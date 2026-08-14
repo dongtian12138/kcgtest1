@@ -1,0 +1,118 @@
+schema_version: kcg_d38999_compliant_insertion_v2
+enabled: true
+task_frame_id: connector_assembly_frame
+control_rate_hz: 240
+filter:
+  wrench_lowpass_alpha: 0.18
+motion:
+  axial_speed_m_s: 0.00020
+  minimum_effective_linear_speed_m_s: 0.000002
+  maximum_xy_speed_m_s: 0.00015
+  maximum_tilt_speed_rad_s: 0.008
+  maximum_rz_search_speed_rad_s: 0.010
+  maximum_linear_acceleration_m_s2: 0.003
+  maximum_angular_acceleration_rad_s2: 0.20
+  maximum_total_travel_m: 0.024
+  maximum_search_radius_m: 0.00020
+  maximum_search_angle_rad: 0.008
+  # Covers the unchanged 0.07 mm/s zero-load admittance speed through the
+  # configured 9 mm seated depth.  This changes only the timeout; no gain or
+  # force/torque safety limit is relaxed.
+  # Includes one bounded full guide-exit angular recovery.  This is a timeout,
+  # not a force/torque relaxation.
+  maximum_duration_s: 300.0
+  maximum_retries: 2
+admittance:
+  k_fx_m_s_n: 0.000035
+  k_fy_m_s_n: 0.000035
+  k_mx_rad_s_nm: 0.12
+  k_my_rad_s_nm: 0.12
+  fz_reference_n: 0.35
+  k_fz_m_s_n: 0.00020
+local_response_model:
+  enabled: true
+  label: SAME_SCENE_MEASURED_CONTACT_RESPONSE
+  source_artifact: artifacts/kcg_connector/d38999_postgrasp_visual_ft_e2e_v2/contact_response_identification/x_plus_0p55_fix1/nominal_physics_report.json
+  motion_order: [X, Y, Rx, Ry]
+  wrench_rows: [Fx, Fy, Mx, My]
+  effective_length_m: 0.020
+  damping: 10.0
+  angular_regularization_weight: 1000.0
+  correction_rate_hz: 1.0
+  maximum_model_tilt_speed_rad_s: 0.00050
+  measured_scaled_condition_number: 1783.3107466126175
+  response_matrix_wrench_per_motion:
+    - [-156.32829442, 47.10448678, -11.07166290, -22.36999778]
+    - [164.17187089, -33.81240883, 15.07693838, -1.00275692]
+    - [35.17569568, -7.59978925, 2.91028060, -0.18660162]
+    - [33.99765380, -10.78540358, 1.08449744, 5.19023622]
+active_probe:
+  enabled: true
+  sequence: [plus_x, return_x, minus_x, return_x, plus_y, return_y, minus_y, return_y, plus_rx, return_rx, minus_rx, return_rx, plus_ry, return_ry, minus_ry, return_ry]
+  amplitude_m: 0.00002
+  speed_m_s: 0.00004
+  angular_amplitude_rad: 0.0003490658504
+  angular_speed_rad_s: 0.0006981317008
+  selected_centering_speed_m_s: 0.00012
+  selected_tilt_speed_rad_s: 0.003490658504
+  contact_unload_distance_m: 0.00005
+  # First angular contact occurred with 4.87 mm guide overlap.  Measured 0.05,
+  # 0.50 and 1.50 mm trials remained side-loaded, so angular recovery exits
+  # the guide by a bounded 5.0 mm before rotating.  No force gate is changed.
+  angular_contact_unload_distance_m: 0.00500
+  contact_unload_speed_m_s: 0.00010
+  angular_contact_unload_speed_m_s: 0.00030
+  unloaded_centering_distance_m: 0.00006
+  # 0.39 degree leaves room inside the unchanged 0.458 degree total search
+  # angle for the bounded probe's measured residual rotation.  The previous
+  # 0.40 degree move plus 0.062 degree residual exceeded that gate by 0.004
+  # degree before re-approach even though the posthoc effective lateral error
+  # had already fallen inside 0.70 mm.
+  unloaded_tilt_distance_rad: 0.006806784083
+  position_tolerance_m: 0.000004
+  angular_position_tolerance_rad: 0.00003490658504
+  maximum_leg_duration_s: 0.80
+  maximum_total_steps: 4800
+  contact_hold_s: 0.10
+  lateral_weight: 1.0
+  bending_weight_n_per_nm: 20.0
+  minimum_score_improvement_n: 0.015
+  # Stop after the first symmetric axis pair only when it is unambiguous:
+  # one side reduces the measured load cost by at least 0.10 N and the
+  # opposite side increases it.  This avoids probing unrelated axes after
+  # the +X 0.55 mm case already measured -0.166/+0.143 N evidence.
+  early_pair_selection_improvement_n: 0.10
+  early_return_fraction_of_soft: 0.80
+  permitted_measurements: [Fx, Fy, Fz, Mx, My, tcp_fk, controller_history]
+  forbidden_measurements: [physx_contact_normal, collider_identity, contact_point_truth]
+contact_classifier:
+  axial_contact_n: 0.22
+  lateral_contact_n: 0.12
+  bending_contact_nm: 0.006
+  jam_lateral_n: 0.65
+  jam_bending_nm: 0.045
+  key_mismatch_mz_nm: 0.025
+  guided_progress_m: 0.00035
+  stalled_progress_m: 0.00003
+  stalled_window_s: 0.40
+  seated_axial_n: 0.55
+  seated_progress_m: 0.0085
+safety:
+  # Simulation experiment placeholders, not hardware limits.
+  hard_axial_force_n: 5.0
+  hard_lateral_force_n: 2.0
+  hard_bending_moment_nm: 0.18
+  hard_torsional_moment_nm: 0.05
+  soft_fraction: 0.70
+  maximum_sample_age_s: 0.020
+  require_tare: true
+  require_payload_compensation: true
+recovery:
+  backoff_distance_m: 0.00040
+  backoff_speed_m_s: 0.00030
+boundaries:
+  allowed_inputs: [rgbd_pose5d, joint_state, tcp_fk, wrist_wrench_6d, controller_history]
+  forbidden_inputs: [object_truth, physx_contact_normal, collider_identity, contact_point_truth, penetration_depth_truth, fingertip_tactile]
+  root_joint_torque_name: root_joint_torque_proxy
+  hardware_safety_certified: false
+  insertion_success_claimed: false

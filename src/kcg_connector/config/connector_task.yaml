@@ -1,0 +1,115 @@
+task_version: kcg_connector_task_v1
+
+# These are deliberately synthetic curriculum dimensions.  They must be
+# replaced by measured CAD/mass/thread data before claiming hardware fidelity.
+geometry:
+  coupling_nut_radius: 0.045
+  coupling_nut_length: 0.060
+  plug_nose_radius: 0.032
+  plug_nose_length: 0.030
+  receptacle_entry_radius: 0.033
+  receptacle_body_radius: 0.050
+  # In connector_pair.usda the plug/nut origin starts this far above the
+  # receptacle origin.  It leaves a 10 mm pre-insertion gap for the v1 rig.
+  initial_plug_center_height: 0.095
+
+# Reuse the validated Gazebo cylinder end poses as the first Isaac curriculum
+# seed.  They are task targets, not a replacement for the authoritative URDF.
+robot_curriculum:
+  arm_joint_names:
+    [iiwa_joint_1, iiwa_joint_2, iiwa_joint_3, iiwa_joint_4,
+     iiwa_joint_5, iiwa_joint_6, iiwa_joint_7]
+  active_hand_joint_names: [f1j1, f1j2, f2j1, f3j2]
+  pre_approach_joint_positions:
+    [0.158382, 0.340953, -0.278255, -0.800570,
+     0.101666, 2.010246, -0.061229]
+  approach_joint_positions:
+    [0.173683, 0.256410, -0.236703, -1.171082,
+     0.060182, 1.720685, -0.046556]
+  # Fraction from pre-approach (0.0) to approach (1.0) used by the physical
+  # grasp search.  The explicit joint seed below is its Cartesian-corrected
+  # replacement: it keeps the same 331.27 mm TCP height while putting the TCP
+  # exactly over the receptacle so insertion no longer follows a curved chord.
+  connector_grasp_approach_fraction: 0.70
+  connector_grasp_joint_positions:
+    [0.17336033, 0.27263860, -0.24813867, -1.07149780,
+     0.06804074, 1.80489336, -0.05015867]
+  # Contact-aware insertion endpoint.  The nominal approach is vertical in
+  # free-space FK, but the held body tilts at the sharp synthetic entry.  This
+  # measured half-compensation keeps the physical plug within the 2 deg and
+  # 1.5 mm engagement gates without moving the object directly.
+  connector_insert_joint_positions:
+    [0.242531918, 0.223969551, -0.304534832, -1.215108336,
+     0.060111064, 1.685354545, -0.046556000]
+  open_hand_positions: [1.000, 0.000, 0.000, 0.000]
+  grasp_hand_positions: [1.000, 0.750, 0.500, 0.750]
+  grasp_center_world: [0.500, 0.000, 0.300]
+  plug_axis_world: [0.000, 0.000, 1.000]
+  insertion_direction_world: [0.000, 0.000, -1.000]
+
+# Conservative q7-only screw controller limits.  The safe limits already
+# include the desired mechanical clearance.  Angular speeds are degrees/s.
+q7_twist:
+  safe_lower_rad: -2.5
+  safe_upper_rad: 2.5
+  # With the imported KUKA/hand joint axes, negative q7 rotates the coupling
+  # nut in the positive local connector angle and advances this right-hand
+  # synthetic thread into the receptacle.
+  tightening_direction: -1
+  maximum_segment_degrees: 120.0
+  probe_degrees: 20.0
+  probe_speed_degrees_per_second: 10.0
+  maximum_speed: 20.0
+  regrasp_clearance_m: 0.00075
+
+# Stage-1 residual RL is deliberately narrower than the full connector task.
+# Reset, grasp, insertion, thread engagement and regrasp remain deterministic;
+# the policy only adjusts the already-validated 20 degree q7 probe and the
+# three actively controlled joints that also have real base-torque sensing.
+residual_rl:
+  interface_version: kcg_connector_twist_residual_v0
+  policy_rate_hz: 10.0
+  target_segment_degrees: 20.0
+  # The zero policy action exactly reproduces the already-validated 10 deg/s
+  # probe.  Its symmetric +/-2 deg/s residual remains far below the existing
+  # conservative 20 deg/s q7 ceiling and can never reverse tightening.
+  nominal_q7_speed_degrees_per_second: 10.0
+  q7_speed_residual_degrees_per_second: 2.0
+  clamp_joint_names: [f1j2, f2j1, f3j2]
+  clamp_nominal_positions_rad: [0.750, 0.500, 0.750]
+  clamp_position_residual_limits_rad: [0.020, 0.020, 0.020]
+  loaded_torque_threshold_nm: 0.020
+  q7_tracking_error_scale_degrees: 5.0
+  grasp_translation_error_scale_m: 0.005
+  grasp_rotation_error_scale_degrees: 5.0
+  torque_delta_scale_nm: 0.250
+  # Base stage value.  The versioned residual curriculum replaces this with
+  # the selected stage's fail-closed axial-progress acceptance threshold.
+  minimum_axial_progress_fraction: 0.75
+  success_angle_tolerance_degrees: 0.5
+  success_hold_duration_s: 0.5
+  maximum_grasp_translation_error_m: 0.005
+  maximum_grasp_rotation_error_degrees: 5.0
+  maximum_q7_tracking_error_degrees: 2.0
+  hold_q7_velocity_tolerance_degrees_per_second: 0.5
+  hold_nut_velocity_tolerance_degrees_per_second: 0.5
+  hold_axial_velocity_tolerance_m_per_second: 0.00005
+
+success:
+  maximum_grasp_distance: 0.015
+  minimum_loaded_torque_channels: 2
+  maximum_absolute_finger_torque: 1.0
+  lateral_alignment_tolerance: 0.0015
+  angular_alignment_tolerance_degrees: 2.0
+  key_alignment_tolerance_degrees: 5.0
+  engage_depth: 0.010
+  target_coupling_angle_degrees: 360.0
+  coupling_angle_tolerance_degrees: 2.0
+  helical_lead_per_revolution: 0.004
+  helical_error_tolerance: 0.0005
+  hold_duration: 2.0
+
+sensing:
+  finger_torque_joint_names: [f1j2, f2j1, f3j2]
+  fingertip_tactile_available: false
+  wrist_force_torque_available: false

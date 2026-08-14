@@ -1,0 +1,52 @@
+# First camera milestone for the D38999 tabletop proxy.  This deliberately
+# uses Isaac renderer annotations to bootstrap and verify the RGB-D pipeline;
+# it is not a learned detector and is not accepted as a full keyed 6D pose.
+schema_version: kcg_d38999_rgbd_bootstrap_v1
+tabletop_config: src/kcg_connector/config/d38999_tabletop_scene_v1.yaml
+pose_contract_config: src/kcg_connector/config/connector_pose_observation_v1.yaml
+
+camera:
+  prim_path: /World/D38999TabletopV1/RgbdCamera
+  frame_id: d38999_rgbd_camera_optical
+  # Wider, centered view: the settled loose plug and fixed receptacle both
+  # retain ample margin in the 640x480 render product.
+  eye_m: [0.550, -0.850, 0.720]
+  target_m: [0.535, -0.0125, 0.231]
+  resolution: [640, 480]
+  frequency_hz: 20
+  warmup_frames: 5
+
+labels:
+  taxonomy: class
+  loose_plug: d38999_loose_plug
+  fixed_receptacle: d38999_fixed_receptacle
+
+# A semantic silhouette observes the connector's projected envelope center,
+# not the nearest visible shell surface.  Intersect its robust image center
+# with the registered axial-envelope mid-height for this known proxy model.
+# These heights are model/tabletop priors only; neither endpoint truth X nor Y
+# is used by the estimator.
+position_estimator:
+  kind: ray_plane_registered_model_height
+  mask_center_statistic: coordinatewise_median_semantic_mask_pixels
+  # 0.200 table-rest body root + 0.031 plug overall length / 2.
+  loose_plug_registered_model_height_m: 0.2155
+  loose_plug_registered_model_height_source: tabletop_rest_root_plus_half_d38999_plug_overall_length
+  # 0.2615 receptacle datum + (0.010 front - 0.0215 rear) / 2.
+  fixed_receptacle_registered_model_height_m: 0.25575
+  fixed_receptacle_registered_model_height_source: receptacle_datum_plus_axial_envelope_midpoint_offset
+
+acceptance:
+  minimum_pixels_per_endpoint: 150
+  minimum_visible_fraction_per_endpoint: 0.0004
+  minimum_valid_depth_m: 0.10
+  maximum_valid_depth_m: 2.00
+  maximum_xy_centroid_error_m: 0.010
+
+output:
+  directory: artifacts/kcg_connector/d38999_rgbd_bootstrap_v1
+  rgb_filename: rgb.png
+  depth_preview_filename: depth_preview.png
+  depth_numpy_filename: depth_m.npy
+  semantic_preview_filename: semantic_preview.png
+  report_filename: report.json

@@ -1,0 +1,16 @@
+build/
+install/
+log/
+.venv/
+artifacts/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+log_verify/
+log_verify_isaac/
+bootstrap.log
+
+# ros1 原工程的 catkin 编译产物
+ros1_original/kcgtest1/build/
+ros1_original/kcgtest1/devel/

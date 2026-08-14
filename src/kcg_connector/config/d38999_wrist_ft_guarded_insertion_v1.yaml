@@ -1,0 +1,96 @@
+# Wrist-FT-only guarded insertion contract for the D38999 visual pipeline.
+#
+# This contract deliberately excludes simulator contact reports, collider
+# identities and object ground truth from the controller input.  Those signals
+# may be inspected after a run, but they cannot influence a command or state
+# transition.
+schema_version: kcg_d38999_wrist_ft_guarded_insertion_v1
+enabled: false
+status: runtime_integrated_cpu_static_ready_gpu_not_validated
+
+inputs:
+  visual_preinsert:
+    path: src/kcg_connector/config/d38999_visual_xy_preinsert_probe_v1.yaml
+    sha256: 7b983bfc211ef25e70ddb818c5773c7b748452e81ace9b8fd0cb464385c2f18c
+  wrist_ft_monitor:
+    path: src/kcg_connector/config/d38999_wrist_ft_monitor_v1.yaml
+    sha256: a7afc437031a36f67471fa1d785136997315b95df9298b0efb866ed538e79f89
+  physical_insertion:
+    path: src/kcg_connector/config/d38999_physical_insertion_v1.yaml
+    sha256: 652b46768735e59146fb249c8c7944ead9a68dc60837c615bc561361f7ded10d
+  wrist_ft_runtime:
+    path: src/kcg_connector/kcg_connector/virtual_wrist_ft_runtime.py
+    sha256: 5fb6f6d39d51bb66df2c0823b78e91e11f7b497fcb351247f0b6d27ce17fbb40
+  insertion_geometry:
+    path: src/kcg_connector/kcg_connector/d38999_physical_insertion.py
+    sha256: ca02106e5552b139b2cd9341bb293ccb644e990842c339c0368f7b306b181a10
+
+controller_interface:
+  task_frame_id: connector_task_frame
+  wrench_order: [Fx, Fy, Fz, Tx, Ty, Tz]
+  allowed_observations:
+    - timestamp_s
+    - sample_age_s
+    - compensated_wrench_task
+    - measured_tcp_position_task_m
+    - commanded_tcp_position_task_m
+    - arm_tracking_error_rad
+    - maximum_joint_speed_rad_s
+    - gripper_position_drift_from_preinsert_rad
+    - robot_state_finite
+    - vision_preinsert_id
+  forbidden_control_inputs:
+    - simulator_object_truth_pose
+    - simulator_truth_gap
+    - physx_contact_report
+    - physx_contact_manifold
+    - collider_path
+    - contact_normal
+    - contact_separation
+    - contact_material
+
+motion:
+  control_rate_hz: 240
+  preinsert_gap_m: 0.012
+  entry_gap_m: 0.010
+  engage_gap_m: 0.003
+  guarded_approach_speed_m_s: 0.00035
+  insertion_speed_m_s: 0.00020
+  contact_retract_distance_m: 0.00030
+  contact_retract_speed_m_s: 0.00035
+  maximum_contact_retries: 40
+  maximum_xy_correction_step_m: 0.00002
+  maximum_xy_search_radius_m: 0.003
+  lateral_correction_gain_m_per_n: 0.000025
+  correction_direction: environment_force_on_tool
+  hold_steps: 240
+  maximum_control_steps: 24000
+
+# These are conservative simulation experiment abort envelopes.  They are not
+# calibrated hardware safety limits and must never be promoted as such.
+experimental_abort_envelope:
+  maximum_axial_force_n: 5.0
+  maximum_lateral_force_n: 2.0
+  maximum_bending_torque_nm: 0.18
+  maximum_tightening_torque_nm: 0.05
+  maximum_arm_tracking_error_rad: 0.020
+  maximum_joint_speed_rad_s: 1.0
+  maximum_gripper_position_drift_from_preinsert_rad: 0.020
+  maximum_sample_age_s: 0.020
+
+contact_response:
+  minimum_axial_contact_force_n: 0.25
+  minimum_lateral_correction_force_n: 0.10
+  minimum_bending_correction_torque_nm: 0.008
+  maximum_hold_axial_force_n: 1.0
+  maximum_hold_lateral_force_n: 0.5
+
+boundaries:
+  uses_fingertip_tactile_sensor: false
+  uses_physx_contact_for_control: false
+  uses_simulator_truth_for_control: false
+  hardware_safety_certified: false
+  production_control_authorized: false
+  runtime_integrated: true
+  insertion_success_claimed: false
+  rl_training_ready_claimed: false

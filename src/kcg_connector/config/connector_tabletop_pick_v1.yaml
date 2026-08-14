@@ -1,0 +1,61 @@
+schema_version: kcg_connector_tabletop_pick_v1
+
+pregrasp:
+  config: connector_home_to_pregrasp_v1.yaml
+
+motion:
+  interpolation: minimum_jerk
+  grasp_arm_rad: [-0.164155590, 0.426740717, -0.376494151, -0.980754913, 0.155526632, 1.758561897, -0.096543358]
+  grasp_tcp_position_m: [0.520, -0.210, 0.291]
+  grasp_tcp_down_axis_world: [0.0, 0.0, -1.0]
+  descent_duration_s: 2.5
+  open_tare_duration_s: 0.5
+  grasp_hand_rad: [1.0, 0.75, 0.50, 0.75]
+  closure_duration_s: 3.0
+  preload_duration_s: 0.5
+  lift_duration_s: 2.5
+  final_hold_duration_s: 4.0
+  effort_sample_duration_s: 0.5
+  grip_hand_stiffness: 5.0
+  # A/B baseline 0.7 left f3j2 at 0.04062 rad/s after a four-second hold;
+  # B1 damping 1.0 reduced it to 0.03840, while B2 damping 1.5 worsened it
+  # to 0.04464.  Restore the best known B1 setting for tail diagnostics.
+  grip_hand_damping: 1.0
+  grip_static_friction: 1.4
+  grip_dynamic_friction: 1.4
+  grip_restitution: 0.0
+
+sensing:
+  torque_joint_names: [f1j2, f2j1, f3j2]
+  loaded_torque_threshold_nm: 0.020
+  minimum_loaded_channels: 2
+  maximum_absolute_torque_delta_nm: 1.0
+  fingertip_tactile_available: false
+
+acceptance:
+  maximum_grasp_tcp_position_error_m: 0.003
+  maximum_grasp_tcp_axis_error_rad: 0.03490658503988659
+  maximum_arm_tracking_error_rad: 0.020
+  maximum_endpoint_arm_tracking_error_rad: 0.020
+  maximum_joint_limit_violation_rad: 0.020
+  maximum_observed_joint_speed_rad_s: 1.0
+  # Observable motion is measured from integrated joint-position differences.
+  maximum_final_observable_joint_speed_rad_s: 0.030
+  # PhysX post-solver velocity can chatter without being integrated into pose;
+  # retain a separate empirical v1 health gate instead of calling it motion.
+  maximum_final_post_solver_joint_speed_rad_s: 0.050
+  minimum_body_lift_m: 0.040
+  minimum_final_bottom_clearance_m: 0.030
+  maximum_body_tcp_slip_m: 0.005
+  maximum_body_nut_separation_change_m: 0.001
+  maximum_final_hold_displacement_m: 0.002
+  maximum_final_body_linear_speed_m_s: 0.020
+  maximum_final_body_angular_speed_rad_s: 0.200
+  maximum_fixed_translation_drift_m: 0.000001
+  maximum_fixed_rotation_drift_rad: 0.00001
+  require_zero_preclosure_robot_connector_contacts: true
+  require_zero_robot_table_contacts: true
+  require_zero_robot_fixture_contacts: true
+  require_zero_robot_fixed_endpoint_contacts: true
+  require_zero_final_plug_table_contacts: true
+  require_physical_grip_contact: true

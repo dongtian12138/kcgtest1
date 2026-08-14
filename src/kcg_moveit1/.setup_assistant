@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: kcg_moveit1
+    relative_path: config/handarm.urdf.xacro
+    xacro_args: "use_gazebo:=false"
+  SRDF:
+    relative_path: config/handarm.srdf
+  CONFIG:
+    author_name: dong
+    author_email: 974622934@qq.com
+    generated_timestamp: 1776256559

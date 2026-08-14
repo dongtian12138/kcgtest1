@@ -1,0 +1,90 @@
+# Opt-in observation-only use of the already validated virtual hand2arm
+# reaction wrench.  This contract intentionally does not enable residual-v1
+# and does not add a new E2E success or safety gate.
+schema_version: kcg_d38999_wrist_ft_monitor_v1
+enabled: true
+status: monitor_only_baseline_calibration_required
+
+compatibility:
+  active_interface_version: kcg_connector_twist_residual_v0
+  modifies_active_interface: false
+  modifies_robot_asset: false
+  modifies_default_e2e: false
+  modifies_e2e_pass_gate: false
+
+inputs:
+  wrist_ft_design:
+    path: src/kcg_connector/config/wrist_ft_v1_contract.yaml
+    sha256: b85fe331e41239478a1a3af3e815edec50531952968b68bd45eafcb4879b558a
+  robot_asset:
+    path: artifacts/kcg_connector/isaac/robot/handarm/handarm.usda
+    sha256: 031f8241c9dd1e2af96d7b1dde7d2adda7744891832a05e2580fd3398da4216b
+
+source:
+  measurement_joint: hand2arm
+  metadata_joint_index_offset: 1
+  raw_frame: handbase_link
+  canonical_frame: handbase_link
+  raw_semantics: isaac_incoming_joint_reaction_on_child
+  canonical_semantics: environment_on_tool
+  wrench_order: [Fx, Fy, Fz, Tx, Ty, Tz]
+  canonical_from_raw:
+    - [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    - [0.0, -1.0, 0.0, 0.0, 0.0, 0.0]
+    - [0.0, 0.0, -1.0, 0.0, 0.0, 0.0]
+    - [0.0, 0.0, 0.0, -1.0, 0.0, 0.0]
+    - [0.0, 0.0, 0.0, 0.0, -1.0, 0.0]
+    - [0.0, 0.0, 0.0, 0.0, 0.0, -1.0]
+
+task_frame:
+  frame_id: connector_task_frame
+  origin_source: assembly_fixed_engagement_datum
+  z_axis_source: assembly_insertion_axis
+  x_reference_world: [1.0, 0.0, 0.0]
+  tightening_resistance_sign: positive_about_task_z
+
+sampling:
+  physics_rate_hz: 240
+  home_tare_window_steps: 120
+  payload_baseline_window_steps: 120
+  minimum_capture_samples: 60
+
+phase_policy:
+  electronic_bias_tare_allowed: [HOME_FREE_SPACE_EMPTY_HAND]
+  payload_capture_allowed: [POST_GRASP_FREE_SPACE]
+  tare_forbidden: [INSERT, ENGAGE, SCREW, HOLD]
+  monitored_contact_phases: [INSERT, ENGAGE, SCREW, HOLD]
+
+compensation:
+  mode: captured_payload_quasistatic_baseline
+  subtract_home_empty_baseline_for_payload_estimate: true
+  subtract_captured_payload_baseline_from_contact_samples: true
+  uses_current_sensor_orientation: true
+  shifts_moment_to_engagement_datum: true
+  dynamic_inertia_compensation_complete: false
+  orientation_dependent_gravity_compensation_complete: false
+
+# These values must come from repeated runs of this same physical E2E scene.
+# Null values deliberately prevent this monitor from becoming a safety gate.
+threshold_calibration:
+  status: pending_same_scene_physical_baseline_scan
+  source_artifact: null
+  source_artifact_sha256: null
+  repeat_count: 0
+  statistic: null
+  margin_policy: null
+
+safety_limits:
+  maximum_lateral_force_n: null
+  maximum_axial_force_n: null
+  maximum_bending_torque_nm: null
+  maximum_tightening_torque_nm: null
+  stale_timeout_s: null
+
+boundaries:
+  monitor_only: true
+  safety_gate_claimed: false
+  dynamic_compensation_claimed: false
+  calibrated_thresholds_claimed: false
+  residual_v1_enabled: false
+  assembly_success_claimed_from_wrench: false

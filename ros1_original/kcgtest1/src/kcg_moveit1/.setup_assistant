@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: iiwa_description
+    relative_path: urdf/handarmtest.urdf
+    xacro_args: ""
+  SRDF:
+    relative_path: config/handarm.srdf
+  CONFIG:
+    author_name: dong
+    author_email: 974622934@qq.com
+    generated_timestamp: 1776256559

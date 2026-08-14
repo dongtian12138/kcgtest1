@@ -1,0 +1,261 @@
+contract_version: kcg_connector_virtual_wrist_ft_design_v1
+status: design_only
+
+# This switch controls only the future residual-v1 consumer.  The virtual
+# measurement boundary itself is available by default in the current USD.
+enabled: false
+
+compatibility:
+  active_interface_version: kcg_connector_twist_residual_v0
+  active_action_size: 4
+  active_observation_size: 24
+  modifies_active_interface: false
+  modifies_robot_asset: false
+  modifies_tcp: false
+
+# The existing zero-transform fixed joint is the measurement boundary.  No
+# sensor housing, adapter, link, joint, mass, inertia, collision, or visual is
+# added to URDF/USD.
+virtual_measurement_boundary:
+  mode: existing_fixed_joint_reaction_wrench
+  available_by_default: true
+  parent_link: iiwa_link_ee
+  measurement_joint: hand2arm
+  child_link: handbase_link
+  sensor_frame: handbase_link
+  preserve_task_tcp: grasp_tcp
+  zero_translation: true
+  zero_rotation: true
+  zero_thickness: true
+  zero_mass: true
+  adds_links: false
+  adds_joints: false
+  adds_geometry: false
+  changes_kinematics: false
+
+frames:
+  raw_wrench_frame: handbase_link
+  raw_wrench_semantics: isaac_incoming_joint_reaction_on_child
+  canonical_from_isaac_raw: "wrench_canonical = -wrench_raw"
+  canonical_from_isaac_raw_axis_permutation: false
+  policy_wrench_frame: connector_task_frame
+  policy_frame_origin: connector_engagement_datum
+  policy_frame_z_axis: insertion_axis
+  canonical_wrench_convention: environment_on_tool
+  tightening_resistance_sign: positive
+
+ros2_control:
+  canonical_sensor_name: wrist_ft_sensor
+  state_interfaces:
+    - force.x
+    - force.y
+    - force.z
+    - torque.x
+    - torque.y
+    - torque.z
+  boundary_topic: /wrist_ft/boundary
+  compensated_topic: /wrist_ft/compensated
+  task_frame_topic: /wrist_ft/task_wrench
+  message_type: geometry_msgs/msg/WrenchStamped
+  physical_sensor_optional: true
+  joint_torque_estimator_optional: true
+
+isaac:
+  robot_asset_unchanged: true
+  merge_fixed_joints_required: false
+  reaction_wrench_api: get_measured_joint_forces
+  reaction_wrench_joint: hand2arm
+  reaction_wrench_joint_index_offset: 1
+  reaction_wrench_frame: child_joint_frame
+  reaction_wrench_order:
+    - force.x
+    - force.y
+    - force.z
+    - torque.x
+    - torque.y
+    - torque.z
+  privileged_contact_wrench_in_actor: false
+  validation_script: virtual_wrist_ft_smoke.py
+
+validation_evidence:
+  validated_utc: "2026-08-11T15:13:56Z"
+  marker: ISAAC VIRTUAL WRIST FT PASSED
+  metadata_joint_index: 7
+  reaction_row_index: 8
+  selected_wrench_shape: [1, 6]
+  raw_frame: handbase_link
+  gravity_force_response_n: 20.5219495
+  tcp_offset_m: [0.0, 0.0, 0.4]
+  tcp_offset_change_m: 1.6543612251060553e-24
+  robot_asset_sha256_before: 031f8241c9dd1e2af96d7b1dde7d2adda7744891832a05e2580fd3398da4216b
+  robot_asset_sha256_after: 031f8241c9dd1e2af96d7b1dde7d2adda7744891832a05e2580fd3398da4216b
+  asset_file_count: 9
+  asset_manifest_sha256_before: 65f14f08d7864b041b145e8582891043f171a7dde52656fe715ecd6451d39f86
+  asset_manifest_sha256_after: 65f14f08d7864b041b145e8582891043f171a7dde52656fe715ecd6451d39f86
+  axis_calibration:
+    application_point: handbase_link_origin
+    full_force_n: 4.0
+    full_torque_nm: 0.4
+    half_scale: 0.5
+    canonical_from_raw_sign_permutation:
+      - [-1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      - [0.0, -1.0, 0.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, -1.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, -1.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, -1.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, -1.0]
+    minimum_absolute_gain: 0.993799005702749
+    maximum_absolute_gain: 1.000000000066695
+    maximum_same_kind_cross_axis_ratio: 0.00018902946361348675
+    maximum_odd_symmetry_error_ratio: 0.0002054679808041462
+    maximum_half_full_linearity_error_ratio: 0.00017604280687211183
+    maximum_force_to_torque_sensitivity_nm_per_n: 0.001329717168600079
+    maximum_torque_to_force_sensitivity_n_per_nm: 0.008832117364505612
+    teardown_articulation_assignment_warning_count: 0
+    runtime_joint_warning_count: 0
+    traceback_count: 0
+
+# A second estimate may be reconstructed from the seven iiwa joint torque
+# sensors.  It is not treated as identical to a wrist sensor.
+joint_torque_wrench_estimator:
+  role: independent_redundant_estimate
+  integration_enabled: false
+  implementation_module: kcg_connector.joint_torque_wrench
+  implementation_function: estimate_tool_wrench
+  source_joint_names:
+    - iiwa_joint_1
+    - iiwa_joint_2
+    - iiwa_joint_3
+    - iiwa_joint_4
+    - iiwa_joint_5
+    - iiwa_joint_6
+    - iiwa_joint_7
+  external_torque_relation: "tau_ext = transpose(J_tool(q)) * wrench_tool"
+  full_rank_solution: "wrench_tool = inverse(J*transpose(J)) * J * tau_ext"
+  deployed_solver: weighted_damped_least_squares
+  jacobian_shape: [6, 7]
+  required_task_rank: 6
+  nullspace_dimension_at_full_rank: 1
+  monitor_nullspace_projection_residual: true
+  condition_number_metric: "sqrt(W) * transpose(J) * diag(wrench_scales)"
+  contact_distribution_observable: false
+  arm_link_contact_localization_from_single_wrench: false
+  assumptions:
+    - only_one_external_contact_resultant_at_known_tool_frame
+    - calibrated_joint_torque_sign_scale_and_bias
+    - accurate_joint_state_time_alignment
+    - compensated_robot_and_payload_dynamics
+    - jacobian_not_singular_or_ill_conditioned
+  compensation_terms:
+    - gravity
+    - payload_gravity
+    - inertia
+    - coriolis_and_centrifugal
+    - joint_friction_and_hysteresis
+    - sensor_bias_and_temperature_drift
+    - cable_and_unmodeled_loads
+  damping: null
+  wrench_scales: null
+  maximum_condition_number: null
+  maximum_projection_residual_nm: null
+  calibrated_covariance: null
+
+fusion:
+  primary_sim_source: hand2arm_reaction_wrench
+  primary_real_source: physical_wrist_ft_when_available
+  fallback_real_source: jacobian_joint_torque_estimate
+  keep_three_finger_base_torques: true
+  reject_or_degrade_near_singularity: true
+  require_source_timestamp_and_health: true
+
+residual_v1:
+  interface_version: kcg_connector_twist_residual_wrist_ft_v1
+  base_interface_version: kcg_connector_twist_residual_v0
+  action_names:
+    - tightening_speed_residual
+    - f1j2_clamp_residual
+    - f2j1_clamp_residual
+    - f3j2_clamp_residual
+  appended_observation_names:
+    - wrist_force_x
+    - wrist_force_y
+    - wrist_force_z
+    - wrist_torque_x
+    - wrist_torque_y
+    - wrist_torque_z
+  action_size: 4
+  observation_size: 30
+  observation_source: compensated_connector_task_frame_wrench
+  normalized_clip_range: [-1.0, 1.0]
+  normalization_scales:
+    lateral_force_n: null
+    axial_force_n: null
+    bending_torque_nm: null
+    tightening_torque_nm: null
+
+compensation:
+  subtract_electronic_bias: true
+  subtract_distal_tool_gravity: true
+  subtract_grasped_payload_gravity: true
+  compensate_dynamic_inertia: true
+  use_current_robot_orientation: true
+  use_current_finger_configuration: true
+  use_estimated_hand_to_connector_transform: true
+  electronic_bias_update_allowed_phases:
+    - HOME_FREE_SPACE_EMPTY_HAND
+  payload_capture_allowed_phases:
+    - POST_GRASP_FREE_SPACE
+  tare_forbidden_phases:
+    - INSERT
+    - ENGAGE
+    - SCREW
+    - HOLD
+
+# Operational limits remain deliberately unset. Enabling the v1 consumer
+# while any required value is null must be rejected by the future loader.
+safety_limits:
+  maximum_raw_force_n: null
+  maximum_raw_torque_nm: null
+  maximum_lateral_force_n: null
+  maximum_axial_force_n: null
+  maximum_bending_torque_nm: null
+  maximum_tightening_torque_nm: null
+  stale_timeout_s: null
+
+success_requires_all:
+  - measured_nut_progress
+  - measured_axial_progress
+  - connector_depth_or_gap_in_tolerance
+  - tightening_torque_in_terminal_band
+  - lateral_force_and_bending_in_tolerance
+  - finger_base_torques_loaded_and_stable
+  - stable_hold
+
+failure_evidence:
+  early_jam:
+    - tightening_torque_high_before_target_progress
+    - axial_progress_stalled
+  lateral_jam:
+    - lateral_force_or_bending_high
+    - axial_progress_stalled
+  grasp_slip:
+    - finger_base_torque_imbalance_or_drop
+    - hand_to_connector_pose_changed
+  estimator_invalid:
+    - jacobian_rank_below_six
+    - jacobian_condition_limit_exceeded
+    - joint_torque_projection_residual_high
+  sensor_fault:
+    - nonfinite_wrench
+    - stale_timestamp
+    - saturation_or_overload
+
+required_before_enable:
+  - six_axis_sign_and_frame_unit_load_tests
+  - calibrated_tool_and_payload_compensation
+  - per_connector_normalization_scales
+  - per_connector_soft_and_hard_safety_limits
+  - timestamp_latency_and_filter_validation
+  - jacobian_rank_condition_and_projection_residual_monitor
+  - joint_torque_estimator_calibration_if_used_on_hardware
+  - unchanged_v0_physics_regression

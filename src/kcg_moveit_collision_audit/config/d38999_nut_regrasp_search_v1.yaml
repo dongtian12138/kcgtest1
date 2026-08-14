@@ -1,0 +1,112 @@
+schema_version: kcg_d38999_nut_regrasp_search_v1
+enabled: false
+status: cpu_geometry_search_only_not_runtime_authorized
+
+# Every source is immutable for one report.  The selected D38999 geometry is a
+# public-dimensional proxy, not flight-qualified CAD.
+inputs:
+  urdf_xacro:
+    path: src/iiwa_description/urdf/handarm.urdf.xacro
+    sha256: b4ee760ec9d2306e172dc71f697a087f5788c32f89dd3c2e80a2f1e7897af399
+  candidate_srdf:
+    path: artifacts/kcg_connector/self_collision_acm_candidate_v1/handarm_sampled_1000000.srdf
+    sha256: 13542f8defb92c3b09669c65a61bfc81d6535f1b61ba556aad8b8507f4ad252f
+  d38999_proxy:
+    path: src/kcg_connector/config/d38999_shell25j_proxy_v1.yaml
+    sha256: 7d1a541a2350b438697497667c7dcb1f2cd69daa3e98ff850c92759b2f6879df
+  d38999_scene:
+    path: src/kcg_connector/config/d38999_tabletop_scene_v1.yaml
+    sha256: 81872c3e6e884e7455dd4e93e608fc651f0dff0090bab27b1b8c935473f9ba7f
+  d38999_assembly:
+    path: src/kcg_connector/config/d38999_assembly_baseline_v1.yaml
+    sha256: 4921246d03bbfead0c0c806402dadeb432ae913d66ba18c43cc179cb11d76f62
+
+robot:
+  arm_joint_names: [iiwa_joint_1, iiwa_joint_2, iiwa_joint_3, iiwa_joint_4, iiwa_joint_5, iiwa_joint_6, iiwa_joint_7]
+  active_hand_joint_names: [f1j1, f1j2, f2j1, f3j2]
+  grasp_tcp_link: grasp_tcp
+  fixed_q7_rad: 0.650482794
+  expected_never_pair_count: 76
+
+# These anchors are pure-URDF IK solutions for x=0.550 m, y=0.185 m and the
+# same downward TCP orientation as the validated D38999 engage seed.  q7 is
+# held fixed so later q7 twist headroom is not silently consumed by IK.
+ik_family:
+  tcp_xy_m: [0.550, 0.185]
+  interpolation: linear_joint_interpolation_between_exact_fk_anchors
+  maximum_interpolated_tcp_position_error_m: 0.000010
+  maximum_interpolated_tcp_axis_error_rad: 0.0001
+  anchors:
+    - {tcp_z_m: 0.28698, arm_rad: [0.444000532354, 0.469588728676, -0.220434288101, -0.912647068744, 0.101076101862, 1.768183007854, 0.650482794000]}
+    - {tcp_z_m: 0.28898, arm_rad: [0.443582200586, 0.470776383101, -0.220847866077, -0.905797442428, 0.101618479178, 1.773861430075, 0.650482794000]}
+    - {tcp_z_m: 0.29098, arm_rad: [0.443152102147, 0.472004099519, -0.221266364557, -0.898880404024, 0.102177052372, 1.779567398169, 0.650482794000]}
+    - {tcp_z_m: 0.29298, arm_rad: [0.442710205877, 0.473272582366, -0.221690452353, -0.891894505782, 0.102752500134, 1.785301682341, 0.650482794000]}
+    - {tcp_z_m: 0.29498, arm_rad: [0.442256479612, 0.474582567056, -0.222120838656, -0.884838237805, 0.103345541452, 1.791065085590, 0.650482794000]}
+    - {tcp_z_m: 0.29698, arm_rad: [0.441790889951, 0.475934821829, -0.222558276000, -0.877710024378, 0.103956938735, 1.796858445644, 0.650482794000]}
+    - {tcp_z_m: 0.29898, arm_rad: [0.441313402015, 0.477330149754, -0.223003563510, -0.870508220009, 0.104587501246, 1.802682637060, 0.650482794000]}
+    - {tcp_z_m: 0.30098, arm_rad: [0.440823979176, 0.478769390874, -0.223457550475, -0.863231105161, 0.105238088865, 1.808538573480, 0.650482794000]}
+    - {tcp_z_m: 0.30298, arm_rad: [0.440322582779, 0.480253424540, -0.223921140281, -0.855876881640, 0.105909616230, 1.814427210071, 0.650482794000]}
+    - {tcp_z_m: 0.30498, arm_rad: [0.439809171830, 0.481783171929, -0.224395294753, -0.848443667603, 0.106603057297, 1.820349546176, 0.650482794000]}
+    - {tcp_z_m: 0.30698, arm_rad: [0.439283702666, 0.483359598774, -0.224881038948, -0.840929492153, 0.107319450373, 1.826306628178, 0.650482794000]}
+    - {tcp_z_m: 0.30898, arm_rad: [0.438746128596, 0.484983718332, -0.225379466461, -0.833332289475, 0.108059903680, 1.832299552613, 0.650482794000]}
+    - {tcp_z_m: 0.31098, arm_rad: [0.438196399515, 0.486656594602, -0.225891745310, -0.825649892461, 0.108825601521, 1.838329469561, 0.650482794000]}
+    - {tcp_z_m: 0.31298, arm_rad: [0.437634461482, 0.488379345844, -0.226419124473, -0.817880025777, 0.109617811111, 1.844397586326, 0.650482794000]}
+    - {tcp_z_m: 0.31498, arm_rad: [0.437060256266, 0.490153148399, -0.226962941165, -0.810020298305, 0.110437890188, 1.850505171467, 0.650482794000]}
+    - {tcp_z_m: 0.31698, arm_rad: [0.436473720846, 0.491979240881, -0.227524628961, -0.802068194884, 0.111287295480, 1.856653559189, 0.650482794000]}
+    - {tcp_z_m: 0.31898, arm_rad: [0.435874786874, 0.493858928750, -0.228105726863, -0.794021067291, 0.112167592166, 1.862844154161, 0.650482794000]}
+    - {tcp_z_m: 0.32098, arm_rad: [0.435263380083, 0.495793589338, -0.228707889475, -0.785876124340, 0.113080464465, 1.869078436792, 0.650482794000]}
+    - {tcp_z_m: 0.32298, arm_rad: [0.434639419642, 0.497784677371, -0.229332898421, -0.777630421026, 0.114027727508, 1.875357969035, 0.650482794000]}
+    - {tcp_z_m: 0.32498, arm_rad: [0.434002817448, 0.499833731039, -0.229982675195, -0.769280846580, 0.115011340694, 1.881684400776, 0.650482794000]}
+    - {tcp_z_m: 0.32698, arm_rad: [0.433353477347, 0.501942378704, -0.230659295674, -0.760824111294, 0.116033422746, 1.888059476884, 0.650482794000]}
+
+search:
+  tcp_z_lower_m: 0.28698
+  tcp_z_upper_m: 0.32698
+  coarse_tcp_z_step_m: 0.00050
+  coarse_outer_blend_lower: 0.55
+  coarse_outer_blend_upper: 0.88
+  coarse_outer_blend_step: 0.01
+  coarse_middle_blend_lower: 0.55
+  coarse_middle_blend_upper: 0.88
+  coarse_middle_blend_step: 0.01
+  refinement_tcp_half_width_m: 0.0010
+  refinement_tcp_z_step_m: 0.00010
+  refinement_blend_half_width: 0.020
+  refinement_blend_step: 0.001
+  hand_command_mapping:
+    f1j1_fixed_rad: 1.0
+    f1j2_from_outer_blend_scale: 0.9
+    f2j1_from_middle_blend_scale: 0.7
+    f3j2_from_outer_blend_scale: 0.9
+
+discrete_regrasp_path:
+  rate_hz: 240
+  interpolation: minimum_jerk
+  carry_tcp_z_m: 0.31298
+  carry_hand_rad: [1.0, 0.765, 0.595, 0.765]
+  open_hand_rad: [1.0, 0.0, 0.0, 0.0]
+  release_duration_s: 2.5
+  open_reposition_duration_s: 2.0
+  nut_closure_duration_s: 3.5
+  expected_sample_count: 1920
+  maximum_joint_step_rad: 0.0025
+  open_reposition_endpoint_clearance_min_m: 0.001
+
+acceptance:
+  nut_touch_signed_distance_max_m: 0.0
+  body_signed_clearance_min_m: 0.001
+  candidate_self_clearance_min_m: 0.001
+  strict_self_clearance_min_m: 0.001
+  robot_environment_clearance_min_m: 0.005
+  require_all_three_fingers_touch_nut: true
+  require_all_three_fingers_clear_body: true
+  require_continuous_collision_verified: true
+
+boundaries:
+  physics_contact_verified: false
+  force_closure_verified: false
+  continuous_collision_verified: false
+  thread_contact_modeled: false
+  runtime_integration_allowed: false
+  object_pose_drive_allowed: false
+  assembly_success_claimed: false

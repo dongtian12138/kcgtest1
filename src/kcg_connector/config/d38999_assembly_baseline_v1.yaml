@@ -1,0 +1,82 @@
+# Pure, disabled-by-default contract for the first D38999 assembly baseline.
+# All stored lengths are metres, angles are radians, and torques are N*m.
+# The 3 mm/rev lead is only a kinematic proxy.  It is neither a claim about
+# flight-connector pitch nor a model of thread-tooth contact.
+schema_version: kcg_d38999_assembly_baseline_v1
+enabled: false
+status: contract_only_not_runtime_validated
+
+scope:
+  start_state: prepared_grip
+  prepared_grip_required: true
+  pick_motion_included: false
+  runtime_integration: none
+  default_execution_allowed: false
+  fail_closed: true
+
+units:
+  length: m
+  angle: rad
+  time: s
+  torque: N*m
+
+datums:
+  fixed:
+    symbol: F
+    prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JProxy/FixedReceptacle
+    feature: root_contact_face_center
+    position_world_m: [0.550, 0.185, 0.2615]
+    axis_world: [0.0, 0.0, 1.0]
+  loose_plug:
+    symbol: P
+    prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JProxy/LoosePlug/BodyAssembly
+    feature: socket_face_center
+    position_source: runtime_observation
+    expected_axis_world: [0.0, 0.0, 1.0]
+
+alignment:
+  axis_relation: parallel_same_direction
+  gap_definition: dot(P-F,Fz)
+  positive_gap_direction: fixed_positive_z
+
+axial_plan:
+  preinsert_gap_m: 0.012
+  entry_gap_m: 0.010
+  engage_gap_m: 0.003
+  insertion_travel_m: 0.009
+  remaining_screw_proxy_travel_m: 0.003
+  final_gap_m: 0.0
+
+thread_proxy:
+  model: kinematic_lead_only
+  lead_m_per_revolution: 0.003
+  real_connector_pitch_claimed: false
+  thread_tooth_collision_modeled: false
+  target_rotation_rad: 6.283185307179586
+  expected_target_travel_m: 0.003
+  probe_rotation_rad: 0.3490658503988659
+  probe_speed_rad_s: 0.08726646259971647
+  expected_probe_duration_s: 4.0
+  expected_probe_travel_m: 0.00016666666666666666
+
+q7_direction:
+  joint_name: iiwa_joint_7
+  tightening_direction_candidate: -1
+  physical_direction_validated: false
+  candidate_use_requires_physical_validation: true
+
+sensing:
+  source: finger_base_single_axis_torque
+  torque_joint_names: [f1j2, f2j1, f3j2]
+  operational_limit_nm: 1.8
+  hard_stop_nm: 2.0
+  require_all_channels_finite: true
+  fingertip_tactile_available: false
+
+boundaries:
+  isaac_import_allowed: false
+  ros_import_allowed: false
+  object_pose_drive_allowed: false
+  autonomous_execution_allowed: false
+  physical_contact_validated: false
+  assembly_success_claimed: false

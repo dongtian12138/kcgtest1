@@ -1,0 +1,142 @@
+# Public-drawing dimensional proxy for one selected MIL-DTL-38999 Series III
+# pair.  This file is deliberately independent of connector_task.yaml and
+# connector_pair.usda.  It is not a qualification record or manufacturing CAD.
+schema_version: kcg_d38999_shell25j_proxy_v1
+
+identity:
+  proxy_id: d38999_shell25j_61_pair_proxy_v1
+  fidelity: public_dimensional_visual_physics_proxy
+  loose_part_number: D38999/26KJ61SN
+  fixed_part_number: D38999/20KJ61PN
+  shell_size: 25
+  shell_size_code: J
+  insert_arrangement: 61
+  loose_contact_style: socket
+  fixed_contact_style: pin
+  polarization: N
+  certification_claim: none
+
+# Paths are relative to the kcg_connector package root.  The SHA-256 values
+# are recorded in assets/public_specs/mil_dtl_38999/SOURCE.md.
+source_documents:
+  receptacle:
+    local_path: assets/public_specs/mil_dtl_38999/dtl38999ss20.pdf
+    sha256: 91dcccb1bcb301fd09f3a6176f3ca99c0b36934d216f28ab74501fe0b491266f
+    document_id: MIL-DTL-38999/20H
+    amendment: 1
+    issue_date: "2022-08-11"
+    figure: Figure 1, Receptacle
+    dimensional_table_page: 2
+    selected_shell_row: 25/J
+    selected_class: K
+    applicability_note: V, W, and Z apply to selected class K; primed values and the 91.310 N-m external bending moment apply only to classes J and M and are not applicable to selected class K.
+  plug:
+    local_path: assets/public_specs/mil_dtl_38999/dtl38999ss26.pdf
+    sha256: 2db5e7470508eaa52ab64f0f0005a650c43cbbf27191dfbec427854fb6948894
+    document_id: MIL-DTL-38999/26G
+    amendment: 4
+    issue_date: "2022-08-11"
+    figure: Figure 1, Plug
+    dimensional_table_page: 2
+    selected_shell_row: 25/J
+    selected_class: K
+    applicability_note: B and Z apply to selected class K; B-prime, H, Z-prime, and the 91.310 N-m external bending moment apply only to classes J and M and are not applicable to selected class K.
+
+# Complete numeric transcription of the shell-size 25 / code J rows on page 2.
+# Millimetres are retained here to make review against the drawings direct.
+public_dimensions_mm:
+  receptacle:
+    m_panel_thickness_max: 5.00
+    p_nominal: 3.91
+    p_plus_minus: 0.20
+    pp_nominal: 6.15
+    pp_plus_minus: 0.20
+    r1: 38.10
+    r2: 34.93
+    s_nominal: 46.0
+    s_plus_minus: 0.3
+    v_nominal: 20.07
+    v_plus: 0.00
+    v_minus: 1.25
+    v_prime_nominal: 18.7
+    v_prime_plus: 1.4
+    v_prime_minus: 0.0
+    w_max: 3.2
+    w_min: 2.1
+    w_prime_max: 4.35
+    w_prime_min: 2.1
+    z_max: 31.5
+    z_prime_max: 32.0
+    class_j_m_external_bending_moment_minimum_nm: 91.310
+  plug:
+    b_diameter_nominal: 44.3
+    b_diameter_plus: 0.2
+    b_diameter_minus: 0.0
+    b_prime_diameter_max: 46.8
+    h_max_rib_count: 28
+    k_max: 44.9
+    s_diameter_max: 48.0
+    z_max: 31.0
+    z_prime_max: 31.5
+    class_j_m_external_bending_moment_minimum_nm: 91.310
+
+# The dimensions below are simulation geometry in metres.  Values tied to a
+# public row are checked by the loader.  Every remaining value is an explicit
+# visual/physics assumption, not a measurement of the selected TE parts.
+proxy_geometry_m:
+  plug:
+    overall_length: 0.0310
+    coupling_nut_outer_radius: 0.0240
+    coupling_nut_inner_radius: 0.0195
+    coupling_nut_length: 0.0170
+    rear_body_radius: 0.02215
+    rear_body_length: 0.0140
+    mating_shell_outer_radius: 0.0190
+    mating_shell_inner_radius: 0.0165
+    mating_shell_length: 0.0100
+    contact_face_radius: 0.0155
+    contact_visual_radius: 0.00065
+    contact_visual_depth: 0.0015
+    contact_count: 61
+    grip_segment_count: 24
+    initial_pair_separation: 0.080
+  receptacle:
+    flange_side: 0.0460
+    flange_thickness: 0.0032
+    shell_outer_radius: 0.0215
+    entry_radius: 0.0193
+    front_shell_length: 0.0100
+    rear_body_radius: 0.0215
+    rear_body_length: 0.0215
+    contact_face_radius: 0.0155
+    pin_visual_radius: 0.00050
+    pin_visual_length: 0.0020
+    mounting_slot_width: 0.00391
+    mounting_slot_length: 0.00615
+    mounting_slot_center_offset: 0.0182575
+    contact_count: 61
+
+physics_assumptions:
+  plug_body_mass_kg: 0.080
+  coupling_nut_mass_kg: 0.040
+  static_friction: 0.60
+  dynamic_friction: 0.50
+  restitution: 0.02
+
+proxy_rules:
+  thread_collision_mode: none
+  contact_collision_mode: simplified_face_stop
+  mounting_slot_collision_mode: visual_only_not_subtracted
+  exact_insert_geometry_available: false
+  exact_mass_and_inertia_available: false
+  certified_geometry: false
+  space_qualified_claim: false
+  intended_use: visualization_and_early_simulation_only
+
+unknowns:
+  - front_and_rear_interface_geometry_from_controlling_procurement_specification
+  - thread_profile_pitch_running_clearance_and_end_stops
+  - calibrated_mass_inertia_and_center_of_mass
+  - contact_materials_and_contact_friction
+  - torque_force_damage_and_success_limits
+  - exact_61_contact_insert_geometry

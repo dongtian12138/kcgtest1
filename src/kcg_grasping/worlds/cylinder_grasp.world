@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <world name="default">
+    <gravity>0 0 -9.81</gravity>
+
+    <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+      <ros>
+        <namespace>/gazebo</namespace>
+      </ros>
+      <update_rate>100.0</update_rate>
+    </plugin>
+
+    <physics name="ode_physics" default="true" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_update_rate>1000</real_time_update_rate>
+      <real_time_factor>1.0</real_time_factor>
+      <ode>
+        <solver>
+          <type>quick</type>
+          <iters>100</iters>
+          <sor>1.3</sor>
+        </solver>
+        <constraints>
+          <cfm>0.0</cfm>
+          <erp>0.2</erp>
+          <contact_max_correcting_vel>0.1</contact_max_correcting_vel>
+          <contact_surface_layer>0.001</contact_surface_layer>
+        </constraints>
+      </ode>
+    </physics>
+
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <model name="grasp_pedestal">
+      <static>true</static>
+      <pose>0.5 0 0.12 0 0 0</pose>
+      <link name="pedestal_link">
+        <collision name="pedestal_collision">
+          <geometry>
+            <!--
+              A narrow fixture supports the cylinder while leaving its sides
+              accessible to all three fingers.  The former 0.30 m square top
+              intersected the distal finger meshes during the pregrasp and
+              injected an unbounded ODE contact impulse.
+            -->
+            <box><size>0.07 0.07 0.24</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>1.0</mu><mu2>1.0</mu2></ode>
+            </friction>
+            <contact>
+              <ode><kp>1000000</kp><kd>100</kd><max_vel>0.05</max_vel><min_depth>0.001</min_depth></ode>
+            </contact>
+          </surface>
+        </collision>
+        <visual name="pedestal_visual">
+          <geometry>
+            <box><size>0.07 0.07 0.24</size></box>
+          </geometry>
+          <material>
+            <ambient>0.30 0.32 0.36 1</ambient>
+            <diffuse>0.38 0.42 0.48 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="grasp_cylinder">
+      <!--
+        Keep the task object outside the robot setup path.  The task manager
+        places it on the fixture only after OPEN and APPROACH are complete.
+      -->
+      <pose>2.0 0 0.300 0 0 0</pose>
+      <link name="cylinder_link">
+        <inertial>
+          <mass>0.10</mass>
+          <inertia>
+            <ixx>0.0001706</ixx>
+            <iyy>0.0001706</iyy>
+            <izz>0.0001013</izz>
+            <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+          </inertia>
+        </inertial>
+        <velocity_decay>
+          <linear>0.01</linear>
+          <angular>0.01</angular>
+        </velocity_decay>
+        <collision name="cylinder_collision">
+          <geometry>
+            <cylinder><radius>0.045</radius><length>0.12</length></cylinder>
+          </geometry>
+          <max_contacts>30</max_contacts>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.4</mu><mu2>1.4</mu2>
+                <slip1>0.0</slip1><slip2>0.0</slip2>
+              </ode>
+            </friction>
+            <contact>
+              <ode><kp>1000000</kp><kd>100</kd><max_vel>0.05</max_vel><min_depth>0.001</min_depth></ode>
+            </contact>
+          </surface>
+        </collision>
+        <visual name="cylinder_visual">
+          <geometry>
+            <cylinder><radius>0.045</radius><length>0.12</length></cylinder>
+          </geometry>
+          <material>
+            <ambient>0.70 0.18 0.06 1</ambient>
+            <diffuse>0.90 0.28 0.08 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+  </world>
+</sdf>

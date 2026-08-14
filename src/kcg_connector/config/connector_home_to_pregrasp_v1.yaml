@@ -1,0 +1,66 @@
+schema_version: kcg_connector_home_to_pregrasp_v1
+
+scene:
+  tabletop_config: connector_tabletop_scene_v1.yaml
+  robot_root_prim_path: /World/HandArm
+  articulation_prim_path: /World/HandArm/Geometry/world
+  grasp_tcp_prim_path: /World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/grasp_tcp
+
+robot:
+  arm_joint_names:
+    - iiwa_joint_1
+    - iiwa_joint_2
+    - iiwa_joint_3
+    - iiwa_joint_4
+    - iiwa_joint_5
+    - iiwa_joint_6
+    - iiwa_joint_7
+  active_hand_joint_names: [f1j1, f1j2, f2j1, f3j2]
+  home_arm_rad: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  open_hand_rad: [1.0, 0.0, 0.0, 0.0]
+  # The laterally extended pregrasp pose carries about 44 N m in simulation.
+  # These gains keep its static TCP error below the 2 mm acceptance gate;
+  # 400/40 and 8000/220 were both measured as too compliant here.
+  arm_stiffness: 24000.0
+  arm_damping: 400.0
+  hand_stiffness: 25.0
+  hand_damping: 2.0
+
+motion:
+  interpolation: minimum_jerk
+  # Open at Home slowly enough that every active finger stays within the
+  # 0.02 rad path-tracking gate before the arm starts to travel.
+  hand_open_duration_s: 16.0
+  # These joint-space points are deterministic candidates, not a claim that
+  # IK or collision planning has already been accepted.  Physics acceptance
+  # is performed by the standalone smoke at every 240 Hz sample.
+  segments:
+    - name: home_to_safe_mid
+      duration_s: 6.2
+      target_arm_rad: [-0.1133152125, 0.2419650715, -0.1716717785, -0.3550775790, 0.0852878585, 0.9833095885, -0.0414886690]
+    - name: safe_mid_to_high_approach
+      duration_s: 3.7
+      target_arm_rad: [-0.1813043400, 0.3871441144, -0.2746748456, -0.5681241264, 0.1364605736, 1.5732953416, -0.0663818704]
+    - name: high_approach_to_pregrasp
+      duration_s: 2.5
+      target_arm_rad: [-0.2266304250, 0.4839301430, -0.3433435570, -0.7101551580, 0.1705757170, 1.9666191770, -0.0829773380]
+  hold_duration_s: 1.0
+  target_tcp_position_m: [0.520, -0.210, 0.360]
+  target_tcp_down_axis_world: [0.0, 0.0, -1.0]
+
+acceptance:
+  maximum_tcp_position_error_m: 0.002
+  maximum_tcp_axis_error_rad: 0.03490658503988659
+  maximum_observed_arm_tracking_error_rad: 0.020
+  maximum_observed_hand_tracking_error_rad: 0.020
+  maximum_final_arm_tracking_error_rad: 0.020
+  maximum_joint_limit_violation_rad: 0.020
+  maximum_observed_joint_speed_rad_s: 1.0
+  maximum_final_joint_speed_rad_s: 0.030
+  maximum_loose_endpoint_xy_drift_m: 0.001
+  maximum_loose_endpoint_tail_displacement_m: 0.002
+  maximum_fixed_translation_drift_m: 0.000001
+  maximum_fixed_rotation_drift_rad: 0.00001
+  require_zero_robot_table_contacts: true
+  require_zero_robot_fixture_contacts: true
+  require_zero_robot_connector_contacts: true

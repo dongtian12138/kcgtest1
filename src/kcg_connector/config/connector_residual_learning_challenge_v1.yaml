@@ -1,0 +1,59 @@
+# Offline-only learnability challenge for the unchanged residual-v0 interface.
+# It is deliberately disabled and is not consumed by the Isaac backend or the
+# formal SAC runner.  Enabling it requires a separate reviewed integration.
+schema_version: kcg_connector_residual_learning_challenge_v1
+enabled: false
+
+contract:
+  interface_version: kcg_connector_twist_residual_v0
+  action_size: 4
+  observation_size: 24
+  operational_stage_reference: stage20
+
+task:
+  target_angle_degrees: 20.0
+  success_hold_duration_s: 0.5
+  hold_entry_detection_policy_steps: 1
+  policy_rate_hz: 10.0
+  maximum_episode_steps: 28
+  nominal_q7_speed_degrees_per_second: 10.0
+  q7_speed_residual_degrees_per_second: 2.0
+  maximum_q7_speed_degrees_per_second: 20.0
+
+control_path_randomization:
+  q7_velocity_scale:
+    lower: 0.85
+    upper: 1.15
+  clamp_position_offset:
+    joint_names: [f1j2, f2j1, f3j2]
+    lower_rad: [-0.015, -0.015, -0.015]
+    upper_rad: [0.015, 0.015, 0.015]
+  clamp_observation_reference:
+    kind: base_nominal
+    positions_rad: [0.750, 0.500, 0.750]
+    residual_action_limits_rad: [0.020, 0.020, 0.020]
+
+deadline:
+  penalty: -10.0
+  termination_reason: time_limit
+  counts_as_safety_failure: false
+
+fixed_physics:
+  mass_randomized: false
+  friction_randomized: false
+  helical_lead_randomized: false
+
+seed_ranges:
+  tuning: {start: 20000, end_inclusive: 20063}
+  validation: {start: 30000, end_inclusive: 30127}
+  final_paired: {start: 10000, end_inclusive: 10099}
+
+acceptance:
+  zero_policy_success_rate:
+    minimum: 0.65
+    maximum: 0.85
+  oracle_minimum_success_rate: 0.98
+  maximum_zero_policy_raw_safety_failures: 0
+  maximum_oracle_raw_safety_failures: 0
+  zero_policy_allowed_failure_reasons: [time_limit]
+  require_all_paired_randomization_matches: true

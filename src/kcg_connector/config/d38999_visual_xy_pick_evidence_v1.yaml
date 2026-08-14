@@ -1,0 +1,116 @@
+# CPU-only evidence request for four completed Isaac visual-XY pick probes.
+# The aggregator archives the /tmp logs byte-for-byte.  This request cannot
+# authorize full 6-DoF, arbitrary-pose or production control claims.
+schema_version: kcg_d38999_visual_xy_pick_evidence_request_v1
+expected_run_count: 4
+
+policy:
+  evidence_scope: independent_multi_position_visual_xy_pick_only
+  require_all_passed: true
+  statistics_only: true
+  claim_same_condition_repeatability: false
+  claim_full_6d: false
+  claim_arbitrary_pose: false
+  claim_production_control: false
+  close_rl_readiness_gate: false
+
+runs:
+  - run_id: plus10_xy
+    expected_trial_id: loose_plus_10mm_xy_fixed_nominal
+    expected_loose_xy_m: [0.53, -0.20]
+    expected_fixed_xy_m: [0.55, 0.185]
+    report:
+      path: artifacts/kcg_connector/d38999_visual_xy_pick_probe_v1/first_gpu_20260812T1455Z/report.json
+      sha256: d079cebcd32b357f1279cd3d603d15a5cca530aef3ff8c733826dfeacb7858a5
+      size_bytes: 16958
+      schema_version: kcg_d38999_visual_xy_pick_report_v1
+    console_log:
+      path: /tmp/kcg_d38999_visual_xy_pick_first_gpu.log
+      sha256: 3ab6ea126c5ff779e025e39173c2926cef6fc392e8d545bf0a4328cff77d2cfd
+      size_bytes: 35074
+      schema_version: kcg_d38999_visual_xy_pick_console_log_v1
+    config:
+      path: src/kcg_connector/config/d38999_visual_xy_pick_probe_v1.yaml
+      sha256: 4bab601ac0dd27425f29da7e585dc2c10c0877bfd88729f31f5af28ac0ed8d19
+      size_bytes: 2816
+      schema_version: kcg_d38999_visual_xy_pick_probe_v1
+    cpu_plan:
+      path: artifacts/kcg_connector/d38999_visual_xy_pick_probe_v1/first_gpu_20260812T1455Z/cpu_plan.json
+      sha256: fe1c17faa14451b752ec556a859dc818b5c81ab99a8988f711a25d1024c79ab7
+      size_bytes: 3575
+      schema_version: kcg_d38999_visual_xy_pick_probe_v1
+
+  - run_id: plus20_x
+    expected_trial_id: loose_plus_20mm_x_fixed_nominal
+    expected_loose_xy_m: [0.54, -0.21]
+    expected_fixed_xy_m: [0.55, 0.185]
+    report:
+      path: artifacts/kcg_connector/d38999_visual_xy_pick_probe_v1/runs/loose_px20_y0_gpu_20260812T151700Z/report.json
+      sha256: edbc5a839bfe6f16f986f4d6876a849a71ebc30c309d3f76a593b43c1df8ef27
+      size_bytes: 17030
+      schema_version: kcg_d38999_visual_xy_pick_report_v1
+    console_log:
+      path: /tmp/kcg_d38999_visual_xy_pick_px20_y0.log
+      sha256: 436e8a4321e977e6043d0aa91aa5a1d0c9117c5de77cdb7bfeddd4b5d19d718d
+      size_bytes: 35236
+      schema_version: kcg_d38999_visual_xy_pick_console_log_v1
+    config:
+      path: src/kcg_connector/config/d38999_visual_xy_pick_px20_y0_v1.yaml
+      sha256: 7e761f87ecf967a6bc06c8b3397558ea347c21c1d41b5f6e9d02784e048c31f1
+      size_bytes: 2678
+      schema_version: kcg_d38999_visual_xy_pick_probe_v1
+    cpu_plan:
+      path: artifacts/kcg_connector/d38999_visual_xy_pick_probe_v1/runs/loose_px20_y0_gpu_20260812T151700Z/cpu_plan.json
+      sha256: 832bc57fca4439fef8c9fae4f11ca9ab6cfbfc7b79f86543d37d897cf3b5d4ec
+      size_bytes: 3575
+      schema_version: kcg_d38999_visual_xy_pick_probe_v1
+
+  - run_id: minus20_x
+    expected_trial_id: loose_minus_20mm_x_fixed_nominal
+    expected_loose_xy_m: [0.50, -0.21]
+    expected_fixed_xy_m: [0.55, 0.185]
+    report:
+      path: artifacts/kcg_connector/d38999_visual_xy_pick_probe_v1/runs/loose_mx20_y0_gpu_20260812T151700Z/report.json
+      sha256: 23de78b0be847fdac9d8bcfd11e6d9a1af89e32fb34a686469386338ae171dd3
+      size_bytes: 17031
+      schema_version: kcg_d38999_visual_xy_pick_report_v1
+    console_log:
+      path: /tmp/kcg_d38999_visual_xy_pick_mx20_y0.log
+      sha256: 1faa3a2a8f8580de752b1d71ce9f934867a478c17ab11af69b178c389ba79b19
+      size_bytes: 35237
+      schema_version: kcg_d38999_visual_xy_pick_console_log_v1
+    config:
+      path: src/kcg_connector/config/d38999_visual_xy_pick_mx20_y0_v1.yaml
+      sha256: b5cec2e61846b85d04123c5e48db857578176ec3024fbb04a862e79fd9997f65
+      size_bytes: 2679
+      schema_version: kcg_d38999_visual_xy_pick_probe_v1
+    cpu_plan:
+      path: artifacts/kcg_connector/d38999_visual_xy_pick_probe_v1/runs/loose_mx20_y0_gpu_20260812T151700Z/cpu_plan.json
+      sha256: 403d45e359a27a5d95eab9f38990adc55fff422fd681a751b63233b83b8d197b
+      size_bytes: 3584
+      schema_version: kcg_d38999_visual_xy_pick_probe_v1
+
+  - run_id: minus20_y
+    expected_trial_id: loose_minus_20mm_y_fixed_nominal
+    expected_loose_xy_m: [0.52, -0.23]
+    expected_fixed_xy_m: [0.55, 0.185]
+    report:
+      path: artifacts/kcg_connector/d38999_visual_xy_pick_probe_v1/runs/loose_x0_my20_gpu_20260812T151700Z/report.json
+      sha256: e814aecdbe4a123de5967b3747f96e1897012232d0a3dfbb2d48c64fbe939f1d
+      size_bytes: 17034
+      schema_version: kcg_d38999_visual_xy_pick_report_v1
+    console_log:
+      path: /tmp/kcg_d38999_visual_xy_pick_x0_my20.log
+      sha256: 8e0346f4e137ea5942c29b8b6eba5c78d944a0fa3acfec8427d85fbbda07c722
+      size_bytes: 35240
+      schema_version: kcg_d38999_visual_xy_pick_console_log_v1
+    config:
+      path: src/kcg_connector/config/d38999_visual_xy_pick_x0_my20_v1.yaml
+      sha256: f600c167cfecb379dc386259f21e5c5eb18c8dd68bed08e9bf8013f664b0d929
+      size_bytes: 2679
+      schema_version: kcg_d38999_visual_xy_pick_probe_v1
+    cpu_plan:
+      path: artifacts/kcg_connector/d38999_visual_xy_pick_probe_v1/runs/loose_x0_my20_gpu_20260812T151700Z/cpu_plan.json
+      sha256: d9fe2ecec666bbe8e7d52839017bb319dd007659ba2cf3339e3fee37e4666c07
+      size_bytes: 3585
+      schema_version: kcg_d38999_visual_xy_pick_probe_v1

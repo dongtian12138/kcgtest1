@@ -1,0 +1,4 @@
+# The project .venv inherits HaMeR's tested torch 2.7.0+cu128 installation.
+# Keep SB3 below 2.8 so pip does not replace that working GPU build.
+gymnasium==1.2.3
+stable-baselines3==2.7.1

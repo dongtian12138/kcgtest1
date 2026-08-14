@@ -1,0 +1,49 @@
+# Versioned, simulator-neutral contract shared by current simulation truth and
+# a future vision adapter.  Registry entries below identify models and frames;
+# they do not contain object-to-grasp or object-to-assembly calibration.
+schema_version: kcg_connector_pose_contract_v1
+observation_schema_version: kcg_connector_pose_observation_v1
+object_target_transform_schema_version: kcg_connector_object_target_transform_v1
+quaternion_convention: xyzw
+transform_convention: parent_T_child
+covariance_tangent_order: [x_m, y_m, z_m, rx_rad, ry_rad, rz_rad]
+
+policy:
+  maximum_age_s: 0.250
+  maximum_future_offset_s: 0.020
+  maximum_pair_timestamp_skew_s: 0.050
+  minimum_confidence: 0.80
+  quaternion_norm_tolerance: 0.000001
+  covariance_symmetry_tolerance: 0.000000000001
+  covariance_psd_tolerance: 0.000000000001
+
+# The first pair is the legacy synthetic curriculum.  The second pair names
+# the public-dimensional D38999 shell-25/J proxy; the ``proxy_v1`` suffix is
+# intentional and prevents an observation of this model from being confused
+# with vendor CAD or qualified hardware.  Neither pair has an operational
+# object-to-grasp or object-to-assembly calibration below.
+model_registry:
+  - model_id: synthetic_plug_v1
+    role: loose_plug
+    object_frame_id: synthetic_plug_object
+    symmetry_class: keyed_order_1
+    compatible_model_ids: [synthetic_receptacle_v1]
+  - model_id: synthetic_receptacle_v1
+    role: fixed_receptacle
+    object_frame_id: synthetic_receptacle_object
+    symmetry_class: keyed_order_1
+    compatible_model_ids: [synthetic_plug_v1]
+  - model_id: d38999_26kj61sn_proxy_v1
+    role: loose_plug
+    object_frame_id: d38999_26kj61sn_body_object
+    symmetry_class: keyed_order_1
+    compatible_model_ids: [d38999_20kj61pn_proxy_v1]
+  - model_id: d38999_20kj61pn_proxy_v1
+    role: fixed_receptacle
+    object_frame_id: d38999_20kj61pn_receptacle_object
+    symmetry_class: keyed_order_1
+    compatible_model_ids: [d38999_26kj61sn_proxy_v1]
+
+# Deliberately empty.  A target transform must come from a version-controlled
+# calibration or measured model source; this contract never guesses one.
+object_target_transforms: []

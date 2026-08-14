@@ -1,0 +1,102 @@
+schema_version: kcg_d38999_insert_proxy_v2
+
+identity:
+  proxy_id: d38999_insert_proxy_v2
+  source_proxy_id: d38999_shell25j_61_pair_proxy_v1
+  fidelity: insertion_contact_and_c2_guidance_proxy
+  certification_claim: none
+  required_labels:
+    - PROXY THREAD
+    - PROXY LOCK
+
+frames:
+  convention: parent_T_child
+  connector_assembly_frame:
+    frame_id: connector_assembly_frame
+    plus_z: plug_insertion_direction_into_receptacle
+    plus_x: c2_key_channel_reference
+    plus_y: right_handed
+  plug_mating_frame:
+    origin: center_of_plug_leading_face
+    insertion_axis_xyz: [0.0, 0.0, 1.0]
+  receptacle_mating_frame:
+    origin: center_of_receptacle_mouth
+    insertion_axis_xyz: [0.0, 0.0, 1.0]
+
+geometry_m:
+  plug:
+    body_radius: 0.02215
+    body_length: 0.0140
+    guide_outer_radius: 0.01880
+    guide_inner_radius: 0.01650
+    guide_length: 0.0120
+    nose_radius: 0.01820
+    nose_chamfer_length: 0.0020
+    coupling_nut_inner_radius: 0.01950
+    coupling_nut_outer_radius: 0.02400
+    coupling_nut_length: 0.0170
+    c2_key_outer_radius: 0.01955
+    c2_key_tangential_width: 0.00120
+    c2_key_length: 0.0060
+    c2_key_start_from_tip: 0.0025
+  receptacle:
+    shell_outer_radius: 0.02150
+    guide_bore_radius: 0.01930
+    mouth_bore_radius: 0.02030
+    entrance_chamfer_length: 0.0030
+    guide_length: 0.0100
+    rear_body_radius: 0.02150
+    rear_body_length: 0.0215
+    flange_side: 0.0460
+    flange_thickness: 0.0032
+    collision_segment_count: 64
+    c2_channel_half_width_rad: 0.055
+  radial_clearance: 0.00050
+  key_radial_overlap_when_misaligned: 0.00025
+  key_side_clearance: 0.00020
+  insertion_depth: 0.0090
+  preinsert_gap: 0.0120
+  c2_symmetry_order: 2
+
+physics:
+  plug_body_mass_kg: 0.080
+  coupling_nut_mass_kg: 0.040
+  plug_body_diagonal_inertia_kg_m2: [0.000020, 0.000020, 0.000030]
+  coupling_nut_diagonal_inertia_kg_m2: [0.000006, 0.000006, 0.000010]
+  static_friction: 0.45
+  dynamic_friction: 0.35
+  restitution: 0.01
+  compliant_contact_stiffness_n_m: 250000.0
+  compliant_contact_damping_n_s_m: 350.0
+  contact_offset_m: 0.00020
+  rest_offset_m: 0.0
+  solver_position_iterations: 16
+  solver_velocity_iterations: 4
+
+proxy_mechanism:
+  coupling_nut_joint: independent_revolute_about_assembly_z
+  fine_thread_teeth_modeled: false
+  thread_behavior: analytic_helical_proxy_after_insert_verify
+  lock_behavior: analytic_final_seat_multisignal_proxy
+  labels:
+    thread: PROXY THREAD
+    lock: PROXY LOCK
+
+tolerance_sweep:
+  controller_truth_inputs: []
+  truth_usage: post_hoc_evaluation_only
+  x_offset_m: [-0.00240, -0.00180, -0.00120, -0.00060, -0.00050, -0.00040, -0.00030, -0.00020, -0.00010, 0.0, 0.00010, 0.00020, 0.00030, 0.00040, 0.00050, 0.00060, 0.00120, 0.00180, 0.00240]
+  y_offset_m: [-0.00240, -0.00180, -0.00120, -0.00060, -0.00050, -0.00040, -0.00030, -0.00020, -0.00010, 0.0, 0.00010, 0.00020, 0.00030, 0.00040, 0.00050, 0.00060, 0.00120, 0.00180, 0.00240]
+  tilt_x_rad: [-0.7853981634, -0.5235987756, -0.3490658504, -0.1745329252, -0.0872664626, -0.0523598776, -0.0349065850, -0.0174532925, 0.0, 0.0174532925, 0.0349065850, 0.0523598776, 0.0872664626, 0.1745329252, 0.3490658504, 0.5235987756, 0.7853981634]
+  tilt_y_rad: [-0.7853981634, -0.5235987756, -0.3490658504, -0.1745329252, -0.0872664626, -0.0523598776, -0.0349065850, -0.0174532925, 0.0, 0.0174532925, 0.0349065850, 0.0523598776, 0.0872664626, 0.1745329252, 0.3490658504, 0.5235987756, 0.7853981634]
+  yaw_rad: [-0.1745329252, -0.0872664626, -0.0436332313, -0.0349065850, -0.0261799388, -0.0174532925, -0.0087266463, 0.0, 0.0087266463, 0.0174532925, 0.0261799388, 0.0349065850, 0.0436332313, 0.0872664626, 0.1745329252, 1.5707963268]
+  conservative_gate_fraction_of_measured_failure_boundary: 0.65
+
+boundaries:
+  old_proxy_modified: false
+  real_thread_claimed: false
+  real_lock_claimed: false
+  real_d38999_certification_claimed: false
+  object_truth_allowed_for_control: false
+  physx_contact_normal_allowed_for_control: false
+  collider_identity_allowed_for_control: false

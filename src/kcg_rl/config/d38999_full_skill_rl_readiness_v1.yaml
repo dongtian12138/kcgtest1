@@ -1,0 +1,447 @@
+# Long full-skill training is deliberately disabled until every evidence gate
+# below has a current, independently hashed PASS document.  The existing
+# already-engaged residual-v0 runner does not read this file.
+schema_version: kcg_d38999_full_skill_rl_readiness_v1
+
+training:
+  enabled: false
+  full_skill_interface_version: kcg_d38999_full_skill_hierarchical_v1
+  residual_interface_version: kcg_connector_twist_residual_wrist_ft_v1
+  base_residual_interface_version: kcg_connector_twist_residual_v0
+  action_size: 4
+  observation_size: 30
+  active_v0_modified: false
+  long_training_requires_readiness_pass: true
+
+# The deterministic stage machine owns vision, grasping and free-space motion.
+# The present 4D policy has no Cartesian action, so it may only influence the
+# already aligned contact skill.  This prevents an unobservable policy from
+# being advertised as an end-to-end visual manipulation policy.
+workflow:
+  topology: hierarchical_fsm_with_contact_residual
+  stage_order:
+    - DETECT_LOOSE
+    - PICK
+    - IN_HAND_RELOCALIZE
+    - DETECT_FIXED
+    - PREALIGN
+    - INSERT
+    - ENGAGE
+    - SCREW
+    - VERIFY
+    - RETREAT
+    - HOME
+  policy_active_stages: [ENGAGE, SCREW]
+  fsm_owns_perception_pick_and_free_space_motion: true
+  perception_control_source: measured_rgbd_pose
+  simulation_ground_truth_control_authority: false
+
+# These records preserve useful completed work without promoting it into a
+# full-skill gate PASS.  The checker re-hashes every file and runs the named
+# artifact-specific schema validator.  Scope and limitations are emitted in
+# both human and JSON readiness reports; closes_full_skill_gate is always false.
+limited_evidence:
+  - evidence_id: multisite_rgbd_xy_five_of_five
+    gate_id: perception_tabletop_pose
+    validator: multisite_rgbd_xy_v1
+    disposition: active
+    scope:
+      - five_deterministic_tabletop_anchor_pairs_passed_headless
+      - both_endpoints_semantically_detected_with_mask_derived_xy_under_10mm
+      - zero_object_pose_writes_after_physics_start
+    limitations:
+      - no_keyed_yaw_or_full_6d_pose
+      - pose_is_not_authorized_for_robot_control
+      - five_fixed_anchors_are_not_randomized_closed_loop_trials
+    artifacts:
+      report:
+        path: artifacts/kcg_connector/d38999_multisite_rgbd_v1/report.json
+        sha256: 2630dfb49ef8ab2e64b639cf5b89a01ec9362f853cc372429ae1542022590176
+        size_bytes: 30216
+      multisite_config:
+        path: src/kcg_connector/config/d38999_multisite_vision6d_v1.yaml
+        sha256: 7d17781241197a5e6f7c740cd7db419472e7ff303f243230482219793148aa81
+        size_bytes: 9433
+      rgbd_config:
+        path: src/kcg_connector/config/d38999_rgbd_bootstrap_v1.yaml
+        sha256: 25c77b8c8d999635eecf1ec5e18454336f7aa6a240b09b338c72a965a460166f
+        size_bytes: 2236
+      runner_source:
+        path: src/kcg_connector/isaac/d38999_multisite_rgbd_smoke.py
+        sha256: b2005389e2f4bdc776fa08f38d239578e470b3178068301352f80d668f6fea07
+        size_bytes: 20072
+
+  - evidence_id: nut_tooth_six_view_identity_limited_v2
+    gate_id: coupling_nut_tooth_jitter
+    validator: nut_tooth_six_view_identity_v2
+    disposition: active
+    scope:
+      - all_24_nut_segments_tracked_for_5590_steps_with_zero_transform_anomaly_steps
+      - six_synchronized_views_and_1590_hash_revalidated_rgb_frames
+      - six_view_rgb_identity_union_is_23_of_24_with_segment23_missing
+      - cad_and_per_frame_physics_assisted_posthoc_segment23_identity_recovery
+      - combined_sequence_identity_union_is_24_of_24_but_not_rgb_only
+    limitations:
+      - render_jitter_remains_unresolved
+      - zero_transitions_have_all_24_identities_after_posthoc_recovery
+      - combined_24_id_union_is_not_rgb_only
+      - posthoc_geometry_identity_is_not_preregistered_jitter_acceptance
+      - no_visual_residual_acceptance_threshold_was_preregistered
+      - thirty_hz_sampling_cannot_exclude_between_sample_render_artifacts
+      - physics_zero_anomaly_does_not_prove_renderer_zero_jitter
+      - limited_evidence_never_closes_the_formal_jitter_gate
+      - full_skill_training_remains_disabled
+    artifacts:
+      axial_all_view_residuals:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_evidence_v1/axial_all_view_residuals.csv
+        sha256: cfe2dc3bb4e694b1dc4c31d630529355414a3c837031a4466757364c3e0ec1b4
+        size_bytes: 196539
+      axial_capture:
+        path: src/kcg_connector/isaac/d38999_tooth_axial_capture.py
+        sha256: 60bbbcdd8070ac9c962998157bdbbfd1f4424a1c31cb35f964141d0f5b7e13d3
+        size_bytes: 30265
+      axial_capture_manifest:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_20260812T174508Z/axial/axial_capture_manifest.json
+        sha256: b25afe248e61b42b0149b0cb344e54cf7680e57154e64fbadc2f37fdb0e361c8
+        size_bytes: 66844
+      axial_evidence:
+        path: src/kcg_connector/kcg_connector/d38999_tooth_axial_evidence.py
+        sha256: 70ad3128cb5e77ce45bc7694e1ff3f3737feb1786d0d4fc5a48fe48d84a8ace7
+        size_bytes: 36627
+      axial_ghost_bundle:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_20260812T174508Z/axial/axial_ghost_bundle_manifest.json
+        sha256: b4b3ca02efc96a502f282bc4d2b5bd1ee1b5a5f1285a41441a88f981b8b576f1
+        size_bytes: 1475
+      axial_wrapper:
+        path: src/kcg_connector/isaac/d38999_nut_regrasp_axial_smoke.py
+        sha256: f06637ac44265d800b77c8bf9396a5f1185b56583af44db17501c36795c480fb
+        size_bytes: 4652
+      base_analysis:
+        path: src/kcg_connector/kcg_connector/d38999_tooth_sync_analysis.py
+        sha256: e2c31a9194f9cd741d4909d2e7b1d1bb5bba86e286848072d8356ab737aaa90d
+        size_bytes: 45232
+      base_capture:
+        path: src/kcg_connector/isaac/d38999_tooth_sync_capture.py
+        sha256: bd7d9d15b5b745d9585d6c9cd0ec104fd532d173eebbf9c32251a2c58aa1a577
+        size_bytes: 23709
+      base_capture_manifest:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_20260812T174508Z/capture/video_capture_manifest.json
+        sha256: e6d3cbcde6a21681620e25aff86c378b55ac74ce3a50702954cae7c1afaf7664
+        size_bytes: 122087
+      connector_asset:
+        path: artifacts/kcg_connector/isaac/d38999_shell25j_61_pair_proxy_v1.usda
+        sha256: 6f716b6e40129f98e5914b5597005c575617d5f55cd0f2c0c8df067ee6788740
+        size_bytes: 124269
+      ghost_manifest:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_20260812T174508Z/ghost/manifest.json
+        sha256: 62b4d0153adbc2a16731fd879599e0197dfcfa9292e5b6235e46d4c0915ff0d3
+        size_bytes: 2125
+      ghost_runtime:
+        path: src/kcg_connector/isaac/d38999_tooth_ghost_runtime.py
+        sha256: 89fd99343692204a875d5fc66db72a87d3bb3ab0188530413f77166a049dc57f
+        size_bytes: 19884
+      ghost_visibility_sidecar:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_20260812T174508Z/ghost/visibility_sidecar.json
+        sha256: 4f001da25dbdc4fef8b17a659da7535c122841e2d35dfef24fa777ac71ebe0fb
+        size_bytes: 2688
+      occlusion_control:
+        path: src/kcg_connector/kcg_connector/d38999_tooth_occlusion_control.py
+        sha256: 2c3c224c186d7e74d4a43ca7ddc204aa2633237c5b5aee449627af453311f78f
+        size_bytes: 16369
+      occlusion_evidence:
+        path: src/kcg_connector/kcg_connector/d38999_tooth_occlusion_evidence.py
+        sha256: 9ba4b1df5e4df344612b7d25d096823393d5abba7aa568463d2042ff73756532
+        size_bytes: 19935
+      physics_report:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_20260812T174508Z/physics/report.json
+        sha256: b56c5d22c5b57272db8235b75fa5354e9cbb88ead50c520b52f31f145677353f
+        size_bytes: 21012
+      physics_summary:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_20260812T174508Z/physics/summary.csv
+        sha256: b684f14c5d3820147ab33140d23474376c41502944d9380e2d9934617534fcef
+        size_bytes: 1573135
+      prepared_runner_source:
+        path: src/kcg_connector/isaac/d38999_nut_regrasp_smoke.py
+        sha256: f8a77d1b56982b7225a5b3e2858bcd6b4fe139c5487915e6e79fbab98311e13b
+        size_bytes: 166952
+      run_log:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_20260812T174508Z/run.log
+        sha256: 788ac09fbccafd4018e42adee448fb932cb66aefefd443bc0510ce8b7b7c655d
+        size_bytes: 169263
+      segment23_assignments:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/segment23_identity_reanalysis_v1/segment23_assignments.csv
+        sha256: ead31d7720f90103a7b9a08ac3926c40a91a8b39321951112e6a3e1ec62033be
+        size_bytes: 60156
+      segment23_manifest:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/segment23_identity_reanalysis_v1/manifest.json
+        sha256: 27bdc1dec6d05940e177dac4b5481ca0b6277949f88dea8c5630a979bbf24549
+        size_bytes: 3124
+      segment23_reanalysis_source:
+        path: src/kcg_connector/kcg_connector/d38999_segment23_identity_reanalysis.py
+        sha256: 8f67228ed888753aa0e8fba2e0069c6cfe96703ba49bcd7535d8dbd9d2daad21
+        size_bytes: 34796
+      segment23_report:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/segment23_identity_reanalysis_v1/report.json
+        sha256: e6a8c46732942be437fea99e499e19635aa90312186d8fab9b1f36aec442b1b5
+        size_bytes: 3960
+      six_view_manifest:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_evidence_v1/manifest.json
+        sha256: 5936020c3e8b4757ccafac0ba6f67a34631660a458126cf8cd901c03504b88f6
+        size_bytes: 5066
+      six_view_report:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_evidence_v1/report.json
+        sha256: 45790d8a8bb2253a77822a4781895424966c3f29b5d17c606aebafd8087bd907
+        size_bytes: 13470
+      six_view_residuals:
+        path: artifacts/kcg_connector/d38999_nut_tooth_jitter/six_synced_ghost_axial_evidence_v1/six_view_residuals.csv
+        sha256: db3a8d490318d46300d66aa927c7ae5d323e6abfbae2108b44f816c065d03228
+        size_bytes: 843030
+      sync_evidence:
+        path: src/kcg_connector/kcg_connector/d38999_tooth_sync_evidence.py
+        sha256: f6f0e5724697240a9b37924350099f4e5bd0dbc0942953b5ff1595c15c01c734
+        size_bytes: 27080
+
+  - evidence_id: wrist_ft_monitor_three_run_repeatability
+    gate_id: wrist_ft_contact
+    validator: wrist_ft_monitor_repeatability_v1
+    disposition: active
+    scope:
+      - three_distinct_hash_bound_headless_monitor_runs
+      - empty_hand_payload_and_last_sample_6d_wrenches_present
+      - protected_phase_observation_statistics_archived
+    limitations:
+      - monitor_only_and_does_not_modify_e2e_pass_gate
+      - calibrated_safety_limits_and_generated_thresholds_are_null
+      - dynamic_compensation_and_residual_v1_are_disabled
+    artifacts:
+      repeatability_report:
+        path: artifacts/kcg_connector/d38999_wrist_ft_repeatability_v1/report_archived.json
+        sha256: 5883f0fd2d688b7183a5eb224a7e66d12b696618662bca314828c510338f59ef
+        size_bytes: 15354
+      run_v3_log:
+        path: artifacts/kcg_connector/d38999_wrist_ft_repeatability_v1/logs/run_v3.log
+        sha256: bb3f45fecbf0e710ec4ef550cb39633e44425446f45a05095b309f08028fc737
+        size_bytes: 121764
+      run_v4_log:
+        path: artifacts/kcg_connector/d38999_wrist_ft_repeatability_v1/logs/run_v4.log
+        sha256: f7bbe18239e2b9148fac54bec12792872e7e363eb330c00fead049fbbc1ff727
+        size_bytes: 121764
+      run_v5_log:
+        path: artifacts/kcg_connector/d38999_wrist_ft_repeatability_v1/logs/run_v5.log
+        sha256: 812995f9b488cbbb146907acfa2aabe17760390f7bca788d19ac84a49567d26d
+        size_bytes: 121763
+      monitor_config:
+        path: src/kcg_connector/config/d38999_wrist_ft_monitor_v1.yaml
+        sha256: a7afc437031a36f67471fa1d785136997315b95df9298b0efb866ed538e79f89
+        size_bytes: 3056
+      runner_source:
+        path: src/kcg_connector/isaac/d38999_tabletop_pick_smoke.py
+        sha256: d9af1e8955e1c999fde12c8b3289d31249dfb7d1c96a3f1925580c465e70ff98
+        size_bytes: 238648
+
+  - evidence_id: smooth_e2e_three_headless_runs
+    gate_id: repeat_physics_regression
+    validator: smooth_e2e_repeat_v1
+    disposition: active
+    scope:
+      - three_distinct_smooth_demo_headless_e2e_runs_passed
+      - masked_rgbd_preflight_and_monitor_only_wrist_ft_present_each_run
+      - physical_pick_insert_proxy_twist_release_and_home_sections_passed
+    limitations:
+      - sim_ground_truth_remains_the_control_pose_provider
+      - masked_rgbd_xy_is_not_consumed_by_control
+      - continuous_collision_verification_is_false
+      - only_three_headless_runs_without_gui_or_randomized_closed_loop_coverage
+      - proxy_assembly_success_is_not_claimed
+    artifacts:
+      repeatability_report:
+        path: artifacts/kcg_connector/d38999_wrist_ft_repeatability_v1/report_archived.json
+        sha256: 5883f0fd2d688b7183a5eb224a7e66d12b696618662bca314828c510338f59ef
+        size_bytes: 15354
+      run_v3_log:
+        path: artifacts/kcg_connector/d38999_wrist_ft_repeatability_v1/logs/run_v3.log
+        sha256: bb3f45fecbf0e710ec4ef550cb39633e44425446f45a05095b309f08028fc737
+        size_bytes: 121764
+      run_v4_log:
+        path: artifacts/kcg_connector/d38999_wrist_ft_repeatability_v1/logs/run_v4.log
+        sha256: f7bbe18239e2b9148fac54bec12792872e7e363eb330c00fead049fbbc1ff727
+        size_bytes: 121764
+      run_v5_log:
+        path: artifacts/kcg_connector/d38999_wrist_ft_repeatability_v1/logs/run_v5.log
+        sha256: 812995f9b488cbbb146907acfa2aabe17760390f7bca788d19ac84a49567d26d
+        size_bytes: 121763
+      monitor_config:
+        path: src/kcg_connector/config/d38999_wrist_ft_monitor_v1.yaml
+        sha256: a7afc437031a36f67471fa1d785136997315b95df9298b0efb866ed538e79f89
+        size_bytes: 3056
+      runner_source:
+        path: src/kcg_connector/isaac/d38999_tabletop_pick_smoke.py
+        sha256: d9af1e8955e1c999fde12c8b3289d31249dfb7d1c96a3f1925580c465e70ff98
+        size_bytes: 238648
+
+gates:
+  - gate_id: perception_tabletop_pose
+    category: perception
+    evidence_path: artifacts/kcg_connector/d38999_full_skill_rl_v1/readiness/perception_tabletop_pose.yaml
+    required_checks:
+      - both_connector_halves_detected
+      - full_6d_pose_and_uncertainty_reported
+      - same_world_repeated_capture_passed
+      - no_pose_write_after_physics_start
+      - no_simulation_truth_in_control_path
+      - controller_consumed_measured_pose
+      - loose_pose_error_within_registered_limit
+      - fixed_pose_error_within_registered_limit
+    required_metrics:
+      tested_pose_pairs: {minimum: 100}
+      detection_success_rate: {minimum: 0.99}
+      loose_translation_error_max_mm: {maximum: 2.0}
+      fixed_translation_error_max_mm: {maximum: 2.0}
+      pose_control_truth_reads: {equal: 0}
+    required_artifacts:
+      - rgb_sample
+      - depth_sample
+      - semantic_mask_sample
+      - pose_trial_report
+
+  - gate_id: full_workflow_control
+    category: control
+    evidence_path: artifacts/kcg_connector/d38999_full_skill_rl_v1/readiness/full_workflow_control.yaml
+    required_checks:
+      - all_eleven_workflow_stages_observed
+      - begins_at_home
+      - physical_pick_retained
+      - insertion_completed
+      - coupling_rotation_and_lead_consistent
+      - assembly_verified
+      - returns_home
+      - no_pose_snap_or_attachment
+      - raw_safety_passed
+    required_metrics:
+      workflow_success_rate: {minimum: 1.0}
+      completed_workflows: {minimum: 10}
+      safety_failures: {equal: 0}
+      pose_snap_count: {equal: 0}
+    required_artifacts:
+      - workflow_report
+      - workflow_log
+
+  - gate_id: wrist_ft_contact
+    category: ft
+    evidence_path: artifacts/kcg_connector/d38999_full_skill_rl_v1/readiness/wrist_ft_contact.yaml
+    required_checks:
+      - hand2arm_reaction_is_primary_sim_signal
+      - six_axis_sign_scale_and_cross_axis_calibration_passed
+      - gravity_payload_and_dynamic_compensation_enabled
+      - task_frame_transform_includes_moment_arm
+      - contact_phase_tare_rejected
+      - finite_fresh_unsaturated_throughout_contact
+      - soft_and_hard_limits_fail_closed
+      - residual_v1_4d_action_30d_observation_verified
+      - wrench_changes_contact_control_or_safety_outcome
+    required_metrics:
+      calibrated_axes: {equal: 6}
+      nonfinite_wrench_samples: {equal: 0}
+      stale_wrench_samples: {equal: 0}
+      saturated_wrench_samples: {equal: 0}
+      contact_policy_steps_audited: {minimum: 100}
+    required_artifacts:
+      - wrist_ft_report
+      - compensated_wrench_timeseries
+
+  - gate_id: coupling_nut_tooth_jitter
+    category: jitter
+    evidence_path: artifacts/kcg_connector/d38999_full_skill_rl_v1/readiness/coupling_nut_tooth_jitter.yaml
+    required_checks:
+      - all_teeth_tracked_individually
+      - rear_side_visibility_included
+      - usd_fabric_physx_parent_coherence_passed
+      - per_tooth_contact_attribution_recorded
+      - segment_zero_transform_ab_tested
+      - no_single_tooth_relative_motion_above_threshold
+      - active_asset_hash_bound
+    required_metrics:
+      tracked_teeth: {equal: 24}
+      unexpected_relative_translation_max_m: {maximum: 0.000001}
+      unexpected_relative_rotation_max_rad: {maximum: 0.00001}
+      unresolved_jitter_events: {equal: 0}
+    required_artifacts:
+      - per_tooth_report
+      - rear_view_video
+
+  - gate_id: collision_safety
+    category: collision
+    evidence_path: artifacts/kcg_connector/d38999_full_skill_rl_v1/readiness/collision_safety.yaml
+    required_checks:
+      - connector_collision_filter_complete
+      - robot_self_collision_audit_passed
+      - planning_scene_collision_check_passed
+      - unintended_penetration_absent
+      - finger_torque_limits_unchanged
+      - contact_safety_thresholds_unchanged
+    required_metrics:
+      collision_filter_missing_pairs: {equal: 0}
+      unintended_collision_events: {equal: 0}
+      safety_failures: {equal: 0}
+    required_artifacts:
+      - collision_report
+
+  - gate_id: tabletop_pose_randomization
+    category: randomization
+    evidence_path: artifacts/kcg_connector/d38999_full_skill_rl_v1/readiness/tabletop_pose_randomization.yaml
+    required_checks:
+      - loose_xy_and_yaw_randomized
+      - fixed_xy_and_yaw_randomized
+      - sampled_parts_remain_on_table
+      - sampled_parts_do_not_overlap
+      - seeds_reproduce_pose_sequence
+      - sensor_noise_latency_and_extrinsics_randomized
+      - registered_workspace_bounds_enforced
+    required_metrics:
+      unique_pose_pairs: {minimum: 100}
+      invalid_samples: {equal: 0}
+      seed_replay_mismatches: {equal: 0}
+    required_artifacts:
+      - resolved_randomization_config
+      - sampled_pose_matrix
+
+  - gate_id: repeat_physics_regression
+    category: control
+    evidence_path: artifacts/kcg_connector/d38999_full_skill_rl_v1/readiness/repeat_physics_regression.yaml
+    required_checks:
+      - frozen_baseline_unchanged
+      - smooth_profile_repeated_headless
+      - smooth_profile_repeated_gui
+      - wrist_ft_enabled_full_chain_repeated
+      - rgbd_enabled_full_chain_repeated
+      - reset_isolation_passed
+      - final_home_tolerance_passed
+      - all_runtime_errors_and_tracebacks_absent
+    required_metrics:
+      full_chain_runs: {minimum: 10}
+      full_chain_success_rate: {minimum: 1.0}
+      safety_failures: {equal: 0}
+      runtime_errors: {equal: 0}
+      tracebacks: {equal: 0}
+    required_artifacts:
+      - regression_report
+      - frozen_baseline_manifest
+
+  - gate_id: visual_evidence_archive
+    category: artifact
+    evidence_path: artifacts/kcg_connector/d38999_full_skill_rl_v1/readiness/visual_evidence_archive.yaml
+    required_checks:
+      - video_shows_home_to_pick_to_insert_to_screw_to_home
+      - rgb_depth_mask_and_pose_overlay_archived
+      - wrist_force_and_torque_plot_archived
+      - per_tooth_jitter_overlay_archived
+      - every_artifact_hash_verified
+    required_metrics:
+      complete_workflow_videos: {minimum: 1}
+      missing_artifacts: {equal: 0}
+    required_artifacts:
+      - workflow_video
+      - perception_montage
+      - wrist_ft_plot
+      - tooth_jitter_overlay
+      - artifact_index

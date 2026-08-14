@@ -1,0 +1,42 @@
+schema_version: kcg_d38999_pose5d_v1
+enabled: true
+estimator:
+  kind: semantic_depth_robust_pca_cylinder_c2
+  minimum_point_count: 180
+  maximum_point_count: 6000
+  robust_radius_quantile: 0.985
+  bootstrap_samples: 48
+  bootstrap_fraction: 0.75
+  random_seed: 38999
+  maximum_axis_prior_angle_rad: 0.8726646260
+  minimum_planar_anisotropy: 0.015
+  maximum_cylinder_radial_rmse_m: 0.0040
+  minimum_depth_valid_ratio: 0.95
+  maximum_lateral_std_fraction_of_gate: 0.50
+  maximum_axis_std_fraction_of_gate: 0.50
+  axial_low_quantile: 0.01
+  visible_cap_quantile: 0.82
+  minimum_cap_point_count: 50
+frames:
+  output_frame_id: world
+  plug_object_id: d38999_insert_proxy_v2_plug
+  receptacle_object_id: d38999_insert_proxy_v2_receptacle
+  assembly_axis_local: [0.0, 0.0, 1.0]
+models:
+  loose_plug:
+    axial_reference: low_quantile_plus_registered_offset
+    registered_offset_m: 0.0
+    provenance: d38999_shell25j_proxy_v1_mating_face_at_body_local_z_zero
+  fixed_receptacle:
+    axial_reference: low_quantile_plus_registered_offset
+    registered_offset_m: 0.0215
+    provenance: d38999_shell25j_proxy_v1_rear_body_length_to_mating_frame
+symmetry:
+  order: 2
+  yaw_period_rad: 3.141592653589793
+  unique_yaw_claimed: false
+boundaries:
+  object_truth_allowed_in_estimator: false
+  physx_contact_normal_allowed_in_estimator: false
+  collider_identity_allowed_in_estimator: false
+  truth_scope: post_hoc_evaluation_only

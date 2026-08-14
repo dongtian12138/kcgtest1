@@ -1,0 +1,84 @@
+# Fail-closed model registry for the future perception-to-assembly workflow.
+# This v1 file contains only the current synthetic curriculum proxy.  A real
+# connector must be added from measured drawings/CAD and qualified limits;
+# values in this file must never be copied into a real-model entry by guess.
+schema_version: kcg_connector_model_registry_v1
+registry_enabled: false
+scope: synthetic_curriculum_only
+
+models:
+  - model_id: synthetic_plug_v1
+    designation: Synthetic loose plug proxy
+    provenance: synthetic_curriculum_only
+    deployment_role: loose
+    gender: male
+    compatible_model_ids: [synthetic_receptacle_v1]
+    assembly_frame:
+      frame_id: synthetic_plug_assembly
+      parent_component: plug_body_root
+      translation_m: [0.0, 0.0, 0.0]
+      quaternion_xyzw: [0.0, 0.0, 0.0, 1.0]
+    rotational_symmetry:
+      # The current task applies an abstract key-angle gate even though the
+      # proxy geometry is deliberately simple and is not hardware-faithful.
+      kind: keyed
+      order: 1
+      axis_in_assembly_frame: [0.0, 0.0, 1.0]
+      key_reference_direction_in_assembly_frame: [1.0, 0.0, 0.0]
+    grasp_regions:
+      - region_id: synthetic_coupling_nut_outer_surface
+        parent_component: coupling_nut
+        shape: cylindrical_surface
+        axis_in_region_frame: [0.0, 0.0, 1.0]
+        axial_bounds_m: [-0.030, 0.030]
+        radius_bounds_m: [0.045, 0.045]
+
+  - model_id: synthetic_receptacle_v1
+    designation: Synthetic fixed receptacle proxy
+    provenance: synthetic_curriculum_only
+    deployment_role: fixed
+    gender: female
+    compatible_model_ids: [synthetic_plug_v1]
+    assembly_frame:
+      frame_id: synthetic_receptacle_assembly
+      parent_component: receptacle_root
+      translation_m: [0.0, 0.0, 0.0]
+      quaternion_xyzw: [0.0, 0.0, 0.0, 1.0]
+    rotational_symmetry:
+      kind: keyed
+      order: 1
+      axis_in_assembly_frame: [0.0, 0.0, 1.0]
+      key_reference_direction_in_assembly_frame: [1.0, 0.0, 0.0]
+    # The receptacle is fixture-mounted and is never a pick target.
+    grasp_regions: []
+
+assembly_profiles:
+  - profile_id: synthetic_thread_proxy_pair_v1
+    enabled: false
+    fidelity: synthetic_curriculum_only
+    loose_model_id: synthetic_plug_v1
+    fixed_model_id: synthetic_receptacle_v1
+    insertion:
+      direction_in_fixed_assembly_frame: [0.0, 0.0, -1.0]
+      minimum_engage_depth_m: 0.010
+      maximum_lateral_error_m: 0.0015
+      maximum_angular_error_degrees: 2.0
+      maximum_key_error_degrees: 5.0
+    fastening:
+      mechanism: synthetic_helical_proxy
+      axis_in_fixed_assembly_frame: [0.0, 0.0, 1.0]
+      # +1 means positive rotation about the declared fixed-frame axis.
+      # Robot q7 command direction is a separate robot/control mapping.
+      tightening_sign_about_axis: 1
+      target_angle_degrees: 360.0
+      angle_tolerance_degrees: 2.0
+      lead_m_per_revolution: 0.004
+    safety_limits:
+      # The existing task has no calibrated wrist-force limits.  Null is
+      # deliberate: the loader refuses to enable this profile until measured
+      # positive limits replace every null value.
+      maximum_insertion_axial_force_n: null
+      maximum_lateral_force_n: null
+      maximum_bending_moment_nm: null
+      maximum_tightening_torque_nm: null
+      maximum_finger_base_torque_nm: 1.0

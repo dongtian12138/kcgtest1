@@ -1,0 +1,74 @@
+controller_gazebo_kuka:
+  type: position_controllers/JointTrajectoryController
+  joints:
+    - iiwa_joint_1
+    - iiwa_joint_2
+    - iiwa_joint_3
+    - iiwa_joint_4
+    - iiwa_joint_5
+    - iiwa_joint_6
+    - iiwa_joint_7
+  gains:
+    iiwa_joint_1:
+      p: 100
+      d: 1
+      i: 1
+      i_clamp: 1
+    iiwa_joint_2:
+      p: 100
+      d: 1
+      i: 1
+      i_clamp: 1
+    iiwa_joint_3:
+      p: 100
+      d: 1
+      i: 1
+      i_clamp: 1
+    iiwa_joint_4:
+      p: 100
+      d: 1
+      i: 1
+      i_clamp: 1
+    iiwa_joint_5:
+      p: 100
+      d: 1
+      i: 1
+      i_clamp: 1
+    iiwa_joint_6:
+      p: 100
+      d: 1
+      i: 1
+      i_clamp: 1
+    iiwa_joint_7:
+      p: 100
+      d: 1
+      i: 1
+      i_clamp: 1
+controller_gazebo_hand:
+  type: position_controllers/JointTrajectoryController
+  joints:
+    - f1j1
+    - f1j2
+    - f2j1
+    - f3j2
+  gains:
+    f1j1:
+      p: 100
+      d: 1
+      i: 1
+      i_clamp: 1
+    f1j2:
+      p: 100
+      d: 1
+      i: 1
+      i_clamp: 1
+    f2j1:
+      p: 100
+      d: 1
+      i: 1
+      i_clamp: 1
+    f3j2:
+      p: 100
+      d: 1
+      i: 1
+      i_clamp: 1

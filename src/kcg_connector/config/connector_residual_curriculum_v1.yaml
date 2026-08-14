@@ -1,0 +1,35 @@
+# Versioned single-stroke curriculum for the unchanged residual-v0 interface.
+# This file only selects task duration and acceptance gates.  It does not add
+# observations, actions, regrasp, physics randomization, or asset changes.
+schema_version: kcg_connector_residual_curriculum_v1
+
+contract:
+  interface_version: kcg_connector_twist_residual_v0
+  default_stage: stage20
+  policy_rate_hz: 10.0
+  tightening_direction: -1
+  minimum_tightening_speed_degrees_per_second: 8.0
+  maximum_single_stroke_degrees: 120.0
+  minimum_episode_margin_policy_steps: 10
+
+acceptance:
+  success_angle_tolerance_degrees: 0.5
+  maximum_helical_error_m: 0.0001
+  q7_command_reserve_degrees: 10.0
+
+stages:
+  stage20:
+    target_segment_degrees: 20.0
+    success_hold_duration_s: 0.5
+    maximum_episode_steps: 40
+    minimum_axial_progress_fraction: 0.75
+  stage60:
+    target_segment_degrees: 60.0
+    success_hold_duration_s: 1.0
+    maximum_episode_steps: 100
+    minimum_axial_progress_fraction: 0.90
+  stage120:
+    target_segment_degrees: 120.0
+    success_hold_duration_s: 2.0
+    maximum_episode_steps: 180
+    minimum_axial_progress_fraction: 0.90

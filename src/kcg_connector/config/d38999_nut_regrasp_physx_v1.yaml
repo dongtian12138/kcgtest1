@@ -1,0 +1,136 @@
+schema_version: kcg_d38999_nut_regrasp_physx_v1
+enabled: true
+status: independent_prepared_engage_physics_ab
+
+inputs:
+  tabletop_pick:
+    path: src/kcg_connector/config/d38999_tabletop_pick_v1.yaml
+    sha256: dce6f4824b1cf7579cb1937dfb2b23d8f14b80d77776fb131e13f3d4e0551179
+  tabletop_scene:
+    path: src/kcg_connector/config/d38999_tabletop_scene_v1.yaml
+    sha256: 81872c3e6e884e7455dd4e93e608fc651f0dff0090bab27b1b8c935473f9ba7f
+  shell_proxy:
+    path: src/kcg_connector/config/d38999_shell25j_proxy_v1.yaml
+    sha256: 7d1a541a2350b438697497667c7dcb1f2cd69daa3e98ff850c92759b2f6879df
+  assembly_baseline:
+    path: src/kcg_connector/config/d38999_assembly_baseline_v1.yaml
+    sha256: 4921246d03bbfead0c0c806402dadeb432ae913d66ba18c43cc179cb11d76f62
+  cpu_search_config:
+    path: src/kcg_moveit_collision_audit/config/d38999_nut_regrasp_search_v1.yaml
+    sha256: 2cfc767fc7f20f067555cd391bebffbe1eb8a29c92b001070d27bde786eef890
+  cpu_search_report:
+    path: artifacts/kcg_connector/d38999_nut_regrasp_search_v1/report.yaml
+    sha256: 0981f43424345172b0212d1568ccd42bebc582a7790b1961238c486dc11bd1ac
+  cpu_command_compensation_config:
+    path: artifacts/kcg_connector/d38999_nut_regrasp_physx_v1/command_compensation_config.yaml
+    sha256: b38c4e4f7c4e648638c6eb520078484469ed9b3fd8ae97991e7669d15d127911
+  cpu_command_compensation_report:
+    path: artifacts/kcg_connector/d38999_nut_regrasp_physx_v1/command_compensation_report.yaml
+    sha256: 8ff468799b7d8513e51f45060ac5fc635d12f7e4e12c4db9070218aec26cf4f9
+  uncompensated_physx_log:
+    path: artifacts/kcg_connector/d38999_nut_regrasp_physx_v1/uncompensated_physx_run.log
+    sha256: 3dedf605c144bce0a9954bbe5a03f96b9e6e11c87d2e47c4b244b3ff66b7cbb0
+  robot_asset:
+    path: artifacts/kcg_connector/isaac/robot/handarm/handarm.usda
+    sha256: 031f8241c9dd1e2af96d7b1dde7d2adda7744891832a05e2580fd3398da4216b
+
+prepared_engage:
+  body_root_world_m: [0.550, 0.185, 0.2645]
+  body_world_orientation_wxyz: [1.0, 0.0, 0.0, 0.0]
+  engage_gap_m: 0.003
+  temporary_world_body_constraint: fixed_joint
+  constraint_is_real_keying_claim: false
+  carry_tcp_z_m: 0.31298
+  carry_arm_rad: [0.437634461482, 0.488379345844, -0.226419124473, -0.817880025777, 0.109617811111, 1.844397586326, 0.650482794000]
+  carry_hand_rad: [1.0, 0.765, 0.595, 0.765]
+  open_hand_rad: [1.0, 0.0, 0.0, 0.0]
+
+uncompensated_seed:
+  tcp_position_world_m: [0.550, 0.185, 0.29798]
+  tcp_down_axis_world: [0.0, 0.0, -1.0]
+  arm_rad: [0.441552145983, 0.47663248579149997, -0.222780919755, -0.8741091221935, 0.1042722199905, 1.799770541352, 0.650482794]
+  hand_rad: [1.0, 0.6822, 0.49210000000000004, 0.6822]
+  cpu_minimum_acceptance_margin_m: 0.0004102650369351077
+  cpu_minimum_body_clearance_m: 0.0014102650369351077
+  cpu_worst_nut_signed_distance_m: -0.0004208250426576356
+
+tracking_compensation:
+  fraction: 0.75
+  measured_uncompensated_tcp_position_world_m: [0.5495053191898741, 0.18487557629658824, 0.29655469044572097]
+  measured_uncompensated_error_world_m: [-0.0004946808101259, -0.00012442370341178, -0.00142530955427904]
+
+nut_only_candidate:
+  tcp_position_world_m: [0.5503710106075945, 0.18509331777755883, 0.2990489821657093]
+  desired_physical_tcp_position_world_m: [0.550, 0.185, 0.29798]
+  tcp_down_axis_world: [0.0, 0.0, -1.0]
+  arm_rad: [0.4408668135085119, 0.4785235914655594, -0.2227672179827388, -0.8685337423379632, 0.1047398863410278, 1.803452038653835, 0.650482794]
+  hand_rad: [1.0, 0.6822, 0.49210000000000004, 0.6822]
+  cpu_minimum_acceptance_margin_m: 0.0000315671357958873
+  cpu_minimum_body_clearance_m: 0.0010315671357958873
+  cpu_worst_nut_signed_distance_m: -0.00007064611958119448
+
+control:
+  physics_rate_hz: 240
+  arm_stiffness: 24000.0
+  arm_damping: 400.0
+  open_hand_stiffness: 25.0
+  open_hand_damping: 2.0
+  grip_hand_stiffness: 5.0
+  grip_hand_damping: 1.0
+  initial_open_settle_s: 1.0
+  open_tare_s: 0.5
+  mixed_closure_s: 3.5
+  mixed_preload_s: 0.5
+  release_s: 2.5
+  open_reposition_s: 2.0
+  second_open_tare_s: 0.5
+  nut_closure_s: 3.5
+  nut_preload_s: 0.5
+  final_hold_s: 4.0
+  effort_sample_s: 0.5
+
+sensing:
+  torque_joint_names: [f1j2, f2j1, f3j2]
+  loaded_torque_threshold_nm: 0.020
+  minimum_loaded_channels: 3
+  operational_torque_target_nm: 1.8
+  hard_stop_nm: 2.0
+  fingertip_tactile_available: false
+
+acceptance:
+  maximum_joint_limit_violation_rad: 0.020
+  maximum_joint_speed_rad_s: 1.0
+  maximum_arm_tracking_error_rad: 0.020
+  maximum_tcp_position_error_m: 0.003
+  maximum_desired_physical_tcp_position_error_m: 0.00075
+  maximum_tcp_axis_error_rad: 0.03490658503988659
+  maximum_body_translation_drift_m: 0.000050
+  maximum_body_rotation_drift_rad: 0.0005
+  maximum_body_nut_separation_change_m: 0.001
+  maximum_final_observable_joint_speed_rad_s: 0.030
+  maximum_final_post_solver_joint_speed_rad_s: 0.050
+  maximum_final_nut_observable_angular_speed_rad_s: 0.200
+  maximum_final_nut_post_solver_angular_speed_rad_s: 0.500
+  require_mixed_preload_all_fingers_endpoint_contact: true
+  require_open_reposition_zero_endpoint_contact: true
+  require_postclosure_all_fingers_nut_contact: true
+  require_postclosure_zero_finger_body_contact: true
+  require_final_all_fingers_nut_contact: true
+  require_final_zero_finger_body_contact: true
+  require_zero_robot_table_contacts: true
+  require_zero_robot_fixture_contacts: true
+  require_zero_robot_fixed_endpoint_contacts: true
+  require_zero_nonfinger_endpoint_contacts: true
+
+boundaries:
+  attachment_allowed: false
+  object_drive_allowed: false
+  object_pose_writes_after_start_allowed: false
+  physical_initial_mixed_closure_included: true
+  q7_twist_included: false
+  physical_insertion_included: false
+  real_keying_modeled: false
+  thread_teeth_modeled: false
+  self_collision_enabled_in_asset: false
+  continuous_collision_verified: false
+  assembly_success_claimed: false

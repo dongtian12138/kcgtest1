@@ -1,0 +1,8 @@
+# Install this file with --no-deps.  Every package absent from the verified
+# Isaac environment is listed explicitly so pip never resolves or replaces
+# the existing torch 2.11.0+cu128 installation.
+cloudpickle==3.1.2
+farama-notifications==0.0.6
+gymnasium==1.2.3
+pandas==3.0.5
+stable-baselines3==2.7.1

@@ -1,0 +1,24 @@
+default_velocity_scaling_factor: 0.1
+default_acceleration_scaling_factor: 0.1
+
+joint_limits:
+  iiwa_joint_1: &iiwa_joint_limits
+    has_velocity_limits: true
+    max_velocity: 1.5
+    has_acceleration_limits: true
+    max_acceleration: 2.0
+  iiwa_joint_2: *iiwa_joint_limits
+  iiwa_joint_3: *iiwa_joint_limits
+  iiwa_joint_4: *iiwa_joint_limits
+  iiwa_joint_5: *iiwa_joint_limits
+  iiwa_joint_6: *iiwa_joint_limits
+  iiwa_joint_7: *iiwa_joint_limits
+
+  f1j1: &hand_joint_limits
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 2.0
+  f1j2: *hand_joint_limits
+  f2j1: *hand_joint_limits
+  f3j2: *hand_joint_limits

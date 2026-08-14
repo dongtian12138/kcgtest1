@@ -1,0 +1,78 @@
+# Disabled-by-default bridge from bounded RGB-D XY observations to candidate
+# world TCP translations.  This is only for a future independent probe; it is
+# not imported by the proven E2E runner and never authorizes production use.
+schema_version: kcg_d38999_visual_xy_control_adapter_v1
+enabled_by_default: false
+status: prepared_independent_probe_adapter_not_e2e_integrated
+
+inputs:
+  multisite_vision_contract:
+    path: src/kcg_connector/config/d38999_multisite_vision6d_v1.yaml
+    sha256: 7d17781241197a5e6f7c740cd7db419472e7ff303f243230482219793148aa81
+  multisite_rgbd_report:
+    path: artifacts/kcg_connector/d38999_multisite_rgbd_v1/report.json
+    sha256: 2630dfb49ef8ab2e64b639cf5b89a01ec9362f853cc372429ae1542022590176
+  rgbd_config:
+    path: src/kcg_connector/config/d38999_rgbd_bootstrap_v1.yaml
+    sha256: 25c77b8c8d999635eecf1ec5e18454336f7aa6a240b09b338c72a965a460166f
+  pose_contract:
+    path: src/kcg_connector/config/connector_pose_observation_v1.yaml
+    sha256: f961598ebdf59f5f92e5b2820c099134ab95130f5b7dc54a7f115945ed43879c
+  nominal_pick:
+    path: src/kcg_connector/config/d38999_tabletop_pick_v1.yaml
+    sha256: dce6f4824b1cf7579cb1937dfb2b23d8f14b80d77776fb131e13f3d4e0551179
+  nominal_insertion:
+    path: src/kcg_connector/config/d38999_physical_insertion_v1.yaml
+    sha256: 652b46768735e59146fb249c8c7944ead9a68dc60837c615bc561361f7ded10d
+
+provider_boundary:
+  pose_provider_sample_schema: kcg_connector_pose_provider_sample_v1
+  required_purpose: preflight
+  required_clock_domain: simulation_time
+  required_control_frame: world
+  diagnostics_schema: kcg_d38999_visual_xy_diagnostics_v1
+  estimator_kind: ray_plane_registered_model_height_world_xy_only
+  required_calibration_input: rgbd_config
+
+# These values are copied from the strict pose and RGB-D contracts and checked
+# against them by the loader; changing only this file cannot loosen a gate.
+gates:
+  minimum_confidence: 0.80
+  maximum_xy_error_bound_m: 0.010
+  maximum_age_s: 0.250
+  maximum_future_offset_s: 0.020
+  maximum_pair_timestamp_skew_s: 0.050
+  require_both_endpoints: true
+  require_footprint_inside_table: true
+
+# This is a nominal-translation screen, not a proof of arbitrary-pose IK or
+# continuous collision safety.  A future probe must solve and validate IK.
+bounded_reachability_screen:
+  loose_maximum_abs_translation_xy_m: [0.035, 0.035]
+  fixed_maximum_abs_translation_xy_m: [0.015, 0.015]
+  downstream_ik_required: true
+  collision_free_ik_claimed: false
+
+orientation_policy:
+  permitted_sources: [sim_ground_truth, registered_nominal]
+  orientation_is_not_estimated_by_xy_adapter: true
+  yaw_is_not_observed_by_xy_adapter: true
+  full_6d: false
+
+target_translation:
+  preserve_nominal_z: true
+  loose_compensated_targets: [pregrasp_tcp, grasp_tcp, closure_clearance_tcp]
+  fixed_compensated_targets: [transport_safe_tcp, axis_high_tcp, preinsert_tcp, engage_tcp]
+
+boundaries:
+  explicit_independent_probe_opt_in_required: true
+  e2e_integration_allowed: false
+  production_control_authorized: false
+  pose_provider_control_authorized: false
+  vision_xy_used_for_translation_only: true
+  truth_position_used_for_translation: false
+  full_6d_claimed: false
+  arbitrary_pose_reachability_claimed: false
+  collision_planned: false
+  object_pose_writes_after_start_allowed: false
+  assembly_success_claimed: false

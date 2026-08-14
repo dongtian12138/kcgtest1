@@ -1,0 +1,161 @@
+controller_manager:
+  ros__parameters:
+    # Match the 1 ms Gazebo physics step so effort commands are refreshed on
+    # every ODE iteration.  At 100 Hz the IIWA only received one torque update
+    # per ten physics steps and could not reliably support its own weight.
+    update_rate: 1000
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    physics_joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    finger_torque_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    controller_gazebo_kuka:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    controller_gazebo_hand:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+controller_gazebo_kuka:
+  ros__parameters:
+    joints:
+      - iiwa_joint_1
+      - iiwa_joint_2
+      - iiwa_joint_3
+      - iiwa_joint_4
+      - iiwa_joint_5
+      - iiwa_joint_6
+      - iiwa_joint_7
+    command_interfaces:
+      - effort
+    state_interfaces:
+      - position
+      - velocity
+    # Effort is torque, not a position state.  Start each new trajectory from
+    # the measured joint state and compute D from velocity error, so a small
+    # gravity tracking offset cannot create a derivative kick.
+    set_last_command_interface_value_as_state_on_activation: false
+    gains:
+      # Integral terms provide bounded gravity compensation.  Without them the
+      # wrist settled roughly 35 mm below the commanded cylinder pregrasp.
+      iiwa_joint_1: {p: 300.0, i: 40.0, d: 15.0, i_clamp: 10.0, ff_velocity_scale: 0.0}
+      iiwa_joint_2: {p: 800.0, i: 150.0, d: 70.0, i_clamp: 70.0, ff_velocity_scale: 0.0}
+      iiwa_joint_3: {p: 300.0, i: 50.0, d: 10.0, i_clamp: 20.0, ff_velocity_scale: 0.0}
+      iiwa_joint_4: {p: 600.0, i: 120.0, d: 40.0, i_clamp: 45.0, ff_velocity_scale: 0.0}
+      iiwa_joint_5: {p: 200.0, i: 30.0, d: 5.0, i_clamp: 15.0, ff_velocity_scale: 0.0}
+      iiwa_joint_6: {p: 250.0, i: 30.0, d: 12.0, i_clamp: 15.0, ff_velocity_scale: 0.0}
+      iiwa_joint_7: {p: 100.0, i: 10.0, d: 1.5, i_clamp: 5.0, ff_velocity_scale: 0.0}
+    state_publish_rate: 100.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    allow_nonzero_velocity_at_trajectory_end: false
+    constraints:
+      # The effort-controlled arm can retain a small (< 0.03 rad/s) gravity
+      # settling velocity after reaching the pre-grasp.  A 0.02 threshold
+      # caused the controller to abort an otherwise accurate hold ten seconds
+      # later, which is long enough to occur during an RL episode.  Keep the
+      # position tolerances strict while allowing that measured settling rate.
+      stopped_velocity_tolerance: 0.05
+      goal_time: 5.0
+      iiwa_joint_1: {trajectory: 0.20, goal: 0.015}
+      iiwa_joint_2: {trajectory: 0.20, goal: 0.015}
+      iiwa_joint_3: {trajectory: 0.20, goal: 0.015}
+      iiwa_joint_4: {trajectory: 0.20, goal: 0.015}
+      iiwa_joint_5: {trajectory: 0.20, goal: 0.015}
+      iiwa_joint_6: {trajectory: 0.20, goal: 0.015}
+      iiwa_joint_7: {trajectory: 0.20, goal: 0.015}
+
+controller_gazebo_hand:
+  ros__parameters:
+    joints:
+      - f1j1
+      - f1j2
+      - f2j1
+      - f3j2
+      - f3j1
+      - f1j3
+      - f2j2
+      - f3j3
+    command_interfaces:
+      - effort
+    state_interfaces:
+      - position
+      - velocity
+    # The command interface is effort, so its last command value is a torque,
+    # not a joint position.  Initialize the trajectory state from the measured
+    # Gazebo joint positions when activating this controller.
+    set_last_command_interface_value_as_state_on_activation: false
+    # The trajectory controller converts position/velocity tracking error into
+    # physical joint effort.  These simulation-only gains are deliberately
+    # compliant enough for force-aware grasping; they are not hardware gains.
+    gains:
+      f1j1: {p: 1.0, i: 0.0, d: 0.0, i_clamp: 0.0, ff_velocity_scale: 0.0}
+      f1j2: {p: 1.0, i: 0.0, d: 0.0, i_clamp: 0.0, ff_velocity_scale: 0.0}
+      f2j1: {p: 1.0, i: 0.0, d: 0.0, i_clamp: 0.0, ff_velocity_scale: 0.0}
+      f3j2: {p: 1.0, i: 0.0, d: 0.0, i_clamp: 0.0, ff_velocity_scale: 0.0}
+      f3j1: {p: 1.0, i: 0.0, d: 0.0, i_clamp: 0.0, ff_velocity_scale: 0.0}
+      f1j3: {p: 1.0, i: 0.0, d: 0.0, i_clamp: 0.0, ff_velocity_scale: 0.0}
+      f2j2: {p: 1.0, i: 0.0, d: 0.0, i_clamp: 0.0, ff_velocity_scale: 0.0}
+      f3j3: {p: 1.0, i: 0.0, d: 0.0, i_clamp: 0.0, ff_velocity_scale: 0.0}
+    state_publish_rate: 100.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    allow_nonzero_velocity_at_trajectory_end: false
+    constraints:
+      # The compliant fingers can still settle around 0.03 rad/s when a
+      # five-second grasp macro reaches contact.  Treat that as a reached goal
+      # so the controller keeps the commanded preload instead of replacing it
+      # with a weaker current-position hold.  Position tolerances remain
+      # unchanged and continue to reject inaccurate trajectories.
+      stopped_velocity_tolerance: 0.05
+      goal_time: 2.0
+      f1j1: {trajectory: 0.50, goal: 0.25}
+      f1j2: {trajectory: 0.50, goal: 0.25}
+      f2j1: {trajectory: 0.50, goal: 0.25}
+      f3j2: {trajectory: 0.50, goal: 0.25}
+      f3j1: {trajectory: 0.50, goal: 0.25}
+      f1j3: {trajectory: 0.50, goal: 0.25}
+      f2j2: {trajectory: 0.50, goal: 0.25}
+      f3j3: {trajectory: 0.50, goal: 0.25}
+
+joint_state_broadcaster:
+  ros__parameters:
+    joints:
+      - iiwa_joint_1
+      - iiwa_joint_2
+      - iiwa_joint_3
+      - iiwa_joint_4
+      - iiwa_joint_5
+      - iiwa_joint_6
+      - iiwa_joint_7
+      - f1j1
+      - f1j2
+      - f2j1
+      - f3j2
+      - f3j1
+      - f1j3
+      - f2j2
+      - f3j3
+    interfaces:
+      - position
+      - velocity
+
+physics_joint_state_broadcaster:
+  ros__parameters:
+    use_local_topics: true
+
+finger_torque_broadcaster:
+  ros__parameters:
+    use_local_topics: true
+    joints:
+      - f1j2
+      - f2j1
+      - f3j2
+    interfaces:
+      - torque.z
+    map_interface_to_joint_state:
+      effort: torque.z

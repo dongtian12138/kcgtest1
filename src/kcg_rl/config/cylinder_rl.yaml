@@ -1,0 +1,15 @@
+cylinder_rl_env:
+  ros__parameters:
+    use_sim_time: true
+    reset_motion_duration: 8.0
+    reset_settle_duration: 1.0
+    hand_motion_duration: 5.0
+    preload_duration: 1.0
+    lift_motion_duration: 8.0
+    idle_step_duration: 1.0
+    lift_trigger_threshold: 0.5
+    target_change_tolerance: 0.0001
+    service_timeout: 10.0
+    data_timeout: 10.0
+    max_episode_steps: 12
+    park_position: [2.0, 0.0, 0.30]

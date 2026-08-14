@@ -1,0 +1,43 @@
+# Formal single-environment SAC configuration for the already-engaged 20 degree
+# connector residual curriculum.  A runner must still receive an explicit
+# timestep count; values above maximum_unconfirmed_timesteps also require the
+# explicit --allow-long-training guard.
+schema_version: kcg_connector_residual_sac_run_v0
+
+contract:
+  interface_version: kcg_connector_twist_residual_v0
+  action_size: 4
+  observation_size: 24
+
+runtime:
+  device: cuda:0
+  required_torch_version: 2.11.0+cu128
+  required_cuda_build: "12.8"
+  seed: 42
+  maximum_unconfirmed_timesteps: 32
+
+algorithm:
+  name: SAC
+  policy: MlpPolicy
+  learning_rate: 0.0003
+  buffer_size: 100000
+  learning_starts: 1000
+  batch_size: 256
+  tau: 0.005
+  gamma: 0.99
+  train_freq_steps: 1
+  gradient_steps: 1
+  network_architecture: [256, 256]
+
+artifacts:
+  checkpoint_interval_steps: 10000
+  save_replay_buffer: true
+  # The residual observation is already explicitly normalized and clipped.
+  use_vecnormalize: false
+
+evaluation:
+  episodes: 20
+  seed_start: 10000
+  deterministic: true
+  minimum_success_rate: 0.95
+  maximum_safety_failures: 0

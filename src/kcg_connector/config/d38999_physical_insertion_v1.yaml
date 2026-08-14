@@ -1,0 +1,85 @@
+# Deterministic transport and physical insertion contract for the public-
+# dimension D38999 proxy.  The targets start after the already validated
+# tabletop pick and stop at the 3 mm engage gap; no object pose is authored or
+# driven after physics starts.
+schema_version: kcg_d38999_physical_insertion_v1
+enabled: true
+status: tabletop_pick_to_engage_physics_probe
+
+inputs:
+  tabletop_pick:
+    path: src/kcg_connector/config/d38999_tabletop_pick_v1.yaml
+    sha256: dce6f4824b1cf7579cb1937dfb2b23d8f14b80d77776fb131e13f3d4e0551179
+  assembly_baseline:
+    path: src/kcg_connector/config/d38999_assembly_baseline_v1.yaml
+    sha256: 4921246d03bbfead0c0c806402dadeb432ae913d66ba18c43cc179cb11d76f62
+  ik_family:
+    path: src/kcg_moveit_collision_audit/config/d38999_nut_regrasp_search_v1.yaml
+    sha256: 2cfc767fc7f20f067555cd391bebffbe1eb8a29c92b001070d27bde786eef890
+
+motion:
+  interpolation: minimum_jerk
+  # This high waypoint moves laterally above the fixed endpoint before the
+  # axial approach.  Its FK is checked by the pure loader.
+  transport_safe_tcp_position_m: [0.550, 0.185, 0.3435]
+  transport_safe_arm_rad: [0.435799782, 0.522940416, -0.257136665, -0.686362024, 0.136796539, 1.943438486, 0.650482794]
+  transport_duration_s: 5.0
+  # The signed-in IK family contains this exact axial waypoint.  Alignment is
+  # corrected here while the two shell colliders still have 7 mm axial clear
+  # space, before entering the 0.30 mm radial-clearance region.
+  axis_high_gap_m: 0.017
+  axis_high_tcp_position_m: [0.550, 0.185, 0.32698]
+  axis_high_arm_rad: [0.433353477347, 0.501942378704, -0.230659295674, -0.760824111294, 0.116033422746, 1.888059476884, 0.650482794]
+  axis_high_duration_s: 2.0
+  axis_high_hold_s: 0.5
+  # The nominal TCP values assume the measured body origin is 48.48 mm below
+  # the TCP.  Runtime uses the actual post-pick body-in-TCP point and solves a
+  # small fixed-q7 correction instead of trusting this nominal offset.
+  preinsert_tcp_position_m: [0.550, 0.185, 0.32198]
+  preinsert_arm_rad: [0.4349513998625, 0.4967891333545, -0.229020393948, -0.781753272683, 0.1135540959865, 1.8722182029135, 0.650482794]
+  preinsert_duration_s: 2.0
+  preinsert_hold_s: 0.5
+  engage_tcp_position_m: [0.550, 0.185, 0.31298]
+  engage_arm_rad: [0.437634461482, 0.488379345844, -0.226419124473, -0.817880025777, 0.109617811111, 1.844397586326, 0.650482794]
+  insertion_duration_s: 3.0
+  engage_hold_s: 1.0
+  fixed_q7_rad: 0.650482794
+  runtime_body_in_tcp_compensation: true
+
+# This is the exact narrow exception already validated by the prepared-engage
+# q7 probe.  It compensates for segmented-box/contact-margin false contacts;
+# it does not disable table, fixture, robot, rear-body or final face collisions.
+proxy_collision_filter:
+  mode: proxy_false_contacts_only
+  expected_nut_segment_count: 24
+  expected_body_mating_segment_count: 20
+  expected_fixed_entry_segment_count: 20
+  expected_filtered_pair_count: 500
+
+acceptance:
+  maximum_preinsert_gap_error_m: 0.00025
+  maximum_axis_high_gap_error_m: 0.00025
+  maximum_engage_gap_error_m: 0.00020
+  maximum_lateral_error_m: 0.00020
+  maximum_axis_error_rad: 0.008726646259971648
+  maximum_combined_entry_error_m: 0.00025
+  entry_evaluation_length_m: 0.010
+  maximum_insertion_travel_error_m: 0.00050
+  maximum_body_tcp_slip_m: 0.0010
+  maximum_arm_tracking_error_rad: 0.020
+  maximum_joint_speed_rad_s: 1.0
+  maximum_joint_limit_violation_rad: 0.020
+  maximum_fixed_translation_drift_m: 0.000001
+  maximum_fixed_rotation_drift_rad: 0.00001
+
+boundaries:
+  pose_source: isaac_ground_truth_runtime
+  vision_included: false
+  attachment_allowed: false
+  object_drive_allowed: false
+  object_pose_writes_after_start_allowed: false
+  collision_planned: false
+  continuous_collision_verified: false
+  real_keying_modeled: false
+  thread_teeth_modeled: false
+  assembly_success_claimed: false

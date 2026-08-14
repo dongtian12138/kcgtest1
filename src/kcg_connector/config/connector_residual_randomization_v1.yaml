@@ -1,0 +1,42 @@
+# Seeded, low-risk episode randomization for the already-engaged 20 degree
+# connector curriculum.  This changes control/observation conditions only;
+# it deliberately leaves the validated synthetic thread proxy untouched.
+schema_version: kcg_connector_residual_randomization_v1
+
+contract:
+  interface_version: kcg_connector_twist_residual_v0
+  action_size: 4
+  observation_size: 24
+
+randomization:
+  enabled: true
+  clamp_nominal_offset:
+    joint_names: [f1j2, f2j1, f3j2]
+    lower_rad: [-0.010, -0.010, -0.010]
+    upper_rad: [0.010, 0.010, 0.010]
+  hand_pd_scale:
+    # Only the three actively sensed clamp axes are varied in v1.  The arm and
+    # unsensed f1 spread joint retain their validated gains.
+    joint_names: [f1j2, f2j1, f3j2]
+    kp: [0.95, 1.05]
+    kd: [0.95, 1.05]
+  finger_torque_observation:
+    joint_names: [f1j2, f2j1, f3j2]
+    bias_lower_nm: [-0.005, -0.005, -0.005]
+    bias_upper_nm: [0.005, 0.005, 0.005]
+    gaussian_noise_std_nm: [0.002, 0.002, 0.002]
+    gaussian_noise_clip_sigma: 3.0
+  action_delay_policy_steps:
+    # Uniformly sampled.  A delayed episode begins with a zero residual, so
+    # the baseline controller remains active and never receives stale data
+    # from the preceding episode.
+    choices: [0, 1]
+
+safety:
+  # Termination, overload, lost-grasp, reward, and episode safety statistics
+  # must be evaluated before observation bias/noise is applied.
+  signal_source: raw_physics
+
+# Deferred until each parameter can be restored at hard reset and separately
+# validated against the prismatic+rack proxy and real connector measurements.
+excluded_physics_parameters: [mass, friction, thread_lead]

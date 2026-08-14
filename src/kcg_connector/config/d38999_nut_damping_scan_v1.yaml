@@ -1,0 +1,110 @@
+# Offline calibration scan for the free D38999 coupling-nut rigid body.
+# This contract never edits the source USD and never promotes a value into the
+# tabletop, grasp, twist, or RL defaults.  Every non-baseline effect must be
+# measured in a fresh in-memory stage.
+schema_version: kcg_d38999_nut_damping_scan_v1
+
+scope:
+  scene_schema_version: kcg_d38999_tabletop_scene_v1
+  asset_sha256: 6f716b6e40129f98e5914b5597005c575617d5f55cd0f2c0c8df067ee6788740
+  target_component: coupling_nut_rigid_body
+  target_prim_suffix: /D38999Shell25JProxy/LoosePlug/CouplingNut
+  source_asset_mutation_allowed: false
+  in_memory_stage_override_only: true
+  runtime_integration: none
+  automatic_promotion_allowed: false
+
+experiment:
+  physics_rate_hz: 240
+  settle_duration_s: 2.0
+  tail_duration_s: 0.5
+  repeats_per_candidate: 2
+  fresh_stage_per_repeat: true
+  object_pose_writes_after_start: 0
+
+physx_evidence:
+  physx_schema_version: 110.1.13
+  rigid_body_api: PhysxSchema.PhysxRigidBodyAPI
+  authoring_call: CreateAngularDampingAttr().Set
+  schema_default_angular_damping: 0.05
+  schema_default_source: omni.usd.schema.physx generatedSchema.usda, PhysxRigidBodyAPI
+  joint_friction_effect_claim: unverified_on_non_articulation_revolute
+
+candidates:
+  - candidate_id: baseline_schema_default
+    run_order: 0
+    mechanism: none
+    target_component: coupling_nut_rigid_body
+    angular_damping: null
+    expected_resolved_angular_damping: 0.05
+    requires_articulation: false
+    efficacy_status: reference_baseline_must_be_measured
+
+  - candidate_id: nut_angular_damping_0p25
+    run_order: 1
+    mechanism: physx_rigid_body_angular_damping
+    target_component: coupling_nut_rigid_body
+    angular_damping: 0.25
+    expected_resolved_angular_damping: 0.25
+    requires_articulation: false
+    efficacy_status: must_be_measured
+
+  - candidate_id: nut_angular_damping_0p50
+    run_order: 2
+    mechanism: physx_rigid_body_angular_damping
+    target_component: coupling_nut_rigid_body
+    angular_damping: 0.50
+    expected_resolved_angular_damping: 0.50
+    requires_articulation: false
+    efficacy_status: must_be_measured
+
+  - candidate_id: nut_angular_damping_1p00
+    run_order: 3
+    mechanism: physx_rigid_body_angular_damping
+    target_component: coupling_nut_rigid_body
+    angular_damping: 1.00
+    expected_resolved_angular_damping: 1.00
+    requires_articulation: false
+    efficacy_status: must_be_measured
+
+  - candidate_id: nut_angular_damping_2p00
+    run_order: 4
+    mechanism: physx_rigid_body_angular_damping
+    target_component: coupling_nut_rigid_body
+    angular_damping: 2.00
+    expected_resolved_angular_damping: 2.00
+    requires_articulation: false
+    efficacy_status: must_be_measured
+
+excluded_mechanisms:
+  - mechanism: physx_joint_friction
+    target_component: non_articulation_revolute_joint
+    runnable_in_v1: false
+    effectiveness_claimed: false
+    reason: effect_not_yet_demonstrated_for_this_two_rigid_body_revolute
+
+acceptance:
+  # The earlier tabletop smoke named this metric
+  # maximum_tail_angular_speed_rad_s and defined it as max(body, nut).  Its
+  # observed 0.08564867 rad/s was body-dominated; it never established a
+  # >=0.05 rad/s nut-specific baseline.  Preserve the original numeric gate,
+  # but apply it only to the same aggregate scene metric for reproducibility.
+  baseline_reproduction_metric: maximum_tail_any_dynamic_body_angular_speed_rad_s
+  baseline_tail_scene_angular_speed_minimum_rad_s: 0.050
+  baseline_tail_scene_angular_speed_maximum_rad_s: 0.200
+  # Candidate efficacy remains nut-specific and is compared against the
+  # measured baseline nut speed from this scan, not the aggregate scene speed.
+  candidate_speed_reduction_metric: maximum_tail_nut_angular_speed_rad_s
+  maximum_tail_nut_angular_speed_rad_s: 0.020
+  maximum_tail_relative_axis_speed_rad_s: 0.020
+  minimum_speed_reduction_fraction: 0.70
+  require_every_repeat_scene_safety_pass: true
+  require_every_repeat_finite: true
+  selection_policy: lowest_positive_damping_then_candidate_id
+
+promotion_gates:
+  automatic_promotion: false
+  require_separate_q7_twist_regression: true
+  require_regrasp_regression: true
+  require_contact_and_tabletop_regression: true
+  require_hardware_calibration_before_fidelity_claim: true

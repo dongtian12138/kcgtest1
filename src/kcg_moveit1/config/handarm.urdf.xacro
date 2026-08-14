@@ -1,0 +1,155 @@
+<?xml version="1.0"?>
+<robot name="handarm" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="use_gazebo" default="false" />
+  <xacro:arg name="start_at_cylinder_pregrasp" default="false" />
+
+  <xacro:include filename="$(find iiwa_description)/urdf/iiwa14.xacro" />
+  <xacro:include filename="$(find iiwa_description)/urdf/hand.xacro" />
+
+  <xacro:macro name="position_controlled_joint" params="name initial_value:=0.0">
+    <joint name="${name}">
+      <xacro:if value="$(arg use_gazebo)">
+        <!--
+          The trajectory controller closes the position/velocity loop and
+          exports physical joint effort.  Keeping the derivative term there
+          avoids the derivative kick produced by gazebo_ros2_control's
+          position_pid whenever a new trajectory starts from measured state.
+        -->
+        <command_interface name="effort" />
+      </xacro:if>
+      <xacro:unless value="$(arg use_gazebo)">
+        <command_interface name="position" />
+      </xacro:unless>
+      <state_interface name="position">
+        <param name="initial_value">${initial_value}</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+  </xacro:macro>
+
+  <!--
+    Gazebo must drive the fingers through joint effort so that contact forces
+    can support an object.  A directly forwarded position command uses
+    SetPosition() inside gazebo_ros2_control and does not provide a meaningful
+    compliant grasp.  Outside Gazebo the GenericSystem keeps the lightweight
+    position interface used by the planning-only configuration.
+  -->
+  <xacro:macro name="hand_controlled_joint" params="name initial_value:=0.0">
+    <joint name="${name}">
+      <xacro:if value="$(arg use_gazebo)">
+        <command_interface name="effort" />
+      </xacro:if>
+      <xacro:unless value="$(arg use_gazebo)">
+        <command_interface name="position" />
+      </xacro:unless>
+      <state_interface name="position">
+        <param name="initial_value">${initial_value}</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="mimic_controlled_joint" params="name source multiplier:=1.0 initial_value:=0.0">
+    <joint name="${name}">
+      <!--
+        gazebo_ros2_control only mirrors the source effort into a mimic joint;
+        that is not a closed mechanical coupling.  Give the simulated joint
+        its own effort loop and command it to the mapped source position.  The
+        planning-only GenericSystem keeps native mimic semantics.
+      -->
+      <xacro:if value="$(arg use_gazebo)">
+        <command_interface name="effort" />
+      </xacro:if>
+      <xacro:unless value="$(arg use_gazebo)">
+        <param name="mimic">${source}</param>
+        <param name="multiplier">${multiplier}</param>
+      </xacro:unless>
+      <state_interface name="position">
+        <param name="initial_value">${initial_value}</param>
+      </state_interface>
+      <state_interface name="velocity" />
+    </joint>
+  </xacro:macro>
+
+  <ros2_control name="KcgHandArmSystem" type="system">
+    <hardware>
+      <xacro:if value="$(arg use_gazebo)">
+        <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+      </xacro:if>
+      <xacro:unless value="$(arg use_gazebo)">
+        <plugin>mock_components/GenericSystem</plugin>
+        <param name="calculate_dynamics">false</param>
+      </xacro:unless>
+    </hardware>
+
+    <!--
+      The cylinder benchmark starts directly in its collision-checked
+      pregrasp.  This avoids dragging unactuated light finger links through a
+      large ideal-position arm move and gives RL episodes a deterministic
+      physical initial state.  All general launch files retain the zero pose.
+    -->
+    <xacro:if value="$(arg start_at_cylinder_pregrasp)">
+      <xacro:position_controlled_joint name="iiwa_joint_1" initial_value="0.173683" />
+      <xacro:position_controlled_joint name="iiwa_joint_2" initial_value="0.256410" />
+      <xacro:position_controlled_joint name="iiwa_joint_3" initial_value="-0.236703" />
+      <xacro:position_controlled_joint name="iiwa_joint_4" initial_value="-1.171082" />
+      <xacro:position_controlled_joint name="iiwa_joint_5" initial_value="0.060182" />
+      <xacro:position_controlled_joint name="iiwa_joint_6" initial_value="1.720685" />
+      <xacro:position_controlled_joint name="iiwa_joint_7" initial_value="-0.046556" />
+
+      <xacro:hand_controlled_joint name="f1j1" initial_value="1.0" />
+      <xacro:hand_controlled_joint name="f1j2" initial_value="0.0" />
+      <xacro:hand_controlled_joint name="f2j1" initial_value="0.0" />
+      <xacro:hand_controlled_joint name="f3j2" initial_value="0.0" />
+
+      <xacro:mimic_controlled_joint name="f3j1" source="f1j1" initial_value="1.0" />
+      <xacro:mimic_controlled_joint name="f1j3" source="f1j2" initial_value="0.0" />
+      <xacro:mimic_controlled_joint name="f2j2" source="f2j1" initial_value="0.0" />
+      <xacro:mimic_controlled_joint name="f3j3" source="f3j2" initial_value="0.0" />
+    </xacro:if>
+
+    <xacro:unless value="$(arg start_at_cylinder_pregrasp)">
+      <xacro:position_controlled_joint name="iiwa_joint_1" />
+      <xacro:position_controlled_joint name="iiwa_joint_2" />
+      <xacro:position_controlled_joint name="iiwa_joint_3" />
+      <xacro:position_controlled_joint name="iiwa_joint_4" />
+      <xacro:position_controlled_joint name="iiwa_joint_5" />
+      <xacro:position_controlled_joint name="iiwa_joint_6" />
+      <xacro:position_controlled_joint name="iiwa_joint_7" />
+
+      <xacro:hand_controlled_joint name="f1j1" />
+      <xacro:hand_controlled_joint name="f1j2" />
+      <xacro:hand_controlled_joint name="f2j1" />
+      <xacro:hand_controlled_joint name="f3j2" />
+
+      <xacro:mimic_controlled_joint name="f3j1" source="f1j1" />
+      <xacro:mimic_controlled_joint name="f1j3" source="f1j2" />
+      <xacro:mimic_controlled_joint name="f2j2" source="f2j1" />
+      <xacro:mimic_controlled_joint name="f3j3" source="f3j2" />
+    </xacro:unless>
+
+    <!-- One exported scalar per physical Wheatstone-bridge channel. -->
+    <xacro:if value="$(arg use_gazebo)">
+      <sensor name="f1j2">
+        <state_interface name="torque.z" />
+      </sensor>
+      <sensor name="f2j1">
+        <state_interface name="torque.z" />
+      </sensor>
+      <sensor name="f3j2">
+        <state_interface name="torque.z" />
+      </sensor>
+    </xacro:if>
+  </ros2_control>
+
+  <xacro:if value="$(arg use_gazebo)">
+    <gazebo>
+      <self_collide>false</self_collide>
+      <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+        <robot_param>robot_description</robot_param>
+        <robot_param_node>robot_state_publisher</robot_param_node>
+        <parameters>$(find kcg_moveit1)/config/ros2_controllers.yaml</parameters>
+      </plugin>
+    </gazebo>
+  </xacro:if>
+</robot>

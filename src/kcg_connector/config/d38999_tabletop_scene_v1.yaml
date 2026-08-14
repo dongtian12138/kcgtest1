@@ -1,0 +1,75 @@
+# Independent physical tabletop smoke for the public-dimensional D38999 proxy.
+# The table dimensions intentionally match connector_tabletop_scene_v1, but no
+# synthetic connector asset or synthetic child path is referenced here.
+schema_version: kcg_d38999_tabletop_scene_v1
+
+asset:
+  local_path: artifacts/kcg_connector/isaac/d38999_shell25j_61_pair_proxy_v1.usda
+  sha256: 6f716b6e40129f98e5914b5597005c575617d5f55cd0f2c0c8df067ee6788740
+  proxy_id: d38999_shell25j_61_pair_proxy_v1
+  reference_prim_path: /World/D38999TabletopV1/D38999Pair
+  model_root_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JProxy
+  loose_plug_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JProxy/LoosePlug
+  body_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JProxy/LoosePlug/BodyAssembly
+  nut_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JProxy/LoosePlug/CouplingNut
+  joint_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JProxy/LoosePlug/CouplingNutJoint
+  fixed_receptacle_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JProxy/FixedReceptacle
+
+world:
+  root_prim_path: /World/D38999TabletopV1
+  physics_material_prim_path: /World/D38999TabletopV1/TabletopMaterial
+
+table:
+  prim_path: /World/D38999TabletopV1/Table
+  center_m: [0.550, 0.000, 0.160]
+  size_m: [0.800, 0.900, 0.080]
+  color_rgb: [0.24, 0.29, 0.34]
+  static_friction: 0.90
+  dynamic_friction: 0.75
+  restitution: 0.0
+
+fixed_endpoint:
+  fixture_prim_path: /World/D38999TabletopV1/FixedFixture
+  fixture_center_m: [0.550, 0.185, 0.220]
+  fixture_size_m: [0.140, 0.140, 0.040]
+  fixture_color_rgb: [0.12, 0.15, 0.19]
+  # The receptacle proxy rear body extends 21.5 mm below its datum.  Placing
+  # the datum here puts the rear body exactly on the fixture top at z=0.240 m.
+  receptacle_origin_m: [0.550, 0.185, 0.2615]
+  receptacle_bottom_offset_m: 0.0215
+
+loose_endpoint:
+  # The loose proxy's lowest collision is at its body origin.  Its 0.215 m
+  # initial origin therefore gives a physical 15 mm drop to the table top.
+  initial_origin_m: [0.520, -0.210, 0.215]
+  body_bottom_offset_m: 0.0
+  nut_bottom_offset_m: 0.007
+  footprint_radius_m: 0.024
+  initial_clearance_above_table_m: 0.015
+  minimum_endpoint_separation_m: 0.300
+
+physics:
+  rate_hz: 240
+  gravity_m_s2: -9.81
+  settle_duration_s: 2.0
+  tail_duration_s: 0.50
+  minimum_vertical_drop_m: 0.010
+  maximum_vertical_drop_m: 0.020
+  maximum_transient_table_penetration_m: 0.002
+  maximum_final_surface_gap_m: 0.003
+  maximum_xy_drift_m: 0.015
+  maximum_tail_displacement_m: 0.001
+  maximum_tail_linear_speed_m_s: 0.020
+  maximum_tail_angular_speed_rad_s: 0.200
+  maximum_upright_axis_tilt_rad: 0.08726646259971647
+  maximum_fixed_translation_drift_m: 0.000001
+  maximum_fixed_rotation_drift_rad: 0.00001
+
+render:
+  camera_eye_m: [1.050, 0.900, 0.610]
+  camera_target_m: [0.535, 0.000, 0.235]
+  dome_light_intensity: 650.0
+  dome_light_color_rgb: [0.82, 0.88, 1.00]
+  key_light_intensity: 2200.0
+  key_light_color_rgb: [1.00, 0.92, 0.82]
+  key_light_rotation_degrees_xyz: [-45.0, 30.0, 35.0]

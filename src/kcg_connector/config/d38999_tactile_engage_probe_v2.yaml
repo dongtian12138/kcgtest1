@@ -1,0 +1,190 @@
+# Disabled-by-default CPU contract for centered no-lip entry confirmation.
+# This v2 file does not alter the frozen v1 GPU reports or the Isaac runner.
+# Numeric wrench limits remain synthetic-scene experiment guards, not
+# calibrated hardware safety limits.
+schema_version: kcg_d38999_tactile_engage_probe_v2
+enabled_by_default: false
+status: cpu_contract_ready_gpu_contact_characterization_required
+
+inputs:
+  visual_preinsert_contract:
+    path: src/kcg_connector/config/d38999_visual_xy_preinsert_probe_v1.yaml
+    sha256: 7b983bfc211ef25e70ddb818c5773c7b748452e81ace9b8fd0cb464385c2f18c
+  physical_insertion_contract:
+    path: src/kcg_connector/config/d38999_physical_insertion_v1.yaml
+    sha256: 652b46768735e59146fb249c8c7944ead9a68dc60837c615bc561361f7ded10d
+  virtual_wrist_ft_monitor:
+    path: src/kcg_connector/config/d38999_wrist_ft_monitor_v1.yaml
+    sha256: a7afc437031a36f67471fa1d785136997315b95df9298b0efb866ed538e79f89
+  visual_pick_evidence:
+    path: artifacts/kcg_connector/d38999_visual_xy_pick_probe_v1/first_gpu_20260812T1455Z/report.json
+    sha256: d079cebcd32b357f1279cd3d603d15a5cca530aef3ff8c733826dfeacb7858a5
+  wrist_ft_repeatability_evidence:
+    path: artifacts/kcg_connector/d38999_wrist_ft_repeatability_v1/report_archived.json
+    sha256: 5883f0fd2d688b7183a5eb224a7e66d12b696618662bca314828c510338f59ef
+
+eligibility:
+  required_preinsert_status: PASSED_AT_PREINSERT_OUTSIDE_ENTRY
+  require_same_world_and_capture_id: true
+  require_payload_baseline_ready: true
+  require_zero_loose_fixed_contact_at_start: true
+  require_three_finger_body_contact: true
+  require_no_object_pose_writes_after_start: true
+  allowed_orientation_source: registered_nominal_fk
+  axial_progress_source: measured_robot_fk_against_registered_fixed_z
+  provider_xy_error_bound_m: 0.010
+  observed_fixed_xy_error_m: 0.001824
+  search_radius_m: 0.003
+  provider_error_bound_fully_covered: false
+
+sensor_policy:
+  source: virtual_wrist_ft_compensated_connector_task_frame
+  controller_wrench_mode: subtract_stopped_preinsert_local_reference
+  control_rate_hz: 240
+  maximum_sample_age_s: 0.008333333333333333
+  local_reference_samples: 120
+  contact_debounce_samples: 6
+  release_debounce_samples: 6
+  entry_confirmation_samples: 24
+  local_reference_is_safety_tare: false
+  requires_lip_contact_direction_calibration: true
+  requires_quasistatic_motion: true
+
+motion_policy:
+  preinsert_gap_m: 0.012
+  entry_gap_m: 0.010
+  entry_confirmation_gap_m: 0.0095
+  engage_gap_m: 0.003
+  guarded_approach_speed_m_s: 0.0005
+  compliant_insert_speed_m_s: 0.00035
+  unload_retract_speed_m_s: 0.0005
+  unload_retract_distance_m: 0.0003
+  moment_guided_xy_step_m: 0.0002
+  maximum_xy_speed_m_s: 0.001
+  maximum_search_radius_m: 0.003
+  spiral_radial_pitch_m: 0.0002
+  spiral_arc_step_m: 0.0002
+  maximum_contact_attempts: 708
+  maximum_search_duration_s: 180.0
+  minimum_contact_lever_radius_m: 0.005
+  maximum_contact_lever_radius_m: 0.030
+  compressive_axial_force_sign_candidate: 1
+
+contact_detection:
+  contact_on_compressive_axial_force_n: 0.25
+  contact_off_compressive_axial_force_n: 0.10
+  contact_on_bending_torque_nm: 0.008
+  contact_off_bending_torque_nm: 0.004
+  breakthrough_axial_travel_m: 0.0005
+
+# The default entry mode proves centered progress without observing lip
+# contact.  The old first-contact breakthrough predicate remains available
+# only through its explicitly named compatibility helper.
+entry_confirmation_policy:
+  default_mode: centered_no_lip_contact_v1
+  compatible_modes:
+    - centered_no_lip_contact_v1
+    - lip_contact_breakthrough_v1
+  required_task_frame_id: connector_task_frame
+  # Columns are connector task x/y/z axes expressed in world coordinates.
+  # This identity basis is the exact fixed-axis + FT x-reference contract for
+  # the current frozen scene; a rotated future scene needs a new config hash.
+  required_task_rotation_world:
+    - [1.0, 0.0, 0.0]
+    - [0.0, 1.0, 0.0]
+    - [0.0, 0.0, 1.0]
+  command_gap_source: commanded_fixed_q7_fk_against_registered_fixed_z
+  measured_gap_source: measured_tcp_prim_against_registered_fixed_z
+  minimum_registered_preentry_gap_m: 0.010
+  maximum_confirmation_gap_m: 0.0095
+  minimum_axial_travel_m: 0.0005
+  required_consecutive_samples: 24
+  maximum_absolute_axial_force_n: 0.10
+  maximum_lateral_force_n: 0.10
+  maximum_bending_torque_nm: 0.004
+  maximum_tightening_torque_nm: 0.004
+  require_zero_loose_fixed_contact: true
+  require_release_candidate_each_sample: true
+  require_task_frame_provenance: true
+  require_same_world_and_capture_id: true
+  require_no_object_pose_writes_after_start: true
+  truth_control_allowed: false
+  first_contact_gap_required: false
+  legacy_lip_contact_mode_requires_explicit_call: true
+
+experimental_abort_envelope:
+  maximum_absolute_axial_force_n: 5.0
+  maximum_lateral_force_n: 2.0
+  maximum_bending_torque_nm: 0.18
+  maximum_tightening_torque_nm: 0.05
+  maximum_finger_base_torque_nm: 2.0
+  calibrated_hardware_safety_limit: false
+
+state_machine:
+  initial_state: WAIT_PREINSERT_PASS
+  terminal_ready_state: READY_FOR_EXISTING_PROXY_TWIST
+  terminal_abort_state: TERMINAL_ABORT
+  states:
+    - WAIT_PREINSERT_PASS
+    - LOCAL_REFERENCE
+    - GUARDED_APPROACH
+    - RETRACT_UNLOAD
+    - CENTER_CORRECTION
+    - SPIRAL_FALLBACK
+    - ENTRY_CONFIRM
+    - COMPLIANT_INSERT
+    - ENGAGE_HOLD
+    - SIM_TRUTH_AUDIT
+    - READY_FOR_EXISTING_PROXY_TWIST
+    - ABORT_RETRACT
+    - TERMINAL_ABORT
+
+validation_sequence:
+  cpu_nodes:
+    - contract_hash_and_boundary_tests
+    - signed_contact_moment_math_tests
+    - centered_no_lip_entry_evidence_tests
+    - fail_closed_state_machine_tests
+    - bounded_spiral_geometry_tests
+  gpu_nodes:
+    - visual_preinsert_same_world_pass
+    - signed_lip_contact_characterization_plus_x_minus_x_plus_y_minus_y
+    - one_offset_tactile_engage_without_twist
+    - three_visual_offset_tactile_engage_ab
+    - repeated_tactile_engage_regression
+    - chain_existing_regrasp_twist_and_home
+
+proxy_boundaries:
+  segmented_box_entry_shell: true
+  exact_insert_geometry_available: false
+  entry_chamfer_modeled: false
+  keying_modeled: false
+  thread_teeth_modeled: false
+  filtered_proxy_collision_pair_count: 500
+  contact_face_collision_mode: visual_only
+  tactile_result_transferable_to_hardware: false
+
+boundaries:
+  explicit_opt_in_required: true
+  # The CPU helper is not yet called by the Isaac runner.  A future runtime
+  # must build fresh evidence and call it immediately before the transition;
+  # passing a literal entry_confirmed=True is never integration evidence.
+  entry_confirmation_runtime_integrated: false
+  bare_entry_confirmed_proves_entry_evidence: false
+  existing_e2e_modified: false
+  existing_runner_modified: false
+  robot_or_connector_asset_modified: false
+  frozen_baseline_modified: false
+  foundationpose_required_for_this_proxy_probe: false
+  yaw_estimated_from_rgbd: false
+  full_6d_claimed: false
+  arbitrary_visual_error_coverage_claimed: false
+  virtual_ft_is_calibrated_safety_gate: false
+  truth_used_for_engage_search_control: false
+  sim_truth_used_for_posthoc_acceptance_only: true
+  engage_executed: false
+  twist_executed: false
+  home_return_executed: false
+  gpu_or_physx_validated: false
+  production_control_authorized: false
+  real_connector_assembly_claimed: false

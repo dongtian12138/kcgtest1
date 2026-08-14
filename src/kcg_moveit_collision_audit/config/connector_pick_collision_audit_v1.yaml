@@ -1,0 +1,79 @@
+schema_version: kcg_moveit_connector_pick_collision_audit_v1
+profile: synthetic_connector_v1
+
+# Every runtime input is content-addressed.  The executable stops before
+# collision checking when any file has drifted.  This candidate SRDF is never
+# copied over, activated as, or substituted for the current MoveIt SRDF.
+inputs:
+  urdf_xacro:
+    path: src/iiwa_description/urdf/handarm.urdf.xacro
+    sha256: b4ee760ec9d2306e172dc71f697a087f5788c32f89dd3c2e80a2f1e7897af399
+  candidate_srdf:
+    path: artifacts/kcg_connector/self_collision_acm_candidate_v1/handarm_sampled_1000000.srdf
+    sha256: 13542f8defb92c3b09669c65a61bfc81d6535f1b61ba556aad8b8507f4ad252f
+  home_to_pregrasp:
+    path: src/kcg_connector/config/connector_home_to_pregrasp_v1.yaml
+    sha256: ab7a40d2791dd3c57c64c421030f9e5203a8861ecb1736be4ed101c27dcf9d4d
+  tabletop_pick:
+    path: src/kcg_connector/config/connector_tabletop_pick_v1.yaml
+    sha256: 9c8dae51a7abd95cc48bb42d784ed3c42269370cb36ae36b74fcef5ba99841f4
+  tabletop_scene:
+    path: src/kcg_connector/config/connector_tabletop_scene_v1.yaml
+    sha256: 3bbd65f9e1f26bc02ee0588ba5188b15f22b9b7a32ecd7404cf685e8a96deb18
+  connector_task:
+    path: src/kcg_connector/config/connector_task.yaml
+    sha256: 4e8bee1abcda805fc0669cffbf34c095e509b3ecc96c0571e618e00d9940d36e
+
+model_contract:
+  expected_link_count: 20
+  expected_collision_link_count: 17
+  expected_never_pair_count: 76
+  expected_adjacent_pair_count: 16
+  required_collision_detector: FCL
+
+sampling:
+  rate_hz: 240
+  expected_sample_count: 10656
+  maximum_joint_step_rad: 0.0025
+  interpolation: minimum_jerk
+
+collision_policy:
+  # Candidate policy is checked as generated.  A second in-memory policy
+  # restores every reason=Never pair to checking and retains only Adjacent.
+  reenable_all_never_pairs_for_strict_audit: true
+  minimum_forbidden_distance_m: 0.0
+  minimum_robot_link_table_distance_m: 0.0
+  require_candidate_discrete_collision_free: true
+  require_strict_discrete_collision_free: true
+  # Humble FCL does not implement continuous robot collision checking.  This
+  # stays true so the overall gate cannot pass on discrete evidence alone.
+  require_continuous_collision_verified: true
+  maximum_reported_collision_examples_per_policy: 24
+  loose_endpoint_world_id: loose_connector_endpoint
+  attached_endpoint_id: attached_connector_endpoint
+  attachment_link: grasp_tcp
+  intentional_touch_links:
+    - f1Link1
+    - f1Link2
+    - f1Link3
+    - f2Link1
+    - f2Link2
+    - f3Link1
+    - f3Link2
+    - f3Link3
+
+# Conservative solids over-approximate the synthetic connector USD.  Ring
+# bores are deliberately filled; dimensions are derived from connector_task
+# plus the fixed offsets used by create_connector_asset.py.
+scene_proxy:
+  table_world_id: connector_table
+  fixture_world_id: fixed_connector_fixture
+  fixed_endpoint_world_id: fixed_connector_endpoint
+  loose_endpoint_settled_root_rule: table_top_plus_body_bottom_offset
+  fixed_endpoint_min_z_offset_m: -0.036
+  fixed_endpoint_max_z_offset_m: 0.015
+  body_radius_scale_from_plug_nose: 0.85
+  body_extra_length_m: 0.020
+  body_center_z_offset_m: -0.015
+  plug_nose_center_rule: negative_half_nut_plus_nose_length
+  coupling_nut_center_z_offset_m: 0.0

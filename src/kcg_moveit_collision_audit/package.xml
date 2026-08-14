@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>kcg_moveit_collision_audit</name>
+  <version>0.1.0</version>
+  <description>Fail-closed offline MoveIt collision audit for the KCG connector pick trajectory.</description>
+  <maintainer email="974622934@qq.com">dong</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>geometric_shapes</depend>
+  <depend>moveit_core</depend>
+  <depend>moveit_ros_planning</depend>
+  <depend>yaml_cpp_vendor</depend>
+  <depend>openssl</depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

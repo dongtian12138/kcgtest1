@@ -1,0 +1,176 @@
+{
+  "claims_authorized": false,
+  "complete_run_count": 4,
+  "config": {
+    "path": "src/kcg_connector/config/d38999_visual_xy_preinsert_evidence_v1.yaml",
+    "schema_version": "kcg_d38999_visual_xy_preinsert_evidence_config_v1",
+    "sha256": "5d79de001d913e8168224d675ef1907e2db0946688223bdd0227c4333633c04a",
+    "size_bytes": 2964
+  },
+  "expected_run_count": 4,
+  "missing_paths": [],
+  "runs": [
+    {
+      "run_id": "plus10_xy",
+      "sources": {
+        "cpu_plan": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/first_gpu_20260812T154220Z/cpu_plan.json",
+          "schema_version": "kcg_d38999_visual_xy_pick_probe_v1",
+          "sha256": "fe1c17faa14451b752ec556a859dc818b5c81ab99a8988f711a25d1024c79ab7",
+          "size_bytes": 3575,
+          "state": "BOUND"
+        },
+        "pick_config": {
+          "path": "src/kcg_connector/config/d38999_visual_xy_pick_probe_v1.yaml",
+          "schema_version": "kcg_d38999_visual_xy_pick_probe_v1",
+          "sha256": "4bab601ac0dd27425f29da7e585dc2c10c0877bfd88729f31f5af28ac0ed8d19",
+          "size_bytes": 2816,
+          "state": "BOUND"
+        },
+        "preinsert_config": {
+          "path": "src/kcg_connector/config/d38999_visual_xy_preinsert_probe_v1.yaml",
+          "schema_version": "kcg_d38999_visual_xy_preinsert_probe_v1",
+          "sha256": "7b983bfc211ef25e70ddb818c5773c7b748452e81ace9b8fd0cb464385c2f18c",
+          "size_bytes": 2918,
+          "state": "BOUND"
+        },
+        "preinsert_cpu_plan": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/first_gpu_20260812T154220Z/preinsert_cpu_plan.json",
+          "schema_version": "kcg_d38999_visual_xy_preinsert_probe_v1",
+          "sha256": "7ba38ba9742ac0ba86549a884af9f40f1fed1ea15cd830e68db44edfda694ea3",
+          "size_bytes": 2566,
+          "state": "BOUND"
+        },
+        "report": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/first_gpu_20260812T154220Z/report.json",
+          "schema_version": "kcg_d38999_visual_xy_pick_report_v1",
+          "sha256": "8d2a3c9002699b649349b23e6be7ad82a9594352b12871284e6f4788909bcb3d",
+          "size_bytes": 22583,
+          "state": "BOUND"
+        }
+      }
+    },
+    {
+      "run_id": "plus20_x",
+      "sources": {
+        "cpu_plan": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/runs/loose_px20_y0_gpu_20260812T1600Z/cpu_plan.json",
+          "schema_version": "kcg_d38999_visual_xy_pick_probe_v1",
+          "sha256": "832bc57fca4439fef8c9fae4f11ca9ab6cfbfc7b79f86543d37d897cf3b5d4ec",
+          "size_bytes": 3575,
+          "state": "BOUND"
+        },
+        "pick_config": {
+          "path": "src/kcg_connector/config/d38999_visual_xy_pick_px20_y0_v1.yaml",
+          "schema_version": "kcg_d38999_visual_xy_pick_probe_v1",
+          "sha256": "7e761f87ecf967a6bc06c8b3397558ea347c21c1d41b5f6e9d02784e048c31f1",
+          "size_bytes": 2678,
+          "state": "BOUND"
+        },
+        "preinsert_config": {
+          "path": "src/kcg_connector/config/d38999_visual_xy_preinsert_probe_v1.yaml",
+          "schema_version": "kcg_d38999_visual_xy_preinsert_probe_v1",
+          "sha256": "7b983bfc211ef25e70ddb818c5773c7b748452e81ace9b8fd0cb464385c2f18c",
+          "size_bytes": 2918,
+          "state": "BOUND"
+        },
+        "preinsert_cpu_plan": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/runs/loose_px20_y0_gpu_20260812T1600Z/preinsert_cpu_plan.json",
+          "schema_version": "kcg_d38999_visual_xy_preinsert_probe_v1",
+          "sha256": "248f0b065180b823608294f960b6600118c94836d438327ba93be92052543756",
+          "size_bytes": 2564,
+          "state": "BOUND"
+        },
+        "report": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/runs/loose_px20_y0_gpu_20260812T1600Z/report.json",
+          "schema_version": "kcg_d38999_visual_xy_pick_report_v1",
+          "sha256": "4e5303ad78e0eca41c75d8ff97e6bdb0a447e2d75d0e970eb2719b0e1c7dac4d",
+          "size_bytes": 22651,
+          "state": "BOUND"
+        }
+      }
+    },
+    {
+      "run_id": "minus20_x",
+      "sources": {
+        "cpu_plan": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/runs/loose_mx20_y0_gpu_20260812T1600Z/cpu_plan.json",
+          "schema_version": "kcg_d38999_visual_xy_pick_probe_v1",
+          "sha256": "403d45e359a27a5d95eab9f38990adc55fff422fd681a751b63233b83b8d197b",
+          "size_bytes": 3584,
+          "state": "BOUND"
+        },
+        "pick_config": {
+          "path": "src/kcg_connector/config/d38999_visual_xy_pick_mx20_y0_v1.yaml",
+          "schema_version": "kcg_d38999_visual_xy_pick_probe_v1",
+          "sha256": "b5cec2e61846b85d04123c5e48db857578176ec3024fbb04a862e79fd9997f65",
+          "size_bytes": 2679,
+          "state": "BOUND"
+        },
+        "preinsert_config": {
+          "path": "src/kcg_connector/config/d38999_visual_xy_preinsert_probe_v1.yaml",
+          "schema_version": "kcg_d38999_visual_xy_preinsert_probe_v1",
+          "sha256": "7b983bfc211ef25e70ddb818c5773c7b748452e81ace9b8fd0cb464385c2f18c",
+          "size_bytes": 2918,
+          "state": "BOUND"
+        },
+        "preinsert_cpu_plan": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/runs/loose_mx20_y0_gpu_20260812T1600Z/preinsert_cpu_plan.json",
+          "schema_version": "kcg_d38999_visual_xy_preinsert_probe_v1",
+          "sha256": "3b56fd2ad4e61db865d730f786186b80148222d7327a4d464a57953dcb6fd3ef",
+          "size_bytes": 2566,
+          "state": "BOUND"
+        },
+        "report": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/runs/loose_mx20_y0_gpu_20260812T1600Z/report.json",
+          "schema_version": "kcg_d38999_visual_xy_pick_report_v1",
+          "sha256": "9616eeee2c10cd3ac5f0184cd96cd6dcbd6265c06b7b27b6a7d4bb10d26e20a9",
+          "size_bytes": 22652,
+          "state": "BOUND"
+        }
+      }
+    },
+    {
+      "run_id": "minus20_y",
+      "sources": {
+        "cpu_plan": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/runs/loose_x0_my20_gpu_20260812T1600Z/cpu_plan.json",
+          "schema_version": "kcg_d38999_visual_xy_pick_probe_v1",
+          "sha256": "d9fe2ecec666bbe8e7d52839017bb319dd007659ba2cf3339e3fee37e4666c07",
+          "size_bytes": 3585,
+          "state": "BOUND"
+        },
+        "pick_config": {
+          "path": "src/kcg_connector/config/d38999_visual_xy_pick_x0_my20_v1.yaml",
+          "schema_version": "kcg_d38999_visual_xy_pick_probe_v1",
+          "sha256": "f600c167cfecb379dc386259f21e5c5eb18c8dd68bed08e9bf8013f664b0d929",
+          "size_bytes": 2679,
+          "state": "BOUND"
+        },
+        "preinsert_config": {
+          "path": "src/kcg_connector/config/d38999_visual_xy_preinsert_probe_v1.yaml",
+          "schema_version": "kcg_d38999_visual_xy_preinsert_probe_v1",
+          "sha256": "7b983bfc211ef25e70ddb818c5773c7b748452e81ace9b8fd0cb464385c2f18c",
+          "size_bytes": 2918,
+          "state": "BOUND"
+        },
+        "preinsert_cpu_plan": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/runs/loose_x0_my20_gpu_20260812T1600Z/preinsert_cpu_plan.json",
+          "schema_version": "kcg_d38999_visual_xy_preinsert_probe_v1",
+          "sha256": "4560846ee55e77d93ee96c192929a8a30baaf4967b909b63b18a81d5b445223e",
+          "size_bytes": 2578,
+          "state": "BOUND"
+        },
+        "report": {
+          "path": "artifacts/kcg_connector/d38999_visual_xy_preinsert_probe_v1/runs/loose_x0_my20_gpu_20260812T1600Z/report.json",
+          "schema_version": "kcg_d38999_visual_xy_pick_report_v1",
+          "sha256": "099d541aca3dbd67f2f491686dda61378a0e5aaef4fe256617858089c1dd8745",
+          "size_bytes": 22669,
+          "state": "BOUND"
+        }
+      }
+    }
+  ],
+  "schema_version": "kcg_d38999_visual_xy_preinsert_evidence_manifest_v1",
+  "status": "COMPLETE_HASH_SIZE_SCHEMA_BOUND"
+}

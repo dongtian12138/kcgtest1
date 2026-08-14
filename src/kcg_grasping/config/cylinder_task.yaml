@@ -1,0 +1,70 @@
+cylinder_task_manager:
+  ros__parameters:
+    use_sim_time: true
+    object_name: grasp_cylinder
+    world_frame: world
+    grasp_frame: grasp_tcp
+    reset_position: [0.5, 0.0, 0.300]
+    reset_orientation: [0.0, 0.0, 0.0, 1.0]
+    align_reset_xy_with_grasp: true
+    observation_rate: 20.0
+    finger_torque_topic: /finger_torque_broadcaster/joint_states
+    # Three physical Wheatstone-full-bridge channels.  Each channel measures
+    # only the axial torque of its corresponding joint.
+    finger_torque_joint_names: [f1j2, f2j1, f3j2]
+    torque_tare_duration: 0.5
+    torque_delta_threshold: 0.03
+    minimum_loaded_torque_channels: 2
+    # Gazebo task success is evaluated from object pose.  The three torque
+    # channels stay in the observation, but are not treated as contact switches:
+    # their unloaded values also vary with hand/arm pose and require gravity
+    # compensation before they can be a reliable hard success condition.
+    require_torque_for_success: false
+    lift_height: 0.08
+    hold_height_tolerance: 0.01
+    hold_duration: 3.0
+    maximum_grasp_distance: 0.075
+
+scripted_cylinder_grasp:
+  ros__parameters:
+    use_sim_time: true
+    arm_joint_names:
+      - iiwa_joint_1
+      - iiwa_joint_2
+      - iiwa_joint_3
+      - iiwa_joint_4
+      - iiwa_joint_5
+      - iiwa_joint_6
+      - iiwa_joint_7
+    hand_joint_names: [f1j1, f1j2, f2j1, f3j2]
+    # Gazebo controls the four mechanically coupled joints with their own
+    # effort loops; their desired positions are mapped from the four active DOF.
+    hand_controller_joint_names:
+      [f1j1, f1j2, f2j1, f3j2, f3j1, f1j3, f2j2, f3j3]
+    approach_joint_positions:
+      [0.173683, 0.256410, -0.236703, -1.171082, 0.060182, 1.720685, -0.046556]
+    # First move above the object, then descend into the open three-finger
+    # pregrasp.  A direct zero-pose-to-grasp interpolation sweeps the hand
+    # through a cylinder that is already present in the natural demo.
+    pre_approach_joint_positions:
+      [0.158382, 0.340953, -0.278255, -0.800570, 0.101666, 2.010246, -0.061229]
+    lift_joint_positions:
+      [0.158382, 0.340953, -0.278255, -0.800570, 0.101666, 2.010246, -0.061229]
+    # Preset the two coupled side fingers before the object reset.  Moving
+    # f1j1 during closure makes those fingers sweep laterally across the object.
+    open_hand_positions: [1.00, 0.0, 0.0, 0.0]
+    # Contact-scan target for the original finger meshes.  The desired angles
+    # intentionally continue slightly beyond first contact so the compliant
+    # effort loops generate holding force instead of merely touching the body.
+    closed_hand_positions: [1.00, 0.750, 0.500, 0.750]
+    approach_velocity_scale: 0.08
+    approach_acceleration_scale: 0.08
+    pre_approach_motion_duration: 15.0
+    approach_motion_duration: 8.0
+    use_moveit_for_approach: false
+    hand_motion_duration: 5.0
+    lift_motion_duration: 8.0
+    settle_duration: 1.0
+    hold_duration: 4.0
+    perform_approach: true
+    activate_hand_controller_at_runtime: false
