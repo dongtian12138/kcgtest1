@@ -2,7 +2,8 @@ build/
 install/
 log/
 .venv/
-artifacts/
+artifacts/*
+!artifacts/README.md
 __pycache__/
 *.py[cod]
 .pytest_cache/
