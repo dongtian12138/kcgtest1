@@ -15,8 +15,8 @@ D38999 类电连接器的识别、抓取、对准、插入、锁紧和回到 Hom
 - 工程目录说明：[`docs/PROJECT_STRUCTURE_CN.md`](docs/PROJECT_STRUCTURE_CN.md)
 - 证据保留规则：[`docs/ARTIFACT_RETENTION_CN.md`](docs/ARTIFACT_RETENTION_CN.md)
 
-状态以磁盘中的控制文件为准，不从本 README 推断。2026-08-19 清理时，A1/A2 已有
-动态通过证据，当前前沿是 B-V3 三指抓取支撑转移；B 尚未动态通过，C 到 G 尚未进入。
+状态、当前节点、安全门语义和运行授权只以磁盘中的最新控制文件为准，不从本 README
+推断。本文件刻意不固化瞬时任务名，避免任务切换后再次产生过时说明。
 
 ## 目录边界
 
@@ -40,7 +40,7 @@ source /opt/ros/humble/setup.bash
 colcon build --symlink-install
 ```
 
-当前 B-V3 控制器的纯 CPU 定向测试：
+抓取控制器的一个纯 CPU 定向回归示例（是否属于当前节点仍以控制面为准）：
 
 ```bash
 PYTHONPATH=src/kcg_connector \
@@ -57,6 +57,6 @@ python3 -m pytest -q \
   运行证据不进入普通提交。
 - `artifacts/` 约 18 GB，其中有不可替代的失败证据与冻结模型。本轮整理不删除、
   不移动这些内容；仅跟踪其入口说明。
-- 清理前完整源码状态保存在本地分支 `cleanup/project-structure-20260819` 的提交
-  `c606865`，旧文件可从该提交逐项恢复。
+- 清理前完整源码状态由本地标签 `pre-cleanup-20260819` 锚定，旧文件可从该标签逐项
+  恢复；整理结果位于分支 `cleanup/project-structure-20260819`。
 - 禁止用 `git reset --hard`、强制推送或批量删除来“变干净”。
