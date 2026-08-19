@@ -20,6 +20,7 @@ CONFIG = (
     REPOSITORY
     / "src/kcg_connector/config/d38999_moment_constrained_support_transfer_v1.yaml"
 )
+RUNNER = REPOSITORY / "src/kcg_connector/isaac/d38999_tabletop_pick_smoke.py"
 
 
 def _controller():
@@ -178,3 +179,33 @@ def test_root_load_loss_blocks_all_phase_progress():
     assert result["phase_after"] == PHASE_INTERNAL_FORCE_CENTERING
     assert result["advance_safe"] is False
     assert result["support_profile_index"] == 0
+
+
+def test_runner_opt_in_is_bound_to_current_task_and_immutable_evidence():
+    source = RUNNER.read_text(encoding="utf-8")
+    assert '"--moment-constrained-support-config"' in source
+    assert (
+        '"# 当前任务：DYN-B-V3-MOMENT-CONSTRAINED-SUPPORT-TRANSFER"'
+        in source
+    )
+    assert "verify_evidence_bindings(" in source
+    assert "B-V3 support transfer is not authorized by CURRENT_TASK.md" in source
+
+
+def test_runner_b_v3_preempts_h25_and_h17_in_both_dynamic_loops():
+    source = RUNNER.read_text(encoding="utf-8")
+    assert source.count("moment_support_controller.update(") == 2
+    assert source.count("elif lift_finger_fixed_target_config.enabled:") == 2
+    assert source.count('"h17_target_updated": False') == 2
+    assert "b_v3_lift_started_before_ready" in source
+    assert "moment_support_controller.phase != PHASE_LIFT_READY" in source
+
+
+def test_runner_b_v3_is_bounded_and_keeps_raw_gate_unfiltered():
+    source = RUNNER.read_text(encoding="utf-8")
+    assert "vertical_force_step_limit = (" in source
+    assert "moment_support_config.stable_confirm_steps" in source
+    assert "b_v3_support_transfer_step_limit" in source
+    assert source.count('"raw_hard_gate_sample_filtered": False') >= 2
+    assert '"raw_hard_gate_detection_delay_steps": 0' in source
+    assert '"post_physics_object_pose_writes": 0' in source

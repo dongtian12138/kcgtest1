@@ -13665,7 +13665,11 @@ def main():
                                 "FAILED_CLOSED_POST_H23_TARGET_HANDOFF_MISMATCH"
                             )
                             fail_vertical_force_ramp(
-                                "post_h23_target_handoff_mismatch",
+                                (
+                                    "b_v3_target_handoff_mismatch"
+                                    if moment_support_config is not None
+                                    else "h25_target_handoff_mismatch"
+                                ),
                                 h23_fix_phase,
                                 len(h23_fix_schedule) - 1,
                                 "post-H23 controller requires exact final targets at handoff",
@@ -16439,13 +16443,9 @@ def main():
             if lift_x_admittance.enabled:
                 metrics["lift_x_force_admittance"] = {
                     "status": (
-                        "SUPERSEDED_BY_B_V3_AFTER_H23_STABILITY_WINDOW"
-                        if moment_support_controller is not None
-                        else (
-                            "FAILED_CLOSED"
-                            if formal_lift_failure is not None
-                            else "STAGED_LIFT_COMPLETED"
-                        )
+                        "FAILED_CLOSED"
+                        if formal_lift_failure is not None
+                        else "STAGED_LIFT_COMPLETED"
                     ),
                     "threshold_label": lift_x_admittance.threshold_label,
                     "source_run_id": lift_x_admittance.source_run_id,
@@ -16498,9 +16498,13 @@ def main():
                     "lift_finger_root_load_two_sample_suppression"
                 ] = {
                     "status": (
-                        "FAILED_CLOSED"
-                        if formal_lift_failure is not None
-                        else "STAGED_LIFT_COMPLETED"
+                        "SUPERSEDED_BY_B_V3_AFTER_H23_STABILITY_WINDOW"
+                        if moment_support_controller is not None
+                        else (
+                            "FAILED_CLOSED"
+                            if formal_lift_failure is not None
+                            else "STAGED_LIFT_COMPLETED"
+                        )
                     ),
                     "threshold_label": (
                         lift_finger_root_load_suppression_config
@@ -16613,7 +16617,7 @@ def main():
                     "raw_hard_gate_detection_delay_steps": 0,
                     "object_truth_used": False,
                     "contact_truth_used": False,
-                    "contact_normal_used": False,
+                    "contact_geometry_truth_used": False,
                     "event_truth_used": False,
                     "post_physics_object_pose_writes": 0,
                     "formal_b_pass_claimed": False,
