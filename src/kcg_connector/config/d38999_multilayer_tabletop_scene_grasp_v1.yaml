@@ -1,0 +1,81 @@
+# DYN-B2-B4 only: the shared assembly-control representation on the validated
+# tabletop frame. This is a simulation grasp scene, not manufacturer CAD.
+schema_version: kcg_d38999_multilayer_tabletop_scene_grasp_v1
+
+asset_profile:
+  profile_id: D38999_ASSEMBLY_CONTROL_V1
+  source_config: src/kcg_connector/config/d38999_master_model_contract_v1.yaml
+  loose_endpoint_orientation: MATING_FACE_UP_RX_180_FOR_REAR_DOWN
+  fixed_endpoint_orientation: MATING_FACE_UP_RX_180_FOR_DOWNWARD_INSERTION
+  loose_endpoint_rotation_degrees_xyz: [180.0, 0.0, 0.0]
+  fixed_endpoint_rotation_degrees_xyz: [180.0, 0.0, 0.0]
+  body_mass_kg: 0.23
+  nut_mass_kg: 0.08
+  expected_body_collider_count: 72
+  expected_nut_collider_count: 7
+
+asset:
+  local_path: artifacts/kcg_connector/isaac/d38999_multilayer_v1/D38999_ASSEMBLY_CONTROL_V1.usda
+  proxy_id: D38999_ASSEMBLY_CONTROL_V1
+  reference_prim_path: /World/D38999TabletopV1/D38999Pair
+  model_root_prim_path: /World/D38999TabletopV1/D38999Pair/D38999MultilayerV1/D38999_ASSEMBLY_CONTROL_V1
+  loose_plug_prim_path: /World/D38999TabletopV1/D38999Pair/D38999MultilayerV1/D38999_ASSEMBLY_CONTROL_V1/D38999Pair/LoosePlug
+  body_prim_path: /World/D38999TabletopV1/D38999Pair/D38999MultilayerV1/D38999_ASSEMBLY_CONTROL_V1/D38999Pair/LoosePlug/BodyAssembly
+  nut_prim_path: /World/D38999TabletopV1/D38999Pair/D38999MultilayerV1/D38999_ASSEMBLY_CONTROL_V1/D38999Pair/LoosePlug/CouplingNut
+  joint_prim_path: /World/D38999TabletopV1/D38999Pair/D38999MultilayerV1/D38999_ASSEMBLY_CONTROL_V1/D38999Pair/LoosePlug/CouplingNutJoint
+  fixed_receptacle_prim_path: /World/D38999TabletopV1/D38999Pair/D38999MultilayerV1/D38999_ASSEMBLY_CONTROL_V1/D38999Pair/FixedReceptacle
+
+world:
+  root_prim_path: /World/D38999TabletopV1
+  physics_material_prim_path: /World/D38999TabletopV1/TabletopMaterial
+
+table:
+  prim_path: /World/D38999TabletopV1/Table
+  center_m: [0.550, 0.000, 0.160]
+  size_m: [0.800, 0.900, 0.080]
+  color_rgb: [0.24, 0.29, 0.34]
+  static_friction: 0.90
+  dynamic_friction: 0.75
+  restitution: 0.0
+
+fixed_endpoint:
+  fixture_prim_path: /World/D38999TabletopV1/FixedFixture
+  fixture_center_m: [0.550, 0.185, 0.220]
+  fixture_size_m: [0.140, 0.140, 0.040]
+  fixture_color_rgb: [0.12, 0.15, 0.19]
+  receptacle_origin_m: [0.550, 0.185, 0.272]
+  receptacle_bottom_offset_m: 0.032
+
+loose_endpoint:
+  initial_origin_m: [0.520, -0.210, 0.2455]
+  body_bottom_offset_m: -0.0305
+  nut_bottom_offset_m: -0.0305
+  footprint_radius_m: 0.024
+  initial_clearance_above_table_m: 0.015
+  minimum_endpoint_separation_m: 0.300
+
+physics:
+  rate_hz: 240
+  gravity_m_s2: -9.81
+  settle_duration_s: 2.0
+  tail_duration_s: 0.50
+  minimum_vertical_drop_m: 0.010
+  maximum_vertical_drop_m: 0.020
+  maximum_transient_table_penetration_m: 0.002
+  maximum_final_surface_gap_m: 0.003
+  maximum_xy_drift_m: 0.015
+  maximum_tail_displacement_m: 0.001
+  maximum_tail_linear_speed_m_s: 0.020
+  maximum_tail_angular_speed_rad_s: 0.200
+  maximum_upright_axis_tilt_rad: 0.08726646259971647
+  maximum_fixed_translation_drift_m: 0.000001
+  maximum_fixed_rotation_drift_rad: 0.00001
+
+render:
+  camera_eye_m: [1.050, 0.900, 0.610]
+  camera_target_m: [0.535, 0.000, 0.250]
+  dome_light_intensity: 650.0
+  dome_light_color_rgb: [0.82, 0.88, 1.00]
+  key_light_intensity: 2200.0
+  key_light_color_rgb: [1.00, 0.92, 0.82]
+  key_light_rotation_degrees_xyz: [-45.0, 30.0, 35.0]

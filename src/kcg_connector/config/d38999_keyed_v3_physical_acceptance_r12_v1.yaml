@@ -1,0 +1,677 @@
+schema_version: kcg_d38999_keyed_v3_physical_acceptance_r12_v1
+status: THRESHOLDS_FROZEN_BENCHES_NOT_RUN
+model_contract:
+  path: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml
+  required_successor_revision: keyed_v3_physical_r12
+  required_successor_asset: d38999_shell25j_25_61_n_keyed_physical_v3_r12.usda
+evidence_policy:
+  identity_basis: semantic_ids_exact_paths_schema_and_resolved_readback
+  cryptographic_fingerprints_allowed: false
+  fail_closed_on_missing_field_or_trace: true
+  fresh_process_replays_per_deterministic_case: 3
+  controller_truth_firewall_applies: true
+  posthoc_truth_cannot_override_a_formal_failure: true
+shared_numeric_profile:
+  physics_rate_hz: 240
+  physics_dt_s: 0.004166666666666667
+  fine_contact_offset_m: 1.0e-05
+  rest_offset_m: 0.0
+  max_hard_stop_gap_or_penetration_m: 5.0e-05
+  hard_penetration_excludes_declared_compliant_physical_deflection: true
+  compliant_exclusion_requires_resolved_intended_collider_pair: true
+  compliant_exclusion_requires_effective_material_binding: true
+  compliant_exclusion_requires_positive_resolved_stiffness: true
+  missing_or_wrong_compliant_binding_is_scored_as_hard_penetration: true
+  compliant_energy_reference: after_gravity_free_preload_settle_before_external_probe
+  energy_balance_includes_external_work: true
+  energy_state_equation: E=K+Ug+sum(0.5*k_eff*deflection^2)
+  energy_residual_equation: R=delta_E-W_external+E_dissipation
+  unexplained_energy_gain_definition: max(0,R)
+  energy_trace_required_fields:
+  - timestamp_s
+  - kinetic_energy_j
+  - gravitational_potential_energy_j
+  - compliant_energy_by_role_j
+  - external_applied_work_j
+  - kinematic_or_constraint_work_j
+  - friction_dissipation_j
+  - damping_dissipation_j
+  - residual_j
+  slow_linear_speed_m_s: 0.0005
+  slow_angular_speed_deg_s: 5.0
+  no_drive_hold_s: 5.0
+  robot_formal_perpendicular_moment_max_nm: 0.3
+  first_formal_exceedance_fails_episode: true
+benches:
+  P1:
+    name: correct_n_key_and_three_start_entry
+    mode: connector_component_only
+    inputs:
+      yaw_deg: 0.0
+      lateral_offset_m:
+      - 0.0
+      - 0.0
+      tilt_rad:
+      - 0.0
+      - 0.0
+      thread_start_phases_deg:
+      - 0.0
+      - 120.0
+      - 240.0
+      axial_speed_m_s: 0.0005
+      component_driver_profile:
+        schema_version: kcg_d38999_p1_component_driver_v1
+        gravity_magnitude_m_s2: 0.0
+        gravity_set_before_world_reset: true
+        settle_steps: 120
+        hold_steps: 240
+        translation_position_gain_n_m: 600.0
+        translation_velocity_gain_n_s_m: 8.0
+        translation_force_component_limit_n: 8.0
+        roll_pitch_position_gain_nm_rad: 1.2
+        body_yaw_position_gain_nm_rad: 0.8
+        nut_yaw_position_gain_nm_rad: 0.8
+        angular_velocity_gain_nm_s_rad: 0.01
+        torque_component_limit_nm: 0.3
+        body_yaw_target_rad: 0.0
+        nut_yaw_target_equation: -2*pi*max(0,separation-thread_entry_separation)/thread_lead
+        body_and_nut_translation_target_is_same_frozen_axial_target: true
+        forces_and_torques_applied_in_world_frame: true
+        force_and_torque_clamps_are_componentwise: true
+        object_pose_write_after_physics_start_allowed: false
+    pass:
+      required_precedence_edges:
+      - - five_key_polarization
+        - three_start_thread_entry
+      - - five_key_polarization
+        - first_pin_socket_spring_touch
+      - - spring_finger_engagement
+        - first_pin_socket_spring_touch
+      - - three_start_thread_entry
+        - shell_to_shell_metal_bottoming
+      - - first_pin_socket_spring_touch
+        - shell_to_shell_metal_bottoming
+      - - first_pin_socket_spring_touch
+        - pin_barrier_seal_contact
+      - - pin_barrier_seal_contact
+        - shell_to_shell_metal_bottoming
+      - - seal_compression
+        - shell_to_shell_metal_bottoming
+      nominal_r7_expected_order:
+      - five_key_polarization
+      - three_start_thread_entry
+      - spring_finger_engagement
+      - first_pin_socket_spring_touch
+      - pin_barrier_seal_contact
+      - seal_compression
+      - shell_to_shell_metal_bottoming
+      nominal_event_datum_B_separation_mm:
+        five_key_polarization: 6.5
+        three_start_thread_entry: 7.43
+        spring_finger_engagement: 10.8
+        first_pin_socket_spring_touch: 12.02
+        pin_barrier_seal_contact: 14.305
+        seal_compression: 14.615
+        shell_to_shell_metal_bottoming: 15.05
+      nominal_event_position_tolerance_m: 5.0e-05
+      observed_event_order_must_be_recorded: true
+      all_three_thread_starts_enter: true
+      false_bottoming_count: 0
+      solver_error_count: 0
+  P2:
+    name: full_yaw_wrong_key_and_boundary_sweep
+    mode: connector_component_only
+    inputs:
+      yaw_start_deg: 0
+      yaw_stop_deg_inclusive: 359
+      yaw_step_deg: 1
+      mandatory_wrong_yaw_deg: 180
+      boundary_refinement_step_deg: 0.1
+      axial_speed_m_s: 0.0005
+    pass:
+      outside_geometry_admissible_n_key_window_blocked: true
+      block_before_thread_entry: true
+      block_before_first_electrical_contact: true
+      false_bottoming_count: 0
+      cross_contact_pair_count: 0
+  P3:
+    name: xy_tilt_capture_and_blocking_map
+    mode: connector_component_only
+    inputs:
+      x_offsets_m:
+      - 0.0
+      - -5.0e-05
+      - 5.0e-05
+      - -0.0001
+      - 0.0001
+      - -0.0002
+      - 0.0002
+      y_offsets_m:
+      - 0.0
+      - -5.0e-05
+      - 5.0e-05
+      - -0.0001
+      - 0.0001
+      - -0.0002
+      - 0.0002
+      tilt_x_rad:
+      - 0.0
+      - -0.002
+      - 0.002
+      - -0.004
+      - 0.004
+      - -0.008
+      - 0.008
+      tilt_y_rad:
+      - 0.0
+      - -0.002
+      - 0.002
+      - -0.004
+      - 0.004
+      - -0.008
+      - 0.008
+      include_axis_extremes_and_combined_corners: true
+    pass:
+      centered_case_must_bottom: true
+      minimum_passive_capture_abs_xy_m: 5.0e-05
+      minimum_passive_capture_abs_tilt_rad: 0.002
+      larger_cases_may_guide_or_block_but_not_false_bottom: true
+      force_or_moment_response_must_be_continuous_and_directionally_restoring_or_blocking: true
+      max_noncompliant_hard_surface_penetration_m: 5.0e-05
+  P4:
+    name: passive_sequence_compliance_and_energy
+    mode: connector_component_only
+    inputs:
+      single_contact_then_full_array: true
+      load_and_unload: true
+      complete_pair_axial_force_probe: true
+      spring_finger_force_reported_for_complete_pair: true
+      seal_physical_deflection_probe_m:
+      - 0.00028
+      - 0.000435
+      - 0.00059
+      energy_reference_after_preload_settle: true
+      force_slope_calibration_roles:
+      - socket_petal_per_petal
+      - spring_finger_per_finger
+      - pin_barrier_per_barrier
+      - peripheral_seal_per_segment
+      record_active_collider_pair_and_contact_point_counts: true
+      calibration_uses_resolved_normal_force_and_overlap: true
+      geometry_or_topology_change_for_calibration_forbidden: true
+    pass:
+      spring_finger_lead_before_first_electrical_contact_m_min: 0.00102
+      shell25_spring_finger_complete_connector_axial_force_n_min: 2.0
+      shell25_spring_finger_complete_connector_axial_force_n_max: 156.0
+      socket_sleeve_physical_deflection_m_max: 7.5e-05
+      pin_barrier_contact_count: 61
+      pin_barrier_nominal_first_touch_datum_B_separation_m: 0.014305
+      pin_barrier_post_contact_axial_travel_to_bottoming_m: 0.000745
+      pin_barrier_resolved_normal_deflection_m_max: 0.000335
+      spring_finger_physical_deflection_m_max: 0.00025
+      seal_nominal_physical_deflection_m: 0.000435
+      seal_physical_deflection_m_max: 0.00059
+      declared_compliant_deflection_excluded_from_hard_penetration_gate: true
+      max_noncompliant_hard_surface_penetration_m: 5.0e-05
+      force_nonnegative_along_compression: true
+      unload_returns_without_residual_growth: true
+      dissipated_energy_j_min: 0.0
+      initial_preload_energy_accounted_separately: true
+      external_work_accounted_in_energy_balance: true
+      unexplained_energy_gain_j_max: 1.0e-06
+      realized_normal_force_slope_target_n_m:
+        socket_petal_per_petal: 4000.0
+        spring_finger_per_finger: 12000.0
+        pin_barrier_per_barrier: 250.0
+        peripheral_seal_per_segment: 800.0
+      realized_normal_force_slope_relative_error_max: 0.1
+      active_pair_and_contact_point_trace_complete: true
+      band_or_seam_force_discontinuity_relative_to_full_scale_max: 0.05
+      authored_material_stiffness_is_not_accepted_as_effective_slope_proof: true
+      force_curve_claim: simulation_proxy_only
+  P5:
+    name: all_61_same_label_contacts_with_bad_contact_positive_control
+    mode: connector_component_only
+    inputs:
+      geometry_variants:
+      - minimum_interference
+      - nominal
+      - maximum_interference
+      geometry_variant_source: model_contract.series_III_size20_interface_detail.r7_collision_blueprint.deterministic_geometry_variants
+      independent_cartesian_public_extremes_forbidden: true
+      representative_single_contact_regions:
+      - inner
+      - middle
+      - outer
+      deliberate_bad_contact_count: 1
+    pass:
+      nominal_same_label_contact_count: 61
+      nominal_cross_label_contact_count: 0
+      bad_control_complete_contact_count_max: 60
+      max_hard_annulus_or_wrong_surface_penetration_m: 5.0e-05
+      compliant_sleeve_physical_deflection_m_max: 7.5e-05
+      no_nan_or_solver_error: true
+  P6:
+    name: three_start_theta_z_lead
+    mode: connector_component_only
+    inputs:
+      thread_start_phases_deg:
+      - 0.0
+      - 120.0
+      - 240.0
+      sample_angles_deg:
+      - 0.0
+      - 90.0
+      - 180.0
+      - 270.0
+      - 360.0
+      expected_lead_m_per_revolution: 0.00762
+    pass:
+      fitted_lead_relative_error_max: 0.01
+      full_revolution_axial_error_m_max: 5.0e-05
+      inter_start_axial_difference_m_max: 5.0e-05
+      continuous_correct_direction: true
+      no_runtime_engagement_switch_or_axial_pose_write: true
+      loaded_rail_interval_from_receptacle_B_m:
+      - 0.00912
+      - 0.01674
+      nominal_loaded_entry_plane_from_receptacle_B_m: 0.00912
+      nut_body_joint_type: UsdPhysics.Joint
+      nut_body_joint_collision_enabled_readback: true
+      nut_body_transZ_backup_limits_m:
+      - -0.00015
+      - 0.00015
+      physical_shoulder_contact_before_joint_limit: true
+  P7:
+    name: physical_metal_bottoming_and_hold
+    mode: connector_component_only
+    inputs:
+      no_drive_hold_s: 5.0
+      preserve_all_contacts_during_hold: true
+    pass:
+      physical_shell_stop_pair_required: true
+      both_stop_surface_assignments_are_simulation_proxies: true
+      full_mate_datum_B_separation_m: 0.01505
+      max_shell_gap_m: 5.0e-05
+      max_shell_penetration_m: 5.0e-05
+      same_label_contact_count: 61
+      red_band_is_not_a_pass_signal: true
+      spontaneous_release_count: 0
+  P8:
+    name: friction_torque_and_energy
+    mode: component_then_robot_in_loop
+    inputs:
+      material_parameter_scales:
+      - 0.5
+      - 1.0
+      - 1.5
+      rotation_speed_deg_s: 5.0
+      complete_pair_coupling_probe: true
+      complete_pair_probe_runs_without_robot: true
+      detent_component_is_reported_separately: true
+      settle_and_rebase_preload_energy_for_each_material_scale: true
+      detent_force_overlap_component_calibration: true
+      detent_all_three_followers_individual_and_aggregate_trace: true
+      detent_active_collider_pair_and_contact_point_trace: true
+      detent_tooth_seam_crossing_probe: true
+      detent_damping_trace: true
+    pass:
+      torque_changes_monotonically_with_friction_or_normal_load: true
+      complete_pair_coupling_torque_nm_max: 4.6
+      detent_initial_forward_component_nm_min: 0.0005
+      detent_full_forward_ramp_component_nm_max: 0.1
+      detent_physical_deflection_m_max: 5.1e-05
+      detent_resolved_force_overlap_slope_target_n_m: 110000.0
+      detent_resolved_force_overlap_slope_relative_error_max: 0.1
+      detent_force_overlap_curve_finite_nonnegative_and_monotonic: true
+      detent_active_pair_and_contact_point_trace_complete: true
+      detent_tooth_seam_force_discontinuity_relative_to_full_scale_max: 0.05
+      detent_resolved_damping_trace_complete: true
+      authored_detent_material_stiffness_is_not_effective_slope_proof: true
+      detent_result_cannot_be_substituted_for_complete_pair_result: true
+      initial_preload_energy_accounted_separately: true
+      external_work_accounted_in_energy_balance: true
+      kinematic_or_constraint_work_accounted_in_energy_balance: true
+      friction_and_damping_dissipation_traced: true
+      unexplained_energy_gain_j_max: 1.0e-06
+      robot_formal_perpendicular_moment_nm_max: 0.3
+      first_robot_limit_exceedance_fails_episode: true
+      posthoc_filter_cannot_restore_failure: true
+  P9:
+    name: self_lock_and_component_disengagement
+    mode: component_then_robot_in_loop
+    inputs:
+      no_drive_hold_s: 5.0
+      robot_reverse_disturbance_nm_max: 0.3
+      component_only_reverse_probe_allowed: true
+      complete_pair_disengagement_probe: true
+      complete_pair_probe_runs_without_robot: true
+    pass:
+      hold_rotation_deg_max: 1.0
+      hold_axial_retreat_m_max: 5.0e-05
+      robot_disturbance_rotation_deg_max: 1.0
+      robot_disturbance_axial_retreat_m_max: 5.0e-05
+      complete_pair_disengagement_torque_nm_min: 0.6
+      complete_pair_disengagement_torque_nm_max: 4.6
+      complete_pair_limits_do_not_apply_to_detent_alone: true
+      reverse_motion_follows_negative_thread_lead: true
+      component_limit_cannot_relax_robot_limit: true
+  P10:
+    name: receptacle_fixture_world_load_path
+    mode: fixture_component_only
+    inputs:
+      axial_force_n: 5.0
+      lateral_force_n: 2.0
+      bending_moment_nm: 0.18
+      torsional_moment_nm: 0.3
+      include_combined_case: true
+    pass:
+      receptacle_to_fixture_joint_required: true
+      fixture_to_world_joint_required: true
+      receptacle_to_fixture_joint_path: /World/D38999TabletopV1/Joints/ReceptacleToFixture
+      fixture_to_world_joint_path: /World/D38999TabletopV1/Joints/FixtureToWorld
+      fixture_to_world_body0_relationship_target_count: 0
+      fixture_to_world_localPos0_m:
+      - 0.55
+      - 0.185
+      - 0.22
+      fixture_to_world_localRot0_wxyz:
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.0
+      fixture_to_world_localPos1_m:
+      - 0.0
+      - 0.0
+      - 0.0
+      fixture_to_world_localRot1_wxyz:
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.0
+      receptacle_to_fixture_localPos0_m:
+      - 0.0
+      - 0.0
+      - 0.052
+      receptacle_to_fixture_localRot0_wxyz:
+      - 0.0
+      - 1.0
+      - 0.0
+      - 0.0
+      receptacle_to_fixture_localPos1_m:
+      - 0.0
+      - 0.0
+      - 0.0
+      receptacle_to_fixture_localRot1_wxyz:
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.0
+      direct_world_static_receptacle_forbidden: true
+      fixture_explicit_mass_api_required: true
+      receptacle_explicit_mass_api_required: true
+      fixture_diagonal_inertia_kg_m2:
+      - 0.0088333333333
+      - 0.0088333333333
+      - 0.0163333333333
+      translation_drift_m_max: 1.0e-06
+      rotation_drift_rad_max: 1.0e-05
+      fixture_or_table_penetration_count: 0
+  P11:
+    name: robot_hand_self_collision_and_positive_control
+    mode: robot_in_loop
+    inputs:
+      path_waypoints:
+      - home
+      - pregrasp
+      - grasp
+      - insert
+      - twist
+      dynamic_sample_rate_hz: 240
+      include_empty_hand_open_close: true
+      deliberate_collision_positive_control: true
+    pass:
+      self_collision_enabled_readback: true
+      excluded_pair_count_initial: 16
+      sampled_never_pair_exclusion_count: 0
+      nonexcluded_path_collision_count: 0
+      unexpected_environment_contact_count: 0
+      excluded_pair_set_exactly_matches_contract: true
+      successor_regenerated_from_frozen_source_path: src/iiwa_description/urdf/handarm.urdf.xacro
+      successor_robot_asset_path: artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/handarm.usda
+      arm_mass_inertia_source_path: src/iiwa_description/urdf/iiwa14.xacro
+      hand_mass_inertia_source_path: src/iiwa_description/urdf/hand.xacro
+      predecessor_physics_usda_reused_as_successor: false
+      deliberate_positive_control_detected: true
+      robot_collision_link_count: 17
+      unassigned_material_role_collider_count: 0
+      unassigned_response_role_collider_count: 0
+      fingertip_role_links:
+      - f1Link3
+      - f2Link2
+      - f3Link3
+      nonterminal_finger_role_violation_count: 0
+      full_robot_material_role_mapping_exact: true
+      resolved_high_friction_robot_links:
+      - f1Link3
+      - f2Link2
+      - f3Link3
+      every_robot_collision_link_has_collision_api: true
+      every_robot_collision_link_uses_exact_frozen_source_mesh: true
+      every_robot_link_mass_com_inertia_matches_frozen_source: true
+  P12:
+    name: wrist_ft_camera_frames_and_timing
+    mode: robot_sensor_bench
+    inputs:
+      axis_signs:
+      - positive
+      - negative
+      amplitudes:
+      - half
+      - full
+      axes:
+      - fx
+      - fy
+      - fz
+      - mx
+      - my
+      - mz
+      multiple_wrist_orientations: true
+      payload_and_stale_sample_cases: true
+    pass:
+      gain_min: 0.99
+      gain_max: 1.01
+      same_kind_crosstalk_fraction_max: 0.01
+      odd_symmetry_error_fraction_max: 0.01
+      half_amplitude_linearity_error_fraction_max: 0.01
+      sample_age_s_max: 0.02
+      tare_payload_gravity_and_inertia_compensation_required: true
+      safety_threshold_fields_may_not_be_null: true
+      camera_extrinsics_constant_during_episode: true
+      palm_camera_canonical_suffix: /PalmCamera
+      wrist_camera_canonical_suffix: /WristCamera
+      duplicate_live_view_camera_prim_count: 0
+      camera_resolution_px:
+      - 1280
+      - 720
+      camera_clipping_range_m:
+      - 0.02
+      - 10.0
+      camera_has_mass_rigid_body_or_collision_api_count: 0
+      wrist_ft_independent_sensor_body_or_collider_count: 0
+      wrist_ft_source_joint_semantic_id: hand2arm
+      wrist_ft_canonical_joint_path: /World/HandArm/Physics/hand2arm
+      wrist_ft_raw_frame: handbase_link
+      wrist_ft_canonical_from_raw: negate_all_six_components
+      fingertip_tactile_input_count: 0
+      grasp_tcp_is_massless_noncolliding_virtual_frame: true
+      grasp_tcp_canonical_suffix: /grasp_tcp
+      grasp_tcp_handbase_translation_m:
+      - 0.0
+      - 0.0
+      - 0.4
+      grasp_tcp_handbase_rotation_wxyz:
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.0
+      grasp_tcp_forbidden_physics_api_count: 0
+  P13:
+    name: numerical_stability_three_fresh_processes
+    mode: connector_then_robot_in_loop
+    inputs:
+      states:
+      - loose_resting
+      - first_contact
+      - partial_thread
+      - full_bottoming
+      no_drive_hold_s: 5.0
+      fresh_process_replays: 3
+    pass:
+      nan_count: 0
+      traceback_count: 0
+      solver_explosion_count: 0
+      full_mate_translation_drift_m_max: 5.0e-05
+      full_mate_rotation_drift_deg_max: 0.1
+      spontaneous_unlock_count: 0
+      verdicts_identical_across_replays: true
+      pose_write_after_initialization_count: 0
+      intended_compliant_thread_detent_pair_filtered_count: 0
+      resolved_compliant_material_error_count: 0
+      nonconvex_dynamic_collider_count: 0
+      automatic_collision_approximation_count: 0
+      ancestor_filter_covering_intended_pair_count: 0
+      compliant_pair_with_zero_or_two_compliant_sides_count: 0
+  P14:
+    name: minimal_sensor_only_robot_in_loop
+    mode: robot_in_loop
+    inputs:
+      required_cases:
+      - correct_n_key
+      - wrong_key
+      controller_inputs:
+      - rgbd
+      - joint_state
+      - tcp_forward_kinematics
+      - wrist_6d_wrench
+      - controller_history
+    pass:
+      correct_case_reaches_physical_thread_and_bottoming: true
+      wrong_case_stops_or_recovers_within_robot_moment_gate: true
+      robot_formal_perpendicular_moment_nm_max: 0.3
+      first_formal_exceedance_fails_episode: true
+      forbidden_controller_input_count: 0
+      forbidden_mechanism_count: 0
+      posthoc_truth_cannot_restore_failure: true
+phase_release:
+  A2_requires:
+  - structural_inventory_pass
+  - resolved_stage_property_readback
+  - geometry_derived_from_collision_not_metadata
+  - material_role_partition_pass
+  - intended_contact_pair_filter_audit_pass
+  - mass_inertia_and_joint_readback_pass
+  - complete_resolved_readback_inventory_pass
+  - realized_robot_asset_contract_pass
+  - connector_blueprint_inventory_pass
+  - explicit_convex_topology_and_bounds_pass
+  - response_role_and_compliance_side_pass
+  - leaf_filter_source_audit_pass
+  - canonical_camera_fixture_path_pass
+  A2_result_contract:
+    schema_version: kcg_d38999_keyed_physical_r12_resolved_readback_v1
+    generator_id: kcg_d38999_keyed_v2_composed_stage_reader_v2
+    contract_revision: d38999_keyed_v3_r12_family_algebra_v1
+    model_solver_contract_must_match_exactly: true
+    model_contract_is_only_expected_inventory_authority: true
+    external_expected_inventory_allowed: false
+    production_release_API_accepts_composed_asset_path_only: true
+    caller_supplied_mapping_is_candidate_only: true
+    required_top_level_fields:
+    - schema_version
+    - generator_id
+    - contract_revision
+    - asset_path
+    - root_prim
+    - collider_rows
+    - property_rows
+    - family_pair_rows
+    - filter_source_rows
+    - summary
+    row_field_sources:
+      collider_rows: solver_profile.resolved_readback_required_fields
+      property_rows: solver_profile.resolved_property_readback_required_fields
+      family_pair_rows: solver_profile.resolved_family_pair_readback_required_fields
+      filter_source_rows: solver_profile.resolved_filter_source_row_required_fields
+    expected_row_counts:
+      collider_rows: 14761
+      property_rows: 22
+      family_pair_rows: 406
+      filter_source_rows: 387
+    complete_inventory_required_for_every_collection: true
+    claimed_summary_must_equal_internal_recomputation: true
+    missing_expected_collider_row_count: 0
+    unexpected_collider_row_count: 0
+    duplicate_collider_row_identity_count: 0
+    missing_expected_property_row_count: 0
+    unexpected_property_row_count: 0
+    duplicate_property_row_identity_count: 0
+    missing_expected_family_pair_row_count: 0
+    unexpected_family_pair_row_count: 0
+    duplicate_family_pair_row_identity_count: 0
+    missing_expected_filter_source_row_count: 0
+    unexpected_filter_source_row_count: 0
+    duplicate_filter_source_row_identity_count: 0
+    failed_collider_row_count: 0
+    failed_property_row_count: 0
+    failed_family_pair_row_count: 0
+    failed_filter_source_row_count: 0
+    missing_semantic_prim_count: 0
+    unexpected_semantic_prim_count: 0
+    unclassified_connector_collider_count: 0
+    family_member_count_mismatch_count: 0
+    unmatched_base_family_pair_count: 0
+    multiply_matched_base_family_pair_count: 0
+    concrete_leaf_pair_count_mismatch_count: 0
+    unassigned_material_role_collider_count: 0
+    unassigned_response_role_collider_count: 0
+    intended_enabled_family_pair_filtered_count: 0
+    filter_source_coverage_error_count: 0
+    rigid_owner_resolution_error_count: 0
+    collision_group_membership_error_count: 0
+    geometry_metadata_disagreement_count: 0
+    nonconvex_dynamic_collider_count: 0
+    automatic_collision_approximation_count: 0
+    ancestor_filter_covering_intended_pair_count: 0
+    compliant_pair_with_zero_or_two_compliant_sides_count: 0
+    all_expected_semantic_inventory_present: true
+    asset_path_must_equal_authorized_A2_output: true
+  A3_requires:
+  - P1
+  - P2
+  - P3
+  - P4
+  - P5
+  - P6
+  - P7
+  - P8
+  - P9
+  - P10
+  - P11
+  - P12
+  - P13
+  - P14
+  A4_requires:
+  - front_face_61_contact_review
+  - transparent_section_sequence_review
+  - wrong_yaw_and_boundary_review
+  - thread_0_120_240_360_review
+  - collision_overlay_review
+  - full_mate_hold_review
+  A5_requires:
+  - all_a2_a3_a4_requirements_pass
+  - proxy_parameters_frozen
+  - material_roles_frozen
+  - solver_profile_frozen
+  - semantic_asset_identity_frozen
+  downstream_release_before_A5: false

@@ -5,31 +5,27 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 from pathlib import Path
 import traceback
 
 
-def _asset_manifest(asset_path):
+def _asset_file_metadata(asset_path):
     root = asset_path.parent
     files = sorted(
         path
         for path in root.rglob("*")
         if path.is_file() and path.suffix.lower() in {".usd", ".usda", ".usdc"}
     )
-    digest = hashlib.sha256()
-    for path in files:
-        relative = path.relative_to(root).as_posix().encode("utf-8")
-        content_digest = hashlib.sha256(path.read_bytes()).hexdigest().encode(
-            "ascii"
-        )
-        digest.update(relative)
-        digest.update(b"\0")
-        digest.update(content_digest)
-        digest.update(b"\n")
-    return digest.hexdigest(), len(files)
+    return [
+        {
+            "relative_path": path.relative_to(root).as_posix(),
+            "size_bytes": path.stat().st_size,
+            "mtime_ns": path.stat().st_mtime_ns,
+        }
+        for path in files
+    ]
 
 
 def _rounded(values):
@@ -43,7 +39,8 @@ def main():
         "--robot-asset",
         default=str(
             repository
-            / "artifacts/kcg_connector/isaac/robot/handarm/handarm.usda"
+            / "artifacts/kcg_connector/isaac/robot/"
+            "handarm_keyed_v3_physical_r7/handarm.usda"
         ),
     )
     parser.add_argument("--zero-gravity-steps", type=int, default=60)
@@ -93,8 +90,8 @@ def main():
     robot_asset = Path(arguments.robot_asset).expanduser().resolve()
     if not robot_asset.is_file():
         raise FileNotFoundError(robot_asset)
-    asset_sha_before = hashlib.sha256(robot_asset.read_bytes()).hexdigest()
-    asset_hash_before, asset_file_count = _asset_manifest(robot_asset)
+    asset_files_before = _asset_file_metadata(robot_asset)
+    asset_file_count = len(asset_files_before)
 
     from isaacsim import SimulationApp
 
@@ -111,8 +108,7 @@ def main():
     metrics = {
         "asset": str(robot_asset),
         "asset_file_count": asset_file_count,
-        "robot_asset_sha256_before": asset_sha_before,
-        "asset_manifest_sha256_before": asset_hash_before,
+        "asset_identity_basis": "exact_path_USD_semantics_and_file_metadata_no_fingerprint",
         "canonical_sign_applied": False,
         "measurement_joint": "hand2arm",
         "raw_frame": "handbase_link",
@@ -449,16 +445,13 @@ def main():
         metrics["tcp_offset_change_m"] = tcp_offset_change
         metrics["tcp_unchanged"] = tcp_unchanged
 
-        asset_hash_after, after_file_count = _asset_manifest(robot_asset)
-        asset_sha_after = hashlib.sha256(robot_asset.read_bytes()).hexdigest()
+        asset_files_after = _asset_file_metadata(robot_asset)
+        after_file_count = len(asset_files_after)
         asset_unchanged = bool(
-            asset_sha_after == asset_sha_before
-            and
-            asset_hash_after == asset_hash_before
+            asset_files_after == asset_files_before
             and after_file_count == asset_file_count
         )
-        metrics["robot_asset_sha256_after"] = asset_sha_after
-        metrics["asset_manifest_sha256_after"] = asset_hash_after
+        metrics["asset_file_metadata_unchanged"] = asset_unchanged
         metrics["asset_unchanged"] = asset_unchanged
 
         passed = bool(

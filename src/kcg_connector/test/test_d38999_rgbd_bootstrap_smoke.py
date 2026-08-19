@@ -51,14 +51,17 @@ def test_script_uses_direct_replicator_shared_render_product():
     assert "Camera(" in source
     assert "rep.functional.create.camera(" in source
     assert "rep.create.render_product(" in source
-    assert source.count("rep.AnnotatorRegistry.get_annotator(") == 3
-    assert 'rep.AnnotatorRegistry.get_annotator("rgb")' in source
-    assert '"distance_to_image_plane"' in source
-    assert '"semantic_segmentation"' in source
-    assert '"semanticFilter": f"{rgbd.labels.taxonomy}:*"' in source
-    assert "annotator.attach([render_product_path])" in source
-    assert '"camera_semantic_wrapper_used": False' in source
-    assert '"shared_render_product_for_rgb_depth_semantics": True' in source
+    semantic_runtime = source.split(
+        "def capture_d38999_rgbd_runtime(", 1
+    )[1].split("def capture_d38999_rgbd_raw_formal(", 1)[0]
+    assert semantic_runtime.count("rep.AnnotatorRegistry.get_annotator(") == 3
+    assert 'rep.AnnotatorRegistry.get_annotator("rgb")' in semantic_runtime
+    assert '"distance_to_image_plane"' in semantic_runtime
+    assert '"semantic_segmentation"' in semantic_runtime
+    assert '"semanticFilter": f"{rgbd.labels.taxonomy}:*"' in semantic_runtime
+    assert "annotator.attach([render_product_path])" in semantic_runtime
+    assert '"camera_semantic_wrapper_used": False' in semantic_runtime
+    assert '"shared_render_product_for_rgb_depth_semantics": True' in semantic_runtime
     assert "add_semantic_segmentation_to_frame" not in source
     assert "semanticTypes" not in source
     assert "capture_d38999_rgbd_runtime(" in _source()

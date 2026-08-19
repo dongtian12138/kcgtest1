@@ -15,14 +15,25 @@ import yaml
 
 
 D38999_TABLETOP_SCHEMA_VERSION = "kcg_d38999_tabletop_scene_v1"
+D38999_TABLETOP_SCHEMA_VERSION_KEYED_V2 = (
+    "kcg_d38999_keyed_v2_tabletop_scene_v1"
+)
+D38999_TABLETOP_SCHEMA_VERSION_KEYED_V3_R12 = (
+    "kcg_d38999_keyed_v3_tabletop_scene_r12_v1"
+)
+D38999_TABLETOP_SCHEMA_VERSION_MULTILAYER_GRASP = (
+    "kcg_d38999_multilayer_tabletop_scene_grasp_v1"
+)
 DEFAULT_D38999_TABLETOP_CONFIG_PATH = (
     Path(__file__).resolve().parents[1]
     / "config/d38999_tabletop_scene_v1.yaml"
 )
 EXPECTED_ASSET_BASENAME = "d38999_shell25j_61_pair_proxy_v1.usda"
+EXPECTED_KEYED_V2_ASSET_BASENAME = "d38999_shell25j_25_61_n_keyed_physical_v3_r11.usda"
+EXPECTED_KEYED_V3_R12_ASSET_BASENAME = "d38999_shell25j_25_61_n_keyed_physical_v3_r12.usda"
+EXPECTED_MULTILAYER_GRASP_ASSET_BASENAME = "D38999_ASSEMBLY_CONTROL_V1.usda"
 LEGACY_ASSET_BASENAME = "connector_pair.usda"
 _PRIM_PATTERN = re.compile(r"^/World(?:/[A-Za-z_][A-Za-z0-9_]*)+$")
-_SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 
 def _mapping(value: Any, label: str) -> Mapping[str, Any]:
@@ -106,7 +117,6 @@ def _color(value: Any, label: str) -> tuple[float, float, float]:
 @dataclass(frozen=True)
 class D38999TabletopAsset:
     local_path: str
-    sha256: str
     proxy_id: str
     reference_prim_path: str
     model_root_prim_path: str
@@ -115,6 +125,293 @@ class D38999TabletopAsset:
     nut_prim_path: str
     joint_prim_path: str
     fixed_receptacle_prim_path: str
+
+
+@dataclass(frozen=True)
+class D38999TabletopAssetProfile:
+    profile_id: str
+    source_config: str
+    loose_endpoint_orientation: str
+    fixed_endpoint_orientation: str
+    loose_endpoint_rotation_degrees_xyz: tuple[float, float, float]
+    fixed_endpoint_rotation_degrees_xyz: tuple[float, float, float]
+    body_mass_kg: float
+    nut_mass_kg: float
+    expected_body_collider_count: int
+    expected_nut_collider_count: int
+
+
+_LEGACY_PROFILE_ID = "d38999_shell25j_61_pair_proxy_v1"
+_KEYED_V2_PROFILE_ID = (
+    "d38999_shell25j_25_61_n_keyed_physical_pair_v3"
+)
+_KEYED_V3_R12_PROFILE_ID = (
+    "d38999_shell25j_25_61_n_keyed_physical_pair_v3_r12"
+)
+_MULTILAYER_GRASP_PROFILE_ID = "D38999_ASSEMBLY_CONTROL_V1"
+_KEYED_V2_MODEL_IDS = {
+    "pairModelId": _KEYED_V2_PROFILE_ID,
+    "loosePlugModelId": "d38999_26kj61sn_physical_proxy_v3",
+    "fixedReceptacleModelId": "d38999_20kj61pn_physical_proxy_v3",
+}
+_KEYED_V3_R12_MODEL_IDS = {
+    **_KEYED_V2_MODEL_IDS,
+    "pairModelId": _KEYED_V3_R12_PROFILE_ID,
+}
+_PHYSICAL_PROFILE_IDS = frozenset(
+    (
+        _KEYED_V2_PROFILE_ID,
+        _KEYED_V3_R12_PROFILE_ID,
+        _MULTILAYER_GRASP_PROFILE_ID,
+    )
+)
+_FIXTURE_JOINT_PROFILE_IDS = frozenset(
+    (_KEYED_V2_PROFILE_ID, _KEYED_V3_R12_PROFILE_ID)
+)
+_PHYSICAL_MODEL_IDS = {
+    _KEYED_V2_PROFILE_ID: _KEYED_V2_MODEL_IDS,
+    _KEYED_V3_R12_PROFILE_ID: _KEYED_V3_R12_MODEL_IDS,
+    _MULTILAYER_GRASP_PROFILE_ID: {
+        "representationId": _MULTILAYER_GRASP_PROFILE_ID,
+    },
+}
+_PROFILE_VALUES = {
+    _LEGACY_PROFILE_ID: {
+        "profile_id": _LEGACY_PROFILE_ID,
+        "source_config": (
+            "src/kcg_connector/config/d38999_shell25j_proxy_v1.yaml"
+        ),
+        "loose_endpoint_orientation": "LEGACY_V1_ASSET_IDENTITY",
+        "fixed_endpoint_orientation": "LEGACY_V1_ASSET_IDENTITY",
+        "loose_endpoint_rotation_degrees_xyz": (0.0, 0.0, 0.0),
+        "fixed_endpoint_rotation_degrees_xyz": (0.0, 0.0, 0.0),
+        "body_mass_kg": 0.08,
+        "nut_mass_kg": 0.04,
+        "expected_body_collider_count": 21,
+        "expected_nut_collider_count": 24,
+    },
+    _KEYED_V2_PROFILE_ID: {
+        "profile_id": _KEYED_V2_PROFILE_ID,
+        "source_config": (
+            "src/kcg_connector/config/d38999_keyed_v2_physical_model_contract_v1.yaml"
+        ),
+        "loose_endpoint_orientation": "MATING_FACE_UP_RX_180_FOR_REAR_DOWN",
+        "fixed_endpoint_orientation": (
+            "MATING_FACE_UP_RX_180_FOR_DOWNWARD_INSERTION"
+        ),
+        "loose_endpoint_rotation_degrees_xyz": (180.0, 0.0, 0.0),
+        "fixed_endpoint_rotation_degrees_xyz": (180.0, 0.0, 0.0),
+        "body_mass_kg": 0.23,
+        "nut_mass_kg": 0.08,
+        "expected_body_collider_count": 7577,
+        "expected_nut_collider_count": 294,
+    },
+    _KEYED_V3_R12_PROFILE_ID: {
+        "profile_id": _KEYED_V3_R12_PROFILE_ID,
+        "source_config": (
+            "src/kcg_connector/config/"
+            "d38999_keyed_v3_physical_model_contract_r12_v1.yaml"
+        ),
+        "loose_endpoint_orientation": "MATING_FACE_UP_RX_180_FOR_REAR_DOWN",
+        "fixed_endpoint_orientation": (
+            "MATING_FACE_UP_RX_180_FOR_DOWNWARD_INSERTION"
+        ),
+        "loose_endpoint_rotation_degrees_xyz": (180.0, 0.0, 0.0),
+        "fixed_endpoint_rotation_degrees_xyz": (180.0, 0.0, 0.0),
+        "body_mass_kg": 0.23,
+        "nut_mass_kg": 0.08,
+        "expected_body_collider_count": 7438,
+        "expected_nut_collider_count": 204,
+    },
+    _MULTILAYER_GRASP_PROFILE_ID: {
+        "profile_id": _MULTILAYER_GRASP_PROFILE_ID,
+        "source_config": (
+            "src/kcg_connector/config/d38999_master_model_contract_v1.yaml"
+        ),
+        "loose_endpoint_orientation": "MATING_FACE_UP_RX_180_FOR_REAR_DOWN",
+        "fixed_endpoint_orientation": (
+            "MATING_FACE_UP_RX_180_FOR_DOWNWARD_INSERTION"
+        ),
+        "loose_endpoint_rotation_degrees_xyz": (180.0, 0.0, 0.0),
+        "fixed_endpoint_rotation_degrees_xyz": (180.0, 0.0, 0.0),
+        "body_mass_kg": 0.23,
+        "nut_mass_kg": 0.08,
+        "expected_body_collider_count": 72,
+        "expected_nut_collider_count": 7,
+    },
+}
+_SCHEMA_PROFILE_IDS = {
+    D38999_TABLETOP_SCHEMA_VERSION: _LEGACY_PROFILE_ID,
+    D38999_TABLETOP_SCHEMA_VERSION_KEYED_V2: _KEYED_V2_PROFILE_ID,
+    D38999_TABLETOP_SCHEMA_VERSION_KEYED_V3_R12: _KEYED_V3_R12_PROFILE_ID,
+    D38999_TABLETOP_SCHEMA_VERSION_MULTILAYER_GRASP: (
+        _MULTILAYER_GRASP_PROFILE_ID
+    ),
+}
+_PROFILE_ASSET_CONTRACTS = {
+    _LEGACY_PROFILE_ID: {
+        "local_path": (
+            "artifacts/kcg_connector/isaac/"
+            "d38999_shell25j_61_pair_proxy_v1.usda"
+        ),
+        "basename": EXPECTED_ASSET_BASENAME,
+        "model_root_name": "D38999Shell25JProxy",
+    },
+    _KEYED_V2_PROFILE_ID: {
+        "local_path": (
+            "artifacts/kcg_connector/isaac/keyed_v3_physical_r11/"
+            "d38999_shell25j_25_61_n_keyed_physical_v3_r11.usda"
+        ),
+        "basename": EXPECTED_KEYED_V2_ASSET_BASENAME,
+        "model_root_name": "D38999Shell25JKeyedPhysicalV3",
+    },
+    _KEYED_V3_R12_PROFILE_ID: {
+        "local_path": (
+            "artifacts/kcg_connector/isaac/keyed_v3_physical_r12/"
+            "d38999_shell25j_25_61_n_keyed_physical_v3_r12.usda"
+        ),
+        "basename": EXPECTED_KEYED_V3_R12_ASSET_BASENAME,
+        "candidate_path_pattern": (
+            r"artifacts/kcg_connector/isaac/keyed_v3_physical_r12/"
+            r"candidates/(r12_candidate_0[1-4])/\1\.usda"
+        ),
+        "model_root_name": "D38999Shell25JKeyedPhysicalV3",
+    },
+    _MULTILAYER_GRASP_PROFILE_ID: {
+        "local_path": (
+            "artifacts/kcg_connector/isaac/d38999_multilayer_v1/"
+            "D38999_ASSEMBLY_CONTROL_V1.usda"
+        ),
+        "basename": EXPECTED_MULTILAYER_GRASP_ASSET_BASENAME,
+        "model_root_name": (
+            "D38999MultilayerV1/D38999_ASSEMBLY_CONTROL_V1"
+        ),
+        "pair_path_suffix": "/D38999Pair",
+        "build_result_path": (
+            "artifacts/agent_control/tasks/"
+            "D38999-AUTONOMOUS-DYNAMIC-CLOSEOUT-V2/"
+            "DYN-A2-NOMINAL-INSERTION-V2/"
+            "A2_RUN05_NUT_BODY_SHOULDER_TARGETED_FIX_RESULT.json"
+        ),
+        "build_result_sha256": (
+            "a8d144799c3d5e38ff04a875f39180c9a92c074e0fc2d7b34ac59f82b5918718"
+        ),
+        "authorized_overrides_path": (
+            "src/kcg_connector/config/"
+            "d38999_assembly_control_authorized_overrides_v2.yaml"
+        ),
+        "generator_path": (
+            "src/kcg_connector/isaac/build_d38999_multilayer_models.py"
+        ),
+        "physical_contract_path": (
+            "src/kcg_connector/config/"
+            "d38999_keyed_v3_physical_model_contract_r12_v1.yaml"
+        ),
+        "preserved_output_paths": {
+            "D38999_LOCAL_CONTACT_REFERENCE_V1.usda": (
+                "artifacts/kcg_connector/isaac/d38999_multilayer_v1/"
+                "D38999_LOCAL_CONTACT_REFERENCE_V1.usda"
+            ),
+            "D38999_VISUAL_COMPLETE_V1.usda": (
+                "artifacts/kcg_connector/isaac/d38999_multilayer_v1/"
+                "D38999_VISUAL_COMPLETE_V1.usda"
+            ),
+            "MODEL_MAPPING.json": (
+                "artifacts/kcg_connector/isaac/d38999_multilayer_v1/"
+                "MODEL_MAPPING.json"
+            ),
+        },
+    },
+}
+
+
+def _asset_path_is_allowed(
+    profile_id: str,
+    local_path: str,
+    authorized_local_asset_path: str | None = None,
+) -> bool:
+    contract = _PROFILE_ASSET_CONTRACTS[profile_id]
+    if local_path == contract["local_path"]:
+        return True
+    if (
+        profile_id == _KEYED_V3_R12_PROFILE_ID
+        and authorized_local_asset_path is not None
+        and local_path == authorized_local_asset_path
+    ):
+        return True
+    pattern = contract.get("candidate_path_pattern")
+    return bool(pattern and re.fullmatch(pattern, local_path))
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _canonical_profile(profile_id: str) -> D38999TabletopAssetProfile:
+    try:
+        return D38999TabletopAssetProfile(**_PROFILE_VALUES[profile_id])
+    except KeyError as error:
+        raise ValueError("unsupported D38999 tabletop asset profile") from error
+
+
+def _load_profile(
+    value: Any, schema_version: str
+) -> D38999TabletopAssetProfile:
+    profile_id = _SCHEMA_PROFILE_IDS[schema_version]
+    canonical = _canonical_profile(profile_id)
+    if schema_version == D38999_TABLETOP_SCHEMA_VERSION:
+        if value is not None:
+            raise ValueError("legacy tabletop schema cannot declare a profile")
+        return canonical
+    document = _mapping(value, "asset_profile")
+    keys = tuple(D38999TabletopAssetProfile.__dataclass_fields__)
+    _exact_keys(document, keys, "asset_profile")
+    source_config = _text(
+        document["source_config"], "asset_profile.source_config"
+    )
+    if Path(source_config).is_absolute() or ".." in Path(source_config).parts:
+        raise ValueError("asset_profile.source_config must be repository-relative")
+    result = D38999TabletopAssetProfile(
+        profile_id=_text(document["profile_id"], "asset_profile.profile_id"),
+        source_config=source_config,
+        loose_endpoint_orientation=_text(
+            document["loose_endpoint_orientation"],
+            "asset_profile.loose_endpoint_orientation",
+        ),
+        fixed_endpoint_orientation=_text(
+            document["fixed_endpoint_orientation"],
+            "asset_profile.fixed_endpoint_orientation",
+        ),
+        loose_endpoint_rotation_degrees_xyz=_vector3(
+            document["loose_endpoint_rotation_degrees_xyz"],
+            "asset_profile.loose_endpoint_rotation_degrees_xyz",
+        ),
+        fixed_endpoint_rotation_degrees_xyz=_vector3(
+            document["fixed_endpoint_rotation_degrees_xyz"],
+            "asset_profile.fixed_endpoint_rotation_degrees_xyz",
+        ),
+        body_mass_kg=_positive(
+            document["body_mass_kg"], "asset_profile.body_mass_kg"
+        ),
+        nut_mass_kg=_positive(
+            document["nut_mass_kg"], "asset_profile.nut_mass_kg"
+        ),
+        expected_body_collider_count=_positive_integer(
+            document["expected_body_collider_count"],
+            "asset_profile.expected_body_collider_count",
+        ),
+        expected_nut_collider_count=_positive_integer(
+            document["expected_nut_collider_count"],
+            "asset_profile.expected_nut_collider_count",
+        ),
+    )
+    if result != canonical:
+        raise ValueError("asset_profile is not an allowlisted canonical profile")
+    return result
 
 
 @dataclass(frozen=True)
@@ -218,50 +515,82 @@ class D38999TabletopScene:
     physics: D38999TabletopPhysics
     render: D38999TabletopRender
 
-    def as_dict(self) -> dict[str, Any]:
-        return json.loads(
-            json.dumps(asdict(self), allow_nan=False, sort_keys=True)
+    @property
+    def asset_profile(self) -> D38999TabletopAssetProfile:
+        return _canonical_profile(self.asset.proxy_id)
+
+    @property
+    def loose_settled_origin_m(self) -> tuple[float, float, float]:
+        bottom_offset = min(
+            self.loose_endpoint.body_bottom_offset_m,
+            self.loose_endpoint.nut_bottom_offset_m,
+        )
+        return (
+            self.loose_endpoint.initial_origin_m[0],
+            self.loose_endpoint.initial_origin_m[1],
+            self.table.top_z_m - bottom_offset,
         )
 
+    def as_dict(self) -> dict[str, Any]:
+        result = asdict(self)
+        if self.schema_version != D38999_TABLETOP_SCHEMA_VERSION:
+            result["asset_profile"] = asdict(self.asset_profile)
+        return json.loads(json.dumps(result, allow_nan=False, sort_keys=True))
 
-def _load_asset(value: Any) -> D38999TabletopAsset:
+
+def _load_asset(
+    value: Any,
+    profile: D38999TabletopAssetProfile,
+    authorized_local_asset_path: str | None = None,
+) -> D38999TabletopAsset:
     document = _mapping(value, "asset")
-    keys = tuple(D38999TabletopAsset.__dataclass_fields__)
-    _exact_keys(document, keys, "asset")
+    all_keys = tuple(D38999TabletopAsset.__dataclass_fields__)
+    _exact_keys(document, all_keys, "asset")
     local_path = _text(document["local_path"], "asset.local_path")
     if Path(local_path).is_absolute() or ".." in Path(local_path).parts:
         raise ValueError("asset.local_path must be repository-relative")
-    if Path(local_path).name != EXPECTED_ASSET_BASENAME:
-        raise ValueError("asset must be the independent D38999 proxy USD")
-    sha256 = _text(document["sha256"], "asset.sha256")
-    if not _SHA256_PATTERN.fullmatch(sha256):
-        raise ValueError("asset.sha256 must be lowercase SHA-256")
+    asset_contract = _PROFILE_ASSET_CONTRACTS[profile.profile_id]
+    if not _asset_path_is_allowed(
+        profile.profile_id, local_path, authorized_local_asset_path
+    ):
+        if profile.profile_id == _LEGACY_PROFILE_ID:
+            raise ValueError("asset must be the independent D38999 proxy USD")
+        raise ValueError("asset path is not canonical for its profile")
     values = {
         name: _prim_path(document[name], f"asset.{name}")
-        for name in keys
+        for name in all_keys
         if name.endswith("_prim_path")
     }
     result = D38999TabletopAsset(
         local_path=local_path,
-        sha256=sha256,
         proxy_id=_text(document["proxy_id"], "asset.proxy_id"),
         **values,
     )
-    if result.proxy_id != "d38999_shell25j_61_pair_proxy_v1":
-        raise ValueError("asset.proxy_id is unsupported")
-    prefix = result.reference_prim_path + "/D38999Shell25JProxy"
+    if result.proxy_id != profile.profile_id:
+        raise ValueError("asset.proxy_id differs from its allowlisted profile")
+    prefix = (
+        result.reference_prim_path
+        + "/"
+        + asset_contract["model_root_name"]
+    )
     if result.model_root_prim_path != prefix:
         raise ValueError("asset model root does not match its reference")
+    pair_prefix = prefix + asset_contract.get("pair_path_suffix", "")
     expected = {
-        "loose_plug_prim_path": prefix + "/LoosePlug",
-        "body_prim_path": prefix + "/LoosePlug/BodyAssembly",
-        "nut_prim_path": prefix + "/LoosePlug/CouplingNut",
-        "joint_prim_path": prefix + "/LoosePlug/CouplingNutJoint",
-        "fixed_receptacle_prim_path": prefix + "/FixedReceptacle",
+        "loose_plug_prim_path": pair_prefix + "/LoosePlug",
+        "body_prim_path": pair_prefix + "/LoosePlug/BodyAssembly",
+        "nut_prim_path": pair_prefix + "/LoosePlug/CouplingNut",
+        "joint_prim_path": pair_prefix + "/LoosePlug/CouplingNutJoint",
+        "fixed_receptacle_prim_path": pair_prefix + "/FixedReceptacle",
     }
     for name, wanted in expected.items():
         if getattr(result, name) != wanted:
-            raise ValueError(f"asset.{name} does not match D38999 USD")
+            suffix = (
+                "D38999 USD"
+                if profile.profile_id == _LEGACY_PROFILE_ID
+                else "profile USD"
+            )
+            raise ValueError(f"asset.{name} does not match {suffix}")
     return result
 
 
@@ -497,6 +826,40 @@ def _validate_geometry(config: D38999TabletopScene) -> None:
     )
     if separation < loose.minimum_endpoint_separation_m:
         raise ValueError("D38999 endpoints are not physically separated")
+    profile = config.asset_profile
+    if profile.profile_id == _LEGACY_PROFILE_ID:
+        expected_endpoint_geometry = {
+            "fixed_origin_z_m": 0.2615,
+            "fixed_bottom_offset_m": 0.0215,
+            "loose_initial_origin_z_m": 0.215,
+            "body_bottom_offset_m": 0.0,
+            "nut_bottom_offset_m": 0.007,
+            "loose_settled_origin_z_m": 0.200,
+        }
+    else:
+        expected_endpoint_geometry = {
+            "fixed_origin_z_m": 0.272,
+            "fixed_bottom_offset_m": 0.032,
+            "loose_initial_origin_z_m": 0.2455,
+            "body_bottom_offset_m": -0.0305,
+            "nut_bottom_offset_m": -0.0305,
+            "loose_settled_origin_z_m": 0.2305,
+        }
+    actual_endpoint_geometry = {
+        "fixed_origin_z_m": fixed.receptacle_origin_m[2],
+        "fixed_bottom_offset_m": fixed.receptacle_bottom_offset_m,
+        "loose_initial_origin_z_m": loose.initial_origin_m[2],
+        "body_bottom_offset_m": loose.body_bottom_offset_m,
+        "nut_bottom_offset_m": loose.nut_bottom_offset_m,
+        "loose_settled_origin_z_m": config.loose_settled_origin_m[2],
+    }
+    for name, expected in expected_endpoint_geometry.items():
+        if not math.isclose(
+            actual_endpoint_geometry[name], expected, abs_tol=1.0e-12
+        ):
+            raise ValueError(
+                f"{name} is not canonical for tabletop asset profile"
+            )
     table_half_x = 0.5 * config.table.size_m[0]
     table_half_y = 0.5 * config.table.size_m[1]
     for x, y, radius in (
@@ -512,13 +875,15 @@ def _validate_geometry(config: D38999TabletopScene) -> None:
 
 def load_d38999_tabletop_scene(
     config_path: Path | str = DEFAULT_D38999_TABLETOP_CONFIG_PATH,
+    *,
+    authorized_local_asset_path: str | None = None,
 ) -> D38999TabletopScene:
     """Load and validate the independent D38999 tabletop contract."""
     path = Path(config_path).expanduser().resolve()
     with path.open("r", encoding="utf-8") as stream:
         document = yaml.safe_load(stream)
     root = _mapping(document, "root")
-    keys = (
+    base_keys = (
         "schema_version",
         "asset",
         "world",
@@ -528,12 +893,19 @@ def load_d38999_tabletop_scene(
         "physics",
         "render",
     )
-    _exact_keys(root, keys, "root")
-    if root["schema_version"] != D38999_TABLETOP_SCHEMA_VERSION:
+    schema_version = root.get("schema_version")
+    if schema_version not in _SCHEMA_PROFILE_IDS:
         raise ValueError("unsupported D38999 tabletop schema")
+    keys = (
+        base_keys
+        if schema_version == D38999_TABLETOP_SCHEMA_VERSION
+        else base_keys + ("asset_profile",)
+    )
+    _exact_keys(root, keys, "root")
+    profile = _load_profile(root.get("asset_profile"), schema_version)
     config = D38999TabletopScene(
-        schema_version=D38999_TABLETOP_SCHEMA_VERSION,
-        asset=_load_asset(root["asset"]),
+        schema_version=schema_version,
+        asset=_load_asset(root["asset"], profile, authorized_local_asset_path),
         world=_load_world(root["world"]),
         table=_load_surface(root["table"]),
         fixed_endpoint=_load_fixed(root["fixed_endpoint"]),
@@ -547,9 +919,13 @@ def load_d38999_tabletop_scene(
 
 
 def verify_d38999_tabletop_asset(
-    config: D38999TabletopScene, repository_root: Path | str
+    config: D38999TabletopScene,
+    repository_root: Path | str,
+    *,
+    authorized_local_asset_path: str | None = None,
+    authorized_model: Any | None = None,
 ) -> Path:
-    """Resolve and hash-pin the independent D38999 proxy asset."""
+    """Resolve one of the two allowlisted D38999 tabletop assets."""
     repository = Path(repository_root).expanduser().resolve()
     path = (repository / config.asset.local_path).resolve()
     try:
@@ -558,11 +934,144 @@ def verify_d38999_tabletop_asset(
         raise ValueError("D38999 asset escapes repository") from error
     if path.name == LEGACY_ASSET_BASENAME:
         raise ValueError("legacy synthetic connector asset is forbidden")
-    if path.name != EXPECTED_ASSET_BASENAME or not path.is_file():
-        raise ValueError("independent D38999 proxy asset is missing")
-    digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    if digest != config.asset.sha256:
-        raise ValueError("D38999 tabletop asset SHA-256 mismatch")
+    asset_contract = _PROFILE_ASSET_CONTRACTS[config.asset_profile.profile_id]
+    if not _asset_path_is_allowed(
+        config.asset_profile.profile_id,
+        config.asset.local_path,
+        authorized_local_asset_path,
+    ) or not path.is_file():
+        raise ValueError("allowlisted D38999 tabletop asset is missing")
+    if config.asset_profile.profile_id in _PHYSICAL_PROFILE_IDS:
+        source_path = (repository / config.asset_profile.source_config).resolve()
+        try:
+            source_path.relative_to(repository)
+        except ValueError as error:
+            raise ValueError("keyed-v2 source config escapes repository") from error
+        if config.asset_profile.profile_id == _MULTILAYER_GRASP_PROFILE_ID:
+            build_result_path = (
+                repository / asset_contract["build_result_path"]
+            ).resolve()
+            if not build_result_path.is_file():
+                raise ValueError("multilayer grasp build result is missing")
+            if _sha256(build_result_path) != asset_contract["build_result_sha256"]:
+                raise ValueError("multilayer grasp build result digest changed")
+            build_result = json.loads(
+                build_result_path.read_text(encoding="utf-8")
+            )
+            assembly_result = build_result.get("assembly_control", {})
+            determinism = build_result.get("determinism", {})
+            current_asset_sha256 = _sha256(path)
+            if (
+                build_result.get("task_id")
+                != "DYN-A2-NOMINAL-INSERTION-V2"
+                or build_result.get("outcome")
+                != "STATIC_PASS_AWAITING_DYNAMIC_VALIDATION"
+                or build_result.get("classification")
+                != "FROZEN_NUT_BODY_PHYSICAL_SHOULDER_RESTORED"
+                or assembly_result.get("path") != config.asset.local_path
+                or assembly_result.get("sha256_after") != current_asset_sha256
+                or build_result.get("master_contract", {}).get("path")
+                != config.asset_profile.source_config
+                or build_result.get("master_contract", {}).get("sha256")
+                != _sha256(source_path)
+                or determinism.get("identical") is not True
+                or determinism.get("generation_pass_1_sha256")
+                != current_asset_sha256
+                or determinism.get("generation_pass_2_sha256")
+                != current_asset_sha256
+                or build_result.get("event_positions_modified") is not False
+                or build_result.get("safety_limits_modified") is not False
+                or build_result.get("visual_model_modified") is not False
+                or build_result.get("local_contact_reference_modified")
+                is not False
+                or build_result.get("model_mapping_modified") is not False
+                or build_result.get("new_connector_geometry_candidate_created")
+                is not False
+            ):
+                raise ValueError(
+                    "multilayer grasp asset differs from guarded build result"
+                )
+
+            guarded_sources = (
+                (
+                    build_result.get("authorized_overrides", {}),
+                    asset_contract["authorized_overrides_path"],
+                ),
+                (
+                    build_result.get("generator", {}),
+                    asset_contract["generator_path"],
+                ),
+                (
+                    build_result.get("physical_contract", {}),
+                    asset_contract["physical_contract_path"],
+                ),
+            )
+            for evidence, expected_relative_path in guarded_sources:
+                evidence_path = (repository / expected_relative_path).resolve()
+                try:
+                    evidence_path.relative_to(repository)
+                except ValueError as error:
+                    raise ValueError(
+                        "multilayer grasp evidence escapes repository"
+                    ) from error
+                if (
+                    evidence.get("path") != expected_relative_path
+                    or not evidence_path.is_file()
+                    or evidence.get("sha256") != _sha256(evidence_path)
+                ):
+                    raise ValueError(
+                        "multilayer grasp source evidence digest changed"
+                    )
+
+            preserved_outputs = build_result.get("preserved_outputs_after", {})
+            if set(preserved_outputs) != set(
+                asset_contract["preserved_output_paths"]
+            ):
+                raise ValueError("multilayer preserved output set changed")
+            for name, relative_path in asset_contract[
+                "preserved_output_paths"
+            ].items():
+                preserved_path = (repository / relative_path).resolve()
+                if (
+                    not preserved_path.is_file()
+                    or preserved_outputs.get(name) != _sha256(preserved_path)
+                ):
+                    raise ValueError(
+                        "multilayer preserved output digest changed"
+                    )
+        elif config.asset_profile.profile_id == _KEYED_V3_R12_PROFILE_ID:
+            from .d38999_keyed_v3_physical_r12_contract import (
+                candidate_model,
+                load_r12_physical_model_contract,
+            )
+
+            if authorized_local_asset_path is not None:
+                if (
+                    config.asset.local_path != authorized_local_asset_path
+                    or authorized_model is None
+                ):
+                    raise ValueError("local R12 asset lacks its exact authorized model")
+                source = authorized_model
+            else:
+                source = load_r12_physical_model_contract(source_path)
+                match = re.search(r"r12_candidate_(0[1-4])", config.asset.local_path)
+                if match:
+                    source = candidate_model(source, int(match.group(1)))
+        else:
+            from .d38999_keyed_v2_physical_model_contract import (
+                load_physical_model_contract,
+            )
+
+            source = load_physical_model_contract(source_path)
+        if config.asset_profile.profile_id != _MULTILAYER_GRASP_PROFILE_ID:
+            if (
+                source.document["identity"]["pair_model_id"]
+                != config.asset_profile.profile_id
+                or config.asset.proxy_id != config.asset_profile.profile_id
+                or path.name
+                != source.document["identity"]["recommended_asset_name"]
+            ):
+                raise ValueError("physical asset source identity differs")
     return path
 
 
@@ -578,11 +1087,20 @@ def author_d38999_tabletop_scene(
     UsdPhysics: Any,
     UsdShade: Any,
     physics_utils: Any,
+    authorized_local_asset_path: str | None = None,
 ) -> dict[str, Any]:
     """Author every object transform before the caller starts physics."""
     asset = Path(asset_path).expanduser().resolve()
-    if asset.name != EXPECTED_ASSET_BASENAME or not asset.is_file():
-        raise ValueError("unexpected D38999 proxy asset")
+    if (
+        not _asset_path_is_allowed(
+            config.asset_profile.profile_id,
+            config.asset.local_path,
+            authorized_local_asset_path,
+        )
+        or asset.name != Path(config.asset.local_path).name
+        or not asset.is_file()
+    ):
+        raise ValueError("unexpected D38999 tabletop asset")
     if stage.GetPrimAtPath(config.world.root_prim_path).IsValid():
         raise RuntimeError("D38999 tabletop root already exists")
     UsdGeom.Xform.Define(stage, config.world.root_prim_path)
@@ -597,35 +1115,148 @@ def author_d38999_tabletop_scene(
         UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
         return cube.GetPrim()
 
-    material = UsdShade.Material.Define(
+    def unscaled_rigid_box_mesh(path, center, size, color):
+        """Author an actual-size box whose rigid frame has no scale op.
+
+        Joint anchors are expressed in a rigid body's local frame.  Placing a
+        non-uniform scale on that same prim changes the interpretation of the
+        anchor coordinates and can make PhysX repair a disjoint fixed joint on
+        the first step.  The physical-r7 fixture therefore carries its metric
+        dimensions in mesh points and has translation as its only xform op.
+        """
+
+        half_x, half_y, half_z = (0.5 * float(value) for value in size)
+        points = [
+            Gf.Vec3f(-half_x, -half_y, -half_z),
+            Gf.Vec3f(half_x, -half_y, -half_z),
+            Gf.Vec3f(half_x, half_y, -half_z),
+            Gf.Vec3f(-half_x, half_y, -half_z),
+            Gf.Vec3f(-half_x, -half_y, half_z),
+            Gf.Vec3f(half_x, -half_y, half_z),
+            Gf.Vec3f(half_x, half_y, half_z),
+            Gf.Vec3f(-half_x, half_y, half_z),
+        ]
+        mesh = UsdGeom.Mesh.Define(stage, path)
+        mesh.CreatePointsAttr(points)
+        mesh.CreateFaceVertexCountsAttr([4, 4, 4, 4, 4, 4])
+        mesh.CreateFaceVertexIndicesAttr(
+            [
+                0, 3, 2, 1,
+                4, 5, 6, 7,
+                0, 1, 5, 4,
+                1, 2, 6, 5,
+                2, 3, 7, 6,
+                3, 0, 4, 7,
+            ]
+        )
+        mesh.CreateExtentAttr(
+            [
+                Gf.Vec3f(-half_x, -half_y, -half_z),
+                Gf.Vec3f(half_x, half_y, half_z),
+            ]
+        )
+        mesh.CreateSubdivisionSchemeAttr(UsdGeom.Tokens.none)
+        mesh.CreateDisplayColorAttr([Gf.Vec3f(*color)])
+        UsdGeom.Xformable(mesh).AddTranslateOp().Set(Gf.Vec3d(*center))
+        prim = mesh.GetPrim()
+        UsdPhysics.CollisionAPI.Apply(prim)
+        mesh_collision = UsdPhysics.MeshCollisionAPI.Apply(prim)
+        mesh_collision.CreateApproximationAttr().Set("convexHull")
+        return prim
+
+    table_material = UsdShade.Material.Define(
         stage, config.world.physics_material_prim_path
     )
-    material_api = UsdPhysics.MaterialAPI.Apply(material.GetPrim())
-    material_api.CreateStaticFrictionAttr(config.table.static_friction)
-    material_api.CreateDynamicFrictionAttr(config.table.dynamic_friction)
-    material_api.CreateRestitutionAttr(config.table.restitution)
+    table_material_api = UsdPhysics.MaterialAPI.Apply(
+        table_material.GetPrim()
+    )
+    table_material_api.CreateStaticFrictionAttr(config.table.static_friction)
+    table_material_api.CreateDynamicFrictionAttr(config.table.dynamic_friction)
+    table_material_api.CreateRestitutionAttr(config.table.restitution)
     table_prim = static_cube(
         config.table.prim_path,
         config.table.center_m,
         config.table.size_m,
         config.table.color_rgb,
     )
-    fixture_prim = static_cube(
-        config.fixed_endpoint.fixture_prim_path,
-        config.fixed_endpoint.fixture_center_m,
-        config.fixed_endpoint.fixture_size_m,
-        config.fixed_endpoint.fixture_color_rgb,
+    if config.asset_profile.profile_id in _FIXTURE_JOINT_PROFILE_IDS:
+        fixture_prim = unscaled_rigid_box_mesh(
+            config.fixed_endpoint.fixture_prim_path,
+            config.fixed_endpoint.fixture_center_m,
+            config.fixed_endpoint.fixture_size_m,
+            config.fixed_endpoint.fixture_color_rgb,
+        )
+    else:
+        fixture_prim = static_cube(
+            config.fixed_endpoint.fixture_prim_path,
+            config.fixed_endpoint.fixture_center_m,
+            config.fixed_endpoint.fixture_size_m,
+            config.fixed_endpoint.fixture_color_rgb,
+        )
+    physics_utils.add_physics_material_to_prim(
+        stage,
+        table_prim,
+        Sdf.Path(config.world.physics_material_prim_path),
     )
-    for prim in (table_prim, fixture_prim):
+    if table_prim.HasAPI(UsdPhysics.RigidBodyAPI):
+        raise RuntimeError("static tabletop collider became dynamic")
+
+    fixture_material_path = (
+        config.world.root_prim_path + "/FixtureAndReceptacleMaterial"
+    )
+    if config.asset_profile.profile_id in _PHYSICAL_PROFILE_IDS:
+        fixture_material = UsdShade.Material.Define(
+            stage, fixture_material_path
+        )
+        fixture_material_api = UsdPhysics.MaterialAPI.Apply(
+            fixture_material.GetPrim()
+        )
+        fixture_material_api.CreateStaticFrictionAttr(0.35)
+        fixture_material_api.CreateDynamicFrictionAttr(0.25)
+        fixture_material_api.CreateRestitutionAttr(0.0)
         physics_utils.add_physics_material_to_prim(
             stage,
-            prim,
+            fixture_prim,
+            Sdf.Path(fixture_material_path),
+        )
+        if config.asset_profile.profile_id in _FIXTURE_JOINT_PROFILE_IDS:
+            fixture_rigid = UsdPhysics.RigidBodyAPI.Apply(fixture_prim)
+            fixture_rigid.CreateRigidBodyEnabledAttr(True)
+            fixture_rigid.CreateKinematicEnabledAttr(False)
+            fixture_mass = UsdPhysics.MassAPI.Apply(fixture_prim)
+            fixture_mass.CreateMassAttr(5.0)
+            fixture_mass.CreateCenterOfMassAttr(Gf.Vec3f(0.0, 0.0, 0.0))
+            fixture_mass.CreateDiagonalInertiaAttr(
+                Gf.Vec3f(
+                    0.0088333333333,
+                    0.0088333333333,
+                    0.0163333333333,
+                )
+            )
+            fixture_mass.CreatePrincipalAxesAttr(Gf.Quatf(1.0))
+    else:
+        physics_utils.add_physics_material_to_prim(
+            stage,
+            fixture_prim,
             Sdf.Path(config.world.physics_material_prim_path),
         )
-        if prim.HasAPI(UsdPhysics.RigidBodyAPI):
-            raise RuntimeError("static tabletop collider became dynamic")
+        if fixture_prim.HasAPI(UsdPhysics.RigidBodyAPI):
+            raise RuntimeError("legacy static fixture became dynamic")
 
     add_reference_to_stage(str(asset), config.asset.reference_prim_path)
+    if config.asset_profile.profile_id in _PHYSICAL_PROFILE_IDS:
+        model_root = stage.GetPrimAtPath(config.asset.model_root_prim_path)
+        if not model_root.IsValid():
+            raise RuntimeError("keyed-v2 referenced model root is missing")
+        for name, expected in _PHYSICAL_MODEL_IDS[
+            config.asset_profile.profile_id
+        ].items():
+            identity_attribute = model_root.GetAttribute(f"kcg:{name}")
+            actual = identity_attribute.Get() if identity_attribute else None
+            if actual != expected:
+                raise RuntimeError(
+                    f"keyed-v2 referenced model identity differs: {name}"
+                )
 
     def set_single_translation(path, value):
         prim = stage.GetPrimAtPath(path)
@@ -644,42 +1275,136 @@ def author_d38999_tabletop_scene(
             raise RuntimeError(f"incompatible transform stack: {path}")
         operation.Set(Gf.Vec3d(*value))
 
-    set_single_translation(
+    def set_translation_and_rotation(path, value, rotation_degrees_xyz):
+        if rotation_degrees_xyz == (0.0, 0.0, 0.0):
+            set_single_translation(path, value)
+            return
+        prim = stage.GetPrimAtPath(path)
+        if not prim.IsValid():
+            raise RuntimeError(f"D38999 asset prim is missing: {path}")
+        xformable = UsdGeom.Xformable(prim)
+        if xformable.GetOrderedXformOps():
+            raise RuntimeError(f"incompatible transform stack: {path}")
+        xformable.AddTranslateOp().Set(Gf.Vec3d(*value))
+        xformable.AddRotateXYZOp().Set(Gf.Vec3f(*rotation_degrees_xyz))
+
+    set_translation_and_rotation(
         config.asset.fixed_receptacle_prim_path,
         config.fixed_endpoint.receptacle_origin_m,
+        config.asset_profile.fixed_endpoint_rotation_degrees_xyz,
     )
-    set_single_translation(
+    set_translation_and_rotation(
         config.asset.loose_plug_prim_path,
         config.loose_endpoint.initial_origin_m,
+        config.asset_profile.loose_endpoint_rotation_degrees_xyz,
     )
 
     fixed = stage.GetPrimAtPath(config.asset.fixed_receptacle_prim_path)
     body = stage.GetPrimAtPath(config.asset.body_prim_path)
     nut = stage.GetPrimAtPath(config.asset.nut_prim_path)
     joint = stage.GetPrimAtPath(config.asset.joint_prim_path)
-    if fixed.HasAPI(UsdPhysics.RigidBodyAPI):
-        raise RuntimeError(
-            "fixed D38999 receptacle unexpectedly became dynamic"
+    if config.asset_profile.profile_id in _PHYSICAL_PROFILE_IDS:
+        if not fixed.HasAPI(UsdPhysics.RigidBodyAPI):
+            raise RuntimeError("physical fixed receptacle is not a rigid body")
+        fixed_rigid = UsdPhysics.RigidBodyAPI(fixed)
+        if fixed_rigid.GetRigidBodyEnabledAttr().Get() is not True:
+            raise RuntimeError("physical fixed receptacle rigid body is disabled")
+        expected_kinematic = bool(
+            config.asset_profile.profile_id == _MULTILAYER_GRASP_PROFILE_ID
         )
+        if fixed_rigid.GetKinematicEnabledAttr().Get() is not expected_kinematic:
+            raise RuntimeError(
+                "physical fixed receptacle kinematic contract differs"
+            )
+    elif fixed.HasAPI(UsdPhysics.RigidBodyAPI):
+        raise RuntimeError("legacy fixed receptacle unexpectedly became dynamic")
     if not body.HasAPI(UsdPhysics.RigidBodyAPI):
         raise RuntimeError("D38999 plug body is not dynamic")
     if not nut.HasAPI(UsdPhysics.RigidBodyAPI):
         raise RuntimeError("D38999 coupling nut is not dynamic")
-    if not joint.IsA(UsdPhysics.RevoluteJoint):
-        raise RuntimeError("D38999 coupling nut joint is missing")
+    if config.asset_profile.profile_id in _PHYSICAL_PROFILE_IDS:
+        if not joint.IsA(UsdPhysics.Joint) or joint.IsA(
+            UsdPhysics.RevoluteJoint
+        ):
+            raise RuntimeError("physical D6 coupling-nut joint is missing")
+
+    if config.asset_profile.profile_id in _FIXTURE_JOINT_PROFILE_IDS:
+        joints_root = config.world.root_prim_path + "/Joints"
+        UsdGeom.Scope.Define(stage, joints_root)
+        fixture_world_path = joints_root + "/FixtureToWorld"
+        receptacle_fixture_path = joints_root + "/ReceptacleToFixture"
+
+        fixture_world = UsdPhysics.FixedJoint.Define(
+            stage, fixture_world_path
+        )
+        fixture_world.CreateBody0Rel().SetTargets([])
+        fixture_world.CreateBody1Rel().SetTargets(
+            [Sdf.Path(config.fixed_endpoint.fixture_prim_path)]
+        )
+        fixture_world.CreateLocalPos0Attr(
+            Gf.Vec3f(*config.fixed_endpoint.fixture_center_m)
+        )
+        fixture_world.CreateLocalRot0Attr(Gf.Quatf(1.0))
+        fixture_world.CreateLocalPos1Attr(Gf.Vec3f(0.0, 0.0, 0.0))
+        fixture_world.CreateLocalRot1Attr(Gf.Quatf(1.0))
+        fixture_world.CreateJointEnabledAttr(True)
+        fixture_world.CreateExcludeFromArticulationAttr(False)
+        fixture_world.CreateCollisionEnabledAttr(False)
+
+        receptacle_fixture = UsdPhysics.FixedJoint.Define(
+            stage, receptacle_fixture_path
+        )
+        receptacle_fixture.CreateBody0Rel().SetTargets(
+            [Sdf.Path(config.fixed_endpoint.fixture_prim_path)]
+        )
+        receptacle_fixture.CreateBody1Rel().SetTargets(
+            [Sdf.Path(config.asset.fixed_receptacle_prim_path)]
+        )
+        receptacle_fixture.CreateLocalPos0Attr(
+            Gf.Vec3f(0.0, 0.0, 0.052)
+        )
+        receptacle_fixture.CreateLocalRot0Attr(
+            Gf.Quatf(0.0, Gf.Vec3f(1.0, 0.0, 0.0))
+        )
+        receptacle_fixture.CreateLocalPos1Attr(Gf.Vec3f(0.0, 0.0, 0.0))
+        receptacle_fixture.CreateLocalRot1Attr(Gf.Quatf(1.0))
+        receptacle_fixture.CreateJointEnabledAttr(True)
+        receptacle_fixture.CreateExcludeFromArticulationAttr(False)
+        receptacle_fixture.CreateCollisionEnabledAttr(False)
+    elif (
+        config.asset_profile.profile_id not in _PHYSICAL_PROFILE_IDS
+        and not joint.IsA(UsdPhysics.RevoluteJoint)
+    ):
+        raise RuntimeError("legacy D38999 coupling nut joint is missing")
 
     result = {
-        "asset_sha256": config.asset.sha256,
         "body_prim_path": config.asset.body_prim_path,
         "fixed_receptacle_prim_path": (
             config.asset.fixed_receptacle_prim_path
         ),
         "fixture_prim_path": config.fixed_endpoint.fixture_prim_path,
+        "fixture_material_prim_path": (
+            fixture_material_path
+            if config.asset_profile.profile_id in _PHYSICAL_PROFILE_IDS
+            else config.world.physics_material_prim_path
+        ),
         "joint_prim_path": config.asset.joint_prim_path,
         "nut_prim_path": config.asset.nut_prim_path,
         "object_pose_writes_after_start": 0,
         "table_prim_path": config.table.prim_path,
     }
+    if config.asset_profile.profile_id in _FIXTURE_JOINT_PROFILE_IDS:
+        result["fixture_to_world_joint_path"] = fixture_world_path
+        result["receptacle_to_fixture_joint_path"] = (
+            receptacle_fixture_path
+        )
+        result["fixed_load_path"] = (
+            "FixedReceptacle->FixedFixture->world"
+        )
+    elif config.asset_profile.profile_id == _MULTILAYER_GRASP_PROFILE_ID:
+        result["fixed_load_path"] = "FixedReceptacle(kinematic)->world"
+    result["asset_profile_id"] = config.asset_profile.profile_id
+    result["asset_source_config"] = config.asset_profile.source_config
     json.dumps(result, allow_nan=False, sort_keys=True)
     return result
 
@@ -687,6 +1412,10 @@ def author_d38999_tabletop_scene(
 __all__ = [
     "DEFAULT_D38999_TABLETOP_CONFIG_PATH",
     "D38999_TABLETOP_SCHEMA_VERSION",
+    "D38999_TABLETOP_SCHEMA_VERSION_KEYED_V2",
+    "D38999_TABLETOP_SCHEMA_VERSION_KEYED_V3_R12",
+    "D38999_TABLETOP_SCHEMA_VERSION_MULTILAYER_GRASP",
+    "D38999TabletopAssetProfile",
     "D38999TabletopScene",
     "author_d38999_tabletop_scene",
     "load_d38999_tabletop_scene",

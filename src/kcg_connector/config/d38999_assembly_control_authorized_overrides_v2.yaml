@@ -1,0 +1,26 @@
+schema_version: kcg_d38999_assembly_control_authorized_overrides_v2
+task_id: D38999-AUTONOMOUS-DYNAMIC-CLOSEOUT-V2
+status: AUTHORIZED
+
+source_contract:
+  path: src/kcg_connector/config/d38999_master_model_contract_v1.yaml
+  sha256: 57010b3c6f8d2214712427193ef7b9b57ede3089a882aa88033f89774215c68b
+pre_v2_assembly_control:
+  path: artifacts/kcg_connector/isaac/d38999_multilayer_v1/D38999_ASSEMBLY_CONTROL_V1.usda
+  sha256: 9630b31f7fcbf50352038e2949ac2fcb2ba163ff143248e50f86c7d5bf2da040
+
+event_onset_proxy_version: 2
+initial_nut_grasp_collision_enabled: true
+initial_nut_grasp_local_z_interval_m: [0.009, 0.029]
+initial_nut_grasp_outer_radius_m: 0.024
+new_backshell_enabled: false
+
+visual_model_change_allowed: false
+local_reference_change_allowed: false
+model_mapping_change_allowed: false
+master_contract_change_allowed: false
+post_physics_pose_write_allowed: false
+controller_truth_input_allowed: false
+formal_r12_generated: false
+hardware_authorized: false
+

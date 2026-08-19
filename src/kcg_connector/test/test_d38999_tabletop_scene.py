@@ -1,6 +1,7 @@
 """Pure gates for the independent D38999 tabletop physical smoke."""
 
 from copy import deepcopy
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -20,6 +21,25 @@ from kcg_connector.d38999_tabletop_scene import (
 REPOSITORY = Path(__file__).resolve().parents[3]
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 SMOKE_PATH = PACKAGE_ROOT / "isaac/d38999_tabletop_smoke.py"
+MULTILAYER_GRASP_SCENE = (
+    REPOSITORY
+    / "src/kcg_connector/config/d38999_multilayer_tabletop_scene_grasp_v1.yaml"
+)
+MULTILAYER_BUILD_RESULT = (
+    REPOSITORY
+    / "artifacts/agent_control/tasks/"
+    "D38999-AUTONOMOUS-DYNAMIC-CLOSEOUT-V2/"
+    "DYN-A2-NOMINAL-INSERTION-V2/"
+    "A2_RUN05_NUT_BODY_SHOULDER_TARGETED_FIX_RESULT.json"
+)
+
+
+def _sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def _document():
@@ -61,12 +81,25 @@ def test_shipped_scene_is_independent_and_exactly_15_mm_above_table():
     json.dumps(config.as_dict(), allow_nan=False, sort_keys=True)
 
 
-def test_shipped_asset_is_hash_pinned_and_not_the_synthetic_asset():
+def test_shipped_asset_is_allowlisted_and_not_the_synthetic_asset():
     path = verify_d38999_tabletop_asset(
         load_d38999_tabletop_scene(), REPOSITORY
     )
     assert path.name == "d38999_shell25j_61_pair_proxy_v1.usda"
     assert path.stat().st_size > 100000
+
+
+def test_current_multilayer_grasp_asset_uses_guarded_a2_shoulder_lineage():
+    config = load_d38999_tabletop_scene(MULTILAYER_GRASP_SCENE)
+    assert config.asset_profile.expected_body_collider_count == 72
+    assert config.asset_profile.expected_nut_collider_count == 7
+    asset = verify_d38999_tabletop_asset(config, REPOSITORY)
+    build_result = json.loads(MULTILAYER_BUILD_RESULT.read_text(encoding="utf-8"))
+    assert _sha256(MULTILAYER_BUILD_RESULT) == (
+        "a8d144799c3d5e38ff04a875f39180c9a92c074e0fc2d7b34ac59f82b5918718"
+    )
+    assert _sha256(asset) == build_result["assembly_control"]["sha256_after"]
+    assert build_result["determinism"]["identical"] is True
 
 
 @pytest.mark.parametrize(
@@ -79,10 +112,7 @@ def test_shipped_asset_is_hash_pinned_and_not_the_synthetic_asset():
             ),
             "independent D38999",
         ),
-        (
-            lambda doc: doc["asset"].update(sha256="0" * 63),
-            "SHA-256",
-        ),
+        (lambda doc: doc["asset"].update(fingerprint="forbidden"), "keys are invalid"),
         (
             lambda doc: doc["asset"].update(
                 body_prim_path=(

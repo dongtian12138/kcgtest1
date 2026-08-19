@@ -152,6 +152,26 @@ def _arguments(repository: Path):
             / "artifacts/kcg_connector/d38999_insert_proxy_v2/nominal_physics_v1"
         ),
     )
+    parser.add_argument(
+        "--screw-after-seat",
+        action="store_true",
+        help=(
+            "after a fully seated 9 mm insertion, rotate the TCP one bounded "
+            "150-degree segment about the assembly axis via joint 7 while the "
+            "three-finger grip only prevents slip; wrench soft gates apply"
+        ),
+    )
+    parser.add_argument(
+        "--visual-chain-report",
+        default=None,
+        help=(
+            "path to a kcg_d38999_visual_chain_v1 report; when present, the "
+            "requested in-hand error is taken from stage_t_hp."
+            "t_hp_error_vs_nominal_xyz_rpy instead of CLI injection args. "
+            "POSTHOC_DIAGNOSTIC_ONLY: the visual estimate never authorizes "
+            "control and never feeds the formal insertion contract."
+        ),
+    )
     result = parser.parse_args()
     if not result.run:
         parser.error("nominal physics ladder requires --run")
@@ -330,6 +350,58 @@ def main():
     ) = _load_inputs(repository, config_path)
     case_spec = document["ladder_cases"][arguments.ladder_case]
     requested_inhand = _requested_inhand_error(arguments, document)
+    visual_chain_error = None
+    if arguments.visual_chain_report is not None:
+        chain_path = Path(arguments.visual_chain_report).expanduser().resolve()
+        chain_report = json.loads(chain_path.read_text(encoding="utf-8"))
+        stage = chain_report.get("stage_t_hp")
+        if stage is None or "t_hp_error_vs_nominal_xyz_rpy" not in stage:
+            raise ValueError(
+                "visual chain report has no stage_t_hp."
+                "t_hp_error_vs_nominal_xyz_rpy"
+            )
+        delta = np.asarray(
+            stage["t_hp_error_vs_nominal_xyz_rpy"], dtype=np.float64
+        )
+        # The chain's plug frame is Rx(pi) from the sweep's hand-aligned
+        # nominal plug frame; convert the right-relative delta accordingly:
+        # T_delta_sweep = Rx(pi) @ T_delta_chain @ Rx(pi).
+        c2_yaw_estimate_rad = float(delta[5])
+        # C2 proxy: the mating face carries no yaw key, so the estimated
+        # Plug-frame Rz is unresolved noise and must NOT be injected as a
+        # correction.  Zero it; the compliant controller's own bounded yaw
+        # search remains the only yaw mechanism.
+        # Axial (z) is force-guided by the compliant descent: the visual
+        # axial estimate carries a systematic ~3 mm bias, so inject only the
+        # force-blind dimensions (x, y, rx, ry).  Same policy family as the
+        # C2 yaw zeroing.
+        requested_inhand = PostGraspError(
+            translation_m=(
+                float(delta[0]),
+                float(-delta[1]),
+                0.0,
+            ),
+            rotation_xyz_rad=(
+                float(delta[3]),
+                float(-delta[4]),
+                0.0,
+            ),
+            source="reset_only_simulation",
+        )
+        visual_chain_error = {
+            "report_path": str(chain_path),
+            "t_hp_pose_valid": stage.get("pose_valid"),
+            "t_hp_pose_valid_reasons": stage.get("pose_valid_reasons"),
+            "c2_resolution": stage.get("c2_resolution"),
+            "delta_xyz_rpy": delta.tolist(),
+            "c2_yaw_estimate_rad": c2_yaw_estimate_rad,
+            "axial_z_estimate_m": float(delta[2]),
+            "axial_z_injected": False,
+            "axial_z_policy": "ZERO_INJECT_FORCE_GUIDED",
+            "c2_yaw_injected": False,
+            "c2_yaw_policy": "ZERO_INJECT_UNRESOLVED",
+            "diagnostic_only": True,
+        }
     inhand_nonzero = bool(
         np.linalg.norm(requested_inhand.translation_m) > 0.0
         or np.linalg.norm(requested_inhand.rotation_xyz_rad) > 0.0
@@ -370,6 +442,7 @@ def main():
         "target_stage": arguments.target_stage,
         "precontact_tracking": arguments.precontact_tracking,
         "authored_error_posthoc_only": case_spec,
+        "visual_chain_estimate": visual_chain_error,
         "grasp_mode": "GRASP_LATCH_PROXY",
         "requested_inhand_error": {
             "translation_m": list(requested_inhand.translation_m),
@@ -1498,323 +1571,389 @@ def main():
                 "scaled_condition_number": condition,
                 "passed": bool(np.all(np.isfinite(matrix))),
             }
-        for _ in range(maximum_steps):
-            measured_tcp = last_sample["tcp"]
-            measured_assembly_tcp = assembly_tcp_from_grasp_tcp(
-                measured_tcp, grasp_to_assembly
-            )
-            relative = base_tcp[:3, :3].T @ (
-                measured_assembly_tcp[:3, 3]
-                - controller_origin_tcp[:3, 3]
-            )
-            relative_rotation = (
-                controller_origin_tcp[:3, :3].T
-                @ measured_assembly_tcp[:3, :3]
-            )
-            wrench = np.asarray(last_sample["observed"]["compensated_wrench_task"])
-            if arguments.control_mode == "compliant":
-                observation = InsertionObservation(
-                    timestamp_s=global_step * dt,
-                    sample_age_s=0.0,
-                    wrench_assembly=tuple(float(value) for value in wrench),
-                    tcp_position_assembly_m=tuple(float(value) for value in relative),
-                    tcp_rotation_vector_assembly_rad=tuple(
-                        float(value)
-                        for value in _xyz_from_rotation(relative_rotation)
-                    ),
-                    vision_control_authorized=True,
-                    synchronized_capture=True,
-                    ft_valid=True,
-                    ft_tared=True,
-                    payload_compensated=True,
+        insertion_attempt = 0
+        nominal_terminal = None
+        request_soft_backoff = False
+        c2_branch_retry = {"attempted": False, "rotated_rad": 0.0, "reason": None}
+        while True:
+            for _ in range(maximum_steps):
+                measured_tcp = last_sample["tcp"]
+                measured_assembly_tcp = assembly_tcp_from_grasp_tcp(
+                    measured_tcp, grasp_to_assembly
                 )
-                action = step_compliant_insertion(
-                    controller_config, controller_state, observation
+                relative = base_tcp[:3, :3].T @ (
+                    measured_assembly_tcp[:3, 3]
+                    - controller_origin_tcp[:3, 3]
                 )
-                controller_state = action.next_state
-                status = action.status
-                twist = np.asarray(action.twist_assembly, dtype=np.float64)
-                contact_name = action.contact_class.value
-            else:
-                target_twist = np.zeros(6, dtype=np.float64)
-                target_twist[2] = guard_speed
-                linear_delta = float(
-                    controller_config["motion"][
-                        "maximum_linear_acceleration_m_s2"
-                    ]
-                ) * dt
-                twist = previous_rigid_twist + np.clip(
-                    target_twist - previous_rigid_twist,
-                    -linear_delta,
-                    linear_delta,
+                relative_rotation = (
+                    controller_origin_tcp[:3, :3].T
+                    @ measured_assembly_tcp[:3, :3]
                 )
-                previous_rigid_twist = twist.copy()
-                status = "RIGID_TCP_SERVO"
-                contact_name = "NOT_CLASSIFIED_RIGID"
-            controller_status_counts[status] = (
-                controller_status_counts.get(status, 0) + 1
-            )
-            contact_class_counts[contact_name] = (
-                contact_class_counts.get(contact_name, 0) + 1
-            )
-            xy_speed = float(np.linalg.norm(twist[:2]))
-            tilt_speed = float(np.linalg.norm(twist[3:5]))
-            correction_metrics["maximum_commanded_xy_speed_m_s"] = max(
-                correction_metrics["maximum_commanded_xy_speed_m_s"], xy_speed
-            )
-            correction_metrics["maximum_commanded_tilt_speed_rad_s"] = max(
-                correction_metrics["maximum_commanded_tilt_speed_rad_s"],
-                tilt_speed,
-            )
-            correction_metrics["absolute_xy_correction_path_m"] += xy_speed * dt
-            correction_metrics["absolute_tilt_correction_path_rad"] += (
-                tilt_speed * dt
-            )
-            if correction_metrics["first_credible_contact_step"] is not None:
-                correction_metrics[
-                    "postcontact_absolute_xy_correction_path_m"
-                ] += xy_speed * dt
-                correction_metrics[
-                    "postcontact_absolute_tilt_correction_path_rad"
-                ] += tilt_speed * dt
-            correction_metrics["nonzero_xy_command_steps"] += int(
-                xy_speed > float(
-                    controller_config["motion"][
-                        "minimum_effective_linear_speed_m_s"
-                    ]
-                )
-            )
-            correction_metrics["nonzero_tilt_command_steps"] += int(
-                tilt_speed > 1.0e-6
-            )
-            controller_command_tcp = integrate_assembly_twist_on_grasp_tcp(
-                controller_command_tcp,
-                twist,
-                base_tcp[:3, :3],
-                grasp_to_assembly,
-                dt,
-            )
-            command_arm = np.asarray(
-                solve_fixed_q7_tcp_pose(
-                    tuple(float(value) for value in command_arm),
-                    tuple(float(value) for value in controller_command_tcp[:3, 3]),
-                    target_rotation=controller_command_tcp[:3, :3],
-                    maximum_iterations=8,
-                )
-            )
-            last_sample = observe_loaded("mixed_grip_physical_insert_nominal", command_arm)
-            wrench = np.asarray(last_sample["observed"]["compensated_wrench_task"])
-            contact_score = float(
-                abs(wrench[2])
-                + float(
-                    controller_config["active_probe"][
-                        "bending_weight_n_per_nm"
-                    ]
-                )
-                * np.linalg.norm(wrench[3:5])
-            )
-            credible_contact = bool(
-                abs(wrench[2])
-                >= float(
-                    controller_config["contact_classifier"]["axial_contact_n"]
-                )
-                or np.linalg.norm(wrench[:2])
-                >= float(
-                    controller_config["contact_classifier"]["lateral_contact_n"]
-                )
-                or np.linalg.norm(wrench[3:5])
-                >= float(
-                    controller_config["contact_classifier"][
-                        "bending_contact_nm"
-                    ]
-                )
-            )
-            if (
-                credible_contact
-                and correction_metrics["first_credible_contact_step"] is None
-            ):
-                correction_metrics["first_credible_contact_step"] = global_step
-                correction_metrics["first_credible_contact_wrench"] = (
-                    wrench.tolist()
-                )
-                correction_metrics["first_credible_contact_score_n"] = (
-                    contact_score
-                )
-                correction_metrics["minimum_postcontact_score_n"] = contact_score
-                if arguments.identify_contact_response:
-                    report["contact_response_identification"] = (
-                        identify_contact_response(controller_command_tcp)
+                wrench = np.asarray(last_sample["observed"]["compensated_wrench_task"])
+                if arguments.control_mode == "compliant":
+                    observation = InsertionObservation(
+                        timestamp_s=global_step * dt,
+                        sample_age_s=0.0,
+                        wrench_assembly=tuple(float(value) for value in wrench),
+                        tcp_position_assembly_m=tuple(float(value) for value in relative),
+                        tcp_rotation_vector_assembly_rad=tuple(
+                            float(value)
+                            for value in _xyz_from_rotation(relative_rotation)
+                        ),
+                        vision_control_authorized=True,
+                        synchronized_capture=True,
+                        ft_valid=True,
+                        ft_tared=True,
+                        payload_compensated=True,
                     )
-                    response_identified = True
-                    report["nominal_physics_valid"] = None
-                    report["full_nominal_seated"] = False
-                    report["bcapture_scan_run"] = False
-                    report["bcapture_lock_reason"] = (
-                        "CONTACT_RESPONSE_IDENTIFICATION_ONLY"
+                    action = step_compliant_insertion(
+                        controller_config, controller_state, observation
                     )
-                    report["passed"] = report[
-                        "contact_response_identification"
-                    ]["passed"]
-                    passed = report["passed"]
-                    raise _ResponseIdentificationComplete()
-            elif correction_metrics["first_credible_contact_step"] is not None:
-                correction_metrics["minimum_postcontact_score_n"] = min(
-                    correction_metrics["minimum_postcontact_score_n"],
-                    contact_score,
-                )
-            peak_wrench = np.maximum(
-                peak_wrench,
-                np.asarray((abs(wrench[2]), np.linalg.norm(wrench[:2]), np.linalg.norm(wrench[3:5]), abs(wrench[5]))),
-            )
-            raw_hard_now = bool(
-                peak_wrench[0] > float(hard["hard_axial_force_n"])
-                or peak_wrench[1] > float(hard["hard_lateral_force_n"])
-                or peak_wrench[2] > float(hard["hard_bending_moment_nm"])
-                or peak_wrench[3] > float(hard["hard_torsional_moment_nm"])
-            )
-            if raw_hard_now:
-                nominal_terminal = "RAW_HARD_SAFETY_GATE"
-                break
-            last_assembly_tcp = assembly_tcp_from_grasp_tcp(
-                last_sample["tcp"], grasp_to_assembly
-            )
-            initial_assembly_tcp = assembly_tcp_from_grasp_tcp(
-                initial_tcp_measured, grasp_to_assembly
-            )
-            measured_from_preinsert = float(
-                (
-                    last_assembly_tcp[:3, 3]
-                    - initial_assembly_tcp[:3, 3]
-                )
-                @ initial_axis
-            )
-            estimated_body_depth_from_fk = measured_from_preinsert - proxy.preinsert_gap
-            for checkpoint_name, checkpoint_depth in checkpoint_depths:
-                if (
-                    checkpoint_name not in checkpoint_names
-                    and estimated_body_depth_from_fk >= checkpoint_depth
-                ):
-                    checkpoint_names.add(checkpoint_name)
-                    checkpoint_results.append(
-                        {
-                            "stage": checkpoint_name,
-                            "planned_body_depth_m": checkpoint_depth,
-                            "actual_fk_body_depth_m": estimated_body_depth_from_fk,
-                            "max_axial_force_n": float(peak_wrench[0]),
-                            "max_lateral_force_n": float(peak_wrench[1]),
-                            "max_bending_moment_nm": float(peak_wrench[2]),
-                            "max_torsional_moment_nm": float(peak_wrench[3]),
-                            "max_tcp_step_m": diagnostics["maximum_tcp_step_m"],
-                            "total_path_m": diagnostics[
-                                "total_absolute_tcp_path_m"
-                            ]
-                            - nominal_path_start,
-                            "control_inputs": [
-                                "robot_joint_state",
-                                "robot_tcp_fk",
-                                "hand2arm_wrist_wrench",
-                                "controller_history",
-                            ],
-                        }
-                    )
-            nominal_path = diagnostics["total_absolute_tcp_path_m"] - nominal_path_start
-            allowed_step = max(
-                float(gates["expected_motion_multiplier"]) * max(float(np.linalg.norm(twist[:3])), guard_speed) * dt,
-                float(gates["minimum_max_step_m"]),
-            )
-            if last_sample["record"]["tcp_step_m"] > allowed_step:
-                nominal_terminal = "PHYSICS_INVALID_TCP_STEP"
-                break
-            if float(np.linalg.norm(last_sample["tcp"][:3, 3] - initial_tcp_measured[:3, 3])) > float(gates["absolute_physics_invalid_motion_m"]):
-                nominal_terminal = "PHYSICS_INVALID_OVER_50MM"
-                break
-            # Plug/Nut/Receptacle state is recorded by a non-controlling
-            # evidence side channel.  Constraint drift, velocity and energy
-            # are scored only after the controller has terminated; they do
-            # not select a twist, correction direction or terminal state.
-            measured_tilt = float(
-                np.linalg.norm(_xyz_from_rotation(relative_rotation)[:2])
-            )
-            if measured_tilt > float(
-                controller_config["motion"]["maximum_search_angle_rad"]
-            ):
-                nominal_terminal = "TILT_SEARCH_BOUND_EXCEEDED"
-                break
-            planned_nominal_path = planned_target_progress - coarse_advance
-            active_probe_config = controller_config["active_probe"]
-            per_realign_path_budget = (
-                8.0
-                * float(active_probe_config["maximum_leg_duration_s"])
-                * float(active_probe_config["speed_m_s"])
-                # A bounded recovery first unloads along -Z and then returns
-                # to the contact depth along +Z.  Account for both legs;
-                # counting only the unload leg falsely invalidates otherwise
-                # bounded guide-exit recovery as excessive TCP travel.
-                + 2.0
-                * max(
-                    float(active_probe_config["contact_unload_distance_m"]),
-                    float(
-                        active_probe_config[
-                            "angular_contact_unload_distance_m"
+                    controller_state = action.next_state
+                    status = action.status
+                    twist = np.asarray(action.twist_assembly, dtype=np.float64)
+                    contact_name = action.contact_class.value
+                else:
+                    target_twist = np.zeros(6, dtype=np.float64)
+                    target_twist[2] = guard_speed
+                    linear_delta = float(
+                        controller_config["motion"][
+                            "maximum_linear_acceleration_m_s2"
                         ]
-                    ),
+                    ) * dt
+                    twist = previous_rigid_twist + np.clip(
+                        target_twist - previous_rigid_twist,
+                        -linear_delta,
+                        linear_delta,
+                    )
+                    previous_rigid_twist = twist.copy()
+                    status = "RIGID_TCP_SERVO"
+                    contact_name = "NOT_CLASSIFIED_RIGID"
+                controller_status_counts[status] = (
+                    controller_status_counts.get(status, 0) + 1
                 )
-                + float(active_probe_config["unloaded_centering_distance_m"])
-            )
-            recovery_phase_active = controller_state.phase in {
-                InsertionState.ACTIVE_PROBE,
-                InsertionState.CONTACT_UNLOAD,
-                InsertionState.UNLOADED_CENTERING,
-            }
-            budgeted_realign_cycles = controller_state.contact_realign_count + int(
-                recovery_phase_active
-            )
-            allowed_nominal_path = (
-                planned_nominal_path
-                + float(gates["maximum_nominal_path_margin_m"])
-                + budgeted_realign_cycles * per_realign_path_budget
-            )
-            if nominal_path > allowed_nominal_path:
-                nominal_terminal = "NOMINAL_PATH_EXCEEDED"
-                break
-            if (
-                arguments.control_mode == "compliant"
-                and controller_state.phase is InsertionState.SAFE_ABORT
-            ):
-                nominal_terminal = controller_state.abort_reason or "SAFE_ABORT"
-                break
-            soft_values = 0.70 * np.asarray(
-                (
-                    float(hard["hard_axial_force_n"]),
-                    float(hard["hard_lateral_force_n"]),
-                    float(hard["hard_bending_moment_nm"]),
-                    float(hard["hard_torsional_moment_nm"]),
+                contact_class_counts[contact_name] = (
+                    contact_class_counts.get(contact_name, 0) + 1
                 )
-            )
-            if np.any(
-                np.asarray(
-                    (
-                        abs(wrench[2]),
-                        np.linalg.norm(wrench[:2]),
-                        np.linalg.norm(wrench[3:5]),
-                        abs(wrench[5]),
+                xy_speed = float(np.linalg.norm(twist[:2]))
+                tilt_speed = float(np.linalg.norm(twist[3:5]))
+                correction_metrics["maximum_commanded_xy_speed_m_s"] = max(
+                    correction_metrics["maximum_commanded_xy_speed_m_s"], xy_speed
+                )
+                correction_metrics["maximum_commanded_tilt_speed_rad_s"] = max(
+                    correction_metrics["maximum_commanded_tilt_speed_rad_s"],
+                    tilt_speed,
+                )
+                correction_metrics["absolute_xy_correction_path_m"] += xy_speed * dt
+                correction_metrics["absolute_tilt_correction_path_rad"] += (
+                    tilt_speed * dt
+                )
+                if correction_metrics["first_credible_contact_step"] is not None:
+                    correction_metrics[
+                        "postcontact_absolute_xy_correction_path_m"
+                    ] += xy_speed * dt
+                    correction_metrics[
+                        "postcontact_absolute_tilt_correction_path_rad"
+                    ] += tilt_speed * dt
+                correction_metrics["nonzero_xy_command_steps"] += int(
+                    xy_speed > float(
+                        controller_config["motion"][
+                            "minimum_effective_linear_speed_m_s"
+                        ]
                     )
                 )
-                > soft_values
-            ):
-                nominal_terminal = "SOFT_GATE_BACKOFF_STOP"
-                request_soft_backoff = True
-                break
+                correction_metrics["nonzero_tilt_command_steps"] += int(
+                    tilt_speed > 1.0e-6
+                )
+                controller_command_tcp = integrate_assembly_twist_on_grasp_tcp(
+                    controller_command_tcp,
+                    twist,
+                    base_tcp[:3, :3],
+                    grasp_to_assembly,
+                    dt,
+                )
+                command_arm = np.asarray(
+                    solve_fixed_q7_tcp_pose(
+                        tuple(float(value) for value in command_arm),
+                        tuple(float(value) for value in controller_command_tcp[:3, 3]),
+                        target_rotation=controller_command_tcp[:3, :3],
+                        maximum_iterations=8,
+                    )
+                )
+                last_sample = observe_loaded("mixed_grip_physical_insert_nominal", command_arm)
+                wrench = np.asarray(last_sample["observed"]["compensated_wrench_task"])
+                contact_score = float(
+                    abs(wrench[2])
+                    + float(
+                        controller_config["active_probe"][
+                            "bending_weight_n_per_nm"
+                        ]
+                    )
+                    * np.linalg.norm(wrench[3:5])
+                )
+                credible_contact = bool(
+                    abs(wrench[2])
+                    >= float(
+                        controller_config["contact_classifier"]["axial_contact_n"]
+                    )
+                    or np.linalg.norm(wrench[:2])
+                    >= float(
+                        controller_config["contact_classifier"]["lateral_contact_n"]
+                    )
+                    or np.linalg.norm(wrench[3:5])
+                    >= float(
+                        controller_config["contact_classifier"][
+                            "bending_contact_nm"
+                        ]
+                    )
+                )
+                if (
+                    credible_contact
+                    and correction_metrics["first_credible_contact_step"] is None
+                ):
+                    correction_metrics["first_credible_contact_step"] = global_step
+                    correction_metrics["first_credible_contact_wrench"] = (
+                        wrench.tolist()
+                    )
+                    correction_metrics["first_credible_contact_score_n"] = (
+                        contact_score
+                    )
+                    correction_metrics["minimum_postcontact_score_n"] = contact_score
+                    if arguments.identify_contact_response:
+                        report["contact_response_identification"] = (
+                            identify_contact_response(controller_command_tcp)
+                        )
+                        response_identified = True
+                        report["nominal_physics_valid"] = None
+                        report["full_nominal_seated"] = False
+                        report["bcapture_scan_run"] = False
+                        report["bcapture_lock_reason"] = (
+                            "CONTACT_RESPONSE_IDENTIFICATION_ONLY"
+                        )
+                        report["passed"] = report[
+                            "contact_response_identification"
+                        ]["passed"]
+                        passed = report["passed"]
+                        raise _ResponseIdentificationComplete()
+                elif correction_metrics["first_credible_contact_step"] is not None:
+                    correction_metrics["minimum_postcontact_score_n"] = min(
+                        correction_metrics["minimum_postcontact_score_n"],
+                        contact_score,
+                    )
+                peak_wrench = np.maximum(
+                    peak_wrench,
+                    np.asarray((abs(wrench[2]), np.linalg.norm(wrench[:2]), np.linalg.norm(wrench[3:5]), abs(wrench[5]))),
+                )
+                raw_hard_now = bool(
+                    peak_wrench[0] > float(hard["hard_axial_force_n"])
+                    or peak_wrench[1] > float(hard["hard_lateral_force_n"])
+                    or peak_wrench[2] > float(hard["hard_bending_moment_nm"])
+                    or peak_wrench[3] > float(hard["hard_torsional_moment_nm"])
+                )
+                if raw_hard_now:
+                    nominal_terminal = "RAW_HARD_SAFETY_GATE"
+                    break
+                last_assembly_tcp = assembly_tcp_from_grasp_tcp(
+                    last_sample["tcp"], grasp_to_assembly
+                )
+                initial_assembly_tcp = assembly_tcp_from_grasp_tcp(
+                    initial_tcp_measured, grasp_to_assembly
+                )
+                measured_from_preinsert = float(
+                    (
+                        last_assembly_tcp[:3, 3]
+                        - initial_assembly_tcp[:3, 3]
+                    )
+                    @ initial_axis
+                )
+                estimated_body_depth_from_fk = measured_from_preinsert - proxy.preinsert_gap
+                for checkpoint_name, checkpoint_depth in checkpoint_depths:
+                    if (
+                        checkpoint_name not in checkpoint_names
+                        and estimated_body_depth_from_fk >= checkpoint_depth
+                    ):
+                        checkpoint_names.add(checkpoint_name)
+                        checkpoint_results.append(
+                            {
+                                "stage": checkpoint_name,
+                                "planned_body_depth_m": checkpoint_depth,
+                                "actual_fk_body_depth_m": estimated_body_depth_from_fk,
+                                "max_axial_force_n": float(peak_wrench[0]),
+                                "max_lateral_force_n": float(peak_wrench[1]),
+                                "max_bending_moment_nm": float(peak_wrench[2]),
+                                "max_torsional_moment_nm": float(peak_wrench[3]),
+                                "max_tcp_step_m": diagnostics["maximum_tcp_step_m"],
+                                "total_path_m": diagnostics[
+                                    "total_absolute_tcp_path_m"
+                                ]
+                                - nominal_path_start,
+                                "control_inputs": [
+                                    "robot_joint_state",
+                                    "robot_tcp_fk",
+                                    "hand2arm_wrist_wrench",
+                                    "controller_history",
+                                ],
+                            }
+                        )
+                nominal_path = diagnostics["total_absolute_tcp_path_m"] - nominal_path_start
+                allowed_step = max(
+                    float(gates["expected_motion_multiplier"]) * max(float(np.linalg.norm(twist[:3])), guard_speed) * dt,
+                    float(gates["minimum_max_step_m"]),
+                )
+                if last_sample["record"]["tcp_step_m"] > allowed_step:
+                    nominal_terminal = "PHYSICS_INVALID_TCP_STEP"
+                    break
+                if float(np.linalg.norm(last_sample["tcp"][:3, 3] - initial_tcp_measured[:3, 3])) > float(gates["absolute_physics_invalid_motion_m"]):
+                    nominal_terminal = "PHYSICS_INVALID_OVER_50MM"
+                    break
+                # Plug/Nut/Receptacle state is recorded by a non-controlling
+                # evidence side channel.  Constraint drift, velocity and energy
+                # are scored only after the controller has terminated; they do
+                # not select a twist, correction direction or terminal state.
+                measured_tilt = float(
+                    np.linalg.norm(_xyz_from_rotation(relative_rotation)[:2])
+                )
+                if measured_tilt > float(
+                    controller_config["motion"]["maximum_search_angle_rad"]
+                ):
+                    nominal_terminal = "TILT_SEARCH_BOUND_EXCEEDED"
+                    break
+                planned_nominal_path = planned_target_progress - coarse_advance
+                active_probe_config = controller_config["active_probe"]
+                per_realign_path_budget = (
+                    8.0
+                    * float(active_probe_config["maximum_leg_duration_s"])
+                    * float(active_probe_config["speed_m_s"])
+                    # A bounded recovery first unloads along -Z and then returns
+                    # to the contact depth along +Z.  Account for both legs;
+                    # counting only the unload leg falsely invalidates otherwise
+                    # bounded guide-exit recovery as excessive TCP travel.
+                    + 2.0
+                    * max(
+                        float(active_probe_config["contact_unload_distance_m"]),
+                        float(
+                            active_probe_config[
+                                "angular_contact_unload_distance_m"
+                            ]
+                        ),
+                    )
+                    + float(active_probe_config["unloaded_centering_distance_m"])
+                )
+                recovery_phase_active = controller_state.phase in {
+                    InsertionState.ACTIVE_PROBE,
+                    InsertionState.CONTACT_UNLOAD,
+                    InsertionState.UNLOADED_CENTERING,
+                }
+                budgeted_realign_cycles = controller_state.contact_realign_count + int(
+                    recovery_phase_active
+                )
+                allowed_nominal_path = (
+                    planned_nominal_path
+                    + float(gates["maximum_nominal_path_margin_m"])
+                    + budgeted_realign_cycles * per_realign_path_budget
+                )
+                if nominal_path > allowed_nominal_path:
+                    nominal_terminal = "NOMINAL_PATH_EXCEEDED"
+                    break
+                if (
+                    arguments.control_mode == "compliant"
+                    and controller_state.phase is InsertionState.SAFE_ABORT
+                ):
+                    nominal_terminal = controller_state.abort_reason or "SAFE_ABORT"
+                    break
+                soft_values = 0.70 * np.asarray(
+                    (
+                        float(hard["hard_axial_force_n"]),
+                        float(hard["hard_lateral_force_n"]),
+                        float(hard["hard_bending_moment_nm"]),
+                        float(hard["hard_torsional_moment_nm"]),
+                    )
+                )
+                if np.any(
+                    np.asarray(
+                        (
+                            abs(wrench[2]),
+                            np.linalg.norm(wrench[:2]),
+                            np.linalg.norm(wrench[3:5]),
+                            abs(wrench[5]),
+                        )
+                    )
+                    > soft_values
+                ):
+                    nominal_terminal = "SOFT_GATE_BACKOFF_STOP"
+                    request_soft_backoff = True
+                    break
+                if (
+                    arguments.control_mode == "compliant"
+                    and controller_state.phase is InsertionState.BACKOFF
+                ):
+                    nominal_terminal = "CONTROLLER_BACKOFF_STOP"
+                    request_soft_backoff = True
+                    break
+                if measured_from_preinsert >= planned_target_progress:
+                    nominal_terminal = "PLANNED_DEPTH_REACHED"
+                    break
+
             if (
-                arguments.control_mode == "compliant"
-                and controller_state.phase is InsertionState.BACKOFF
+                request_soft_backoff
+                and insertion_attempt == 0
+                and arguments.control_mode == "compliant"
+                and measured_from_preinsert < 0.5 * planned_target_progress
             ):
-                nominal_terminal = "CONTROLLER_BACKOFF_STOP"
-                request_soft_backoff = True
-                break
-            if measured_from_preinsert >= planned_target_progress:
-                nominal_terminal = "PLANNED_DEPTH_REACHED"
-                break
+                backoff_speed = float(controller_config["recovery"]["backoff_speed_m_s"])
+                backoff_distance = float(controller_config["recovery"]["backoff_distance_m"])
+                backoff_steps = max(1, int(math.ceil(backoff_distance / (backoff_speed * dt))))
+                for _ in range(backoff_steps):
+                    controller_command_tcp[:3, 3] -= initial_axis * backoff_speed * dt
+                    command_arm = np.asarray(
+                        solve_fixed_q7_tcp_pose(
+                            tuple(float(value) for value in command_arm),
+                            tuple(float(value) for value in controller_command_tcp[:3, 3]),
+                            target_rotation=controller_command_tcp[:3, :3],
+                            maximum_iterations=8,
+                        )
+                    )
+                    last_sample = observe_loaded(
+                        "mixed_grip_physical_insert_branch_retry_retract",
+                        command_arm,
+                    )
+                axis = initial_axis / np.linalg.norm(initial_axis)
+                k = np.array(
+                    [
+                        [0.0, -axis[2], axis[1]],
+                        [axis[2], 0.0, -axis[0]],
+                        [-axis[1], axis[0], 0.0],
+                    ]
+                )
+                flip = np.eye(3) + 2.0 * (k @ k)
+                controller_command_tcp[:3, :3] = (
+                    flip @ controller_command_tcp[:3, :3]
+                )
+                # Select the other C2 branch with the wrist roll joint
+                # (iiwa_joint_7): rotating the TCP 180 degrees about the
+                # assembly axis is exactly a joint-7 roll.  The local IK keeps
+                # q7 fixed, so presetting it makes the flipped pose reachable.
+                command_arm[6] = command_arm[6] + math.pi
+                if command_arm[6] > 3.0543:
+                    command_arm[6] -= 2.0 * math.pi
+                if abs(command_arm[6]) > 3.0543:
+                    raise RuntimeError(
+                        "C2 branch flip unreachable within joint 7 hard limits"
+                    )
+                controller_state = ControllerState(
+                    phase=InsertionState.GUARDED_APPROACH
+                )
+                previous_rigid_twist = np.zeros(6, dtype=np.float64)
+                insertion_attempt += 1
+                c2_branch_retry = {
+                    "attempted": True,
+                    "rotated_rad": float(math.pi),
+                    "reason": nominal_terminal,
+                }
+                nominal_terminal = None
+                request_soft_backoff = False
+                continue
+            break
 
         terminal_sample = last_sample
         if request_soft_backoff:
@@ -1834,6 +1973,67 @@ def main():
                 last_sample = observe_loaded(
                     "mixed_grip_physical_insert_soft_gate_backoff", command_arm
                 )
+
+        insertion_terminal_sample = last_sample
+        screw_result = {"status": "NOT_REQUESTED"}
+        if (
+            arguments.screw_after_seat
+            and not request_soft_backoff
+            and nominal_terminal == "PLANNED_DEPTH_REACHED"
+        ):
+            screw_segment_rad = math.radians(150.0)
+            screw_steps = 600
+            q7_before = float(command_arm[6])
+            screw_trip = None
+            hard_axial = float(hard["hard_axial_force_n"])
+            hard_lateral = float(hard["hard_lateral_force_n"])
+            hard_bend = float(hard["hard_bending_moment_nm"])
+            hard_torsion = float(hard["hard_torsional_moment_nm"])
+            screw_soft = 0.70 * np.asarray(
+                (hard_axial, hard_lateral, hard_bend, hard_torsion)
+            )
+            baseline_wrench = np.asarray(
+                insertion_terminal_sample["observed"][
+                    "compensated_wrench_task"
+                ],
+                dtype=np.float64,
+            )
+            for step in range(screw_steps):
+                command_arm[6] = q7_before + screw_segment_rad * (step + 1) / screw_steps
+                screw_sample = observe_loaded(
+                    "mixed_grip_physical_insert_screw_segment", command_arm
+                )
+                wrench = np.asarray(
+                    screw_sample["observed"]["compensated_wrench_task"],
+                    dtype=np.float64,
+                )
+                # gate on the wrench DELTA from the seated baseline: the
+                # axial seating preload is expected and must not trip the
+                # screw gates; torsional/lateral excursions must stay bounded
+                delta_wrench = wrench - baseline_wrench
+                delta_magnitudes = np.asarray(
+                    (
+                        abs(delta_wrench[2]),
+                        np.linalg.norm(delta_wrench[:2]),
+                        np.linalg.norm(delta_wrench[3:5]),
+                        abs(delta_wrench[5]),
+                    )
+                )
+                if np.any(delta_magnitudes > screw_soft):
+                    screw_trip = f"SCREW_SOFT_GATE_AT_STEP_{step}"
+                    break
+            screw_result = {
+                "status": "COMPLETED" if screw_trip is None else screw_trip,
+                "total_rotation_rad": (
+                    screw_segment_rad if screw_trip is None else
+                    screw_segment_rad * (step + 1) / screw_steps
+                ),
+                "steps": screw_steps,
+                "q7_before_rad": q7_before,
+                "q7_after_rad": float(command_arm[6]),
+                "anti_slip": "GRIP_HELD_POSTHOC_PENDING",
+            }
+            last_sample = insertion_terminal_sample
 
         nominal_path = diagnostics["total_absolute_tcp_path_m"] - nominal_path_start
         posthoc_body_progress = float((terminal_sample["body_pose"][0] - initial_body_pose[0]) @ initial_axis)
@@ -1916,6 +2116,8 @@ def main():
             )
         )
         reported_terminal = nominal_terminal
+        report["c2_yaw_branch_retry"] = dict(c2_branch_retry)
+        report["screw_after_seat"] = dict(screw_result)
         if (
             nominal_terminal == "PLANNED_DEPTH_REACHED"
             and arguments.target_stage == "full_9"

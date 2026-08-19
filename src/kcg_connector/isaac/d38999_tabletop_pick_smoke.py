@@ -12,13 +12,16 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Mapping
+import hashlib
 import json
 import math
 from numbers import Real
 from pathlib import Path
 import traceback
+from typing import Any
 
 import numpy as np
+import yaml
 
 EXPECTED_DOF_NAMES = tuple(f"iiwa_joint_{index}" for index in range(1, 8)) + (
     "f1j1",
@@ -32,6 +35,20 @@ EXPECTED_DOF_NAMES = tuple(f"iiwa_joint_{index}" for index in range(1, 8)) + (
 )
 CAMERA_EYE_M = (1.55, 1.25, 0.85)
 CAMERA_TARGET_M = (0.43, -0.08, 0.38)
+FROZEN_SOLVER_CONTRACT_RELATIVE_PATH = Path(
+    "src/kcg_connector/config/"
+    "d38999_keyed_v3_physical_model_contract_r12_v1.yaml"
+)
+FROZEN_SOLVER_CONTRACT_SHA256 = (
+    "6068066a2ac0339fa83caf2cc0c28050e76ed7e56e960da1b29e121a083b650e"
+)
+
+# Supervisor dependency gate. Checkpoint-A r6 freezes the public outer
+# geometry, contact layout, polarization keys, grip collision and mass
+# properties, but its 61 contacts remain visual-only and its coupling thread
+# remains unmodeled. Checkpoint B must stay unreachable until a new immutable
+# A2 asset and its physical-interaction acceptance contract are reviewed.
+KEYED_V2_CHECKPOINT_A2_PROMOTION_ENABLED = False
 
 
 def _path_is_at_or_below(path, root):
@@ -125,6 +142,30 @@ def _array_quaternion_error_radians(first, second):
         left * right for left, right in zip(first_values, second_values)
     ) / (first_norm * second_norm)
     return 2.0 * math.acos(max(-1.0, min(1.0, abs(dot))))
+
+
+def _array_quaternion_yaw(value):
+    """Return world-Z yaw for one scalar-first quaternion."""
+
+    w, x, y, z = (float(item) for item in value)
+    norm = math.sqrt(w * w + x * x + y * y + z * z)
+    if norm <= 0.0 or not math.isfinite(norm):
+        return float("nan")
+    w, x, y, z = (item / norm for item in (w, x, y, z))
+    return math.atan2(
+        2.0 * (w * z + x * y),
+        1.0 - 2.0 * (y * y + z * z),
+    )
+
+
+def _gf_quaternion_tuple(value):
+    imaginary = value.GetImaginary()
+    return (
+        float(value.GetReal()),
+        float(imaginary[0]),
+        float(imaginary[1]),
+        float(imaginary[2]),
+    )
 
 
 def _world_pose(Gf, Usd, UsdGeom, prim):
@@ -360,6 +401,520 @@ def _speed_statistics(samples):
     }
 
 
+def _sha256_file(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _load_frozen_solver_contract(repository, rate_hz):
+    """Load the immutable R12 solver profile and reject every drift."""
+
+    path = (repository / FROZEN_SOLVER_CONTRACT_RELATIVE_PATH).resolve()
+    digest = _sha256_file(path)
+    if digest != FROZEN_SOLVER_CONTRACT_SHA256:
+        raise RuntimeError(
+            "frozen physical-model contract hash mismatch: "
+            f"expected={FROZEN_SOLVER_CONTRACT_SHA256}, actual={digest}"
+        )
+    document = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(document, Mapping):
+        raise RuntimeError("frozen physical-model contract is not a mapping")
+    profile = document.get("solver_profile")
+    if not isinstance(profile, Mapping):
+        raise RuntimeError("frozen physical-model contract lacks solver_profile")
+    expected_profile = {
+        "physics_rate_hz": 240,
+        "physics_dt_s": 1.0 / 240.0,
+        "solver_type": "TGS",
+        "position_iterations": 32,
+        "velocity_iterations": 8,
+        "substeps": 1,
+        "stabilization_enabled": True,
+        "ccd_required_for_dynamic_connector_and_fingertips": True,
+    }
+    for field, expected in expected_profile.items():
+        actual = profile.get(field)
+        if isinstance(expected, float):
+            matches = isinstance(actual, Real) and not isinstance(actual, bool)
+            matches = bool(
+                matches
+                and math.isclose(
+                    float(actual), expected, rel_tol=0.0, abs_tol=1.0e-15
+                )
+            )
+        else:
+            matches = actual == expected
+        if not matches:
+            raise RuntimeError(
+                "frozen solver profile mismatch: "
+                f"{field} expected={expected!r}, actual={actual!r}"
+            )
+    if int(rate_hz) != expected_profile["physics_rate_hz"]:
+        raise RuntimeError(
+            "active scene physics rate differs from frozen solver profile: "
+            f"active={rate_hz}, required=240"
+        )
+    authored = profile.get("authored_attribute_contract")
+    if not isinstance(authored, Mapping):
+        raise RuntimeError("solver profile lacks authored_attribute_contract")
+    scene_expected = {
+        "physxScene:solverType": "TGS",
+        "physxScene:enableCCD": True,
+        "physxScene:enableStabilization": True,
+        "physxScene:enableEnhancedDeterminism": True,
+        "physxScene:enableExternalForcesEveryIteration": True,
+        "physxScene:minPositionIterationCount": 32,
+        "physxScene:minVelocityIterationCount": 8,
+        "physxScene:timeStepsPerSecond": 240,
+    }
+    rigid_expected = {
+        "physxRigidBody:solverPositionIterationCount": 32,
+        "physxRigidBody:solverVelocityIterationCount": 8,
+        "physxRigidBody:enableCCD": True,
+        "physxRigidBody:maxDepenetrationVelocity": 0.2,
+    }
+    for section_name, expected_values in (
+        ("physics_scene", scene_expected),
+        ("dynamic_rigid_bodies", rigid_expected),
+    ):
+        actual_values = authored.get(section_name)
+        if not isinstance(actual_values, Mapping):
+            raise RuntimeError(
+                f"solver authored contract lacks {section_name}"
+            )
+        for field, expected in expected_values.items():
+            actual = actual_values.get(field)
+            if isinstance(expected, float):
+                matches = isinstance(actual, Real) and not isinstance(
+                    actual, bool
+                )
+                matches = bool(
+                    matches
+                    and math.isclose(
+                        float(actual), expected, rel_tol=0.0, abs_tol=1.0e-12
+                    )
+                )
+            else:
+                matches = actual == expected
+            if not matches:
+                raise RuntimeError(
+                    "frozen authored solver attribute mismatch: "
+                    f"{section_name}.{field} expected={expected!r}, "
+                    f"actual={actual!r}"
+                )
+    return {
+        "source_path": str(path),
+        "source_sha256": digest,
+        "profile": dict(expected_profile),
+        "physics_scene_attributes": scene_expected,
+        "dynamic_rigid_body_attributes": rigid_expected,
+        "robot_articulation_attributes": {
+            "physxArticulation:solverPositionIterationCount": 32,
+            "physxArticulation:solverVelocityIterationCount": 8,
+        },
+    }
+
+
+def _json_scalar(value):
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if hasattr(value, "tolist"):
+        value = value.tolist()
+        while isinstance(value, (list, tuple)) and len(value) == 1:
+            value = value[0]
+        if value is None or isinstance(value, (bool, int, float, str)):
+            return value
+    return str(value)
+
+
+def _solver_value_matches(actual, expected):
+    actual = _json_scalar(actual)
+    if isinstance(expected, bool):
+        return isinstance(actual, bool) and actual is expected
+    if isinstance(expected, int):
+        return (
+            isinstance(actual, Real)
+            and not isinstance(actual, bool)
+            and int(actual) == expected
+        )
+    if isinstance(expected, float):
+        return (
+            isinstance(actual, Real)
+            and not isinstance(actual, bool)
+            and float(actual) == float(np.float32(expected))
+        )
+    return str(actual).upper() == str(expected).upper()
+
+
+def _solver_sdf_type(Sdf, value):
+    if isinstance(value, bool):
+        return Sdf.ValueTypeNames.Bool
+    if isinstance(value, int):
+        return Sdf.ValueTypeNames.Int
+    if isinstance(value, float):
+        return Sdf.ValueTypeNames.Float
+    return Sdf.ValueTypeNames.Token
+
+
+def _author_and_readback_solver_attribute(prim, name, expected, Sdf):
+    attribute = prim.GetAttribute(name)
+    if not attribute.IsValid():
+        attribute = prim.CreateAttribute(
+            name, _solver_sdf_type(Sdf, expected), custom=False
+        )
+    if not attribute.Set(expected):
+        raise RuntimeError(
+            f"failed to author frozen solver attribute {prim.GetPath()}.{name}"
+        )
+    actual = attribute.Get()
+    verified = _solver_value_matches(actual, expected)
+    evidence = {
+        "expected": expected,
+        "storage_expected": (
+            float(np.float32(expected))
+            if isinstance(expected, float)
+            else expected
+        ),
+        "readback": _json_scalar(actual),
+        "authored": bool(attribute.HasAuthoredValueOpinion()),
+        "type_name": str(attribute.GetTypeName()),
+        "verified": bool(verified),
+    }
+    if not evidence["authored"] or not verified:
+        raise RuntimeError(
+            "frozen solver attribute readback mismatch: "
+            f"{prim.GetPath()}.{name} expected={expected!r}, "
+            f"actual={actual!r}"
+        )
+    return evidence
+
+
+def _readback_solver_attributes(prim, expected_attributes):
+    result = {}
+    for name, expected in expected_attributes.items():
+        attribute = prim.GetAttribute(name)
+        actual = attribute.Get() if attribute.IsValid() else None
+        verified = bool(
+            attribute.IsValid()
+            and attribute.HasAuthoredValueOpinion()
+            and _solver_value_matches(actual, expected)
+        )
+        result[name] = {
+            "expected": expected,
+            "storage_expected": (
+                float(np.float32(expected))
+                if isinstance(expected, float)
+                else expected
+            ),
+            "readback": _json_scalar(actual),
+            "authored": bool(
+                attribute.IsValid() and attribute.HasAuthoredValueOpinion()
+            ),
+            "type_name": (
+                str(attribute.GetTypeName()) if attribute.IsValid() else None
+            ),
+            "verified": verified,
+        }
+        if not verified:
+            raise RuntimeError(
+                "post-reset frozen solver attribute mismatch: "
+                f"{prim.GetPath()}.{name} expected={expected!r}, "
+                f"actual={actual!r}"
+            )
+    return result
+
+
+def _author_frozen_solver_contract(
+    *,
+    stage,
+    world,
+    robot_articulation_path,
+    robot_root,
+    body_path,
+    nut_path,
+    contract,
+    PhysxSchema,
+    Sdf,
+    UsdPhysics,
+):
+    """Author the frozen solver profile into the in-memory session stage."""
+
+    physics_context = world.get_physics_context()
+    scene_path = str(physics_context.prim_path)
+    scene_prim = stage.GetPrimAtPath(scene_path)
+    articulation_prim = stage.GetPrimAtPath(robot_articulation_path)
+    if not scene_prim.IsValid() or not articulation_prim.IsValid():
+        raise RuntimeError("physics scene or robot articulation prim is missing")
+    if not scene_prim.HasAPI(PhysxSchema.PhysxSceneAPI):
+        PhysxSchema.PhysxSceneAPI.Apply(scene_prim)
+    if not articulation_prim.HasAPI(PhysxSchema.PhysxArticulationAPI):
+        PhysxSchema.PhysxArticulationAPI.Apply(articulation_prim)
+    physics_context.set_solver_type(contract["profile"]["solver_type"])
+    physics_context.enable_ccd(True)
+    physics_context.enable_stabilization(True)
+    scene_evidence = {
+        name: _author_and_readback_solver_attribute(
+            scene_prim, name, expected, Sdf
+        )
+        for name, expected in contract["physics_scene_attributes"].items()
+    }
+    articulation_evidence = {
+        name: _author_and_readback_solver_attribute(
+            articulation_prim, name, expected, Sdf
+        )
+        for name, expected in contract[
+            "robot_articulation_attributes"
+        ].items()
+    }
+    dynamic_prims = []
+    for prim in stage.Traverse():
+        path = str(prim.GetPath())
+        if (
+            (path == robot_root or path.startswith(robot_root + "/"))
+            and prim.HasAPI(UsdPhysics.RigidBodyAPI)
+        ):
+            dynamic_prims.append(prim)
+    if len(dynamic_prims) < 17:
+        raise RuntimeError(
+            "frozen solver contract found too few robot rigid bodies: "
+            f"{len(dynamic_prims)}"
+        )
+    for connector_path in (body_path, nut_path):
+        prim = stage.GetPrimAtPath(connector_path)
+        if not prim.IsValid() or not prim.HasAPI(UsdPhysics.RigidBodyAPI):
+            raise RuntimeError(
+                f"dynamic connector rigid body is missing: {connector_path}"
+            )
+        dynamic_prims.append(prim)
+    unique_dynamic_prims = {
+        str(prim.GetPath()): prim for prim in dynamic_prims
+    }
+    dynamic_evidence = {}
+    for path, prim in sorted(unique_dynamic_prims.items()):
+        if not prim.HasAPI(PhysxSchema.PhysxRigidBodyAPI):
+            PhysxSchema.PhysxRigidBodyAPI.Apply(prim)
+        dynamic_evidence[path] = {
+            name: _author_and_readback_solver_attribute(
+                prim, name, expected, Sdf
+            )
+            for name, expected in contract[
+                "dynamic_rigid_body_attributes"
+            ].items()
+        }
+    return {
+        "status": "PRE_RESET_EXPLICITLY_AUTHORED_AND_READ_BACK",
+        "source_path": contract["source_path"],
+        "source_sha256": contract["source_sha256"],
+        "profile": contract["profile"],
+        "edit_target_layer": stage.GetEditTarget().GetLayer().identifier,
+        "session_stage_authoring_only": True,
+        "frozen_asset_file_write": False,
+        "used_by_online_controller": False,
+        "physics_scene_path": scene_path,
+        "robot_articulation_path": robot_articulation_path,
+        "physics_scene": scene_evidence,
+        "robot_articulation": articulation_evidence,
+        "dynamic_rigid_body_count": len(dynamic_evidence),
+        "dynamic_rigid_bodies": dynamic_evidence,
+        "post_reset": None,
+    }
+
+
+def _verify_frozen_solver_contract_after_reset(
+    *, stage, world, robot, body, nut, contract, authoring_evidence
+):
+    """Fail unless every Isaac 6.0.1-supported readback preserves 32/8 TGS.
+
+    PhysicsContext and SingleArticulation expose live solver getters.  The
+    Isaac 6.0.1 SingleRigidPrim/RigidPrim API does not expose an equivalent
+    rigid-body iteration getter, so BodyAssembly and CouplingNut are verified
+    from their composed USD attributes after World.reset().  The evidence
+    names these two different sources explicitly; it never labels the rigid
+    body USD values as a live tensor readback.
+    """
+
+    scene_prim = stage.GetPrimAtPath(
+        authoring_evidence["physics_scene_path"]
+    )
+    articulation_prim = stage.GetPrimAtPath(
+        authoring_evidence["robot_articulation_path"]
+    )
+    scene_readback = _readback_solver_attributes(
+        scene_prim, contract["physics_scene_attributes"]
+    )
+    articulation_readback = _readback_solver_attributes(
+        articulation_prim, contract["robot_articulation_attributes"]
+    )
+    body_prim = stage.GetPrimAtPath(str(body.prim_path))
+    nut_prim = stage.GetPrimAtPath(str(nut.prim_path))
+    connector_readback = {
+        "body": _readback_solver_attributes(
+            body_prim, contract["dynamic_rigid_body_attributes"]
+        ),
+        "nut": _readback_solver_attributes(
+            nut_prim, contract["dynamic_rigid_body_attributes"]
+        ),
+    }
+    context = world.get_physics_context()
+    live = {
+        "solver_type": str(context.get_solver_type()).upper(),
+        "ccd_enabled": bool(context.is_ccd_enabled()),
+        "stabilization_enabled": bool(
+            context.is_stablization_enabled()
+        ),
+        "physics_dt_s": float(world.get_physics_dt()),
+        "robot_position_iterations": int(
+            robot.get_solver_position_iteration_count()
+        ),
+        "robot_velocity_iterations": int(
+            robot.get_solver_velocity_iteration_count()
+        ),
+    }
+    expected = contract["profile"]
+    live_matches = {
+        "solver_type": live["solver_type"] == expected["solver_type"],
+        "ccd_enabled": live["ccd_enabled"] is True,
+        "stabilization_enabled": live["stabilization_enabled"] is True,
+        "physics_dt": math.isclose(
+            live["physics_dt_s"],
+            expected["physics_dt_s"],
+            rel_tol=0.0,
+            abs_tol=1.0e-15,
+        ),
+        "robot_iterations": (
+            live["robot_position_iterations"]
+            == expected["position_iterations"]
+            and live["robot_velocity_iterations"]
+            == expected["velocity_iterations"]
+        ),
+    }
+    connector_matches = {
+        label: all(
+            bool(attribute_evidence["verified"])
+            for attribute_evidence in attributes.values()
+        )
+        for label, attributes in connector_readback.items()
+    }
+    if not all(live_matches.values()):
+        raise RuntimeError(
+            "post-reset live solver contract mismatch: "
+            f"live={live}, matches={live_matches}"
+        )
+    if not all(connector_matches.values()):
+        raise RuntimeError(
+            "post-reset connector USD solver contract mismatch: "
+            f"matches={connector_matches}"
+        )
+    return {
+        "status": "POST_RESET_SUPPORTED_READBACK_VERIFIED",
+        "readback_sources": {
+            "physics_scene": (
+                "live_physics_context_and_composed_usd_after_reset"
+            ),
+            "robot_articulation": (
+                "live_single_articulation_and_composed_usd_after_reset"
+            ),
+            "connector_rigid_bodies": "composed_usd_after_reset",
+        },
+        "isaac_6_0_1_rigid_runtime_iteration_getter_available": False,
+        "connector_rigid_body_values_claimed_as_live_tensor_readback": False,
+        "physics_scene": scene_readback,
+        "robot_articulation": articulation_readback,
+        "connector_rigid_bodies": connector_readback,
+        "connector_matches": connector_matches,
+        "live": live,
+        "live_matches": live_matches,
+        "all_verified": True,
+        "control_actions_before_readback": 0,
+        "object_pose_writes_after_start_before_readback": 0,
+    }
+
+
+def _runtime_mode_evidence(
+    arguments,
+    rate_hz,
+    world,
+    pick,
+    tare_steps,
+    wrist_tare_samples,
+    frozen_solver_contract_evidence=None,
+):
+    """Report-only runtime-mode evidence for GUI/headless consistency.
+
+    Every field here comes from the same source in both run modes: CLI
+    arguments, the frozen config, the World constructor arguments, a
+    best-effort World dt readback, and the actual tare array lengths.
+    A frozen solver evidence block is included only after pre-reset authoring
+    and post-reset runtime readback have both succeeded. Nothing here feeds
+    control, recovery, or a PASS gate.
+    """
+    physics_dt_readback = None
+    rendering_dt_readback = None
+    readback_status = []
+    try:
+        physics_dt_readback = float(world.get_physics_dt())
+        readback_status.append("physics_dt_ok")
+    except (AttributeError, TypeError, ValueError):
+        readback_status.append("physics_dt_unavailable")
+    try:
+        rendering_dt_readback = float(world.get_rendering_dt())
+        readback_status.append("rendering_dt_ok")
+    except (AttributeError, TypeError, ValueError):
+        readback_status.append("rendering_dt_unavailable")
+    solver_contract_report = {
+        "status": "not_explicitly_authored_or_unavailable",
+        "note": (
+            "this invocation did not bind the frozen multilayer solver "
+            "contract; no runtime default is guessed"
+        ),
+    }
+    if frozen_solver_contract_evidence is not None:
+        post_reset = frozen_solver_contract_evidence.get("post_reset")
+        if not isinstance(post_reset, Mapping) or not post_reset.get(
+            "all_verified"
+        ):
+            raise RuntimeError(
+                "runtime mode evidence received an unverified solver contract"
+            )
+        solver_contract_report = {
+            "status": "explicitly_authored_and_read_back",
+            "source_path": frozen_solver_contract_evidence["source_path"],
+            "source_sha256": frozen_solver_contract_evidence[
+                "source_sha256"
+            ],
+            "profile": frozen_solver_contract_evidence["profile"],
+            "live": post_reset["live"],
+            "live_matches": post_reset["live_matches"],
+            "substeps_source": "frozen_contract_and_single_world_step",
+        }
+    return {
+        "evidence_only": True,
+        "threshold_label": "SIM_TUNING_ONLY",
+        "report_gui": bool(arguments.gui),
+        "physics_rate_hz": int(rate_hz),
+        "world_physics_dt_s": float(1.0 / rate_hz),
+        "world_physics_dt_readback_s": physics_dt_readback,
+        "world_rendering_dt_s": float(1.0 / 60.0),
+        "world_rendering_dt_readback_s": rendering_dt_readback,
+        "world_step_render_enabled": bool(arguments.gui),
+        "open_tare_duration_s": float(
+            pick.motion.open_tare_duration_s
+        ),
+        "tare_actual_steps": int(tare_steps),
+        "wrist_tare_actual_samples": int(wrist_tare_samples),
+        "controller_updates_per_physics_step": 1,
+        "controller_update_source": (
+            "one controller update per observe_and_step; "
+            "observe_and_step runs exactly one world.step"
+        ),
+        "solver_substep_contract": solver_contract_report,
+        "dt_readback_status": readback_status,
+    }
+
+
 def _json_safe(value):
     """Replace every non-finite scalar before fail-closed JSON output."""
 
@@ -376,18 +931,780 @@ def _metrics_json(metrics):
     return json.dumps(_json_safe(metrics), allow_nan=False, sort_keys=True)
 
 
+# The single authoritative source of the per-finger stiffness scales
+# is the YAML sequential section (soft_hold_stiffness_scale and
+# consolidation_final_stiffness_scale), parsed by the strict loader into
+# SequentialGraspConfig and consumed by ThreeFingerSequentialGrasp.  This
+# validator re-derives the same numbers from the raw YAML document and
+# fails closed on any drift; the controller module owns no hard-coded
+# scale literal.
+
+
+def validate_sequential_gain_consistency(
+    declared, pick_motion, label, sequential_config=None
+):
+    """Fail-closed single-meaning check for the sequential hand gains.
+
+    The physical-grasp YAML declares approach/soft-hold stiffness,
+    damping and the consolidation stiffness scales/steps; the runner
+    applies pick.motion.grip_hand_stiffness (scaled per finger by the
+    declared soft scale, or by the consolidation trajectory) and
+    pick.motion.grip_hand_damping through controller.set_gains.  This
+    returns (problems, evidence) so the caller can abort before any
+    scene work when the sources have drifted apart.  It never alters
+    any control value: evidence-only by construction.
+    """
+    problems = []
+    evidence = {
+        "label": str(label),
+        "consistent": False,
+    }
+
+    def declared_number(name):
+        value = declared.get(name) if isinstance(declared, Mapping) else None
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            problems.append(f"{label}.{name} must be numeric, got {value!r}")
+            return None
+        result = float(value)
+        if not math.isfinite(result) or result <= 0.0:
+            problems.append(
+                f"{label}.{name} must be positive and finite, got {value!r}"
+            )
+            return None
+        return result
+
+    approach = declared_number("approach_stiffness")
+    soft_hold = declared_number("soft_hold_stiffness")
+    damping = declared_number("damping")
+    soft_scale = declared_number("soft_hold_stiffness_scale")
+    final_scale = declared_number("consolidation_final_stiffness_scale")
+    grip_stiffness = getattr(pick_motion, "grip_hand_stiffness", None)
+    grip_damping = getattr(pick_motion, "grip_hand_damping", None)
+    for name, value in (
+        ("grip_hand_stiffness", grip_stiffness),
+        ("grip_hand_damping", grip_damping),
+    ):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            problems.append(
+                f"pick.motion.{name} must be numeric, got {value!r}"
+            )
+        elif not math.isfinite(float(value)) or float(value) <= 0.0:
+            problems.append(
+                f"pick.motion.{name} must be positive and finite, "
+                f"got {value!r}"
+            )
+    evidence.update(
+        {
+            "declared_approach_stiffness": approach,
+            "declared_soft_hold_stiffness": soft_hold,
+            "declared_damping": damping,
+            "declared_soft_hold_stiffness_scale": soft_scale,
+            "declared_consolidation_final_stiffness_scale": final_scale,
+            "pick_grip_hand_stiffness": grip_stiffness,
+            "pick_grip_hand_damping": grip_damping,
+        }
+    )
+    if None in (approach, soft_hold, damping, soft_scale, final_scale):
+        return problems, evidence
+    if not 0.0 < soft_scale < final_scale <= 1.0:
+        problems.append(
+            f"{label} stiffness scales must satisfy "
+            "0 < soft_hold < consolidation_final <= 1.0"
+        )
+    if not isinstance(grip_stiffness, (int, float)) or isinstance(
+        grip_stiffness, bool
+    ):
+        return problems, evidence
+    if not isinstance(grip_damping, (int, float)) or isinstance(
+        grip_damping, bool
+    ):
+        return problems, evidence
+    if not math.isclose(approach, float(grip_stiffness), abs_tol=1e-12):
+        problems.append(
+            f"{label}.approach_stiffness {approach!r} does not match "
+            f"pick.motion.grip_hand_stiffness {grip_stiffness!r}"
+        )
+    expected_soft_hold = approach * soft_scale
+    if not math.isclose(soft_hold, expected_soft_hold, abs_tol=1e-12):
+        problems.append(
+            f"{label}.soft_hold_stiffness {soft_hold!r} does not match "
+            f"approach_stiffness * soft_hold_stiffness_scale = "
+            f"{expected_soft_hold!r}"
+        )
+    if sequential_config is not None:
+        config_values = {
+            "soft_hold_stiffness_scale": getattr(
+                sequential_config, "soft_hold_stiffness_scale", None
+            ),
+            "consolidation_final_stiffness_scale": getattr(
+                sequential_config, "consolidation_final_stiffness_scale", None
+            ),
+            "consolidation_ramp_steps": getattr(
+                sequential_config, "consolidation_ramp_steps", None
+            ),
+            "consolidation_window_steps": getattr(
+                sequential_config, "consolidation_window_steps", None
+            ),
+            "consolidation_threshold_label": getattr(
+                sequential_config, "consolidation_threshold_label", None
+            ),
+        }
+        for key in (
+            "soft_hold_stiffness_scale",
+            "consolidation_final_stiffness_scale",
+            "consolidation_ramp_steps",
+            "consolidation_window_steps",
+        ):
+            value = (
+                declared.get(key)
+                if isinstance(declared, Mapping)
+                else None
+            )
+            loaded_value = config_values[key]
+            if isinstance(value, bool) or not isinstance(
+                value, (int, float)
+            ) or float(value) != float(loaded_value):
+                problems.append(
+                    f"{label}.{key} declared {value!r} does not match "
+                    f"loaded sequential config {loaded_value!r}"
+                )
+        declared_label = (
+            declared.get("consolidation_threshold_label")
+            if isinstance(declared, Mapping)
+            else None
+        )
+        if declared_label != config_values["consolidation_threshold_label"]:
+            problems.append(
+                f"{label}.consolidation_threshold_label declared "
+                f"{declared_label!r} does not match loaded config"
+            )
+        evidence["loaded_sequential_config"] = config_values
+    if not math.isclose(damping, float(grip_damping), abs_tol=1e-12):
+        problems.append(
+            f"{label}.damping {damping!r} does not match "
+            f"pick.motion.grip_hand_damping {grip_damping!r}"
+        )
+    evidence["consistent"] = not problems
+    evidence["problems"] = list(problems)
+    return problems, evidence
+
+
+def install_live_view_cameras(
+    *,
+    stage,
+    arguments,
+    Gf,
+    Usd,
+    UsdGeom,
+    pick,
+):
+    """Install fixed-mount live cameras (visualization only).
+
+    Palm and wrist cameras are non-physical children of ``handbase_link``.
+    Their local T_HC transforms are authored once and never re-aimed, so the
+    view is kinematically identical to a rigid camera bolted to the hand.
+    No object-truth API or control path reads these camera prims.
+    """
+    from kcg_connector.d38999_cad_registration import fixed_camera_model
+    from postgrasp_shadow_capture_runtime import (
+        _camera_cv_pose_from_eye_target,
+        _camera_cv_pose_to_usd,
+    )
+
+    status: dict[str, Any] = {
+        "attempted": True,
+        "cameras": {},
+        "windows": {},
+        "_window_handles": {},
+    }
+    try:
+        handbase_path = pick.scene.grasp_tcp_prim_path.rsplit("/", 1)[0]
+        handbase_prim = stage.GetPrimAtPath(handbase_path)
+        if handbase_prim is None or not handbase_prim.IsValid():
+            raise RuntimeError(f"handbase prim missing: {handbase_path}")
+
+        # Explicit optical transforms in handbase coordinates. These are
+        # simulation mount candidates, not camera poses reverse-engineered
+        # from a nominal Plug pose. Real hardware must replace them with
+        # measured optical frames and hand-eye calibration.
+        palm_t_hc = _camera_cv_pose_from_eye_target(
+            (0.0, 0.0, 0.315),
+            (0.0, 0.0, 0.448),
+        )
+        wrist_t_hc = _camera_cv_pose_from_eye_target(
+            (-0.150, 0.0, 0.060),
+            (-0.090, 0.0, 0.480),
+        )
+        status["rig"] = {
+            "palm_t_hc": palm_t_hc.tolist(),
+            "wrist_t_hc": wrist_t_hc.tolist(),
+            "mount_contract": "SIM_VISUAL_MOUNT_CANDIDATE_FIXED_T_HC",
+            "control_authorized": False,
+        }
+
+        def _local_usd_matrix(t_hc):
+            usd_pose = _camera_cv_pose_to_usd(t_hc)
+            return Gf.Matrix4d(*usd_pose.T.ravel().tolist())
+
+        def _define_camera(path, local_matrix, focal_length_mm):
+            existing = stage.GetPrimAtPath(path)
+            if existing is not None and existing.IsValid():
+                raise RuntimeError(
+                    f"canonical hand camera prim already exists before its single authoring step: {path}"
+                )
+            prim = UsdGeom.Camera.Define(stage, path)
+            xform = UsdGeom.Xformable(prim)
+            xform.ClearXformOpOrder()
+            xform.AddTransformOp().Set(local_matrix)
+            prim.CreateFocalLengthAttr(float(focal_length_mm))
+            prim.CreateHorizontalApertureAttr(20.955)
+            prim.CreateVerticalApertureAttr(20.955 * 720.0 / 1280.0)
+            # The frozen Palm mount places a held keyed-v2 mating face about
+            # 93.5 mm from the optical center.  A 100 mm near plane clips the
+            # very face needed for key observation, so keep the same camera
+            # transform/intrinsics and expose the already-proven 20 mm range.
+            prim.CreateClippingRangeAttr(Gf.Vec2f(0.02, 10.0))
+            return prim
+
+        # A0 freezes one canonical non-physical camera prim per semantic view.
+        # The live display reuses these prims instead of creating a second rig.
+        palm_path = handbase_path + "/PalmCamera"
+        wrist_path = handbase_path + "/WristCamera"
+        table_path = "/World/TableLiveViewCamera"
+        # Display and measurement share the same 24 mm optical model. The
+        # stream is only a lower-resolution render of the same field of view.
+        _define_camera(
+            palm_path,
+            _local_usd_matrix(palm_t_hc),
+            focal_length_mm=24.0,
+        )
+        _define_camera(
+            wrist_path,
+            _local_usd_matrix(wrist_t_hc),
+            focal_length_mm=24.0,
+        )
+        status["rig"]["palm_prim"] = palm_path
+        status["rig"]["wrist_prim"] = wrist_path
+        table_eye = np.asarray(CAMERA_EYE_M, dtype=np.float64)
+        table_target = np.asarray(CAMERA_TARGET_M, dtype=np.float64)
+        table_model = fixed_camera_model(
+            eye=tuple(float(value) for value in table_eye),
+            target=tuple(float(value) for value in table_target),
+            resolution=(1280, 720),
+        )
+        table_rows = np.asarray(table_model.world_to_camera, dtype=np.float64)
+        table_pose = np.eye(4, dtype=np.float64)
+        table_pose[:3, :3] = table_rows.T
+        table_pose[:3, 3] = table_eye
+        table_usd_pose = _camera_cv_pose_to_usd(table_pose)
+        _define_camera(
+            table_path,
+            Gf.Matrix4d(*table_usd_pose.T.ravel().tolist()),
+            focal_length_mm=24.0,
+        )
+        for path in (palm_path, wrist_path, table_path):
+            status["cameras"][path] = True
+
+    except Exception as install_error:  # noqa: BLE001
+        status["error"] = f"{type(install_error).__name__}: {install_error}"
+    return status
+
+
+def attach_live_camera_streams(
+    *, stage, live_camera_rig, initialize_live_callbacks=True
+):
+    """Bind render products after reset without changing camera transforms."""
+
+    status = {"attempted": True, "camera_objects": {}}
+    if not live_camera_rig:
+        status["error"] = "fixed live camera rig is unavailable"
+        return status
+    try:
+        from isaacsim.sensors.camera import Camera
+        import omni.replicator.core as rep
+
+        for key in ("palm", "wrist"):
+            prim_path = live_camera_rig[key + "_prim"]
+            product = rep.create.render_product(
+                stage.GetPrimAtPath(prim_path),
+                (480, 270),
+                name=f"{key.title()}LiveStreamProduct",
+            )
+            live_camera_rig[key + "_render_product_path"] = product.path
+            if initialize_live_callbacks:
+                cam_obj = Camera(
+                    prim_path=prim_path,
+                    name=f"{key}_live_stream",
+                    frequency=15,
+                    resolution=(480, 270),
+                    render_product_path=product.path,
+                )
+                cam_obj.initialize(attach_rgb_annotator=True)
+                live_camera_rig[key + "_cam_obj"] = cam_obj
+                status["camera_objects"][key] = True
+            else:
+                status["camera_objects"][key] = False
+        status["capture_owner"] = (
+            "camera_new_frame_callback"
+            if initialize_live_callbacks
+            else "probe_replicator_annotator_only"
+        )
+        live_camera_rig["_rep"] = rep
+    except Exception as stream_error:  # noqa: BLE001
+        status["error"] = f"{type(stream_error).__name__}: {stream_error}"
+    return status
+
+
+def run_camera_rig_probe(
+    *,
+    output_directory,
+    stage,
+    world,
+    robot,
+    simulation_app,
+    ArticulationAction,
+    Usd,
+    UsdGeom,
+    controlled_indices,
+    arm_indices,
+    home_arm,
+    open_hand,
+    approach_segments,
+    live_camera_rig,
+    rate_hz,
+    interpolate_arm,
+):
+    """Probe the fixed Palm/Wrist mounts without entering grasp control.
+
+    The probe commands only Home and the already-defined safe approach
+    segments through pregrasp.  It saves endpoint images and verifies throughout the
+    motion that each camera keeps the authored fixed ``T_HC`` relative to
+    ``handbase_link``.  Object/contact truth is neither read nor used.
+    """
+
+    from PIL import Image
+
+    output_directory = Path(output_directory).expanduser().resolve()
+    output_directory.mkdir(parents=True, exist_ok=False)
+    report = {
+        "schema_version": "kcg_d38999_camera_rig_probe_v1",
+        "mode": "SIM_MOUNT_RIGIDITY_PROBE_ONLY",
+        "control_authorized": False,
+        "real_mount_calibrated": False,
+        "viewpoint_human_review_required": True,
+        "key_region_visibility_verified": False,
+        "uses_object_or_contact_truth": False,
+        "enters_grasp_or_insertion": False,
+        "thresholds": {
+            "maximum_mount_translation_residual_m": 1.0e-6,
+            "maximum_mount_rotation_residual_rad": 1.0e-5,
+            "maximum_endpoint_arm_tracking_error_rad": 0.03,
+            "minimum_image_dynamic_range": 8,
+            "minimum_image_standard_deviation": 1.0,
+            "minimum_motion_frame_mean_abs_difference": 1.0,
+        },
+        "endpoints": [],
+    }
+    if not isinstance(live_camera_rig, dict):
+        raise RuntimeError("fixed live camera rig is unavailable")
+    required = (
+        "palm_prim",
+        "wrist_prim",
+        "palm_t_hc",
+        "wrist_t_hc",
+        "palm_render_product_path",
+        "wrist_render_product_path",
+        "_rep",
+    )
+    missing = [key for key in required if key not in live_camera_rig]
+    if missing:
+        raise RuntimeError(f"camera rig probe bindings missing: {missing}")
+
+    handbase_path = live_camera_rig["palm_prim"].rsplit("/", 1)[0]
+    if live_camera_rig["wrist_prim"].rsplit("/", 1)[0] != handbase_path:
+        raise RuntimeError("Palm and Wrist cameras do not share handbase")
+    handbase_prim = stage.GetPrimAtPath(handbase_path)
+    if handbase_prim is None or not handbase_prim.IsValid():
+        raise RuntimeError(f"handbase prim missing: {handbase_path}")
+    report["camera_parent_path"] = handbase_path
+    report["mount_contract"] = live_camera_rig.get("mount_contract")
+    rep = live_camera_rig["_rep"]
+    rgb_annotators = {}
+    for key in ("palm", "wrist"):
+        annotator = rep.AnnotatorRegistry.get_annotator("rgb")
+        annotator.attach([live_camera_rig[key + "_render_product_path"]])
+        rgb_annotators[key] = annotator
+
+    # The authored USD camera looks along local -Z, whereas the project RGB-D
+    # convention looks along optical +Z.  D is its own inverse.
+    camera_cv_from_usd = np.diag((1.0, -1.0, -1.0, 1.0))
+    expected_t_hc = {
+        key: np.asarray(live_camera_rig[key + "_t_hc"], dtype=np.float64)
+        for key in ("palm", "wrist")
+    }
+    for key, matrix in expected_t_hc.items():
+        if matrix.shape != (4, 4) or not np.all(np.isfinite(matrix)):
+            raise RuntimeError(f"{key} T_HC is not a finite 4x4 matrix")
+
+    maximum_translation_residual = {"palm": 0.0, "wrist": 0.0}
+    maximum_rotation_residual = {"palm": 0.0, "wrist": 0.0}
+    rigidity_sample_count = 0
+
+    def _world_transform(prim):
+        # Gf exposes USD's row-vector matrix; numpy code below is column-vector.
+        return np.asarray(
+            UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(
+                Usd.TimeCode.Default()
+            ),
+            dtype=np.float64,
+        ).T
+
+    def _rotation_residual(first, second):
+        relative = first[:3, :3].T @ second[:3, :3]
+        cosine = float(np.clip((np.trace(relative) - 1.0) * 0.5, -1.0, 1.0))
+        return float(math.acos(cosine))
+
+    def _sample_mount_rigidity():
+        nonlocal rigidity_sample_count
+        t_wh = _world_transform(handbase_prim)
+        if t_wh.shape != (4, 4) or not np.all(np.isfinite(t_wh)):
+            raise RuntimeError("handbase world transform is invalid")
+        t_hw = np.linalg.inv(t_wh)
+        for key in ("palm", "wrist"):
+            camera_prim = stage.GetPrimAtPath(live_camera_rig[key + "_prim"])
+            if camera_prim is None or not camera_prim.IsValid():
+                raise RuntimeError(f"{key} camera prim is missing")
+            t_wu = _world_transform(camera_prim)
+            observed_t_hc = t_hw @ t_wu @ camera_cv_from_usd
+            translation_residual = float(
+                np.linalg.norm(
+                    observed_t_hc[:3, 3] - expected_t_hc[key][:3, 3]
+                )
+            )
+            rotation_residual = _rotation_residual(
+                expected_t_hc[key], observed_t_hc
+            )
+            maximum_translation_residual[key] = max(
+                maximum_translation_residual[key], translation_residual
+            )
+            maximum_rotation_residual[key] = max(
+                maximum_rotation_residual[key], rotation_residual
+            )
+        rigidity_sample_count += 1
+
+    def _command_step(arm_target, render=False):
+        target = np.concatenate((arm_target, open_hand)).astype(np.float32)
+        robot.apply_action(
+            ArticulationAction(
+                joint_positions=target,
+                joint_indices=controlled_indices,
+            )
+        )
+        world.step(render=render)
+        _sample_mount_rigidity()
+
+    def _capture_endpoint(label, arm_target):
+        # Isaac 6's reliable formal-capture path renders through Replicator
+        # annotators while physics is paused.  Zero delta guarantees this
+        # endpoint image cannot advance the robot or scene.
+        playing_before_capture = bool(world.is_playing())
+        if playing_before_capture:
+            world.pause()
+            simulation_app.update()
+        if world.is_playing():
+            raise RuntimeError("camera probe could not pause the timeline")
+        for _ in range(5):
+            rep.orchestrator.step(
+                rt_subframes=4,
+                delta_time=0.0,
+                pause_timeline=True,
+            )
+        actual_arm = np.asarray(
+            robot.get_joint_positions(joint_indices=arm_indices),
+            dtype=np.float64,
+        )
+        tracking_error = float(np.max(np.abs(actual_arm - arm_target)))
+        endpoint = {
+            "name": label,
+            "target_arm_rad": [float(value) for value in arm_target],
+            "actual_arm_rad": [float(value) for value in actual_arm],
+            "maximum_arm_tracking_error_rad": tracking_error,
+            "images": {},
+        }
+        for key in ("palm", "wrist"):
+            rgba = rgb_annotators[key].get_data()
+            if rgba is None:
+                raise RuntimeError(f"{key} camera returned no frame at {label}")
+            array = np.asarray(rgba)
+            if array.ndim != 3 or array.shape[2] < 3 or array.size == 0:
+                raise RuntimeError(
+                    f"{key} camera returned invalid shape {array.shape} at {label}"
+                )
+            rgb = np.asarray(array[:, :, :3], dtype=np.uint8)
+            dynamic_range = int(rgb.max()) - int(rgb.min())
+            standard_deviation = float(np.std(rgb.astype(np.float32)))
+            relative_path = f"{key}_{label}.png"
+            Image.fromarray(rgb, "RGB").save(output_directory / relative_path)
+            endpoint["images"][key] = {
+                "path": relative_path,
+                "shape": [int(value) for value in rgb.shape],
+                "dynamic_range": dynamic_range,
+                "standard_deviation": standard_deviation,
+                "mean_rgb": [
+                    float(value) for value in np.mean(rgb, axis=(0, 1))
+                ],
+            }
+        if playing_before_capture:
+            world.play()
+            simulation_app.update()
+        if bool(world.is_playing()) is not playing_before_capture:
+            raise RuntimeError("camera probe did not restore the timeline")
+        report["endpoints"].append(endpoint)
+
+    # Fixed-robot observation at Home.
+    for _ in range(max(12, round(0.1 * rate_hz))):
+        _command_step(home_arm)
+    _capture_endpoint("home", home_arm)
+
+    # Moving-robot observation uses the complete collision-screened approach
+    # through the pregrasp endpoint. It stops before hold, descent, contact,
+    # or insertion.
+    current_arm = home_arm.copy()
+    for segment in approach_segments:
+        final_arm = np.asarray(segment.target_arm_rad, dtype=np.float64)
+        segment_steps = max(1, round(segment.duration_s * rate_hz))
+        for index in range(segment_steps):
+            next_arm = np.asarray(
+                interpolate_arm(
+                    tuple(float(value) for value in current_arm),
+                    tuple(float(value) for value in final_arm),
+                    float(index + 1) / float(segment_steps),
+                ),
+                dtype=np.float64,
+            )
+            _command_step(next_arm)
+        for _ in range(max(12, round(0.1 * rate_hz))):
+            _command_step(final_arm)
+        _capture_endpoint(segment.name, final_arm)
+        current_arm = final_arm.copy()
+
+    report["rigidity_sample_count"] = rigidity_sample_count
+    report["maximum_mount_translation_residual_m"] = (
+        maximum_translation_residual
+    )
+    report["maximum_mount_rotation_residual_rad"] = maximum_rotation_residual
+    first_images = report["endpoints"][0]["images"]
+    for endpoint in report["endpoints"][1:]:
+        for key in ("palm", "wrist"):
+            first_rgb = np.asarray(
+                Image.open(output_directory / first_images[key]["path"]),
+                dtype=np.float32,
+            )
+            moved_rgb = np.asarray(
+                Image.open(output_directory / endpoint["images"][key]["path"]),
+                dtype=np.float32,
+            )
+            endpoint["images"][key]["mean_abs_difference_from_home"] = float(
+                np.mean(np.abs(moved_rgb - first_rgb))
+            )
+
+    thresholds = report["thresholds"]
+    image_quality_passed = all(
+        image["dynamic_range"] >= thresholds["minimum_image_dynamic_range"]
+        and image["standard_deviation"]
+        >= thresholds["minimum_image_standard_deviation"]
+        for endpoint in report["endpoints"]
+        for image in endpoint["images"].values()
+    )
+    motion_frames_changed = all(
+        any(
+            endpoint["images"][key]["mean_abs_difference_from_home"]
+            >= thresholds["minimum_motion_frame_mean_abs_difference"]
+            for endpoint in report["endpoints"][1:]
+        )
+        for key in ("palm", "wrist")
+    )
+    mount_rigidity_passed = all(
+        maximum_translation_residual[key]
+        <= thresholds["maximum_mount_translation_residual_m"]
+        and maximum_rotation_residual[key]
+        <= thresholds["maximum_mount_rotation_residual_rad"]
+        for key in ("palm", "wrist")
+    )
+    tracking_passed = all(
+        endpoint["maximum_arm_tracking_error_rad"]
+        <= thresholds["maximum_endpoint_arm_tracking_error_rad"]
+        for endpoint in report["endpoints"]
+    )
+    report.update(
+        {
+            "image_quality_passed": image_quality_passed,
+            "motion_frames_changed": motion_frames_changed,
+            "mount_rigidity_passed": mount_rigidity_passed,
+            "tracking_passed": tracking_passed,
+            "passed": bool(
+                image_quality_passed
+                and motion_frames_changed
+                and mount_rigidity_passed
+                and tracking_passed
+            ),
+        }
+    )
+    for key, annotator in rgb_annotators.items():
+        annotator.detach([live_camera_rig[key + "_render_product_path"]])
+    (output_directory / "camera_rig_probe.json").write_text(
+        json.dumps(
+            _json_safe(report),
+            allow_nan=False,
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
 def main():
+    # Keep the runner importable by CPU-only contract tests.  When executed as
+    # a script, its directory is on sys.path and the telemetry helper is
+    # loaded only after main starts; it is unrelated to scene/config parsing.
+    import live_telemetry
+    import sys
+
     repository = Path(__file__).resolve().parents[3]
+    package_root = repository / "src/kcg_connector"
+    if str(package_root) not in sys.path:
+        sys.path.insert(0, str(package_root))
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--config",
         default=str(
             repository
-            / "src/kcg_connector/config/d38999_tabletop_pick_v1.yaml"
+            / "src/kcg_connector/config/d38999_tabletop_pick_v2_fast.yaml"
         ),
     )
     parser.add_argument("--gui", action="store_true")
+    parser.add_argument(
+        "--camera-rig-probe",
+        action="store_true",
+        help=(
+            "SIM_MOUNT_RIGIDITY_PROBE_ONLY: save Palm/Wrist images at Home "
+            "and every safe approach endpoint through pregrasp, verify fixed T_HC "
+            "through motion, then exit before grasp or insertion"
+        ),
+    )
     parser.add_argument("--keep-open", action="store_true")
+    parser.add_argument(
+        "--live-telemetry-port",
+        type=int,
+        default=8790,
+        help=(
+            "port of the live wrist-wrench HTTP stream "
+            "(http://127.0.0.1:PORT/ shows the real-time curves)"
+        ),
+    )
+    parser.add_argument(
+        "--no-live-telemetry",
+        action="store_true",
+        help="disable the live wrist-wrench HTTP stream",
+    )
+    parser.add_argument(
+        "--visual-chain-report",
+        default=None,
+        help=(
+            "path to a kcg_d38999_visual_chain_v1 report; when present, the "
+            "insertion planner accepts its visual T_HP only when the report "
+            "explicitly authorizes one finite, covariance-calibrated, "
+            "observation-resolved C2 hypothesis from a validated real keyed "
+            "model; otherwise fail closed"
+        ),
+    )
+    parser.add_argument(
+        "--physical-grasp-method",
+        choices=(
+            "legacy",
+            "synchronous",
+            "sequential-compliant",
+            "single-finger",
+        ),
+        default="legacy",
+        help=(
+            "select the sensor-bounded tabletop grasp controller; legacy "
+            "preserves the previously validated smoke path"
+        ),
+    )
+    parser.add_argument(
+        "--single-finger",
+        choices=("f1", "f2", "f3"),
+        default=None,
+        help=(
+            "single-finger contact/hold/release characterization; required "
+            "when --physical-grasp-method single-finger is selected"
+        ),
+    )
+    parser.add_argument(
+        "--single-finger-posthoc-audit-mode",
+        choices=("skip", "capture"),
+        default="skip",
+        help=(
+            "skip records only the four audit markers and never touches "
+            "the contact API; capture additionally records raw classified "
+            "contact evidence at the four points (log-only, never read by "
+            "control)"
+        ),
+    )
+    parser.add_argument(
+        "--physical-grasp-config",
+        default=str(
+            repository
+            / "src/kcg_connector/config/d38999_tabletop_physical_grasp_v3_fastlift.yaml"
+        ),
+    )
+    parser.add_argument(
+        "--moment-constrained-support-config",
+        default=None,
+        help=(
+            "opt in to the strict DYN-B-V3 moment-constrained support "
+            "transfer; requires the current B-V3 task, staged sequential "
+            "grasp and all immutable evidence bindings"
+        ),
+    )
+    parser.add_argument(
+        "--formal-lift-mode",
+        choices=(
+            "staged",
+            "zero-lift-hold",
+            "gravity-transfer-hold",
+            "stiffness-restore-hold",
+        ),
+        default="staged",
+        help=(
+            "staged keeps the validated staged lift under the original "
+            "monitor/gates; zero-lift-hold keeps the exact grasped arm/hand "
+            "command for a bounded hold and is characterization-only "
+            "(never a grasp PASS); gravity-transfer-hold performs the one "
+            "B-V2-H15 bumpless position-preload to gravity-effort diagnostic "
+            "and also can never be a grasp PASS; stiffness-restore-hold "
+            "performs the one B-V2-H16 bumpless restoration to the existing "
+            "nominal arm stiffness under H13 damping, without lifting"
+        ),
+    )
+    parser.add_argument(
+        "--empty-hand-first-stage-diagnostic",
+        action="store_true",
+        help=(
+            "EMPTY_HAND_FIRST_STAGE_REPLAY_DIAGNOSTIC_ONLY: keep the fingers "
+            "open and replay the stage-1 lift trajectory under the frozen "
+            "wrist gates; diagnostic evidence only, never a grasp PASS"
+        ),
+    )
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--output-dir",
+        help="write nominal_physics_report.json and controller_steps.jsonl",
+    )
     parser.add_argument(
         "--insertion-probe",
         action="store_true",
@@ -400,7 +1717,7 @@ def main():
         "--insertion-config",
         default=str(
             repository
-            / "src/kcg_connector/config/d38999_physical_insertion_v1.yaml"
+            / "src/kcg_connector/config/d38999_physical_insertion_v2_fast.yaml"
         ),
     )
     parser.add_argument(
@@ -412,12 +1729,59 @@ def main():
         ),
     )
     parser.add_argument(
+        "--sim-truth-proxy-regression",
+        action="store_true",
+        help=(
+            "explicitly allow the legacy simulation-only insertion/E2E "
+            "regression that uses object-pose/contact truth and key/thread "
+            "proxies; never authorizes formal or visual insertion control"
+        ),
+    )
+    parser.add_argument(
         "--pose-preflight",
         choices=("none", "masked-rgbd"),
         default="none",
         help=(
             "run the selected pose preflight in this same World after the "
             "initial settle and before intentional robot motion"
+        ),
+    )
+    parser.add_argument(
+        "--postgrasp-snapshot-gate",
+        action="store_true",
+        help=(
+            "OPT-IN snapshot gate: save frozen post-grasp restore snapshot, "
+            "restore it, settle 0.5 s, and verify loads/pose posthoc-only. "
+            "Never a visual estimate or control authorization."
+        ),
+    )
+    parser.add_argument(
+        "--postgrasp-diag-mount-search",
+        action="store_true",
+        help=(
+            "OPT-IN DIAGNOSTIC_MOUNT_SEARCH_ONLY: after the frozen grasp PASS, "
+            "capture raw RGB-D from virtual wrist mount candidates without arm "
+            "motion. Never a formal estimator input or control authorization."
+        ),
+    )
+    parser.add_argument(
+        "--postgrasp-shadow-capture",
+        action="store_true",
+        help=(
+            "OPT-IN POST_GRASP_SHADOW: after the formal grasp PASS is frozen, "
+            "write a root+joint snapshot and capture RGB-D-only wrist views. "
+            "Shadow only; never mutates the grasp PASS or authorizes control."
+        ),
+    )
+    parser.add_argument(
+        "--keyed-visual-control",
+        action="store_true",
+        help=(
+            "after the formal keyed-v2 grasp sensor gate, capture the fixed "
+            "Palm RGB-D frame and run key observation plus the visual "
+            "prealignment-plan gate in the same episode; any incomplete "
+            "image/accuracy/path gate stops safely and never falls back to "
+            "simulator object or contact truth"
         ),
     )
     parser.add_argument(
@@ -441,21 +1805,21 @@ def main():
         "--regrasp-config",
         default=str(
             repository
-            / "src/kcg_connector/config/d38999_nut_regrasp_physx_v1.yaml"
+            / "src/kcg_connector/config/d38999_nut_regrasp_physx_v2_fast.yaml"
         ),
     )
     parser.add_argument(
         "--twist-config",
         default=str(
             repository
-            / "src/kcg_connector/config/d38999_q7_twist_probe_stage120_v1.yaml"
+            / "src/kcg_connector/config/d38999_q7_twist_probe_stage120_v2_fast.yaml"
         ),
     )
     parser.add_argument(
         "--rewind-config",
         default=str(
             repository
-            / "src/kcg_connector/config/d38999_q7_rewind_probe_v1.yaml"
+            / "src/kcg_connector/config/d38999_q7_rewind_probe_v2_fast.yaml"
         ),
     )
     parser.add_argument(
@@ -494,6 +1858,215 @@ def main():
         help="author deterministic 24-tooth displayColor IDs in-session",
     )
     arguments = parser.parse_args()
+    # Model-first dependency gate applies to every run that selects the keyed
+    # public-spec scene, not only to --keyed-visual-control. This prevents a
+    # grasp-only or diagnostic invocation from tuning against r6 while its
+    # contacts are visual-only and its coupling thread is unmodeled.
+    early_pick_config_path = Path(arguments.config).expanduser().resolve()
+    try:
+        early_pick_document = yaml.safe_load(
+            early_pick_config_path.read_text(encoding="utf-8")
+        )
+    except (OSError, ValueError, yaml.YAMLError):
+        early_pick_document = None
+    early_pick_scene = (
+        early_pick_document.get("scene")
+        if isinstance(early_pick_document, Mapping)
+        else None
+    )
+    keyed_v2_model_requested = bool(
+        early_pick_config_path.name.startswith("d38999_keyed_v2_tabletop_pick")
+        or (
+            isinstance(early_pick_document, Mapping)
+            and str(early_pick_document.get("schema_version", "")).startswith(
+                "kcg_d38999_keyed_v2_tabletop_pick_"
+            )
+        )
+        or (
+            isinstance(early_pick_scene, Mapping)
+            and (
+                early_pick_scene.get("proxy_config")
+                == "d38999_keyed_public_spec_v2.yaml"
+                or early_pick_scene.get("tabletop_config")
+                == "d38999_keyed_v2_tabletop_scene_v1.yaml"
+            )
+        )
+    )
+    # A manual Boolean is not sufficient to reopen the task chain.  The
+    # machine-checked A0-A5 contract is a second independent latch, evaluated
+    # before Isaac imports.  Missing, malformed, incomplete, or unexpectedly
+    # permissive contract state fails closed.
+    if keyed_v2_model_requested:
+        try:
+            from kcg_connector.d38999_keyed_v2_physical_model_contract import (
+                FINAL_PHASE_STATE,
+                load_physical_model_contract,
+            )
+
+            physical_model_contract = load_physical_model_contract()
+            physical_model_contract_ready = bool(
+                dict(physical_model_contract.phase_gates)
+                == FINAL_PHASE_STATE
+                and physical_model_contract.document["authorization"][
+                    "grasp_allowed"
+                ]
+            )
+        except (OSError, ValueError, yaml.YAMLError) as exc:
+            parser.error(
+                "all keyed-v2 simulation episodes are blocked by the "
+                "model-first gate: the A0-A5 physical-model contract is "
+                f"missing or invalid ({exc})"
+            )
+        if not physical_model_contract_ready:
+            parser.error(
+                "all keyed-v2 simulation episodes are blocked by the "
+                "model-first gate: finish and accept checkpoint A0-A5 "
+                "physical modeling before any grasp, diagnostic, vision, "
+                "insertion, or twist run"
+            )
+    if keyed_v2_model_requested and not KEYED_V2_CHECKPOINT_A2_PROMOTION_ENABLED:
+        parser.error(
+            "all keyed-v2 simulation episodes are blocked by the model-first "
+            "gate: finish and accept checkpoint A0-A5 physical modeling before "
+            "any grasp, diagnostic, vision, insertion, or twist run"
+        )
+    keyed_checkpoint_a_acceptance = None
+    keyed_checkpoint_a_acceptance_path = None
+    if arguments.camera_rig_probe:
+        if not arguments.output_dir:
+            parser.error("--camera-rig-probe requires --output-dir")
+        probe_output = Path(arguments.output_dir).expanduser().resolve()
+        if probe_output.exists():
+            parser.error(f"camera rig probe output already exists: {probe_output}")
+        incompatible_probe_modes = {
+            "keep_open": arguments.keep_open,
+            "formal_grasp": arguments.physical_grasp_method != "legacy",
+            "insertion_probe": arguments.insertion_probe,
+            "end_to_end_probe": arguments.end_to_end_probe,
+            "pose_preflight": arguments.pose_preflight != "none",
+            "postgrasp_snapshot_gate": arguments.postgrasp_snapshot_gate,
+            "postgrasp_diag_mount_search": (
+                arguments.postgrasp_diag_mount_search
+            ),
+            "postgrasp_shadow_capture": arguments.postgrasp_shadow_capture,
+            "keyed_visual_control": arguments.keyed_visual_control,
+            "empty_hand_first_stage_diagnostic": (
+                arguments.empty_hand_first_stage_diagnostic
+            ),
+            "smooth_demo": arguments.smooth_demo,
+            "wrist_ft_monitor": arguments.wrist_ft_monitor,
+            "nut_tooth_jitter_output": bool(arguments.nut_tooth_jitter_output),
+        }
+        selected_incompatible = [
+            name for name, selected in incompatible_probe_modes.items() if selected
+        ]
+        if selected_incompatible:
+            parser.error(
+                "--camera-rig-probe cannot combine with: "
+                + ", ".join(selected_incompatible)
+            )
+        # The probe produces files only; do not start the unrelated telemetry
+        # server merely because its normal runner default is enabled.
+        arguments.no_live_telemetry = True
+    truth_proxy_motion_requested = bool(
+        arguments.insertion_probe or arguments.end_to_end_probe
+    )
+    if truth_proxy_motion_requested and not arguments.sim_truth_proxy_regression:
+        parser.error(
+            "insertion/end-to-end is quarantined: explicitly pass "
+            "--sim-truth-proxy-regression for the legacy simulation-only "
+            "truth-driven proxy regression"
+        )
+    if arguments.sim_truth_proxy_regression and not truth_proxy_motion_requested:
+        parser.error(
+            "--sim-truth-proxy-regression requires --insertion-probe or "
+            "--end-to-end-probe"
+        )
+    if arguments.sim_truth_proxy_regression:
+        if arguments.physical_grasp_method != "legacy":
+            parser.error(
+                "--sim-truth-proxy-regression requires "
+                "--physical-grasp-method legacy; formal grasp is isolated "
+                "from truth-driven insertion"
+            )
+        if arguments.visual_chain_report is not None:
+            parser.error(
+                "--sim-truth-proxy-regression cannot consume "
+                "--visual-chain-report"
+            )
+        if arguments.pose_preflight != "none":
+            parser.error(
+                "--sim-truth-proxy-regression cannot combine with visual "
+                "pose preflight"
+            )
+    if not arguments.no_live_telemetry:
+        live_telemetry.start_live_telemetry(arguments.live_telemetry_port)
+    formal_grasp = arguments.physical_grasp_method != "legacy"
+    single_finger_mode = arguments.physical_grasp_method == "single-finger"
+    # Formal/sensor-bounded grasp is intentionally isolated from the legacy
+    # truth-driven insertion. Only the explicit legacy regression flag above
+    # may reach that old proxy path.
+    if formal_grasp:
+        arguments.wrist_ft_monitor = True
+    if arguments.formal_lift_mode in (
+        "zero-lift-hold",
+        "gravity-transfer-hold",
+        "stiffness-restore-hold",
+    ) and not formal_grasp:
+        parser.error(
+            "characterization-only formal lift modes require a formal "
+            "physical grasp method"
+        )
+    if single_finger_mode and arguments.single_finger is None:
+        parser.error(
+            "--physical-grasp-method single-finger requires --single-finger"
+        )
+    if not single_finger_mode and arguments.single_finger is not None:
+        parser.error(
+            "--single-finger requires --physical-grasp-method single-finger"
+        )
+    if single_finger_mode and arguments.formal_lift_mode != "zero-lift-hold":
+        parser.error(
+            "--physical-grasp-method single-finger requires "
+            "--formal-lift-mode zero-lift-hold"
+        )
+    if single_finger_mode and arguments.pose_preflight != "none":
+        parser.error(
+            "--physical-grasp-method single-finger cannot combine with "
+            "pose preflight"
+        )
+    if arguments.empty_hand_first_stage_diagnostic and (
+        arguments.physical_grasp_method != "synchronous"
+        or arguments.formal_lift_mode != "staged"
+    ):
+        parser.error(
+            "--empty-hand-first-stage-diagnostic requires "
+            "--physical-grasp-method synchronous and "
+            "--formal-lift-mode staged"
+        )
+    if arguments.empty_hand_first_stage_diagnostic and (
+        arguments.insertion_probe
+        or arguments.end_to_end_probe
+        or arguments.smooth_demo
+        or arguments.pose_preflight != "none"
+    ):
+        parser.error(
+            "--empty-hand-first-stage-diagnostic cannot combine with "
+            "probe/preflight/smooth-demo modes"
+        )
+    if single_finger_mode and arguments.smooth_demo:
+        parser.error(
+            "--physical-grasp-method single-finger cannot combine with "
+            "--smooth-demo"
+        )
+    if (
+        not single_finger_mode
+        and arguments.single_finger_posthoc_audit_mode != "skip"
+    ):
+        parser.error(
+            "--single-finger-posthoc-audit-mode capture requires "
+            "--physical-grasp-method single-finger"
+        )
     if arguments.smooth_demo and not arguments.end_to_end_probe:
         parser.error("--smooth-demo requires --end-to-end-probe")
     if (
@@ -503,26 +2076,190 @@ def main():
         parser.error(
             "--pose-preflight masked-rgbd requires --end-to-end-probe"
         )
+    if arguments.postgrasp_snapshot_gate and (
+        not formal_grasp
+        or single_finger_mode
+        or arguments.formal_lift_mode != "staged"
+        or arguments.insertion_probe
+        or arguments.end_to_end_probe
+        or arguments.empty_hand_first_stage_diagnostic
+        or arguments.pose_preflight != "none"
+    ):
+        parser.error(
+            "--postgrasp-snapshot-gate requires a non-single-finger formal "
+            "grasp, staged lift, and no other opt-in modes"
+        )
+    if arguments.postgrasp_diag_mount_search and (
+        not formal_grasp
+        or single_finger_mode
+        or arguments.formal_lift_mode != "staged"
+        or arguments.insertion_probe
+        or arguments.end_to_end_probe
+        or arguments.empty_hand_first_stage_diagnostic
+        or arguments.pose_preflight != "none"
+    ):
+        parser.error(
+            "--postgrasp-diag-mount-search requires a non-single-finger "
+            "formal grasp, staged lift, and no other opt-in modes"
+        )
+    if arguments.postgrasp_shadow_capture and (
+        not formal_grasp
+        or single_finger_mode
+        or arguments.formal_lift_mode != "staged"
+        or arguments.insertion_probe
+        or arguments.end_to_end_probe
+        or arguments.empty_hand_first_stage_diagnostic
+        or arguments.pose_preflight != "none"
+    ):
+        parser.error(
+            "--postgrasp-shadow-capture requires a non-single-finger formal "
+            "grasp, staged lift, no insertion/end-to-end/diagnostic/preflight "
+            "modes"
+        )
+    if arguments.keyed_visual_control and (
+        not formal_grasp
+        or single_finger_mode
+        or arguments.formal_lift_mode != "staged"
+        or arguments.insertion_probe
+        or arguments.end_to_end_probe
+        or arguments.postgrasp_snapshot_gate
+        or arguments.postgrasp_diag_mount_search
+        or arguments.postgrasp_shadow_capture
+        or arguments.empty_hand_first_stage_diagnostic
+        or arguments.pose_preflight != "none"
+    ):
+        parser.error(
+            "--keyed-visual-control requires a non-single-finger formal "
+            "grasp, staged lift, and no legacy insertion, snapshot, "
+            "diagnostic, shadow, or preflight mode"
+        )
+    if arguments.keyed_visual_control:
+        if not arguments.output_dir:
+            parser.error("--keyed-visual-control requires --output-dir")
+        if not KEYED_V2_CHECKPOINT_A2_PROMOTION_ENABLED:
+            parser.error(
+                "keyed-v2 checkpoint B is blocked: checkpoint A2 must first "
+                "physically model pin/socket engagement and coupling-thread "
+                "interaction in a new immutable asset and pass its acceptance "
+                "contract"
+            )
+        keyed_config_dir = repository / "src/kcg_connector/config"
+        # Once A2 is accepted, start again from the frozen nominal pair. Any
+        # alternative centering candidate must be separately promoted after a
+        # same-final-asset nominal run; pre-A2 v9/v10 are diagnostic only.
+        allowed_keyed_pairs = {
+            (keyed_config_dir / "d38999_keyed_v2_tabletop_pick_v1.yaml").resolve(): (
+                keyed_config_dir
+                / "d38999_keyed_v2_tabletop_physical_grasp_v1.yaml"
+            ).resolve(),
+        }
+        requested_keyed_pick = Path(arguments.config).expanduser().resolve()
+        requested_keyed_grasp = (
+            Path(arguments.physical_grasp_config).expanduser().resolve()
+        )
+        if requested_keyed_pick not in allowed_keyed_pairs:
+            parser.error(
+                "--keyed-visual-control requires the exact keyed-v2 pick config"
+            )
+        if requested_keyed_grasp != allowed_keyed_pairs[requested_keyed_pick]:
+            parser.error(
+                "--keyed-visual-control requires the matching exact keyed-v2 "
+                "physical grasp config"
+            )
+        keyed_checkpoint_a_acceptance_path = (
+            repository
+            / "artifacts/kcg_connector/isaac/keyed_v2_checkpoint_a_r6"
+            / "checkpoint_a_acceptance_v2.json"
+        )
+        try:
+            keyed_checkpoint_a_acceptance = json.loads(
+                keyed_checkpoint_a_acceptance_path.read_text(encoding="utf-8")
+            )
+        except (OSError, ValueError) as error:
+            parser.error(
+                "keyed-v2 checkpoint A acceptance is unavailable: "
+                f"{error}"
+            )
+        expected_asset_path = (
+            "artifacts/kcg_connector/isaac/keyed_v2_checkpoint_a_r6/"
+            "d38999_shell25j_25_61_n_keyed_public_spec_v2.usda"
+        )
+        if (
+            not isinstance(keyed_checkpoint_a_acceptance, Mapping)
+            or keyed_checkpoint_a_acceptance.get("schema_version")
+            != "kcg_d38999_keyed_v2_checkpoint_a_acceptance_v2"
+            or keyed_checkpoint_a_acceptance.get("asset_revision")
+            != "keyed_v2_checkpoint_a_r6"
+            or keyed_checkpoint_a_acceptance.get("asset_relative_path")
+            != expected_asset_path
+            or keyed_checkpoint_a_acceptance.get(
+                "accepted_for_checkpoint_b_zero_random_nominal_grasp_only"
+            )
+            is not True
+        ):
+            parser.error("keyed-v2 checkpoint A acceptance contract is invalid")
+        keyed_checkpoint_a_structure = keyed_checkpoint_a_acceptance.get(
+            "structure"
+        )
+        keyed_checkpoint_a_review = keyed_checkpoint_a_acceptance.get("review")
+        if (
+            not isinstance(keyed_checkpoint_a_structure, Mapping)
+            or not isinstance(keyed_checkpoint_a_review, Mapping)
+            or keyed_checkpoint_a_review.get("human_visual_review_complete")
+            is not True
+            or keyed_checkpoint_a_structure.get("socket_count") != 61
+            or keyed_checkpoint_a_structure.get("polarization_key_count") != 5
+            or keyed_checkpoint_a_structure.get(
+                "continuous_grip_collision_present"
+            )
+            is not True
+        ):
+            parser.error("keyed-v2 checkpoint A structure/review gate is invalid")
+        keyed_visual_output = (
+            Path(arguments.output_dir).expanduser().resolve()
+            / "keyed_visual_control"
+        )
+        if keyed_visual_output.exists():
+            parser.error(
+                "keyed visual-control output already exists: "
+                f"{keyed_visual_output}"
+            )
     # Keep the validated baseline as the default.  The unvalidated visual
     # profile shortens Home hand opening by 4x and q7 twist, released-hand
     # rewind and safe-height q7 return by 1.4x.  Twist remains a loaded contact
     # motion: its contact, torque, tracking and hold gates are unchanged.
     home_hand_open_speedup = 4.0 if arguments.smooth_demo else 1.0
     q7_motion_speedup = 1.4 if arguments.smooth_demo else 1.0
-    if arguments.end_to_end_probe:
+    if arguments.camera_rig_probe:
+        result_marker = "ISAAC D38999 CAMERA RIG PROBE V1 "
+    elif arguments.end_to_end_probe:
         # End-to-end extends the exact insertion path.  It cannot select a
         # prepared-state shortcut or create a second simulation scene.
         arguments.insertion_probe = True
-        result_marker = "ISAAC D38999 END TO END V1 "
+        result_marker = (
+            "ISAAC D38999 SIM GROUND TRUTH PROXY END TO END REGRESSION V1 "
+        )
     elif arguments.insertion_probe:
-        result_marker = "ISAAC D38999 TABLETOP PICK TO ENGAGE V1 "
+        result_marker = (
+            "ISAAC D38999 SIM GROUND TRUTH PROXY INSERTION REGRESSION V1 "
+        )
+    elif arguments.keyed_visual_control:
+        result_marker = "ISAAC D38999 KEYED V2 VISUAL CONTROL V1 "
+    elif single_finger_mode:
+        result_marker = "ISAAC D38999 SINGLE FINGER CONTROL V1 "
+    elif formal_grasp:
+        result_marker = "ISAAC D38999 TABLETOP PHYSICAL GRASP V1 "
     else:
         result_marker = "ISAAC D38999 TABLETOP PICK V1 "
     if arguments.keep_open and not arguments.gui:
         parser.error("--keep-open requires --gui")
     if arguments.nut_tooth_jitter_output and not arguments.end_to_end_probe:
         parser.error("--nut-tooth-jitter-output requires --end-to-end-probe")
-    if arguments.wrist_ft_monitor and not arguments.end_to_end_probe:
+    if (
+        arguments.wrist_ft_monitor
+        and not arguments.end_to_end_probe
+        and not formal_grasp
+    ):
         parser.error("--wrist-ft-monitor requires --end-to-end-probe")
     if (
         arguments.nut_tooth_jitter_normalize_segment00_op
@@ -532,6 +2269,18 @@ def main():
             "nut-tooth A/B/color options require "
             "--nut-tooth-jitter-output"
         )
+    if arguments.postgrasp_diag_mount_search:
+        if not arguments.output_dir:
+            parser.error("--postgrasp-diag-mount-search requires --output-dir")
+        diagnostic_output = (
+            Path(arguments.output_dir).expanduser().resolve()
+            / "postgrasp_diag_mount_search"
+        )
+        if diagnostic_output.exists():
+            parser.error(
+                "diagnostic mount-search output already exists: "
+                f"{diagnostic_output}"
+            )
 
     from isaacsim import SimulationApp
 
@@ -544,20 +2293,42 @@ def main():
         }
     )
     passed = False
+    # Process exit semantics are explicit and separate from the top-level
+    # grasp PASS: legacy/synchronous/sequential stay 0 iff passed, while the
+    # single-finger characterization controls its own exit code.
+    process_exit_code = 1
     tooth_probe = None
     wrist_ft_monitor = None
     wrist_ft_monitor_error = None
     wrist_ft_sensor_prim = None
+    capture_terminal_snapshot = None
+    controller_step_records = []
     pose_preflight_gate = arguments.pose_preflight == "none"
     metrics = {
         "attachment": "none",
         "candidate_kind": "geometry_screened_not_dynamics_validated",
-        "control_pose_provider": "sim_ground_truth",
+        "control_pose_provider": (
+            "robot_fk_and_sensor_state_only" if formal_grasp else "sim_ground_truth"
+        ),
         "fingertip_tactile_sensors": "none",
         "foundation_pose": False,
         "gui": arguments.gui,
         "insertion_probe_requested": arguments.insertion_probe,
         "end_to_end_probe_requested": arguments.end_to_end_probe,
+        "keyed_visual_control_requested": arguments.keyed_visual_control,
+        "insertion_execution_contract": (
+            "SIM_GROUND_TRUTH_PROXY_REGRESSION_ONLY"
+            if arguments.sim_truth_proxy_regression
+            else (
+                "KEYED_VISUAL_OBSERVATION_AND_PREALIGN_PLAN_GATE"
+                if arguments.keyed_visual_control
+                else "NO_INSERTION_REQUESTED"
+            )
+        ),
+        "insertion_control_authorized": False,
+        "sim_truth_feedback_used_for_insertion_control": bool(
+            arguments.sim_truth_proxy_regression
+        ),
         "keep_open": arguments.keep_open,
         "motion_profile": (
             "smooth_demo_v1" if arguments.smooth_demo else "baseline_v1"
@@ -572,6 +2343,10 @@ def main():
         "passed": False,
         "pose_preflight_requested": arguments.pose_preflight,
         "scene": "kcg_d38999_tabletop_pick_v1",
+        "physical_grasp_method": arguments.physical_grasp_method,
+        "formal_lift_mode": arguments.formal_lift_mode,
+        "formal_truth_firewall_enabled": formal_grasp,
+        "seed": arguments.seed,
         "self_collision_enabled_in_asset": False,
         "self_collision_verified": False,
         "torque_channels": ["f1j2", "f2j1", "f3j2"],
@@ -579,7 +2354,7 @@ def main():
         "trajectory_kind": (
             "joint_interpolation_screening_not_collision_planned"
         ),
-        "truth_orientation_used": True,
+        "truth_orientation_used": not formal_grasp,
         "wrist_ft_monitor_requested": arguments.wrist_ft_monitor,
     }
     try:
@@ -632,7 +2407,138 @@ def main():
             build_proxy_collision_filter_plan,
         )
         from kcg_connector.d38999_tabletop_scene import (
+            D38999_TABLETOP_SCHEMA_VERSION_KEYED_V2,
             author_d38999_tabletop_scene,
+        )
+        from kcg_connector.grasp.finger_contact_detector import (
+            FingerContactDetector,
+            FingerContactState,
+        )
+        from kcg_connector.grasp.empty_hand_diagnostic import (
+            ALLOWED_EXIT3_REASONS,
+            DIAGNOSTIC_MODE,
+            classify_empty_hand_diagnostic_termination,
+            diagnostic_report_status,
+            stage1_completed_flag,
+            stage_record_failure_evidence,
+        )
+        from kcg_connector.grasp.grasp_stability_monitor import (
+            EmptyHandLiftDiagnosticMonitor,
+            GraspStabilityMonitor,
+            evaluate_wrist_moment_safety,
+            wrist_payload_increment,
+        )
+        from kcg_connector.grasp.grasp_evidence import relative_pose_error
+        from kcg_connector.grasp.lift_recovery import (
+            plan_recovery_open,
+            plan_recovery_return,
+        )
+        from kcg_connector.grasp.posthoc_wrench_analysis import (
+            channel_window_statistics,
+            force_norm,
+            moment_magnitude_increase,
+            moment_norm,
+            perpendicular_moment_delta,
+            reference_window_statistics,
+            window_statistics_block,
+        )
+        from kcg_connector.grasp.terminal_evaluator import (
+            build_terminal_snapshot,
+        )
+        from kcg_connector.grasp.randomization import (
+            FIELD_NAMES,
+            active_fields,
+            realize_randomization,
+            validate_realized,
+        )
+        from kcg_connector.grasp.realized_authoring import (
+            closure_onset_plan,
+            compose_loose_plug_transform,
+            float32_readback_evidence,
+            synchronous_contact_stability,
+            validate_offset_arm_targets,
+        )
+        from kcg_connector.grasp.physical_grasp_config import (
+            load_physical_grasp_experiment_config,
+        )
+        from kcg_connector.grasp.pre_lift_wrench_centering import (
+            solve_bounded_xy_centering,
+        )
+        from kcg_connector.grasp.pre_lift_realized_state_rebase import (
+            validate_realized_state_rebase,
+        )
+        from kcg_connector.grasp.pre_lift_arm_drive_compliance import (
+            capture_position_preload_nm,
+            compliant_path_drive_target,
+            derive_bumpless_drive_step,
+        )
+        from kcg_connector.grasp.pre_lift_gravity_preload_transfer import (
+            derive_gravity_preload_transfer_step,
+            gravity_supported_path_drive_target,
+        )
+        from kcg_connector.grasp.pre_lift_arm_stiffness_restoration import (
+            derive_runtime_target_bias_step_envelope,
+            derive_stiffness_restoration_step,
+            restored_nominal_drive_target,
+        )
+        from kcg_connector.grasp.post_contact_finger_damping import (
+            derive_post_contact_finger_damping_step,
+            select_post_contact_damping_hand_indices,
+        )
+        from kcg_connector.grasp.lift_x_force_admittance import (
+            derive_lift_x_force_admittance_step,
+        )
+        from kcg_connector.grasp.lift_xy_force_admittance import (
+            derive_lift_xy_force_admittance_step,
+        )
+        from kcg_connector.grasp.lift_finger_load_balance import (
+            LiftFingerLoadBalance,
+        )
+        from kcg_connector.grasp.lift_finger_absolute_load_hold import (
+            LiftFingerAbsoluteLoadHold,
+        )
+        from kcg_connector.grasp.lift_finger_root_load_two_sample_suppression import (
+            LiftFingerRootLoadTwoSampleSuppression,
+        )
+        from kcg_connector.grasp.lift_finger_fixed_target_hold import (
+            LiftFingerFixedTargetHold,
+        )
+        from kcg_connector.grasp.moment_constrained_support_transfer import (
+            MomentConstrainedSupportTransfer,
+            PHASE_LIFT_READY,
+            load_moment_constrained_support_transfer_config,
+            verify_evidence_bindings,
+        )
+        from kcg_connector.grasp.lift_task_space_vertical_force_ramp import (
+            derive_vertical_force_step,
+            frozen_payload_weight_force_n,
+        )
+        from kcg_connector.grasp.lift_sensor_origin_vertical_force_ramp import (
+            sensor_origin_from_grasp_tcp_transform,
+        )
+        from kcg_connector.grasp.pre_lift_xy_nyquist_suppression import (
+            two_sample_xy_control_input,
+        )
+        from kcg_connector.grasp.pre_lift_differential_finger_preload_diagnostic import (
+            analyze_differential_probe,
+            derive_probe_contract,
+            probe_offset_rad,
+        )
+        from kcg_connector.grasp.pre_lift_differential_finger_preload_correction import (
+            apply_closure_correction_to_targets,
+            correction_step,
+            derive_fixed_correction_contract,
+        )
+        from kcg_connector.grasp.lift_phase_arm_damping import (
+            derive_lift_phase_arm_damping_step,
+        )
+        from kcg_connector.grasp.three_finger_sequential_grasp import (
+            FINGERS,
+            ThreeFingerSequentialGrasp,
+        )
+        from kcg_connector.grasp.single_finger_contact_test import (
+            SingleFingerContactTest,
+            release_budget_feasibility,
         )
         from d38999_nut_tooth_jitter_probe import (
             NutToothJitterProbe,
@@ -649,6 +2555,684 @@ def main():
         d38999_asset = dependencies["d38999_asset"]
         robot_asset = dependencies["robot_asset"]
         rate_hz = tabletop.physics.rate_hz
+        if arguments.keyed_visual_control:
+            if (
+                tabletop.schema_version
+                != D38999_TABLETOP_SCHEMA_VERSION_KEYED_V2
+                or tabletop.asset_profile.profile_id
+                != "d38999_shell25j_25_61_n_keyed_public_spec_pair_v2"
+                or tabletop.asset_profile.fixed_endpoint_orientation
+                != "MATING_FACE_UP_RX_180_FOR_DOWNWARD_INSERTION"
+            ):
+                raise RuntimeError(
+                    "keyed visual control requires the exact keyed-v2 "
+                    "tabletop scene/profile/orientation contract"
+                )
+        physical_grasp = None
+        moment_support_config = None
+        moment_support_config_path = None
+        moment_support_evidence_bindings = ()
+        if formal_grasp:
+            physical_grasp_path = (
+                Path(arguments.physical_grasp_config).expanduser().resolve()
+            )
+            physical_grasp = load_physical_grasp_experiment_config(
+                physical_grasp_path
+            )
+            if arguments.moment_constrained_support_config is not None:
+                if (
+                    arguments.physical_grasp_method != "sequential-compliant"
+                    or arguments.formal_lift_mode != "staged"
+                    or arguments.empty_hand_first_stage_diagnostic
+                ):
+                    raise RuntimeError(
+                        "B-V3 moment-constrained support transfer requires "
+                        "staged sequential-compliant physical grasp"
+                    )
+                current_task_path = (
+                    repository
+                    / "artifacts/agent_control/CURRENT_TASK.md"
+                ).resolve()
+                current_task_text = current_task_path.read_text(
+                    encoding="utf-8"
+                )
+                if not current_task_text.startswith(
+                    "# 当前任务：DYN-B-V3-MOMENT-CONSTRAINED-SUPPORT-TRANSFER"
+                ):
+                    raise RuntimeError(
+                        "B-V3 support transfer is not authorized by CURRENT_TASK.md"
+                    )
+                moment_support_config_path = Path(
+                    arguments.moment_constrained_support_config
+                ).expanduser().resolve()
+                moment_support_config = (
+                    load_moment_constrained_support_transfer_config(
+                        moment_support_config_path
+                    )
+                )
+                moment_support_evidence_bindings = verify_evidence_bindings(
+                    moment_support_config, repository
+                )
+                required_b_v3_conditions = (
+                    physical_grasp.pre_lift_differential_finger_preload_correction.enabled
+                    and physical_grasp.lift_task_space_vertical_force_ramp.enabled
+                    and physical_grasp.lift_finger_fixed_target_hold.enabled
+                )
+                if not required_b_v3_conditions:
+                    raise RuntimeError(
+                        "B-V3 requires the existing H23 correction, H18 force "
+                        "path and H25 source contract as immutable inputs"
+                    )
+                metrics["moment_constrained_support_transfer_contract"] = {
+                    "path": str(moment_support_config_path),
+                    "task_id": moment_support_config.task_id,
+                    "schema_version": (
+                        "kcg_d38999_moment_constrained_support_transfer_v1"
+                    ),
+                    "threshold_label": moment_support_config.threshold_label,
+                    "evidence_bindings": list(
+                        moment_support_evidence_bindings
+                    ),
+                    "formal_b_pass_claimed": False,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "event_truth_used": False,
+                    "object_pose_written": False,
+                }
+            h23_fix_source_analysis_path = (
+                repository
+                / "artifacts/agent_control/tasks/"
+                "D38999-AUTONOMOUS-DYNAMIC-CLOSEOUT-V2/"
+                "DYN-B-GRASP-LIFT-RECOVERY-V2/"
+                "H23_DIFFERENTIAL_FINGER_PRELOAD_DIAGNOSTIC_IFIX01_ANALYSIS.json"
+            ).resolve()
+            h24_source_derivation_path = (
+                repository
+                / "artifacts/agent_control/tasks/"
+                "D38999-AUTONOMOUS-DYNAMIC-CLOSEOUT-V2/"
+                "DYN-B-GRASP-LIFT-RECOVERY-V2/"
+                "B_H24_TWO_SAMPLE_FINGER_ROOT_LOAD_SUPPRESSION_DERIVATION.json"
+            ).resolve()
+            h25_source_derivation_path = (
+                repository
+                / "artifacts/agent_control/tasks/"
+                "D38999-AUTONOMOUS-DYNAMIC-CLOSEOUT-V2/"
+                "DYN-B-GRASP-LIFT-RECOVERY-V2/"
+                "B_H25_FIXED_POST_H23_FINGER_TARGET_HOLD_DERIVATION.json"
+            ).resolve()
+            if physical_grasp.pre_lift_differential_finger_preload_correction.enabled:
+                if not h23_fix_source_analysis_path.is_file():
+                    raise RuntimeError("H23 fixed-correction source analysis is missing")
+                h23_fix_source_analysis_actual_sha256 = _sha256_file(
+                    h23_fix_source_analysis_path
+                )
+                h23_fix_source_analysis_expected_sha256 = (
+                    physical_grasp
+                    .pre_lift_differential_finger_preload_correction
+                    .source_analysis_sha256
+                )
+                if (
+                    h23_fix_source_analysis_actual_sha256
+                    != h23_fix_source_analysis_expected_sha256
+                ):
+                    raise RuntimeError(
+                        "H23 fixed-correction source analysis hash mismatch: "
+                        f"expected={h23_fix_source_analysis_expected_sha256}, "
+                        f"actual={h23_fix_source_analysis_actual_sha256}"
+                    )
+                metrics["h23_fixed_correction_source_binding"] = {
+                    "path": str(
+                        h23_fix_source_analysis_path.relative_to(repository)
+                    ),
+                    "expected_sha256": (
+                        h23_fix_source_analysis_expected_sha256
+                    ),
+                    "actual_sha256": h23_fix_source_analysis_actual_sha256,
+                    "verified": True,
+                }
+            if physical_grasp.lift_finger_root_load_two_sample_suppression.enabled:
+                if not h24_source_derivation_path.is_file():
+                    raise RuntimeError("H24 source derivation is missing")
+                h24_source_derivation_actual_sha256 = _sha256_file(
+                    h24_source_derivation_path
+                )
+                h24_source_derivation_expected_sha256 = (
+                    physical_grasp
+                    .lift_finger_root_load_two_sample_suppression
+                    .source_derivation_sha256
+                )
+                if (
+                    h24_source_derivation_actual_sha256
+                    != h24_source_derivation_expected_sha256
+                ):
+                    raise RuntimeError(
+                        "H24 source derivation hash mismatch: "
+                        f"expected={h24_source_derivation_expected_sha256}, "
+                        f"actual={h24_source_derivation_actual_sha256}"
+                    )
+                metrics["h24_two_sample_source_binding"] = {
+                    "path": str(
+                        h24_source_derivation_path.relative_to(repository)
+                    ),
+                    "expected_sha256": (
+                        h24_source_derivation_expected_sha256
+                    ),
+                    "actual_sha256": h24_source_derivation_actual_sha256,
+                    "verified": True,
+                }
+            if physical_grasp.lift_finger_fixed_target_hold.enabled:
+                if not h25_source_derivation_path.is_file():
+                    raise RuntimeError("H25 source derivation is missing")
+                h25_source_derivation_actual_sha256 = _sha256_file(
+                    h25_source_derivation_path
+                )
+                h25_source_derivation_expected_sha256 = (
+                    physical_grasp.lift_finger_fixed_target_hold
+                    .source_derivation_sha256
+                )
+                if (
+                    h25_source_derivation_actual_sha256
+                    != h25_source_derivation_expected_sha256
+                ):
+                    raise RuntimeError(
+                        "H25 source derivation hash mismatch: "
+                        f"expected={h25_source_derivation_expected_sha256}, "
+                        f"actual={h25_source_derivation_actual_sha256}"
+                    )
+                metrics["h25_fixed_target_source_binding"] = {
+                    "path": str(
+                        h25_source_derivation_path.relative_to(repository)
+                    ),
+                    "expected_sha256": (
+                        h25_source_derivation_expected_sha256
+                    ),
+                    "actual_sha256": h25_source_derivation_actual_sha256,
+                    "verified": True,
+                }
+            if (repository / physical_grasp.pick_config).resolve() != config_path:
+                raise RuntimeError(
+                    "physical grasp contract does not bind the active pick config"
+                )
+            if physical_grasp.physics_rate_hz != rate_hz:
+                raise RuntimeError("physical grasp physics rate mismatch")
+            if (
+                (
+                    physical_grasp.pre_lift_centering.enabled
+                    or physical_grasp.pre_lift_realized_state_rebase.enabled
+                    or physical_grasp.pre_lift_arm_drive_compliance.enabled
+                    or physical_grasp.pre_lift_arm_stiffness_restoration.enabled
+                    or physical_grasp.post_contact_finger_damping.enabled
+                    or physical_grasp.lift_x_force_admittance.enabled
+                    or physical_grasp.lift_xy_force_admittance.enabled
+                    or physical_grasp.lift_finger_load_balance.enabled
+                    or physical_grasp.lift_finger_absolute_load_hold.enabled
+                    or physical_grasp.lift_finger_root_load_two_sample_suppression.enabled
+                    or physical_grasp.lift_finger_fixed_target_hold.enabled
+                    or physical_grasp.lift_task_space_vertical_force_ramp.enabled
+                    or physical_grasp.lift_sensor_origin_vertical_force_ramp.enabled
+                    or physical_grasp.pre_lift_vertical_force_xy_admittance.enabled
+                    or physical_grasp.pre_lift_xy_nyquist_suppression.enabled
+                    or physical_grasp.pre_lift_quasistatic_lateral_preload_nulling.enabled
+                    or physical_grasp.pre_lift_differential_finger_preload_diagnostic.enabled
+                    or physical_grasp.pre_lift_differential_finger_preload_correction.enabled
+                )
+                and not arguments.wrist_ft_monitor
+            ):
+                raise RuntimeError(
+                    "pre-lift robot conditioning requires the formal wrist "
+                    "sensor chain"
+                )
+            if (
+                arguments.formal_lift_mode == "gravity-transfer-hold"
+                and not physical_grasp.pre_lift_gravity_preload_transfer.enabled
+            ):
+                raise RuntimeError(
+                    "gravity-transfer-hold requires the strict enabled H15 "
+                    "contract"
+                )
+            if (
+                (
+                    physical_grasp.lift_task_space_vertical_force_ramp.enabled
+                    or physical_grasp.lift_sensor_origin_vertical_force_ramp.enabled
+                )
+                and arguments.formal_lift_mode != "staged"
+            ):
+                raise RuntimeError(
+                    "bounded vertical force ramp is authorized only for "
+                    "the staged physical lift"
+                )
+            if (
+                arguments.formal_lift_mode == "stiffness-restore-hold"
+                and not physical_grasp.pre_lift_arm_stiffness_restoration.enabled
+            ):
+                raise RuntimeError(
+                    "stiffness-restore-hold requires the strict enabled H16 "
+                    "contract"
+                )
+            # Fail-closed sequential hand-gain consistency (028): the YAML
+            # declares approach/soft-hold stiffness and damping while the
+            # runner applies pick.motion.grip_hand_stiffness (scaled by the
+            # frozen soft-hold scale) and pick.motion.grip_hand_damping
+            # through controller.set_gains.  Verify the single-meaning
+            # numbers before any scene work so config drift aborts here
+            # instead of silently changing grasp compliance.  Evidence-only:
+            # no control value is altered by this check.
+            sequential_gain_document = (
+                yaml.safe_load(
+                    physical_grasp_path.read_text(encoding="utf-8")
+                )
+                or {}
+            ).get("sequential") or {}
+            (
+                sequential_gain_problems,
+                sequential_gain_evidence,
+            ) = validate_sequential_gain_consistency(
+                sequential_gain_document,
+                pick.motion,
+                label="physical_grasp.sequential",
+                sequential_config=physical_grasp.sequential,
+            )
+            if sequential_gain_problems:
+                raise RuntimeError(
+                    "sequential hand-gain consistency failed closed: "
+                    + "; ".join(sequential_gain_problems)
+                )
+            if (
+                physical_grasp.post_contact_finger_damping.enabled
+                and not math.isclose(
+                    float(pick.motion.grip_hand_damping),
+                    physical_grasp.post_contact_finger_damping
+                    .initial_damping_nm_s_rad,
+                    rel_tol=0.0,
+                    abs_tol=1.0e-12,
+                )
+            ):
+                raise RuntimeError(
+                    "H7 initial finger damping does not match the active "
+                    "pick contract"
+                )
+            metrics["sequential_gain_consistency"] = sequential_gain_evidence
+            metrics["physical_grasp_contract"] = {
+                "path": str(physical_grasp_path),
+                "schema_version": physical_grasp.schema_version,
+                "hand_frame": physical_grasp.hand_frame,
+                "threshold_label": (
+                    physical_grasp.sequential.detector.threshold_label
+                ),
+                "post_grasp_stabilization_proxy_enabled": False,
+                "post_contact_finger_damping_enabled": (
+                    physical_grasp.post_contact_finger_damping.enabled
+                ),
+                "lift_x_force_admittance_enabled": (
+                    physical_grasp.lift_x_force_admittance.enabled
+                ),
+                "lift_xy_force_admittance_enabled": (
+                    physical_grasp.lift_xy_force_admittance.enabled
+                ),
+                "lift_finger_load_balance_enabled": (
+                    physical_grasp.lift_finger_load_balance.enabled
+                ),
+                "lift_finger_absolute_load_hold_enabled": (
+                    physical_grasp.lift_finger_absolute_load_hold.enabled
+                ),
+                "lift_finger_root_load_two_sample_suppression_enabled": (
+                    physical_grasp
+                    .lift_finger_root_load_two_sample_suppression.enabled
+                ),
+                "lift_finger_fixed_target_hold_enabled": (
+                    physical_grasp.lift_finger_fixed_target_hold.enabled
+                ),
+                "moment_constrained_support_transfer_enabled": (
+                    moment_support_config is not None
+                ),
+                "lift_task_space_vertical_force_ramp_enabled": (
+                    physical_grasp.lift_task_space_vertical_force_ramp.enabled
+                ),
+                "lift_sensor_origin_vertical_force_ramp_enabled": (
+                    physical_grasp.lift_sensor_origin_vertical_force_ramp.enabled
+                ),
+                "pre_lift_vertical_force_xy_admittance_enabled": (
+                    physical_grasp.pre_lift_vertical_force_xy_admittance.enabled
+                ),
+                "pre_lift_xy_nyquist_suppression_enabled": (
+                    physical_grasp.pre_lift_xy_nyquist_suppression.enabled
+                ),
+                "pre_lift_quasistatic_lateral_preload_nulling_enabled": (
+                    physical_grasp
+                    .pre_lift_quasistatic_lateral_preload_nulling.enabled
+                ),
+                "pre_lift_differential_finger_preload_diagnostic_enabled": (
+                    physical_grasp
+                    .pre_lift_differential_finger_preload_diagnostic.enabled
+                ),
+                "pre_lift_differential_finger_preload_correction_enabled": (
+                    physical_grasp
+                    .pre_lift_differential_finger_preload_correction.enabled
+                ),
+                "lift_phase_arm_damping_enabled": (
+                    physical_grasp.lift_phase_arm_damping.enabled
+                ),
+                "pre_lift_gravity_preload_transfer_enabled": (
+                    physical_grasp.pre_lift_gravity_preload_transfer.enabled
+                ),
+                "pre_lift_arm_stiffness_restoration_enabled": (
+                    physical_grasp.pre_lift_arm_stiffness_restoration.enabled
+                ),
+            }
+            # Realize exactly once, before any scene or command is built.
+            # The realized payload is method-free; the report records method
+            # and mode separately. Any second realize call or any
+            # random/np.random consumption inside this runner is forbidden
+            # and enforced by the static firewall tests.
+            realized_randomization = realize_randomization(
+                physical_grasp.randomization, arguments.seed
+            )
+            validate_realized(
+                physical_grasp.randomization, realized_randomization
+            )
+            realization_call_count = 1
+            if single_finger_mode:
+                mode_key = "single-finger"
+            elif arguments.formal_lift_mode in (
+                "zero-lift-hold",
+                "gravity-transfer-hold",
+                "stiffness-restore-hold",
+            ):
+                mode_key = "zero-lift-hold"
+            else:
+                mode_key = "staged"
+            active_field_names = active_fields(mode_key)
+            realized_randomization_report = {
+                "schema_version": (
+                    realized_randomization.schema_version
+                ),
+                "seed": arguments.seed,
+                "canonical_payload": (
+                    realized_randomization.canonical_payload()
+                ),
+                "method": arguments.physical_grasp_method,
+                "mode": mode_key,
+                "active_fields": sorted(active_field_names),
+                "inactive_fields": sorted(
+                    set(FIELD_NAMES) - set(active_field_names)
+                ),
+                "realize_call_count": realization_call_count,
+            }
+            metrics["realized_randomization"] = realized_randomization_report
+            # All current episodes use semantic paths and ordinary filesystem
+            # metadata.  No cryptographic fingerprint is computed or stored.
+            source_directory = Path(__file__).resolve().parent
+            repository_root = Path(__file__).resolve().parents[3]
+
+            def _semantic_file_record(path):
+                resolved_path = Path(path).expanduser().resolve()
+                if not resolved_path.is_file():
+                    raise RuntimeError(
+                        "per-episode provenance source missing: "
+                        f"{resolved_path}"
+                    )
+                try:
+                    relative_path = resolved_path.relative_to(repository_root)
+                except ValueError as error:
+                    raise RuntimeError(
+                        "per-episode provenance source escapes repository: "
+                        f"{resolved_path}"
+                    ) from error
+                stat = resolved_path.stat()
+                return {
+                    "path": relative_path.as_posix(),
+                    "size_bytes": stat.st_size,
+                    "mtime_ns": stat.st_mtime_ns,
+                }
+
+            common_source_paths = {
+                "physical_grasp_config": physical_grasp_path,
+                "pick_config": config_path,
+                "tabletop_scene_config": (
+                    config_path.parent / pick.scene.tabletop_config
+                ),
+                "runner": source_directory / "d38999_tabletop_pick_smoke.py",
+                "pre_lift_wrench_centering": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "pre_lift_wrench_centering.py"
+                ),
+                "pre_lift_realized_state_rebase": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "pre_lift_realized_state_rebase.py"
+                ),
+                "pre_lift_arm_drive_compliance": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "pre_lift_arm_drive_compliance.py"
+                ),
+                "pre_lift_gravity_preload_transfer": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "pre_lift_gravity_preload_transfer.py"
+                ),
+                "pre_lift_arm_stiffness_restoration": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "pre_lift_arm_stiffness_restoration.py"
+                ),
+                "post_contact_finger_damping": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "post_contact_finger_damping.py"
+                ),
+                "lift_x_force_admittance": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "lift_x_force_admittance.py"
+                ),
+                "lift_xy_force_admittance": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "lift_xy_force_admittance.py"
+                ),
+                "lift_finger_load_balance": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "lift_finger_load_balance.py"
+                ),
+                "lift_finger_absolute_load_hold": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "lift_finger_absolute_load_hold.py"
+                ),
+                "lift_finger_root_load_two_sample_suppression": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "lift_finger_root_load_two_sample_suppression.py"
+                ),
+                "lift_finger_fixed_target_hold": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "lift_finger_fixed_target_hold.py"
+                ),
+                "moment_constrained_support_transfer": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "moment_constrained_support_transfer.py"
+                ),
+                "lift_task_space_vertical_force_ramp": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "lift_task_space_vertical_force_ramp.py"
+                ),
+                "lift_sensor_origin_vertical_force_ramp": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "lift_sensor_origin_vertical_force_ramp.py"
+                ),
+                "pre_lift_vertical_force_xy_admittance": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "pre_lift_vertical_force_xy_admittance.py"
+                ),
+                "pre_lift_xy_nyquist_suppression": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "pre_lift_xy_nyquist_suppression.py"
+                ),
+                "pre_lift_quasistatic_lateral_preload_nulling": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "pre_lift_quasistatic_lateral_preload_nulling.py"
+                ),
+                "pre_lift_differential_finger_preload_diagnostic": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "pre_lift_differential_finger_preload_diagnostic.py"
+                ),
+                "pre_lift_differential_finger_preload_correction": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "pre_lift_differential_finger_preload_correction.py"
+                ),
+                "lift_phase_arm_damping": (
+                    repository_root
+                    / "src/kcg_connector/kcg_connector/grasp/"
+                    "lift_phase_arm_damping.py"
+                ),
+            }
+            if moment_support_config_path is not None:
+                common_source_paths[
+                    "moment_constrained_support_config"
+                ] = moment_support_config_path
+            if arguments.keyed_visual_control:
+                metrics["provenance"] = {
+                    "identity_mode": (
+                        "semantic_paths_sizes_mtimes_and_strict_contracts"
+                    ),
+                    "seed": arguments.seed,
+                    "checkpoint_a_acceptance_path": str(
+                        keyed_checkpoint_a_acceptance_path.relative_to(
+                            repository_root
+                        )
+                    ),
+                    "asset_revision": keyed_checkpoint_a_acceptance[
+                        "asset_revision"
+                    ],
+                    "asset_relative_path": keyed_checkpoint_a_acceptance[
+                        "asset_relative_path"
+                    ],
+                    "sources": {
+                        name: _semantic_file_record(path)
+                        for name, path in common_source_paths.items()
+                    },
+                }
+            else:
+                legacy_source_paths = {
+                    **common_source_paths,
+                    "wrapper": source_directory
+                    / "d38999_tabletop_physical_grasp_v1.py",
+                    "finger_contact_detector": repository_root
+                    / "src/kcg_connector/kcg_connector/grasp"
+                    / "finger_contact_detector.py",
+                    "three_finger_sequential_grasp": repository_root
+                    / "src/kcg_connector/kcg_connector/grasp"
+                    / "three_finger_sequential_grasp.py",
+                    "single_finger_contact_test": repository_root
+                    / "src/kcg_connector/kcg_connector/grasp"
+                    / "single_finger_contact_test.py",
+                    "single_finger_posthoc_audit": repository_root
+                    / "src/kcg_connector/kcg_connector/grasp"
+                    / "single_finger_posthoc_audit.py",
+                    "single_finger_posthoc_audit_compare": source_directory
+                    / "single_finger_posthoc_audit_compare.py",
+                    "grasp_stability_monitor": repository_root
+                    / "src/kcg_connector/kcg_connector/grasp"
+                    / "grasp_stability_monitor.py",
+                    "physical_grasp_config_loader": repository_root
+                    / "src/kcg_connector/kcg_connector/grasp"
+                    / "physical_grasp_config.py",
+                }
+                metrics["provenance"] = {
+                    "identity_mode": (
+                        "semantic_paths_sizes_mtimes_and_strict_contracts"
+                    ),
+                    "seed": arguments.seed,
+                    "finger": (
+                        arguments.single_finger if single_finger_mode else None
+                    ),
+                    "audit_mode": (
+                        arguments.single_finger_posthoc_audit_mode
+                        if single_finger_mode
+                        else None
+                    ),
+                    "sources": {
+                        name: _semantic_file_record(path)
+                        for name, path in legacy_source_paths.items()
+                    },
+                }
+            if single_finger_mode:
+                # Release budget preflight (frozen 018 discrete formula),
+                # executed after both configs are loaded and before any
+                # World/scene/reset work.  The worst-case initial-load
+                # bound for the filter-tail estimate is the formal
+                # finger-root torque safety gate from the pick sensing
+                # config (2.0 N*m); the wrist force gate is a different
+                # sensor and unit and must never feed this estimate.
+                detector_config = physical_grasp.sequential.detector
+                open_targets = np.asarray(
+                    pick.robot.open_hand_rad, dtype=np.float64
+                )
+                closed_targets = np.asarray(
+                    pick.motion.grasp_hand_rad, dtype=np.float64
+                )
+                # Frozen mapping: f1/f2/f3 -> hand-local indices (1,2,3)
+                # -> f1j2/f2j1/f3j2 (the formal finger joint mapping).
+                finger_local_indices = (1, 2, 3)
+                budget_evidence = release_budget_feasibility(
+                    closed_targets_rad=[
+                        float(closed_targets[int(index)])
+                        for index in finger_local_indices
+                    ],
+                    open_targets_rad=[
+                        float(open_targets[int(index)])
+                        for index in finger_local_indices
+                    ],
+                    release_rate_rad_s=(
+                        physical_grasp.single_finger.release_rate_rad_s
+                    ),
+                    sample_period_s=detector_config.sample_period_s,
+                    lowpass_alpha=detector_config.lowpass_alpha,
+                    minimum_release_delta_nm=(
+                        detector_config.minimum_release_delta_nm
+                    ),
+                    release_ratio=detector_config.release_ratio,
+                    minimum_contact_delta_nm=(
+                        detector_config.minimum_contact_delta_nm
+                    ),
+                    maximum_release_tracking_error_rad=(
+                        physical_grasp.single_finger
+                        .maximum_release_tracking_error_rad
+                    ),
+                    release_confirm_steps=(
+                        detector_config.release_confirm_steps
+                    ),
+                    maximum_torque_delta_gate_nm=(
+                        pick.sensing.maximum_absolute_torque_delta_nm
+                    ),
+                    configured_steps=(
+                        physical_grasp.single_finger.maximum_release_steps
+                    ),
+                )
+                metrics["single_finger_release_budget_preflight"] = (
+                    budget_evidence.as_dict()
+                )
+                if not budget_evidence.feasible:
+                    raise RuntimeError(
+                        "single-finger release budget is infeasible: "
+                        f"required={budget_evidence.required_steps}, "
+                        f"configured={budget_evidence.configured_steps}"
+                    )
+        else:
+            realized_randomization = None
+            realization_call_count = 0
         rgbd = None
         if arguments.pose_preflight == "masked-rgbd":
             # Keep the long-validated default path free of camera/Replicator
@@ -750,8 +3334,10 @@ def main():
             from kcg_connector.virtual_wrist_ft_runtime import (
                 VirtualWristFtMonitor,
                 column_rotation_from_gf_matrix3d,
+                inverse_wrench_transform,
                 load_virtual_wrist_ft_monitor_config,
                 reaction_row_index,
+                transform_wrench_to_task,
                 verify_virtual_wrist_ft_monitor_inputs,
             )
 
@@ -793,6 +3379,413 @@ def main():
         add_reference_to_stage(
             str(robot_asset), pick.scene.robot_root_prim_path
         )
+        # Author non-physical camera children before articulation handles are
+        # created. Their local transforms are never touched after reset.
+        live_view_cameras = install_live_view_cameras(
+            stage=stage,
+            arguments=arguments,
+            Gf=Gf,
+            Usd=Usd,
+            UsdGeom=UsdGeom,
+            pick=pick,
+        )
+        live_camera_rig = live_view_cameras.pop("rig", None)
+        metrics["live_view_cameras"] = live_view_cameras
+        # ---- realized USD authoring block (pre-reset, fail closed) ----
+        # Column-vector (numpy) <-> Gf row-vector boundary: Gf matrices use
+        # USD's row-vector convention, so every matrix crossing this block is
+        # transposed explicitly at the call site.  All realized object,
+        # material and mass writes plus their readbacks happen here, before
+        # any Scene wrapper or world.reset().
+        realized_usd_authoring = {
+            "enabled": False,
+            "usd_authoring_verified": False,
+            "attribute_readbacks_verified": False,
+            "physics_consumption_independently_verified": False,
+            "com_semantics": "per_part_asset_baseline_plus_local_offset",
+        }
+        # Mount the evidence container immediately: every intended/readback/
+        # error recorded below stays visible in the final report even when a
+        # later pre-reset check fails closed.
+        metrics["realized_usd_authoring"] = realized_usd_authoring
+
+        def record_float32_evidence(label, intended, readback, type_name):
+            # USD Float/Point3f attributes store float32: verify the readback
+            # carries the same float32 representation as the quantized
+            # intended value.  A missing readback is recorded as unverified;
+            # scalar and vector readbacks pass through unchanged.
+            if readback is None:
+                return {
+                    "label": label,
+                    "intended": (
+                        float(intended)
+                        if np.asarray(intended).ndim == 0
+                        else [float(v) for v in intended]
+                    ),
+                    "readback": None,
+                    "storage_type": "float32",
+                    "attribute_type": type_name,
+                    "verified": False,
+                }
+            evidence = float32_readback_evidence(
+                intended, readback, label=label
+            )
+            evidence["attribute_type"] = type_name
+            return evidence
+
+        if formal_grasp:
+            realized_usd_authoring["enabled"] = True
+            # 1. Tabletop material: the MaterialAPI is an asset contract that
+            #    must pre-exist; verify it before constructing the schema
+            #    wrapper and writing the realized friction in place.
+            table_material_prim = stage.GetPrimAtPath(
+                tabletop.world.physics_material_prim_path
+            )
+            if not table_material_prim.IsValid():
+                raise RuntimeError("tabletop material prim is missing")
+            if not table_material_prim.HasAPI(UsdPhysics.MaterialAPI):
+                raise RuntimeError(
+                    "tabletop material prim lacks MaterialAPI"
+                )
+            table_material_api = UsdPhysics.MaterialAPI(table_material_prim)
+            table_material_api.CreateStaticFrictionAttr(
+                realized_randomization.table_static_friction
+            )
+            table_material_api.CreateDynamicFrictionAttr(
+                realized_randomization.table_dynamic_friction
+            )
+            table_static_readback = (
+                table_material_api.GetStaticFrictionAttr().Get()
+            )
+            table_dynamic_readback = (
+                table_material_api.GetDynamicFrictionAttr().Get()
+            )
+            table_static_type = (
+                None
+                if table_material_api.GetStaticFrictionAttr().GetTypeName()
+                is None
+                else str(
+                    table_material_api.GetStaticFrictionAttr().GetTypeName()
+                )
+            )
+            table_dynamic_type = (
+                None
+                if table_material_api.GetDynamicFrictionAttr().GetTypeName()
+                is None
+                else str(
+                    table_material_api.GetDynamicFrictionAttr().GetTypeName()
+                )
+            )
+            table_static_evidence = record_float32_evidence(
+                "table_static_friction",
+                realized_randomization.table_static_friction,
+                table_static_readback,
+                table_static_type,
+            )
+            table_dynamic_evidence = record_float32_evidence(
+                "table_dynamic_friction",
+                realized_randomization.table_dynamic_friction,
+                table_dynamic_readback,
+                table_dynamic_type,
+            )
+            realized_usd_authoring["table_material"] = {
+                "prim_path": tabletop.world.physics_material_prim_path,
+                "api_preexisting": True,
+                "static": table_static_evidence,
+                "dynamic": table_dynamic_evidence,
+            }
+            if (
+                not table_static_evidence["verified"]
+                or not table_dynamic_evidence["verified"]
+                or (table_static_type or "").lower() != "float"
+                or (table_dynamic_type or "").lower() != "float"
+            ):
+                raise RuntimeError(
+                    "tabletop material friction float32 readback mismatch"
+                )
+            # 2. Loose plug root: preserve the allowlisted scene orientation
+            #    while realizing the bounded XY/yaw perturbation before reset.
+            plug_prim = stage.GetPrimAtPath(
+                tabletop.asset.loose_plug_prim_path
+            )
+            plug_xformable = UsdGeom.Xformable(plug_prim)
+            plug_operations = plug_xformable.GetOrderedXformOps()
+            frozen_rotation_xyz = tuple(
+                float(value)
+                for value in tabletop.asset_profile
+                .loose_endpoint_rotation_degrees_xyz
+            )
+            expected_op_types = [UsdGeom.XformOp.TypeTranslate]
+            if frozen_rotation_xyz != (0.0, 0.0, 0.0):
+                expected_op_types.append(UsdGeom.XformOp.TypeRotateXYZ)
+            actual_op_types = [
+                operation.GetOpType() for operation in plug_operations
+            ]
+            if actual_op_types != expected_op_types:
+                raise RuntimeError(
+                    "loose plug root op stack differs from its allowlisted "
+                    "scene orientation"
+                )
+            if len(plug_operations) == 2:
+                authored_rotation_xyz = tuple(
+                    float(value) for value in plug_operations[1].Get()
+                )
+                if authored_rotation_xyz != frozen_rotation_xyz:
+                    raise RuntimeError(
+                        "loose plug root rotation differs from scene profile"
+                    )
+            nominal_plug_origin = np.asarray(
+                tabletop.loose_endpoint.initial_origin_m,
+                dtype=np.float64,
+            )
+            authored_plug_column = np.asarray(
+                plug_xformable.GetLocalTransformation(), dtype=np.float64
+            ).T
+            if (
+                authored_plug_column.shape != (4, 4)
+                or not np.all(np.isfinite(authored_plug_column))
+                or np.max(
+                    np.abs(
+                        authored_plug_column[:3, 3]
+                        - nominal_plug_origin
+                    )
+                )
+                > 1.0e-12
+            ):
+                raise RuntimeError(
+                    "loose plug root authored translation differs from scene"
+                )
+            frozen_orientation_column = authored_plug_column.copy()
+            frozen_orientation_column[:3, 3] = 0.0
+            realized_xy_yaw_column = compose_loose_plug_transform(
+                nominal_plug_origin,
+                realized_randomization.plug_x_offset_m,
+                realized_randomization.plug_y_offset_m,
+                realized_randomization.plug_yaw_deg,
+            )
+            plug_column_matrix = (
+                realized_xy_yaw_column @ frozen_orientation_column
+            )
+            # Column-vector -> Gf row-vector: explicit transpose here.
+            plug_gf_matrix = Gf.Matrix4d(
+                *tuple(
+                    float(value)
+                    for value in plug_column_matrix.T.reshape(-1)
+                )
+            )
+            plug_xformable.ClearXformOpOrder()
+            plug_xformable.AddTransformOp().Set(plug_gf_matrix)
+            plug_readback_gf = plug_xformable.GetLocalTransformation()
+            # Gf row-vector -> column-vector: explicit transpose here.
+            plug_readback_column = np.asarray(plug_readback_gf).T
+            plug_matrix_error = float(
+                np.max(np.abs(plug_readback_column - plug_column_matrix))
+            )
+            plug_z_preserved = bool(
+                plug_readback_column[2, 3] == nominal_plug_origin[2]
+            )
+            realized_usd_authoring["loose_plug_root"] = {
+                "prim_path": tabletop.asset.loose_plug_prim_path,
+                "frozen_rotation_degrees_xyz": list(frozen_rotation_xyz),
+                "frozen_orientation_preserved": bool(
+                    np.max(
+                        np.abs(
+                            plug_column_matrix[:3, :3]
+                            - (
+                                realized_xy_yaw_column[:3, :3]
+                                @ frozen_orientation_column[:3, :3]
+                            )
+                        )
+                    )
+                    <= 1.0e-12
+                ),
+                "intended_matrix_column": [
+                    [float(value) for value in row]
+                    for row in plug_column_matrix
+                ],
+                "readback_matrix_column": [
+                    [float(value) for value in row]
+                    for row in plug_readback_column
+                ],
+                "maximum_matrix_error": plug_matrix_error,
+                "z_preserved": plug_z_preserved,
+            }
+            if plug_matrix_error > 1.0e-9 or not plug_z_preserved:
+                raise RuntimeError("loose plug root transform readback mismatch")
+            # 3. Body/nut mass and COM: the MassAPI and an authored explicit
+            #    mass attribute are asset contracts; verify them before the
+            #    schema wrapper is constructed.  The original mass must
+            #    carry an authored value opinion whose float32 storage equals
+            #    the active allowlisted asset profile; density may be absent
+            #    or zero.
+            part_authoring = {}
+            for name, part_path, nominal_mass_kg in (
+                (
+                    "body",
+                    tabletop.asset.body_prim_path,
+                    tabletop.asset_profile.body_mass_kg,
+                ),
+                (
+                    "nut",
+                    tabletop.asset.nut_prim_path,
+                    tabletop.asset_profile.nut_mass_kg,
+                ),
+            ):
+                part_prim = stage.GetPrimAtPath(part_path)
+                if not part_prim.IsValid():
+                    raise RuntimeError(f"{name} prim is missing")
+                if not part_prim.HasAPI(UsdPhysics.MassAPI):
+                    raise RuntimeError(f"{name} prim lacks MassAPI")
+                mass_api = UsdPhysics.MassAPI(part_prim)
+                mass_attr = mass_api.GetMassAttr()
+                if not mass_attr.HasAuthoredValueOpinion():
+                    raise RuntimeError(
+                        f"{name} mass attribute has no authored value opinion"
+                    )
+                existing_mass = mass_attr.Get()
+                mass_type = (
+                    None
+                    if mass_attr.GetTypeName() is None
+                    else str(mass_attr.GetTypeName())
+                )
+                density_attr = mass_api.GetDensityAttr()
+                density_value = density_attr.Get()
+                density_type = (
+                    None
+                    if density_attr.GetTypeName() is None
+                    else str(density_attr.GetTypeName())
+                )
+                density_authored = bool(
+                    density_attr.HasAuthoredValueOpinion()
+                )
+                density_allowed = bool(
+                    density_value is None or float(density_value) == 0.0
+                )
+                com_attr = mass_api.GetCenterOfMassAttr()
+                existing_com = com_attr.Get()
+                existing_com_values = (
+                    None
+                    if existing_com is None
+                    else tuple(float(value) for value in existing_com)
+                )
+                com_type = (
+                    None
+                    if com_attr.GetTypeName() is None
+                    else str(com_attr.GetTypeName())
+                )
+                com_authored = bool(com_attr.HasAuthoredValueOpinion())
+                if arguments.keyed_visual_control:
+                    expected_com = keyed_checkpoint_a_acceptance[
+                        "structure"
+                    ].get(f"{name}_center_of_mass_m")
+                    if (
+                        not isinstance(expected_com, list)
+                        or len(expected_com) != 3
+                    ):
+                        raise RuntimeError(
+                            f"checkpoint A {name} COM contract is invalid"
+                        )
+                    baseline_com = tuple(float(value) for value in expected_com)
+                else:
+                    baseline_com = (
+                        (0.0, 0.0, 0.0)
+                        if existing_com_values is None
+                        else existing_com_values
+                    )
+                baseline_com_evidence = record_float32_evidence(
+                    f"{name}_asset_baseline_com",
+                    baseline_com,
+                    existing_com_values,
+                    com_type,
+                )
+                original_evidence = record_float32_evidence(
+                    f"{name}_original_mass",
+                    nominal_mass_kg,
+                    existing_mass,
+                    mass_type,
+                )
+                intended_mass = (
+                    nominal_mass_kg * realized_randomization.plug_mass_scale
+                )
+                com_offset = tuple(
+                    float(value)
+                    for value in (
+                        realized_randomization.center_of_mass_offset_m
+                    )
+                )
+                com_intended = tuple(
+                    baseline + offset
+                    for baseline, offset in zip(baseline_com, com_offset)
+                )
+                mass_api.GetMassAttr().Set(intended_mass)
+                com_attr.Set(Gf.Vec3f(*com_intended))
+                readback_mass = mass_api.GetMassAttr().Get()
+                readback_com = com_attr.Get()
+                com_readback = (
+                    None
+                    if readback_com is None
+                    else tuple(float(value) for value in readback_com)
+                )
+                scaled_evidence = record_float32_evidence(
+                    f"{name}_scaled_mass", intended_mass, readback_mass,
+                    mass_type,
+                )
+                com_evidence = record_float32_evidence(
+                    f"{name}_com",
+                    com_intended,
+                    (
+                        None
+                        if com_readback is None
+                        else tuple(
+                            float(value) for value in com_readback
+                        )
+                    ),
+                    com_type,
+                )
+                part_authoring[name] = {
+                    "prim_path": part_path,
+                    "api_preexisting": True,
+                    "nominal_mass_kg": nominal_mass_kg,
+                    "mass_scale": realized_randomization.plug_mass_scale,
+                    "original_mass": original_evidence,
+                    "scaled_mass": scaled_evidence,
+                    "asset_baseline_com": baseline_com_evidence,
+                    "center_of_mass_offset_m": list(com_offset),
+                    "center_of_mass_authored_in_asset": com_authored,
+                    "com": com_evidence,
+                    "density": {
+                        "attribute_type": density_type,
+                        "authored": density_authored,
+                        "readback": (
+                            None
+                            if density_value is None
+                            else float(density_value)
+                        ),
+                        "allowed": density_allowed,
+                    },
+                }
+                realized_usd_authoring["parts"] = part_authoring
+                if (
+                    not original_evidence["verified"]
+                    or (mass_type or "").lower() != "float"
+                    or not scaled_evidence["verified"]
+                    or not com_evidence["verified"]
+                    or (
+                        arguments.keyed_visual_control
+                        and (
+                            not com_authored
+                            or not baseline_com_evidence["verified"]
+                        )
+                    )
+                    # MassAPI centerOfMass is schema type point3f on this
+                    # runtime; its three components still store float32.
+                    or (com_type or "").lower() != "point3f"
+                    or not density_allowed
+                ):
+                    raise RuntimeError(
+                        f"{name} mass/COM/density contract mismatch"
+                    )
+
         tcp_prim = stage.GetPrimAtPath(pick.scene.grasp_tcp_prim_path)
         fixed_prim = stage.GetPrimAtPath(
             tabletop.asset.fixed_receptacle_prim_path
@@ -804,63 +3797,214 @@ def main():
             if not prim.IsValid():
                 raise RuntimeError(f"required scene prim is missing: {path}")
 
+        physical_r7_profile = bool(
+            tabletop.asset_profile.profile_id
+            == "d38999_shell25j_25_61_n_keyed_physical_pair_v3"
+        )
+        multilayer_grasp_profile = bool(
+            tabletop.asset_profile.profile_id
+            == "D38999_ASSEMBLY_CONTROL_V1"
+        )
+        frozen_solver_contract = None
+        frozen_solver_contract_evidence = None
+        if multilayer_grasp_profile:
+            frozen_solver_contract = _load_frozen_solver_contract(
+                repository, rate_hz
+            )
         grip_material_path = "/World/D38999PickGripMaterial"
         grip_material = UsdShade.Material.Define(stage, grip_material_path)
         grip_api = UsdPhysics.MaterialAPI.Apply(grip_material.GetPrim())
-        grip_api.CreateStaticFrictionAttr(pick.motion.grip_static_friction)
-        grip_api.CreateDynamicFrictionAttr(pick.motion.grip_dynamic_friction)
+        # The formal path creates the grip material directly from the
+        # realized fingertip friction pair; the legacy path keeps the
+        # validated pick motion values.
+        grip_static_friction = (
+            1.40
+            if physical_r7_profile
+            else realized_randomization.fingertip_static_friction
+            if formal_grasp
+            else pick.motion.grip_static_friction
+        )
+        grip_dynamic_friction = (
+            1.40
+            if physical_r7_profile
+            else realized_randomization.fingertip_dynamic_friction
+            if formal_grasp
+            else pick.motion.grip_dynamic_friction
+        )
+        grip_api.CreateStaticFrictionAttr(grip_static_friction)
+        grip_api.CreateDynamicFrictionAttr(grip_dynamic_friction)
         grip_api.CreateRestitutionAttr(pick.motion.grip_restitution)
+        if formal_grasp:
+            # Grip material readback happens before the collider binding
+            # verification below; its attributes are float32 and are checked
+            # against the quantized realized friction values.
+            grip_static_readback = (
+                grip_api.GetStaticFrictionAttr().Get()
+            )
+            grip_dynamic_readback = (
+                grip_api.GetDynamicFrictionAttr().Get()
+            )
+            grip_static_type = (
+                None
+                if grip_api.GetStaticFrictionAttr().GetTypeName() is None
+                else str(grip_api.GetStaticFrictionAttr().GetTypeName())
+            )
+            grip_dynamic_type = (
+                None
+                if grip_api.GetDynamicFrictionAttr().GetTypeName() is None
+                else str(grip_api.GetDynamicFrictionAttr().GetTypeName())
+            )
+            grip_static_evidence = record_float32_evidence(
+                "grip_static_friction",
+                grip_static_friction,
+                grip_static_readback,
+                grip_static_type,
+            )
+            grip_dynamic_evidence = record_float32_evidence(
+                "grip_dynamic_friction",
+                grip_dynamic_friction,
+                grip_dynamic_readback,
+                grip_dynamic_type,
+            )
+            realized_usd_authoring["grip_material"] = {
+                "prim_path": grip_material_path,
+                "api_preexisting": False,
+                "created_by_runner": True,
+                "static": grip_static_evidence,
+                "dynamic": grip_dynamic_evidence,
+            }
+            if (
+                not grip_static_evidence["verified"]
+                or not grip_dynamic_evidence["verified"]
+                or (grip_static_type or "").lower() != "float"
+                or (grip_dynamic_type or "").lower() != "float"
+            ):
+                raise RuntimeError(
+                    "grip material friction float32 readback mismatch"
+                )
+            # Every attribute readback (table, plug root, body/nut, grip)
+            # has passed; the final usd_authoring_verified flag is still
+            # only set after the binding identity check below.
+            realized_usd_authoring["attribute_readbacks_verified"] = bool(
+                realized_usd_authoring["table_material"]["static"][
+                    "verified"
+                ]
+                and realized_usd_authoring["table_material"]["dynamic"][
+                    "verified"
+                ]
+                and realized_usd_authoring["loose_plug_root"][
+                    "z_preserved"
+                ]
+                and all(
+                    part["original_mass"]["verified"]
+                    and part["scaled_mass"]["verified"]
+                    and part["com"]["verified"]
+                    and part["density"]["allowed"]
+                    for part in realized_usd_authoring["parts"].values()
+                )
+                and grip_static_evidence["verified"]
+                and grip_dynamic_evidence["verified"]
+            )
+        finger_links = {
+            "f1Link1", "f1Link2", "f1Link3", "f2Link1",
+            "f2Link2", "f3Link1", "f3Link2", "f3Link3",
+        }
+        fingertip_links = {"f1Link3", "f2Link2", "f3Link3"}
         finger_collision_anchors = []
+        fingertip_collision_anchors = []
         plug_collision_prims = {"body": [], "nut": []}
+        fixed_collision_prims = []
         robot_root = pick.scene.robot_root_prim_path
         plug_root = tabletop.asset.loose_plug_prim_path
         body_root = tabletop.asset.body_prim_path
         nut_root = tabletop.asset.nut_prim_path
+        fixed_root = tabletop.asset.fixed_receptacle_prim_path
+        if frozen_solver_contract is not None:
+            frozen_solver_contract_evidence = (
+                _author_frozen_solver_contract(
+                    stage=stage,
+                    world=world,
+                    robot_articulation_path=(
+                        pick.scene.articulation_prim_path
+                    ),
+                    robot_root=robot_root,
+                    body_path=body_root,
+                    nut_path=nut_root,
+                    contract=frozen_solver_contract,
+                    PhysxSchema=PhysxSchema,
+                    Sdf=Sdf,
+                    UsdPhysics=UsdPhysics,
+                )
+            )
+            metrics["frozen_solver_contract"] = (
+                frozen_solver_contract_evidence
+            )
         for prim in stage.Traverse():
             prim_path = str(prim.GetPath())
+            path_components = prim_path.split("/")
+            semantic_finger_link = next(
+                (
+                    component
+                    for component in reversed(path_components)
+                    if component in finger_links
+                ),
+                None,
+            )
             finger_anchor = bool(
                 prim_path.startswith(robot_root + "/")
-                and prim.GetName().endswith("_convex")
-                and any(
-                    link_name in prim_path
-                    for link_name in ("/f1Link", "/f2Link", "/f3Link")
-                )
+                and prim.HasAPI(UsdPhysics.CollisionAPI)
+                and semantic_finger_link is not None
             )
             plug_collision = bool(
                 prim.HasAPI(UsdPhysics.CollisionAPI)
                 and prim_path.startswith(plug_root + "/")
             )
-            if finger_anchor or plug_collision:
+            fixed_collision = bool(
+                prim.HasAPI(UsdPhysics.CollisionAPI)
+                and (
+                    prim_path == fixed_root
+                    or prim_path.startswith(fixed_root + "/")
+                )
+            )
+            bind_runner_grip = bool(
+                (finger_anchor and (
+                    not physical_r7_profile
+                    or semantic_finger_link in fingertip_links
+                ))
+                or (plug_collision and not physical_r7_profile)
+            )
+            if bind_runner_grip:
                 physicsUtils.add_physics_material_to_prim(
                     stage, prim, Sdf.Path(grip_material_path)
                 )
-                if finger_anchor:
-                    finger_collision_anchors.append(prim_path)
-                elif (
-                    _d38999_loose_collider_group(
-                        prim_path, body_root, nut_root
-                    )
-                    is not None
-                ):
-                    group = _d38999_loose_collider_group(
-                        prim_path, body_root, nut_root
-                    )
-                    plug_collision_prims[group].append(prim_path)
-                else:
+            if finger_anchor:
+                finger_collision_anchors.append(prim_path)
+                if semantic_finger_link in fingertip_links:
+                    fingertip_collision_anchors.append(prim_path)
+            elif plug_collision:
+                group = _d38999_loose_collider_group(
+                    prim_path, body_root, nut_root
+                )
+                if group is None:
                     raise RuntimeError(
                         "D38999 loose collider is outside body/nut: "
                         f"{prim_path}"
                     )
+                plug_collision_prims[group].append(prim_path)
+            elif fixed_collision:
+                fixed_collision_prims.append(prim_path)
         if len(finger_collision_anchors) != 8:
             raise RuntimeError(
                 "expected 8 finger collision anchors, found "
                 f"{len(finger_collision_anchors)}"
             )
+        if physical_r7_profile and len(fingertip_collision_anchors) != 3:
+            raise RuntimeError(
+                "physical r7 requires exactly three fingertip-pad colliders"
+            )
         expected_plug_collision_counts = {
-            # One rear-body cylinder plus 20 mating-shell segments.
-            "body": 21,
-            # Twenty-four coupling-nut grip segments.
-            "nut": 24,
+            "body": tabletop.asset_profile.expected_body_collider_count,
+            "nut": tabletop.asset_profile.expected_nut_collider_count,
         }
         plug_collision_counts = {
             key: len(value) for key, value in plug_collision_prims.items()
@@ -872,10 +4016,326 @@ def main():
                 f"found={plug_collision_counts}"
             )
 
-        # Apply only the exact 500-pair segmented-proxy exception already used
-        # by the validated q7 twist probe.  This happens before world.reset(),
-        # so no collision topology is mutated during the physical episode.
-        if insertion is not None:
+        multilayer_nut_grasp_filter = {
+            "enabled": False,
+            "authored_before_physics": False,
+            "controller_input": False,
+        }
+        if multilayer_grasp_profile:
+            expected_grip_path = nut_root + "/CouplingNutGraspCollision"
+            if plug_collision_prims["nut"].count(expected_grip_path) != 1:
+                raise RuntimeError(
+                    "multilayer grasp profile lacks its unique authorized nut collider"
+                )
+            non_grip_nut_paths = sorted(
+                path
+                for path in plug_collision_prims["nut"]
+                if path != expected_grip_path
+            )
+            if len(non_grip_nut_paths) != 6:
+                raise RuntimeError(
+                    "multilayer grasp profile requires six physical nut shoulders"
+                )
+            shoulder_signs = ("PositiveStop", "NegativeStop")
+            body_shoulder_paths_by_sign = {
+                sign: sorted(
+                    path
+                    for path in plug_collision_prims["body"]
+                    if f"/NutBearingShoulders/{sign}/" in path
+                )
+                for sign in shoulder_signs
+            }
+            nut_shoulder_paths_by_sign = {
+                sign: sorted(
+                    path
+                    for path in non_grip_nut_paths
+                    if f"/NutBearingShoulders/{sign}/" in path
+                )
+                for sign in shoulder_signs
+            }
+            if any(
+                len(body_shoulder_paths_by_sign[sign]) != 1
+                or len(nut_shoulder_paths_by_sign[sign]) != 3
+                for sign in shoulder_signs
+            ):
+                raise RuntimeError(
+                    "multilayer grasp profile shoulder roles differ from frozen 1/3 per sign"
+                )
+            body_shoulder_paths = sorted(
+                path
+                for sign in shoulder_signs
+                for path in body_shoulder_paths_by_sign[sign]
+            )
+            body_non_shoulder_paths = sorted(
+                set(plug_collision_prims["body"])
+                - set(body_shoulder_paths)
+            )
+            if len(body_non_shoulder_paths) != 70:
+                raise RuntimeError(
+                    "multilayer grasp profile requires 70 non-shoulder body colliders"
+                )
+            if not fixed_collision_prims:
+                raise RuntimeError(
+                    "multilayer grasp profile fixed receptacle colliders are absent"
+                )
+            collision_groups_root = (
+                tabletop.world.root_prim_path + "/GraspCollisionGroups"
+            )
+            UsdGeom.Scope.Define(stage, collision_groups_root)
+
+            def explicit_collision_group(name, members):
+                group_path = collision_groups_root + "/" + name
+                group = UsdPhysics.CollisionGroup.Define(stage, group_path)
+                group.CreateInvertFilteredGroupsAttr(False)
+                collection = group.GetCollidersCollectionAPI()
+                collection.CreateExpansionRuleAttr("explicitOnly")
+                collection.CreateIncludeRootAttr(False)
+                collection.CreateIncludesRel().SetTargets(
+                    [Sdf.Path(path) for path in members]
+                )
+                return group_path, group
+
+            fixed_group_path, fixed_group = explicit_collision_group(
+                "FixedReceptacle", sorted(fixed_collision_prims)
+            )
+            body_non_group_path, body_non_group = explicit_collision_group(
+                "BodyNonShoulder", body_non_shoulder_paths
+            )
+            body_positive_group_path, body_positive_group = (
+                explicit_collision_group(
+                    "BodyShoulderPositive",
+                    body_shoulder_paths_by_sign["PositiveStop"],
+                )
+            )
+            body_negative_group_path, body_negative_group = (
+                explicit_collision_group(
+                    "BodyShoulderNegative",
+                    body_shoulder_paths_by_sign["NegativeStop"],
+                )
+            )
+            nut_group_path, nut_group = explicit_collision_group(
+                "AuthorizedCouplingNutGrip", [expected_grip_path]
+            )
+            nut_positive_group_path, nut_positive_group = (
+                explicit_collision_group(
+                    "NutShoulderPositive",
+                    nut_shoulder_paths_by_sign["PositiveStop"],
+                )
+            )
+            nut_negative_group_path, nut_negative_group = (
+                explicit_collision_group(
+                    "NutShoulderNegative",
+                    nut_shoulder_paths_by_sign["NegativeStop"],
+                )
+            )
+            finger_group_path, finger_group = explicit_collision_group(
+                "ThreeRobotFingers", sorted(finger_collision_anchors)
+            )
+
+            def filter_groups(group, targets):
+                relation = group.CreateFilteredGroupsRel()
+                for target in targets:
+                    relation.AddTarget(Sdf.Path(target))
+
+            filter_groups(
+                nut_group,
+                (
+                    fixed_group_path,
+                    body_non_group_path,
+                    body_positive_group_path,
+                    body_negative_group_path,
+                ),
+            )
+            filter_groups(
+                nut_positive_group,
+                (
+                    fixed_group_path,
+                    body_non_group_path,
+                    body_negative_group_path,
+                ),
+            )
+            filter_groups(
+                nut_negative_group,
+                (
+                    fixed_group_path,
+                    body_non_group_path,
+                    body_positive_group_path,
+                ),
+            )
+            filter_groups(body_positive_group, (fixed_group_path,))
+            filter_groups(body_negative_group, (fixed_group_path,))
+            filter_groups(
+                finger_group,
+                (
+                    body_non_group_path,
+                    body_positive_group_path,
+                    body_negative_group_path,
+                    nut_positive_group_path,
+                    nut_negative_group_path,
+                ),
+            )
+            groups = {
+                "fixed": fixed_group,
+                "body_non_shoulder": body_non_group,
+                "body_shoulder_positive": body_positive_group,
+                "body_shoulder_negative": body_negative_group,
+                "nut": nut_group,
+                "nut_shoulder_positive": nut_positive_group,
+                "nut_shoulder_negative": nut_negative_group,
+                "fingers": finger_group,
+            }
+            authored_members = {
+                name: sorted(
+                    str(path)
+                    for path in group.GetCollidersCollectionAPI()
+                    .GetIncludesRel()
+                    .GetTargets()
+                )
+                for name, group in groups.items()
+            }
+            authored_filters = {
+                name: sorted(
+                    str(path)
+                    for path in group.GetFilteredGroupsRel().GetTargets()
+                )
+                for name, group in groups.items()
+            }
+            expected_members = {
+                "fixed": sorted(fixed_collision_prims),
+                "body_non_shoulder": body_non_shoulder_paths,
+                "body_shoulder_positive": body_shoulder_paths_by_sign[
+                    "PositiveStop"
+                ],
+                "body_shoulder_negative": body_shoulder_paths_by_sign[
+                    "NegativeStop"
+                ],
+                "nut": [expected_grip_path],
+                "nut_shoulder_positive": nut_shoulder_paths_by_sign[
+                    "PositiveStop"
+                ],
+                "nut_shoulder_negative": nut_shoulder_paths_by_sign[
+                    "NegativeStop"
+                ],
+                "fingers": sorted(finger_collision_anchors),
+            }
+            expected_filters = {
+                "fixed": [],
+                "body_non_shoulder": [],
+                "body_shoulder_positive": [fixed_group_path],
+                "body_shoulder_negative": [fixed_group_path],
+                "nut": sorted(
+                    [
+                        fixed_group_path,
+                        body_non_group_path,
+                        body_positive_group_path,
+                        body_negative_group_path,
+                    ]
+                ),
+                "nut_shoulder_positive": sorted(
+                    [
+                        fixed_group_path,
+                        body_non_group_path,
+                        body_negative_group_path,
+                    ]
+                ),
+                "nut_shoulder_negative": sorted(
+                    [
+                        fixed_group_path,
+                        body_non_group_path,
+                        body_positive_group_path,
+                    ]
+                ),
+                "fingers": sorted(
+                    [
+                        body_non_group_path,
+                        body_positive_group_path,
+                        body_negative_group_path,
+                        nut_positive_group_path,
+                        nut_negative_group_path,
+                    ]
+                ),
+            }
+            if (
+                authored_members != expected_members
+                or authored_filters != expected_filters
+            ):
+                raise RuntimeError(
+                    "multilayer nut-grasp collision filtering failed readback"
+                )
+            multilayer_nut_grasp_filter = {
+                "enabled": True,
+                "authored_before_physics": True,
+                "controller_input": False,
+                "mode": "role_paired_physical_shoulders_and_external_grip_no_contact_truth",
+                "authorized_grip_collider": expected_grip_path,
+                "authorized_local_z_interval_m": [0.009, 0.029],
+                "authorized_outer_radius_m": 0.024,
+                "fixed_collider_count": len(authored_members["fixed"]),
+                "body_collider_count": len(plug_collision_prims["body"]),
+                "body_non_shoulder_collider_count": len(
+                    authored_members["body_non_shoulder"]
+                ),
+                "body_shoulder_collider_count": (
+                    len(authored_members["body_shoulder_positive"])
+                    + len(authored_members["body_shoulder_negative"])
+                ),
+                "nut_collider_count": len(plug_collision_prims["nut"]),
+                "authorized_nut_grip_collider_count": len(
+                    authored_members["nut"]
+                ),
+                "non_grip_nut_collider_count": len(
+                    authored_members["nut_shoulder_positive"]
+                ) + len(
+                    authored_members["nut_shoulder_negative"]
+                ),
+                "finger_collider_count": len(authored_members["fingers"]),
+                "filtered_pairs": [
+                    "coupling_nut_grasp_collision<->all_body_colliders",
+                    "nut_shoulder_positive<->body_non_shoulder_and_negative",
+                    "nut_shoulder_negative<->body_non_shoulder_and_positive",
+                    "three_robot_fingers<->all_non_grip_loose_plug_colliders",
+                ],
+                "preserved_pairs": [
+                    "three_robot_fingers<->coupling_nut_grasp_collision",
+                    "body_shoulder_positive<->nut_shoulder_positive",
+                    "body_shoulder_negative<->nut_shoulder_negative",
+                    "coupling_nut_grasp_collision<->table",
+                    "robot<->table",
+                ],
+                "frozen_pair_partition": {
+                    "allowed": [
+                        "BodyShoulderPositive<->NutShoulderPositive",
+                        "BodyShoulderNegative<->NutShoulderNegative",
+                    ],
+                    "default_cross_role_pairs_filtered": True,
+                    "source": "A2_dynamic_pass_collision_algebra",
+                },
+                "group_paths": {
+                    "fixed": fixed_group_path,
+                    "body_non_shoulder": body_non_group_path,
+                    "body_shoulder_positive": body_positive_group_path,
+                    "body_shoulder_negative": body_negative_group_path,
+                    "nut": nut_group_path,
+                    "nut_shoulder_positive": nut_positive_group_path,
+                    "nut_shoulder_negative": nut_negative_group_path,
+                    "fingers": finger_group_path,
+                },
+                "readback_verified": True,
+            }
+        metrics["multilayer_nut_grasp_filter"] = multilayer_nut_grasp_filter
+
+        # Physical r7 owns its complete collision-group algebra in the asset;
+        # the runner may never overlay the historical segmented-proxy filter.
+        if insertion is not None and physical_r7_profile:
+            proxy_collision_filter = {
+                "body_mating_segment_count": 0,
+                "enabled": False,
+                "fixed_entry_segment_count": 0,
+                "mode": "physical_r7_asset_owned_collision_groups",
+                "nut_segment_count": 0,
+                "pair_count": 0,
+            }
+        elif insertion is not None:
             filter_contract = insertion.proxy_collision_filter
             filter_plan = build_proxy_collision_filter_plan(
                 body_root,
@@ -912,19 +4372,21 @@ def main():
             }
         metrics["proxy_collision_filter"] = proxy_collision_filter
 
+        # Reuse the exact collider paths already validated above.  The
+        # multilayer robot composition exposes these as ordinary prims rather
+        # than instance proxies, so a second instance-only discovery pass
+        # would incorrectly report zero bindings.
         proxy_material_bindings = {}
-        robot_prim = stage.GetPrimAtPath(robot_root)
-        for prim in Usd.PrimRange(robot_prim, Usd.TraverseInstanceProxies()):
-            prim_path = str(prim.GetPath())
+        for prim_path in sorted(finger_collision_anchors):
+            prim = stage.GetPrimAtPath(prim_path)
             if not (
-                prim.IsInstanceProxy()
+                prim.IsValid()
                 and prim.HasAPI(UsdPhysics.CollisionAPI)
-                and any(
-                    link_name in prim_path
-                    for link_name in ("/f1Link", "/f2Link", "/f3Link")
-                )
             ):
-                continue
+                raise RuntimeError(
+                    "validated finger collision anchor disappeared: "
+                    f"{prim_path}"
+                )
             bound_material, _ = UsdShade.MaterialBindingAPI(
                 prim
             ).ComputeBoundMaterial("physics")
@@ -934,10 +4396,83 @@ def main():
         proxy_material_binding_ok = bool(
             len(proxy_material_bindings) == 8
             and all(
-                material == grip_material_path
-                for material in proxy_material_bindings.values()
+                (
+                    material == grip_material_path
+                    if not physical_r7_profile
+                    or next(
+                        (
+                            component
+                            for component in reversed(path.split("/"))
+                            if component in finger_links
+                        ),
+                        None,
+                    ) in fingertip_links
+                    else material is not None
+                    and material != grip_material_path
+                )
+                for path, material in proxy_material_bindings.items()
             )
         )
+
+        if formal_grasp:
+            # Physical r7 preserves every connector role material and binds
+            # high friction only to the three terminal pads.  The historical
+            # profile retains its old single-material behavior.
+            plug_binding_identity = {}
+            plug_binding_all_ok = True
+            for group in ("body", "nut"):
+                for prim_path in plug_collision_prims[group]:
+                    prim = stage.GetPrimAtPath(prim_path)
+                    bound_material, _ = UsdShade.MaterialBindingAPI(
+                        prim
+                    ).ComputeBoundMaterial("physics")
+                    bound_path = (
+                        str(bound_material.GetPath())
+                        if bound_material
+                        else None
+                    )
+                    plug_binding_identity[prim_path] = bound_path
+                    plug_binding_all_ok = bool(
+                        plug_binding_all_ok
+                        and (
+                            bound_path is not None
+                            and bound_path != grip_material_path
+                            if physical_r7_profile
+                            else bound_path == grip_material_path
+                        )
+                    )
+            binding_identity_ok = bool(
+                plug_binding_all_ok
+                and proxy_material_binding_ok
+            )
+            realized_usd_authoring["material_binding_identity"] = {
+                "grip_material_path": grip_material_path,
+                "finger_proxy_count": len(proxy_material_bindings),
+                "fingertip_pad_count": len(fingertip_collision_anchors),
+                "finger_roles_preserved": proxy_material_binding_ok,
+                "plug_collider_count": len(plug_binding_identity),
+                "plug_role_materials_preserved": plug_binding_all_ok,
+                "all_bindings_ok": binding_identity_ok,
+            }
+            if not binding_identity_ok:
+                raise RuntimeError(
+                    "realized material binding identity check failed"
+                )
+            # The single location that may flip the final flag: every
+            # attribute readback AND every binding path identity must have
+            # passed before usd_authoring_verified becomes true.
+            realized_usd_authoring["usd_authoring_verified"] = bool(
+                binding_identity_ok
+                and realized_usd_authoring.get(
+                    "attribute_readbacks_verified", False
+                )
+            )
+            if realized_usd_authoring["usd_authoring_verified"] is not True:
+                # Explicit fail-closed: physics must never start with an
+                # unverified realized USD authoring.
+                raise RuntimeError(
+                    "realized USD authoring did not fully verify before reset"
+                )
 
         contact_report_body_count = 0
         for prim in stage.Traverse():
@@ -974,9 +4509,11 @@ def main():
                     stage, nut_root, UsdGeom, Gf
                 )
 
-        if arguments.gui:
-            from isaacsim.core.rendering_manager import ViewportManager
-
+        if (
+            arguments.gui
+            or arguments.camera_rig_probe
+            or arguments.keyed_visual_control
+        ):
             lighting_root = "/World/D38999PickGuiLighting"
             UsdGeom.Xform.Define(stage, lighting_root)
             dome = UsdLux.DomeLight.Define(stage, lighting_root + "/Fill")
@@ -991,11 +4528,14 @@ def main():
             UsdGeom.Xformable(key).AddRotateXYZOp().Set(
                 Gf.Vec3f(*tabletop.render.key_light_rotation_degrees_xyz)
             )
-            ViewportManager.set_camera_view(
-                camera="/OmniverseKit_Persp",
-                eye=np.asarray(CAMERA_EYE_M, dtype=np.float64),
-                target=np.asarray(CAMERA_TARGET_M, dtype=np.float64),
-            )
+            if arguments.gui:
+                from isaacsim.core.rendering_manager import ViewportManager
+
+                ViewportManager.set_camera_view(
+                    camera="/OmniverseKit_Persp",
+                    eye=np.asarray(CAMERA_EYE_M, dtype=np.float64),
+                    target=np.asarray(CAMERA_TARGET_M, dtype=np.float64),
+                )
             simulation_app.update()
 
         robot = world.scene.add(
@@ -1020,6 +4560,24 @@ def main():
         if not robot.handles_initialized:
             raise RuntimeError(
                 "robot articulation handles were not initialized"
+            )
+        if frozen_solver_contract is not None:
+            post_reset_solver_contract = (
+                _verify_frozen_solver_contract_after_reset(
+                    stage=stage,
+                    world=world,
+                    robot=robot,
+                    body=body,
+                    nut=nut,
+                    contract=frozen_solver_contract,
+                    authoring_evidence=frozen_solver_contract_evidence,
+                )
+            )
+            frozen_solver_contract_evidence["post_reset"] = (
+                post_reset_solver_contract
+            )
+            frozen_solver_contract_evidence["status"] = (
+                "EXPLICITLY_AUTHORED_AND_POST_RESET_READ_BACK"
             )
         if wrist_ft_config is not None:
             # Isaac indexes reaction rows one higher than the corresponding
@@ -1084,8 +4642,16 @@ def main():
             wrist_ft_monitor = VirtualWristFtMonitor(
                 wrist_ft_config,
                 reaction_row=wrist_ft_reaction_row,
-                task_origin_world=assembly.datums.fixed.position_world_m,
-                task_z_axis_world=assembly.datums.fixed.axis_world,
+                task_origin_world=(
+                    assembly.datums.fixed.position_world_m
+                    if assembly is not None
+                    else (0.0, 0.0, 0.0)
+                ),
+                task_z_axis_world=(
+                    assembly.datums.fixed.axis_world
+                    if assembly is not None
+                    else (0.0, 0.0, 1.0)
+                ),
             )
             metrics["virtual_wrist_ft_monitor"] = {
                 "status": "INITIALIZED_MONITOR_ONLY",
@@ -1134,6 +4700,18 @@ def main():
             [name_to_index[name] for name in pick.sensing.torque_joint_names],
             dtype=np.int32,
         )
+        formal_finger_hand_indices = np.asarray((1, 2, 3), dtype=np.int32)
+        if formal_grasp:
+            expected_sensor_names = tuple(
+                pick.robot.active_hand_joint_names[index]
+                for index in formal_finger_hand_indices
+            )
+            if expected_sensor_names != tuple(pick.sensing.torque_joint_names):
+                raise RuntimeError(
+                    "formal finger target-to-root-torque mapping changed: "
+                    f"targets={expected_sensor_names}, "
+                    f"sensors={pick.sensing.torque_joint_names}"
+                )
         controlled_indices = np.concatenate((arm_indices, hand_indices))
 
         zero_positions = np.zeros(robot.num_dof, dtype=np.float32)
@@ -1160,9 +4738,142 @@ def main():
         closure_clearance_arm = np.asarray(
             pick.motion.closure_clearance_arm_rad, dtype=np.float64
         )
+        if formal_grasp:
+            # Preserve the nominal targets before any realized offset is
+            # applied: the posthoc T_hand_plug_nominal evaluator must keep
+            # using the nominal grasp target and nominal plug pose so the
+            # intentional arm-center error is never washed out.
+            nominal_grasp_arm = grasp_arm.copy()
+            # Solve every offset target exactly once (nominal FK TCP plus the
+            # same realized world X/Y, nominal rotation, fixed q7), validate
+            # with the frozen SIM_TUNING_ONLY gates, and freeze the results
+            # before any method branch.  No loop recomputation, and no plug
+            # pose is read anywhere in this block.
+            realized_arm_target_records = {}
+
+            def realize_offset_arm_target(name, nominal_target):
+                nominal_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(float(value) for value in nominal_target)
+                    ),
+                    dtype=np.float64,
+                )
+                requested_position = nominal_tcp[:3, 3].copy()
+                requested_position[0] += (
+                    realized_randomization.arm_center_error_x_m
+                )
+                requested_position[1] += (
+                    realized_randomization.arm_center_error_y_m
+                )
+                realized = np.asarray(
+                    solve_fixed_q7_tcp_pose(
+                        tuple(float(value) for value in nominal_target),
+                        tuple(float(value) for value in requested_position),
+                        target_rotation=nominal_tcp[:3, :3],
+                    ),
+                    dtype=np.float64,
+                )
+                residuals = validate_offset_arm_targets(
+                    nominal_target,
+                    realized,
+                    physical_grasp.randomization_validation,
+                    fk=iiwa14_grasp_tcp_transform,
+                    requested_position_m=requested_position,
+                )
+                realized_arm_target_records[name] = {
+                    "nominal_arm_rad": [
+                        float(value) for value in nominal_target
+                    ],
+                    "realized_arm_rad": [
+                        float(value) for value in realized
+                    ],
+                    "requested_tcp_position_m": [
+                        float(value) for value in requested_position
+                    ],
+                    "joint_delta_rad": [
+                        float(value)
+                        for value in (realized - nominal_target)
+                    ],
+                    "residuals": residuals,
+                }
+                return realized
+
+            closure_clearance_arm = realize_offset_arm_target(
+                "closure_clearance", closure_clearance_arm
+            )
+            grasp_arm = realize_offset_arm_target("grasp", grasp_arm)
+            pregrasp_arm = realize_offset_arm_target(
+                "pregrasp", pregrasp_arm
+            )
+            realized_approach_targets = []
+            for segment_index, segment in enumerate(
+                pick.motion.approach_segments
+            ):
+                realized_approach_targets.append(
+                    realize_offset_arm_target(
+                        f"approach_segment_{segment_index}",
+                        np.asarray(
+                            segment.target_arm_rad, dtype=np.float64
+                        ),
+                    )
+                )
+            metrics["realized_arm_targets"] = realized_arm_target_records
+        else:
+            nominal_grasp_arm = None
+            realized_approach_targets = None
         current_arm_target = home_arm.copy()
         current_hand_target = np.zeros(4, dtype=np.float64)
         dof_properties = robot.dof_properties
+
+        # Render products bind after reset, without adding or rewriting any
+        # transform under the articulation.
+        metrics["live_camera_streams"] = attach_live_camera_streams(
+            stage=stage,
+            live_camera_rig=live_camera_rig,
+            initialize_live_callbacks=not arguments.camera_rig_probe,
+        )
+        if arguments.camera_rig_probe:
+            probe_report = run_camera_rig_probe(
+                output_directory=arguments.output_dir,
+                stage=stage,
+                world=world,
+                robot=robot,
+                simulation_app=simulation_app,
+                ArticulationAction=ArticulationAction,
+                Usd=Usd,
+                UsdGeom=UsdGeom,
+                controlled_indices=controlled_indices,
+                arm_indices=arm_indices,
+                home_arm=home_arm,
+                open_hand=open_hand,
+                approach_segments=pick.motion.approach_segments,
+                live_camera_rig=live_camera_rig,
+                rate_hz=rate_hz,
+                interpolate_arm=interpolate_arm,
+            )
+            metrics["camera_rig_probe"] = probe_report
+            metrics["control_pose_provider"] = "none_visualization_probe_only"
+            metrics["truth_orientation_used"] = False
+            passed = bool(probe_report["passed"])
+            metrics["passed"] = passed
+            process_exit_code = 0 if passed else 2
+            metrics["process_exit_code"] = process_exit_code
+            print(_metrics_json(metrics), flush=True)
+            print(
+                result_marker + ("PASSED" if passed else "FAILED"),
+                flush=True,
+            )
+            return process_exit_code
+        # No in-scene USD graph: per-step geometry re-syncs slowed the GUI
+        # loop substantially and the floating curves cluttered the view.
+        # The browser page at http://127.0.0.1:8790/ remains the real-time
+        # wrench curve instrument.
+
+        # MJPEG frame publishing happens in observe_and_step; the Camera
+        # objects live in live_camera_rig.  Imports for JPEG encoding are
+        # kept local to main() and never touch the control path.
+        import io as _live_io
+        from PIL import Image as _live_image
 
         finite_throughout = True
         maximum_joint_limit_violation = 0.0
@@ -1181,6 +4892,20 @@ def main():
         phase_steps = {}
         global_step = 0
         phase = "initial_settle"
+        formal_latest_wrist_raw = np.zeros(6, dtype=np.float64)
+        formal_latest_wrist_canonical = np.zeros(6, dtype=np.float64)
+        formal_latest_wrist_empty_compensated = np.zeros(6, dtype=np.float64)
+        formal_latest_wrist_payload_increment = np.zeros(6, dtype=np.float64)
+        formal_latest_wrist_global_step = None
+        formal_latest_wrist_sensor_position_world = np.zeros(
+            3, dtype=np.float64
+        )
+        formal_latest_wrist_sensor_rotation_world = np.eye(
+            3, dtype=np.float64
+        )
+        formal_wrist_home_tare = None
+        formal_wrist_empty_baseline = None
+        formal_wrist_payload_reference = None
 
         fixed_initial_position, fixed_initial_orientation = _world_pose(
             Gf, Usd, UsdGeom, fixed_prim
@@ -1209,6 +4934,13 @@ def main():
                 "plug_table_records": 0,
                 "robot_loose_plug_records": 0,
                 "unexpected_robot_link_records": 0,
+                "material_evidence": {
+                    "resolved_records": 0,
+                    "unresolved_records": 0,
+                    "grip_grip_records": 0,
+                    "grip_role_pair_records": 0,
+                    "resolved_non_grip_records": 0,
+                },
             }
             for header in headers:
                 paths = (
@@ -1276,14 +5008,82 @@ def main():
                             PhysicsSchemaTools.intToSdfPath(contact.material1)
                         ),
                     )
-                    if materials == (
-                        grip_material_path,
-                        grip_material_path,
-                    ):
-                        result["grip_material_records"] += 1
+                    # Material identity is order-independent; unresolved
+                    # material ids are recorded, never forged into grip
+                    # evidence.
+                    resolved = bool(
+                        materials[0].strip("/")
+                        and materials[1].strip("/")
+                    )
+                    evidence = result["material_evidence"]
+                    if resolved:
+                        evidence["resolved_records"] += 1
+                        grip_pair = bool(
+                            grip_material_path in materials
+                            and (
+                                not physical_r7_profile
+                                or materials[0] != materials[1]
+                            )
+                        )
+                        if grip_pair:
+                            evidence["grip_role_pair_records"] += 1
+                            if materials == (
+                                grip_material_path,
+                                grip_material_path,
+                            ):
+                                evidence["grip_grip_records"] += 1
+                            result["grip_material_records"] += 1
+                        else:
+                            evidence["resolved_non_grip_records"] += 1
+                    else:
+                        evidence["unresolved_records"] += 1
+            result["material_evidence"]["available"] = bool(
+                result["material_evidence"]["resolved_records"] > 0
+            )
             return result
 
-        def observe_and_step(arm_target, hand_target, allow_loose_contact):
+        def capture_single_finger_audit_point(
+            point_name,
+            selected_finger,
+            controller_state,
+            soft_hold_step,
+            release_step,
+        ):
+            # Log-only audit hook.  skip writes the marker without touching
+            # the contact API; capture additionally stores the raw
+            # classified snapshot.  The stored value is only ever written
+            # into metrics["posthoc_audit"]["points"] and is never read by
+            # any control, recovery, or completion branch in this runner.
+            marker = {
+                "point": point_name,
+                "global_step": global_step,
+                "selected_finger": selected_finger,
+                "controller_state": controller_state,
+                "soft_hold_step": soft_hold_step,
+                "release_step": release_step,
+            }
+            if arguments.single_finger_posthoc_audit_mode != "capture":
+                marker["snapshot"] = None
+                metrics["posthoc_audit"]["points"][point_name] = marker
+                return
+            try:
+                snapshot = contact_snapshot()
+            except Exception as snapshot_error:
+                marker["snapshot"] = None
+                marker["error"] = (
+                    f"{type(snapshot_error).__name__}: {snapshot_error}"
+                )
+                metrics["posthoc_audit"]["points"][point_name] = marker
+                return
+            marker["snapshot"] = snapshot
+            metrics["posthoc_audit"]["points"][point_name] = marker
+
+        def observe_and_step(
+            arm_target,
+            hand_target,
+            allow_loose_contact,
+            arm_feedforward_effort_nm=None,
+        ):
             nonlocal finite_throughout
             nonlocal maximum_joint_limit_violation
             nonlocal maximum_joint_speed
@@ -1291,15 +5091,38 @@ def main():
             nonlocal grip_material_contact_records
             nonlocal global_step
             nonlocal wrist_ft_monitor_error
+            nonlocal formal_latest_wrist_raw
+            nonlocal formal_latest_wrist_canonical
+            nonlocal formal_latest_wrist_empty_compensated
+            nonlocal formal_latest_wrist_payload_increment
+            nonlocal formal_latest_wrist_global_step
+            nonlocal formal_latest_wrist_sensor_position_world
+            nonlocal formal_latest_wrist_sensor_rotation_world
             target = np.concatenate((arm_target, hand_target)).astype(
                 np.float32
             )
-            robot.apply_action(
-                ArticulationAction(
-                    joint_positions=target,
-                    joint_indices=controlled_indices,
+            action_arguments = {
+                "joint_positions": target,
+                "joint_indices": controlled_indices,
+            }
+            if arm_feedforward_effort_nm is not None:
+                arm_effort = np.asarray(
+                    arm_feedforward_effort_nm, dtype=np.float64
                 )
-            )
+                if arm_effort.shape != (7,) or not np.all(
+                    np.isfinite(arm_effort)
+                ):
+                    raise RuntimeError(
+                        "arm feedforward effort must contain seven finite values"
+                    )
+                controlled_effort = np.zeros(
+                    len(controlled_indices), dtype=np.float32
+                )
+                controlled_effort[: len(arm_indices)] = arm_effort.astype(
+                    np.float32
+                )
+                action_arguments["joint_efforts"] = controlled_effort
+            robot.apply_action(ArticulationAction(**action_arguments))
             world.step(render=arguments.gui)
             global_step += 1
             phase_steps[phase] = phase_steps.get(phase, 0) + 1
@@ -1336,7 +5159,7 @@ def main():
                             dtype=np.float64,
                         )
                     )
-                    wrist_ft_monitor.observe(
+                    wrist_sample = wrist_ft_monitor.observe(
                         raw_wrench[0],
                         global_step=global_step,
                         runtime_phase=phase,
@@ -1346,10 +5169,58 @@ def main():
                         ),
                         sensor_rotation_world=sensor_rotation,
                     )
+                    if formal_grasp:
+                        formal_latest_wrist_sensor_position_world = np.asarray(
+                            sensor_transform.GetTranslation(),
+                            dtype=np.float64,
+                        )
+                        formal_latest_wrist_sensor_rotation_world = (
+                            sensor_rotation.copy()
+                        )
+                        formal_latest_wrist_raw = np.asarray(
+                            raw_wrench[0], dtype=np.float64
+                        )
+                        canonical = np.asarray(
+                            wrist_sample["canonical_wrench_sensor"],
+                            dtype=np.float64,
+                        )
+                        formal_latest_wrist_canonical = canonical
+                        formal_latest_wrist_global_step = int(global_step)
+                        formal_latest_wrist_empty_compensated = (
+                            canonical
+                            if formal_wrist_empty_baseline is None
+                            else canonical - formal_wrist_empty_baseline
+                        )
+                        formal_latest_wrist_payload_increment = (
+                            np.zeros(6, dtype=np.float64)
+                            if formal_wrist_payload_reference is None
+                            else np.asarray(
+                                wrist_payload_increment(
+                                    canonical, formal_wrist_payload_reference
+                                ),
+                                dtype=np.float64,
+                            )
+                        )
+                        # Live telemetry: publish at 60 Hz so the browser
+                        # page can draw the wrist wrench in real time, and
+                        # redraw the in-scene |F|/|M| graph at the same
+                        # cadence.  Observation only; never feeds a command.
+                        if global_step % 4 == 0:
+                            live_telemetry.publish_live_wrench(
+                                global_step,
+                                phase,
+                                tuple(
+                                    float(value)
+                                    for value in (
+                                        formal_latest_wrist_empty_compensated
+                                    )
+                                ),
+                            )
                 except Exception as monitor_error:
-                    # The opt-in monitor cannot weaken or replace any proven
-                    # E2E gate.  Preserve its failure as explicit evidence and
-                    # let the unchanged physical validation finish.
+                    # Legacy/E2E: the opt-in monitor stays observation only
+                    # and never weakens a proven gate.  Formal grasp keeps
+                    # the failure as evidence and fails closed later: a
+                    # frozen wrist sample must not pass the lift gates.
                     wrist_ft_monitor_error = (
                         f"{type(monitor_error).__name__}: {monitor_error}"
                     )
@@ -1366,26 +5237,72 @@ def main():
             velocities = np.asarray(
                 robot.get_joint_velocities(), dtype=np.float64
             )
-            body_position, body_orientation = body.get_world_pose()
-            nut_position, nut_orientation = nut.get_world_pose()
-            body_linear = np.asarray(
-                body.get_linear_velocity(), dtype=np.float64
-            )
-            body_angular = np.asarray(
-                body.get_angular_velocity(), dtype=np.float64
-            )
-            sampled = np.concatenate(
-                (
-                    positions,
-                    velocities,
-                    np.asarray(body_position, dtype=np.float64),
-                    np.asarray(body_orientation, dtype=np.float64),
-                    np.asarray(nut_position, dtype=np.float64),
-                    np.asarray(nut_orientation, dtype=np.float64),
-                    body_linear,
-                    body_angular,
+            if global_step % 16 == 0 and live_camera_rig:
+                # One zero-time orchestrator render per throttle tick:
+                # it draws the live camera products WITHOUT pausing the
+                # physics timeline (delta_time=0, pause_timeline=False),
+                # so the formal episode is untouched.
+                _live_rep = live_camera_rig.get("_rep")
+                if _live_rep is not None:
+                    try:
+                        _live_rep.orchestrator.step(
+                            rt_subframes=1,
+                            delta_time=0.0,
+                            pause_timeline=False,
+                        )
+                    except Exception:  # noqa: BLE001
+                        pass
+                for _live_key in ("palm", "wrist"):
+                    _live_cam = live_camera_rig.get(
+                        _live_key + "_cam_obj"
+                    )
+                    if _live_cam is None:
+                        continue
+                    try:
+                        _live_rgba = _live_cam.get_rgba(device="cpu")
+                        if _live_rgba is not None and _live_rgba.size:
+                            _live_frame = _live_image.fromarray(
+                                np.asarray(_live_rgba, dtype=np.uint8)[
+                                    :, :, :3
+                                ],
+                                "RGB",
+                            )
+                            _live_buffer = _live_io.BytesIO()
+                            _live_frame.save(
+                                _live_buffer,
+                                format="JPEG",
+                                quality=72,
+                            )
+                            live_telemetry.publish_live_frame(
+                                _live_key, _live_buffer.getvalue()
+                            )
+                    except Exception:  # noqa: BLE001
+                        pass
+            if formal_grasp:
+                # Formal control observes only robot state and sensors here.
+                # Object state and contact truth are evaluated after motion.
+                sampled = np.concatenate((positions, velocities))
+            else:
+                body_position, body_orientation = body.get_world_pose()
+                nut_position, nut_orientation = nut.get_world_pose()
+                body_linear = np.asarray(
+                    body.get_linear_velocity(), dtype=np.float64
                 )
-            )
+                body_angular = np.asarray(
+                    body.get_angular_velocity(), dtype=np.float64
+                )
+                sampled = np.concatenate(
+                    (
+                        positions,
+                        velocities,
+                        np.asarray(body_position, dtype=np.float64),
+                        np.asarray(body_orientation, dtype=np.float64),
+                        np.asarray(nut_position, dtype=np.float64),
+                        np.asarray(nut_orientation, dtype=np.float64),
+                        body_linear,
+                        body_angular,
+                    )
+                )
             sample_is_finite = bool(np.all(np.isfinite(sampled)))
             finite_throughout = bool(finite_throughout and sample_is_finite)
             if not sample_is_finite:
@@ -1423,77 +5340,84 @@ def main():
                         float(positions[dof_index]) - upper,
                     )
 
-            headers, contacts, friction_anchors = (
-                get_physx_simulation_interface().get_full_contact_report()
-            )
-            for header in headers:
-                paths = (
-                    str(PhysicsSchemaTools.intToSdfPath(header.actor0)),
-                    str(PhysicsSchemaTools.intToSdfPath(header.actor1)),
-                    str(PhysicsSchemaTools.intToSdfPath(header.collider0)),
-                    str(PhysicsSchemaTools.intToSdfPath(header.collider1)),
+            headers, contacts, friction_anchors = ((), (), ())
+            if not formal_grasp:
+                # Contact truth is read and consumed only by the legacy
+                # path.  The formal controller never executes this block.
+                headers, contacts, friction_anchors = (
+                    get_physx_simulation_interface().get_full_contact_report()
                 )
-                category = _classify_robot_external_contact(
-                    paths,
-                    robot_root,
-                    tabletop.table.prim_path,
-                    tabletop.fixed_endpoint.fixture_prim_path,
-                    tabletop.asset.fixed_receptacle_prim_path,
-                    tabletop.asset.loose_plug_prim_path,
-                )
-                if category is None:
-                    continue
-                key = category
-                finger_contact = False
-                if category == "loose_plug":
-                    if not allow_loose_contact:
-                        key += "_preclosure"
-                    elif _is_finger_plug_contact(
+                for header in headers:
+                    paths = (
+                        str(PhysicsSchemaTools.intToSdfPath(header.actor0)),
+                        str(PhysicsSchemaTools.intToSdfPath(header.actor1)),
+                        str(PhysicsSchemaTools.intToSdfPath(header.collider0)),
+                        str(PhysicsSchemaTools.intToSdfPath(header.collider1)),
+                    )
+                    category = _classify_robot_external_contact(
                         paths,
                         robot_root,
+                        tabletop.table.prim_path,
+                        tabletop.fixed_endpoint.fixture_prim_path,
+                        tabletop.asset.fixed_receptacle_prim_path,
                         tabletop.asset.loose_plug_prim_path,
-                    ):
-                        key += "_allowed"
-                        finger_contact = True
-                    else:
-                        key += "_unexpected_robot_link"
-                external_contact_headers[key] += 1
-                external_contact_records[key] += int(header.num_contact_data)
-                if not (category == "loose_plug" and finger_contact):
-                    metrics["first_forbidden_contact"] = {
-                        "category": key,
-                        "contact_record_count": int(header.num_contact_data),
-                        "global_step": global_step,
-                        "paths": list(paths),
-                        "phase": phase,
-                        "phase_step": phase_step,
-                    }
-                    raise RuntimeError(
-                        "forbidden contact at "
-                        f"global_step={global_step}, phase={phase}, "
-                        f"phase_step={phase_step}, category={key}, "
-                        f"paths={paths}"
                     )
-                if key != "loose_plug_allowed":
-                    continue
-                for index in range(
-                    header.contact_data_offset,
-                    header.contact_data_offset + header.num_contact_data,
-                ):
-                    contact = contacts[index]
-                    materials = (
-                        str(
-                            PhysicsSchemaTools.intToSdfPath(contact.material0)
-                        ),
-                        str(
-                            PhysicsSchemaTools.intToSdfPath(contact.material1)
-                        ),
-                    )
-                    if materials == (
-                        grip_material_path,
-                        grip_material_path,
+                    if category is None:
+                        continue
+                    key = category
+                    finger_contact = False
+                    if category == "loose_plug":
+                        if not allow_loose_contact:
+                            key += "_preclosure"
+                        elif _is_finger_plug_contact(
+                            paths,
+                            robot_root,
+                            tabletop.asset.loose_plug_prim_path,
+                        ):
+                            key += "_allowed"
+                            finger_contact = True
+                        else:
+                            key += "_unexpected_robot_link"
+                    external_contact_headers[key] += 1
+                    external_contact_records[key] += int(header.num_contact_data)
+                    if not (category == "loose_plug" and finger_contact):
+                        metrics["first_forbidden_contact"] = {
+                            "category": key,
+                            "contact_record_count": int(header.num_contact_data),
+                            "global_step": global_step,
+                            "paths": list(paths),
+                            "phase": phase,
+                            "phase_step": phase_step,
+                        }
+                        raise RuntimeError(
+                            "forbidden contact at "
+                            f"global_step={global_step}, phase={phase}, "
+                            f"phase_step={phase_step}, category={key}, "
+                            f"paths={paths}"
+                        )
+                    if key != "loose_plug_allowed":
+                        continue
+                    for index in range(
+                        header.contact_data_offset,
+                        header.contact_data_offset + header.num_contact_data,
                     ):
-                        grip_material_contact_records += 1
+                        contact = contacts[index]
+                        materials = (
+                            str(
+                                PhysicsSchemaTools.intToSdfPath(contact.material0)
+                            ),
+                            str(
+                                PhysicsSchemaTools.intToSdfPath(contact.material1)
+                            ),
+                        )
+                        if (
+                            grip_material_path in materials
+                            and (
+                                not physical_r7_profile
+                                or materials[0] != materials[1]
+                            )
+                        ):
+                            grip_material_contact_records += 1
             if (
                 tooth_probe is not None
                 and str(phase).startswith("end_to_end_")
@@ -1513,7 +5437,17 @@ def main():
             observe_and_step(current_arm_target, current_hand_target, False)
         if wrist_ft_monitor is not None and wrist_ft_monitor_error is None:
             try:
-                wrist_ft_monitor.capture_home_tare()
+                captured_home_tare = wrist_ft_monitor.capture_home_tare()
+                if formal_grasp:
+                    formal_wrist_home_tare = np.asarray(
+                        captured_home_tare, dtype=np.float64
+                    )
+                    formal_latest_wrist_empty_compensated = np.zeros(
+                        6, dtype=np.float64
+                    )
+                    metrics["formal_home_tare_wrist_baseline"] = [
+                        float(value) for value in formal_wrist_home_tare
+                    ]
             except Exception as monitor_error:
                 wrist_ft_monitor_error = (
                     f"{type(monitor_error).__name__}: {monitor_error}"
@@ -1525,7 +5459,7 @@ def main():
                         "safety_gate_claimed": False,
                     }
                 )
-        settled_body_position, _ = body.get_world_pose()
+        settled_body_position, settled_body_orientation = body.get_world_pose()
         settled_nut_position, _ = nut.get_world_pose()
         settled_bottom = min(
             float(settled_body_position[2])
@@ -1538,6 +5472,53 @@ def main():
             <= settled_bottom - tabletop.table.top_z_m
             <= tabletop.physics.maximum_final_surface_gap_m
         )
+
+        def capture_terminal_snapshot(reason, snapshot_phase):
+            # Log-only post-hoc truth.  Every call site first makes the
+            # controller terminal (a fail-closed exception or a lift gate),
+            # and the returned dict may only be assigned into metrics.
+            plug_position, plug_orientation = body.get_world_pose()
+            nut_position, nut_orientation = nut.get_world_pose()
+            handbase_path = pick.scene.grasp_tcp_prim_path.rsplit("/", 1)[0]
+            snapshot_handbase_prim = stage.GetPrimAtPath(handbase_path)
+            hand_position, hand_orientation = _world_pose(
+                Gf, Usd, UsdGeom, snapshot_handbase_prim
+            )
+            return build_terminal_snapshot(
+                reason=reason,
+                global_step=global_step,
+                phase=snapshot_phase,
+                plug_body_position_world=np.asarray(
+                    plug_position, dtype=np.float64
+                ),
+                plug_body_orientation_world=np.asarray(
+                    plug_orientation, dtype=np.float64
+                ),
+                nut_position_world=np.asarray(
+                    nut_position, dtype=np.float64
+                ),
+                nut_orientation_world=np.asarray(
+                    nut_orientation, dtype=np.float64
+                ),
+                hand_position_world=np.asarray(
+                    hand_position, dtype=np.float64
+                ),
+                hand_orientation_world=np.asarray(
+                    _gf_quaternion_tuple(hand_orientation),
+                    dtype=np.float64,
+                ),
+                settled_plug_position_world=np.asarray(
+                    settled_body_position, dtype=np.float64
+                ),
+                settled_plug_orientation_world=np.asarray(
+                    settled_body_orientation, dtype=np.float64
+                ),
+                settled_plug_z_m=float(settled_body_position[2]),
+                lift_started_dz_m=(
+                    physical_grasp.terminal_evaluator_lift_started_dz_m
+                ),
+                contact_audit=contact_snapshot(),
+            )
 
         if arguments.pose_preflight == "masked-rgbd":
             # Capture after the physical initial settle and before the first
@@ -1601,10 +5582,19 @@ def main():
             observe_and_step(current_arm_target, current_hand_target, False)
         current_hand_target = open_hand.copy()
 
-        for segment in pick.motion.approach_segments:
+        for segment_index, segment in enumerate(
+            pick.motion.approach_segments
+        ):
             phase = segment.name
             start_arm = current_arm_target.copy()
-            final_arm = np.asarray(segment.target_arm_rad, dtype=np.float64)
+            if formal_grasp:
+                # Frozen realized target: solved and validated once before
+                # any method branch; never recomputed inside the loop.
+                final_arm = realized_approach_targets[segment_index]
+            else:
+                final_arm = np.asarray(
+                    segment.target_arm_rad, dtype=np.float64
+                )
             segment_steps = round(segment.duration_s * rate_hz)
             for index in range(segment_steps):
                 current_arm_target = np.asarray(
@@ -1645,6 +5635,7 @@ def main():
         controller.set_gains(kps=kps, kds=kds, save_to_usd=False)
         phase = "open_grasp_tare"
         tare_effort_samples = []
+        formal_wrist_tare_samples = []
         tare_steps = round(pick.motion.open_tare_duration_s * rate_hz)
         for _ in range(tare_steps):
             observe_and_step(current_arm_target, current_hand_target, False)
@@ -1656,7 +5647,99 @@ def main():
                     dtype=np.float64,
                 )
             )
+            if formal_grasp:
+                formal_wrist_tare_samples.append(
+                    formal_latest_wrist_canonical.copy()
+                )
         tare_efforts = np.mean(np.stack(tare_effort_samples), axis=0)
+        if formal_grasp:
+            # The pre-grasp same-pose empty-hand baseline.  A failed or
+            # frozen wrist sensor must not silently produce a zero baseline.
+            if wrist_ft_monitor_error is not None:
+                raise RuntimeError(
+                    "formal wrist FT monitor failed before the empty-hand "
+                    "baseline: " + wrist_ft_monitor_error
+                )
+            if len(formal_wrist_tare_samples) < 8:
+                raise RuntimeError(
+                    "formal empty-hand wrist baseline has too few samples"
+                )
+            stacked_wrist_tare = np.stack(formal_wrist_tare_samples)
+            if not np.all(np.isfinite(stacked_wrist_tare)):
+                raise RuntimeError(
+                    "formal empty-hand wrist baseline is non-finite"
+                )
+            formal_wrist_empty_baseline = np.mean(
+                stacked_wrist_tare, axis=0
+            )
+            formal_latest_wrist_empty_compensated = (
+                formal_latest_wrist_canonical - formal_wrist_empty_baseline
+            )
+            metrics["formal_pregrasp_empty_wrist_baseline"] = [
+                float(value) for value in formal_wrist_empty_baseline
+            ]
+        if single_finger_mode:
+            # Evidence-only statistics over the tare arrays just collected.
+            # No new physics step, no sampling-order change, no controller/
+            # detector/recovery consumption, and no PASS gating: the blocks
+            # below are written straight into the report metrics.
+            stacked_effort_tare = np.stack(tare_effort_samples)
+            metrics["finger_root_torque_proxy_baseline_statistics"] = (
+                window_statistics_block(
+                    stacked_effort_tare,
+                    channel_names=tuple(pick.sensing.torque_joint_names),
+                    frame=(
+                        "selected finger root joint effort tare window "
+                        "(open_grasp_tare)"
+                    ),
+                    source="tare_effort_samples",
+                )
+            )
+            if formal_grasp:
+                stacked_wrist_tare_reference = np.stack(
+                    formal_wrist_tare_samples
+                )
+                wrist_channels = (
+                    "fx_n", "fy_n", "fz_n",
+                    "tx_nm", "ty_nm", "tz_nm",
+                )
+                metrics[
+                    "formal_empty_wrist_reference_statistics_raw"
+                ] = window_statistics_block(
+                    stacked_wrist_tare_reference,
+                    channel_names=wrist_channels,
+                    frame=(
+                        "canonical hand2arm wrist wrench tare window "
+                        "(open_grasp_tare, canonical_from_raw=-I only)"
+                    ),
+                    source="formal_wrist_tare_samples",
+                    norm_summaries=True,
+                )
+                metrics[
+                    "formal_empty_wrist_reference_statistics_residual"
+                ] = window_statistics_block(
+                    stacked_wrist_tare_reference
+                    - formal_wrist_empty_baseline[None, :],
+                    channel_names=wrist_channels,
+                    frame=(
+                        "canonical wrist wrench tare window minus its "
+                        "own window mean (compensation residual)"
+                    ),
+                    source=(
+                        "formal_wrist_tare_samples - window_mean"
+                    ),
+                    baseline_subtraction="window_mean",
+                    norm_summaries=True,
+                )
+            metrics["runtime_mode_evidence"] = _runtime_mode_evidence(
+                arguments,
+                rate_hz,
+                world,
+                pick,
+                len(tare_effort_samples),
+                len(formal_wrist_tare_samples) if formal_grasp else 0,
+                frozen_solver_contract_evidence,
+            )
         maximum_post_tare_absolute_delta_by_channel = np.zeros(
             len(sensor_indices), dtype=np.float64
         )
@@ -1718,13 +5801,28 @@ def main():
         closure_tcp_position, closure_tcp_orientation = _world_pose(
             Gf, Usd, UsdGeom, tcp_prim
         )
+        if formal_grasp:
+            # Formal tracking evaluator compares against the FK of the
+            # realized (offset) closure-clearance target; the legacy path
+            # keeps its validated nominal comparison.
+            closure_tcp_reference = np.asarray(
+                iiwa14_grasp_tcp_transform(
+                    tuple(
+                        float(value)
+                        for value in closure_clearance_arm
+                    )
+                ),
+                dtype=np.float64,
+            )[:3, 3]
+        else:
+            closure_tcp_reference = np.asarray(
+                pick.motion.closure_clearance_tcp_position_m,
+                dtype=np.float64,
+            )
         closure_tcp_position_error = float(
             np.linalg.norm(
                 np.asarray(closure_tcp_position, dtype=np.float64)
-                - np.asarray(
-                    pick.motion.closure_clearance_tcp_position_m,
-                    dtype=np.float64,
-                )
+                - closure_tcp_reference
             )
         )
         closure_tcp_axis = _quaternion_world_z_axis(closure_tcp_orientation)
@@ -1743,16 +5841,907 @@ def main():
         )
 
         phase = "physical_hand_closure"
-        closure_start = current_hand_target.copy()
-        closure_steps = round(pick.motion.closure_duration_s * rate_hz)
-        for index in range(closure_steps):
-            blend = minimum_jerk_blend(float(index + 1) / float(closure_steps))
-            current_hand_target = closure_start + blend * (
-                grasp_hand - closure_start
+        grasp_controller_contact_order = []
+        grasp_controller_failure_reason = None
+        grasp_controller_stable = False
+        grasp_controller_final_states = None
+        if formal_grasp and arguments.physical_grasp_method == "single-finger":
+            # ---- single-finger control block (sensor-only, no truth) ----
+            # The arm stays at the frozen realized closure-clearance target
+            # for the whole characterization; only the selected finger's
+            # target and stiffness move.  This block never reads Plug/Nut
+            # pose, contact reports, colliders or any posthoc snapshot.
+            # A characterization can never claim grasp success, not even on
+            # a later failure path.
+            metrics["grasp_success_claimed"] = False
+            # Top-level control/audit boundary fields: control never reads
+            # object truth or the contact report; the audit hook's evidence
+            # is only ever written into metrics["posthoc_audit"] and is
+            # never consumed by control, recovery or completion.
+            metrics["control_reads_object_truth"] = False
+            metrics["control_reads_contact_report"] = False
+            metrics["posthoc_audit"] = {
+                "mode": arguments.single_finger_posthoc_audit_mode,
+                "read_contact_report": bool(
+                    arguments.single_finger_posthoc_audit_mode
+                    == "capture"
+                ),
+                "points": {},
+                "consumed_by_control": False,
+            }
+            metrics["posthoc_audit_reads_contact_report"] = bool(
+                arguments.single_finger_posthoc_audit_mode == "capture"
             )
-            observe_and_step(current_arm_target, current_hand_target, True)
-            sample_post_tare_efforts()
-        current_hand_target = grasp_hand.copy()
+            metrics["posthoc_audit_consumed_by_control"] = False
+            selected_finger = arguments.single_finger
+            selected_channel = FINGERS.index(selected_finger)
+            # Two distinct index spaces, never mixed:
+            #   selected_hand_local_index: 1/2/3, indexes the length-4
+            #       hand-local vectors open_hand/grasp_hand/
+            #       current_hand_target;
+            #   selected_robot_dof_index: hand_indices[local], indexes the
+            #       full articulation positions/velocities/kps/kds.
+            selected_hand_local_index = int(
+                formal_finger_hand_indices[selected_channel]
+            )
+            selected_robot_dof_index = int(
+                hand_indices[selected_hand_local_index]
+            )
+            selected_joint_name = pick.robot.active_hand_joint_names[
+                selected_hand_local_index
+            ]
+            if not (
+                current_arm_target.shape == closure_clearance_arm.shape
+                and np.allclose(current_arm_target, closure_clearance_arm)
+            ):
+                raise RuntimeError(
+                    "single-finger block requires the closure-clearance "
+                    "arm target"
+                )
+            single_finger_controller = SingleFingerContactTest(
+                physical_grasp.single_finger,
+                physical_grasp.sequential.detector,
+                finger=selected_finger,
+                open_target_rad=float(open_hand[selected_hand_local_index]),
+                closed_target_rad=float(
+                    grasp_hand[selected_hand_local_index]
+                ),
+            )
+            single_finger_controller.calibrate(
+                [
+                    float(sample[selected_channel])
+                    for sample in tare_effort_samples
+                ]
+            )
+            # Audit point 1: pre-approach, before any commanded finger
+            # motion and before the first step of the control loop.
+            capture_single_finger_audit_point(
+                "pre_approach",
+                selected_finger,
+                "APPROACH",
+                0,
+                0,
+            )
+            phase = "single_finger_contact_characterization"
+            single_finger_failure_reason = None
+            single_finger_budget = (
+                physical_grasp.single_finger.maximum_approach_steps
+                + physical_grasp.single_finger.soft_hold_steps
+                + physical_grasp.single_finger.maximum_release_steps
+                + 8
+            )
+            single_finger_command = None
+            for _ in range(single_finger_budget):
+                positions, velocities = observe_and_step(
+                    current_arm_target, current_hand_target, True
+                )
+                measured_efforts = sample_post_tare_efforts()
+                # Invariant: f1j1 and both unselected fingers must stay
+                # exactly at their open targets; the arm must stay frozen.
+                open_invariant_ok = bool(
+                    current_hand_target[0] == open_hand[0]
+                )
+                for channel_index, other_finger in enumerate(FINGERS):
+                    if other_finger == selected_finger:
+                        continue
+                    # Hand-local index: current_hand_target/open_hand are
+                    # length-4 target vectors, not robot DOF arrays.
+                    other_hand_local_index = int(
+                        formal_finger_hand_indices[channel_index]
+                    )
+                    open_invariant_ok = bool(
+                        open_invariant_ok
+                        and current_hand_target[other_hand_local_index]
+                        == open_hand[other_hand_local_index]
+                    )
+                arm_invariant_ok = bool(
+                    np.allclose(current_arm_target, closure_clearance_arm)
+                )
+                if not open_invariant_ok:
+                    single_finger_failure_reason = (
+                        "other_fingers_open_target_invariant_broken"
+                    )
+                    break
+                if not arm_invariant_ok:
+                    single_finger_failure_reason = (
+                        "arm_target_invariant_broken"
+                    )
+                    break
+                single_finger_command = single_finger_controller.update(
+                    measured_efforts[selected_channel],
+                    joint_position_rad=positions[
+                        selected_robot_dof_index
+                    ],
+                    joint_velocity_rad_s=velocities[
+                        selected_robot_dof_index
+                    ],
+                    timestamp_s=float(global_step) / float(rate_hz),
+                )
+                # Freeze the next command: hand-local target vector gets the
+                # new command; the robot-DOF gain array gets the stiffness.
+                current_hand_target[selected_hand_local_index] = (
+                    single_finger_command.target_rad
+                )
+                kps[selected_robot_dof_index] = (
+                    pick.motion.grip_hand_stiffness
+                    * single_finger_command.stiffness_scale
+                )
+                controller.set_gains(kps=kps, kds=kds, save_to_usd=False)
+                controller_step_records.append(
+                    {
+                        "global_step": global_step,
+                        "phase": phase,
+                        "method": "single-finger",
+                        "selected_finger": selected_finger,
+                        "selected_joint_name": selected_joint_name,
+                        "selected_hand_local_index": (
+                            selected_hand_local_index
+                        ),
+                        "selected_robot_dof_index": (
+                            selected_robot_dof_index
+                        ),
+                        "state": single_finger_command.state.value,
+                        "observation": (
+                            None
+                            if single_finger_command.observation is None
+                            else single_finger_command.observation.as_dict()
+                        ),
+                        "finger_root_torque_proxy_nm": {
+                            name: float(
+                                measured_efforts[index]
+                                - tare_efforts[index]
+                            )
+                            for index, name in enumerate(FINGERS)
+                        },
+                        "selected_q_rad": float(
+                            positions[selected_robot_dof_index]
+                        ),
+                        "selected_qd_rad_s": float(
+                            velocities[selected_robot_dof_index]
+                        ),
+                        "selected_target_rad": float(
+                            single_finger_command.target_rad
+                        ),
+                        "selected_stiffness_scale": float(
+                            single_finger_command.stiffness_scale
+                        ),
+                        "hand_q_rad": [
+                            float(value)
+                            for value in positions[hand_indices]
+                        ],
+                        "hand_qd_rad_s": [
+                            float(value)
+                            for value in velocities[hand_indices]
+                        ],
+                        "hand_target_rad": [
+                            float(value)
+                            for value in current_hand_target
+                        ],
+                        "soft_hold_step": (
+                            single_finger_command.soft_hold_step
+                        ),
+                        "release_step": (
+                            single_finger_command.release_step
+                        ),
+                        "release_conditions": dict(
+                            single_finger_command.release_conditions
+                        ),
+                        "transition_events": (
+                            single_finger_command.evidence.get(
+                                "transition_events", []
+                            )
+                        ),
+                        "controller_evidence": dict(
+                            single_finger_command.evidence
+                        ),
+                        "wrist_wrench_raw_sensor_frame": [
+                            float(value)
+                            for value in formal_latest_wrist_raw
+                        ],
+                        "wrist_wrench_canonical": [
+                            float(value)
+                            for value in formal_latest_wrist_canonical
+                        ],
+                        "wrist_wrench_empty_baseline_compensated": [
+                            float(value)
+                            for value in (
+                                formal_latest_wrist_empty_compensated
+                            )
+                        ],
+                        "failed": single_finger_command.failed,
+                        "failure_reason": (
+                            single_finger_command.failure_reason
+                        ),
+                        "detector_test_passed": (
+                            single_finger_command.detector_test_passed
+                        ),
+                        "other_fingers_open_target_invariant": (
+                            open_invariant_ok
+                        ),
+                    }
+                )
+                # The three in-loop audit points, gated purely on the
+                # controller's own state/step values (no wall clock, no
+                # runner counting).  The off-by-one is frozen by the
+                # controller semantics: the confirmation update itself has
+                # soft_hold_step == 0, the following updates count 1..24,
+                # and the release command starts on the update AFTER
+                # soft_hold_step reaches the configured hold length.
+                if (
+                    single_finger_command.state
+                    == FingerContactState.SOFT_HOLD
+                    and single_finger_command.soft_hold_step == 0
+                ):
+                    capture_single_finger_audit_point(
+                        "contact_confirmed",
+                        selected_finger,
+                        single_finger_command.state.value,
+                        single_finger_command.soft_hold_step,
+                        single_finger_command.release_step,
+                    )
+                elif (
+                    single_finger_command.state
+                    == FingerContactState.SOFT_HOLD
+                    and single_finger_command.soft_hold_step
+                    == physical_grasp.single_finger.soft_hold_steps
+                ):
+                    capture_single_finger_audit_point(
+                        "soft_hold_complete",
+                        selected_finger,
+                        single_finger_command.state.value,
+                        single_finger_command.soft_hold_step,
+                        single_finger_command.release_step,
+                    )
+                elif (
+                    single_finger_command.state
+                    == FingerContactState.RELEASE_CONFIRMED
+                ):
+                    capture_single_finger_audit_point(
+                        "release_confirmed",
+                        selected_finger,
+                        single_finger_command.state.value,
+                        single_finger_command.soft_hold_step,
+                        single_finger_command.release_step,
+                    )
+                if single_finger_command.failed:
+                    single_finger_failure_reason = (
+                        single_finger_command.failure_reason
+                    )
+                    break
+                if (
+                    single_finger_controller.state
+                    == FingerContactState.RELEASE_CONFIRMED
+                ):
+                    break
+            else:
+                single_finger_failure_reason = "runner_step_budget_exhausted"
+            if (
+                single_finger_failure_reason is None
+                and single_finger_command is not None
+                and single_finger_command.state
+                == FingerContactState.RELEASE_CONFIRMED
+            ):
+                # Control completed: detector and commanded release passed.
+                # The posthoc contact audit is intentionally NOT run yet, so
+                # the characterization cannot claim G2 and exits with 3.
+                metrics["passed"] = False
+                metrics["grasp_success_claimed"] = False
+                metrics["claim_scope"] = (
+                    "single_finger_detector_characterization"
+                )
+                # The early return bypasses the runner's normal wrist
+                # monitor report: finalize it here with an accurate status.
+                if wrist_ft_monitor is not None:
+                    wrist_report = wrist_ft_monitor.report()
+                    if wrist_ft_monitor_error is not None:
+                        wrist_report.update(
+                            {
+                                "status": "MONITOR_FAILED",
+                                "runtime_error": wrist_ft_monitor_error,
+                            }
+                        )
+                    else:
+                        wrist_report["status"] = (
+                            "SINGLE_FINGER_CONTROL_COMPLETED_"
+                            "POSTHOC_PENDING"
+                        )
+                    metrics["virtual_wrist_ft_monitor"] = wrist_report
+                metrics["single_finger"] = {
+                    "selected_finger": selected_finger,
+                    "selected_joint_name": selected_joint_name,
+                    "selected_hand_local_index": (
+                        selected_hand_local_index
+                    ),
+                    "selected_robot_dof_index": (
+                        selected_robot_dof_index
+                    ),
+                    "maximum_post_tare_absolute_delta_by_channel_nm": {
+                        name: float(
+                            maximum_post_tare_absolute_delta_by_channel[
+                                index
+                            ]
+                        )
+                        for index, name in enumerate(
+                            pick.sensing.torque_joint_names
+                        )
+                    },
+                    "maximum_post_tare_absolute_delta_nm": float(
+                        np.max(
+                            maximum_post_tare_absolute_delta_by_channel
+                        )
+                    ),
+                    "detector_test_passed": True,
+                    "posthoc_contact_audit_passed": None,
+                    "single_finger_validation_passed": None,
+                    "validation_status": (
+                        "CONTROL_COMPLETED_POSTHOC_NOT_YET_RUN"
+                    ),
+                    "soft_hold_step": single_finger_command.soft_hold_step,
+                    "release_step": single_finger_command.release_step,
+                    "release_conditions": dict(
+                        single_finger_command.release_conditions
+                    ),
+                    "transition_events": list(
+                        single_finger_controller.transition_events
+                    ),
+                    "step_count": single_finger_controller.step,
+                }
+                process_exit_code = 3
+                metrics["process_exit_code"] = process_exit_code
+                print(_metrics_json(metrics), flush=True)
+                print(
+                    "ISAAC D38999 SINGLE FINGER CONTROL V1 "
+                    "COMPLETED_POSTHOC_NOT_YET_RUN",
+                    flush=True,
+                )
+                return process_exit_code
+            # Failure: bounded sensor-only whole-hand opening recovery; the
+            # arm stays at closure clearance and no truth is read.
+            single_finger_recovery = {
+                "requested": True,
+                "original_failure_reason": single_finger_failure_reason,
+                "completed": False,
+                "interrupted_by": None,
+                "steps": 0,
+            }
+            try:
+                phase = "single_finger_recovery_open"
+                for hand_target in plan_recovery_open(
+                    current_hand_target,
+                    open_hand,
+                    physical_grasp.recovery.open_duration_s,
+                    rate_hz,
+                ):
+                    current_hand_target = hand_target
+                    recovery_positions, recovery_velocities = (
+                        observe_and_step(
+                            current_arm_target, current_hand_target, True
+                        )
+                    )
+                    recovery_efforts = sample_post_tare_efforts()
+                    # Sensor evidence for the recovery tail: selected
+                    # finger-root torque proxy plus q/qd and all hand
+                    # targets, so a load plateau can be told apart from a
+                    # decaying tail offline.  No truth is read here.
+                    controller_step_records.append(
+                        {
+                            "global_step": global_step,
+                            "phase": phase,
+                            "method": "single-finger",
+                            "recovery": True,
+                            "selected_finger": selected_finger,
+                            "finger_root_torque_proxy_nm": {
+                                name: float(
+                                    recovery_efforts[index]
+                                    - tare_efforts[index]
+                                )
+                                for index, name in enumerate(FINGERS)
+                            },
+                            "selected_q_rad": float(
+                                recovery_positions[
+                                    selected_robot_dof_index
+                                ]
+                            ),
+                            "selected_qd_rad_s": float(
+                                recovery_velocities[
+                                    selected_robot_dof_index
+                                ]
+                            ),
+                            "selected_target_rad": float(
+                                current_hand_target[
+                                    selected_hand_local_index
+                                ]
+                            ),
+                            "hand_q_rad": [
+                                float(value)
+                                for value in recovery_positions[
+                                    hand_indices
+                                ]
+                            ],
+                            "hand_qd_rad_s": [
+                                float(value)
+                                for value in recovery_velocities[
+                                    hand_indices
+                                ]
+                            ],
+                            "hand_target_rad": [
+                                float(value)
+                                for value in current_hand_target
+                            ],
+                            "wrist_wrench_raw_sensor_frame": [
+                                float(value)
+                                for value in formal_latest_wrist_raw
+                            ],
+                            "wrist_wrench_canonical": [
+                                float(value)
+                                for value in formal_latest_wrist_canonical
+                            ],
+                            "wrist_wrench_empty_baseline_compensated": [
+                                float(value)
+                                for value in (
+                                    formal_latest_wrist_empty_compensated
+                                )
+                            ],
+                            "wrist_ft_monitor_error": (
+                                wrist_ft_monitor_error
+                            ),
+                        }
+                    )
+                    single_finger_recovery["steps"] += 1
+                single_finger_recovery["completed"] = True
+            except Exception as recovery_error:
+                single_finger_recovery["interrupted_by"] = (
+                    f"{type(recovery_error).__name__}: {recovery_error}"
+                )
+            metrics["single_finger_recovery"] = single_finger_recovery
+            metrics["single_finger_failure_reason"] = (
+                single_finger_failure_reason
+            )
+            raise RuntimeError(
+                "single-finger characterization failed closed: "
+                f"{single_finger_failure_reason}"
+            )
+        sequential_final_summary = None
+        if formal_grasp and arguments.physical_grasp_method == "sequential-compliant":
+            sequential_controller = ThreeFingerSequentialGrasp(
+                physical_grasp.sequential,
+                open_targets_rad=current_hand_target[
+                    formal_finger_hand_indices
+                ],
+                closed_targets_rad=grasp_hand[formal_finger_hand_indices],
+                start_delay_steps=(
+                    realized_randomization.finger_start_delay_steps
+                ),
+            )
+            sequential_controller.calibrate(
+                {
+                    name: [float(sample[index]) for sample in tare_effort_samples]
+                    for index, name in enumerate(FINGERS)
+                }
+            )
+            # Explicit budget: approach + independent SOFT_HOLD window +
+            # probe initial settle + three probe settles + load build + a
+            # small fixed margin.  The new 24-step window must never be
+            # truncated by this bound.
+            maximum_controller_steps = (
+                physical_grasp.sequential.maximum_approach_steps
+                + physical_grasp.sequential.soft_hold_window_steps
+                + physical_grasp.sequential.probe_settle_steps
+                + 3 * physical_grasp.sequential.probe_settle_steps
+                + physical_grasp.sequential.maximum_load_build_steps
+                + 16
+            )
+            sequential_command = None
+            for _ in range(maximum_controller_steps):
+                observe_and_step(current_arm_target, current_hand_target, True)
+                measured_efforts = sample_post_tare_efforts()
+                measured_positions = np.asarray(
+                    robot.get_joint_positions(), dtype=np.float64
+                )
+                measured_velocities = np.asarray(
+                    robot.get_joint_velocities(), dtype=np.float64
+                )
+                mapped_global_indices = hand_indices[
+                    formal_finger_hand_indices
+                ]
+                detector_input_targets_rad = tuple(
+                    float(value) for value in sequential_controller.targets
+                )
+                sequential_command = sequential_controller.update(
+                    measured_efforts,
+                    measured_positions[mapped_global_indices],
+                    measured_velocities[mapped_global_indices],
+                    timestamp_s=float(global_step) / float(rate_hz),
+                )
+                current_hand_target[
+                    formal_finger_hand_indices
+                ] = sequential_command.finger_targets_rad
+                stiffness_scale = np.ones(4, dtype=np.float64)
+                stiffness_scale[
+                    formal_finger_hand_indices
+                ] = sequential_command.finger_stiffness_scale
+                kps[hand_indices] = (
+                    pick.motion.grip_hand_stiffness * stiffness_scale
+                )
+                controller.set_gains(kps=kps, kds=kds, save_to_usd=False)
+                controller_step_records.append(
+                    {
+                        "global_step": global_step,
+                        "phase": phase,
+                        "method": arguments.physical_grasp_method,
+                        "states": {
+                            name: detector.state.value
+                            for name, detector in sequential_controller.detectors.items()
+                        },
+                        "contact_order": list(sequential_command.contact_order),
+                        "finger_root_torque_proxy_nm": {
+                            name: float(value - tare_efforts[index])
+                            for index, (name, value) in enumerate(
+                                zip(FINGERS, measured_efforts)
+                            )
+                        },
+                        "detector_input_targets_rad": list(
+                            detector_input_targets_rad
+                        ),
+                        "finger_q_actual_rad": [
+                            float(value)
+                            for value in measured_positions[
+                                mapped_global_indices
+                            ]
+                        ],
+                        "finger_qd_actual_rad_s": [
+                            float(value)
+                            for value in measured_velocities[
+                                mapped_global_indices
+                            ]
+                        ],
+                        "detector_observations": {
+                            name: observation.as_dict()
+                            for name, observation in (
+                                sequential_command.observations.items()
+                            )
+                        },
+                        "sample_synchronization": {
+                            "physics_step": int(global_step),
+                            "simulation_time_s": (
+                                float(global_step) / float(rate_hz)
+                            ),
+                            "hand_joint_state_step": int(global_step),
+                            "finger_root_effort_step": int(global_step),
+                            "controller_update_step": int(global_step),
+                            "wrist_wrench_step": (
+                                None
+                                if formal_latest_wrist_global_step is None
+                                else int(formal_latest_wrist_global_step)
+                            ),
+                            "same_physics_step": bool(
+                                formal_latest_wrist_global_step == global_step
+                            ),
+                        },
+                        "finger_targets_rad": list(
+                            sequential_command.finger_targets_rad
+                        ),
+                        "finger_stiffness_scale": list(
+                            sequential_command.finger_stiffness_scale
+                        ),
+                        "normalized_loads": list(
+                            sequential_command.normalized_loads
+                        ),
+                        "normalized_load_imbalance": (
+                            sequential_command.normalized_load_imbalance
+                        ),
+                        "wrist_wrench_empty_baseline_compensated": [
+                            float(value)
+                            for value in formal_latest_wrist_empty_compensated
+                        ],
+                        "stable": sequential_command.stable,
+                        "failed": sequential_command.failed,
+                        "failure_reason": sequential_command.failure_reason,
+                        "controller_evidence": dict(
+                            sequential_command.evidence
+                        ),
+                    }
+                )
+                if sequential_command.failed or sequential_command.stable:
+                    break
+            if sequential_command is None or sequential_command.failed:
+                grasp_controller_failure_reason = (
+                    "controller_no_command"
+                    if sequential_command is None
+                    else sequential_command.failure_reason
+                )
+                raise RuntimeError(
+                    "sequential-compliant grasp failed closed: "
+                    f"{grasp_controller_failure_reason}"
+                )
+            if not sequential_command.stable:
+                raise RuntimeError(
+                    "sequential-compliant grasp controller budget exhausted"
+                )
+            grasp_controller_contact_order = list(
+                sequential_command.contact_order
+            )
+            grasp_controller_stable = True
+            grasp_controller_final_states = {
+                name: detector.state.value
+                for name, detector in sequential_controller.detectors.items()
+            }
+            # Evidence-only final sequential summary (028): the complete
+            # probe responses, normalized loads/imbalance, balance totals
+            # and the independent SOFT_HOLD window completion evidence are
+            # promoted from controller_steps.jsonl into the formal report
+            # so the pre-lift acceptance summary is self-contained.  None
+            # of these values feeds a command, recovery or PASS decision.
+            sequential_final_summary = {
+                "probe_response_nm": [
+                    float(value)
+                    for value in sequential_command.probe_response_nm
+                ],
+                "normalized_loads": [
+                    float(value)
+                    for value in sequential_command.normalized_loads
+                ],
+                "normalized_load_imbalance": float(
+                    sequential_command.normalized_load_imbalance
+                ),
+                "balance_total_rad": [
+                    float(value)
+                    for value in sequential_command.evidence[
+                        "balance_total_rad"
+                    ]
+                ],
+                "balance_budget_remaining_rad": [
+                    float(value)
+                    for value in sequential_command.evidence[
+                        "balance_budget_remaining_rad"
+                    ]
+                ],
+                "soft_hold_window_complete": bool(
+                    sequential_command.evidence[
+                        "soft_hold_window_complete"
+                    ]
+                ),
+                "soft_hold_window_step": int(
+                    sequential_command.evidence["soft_hold_window_step"]
+                ),
+                "soft_hold_window_steps_configured": int(
+                    sequential_command.evidence[
+                        "soft_hold_window_steps_configured"
+                    ]
+                ),
+                "soft_hold_window_armed": bool(
+                    sequential_command.evidence["soft_hold_window_armed"]
+                ),
+                "probe_index": int(
+                    sequential_command.evidence["probe_index"]
+                ),
+            }
+        else:
+            synchronous_detectors = None
+            if formal_grasp and not arguments.empty_hand_first_stage_diagnostic:
+                synchronous_detectors = {
+                    name: FingerContactDetector(
+                        physical_grasp.sequential.detector, name=name
+                    )
+                    for name in FINGERS
+                }
+                for index, name in enumerate(FINGERS):
+                    synchronous_detectors[name].calibrate(
+                        [float(sample[index]) for sample in tare_effort_samples]
+                    )
+            closure_start = current_hand_target.copy()
+            closure_duration_s = (
+                physical_grasp.synchronous_closure_duration_s
+                if formal_grasp
+                else pick.motion.closure_duration_s
+            )
+            closure_steps = round(closure_duration_s * rate_hz)
+            if arguments.empty_hand_first_stage_diagnostic:
+                # Diagnostic replay keeps every finger at its open target:
+                # no closure steps, no contact detectors, no grasp states.
+                total_closure_steps = 0
+                closure_onset_plan_steps = None
+                metrics["synchronous_semantics"] = (
+                    "diagnostic_empty_hand_no_closure"
+                )
+            elif formal_grasp:
+                # Staggered-onset synchronous closure: each of the three
+                # finger joints (hand indices 1,2,3) holds open for its
+                # realized onset delay and then plays the complete nominal
+                # minimum-jerk closure duration; the f1j1 spread joint keeps
+                # its own nominal profile without any delay.
+                total_closure_steps, closure_onset_plan_steps = (
+                    closure_onset_plan(
+                        closure_steps,
+                        realized_randomization.finger_start_delay_steps,
+                    )
+                )
+                metrics["synchronous_semantics"] = (
+                    "staggered_onset_of_nominal_profile"
+                )
+                metrics["closure_onset_delay_steps"] = list(
+                    realized_randomization.finger_start_delay_steps
+                )
+            else:
+                total_closure_steps = closure_steps
+                closure_onset_plan_steps = None
+            for index in range(total_closure_steps):
+                if closure_onset_plan_steps is not None:
+                    for channel_index, fraction in enumerate(
+                        closure_onset_plan_steps[index]
+                    ):
+                        hand_index = formal_finger_hand_indices[
+                            channel_index
+                        ]
+                        if fraction is None:
+                            current_hand_target[hand_index] = (
+                                closure_start[hand_index]
+                            )
+                        else:
+                            current_hand_target[hand_index] = (
+                                closure_start[hand_index]
+                                + fraction
+                                * (
+                                    grasp_hand[hand_index]
+                                    - closure_start[hand_index]
+                                )
+                            )
+                    # f1j1 spread: the nominal profile saturates at its
+                    # nominal closure duration, never delayed.
+                    spread_fraction = minimum_jerk_blend(
+                        float(min(index + 1, closure_steps))
+                        / float(closure_steps)
+                    )
+                    current_hand_target[0] = (
+                        closure_start[0]
+                        + spread_fraction
+                        * (grasp_hand[0] - closure_start[0])
+                    )
+                else:
+                    blend = minimum_jerk_blend(
+                        float(index + 1) / float(closure_steps)
+                    )
+                    current_hand_target = closure_start + blend * (
+                        grasp_hand - closure_start
+                    )
+                positions, velocities = observe_and_step(
+                    current_arm_target, current_hand_target, True
+                )
+                measured_efforts = sample_post_tare_efforts()
+                if synchronous_detectors is not None:
+                    mapped_global_indices = hand_indices[
+                        formal_finger_hand_indices
+                    ]
+                    observations = {}
+                    for finger_index, name in enumerate(FINGERS):
+                        observations[name] = synchronous_detectors[name].update(
+                            measured_efforts[finger_index],
+                            joint_position_rad=positions[
+                                mapped_global_indices[finger_index]
+                            ],
+                            joint_velocity_rad_s=velocities[
+                                mapped_global_indices[finger_index]
+                            ],
+                            commanded_position_rad=current_hand_target[
+                                formal_finger_hand_indices[finger_index]
+                            ],
+                            timestamp_s=float(global_step) / float(rate_hz),
+                        )
+                        if (
+                            observations[name].state
+                            == FingerContactState.CONTACT_CONFIRMED
+                            and name not in grasp_controller_contact_order
+                        ):
+                            grasp_controller_contact_order.append(name)
+                    controller_step_records.append(
+                        {
+                            "global_step": global_step,
+                            "phase": phase,
+                            "method": arguments.physical_grasp_method,
+                            "states": {
+                                name: observation.state.value
+                                for name, observation in observations.items()
+                            },
+                            "contact_order": list(
+                                grasp_controller_contact_order
+                            ),
+                            "finger_root_torque_proxy_nm": {
+                                name: float(
+                                    measured_efforts[finger_index]
+                                    - tare_efforts[finger_index]
+                                )
+                                for finger_index, name in enumerate(FINGERS)
+                            },
+                            "wrist_wrench_empty_baseline_compensated": [
+                                float(value)
+                                for value in (
+                                    formal_latest_wrist_empty_compensated
+                                )
+                            ],
+                            "stable": False,
+                            "failed": False,
+                            "failure_reason": None,
+                        }
+                    )
+            if arguments.empty_hand_first_stage_diagnostic:
+                current_hand_target = current_hand_target.copy()
+            else:
+                current_hand_target = grasp_hand.copy()
+            if formal_grasp and not arguments.empty_hand_first_stage_diagnostic:
+                # Stability requires the historical contact order AND every
+                # finger's final detector state to remain CONTACT_CONFIRMED:
+                # a terminal SLIP/FAILED can never be masked by history.
+                grasp_controller_final_states = {
+                    name: detector.state.value
+                    for name, detector in synchronous_detectors.items()
+                }
+                grasp_controller_stable = synchronous_contact_stability(
+                    grasp_controller_contact_order,
+                    grasp_controller_final_states,
+                )
+            else:
+                grasp_controller_stable = True
+            if (
+                formal_grasp
+                and not grasp_controller_stable
+                and not arguments.empty_hand_first_stage_diagnostic
+            ):
+                raise RuntimeError(
+                    "synchronous contact detector did not confirm all fingers"
+                )
+
+        sequential_preconsolidation_failure = None
+
+        def sequential_stable_hold_step(efforts, positions, velocities):
+            # One frozen-target soft-hold update for sequential-compliant
+            # formal runs.  Returns (hold_command, error_message); the
+            # caller routes error_message into the shared pre-consolidation
+            # failure path.  Callers must catch (ValueError, RuntimeError)
+            # around this helper: a stale or non-finite detector sample
+            # raises instead of returning a failed command.
+            mapped_global_indices = hand_indices[
+                formal_finger_hand_indices
+            ]
+            hold_command = sequential_controller.update(
+                efforts,
+                positions[mapped_global_indices],
+                velocities[mapped_global_indices],
+                timestamp_s=float(global_step) / float(rate_hz),
+            )
+            current_hand_target[formal_finger_hand_indices] = (
+                hold_command.finger_targets_rad
+            )
+            stiffness_scale = np.ones(4, dtype=np.float64)
+            stiffness_scale[formal_finger_hand_indices] = (
+                hold_command.finger_stiffness_scale
+            )
+            kps[hand_indices] = (
+                pick.motion.grip_hand_stiffness * stiffness_scale
+            )
+            controller.set_gains(kps=kps, kds=kds, save_to_usd=False)
+            if hold_command.failed:
+                return hold_command, hold_command.failure_reason
+            return hold_command, None
 
         phase = "closed_hand_seating"
         seating_start = current_arm_target.copy()
@@ -1766,19 +6755,88 @@ def main():
                 ),
                 dtype=np.float64,
             )
-            observe_and_step(current_arm_target, current_hand_target, True)
-            sample_post_tare_efforts()
-        current_arm_target = grasp_arm.copy()
+            positions, velocities = observe_and_step(
+                current_arm_target, current_hand_target, True
+            )
+            efforts = sample_post_tare_efforts()
+            if (
+                formal_grasp
+                and arguments.physical_grasp_method == "sequential-compliant"
+                and not arguments.empty_hand_first_stage_diagnostic
+                and sequential_preconsolidation_failure is None
+            ):
+                # Stable-hold update during seating: detector timestamps
+                # must stay continuous from the closure loop through the
+                # reference window, otherwise the first preload update
+                # raises a stale-sample error.  A failure freezes the
+                # already commanded arm/hand targets immediately.
+                try:
+                    hold_command, hold_error = sequential_stable_hold_step(
+                        efforts, positions, velocities
+                    )
+                except (ValueError, RuntimeError) as hold_exception:
+                    hold_command = None
+                    hold_error = (
+                        f"{type(hold_exception).__name__}: {hold_exception}"
+                    )
+                controller_step_records.append(
+                    {
+                        "global_step": global_step,
+                        "phase": phase,
+                        "method": arguments.physical_grasp_method,
+                        "seating_stable_hold": True,
+                        "states": {
+                            name: detector.state.value
+                            for name, detector in (
+                                sequential_controller.detectors.items()
+                            )
+                        },
+                        "finger_targets_rad": (
+                            None
+                            if hold_command is None
+                            else list(hold_command.finger_targets_rad)
+                        ),
+                        "next_command_finger_stiffness_scale": (
+                            None
+                            if hold_command is None
+                            else list(hold_command.finger_stiffness_scale)
+                        ),
+                        "controller_evidence": (
+                            {}
+                            if hold_command is None
+                            else dict(hold_command.evidence)
+                        ),
+                        "failed": bool(hold_error is not None),
+                        "failure_reason": hold_error,
+                    }
+                )
+                if hold_error is not None:
+                    sequential_preconsolidation_failure = hold_error
+                    break
+        if sequential_preconsolidation_failure is None:
+            current_arm_target = grasp_arm.copy()
 
         grasp_tcp_position, grasp_tcp_orientation = _world_pose(
             Gf, Usd, UsdGeom, tcp_prim
         )
+        if formal_grasp:
+            # Formal tracking evaluator compares against the FK of the
+            # realized (offset) grasp target; the legacy path keeps its
+            # validated nominal comparison.
+            grasp_tcp_reference = np.asarray(
+                iiwa14_grasp_tcp_transform(
+                    tuple(float(value) for value in grasp_arm)
+                ),
+                dtype=np.float64,
+            )[:3, 3]
+        else:
+            grasp_tcp_reference = np.asarray(
+                pick.motion.grasp_tcp_position_m, dtype=np.float64
+            )
         grasp_tcp_position_error = float(
             np.linalg.norm(
                 np.asarray(grasp_tcp_position, dtype=np.float64)
-                - np.asarray(
-                    pick.motion.grasp_tcp_position_m, dtype=np.float64
-                )
+                - grasp_tcp_reference
             )
         )
         grasp_tcp_axis = _quaternion_world_z_axis(grasp_tcp_orientation)
@@ -1794,11 +6852,160 @@ def main():
 
         phase = "physical_grip_preload"
         preload_effort_samples = []
-        preload_steps = round(pick.motion.preload_duration_s * rate_hz)
+        formal_wrist_preload_samples = []
+        preload_steps = (
+            physical_grasp.reference_window_steps
+            if formal_grasp
+            else round(pick.motion.preload_duration_s * rate_hz)
+        )
         for _ in range(preload_steps):
-            observe_and_step(current_arm_target, current_hand_target, True)
-            preload_effort_samples.append(sample_post_tare_efforts())
+            positions, velocities = observe_and_step(
+                current_arm_target, current_hand_target, True
+            )
+            efforts = sample_post_tare_efforts()
+            preload_effort_samples.append(efforts)
+            if formal_grasp:
+                formal_wrist_preload_samples.append(
+                    formal_latest_wrist_canonical.copy()
+                )
+            if (
+                formal_grasp
+                and arguments.physical_grasp_method == "sequential-compliant"
+                and not arguments.empty_hand_first_stage_diagnostic
+                and sequential_preconsolidation_failure is None
+            ):
+                # Stable-hold update inside the low-stiffness reference
+                # window: detector timestamps stay continuous, the three
+                # targets stay frozen at their stable values and the
+                # per-finger stiffness stays at the soft scale.  Stale or
+                # non-finite samples raise and must route through the same
+                # shared pre-consolidation failure path, never a bare
+                # exception.
+                try:
+                    hold_command, hold_error = sequential_stable_hold_step(
+                        efforts, positions, velocities
+                    )
+                except (ValueError, RuntimeError) as hold_exception:
+                    hold_command = None
+                    hold_error = (
+                        f"{type(hold_exception).__name__}: {hold_exception}"
+                    )
+                controller_step_records.append(
+                    {
+                        "global_step": global_step,
+                        "phase": phase,
+                        "method": arguments.physical_grasp_method,
+                        "preload_stable_hold": True,
+                        "states": {
+                            name: detector.state.value
+                            for name, detector in (
+                                sequential_controller.detectors.items()
+                            )
+                        },
+                        "finger_targets_rad": (
+                            None
+                            if hold_command is None
+                            else list(hold_command.finger_targets_rad)
+                        ),
+                        "next_command_finger_stiffness_scale": (
+                            None
+                            if hold_command is None
+                            else list(hold_command.finger_stiffness_scale)
+                        ),
+                        "controller_evidence": (
+                            {}
+                            if hold_command is None
+                            else dict(hold_command.evidence)
+                        ),
+                        "failed": bool(hold_error is not None),
+                        "failure_reason": hold_error,
+                    }
+                )
+                if hold_error is not None:
+                    sequential_preconsolidation_failure = hold_error
         contact_efforts = np.mean(np.stack(preload_effort_samples), axis=0)
+        if formal_grasp:
+            # Independent grasped-payload wrist reference: quasi-static mean
+            # with three fingers confirmed stable, before lift starts.
+            if wrist_ft_monitor_error is not None:
+                raise RuntimeError(
+                    "formal wrist FT monitor failed before the payload "
+                    "reference: " + wrist_ft_monitor_error
+                )
+            if len(formal_wrist_preload_samples) < 8:
+                raise RuntimeError(
+                    "formal payload wrist reference has too few samples"
+                )
+            stacked_wrist_preload = np.stack(formal_wrist_preload_samples)
+            if not np.all(np.isfinite(stacked_wrist_preload)):
+                raise RuntimeError(
+                    "formal payload wrist reference is non-finite"
+                )
+            formal_wrist_payload_reference = np.mean(
+                stacked_wrist_preload, axis=0
+            )
+            formal_latest_wrist_payload_increment = np.asarray(
+                wrist_payload_increment(
+                    formal_latest_wrist_canonical,
+                    formal_wrist_payload_reference,
+                ),
+                dtype=np.float64,
+            )
+            metrics["formal_payload_wrist_reference"] = [
+                float(value) for value in formal_wrist_payload_reference
+            ]
+            metrics["formal_payload_wrist_reference_sample_count"] = len(
+                formal_wrist_preload_samples
+            )
+            metrics["formal_payload_wrist_reference_kind"] = (
+                "empty_hand_open_grasp_diagnostic"
+                if arguments.empty_hand_first_stage_diagnostic
+                else "grasped_payload_quasistatic"
+            )
+            # Evidence-only reference window statistics, recorded before lift
+            # starts so a later lift failure cannot lose them.
+            metrics["formal_payload_wrist_reference_statistics"] = (
+                reference_window_statistics(stacked_wrist_preload)
+            )
+            metrics["formal_wrist_wrench_frame_audit"] = {
+                "raw_frame": "handbase_link_sensor_frame",
+                "canonical_frame": "handbase_link_canonical_sensor_frame",
+                "canonicalization": (
+                    "canonical_from_raw = -I sign correction only"
+                ),
+                "connector_task_frame_transform_applied": bool(
+                    physical_grasp.pre_lift_centering.enabled
+                ),
+                "transform_wrench_to_task_called_by_formal_lift": bool(
+                    physical_grasp.pre_lift_centering.enabled
+                ),
+                "inverse_wrench_transform_roundtrip_checked": bool(
+                    physical_grasp.pre_lift_centering.enabled
+                ),
+                "sensor_origin_hard_gate_unchanged": True,
+                "wrist_ft_monitor_task_frame_id": "connector_task_frame",
+                "note": (
+                    "canonical_wrench_sensor is the handbase_link sensor-frame "
+                    "reaction wrench with sign correction and remains the "
+                    "hard-gate input; the connector task-frame wrench is "
+                    "used only by enabled pre-lift XY centering"
+                ),
+            }
+            metrics["pre_lift_grasp_controller_evidence"] = {
+                "method": arguments.physical_grasp_method,
+                "stable": grasp_controller_stable,
+                "failure_reason": grasp_controller_failure_reason,
+                "contact_order": list(grasp_controller_contact_order),
+                "finger_states_final": grasp_controller_final_states,
+                "sequential_final_summary": sequential_final_summary,
+                "payload_reference_statistics": metrics[
+                    "formal_payload_wrist_reference_statistics"
+                ],
+                "payload_reference_sample_count": len(
+                    formal_wrist_preload_samples
+                ),
+                "recorded_before_lift_started": True,
+            }
         torque_deltas = contact_efforts - tare_efforts
         loaded_channels = int(
             np.count_nonzero(
@@ -1807,31 +7014,9914 @@ def main():
             )
         )
         maximum_absolute_torque_delta = float(np.max(np.abs(torque_deltas)))
-        postclosure_body_position, _ = body.get_world_pose()
+        postclosure_body_position, postclosure_body_orientation = (
+            body.get_world_pose()
+        )
         postclosure_nut_position, _ = nut.get_world_pose()
+        handbase_prim = stage.GetPrimAtPath(
+            pick.scene.grasp_tcp_prim_path.rsplit("/", 1)[0]
+        )
+        if not handbase_prim.IsValid():
+            raise RuntimeError("handbase_link frame is missing")
+        (
+            postclosure_handbase_position,
+            postclosure_handbase_orientation,
+        ) = _world_pose(Gf, Usd, UsdGeom, handbase_prim)
         postclosure_body_in_tcp = body_in_tcp_frame(postclosure_body_position)
         postclosure_body_nut_separation = float(
             np.linalg.norm(
                 postclosure_nut_position - postclosure_body_position
             )
         )
-        postclosure_contacts = contact_snapshot()
+        # The legacy path retains its historical post-closure contact gate.
+        # Formal grasp defers all contact-report truth until motion has ended;
+        # its mid-episode pose checkpoint is evaluator-only and never feeds a
+        # command or sensor safety state.
+        postclosure_contacts = (
+            None if formal_grasp else contact_snapshot()
+        )
 
         phase = "physical_grip_lift"
         lift_start = current_arm_target.copy()
-        lift_steps = round(pick.motion.lift_duration_s * rate_hz)
-        for index in range(lift_steps):
-            current_arm_target = np.asarray(
-                interpolate_arm(
-                    tuple(float(value) for value in lift_start),
-                    tuple(float(value) for value in pregrasp_arm),
-                    float(index + 1) / float(lift_steps),
+        formal_recovery_lift_start_target = lift_start.copy()
+        formal_lift_arm_drive_bias = None
+        formal_lift_compliant_path_arm = None
+        formal_lift_compliant_position_preload = None
+        formal_arm_feedforward_effort = None
+        formal_lift_monitor = None
+        formal_lift_stage_records = []
+        formal_lift_failure = None
+        formal_lift_traversed_arm_targets = []
+        formal_recovery_record = None
+        formal_lift_terminal = False
+        formal_sensor_control_ready = False
+        if formal_grasp:
+            # The monitor receives the current ABSOLUTE canonical wrist
+            # wrench each lift step and compares it internally against the
+            # grasped-payload reference captured during the preload window
+            # (the frozen three-component moment gate decomposes that
+            # comparison).  The empty-hand-compensated reading remains
+            # per-step report evidence only.
+            if arguments.empty_hand_first_stage_diagnostic:
+                # No grasped payload, so no root-load reference and no
+                # retained/imbalance/rate gates.  The diagnostic recorder
+                # enforces only the frozen wrist force/moment increment
+                # gates plus arm-tracking and finger-speed limits, using the
+                # open-hand wrist reference captured above.
+                formal_lift_monitor = EmptyHandLiftDiagnosticMonitor(
+                    physical_grasp.stability,
+                    reference_wrench=formal_wrist_payload_reference,
+                )
+            else:
+                reference_load = tuple(
+                    max(abs(float(value)), 1.0e-6) for value in torque_deltas
+                )
+                formal_lift_monitor = GraspStabilityMonitor(
+                    physical_grasp.stability,
+                    reference_load_nm=reference_load,
+                    load_scale_nm=physical_grasp.sequential.load_scale_nm,
+                    sample_period_s=1.0 / rate_hz,
+                    wrist_reference=formal_wrist_payload_reference,
+                )
+            zero_lift_hold_mode = (
+                arguments.formal_lift_mode == "zero-lift-hold"
+            )
+            gravity_transfer_diagnostic_mode = (
+                arguments.formal_lift_mode == "gravity-transfer-hold"
+            )
+            stiffness_restore_diagnostic_mode = (
+                arguments.formal_lift_mode == "stiffness-restore-hold"
+            )
+
+            def formal_kinematic_step_evidence(
+                positions, velocities, arm_target, hand_target
+            ):
+                # Per-step robot-state and pure-URDF-FK evidence.  These
+                # values are report diagnostics only and never gate control.
+                actual_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(
+                            float(value)
+                            for value in positions[arm_indices]
+                        )
+                    ),
+                    dtype=np.float64,
+                )
+                target_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(float(value) for value in arm_target)
+                    ),
+                    dtype=np.float64,
+                )
+                return {
+                    "sample_synchronization": {
+                        "physics_step": int(global_step),
+                        "simulation_time_s": (
+                            float(global_step) / float(rate_hz)
+                        ),
+                        "arm_joint_state_step": int(global_step),
+                        "arm_target_step": int(global_step),
+                        "hand_joint_state_step": int(global_step),
+                        "finger_root_effort_step": int(global_step),
+                        "wrist_wrench_step": (
+                            None
+                            if formal_latest_wrist_global_step is None
+                            else int(formal_latest_wrist_global_step)
+                        ),
+                        "same_physics_step": bool(
+                            formal_latest_wrist_global_step == global_step
+                        ),
+                    },
+                    "arm_q_actual_rad": [
+                        float(value) for value in positions[arm_indices]
+                    ],
+                    "arm_qd_actual_rad_s": [
+                        float(value) for value in velocities[arm_indices]
+                    ],
+                    "arm_q_target_rad": [
+                        float(value) for value in arm_target
+                    ],
+                    "hand_q_actual_rad": [
+                        float(value) for value in positions[hand_indices]
+                    ],
+                    "hand_qd_actual_rad_s": [
+                        float(value) for value in velocities[hand_indices]
+                    ],
+                    "hand_q_target_rad": [
+                        float(value) for value in hand_target
+                    ],
+                    "tcp_pose_from_actual_arm_fk": actual_tcp.tolist(),
+                    "tcp_pose_from_target_arm_fk": target_tcp.tolist(),
+                }
+
+            def formal_wrist_step_evidence(positions):
+                # Magnitude-increase and perpendicular-delta remain evidence
+                # only.  H8 may consume task-frame Fx for its historical
+                # scalar correction; H14 may consume task-frame XY plus the
+                # same-step robot-FK rotation for a bounded world-XY target
+                # correction.  The original sensor-origin monitor remains
+                # the only lift safety gate.
+                canonical = formal_latest_wrist_canonical
+                reference = formal_wrist_payload_reference
+                evidence = {
+                    "wrist_wrench_raw_sensor_frame": [
+                        float(value) for value in formal_latest_wrist_raw
+                    ],
+                    "wrist_wrench_canonical": [
+                        float(value) for value in canonical
+                    ],
+                    "wrist_wrench_empty_baseline_compensated": [
+                        float(value)
+                        for value in (
+                            formal_latest_wrist_empty_compensated
+                        )
+                    ],
+                    "wrist_wrench_payload_reference_increment": [
+                        float(value)
+                        for value in (
+                            formal_latest_wrist_payload_increment
+                        )
+                    ],
+                    "wrist_wrench_payload_reference": [
+                        float(value) for value in reference
+                    ],
+                    "absolute_sensor_force_norm_n": force_norm(canonical),
+                    "absolute_sensor_moment_norm_nm": moment_norm(
+                        canonical
+                    ),
+                    "moment_magnitude_increase_candidate_nm": (
+                        moment_magnitude_increase(canonical, reference)
+                    ),
+                    "perpendicular_moment_delta_candidate": (
+                        perpendicular_moment_delta(canonical, reference)
+                    ),
+                    "wrench_frames": {
+                        "raw": "handbase_link_sensor_frame",
+                        "canonical": (
+                            "handbase_link_canonical_sensor_frame"
+                        ),
+                        "empty_compensated": (
+                            "handbase_link_canonical_sensor_frame"
+                        ),
+                        "payload_reference_delta": (
+                            "handbase_link_canonical_sensor_frame"
+                        ),
+                        "connector_task_frame_transform_applied": False,
+                    },
+                    "candidates_gate_control": False,
+                }
+                if not (
+                    physical_grasp.pre_lift_centering.enabled
+                    or physical_grasp.lift_x_force_admittance.enabled
+                    or physical_grasp.lift_xy_force_admittance.enabled
+                    or moment_support_config is not None
+                ):
+                    return evidence
+                actual_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(
+                            float(value)
+                            for value in positions[arm_indices]
+                        )
+                    ),
+                    dtype=np.float64,
+                )
+                task_origin = actual_tcp[:3, 3]
+                task_rotation = actual_tcp[:3, :3]
+                sensor_position = (
+                    formal_latest_wrist_sensor_position_world
+                )
+                sensor_rotation = (
+                    formal_latest_wrist_sensor_rotation_world
+                )
+                task_wrench = transform_wrench_to_task(
+                    canonical,
+                    sensor_position,
+                    sensor_rotation,
+                    task_origin,
+                    task_rotation,
+                )
+                task_empty_compensated = transform_wrench_to_task(
+                    formal_latest_wrist_empty_compensated,
+                    sensor_position,
+                    sensor_rotation,
+                    task_origin,
+                    task_rotation,
+                )
+                task_payload_increment = transform_wrench_to_task(
+                    formal_latest_wrist_payload_increment,
+                    sensor_position,
+                    sensor_rotation,
+                    task_origin,
+                    task_rotation,
+                )
+                rotation_task_from_sensor = (
+                    task_rotation.T @ sensor_rotation
+                )
+                position_task_sensor = task_rotation.T @ (
+                    sensor_position - task_origin
+                )
+                recovered = inverse_wrench_transform(
+                    task_wrench,
+                    rotation_task_from_sensor,
+                    position_task_sensor,
+                )
+                roundtrip_error = float(
+                    np.max(np.abs(recovered - canonical))
+                )
+                evidence.update(
+                    {
+                        "wrist_wrench_grasp_tcp_frame": [
+                            float(value) for value in task_wrench
+                        ],
+                        "wrist_wrench_connector_task_frame": [
+                            float(value) for value in task_wrench
+                        ],
+                        "wrist_wrench_empty_compensated_task_frame": [
+                            float(value)
+                            for value in task_empty_compensated
+                        ],
+                        "wrist_wrench_payload_increment_task_frame": [
+                            float(value)
+                            for value in task_payload_increment
+                        ],
+                        "wrench_transform_roundtrip_max_abs_error": (
+                            roundtrip_error
+                        ),
+                        "wrench_frames": {
+                            **evidence["wrench_frames"],
+                            "grasp_tcp": "robot_fk_grasp_tcp_frame",
+                            "connector_task": (
+                                "B_grasp_tcp_alias_from_configured_"
+                                "handbase_to_tcp_transform"
+                            ),
+                            "connector_task_frame_transform_applied": True,
+                            "sensor_origin_hard_gate_unchanged": True,
+                            "task_wrench_control_use": (
+                                "b_v3_task_fx_fy_only"
+                                if moment_support_config is not None
+                                else (
+                                    "pre_lift_xy_centering_only"
+                                    if physical_grasp.pre_lift_centering.enabled
+                                    else (
+                                        "lift_xy_force_admittance_only"
+                                        if physical_grasp
+                                        .lift_xy_force_admittance.enabled
+                                        else "lift_x_force_admittance_only"
+                                    )
+                                )
+                            ),
+                        },
+                    }
+                )
+                return evidence
+
+            def run_formal_failure_recovery():
+                # Bounded recovery: stop rising, reverse the traversed joint
+                # trajectory back to the pre-lift target, settle, then slowly
+                # open the fingers.  Recovery consumes robot/hand state and
+                # existing targets only; it never reads object state or
+                # physics contact truth, and it can never flip the episode
+                # back to success.  Both terminal evaluator snapshots are
+                # written into metrics before the fail-closed raise.
+                nonlocal formal_recovery_record
+                nonlocal current_arm_target
+                nonlocal current_hand_target
+                nonlocal phase
+                try:
+                    metrics["formal_terminal_evaluator_snapshot"] = (
+                        capture_terminal_snapshot(
+                            "formal_lift_gate_triggered", phase
+                        )
+                    )
+                    metrics[
+                        "formal_terminal_evaluator_snapshots_control_isolated"
+                    ] = True
+                except Exception as snapshot_error:
+                    metrics["formal_terminal_evaluator_snapshot_error"] = (
+                        f"{type(snapshot_error).__name__}: "
+                        f"{snapshot_error}"
+                    )
+                formal_recovery_record = {
+                    "requested": True,
+                    "original_failure_reason": (
+                        formal_lift_failure["reason"]
+                    ),
+                    "failure_stage": formal_lift_failure["stage"],
+                    "failure_stage_step": formal_lift_failure["stage_step"],
+                    "failure_global_step": formal_lift_failure[
+                        "global_step"
+                    ],
+                    "traversed_waypoint_count": len(
+                        formal_lift_traversed_arm_targets
+                    ),
+                    "return_completed": False,
+                    "open_completed": False,
+                    "completed": False,
+                    "interrupted_by": None,
+                    "steps": {"return": 0, "open": 0},
+                }
+                try:
+                    recovery_config = physical_grasp.recovery
+                    phase = "formal_lift_recovery_return"
+                    for waypoint in plan_recovery_return(
+                        formal_lift_traversed_arm_targets,
+                        formal_recovery_lift_start_target,
+                        recovery_config,
+                    ):
+                        current_arm_target = waypoint
+                        positions, velocities = observe_and_step(
+                            current_arm_target,
+                            current_hand_target,
+                            True,
+                            formal_arm_feedforward_effort,
+                        )
+                        sample_post_tare_efforts()
+                        controller_step_records.append(
+                            {
+                                "global_step": global_step,
+                                "phase": phase,
+                                "method": (
+                                    arguments.physical_grasp_method
+                                ),
+                                "recovery": True,
+                                "arm_target_rad": [
+                                    float(value)
+                                    for value in current_arm_target
+                                ],
+                                "hand_target_rad": [
+                                    float(value)
+                                    for value in current_hand_target
+                                ],
+                                **formal_kinematic_step_evidence(
+                                    positions,
+                                    velocities,
+                                    current_arm_target,
+                                    current_hand_target,
+                                ),
+                                **formal_wrist_step_evidence(positions),
+                                "wrist_ft_monitor_error": (
+                                    wrist_ft_monitor_error
+                                ),
+                            }
+                        )
+                        formal_recovery_record["steps"]["return"] += 1
+                    current_arm_target = (
+                        formal_recovery_lift_start_target.copy()
+                    )
+                    formal_recovery_record["return_completed"] = True
+                    phase = "formal_lift_recovery_open"
+                    open_start = current_hand_target.copy()
+                    for hand_target in plan_recovery_open(
+                        open_start,
+                        open_hand,
+                        recovery_config.open_duration_s,
+                        rate_hz,
+                    ):
+                        current_hand_target = hand_target
+                        positions, velocities = observe_and_step(
+                            current_arm_target,
+                            current_hand_target,
+                            True,
+                            formal_arm_feedforward_effort,
+                        )
+                        sample_post_tare_efforts()
+                        controller_step_records.append(
+                            {
+                                "global_step": global_step,
+                                "phase": phase,
+                                "method": (
+                                    arguments.physical_grasp_method
+                                ),
+                                "recovery": True,
+                                "arm_target_rad": [
+                                    float(value)
+                                    for value in current_arm_target
+                                ],
+                                "hand_target_rad": [
+                                    float(value)
+                                    for value in current_hand_target
+                                ],
+                                **formal_kinematic_step_evidence(
+                                    positions,
+                                    velocities,
+                                    current_arm_target,
+                                    current_hand_target,
+                                ),
+                                **formal_wrist_step_evidence(positions),
+                                "wrist_ft_monitor_error": (
+                                    wrist_ft_monitor_error
+                                ),
+                            }
+                        )
+                        formal_recovery_record["steps"]["open"] += 1
+                    current_hand_target = open_hand.copy()
+                    formal_recovery_record["open_completed"] = True
+                    formal_recovery_record["completed"] = True
+                except Exception as recovery_error:
+                    formal_recovery_record["interrupted_by"] = (
+                        f"{type(recovery_error).__name__}: {recovery_error}"
+                    )
+                    formal_recovery_record["interrupted_global_step"] = (
+                        global_step
+                    )
+                metrics["formal_recovery"] = formal_recovery_record
+                metrics["formal_lift_failure"] = formal_lift_failure
+                metrics["formal_lift_terminal"] = True
+                try:
+                    metrics["formal_recovery_end_evaluator_snapshot"] = (
+                        capture_terminal_snapshot(
+                            "formal_recovery_end",
+                            "formal_lift_recovery_end",
+                        )
+                    )
+                except Exception as snapshot_error:
+                    metrics[
+                        "formal_recovery_end_evaluator_snapshot_error"
+                    ] = (
+                        f"{type(snapshot_error).__name__}: "
+                        f"{snapshot_error}"
+                    )
+                mode_label = (
+                    "gravity-transfer hold"
+                    if gravity_transfer_diagnostic_mode
+                    else (
+                        "stiffness-restore hold"
+                        if stiffness_restore_diagnostic_mode
+                        else (
+                            "zero-lift hold"
+                            if zero_lift_hold_mode
+                            else "staged lift"
+                        )
+                    )
+                )
+                raise RuntimeError(
+                    f"{mode_label} failed closed: "
+                    f"{formal_lift_failure['reason']} "
+                    "(recovery_completed="
+                    f"{formal_recovery_record['completed']})"
+                )
+
+            sequential_lift_ready = False
+            if (
+                arguments.physical_grasp_method == "sequential-compliant"
+                and not arguments.empty_hand_first_stage_diagnostic
+            ):
+                # LIFT_READY consolidation (SIM_TUNING_ONLY_A_CANDIDATE):
+                # STABLE_CONTACT alone must never release the lift.  The
+                # pre-consolidation monitor (constructed above with the
+                # preload-window references) keeps running the frozen
+                # 8 N / 0.30 N*m gates through the whole ramp and quiet
+                # window; only a full clean pass may rebase the lift
+                # references.  Any failure routes through the shared
+                # snapshot-first bounded recovery below.
+                phase = "physical_grip_consolidation"
+                consolidation_ramp_steps = (
+                    physical_grasp.sequential.consolidation_ramp_steps
+                )
+                consolidation_window_steps = (
+                    physical_grasp.sequential.consolidation_window_steps
+                )
+                consolidation_total_steps = (
+                    consolidation_ramp_steps + consolidation_window_steps
+                )
+                # The legacy top-level signed root delta predates
+                # consolidation: label it explicitly so it can never be
+                # mistaken for the final monitor reference (the final
+                # signed/absolute references live in the dedicated
+                # consolidation evidence fields).
+                metrics["contact_torque_deltas_nm_kind"] = (
+                    "pre_consolidation_signed_root_delta"
+                )
+                pre_consolidation_root_reference = tuple(
+                    float(value) for value in reference_load
+                )
+                pre_consolidation_wrist_reference = np.asarray(
+                    formal_wrist_payload_reference, dtype=np.float64
+                ).copy()
+                consolidation_monitor = formal_lift_monitor
+                final_window_root_samples = []
+                final_window_wrist_samples = []
+                consolidation_failure = (
+                    sequential_preconsolidation_failure
+                )
+                consolidation_failure_step = 0
+                applied_scale = float(
+                    physical_grasp.sequential.soft_hold_stiffness_scale
+                )
+                first_window_sample_applied_scale = None
+                applied_scale_min = None
+                applied_scale_max = None
+                if consolidation_failure is None:
+                    try:
+                        sequential_controller.begin_consolidation()
+                    except RuntimeError as arm_error:
+                        consolidation_failure = (
+                            f"begin_consolidation_rejected: {arm_error}"
+                        )
+                if consolidation_failure is None:
+                    for _ in range(consolidation_total_steps):
+                        positions, velocities = observe_and_step(
+                            current_arm_target, current_hand_target, True
+                        )
+                        # The gains active during this physics step were
+                        # set at the end of the previous iteration; record
+                        # them as the applied scale before the controller
+                        # advances its commanded trajectory.
+                        step_applied_scale = applied_scale
+                        measured_efforts = sample_post_tare_efforts()
+                        mapped_global_indices = hand_indices[
+                            formal_finger_hand_indices
+                        ]
+                        sequential_command = sequential_controller.update(
+                            measured_efforts,
+                            positions[mapped_global_indices],
+                            velocities[mapped_global_indices],
+                            timestamp_s=float(global_step) / float(rate_hz),
+                        )
+                        current_hand_target[
+                            formal_finger_hand_indices
+                        ] = sequential_command.finger_targets_rad
+                        stiffness_scale = np.ones(4, dtype=np.float64)
+                        stiffness_scale[
+                            formal_finger_hand_indices
+                        ] = sequential_command.finger_stiffness_scale
+                        kps[hand_indices] = (
+                            pick.motion.grip_hand_stiffness
+                            * stiffness_scale
+                        )
+                        controller.set_gains(
+                            kps=kps, kds=kds, save_to_usd=False
+                        )
+                        applied_scale = float(
+                            sequential_command.finger_stiffness_scale[0]
+                        )
+                        # Summary statistics track the scale actually
+                        # applied during each observed physics step
+                        # (step_applied_scale), not the next-command
+                        # value: the first real applied scale is exactly
+                        # the soft 0.35 and the window steps are exactly
+                        # the configured final scale.
+                        applied_scale_min = (
+                            step_applied_scale
+                            if applied_scale_min is None
+                            else min(applied_scale_min, step_applied_scale)
+                        )
+                        applied_scale_max = (
+                            step_applied_scale
+                            if applied_scale_max is None
+                            else max(applied_scale_max, step_applied_scale)
+                        )
+                        root_delta = measured_efforts - tare_efforts
+                        arm_tracking = float(
+                            np.max(
+                                np.abs(
+                                    positions[arm_indices]
+                                    - current_arm_target
+                                )
+                            )
+                        )
+                        finger_velocities = velocities[
+                            mapped_global_indices
+                        ]
+                        if sequential_command.failed:
+                            consolidation_failure = (
+                                "controller_"
+                                + str(sequential_command.failure_reason)
+                            )
+                        elif wrist_ft_monitor_error is not None:
+                            consolidation_monitor.fail_closed(
+                                "wrist_ft_sensor_error"
+                            )
+                            consolidation_failure = "wrist_ft_sensor_error"
+                        else:
+                            monitor_ok = consolidation_monitor.update(
+                                root_delta,
+                                formal_latest_wrist_canonical,
+                                arm_tracking_error_rad=arm_tracking,
+                                finger_velocities_rad_s=finger_velocities,
+                            )
+                            if not monitor_ok:
+                                consolidation_failure = (
+                                    consolidation_monitor.failure_reason
+                                )
+                        window_step = sequential_command.evidence.get(
+                            "consolidation_window_step", 0
+                        )
+                        if window_step > 0:
+                            if first_window_sample_applied_scale is None:
+                                first_window_sample_applied_scale = (
+                                    step_applied_scale
+                                )
+                            final_window_root_samples.append(
+                                np.asarray(
+                                    root_delta, dtype=np.float64
+                                ).copy()
+                            )
+                            final_window_wrist_samples.append(
+                                np.asarray(
+                                    formal_latest_wrist_canonical,
+                                    dtype=np.float64,
+                                ).copy()
+                            )
+                        controller_step_records.append(
+                            {
+                                "global_step": global_step,
+                                "phase": phase,
+                                "method": (
+                                    arguments.physical_grasp_method
+                                ),
+                                "consolidation": True,
+                                "consolidation_step": (
+                                    sequential_command.evidence.get(
+                                        "consolidation_ramp_step", 0
+                                    )
+                                    + window_step
+                                ),
+                                "finger_root_torque_proxy_nm": {
+                                    name: float(root_delta[index])
+                                    for index, name in enumerate(FINGERS)
+                                },
+                                "finger_targets_rad": list(
+                                    sequential_command.finger_targets_rad
+                                ),
+                                "applied_finger_stiffness_scale": (
+                                    step_applied_scale
+                                ),
+                                "next_command_finger_stiffness_scale": (
+                                    list(
+                                        sequential_command
+                                        .finger_stiffness_scale
+                                    )
+                                ),
+                                "controller_evidence": dict(
+                                    sequential_command.evidence
+                                ),
+                                **formal_kinematic_step_evidence(
+                                    positions,
+                                    velocities,
+                                    current_arm_target,
+                                    current_hand_target,
+                                ),
+                                **formal_wrist_step_evidence(positions),
+                                "wrist_moment_safety_evidence": dict(
+                                    consolidation_monitor
+                                    .last_moment_safety_evidence
+                                ),
+                                "arm_tracking_error_rad": arm_tracking,
+                                "wrist_ft_monitor_error": (
+                                    wrist_ft_monitor_error
+                                ),
+                                "lift_ready": (
+                                    sequential_command.lift_ready
+                                ),
+                                "failed": sequential_command.failed,
+                                "failure_reason": (
+                                    sequential_command.failure_reason
+                                ),
+                            }
+                        )
+                        if consolidation_failure is not None:
+                            consolidation_failure_step = (
+                                sequential_command.evidence.get(
+                                    "consolidation_ramp_step", 0
+                                )
+                                + window_step
+                            )
+                            break
+                        if sequential_command.lift_ready:
+                            sequential_lift_ready = True
+                            break
+                    if (
+                        consolidation_failure is None
+                        and not sequential_controller.lift_ready
+                    ):
+                        consolidation_failure = (
+                            "consolidation_budget_exhausted"
+                        )
+                    if (
+                        consolidation_failure is None
+                        and (
+                            len(final_window_root_samples)
+                            != consolidation_window_steps
+                            or len(final_window_wrist_samples)
+                            != consolidation_window_steps
+                        )
+                    ):
+                        consolidation_failure = (
+                            "consolidation_window_sample_count_mismatch"
+                        )
+                    if (
+                        consolidation_failure is None
+                        and first_window_sample_applied_scale
+                        != float(
+                            physical_grasp.sequential
+                            .consolidation_final_stiffness_scale
+                        )
+                    ):
+                        consolidation_failure = (
+                            "consolidation_window_applied_scale_mismatch"
+                        )
+                if consolidation_failure is not None:
+                    formal_lift_terminal = True
+                    formal_lift_failure = {
+                        "reason": consolidation_failure,
+                        "stage": 0,
+                        "stage_step": consolidation_failure_step,
+                        "global_step": global_step,
+                        "controller_terminal": True,
+                        "phase": "physical_grip_consolidation",
+                        "wrist_moment_safety_evidence": dict(
+                            consolidation_monitor
+                            .last_moment_safety_evidence
+                        ),
+                        "wrist_wrench_canonical": [
+                            float(value)
+                            for value in formal_latest_wrist_canonical
+                        ],
+                    }
+                    metrics["formal_lift_stages"] = []
+                    metrics["formal_lift_monitor"] = (
+                        consolidation_monitor.summary()
+                    )
+                    metrics["sequential_consolidation"] = {
+                        "mode": "sequential-compliant",
+                        "threshold_label": "SIM_TUNING_ONLY_A_CANDIDATE",
+                        "completed": False,
+                        "lift_ready": False,
+                        "failure_reason": consolidation_failure,
+                    }
+                    metrics["pre_lift_grasp_controller_evidence"].update(
+                        {
+                            "stable_implies_lift_ready": False,
+                            "lift_ready": False,
+                            "consolidation_completed": False,
+                            "consolidation_failure_reason": (
+                                consolidation_failure
+                            ),
+                        }
+                    )
+                    run_formal_failure_recovery()
+                # Construct every final reference and evidence object in
+                # local variables first and validate them; only after ALL
+                # of them succeed may the top-level report references and
+                # the lift monitor be mutated.  Any statistics/shape
+                # failure must fail closed through the shared recovery and
+                # must never leave a partially rebased report or release
+                # the lift.
+                consolidation_evidence_failure = None
+                try:
+                    final_window_root_stack = np.stack(
+                        final_window_root_samples
+                    )
+                    final_window_wrist_stack = np.stack(
+                        final_window_wrist_samples
+                    )
+                    final_window_root_mean_signed = np.mean(
+                        final_window_root_stack, axis=0
+                    )
+                    final_root_reference = tuple(
+                        max(abs(float(value)), 1.0e-6)
+                        for value in final_window_root_mean_signed
+                    )
+                    final_wrist_reference = np.asarray(
+                        np.mean(final_window_wrist_stack, axis=0),
+                        dtype=np.float64,
+                    )
+                    if not np.all(np.isfinite(final_wrist_reference)):
+                        raise ValueError(
+                            "final wrist reference is non-finite"
+                        )
+                    if not np.all(
+                        np.isfinite(final_window_root_mean_signed)
+                    ):
+                        raise ValueError(
+                            "final root reference is non-finite"
+                        )
+                    final_window_wrist_statistics = (
+                        reference_window_statistics(
+                            final_window_wrist_stack
+                        )
+                    )
+                    final_window_root_statistics = (
+                        channel_window_statistics(
+                            final_window_root_stack
+                        )
+                    )
+                    final_monitor_summary = consolidation_monitor.summary()
+                except (ValueError, RuntimeError) as evidence_error:
+                    consolidation_evidence_failure = (
+                        f"{type(evidence_error).__name__}: {evidence_error}"
+                    )
+                if consolidation_evidence_failure is not None:
+                    formal_lift_terminal = True
+                    formal_lift_failure = {
+                        "reason": (
+                            "consolidation_evidence_construction_failed: "
+                            + consolidation_evidence_failure
+                        ),
+                        "stage": 0,
+                        "stage_step": consolidation_window_steps,
+                        "global_step": global_step,
+                        "controller_terminal": True,
+                        "phase": "physical_grip_consolidation",
+                    }
+                    metrics["formal_lift_stages"] = []
+                    metrics["formal_lift_monitor"] = (
+                        consolidation_monitor.summary()
+                    )
+                    metrics["sequential_consolidation"] = {
+                        "mode": "sequential-compliant",
+                        "threshold_label": "SIM_TUNING_ONLY_A_CANDIDATE",
+                        "completed": False,
+                        "lift_ready": False,
+                        "failure_reason": formal_lift_failure["reason"],
+                    }
+                    metrics["pre_lift_grasp_controller_evidence"].update(
+                        {
+                            "stable_implies_lift_ready": False,
+                            "lift_ready": False,
+                            "consolidation_completed": False,
+                            "consolidation_failure_reason": (
+                                formal_lift_failure["reason"]
+                            ),
+                        }
+                    )
+                    run_formal_failure_recovery()
+                # Rebase only after a full clean pass of the frozen gates
+                # AND a fully validated evidence construction.
+                formal_lift_monitor = GraspStabilityMonitor(
+                    physical_grasp.stability,
+                    reference_load_nm=final_root_reference,
+                    load_scale_nm=physical_grasp.sequential.load_scale_nm,
+                    sample_period_s=1.0 / rate_hz,
+                    wrist_reference=final_wrist_reference,
+                )
+                formal_wrist_payload_reference = final_wrist_reference.copy()
+                formal_latest_wrist_payload_increment = np.asarray(
+                    wrist_payload_increment(
+                        formal_latest_wrist_canonical,
+                        formal_wrist_payload_reference,
+                    ),
+                    dtype=np.float64,
+                )
+                # Evidence single-meaning (030a): preserve the
+                # pre-consolidation low-stiffness reference verbatim before
+                # the top-level formal reference is rebased to the final
+                # 240-step consolidated window mean.
+                metrics["formal_preconsolidation_wrist_reference"] = list(
+                    metrics["formal_payload_wrist_reference"]
+                )
+                metrics[
+                    "formal_preconsolidation_wrist_reference_sample_count"
+                ] = metrics[
+                    "formal_payload_wrist_reference_sample_count"
+                ]
+                metrics[
+                    "formal_preconsolidation_wrist_reference_statistics"
+                ] = metrics[
+                    "formal_payload_wrist_reference_statistics"
+                ]
+                metrics["formal_preconsolidation_wrist_reference_kind"] = (
+                    metrics["formal_payload_wrist_reference_kind"]
+                )
+                metrics["formal_payload_wrist_reference"] = [
+                    float(value) for value in final_wrist_reference
+                ]
+                metrics["formal_payload_wrist_reference_sample_count"] = (
+                    len(final_window_wrist_samples)
+                )
+                metrics["formal_payload_wrist_reference_kind"] = (
+                    "sequential_consolidated_quasistatic"
+                )
+                metrics["formal_payload_wrist_reference_statistics"] = (
+                    final_window_wrist_statistics
+                )
+                metrics["pre_consolidation_root_reference_signed_nm"] = [
+                    float(value)
+                    for value in np.asarray(torque_deltas, dtype=np.float64)
+                ]
+                metrics["final_window_root_mean_signed_nm"] = [
+                    float(value)
+                    for value in final_window_root_mean_signed
+                ]
+                metrics["sequential_consolidation"] = {
+                    "mode": "sequential-compliant",
+                    "threshold_label": "SIM_TUNING_ONLY_A_CANDIDATE",
+                    "completed": True,
+                    "lift_ready": True,
+                    "lift_ready_global_step": global_step,
+                    "ramp_steps": consolidation_ramp_steps,
+                    "window_steps": consolidation_window_steps,
+                    "final_stiffness_scale": float(
+                        physical_grasp.sequential
+                        .consolidation_final_stiffness_scale
+                    ),
+                    "soft_hold_stiffness_scale": float(
+                        physical_grasp.sequential
+                        .soft_hold_stiffness_scale
+                    ),
+                    "commanded_scale_monotonic": bool(
+                        sequential_command.evidence.get(
+                            "consolidation_scale_monotonic"
+                        )
+                    ),
+                    "commanded_scale_min": sequential_command.evidence.get(
+                        "consolidation_scale_min"
+                    ),
+                    "commanded_scale_max": sequential_command.evidence.get(
+                        "consolidation_scale_max"
+                    ),
+                    "applied_scale_min": applied_scale_min,
+                    "applied_scale_max": applied_scale_max,
+                    "first_window_sample_applied_scale": (
+                        first_window_sample_applied_scale
+                    ),
+                    "applied_scale_semantics": (
+                        "gains active during the observed physics step; "
+                        "next_command is what the following step applies"
+                    ),
+                    "targets_frozen_exact": bool(
+                        sequential_command.evidence.get(
+                            "targets_match_frozen"
+                        )
+                    ),
+                    "pre_consolidation_root_reference_nm": [
+                        float(value)
+                        for value in pre_consolidation_root_reference
+                    ],
+                    "final_root_reference_nm": [
+                        float(value) for value in final_root_reference
+                    ],
+                    "root_reference_delta_nm": [
+                        float(new) - float(old)
+                        for old, new in zip(
+                            pre_consolidation_root_reference,
+                            final_root_reference,
+                        )
+                    ],
+                    "pre_consolidation_wrist_reference": [
+                        float(value)
+                        for value in pre_consolidation_wrist_reference
+                    ],
+                    "final_wrist_reference": [
+                        float(value) for value in final_wrist_reference
+                    ],
+                    "wrist_reference_delta": [
+                        float(new) - float(old)
+                        for old, new in zip(
+                            pre_consolidation_wrist_reference,
+                            final_wrist_reference,
+                        )
+                    ],
+                    "consolidation_peak_wrist_force_increment_n": (
+                        final_monitor_summary[
+                            "peak_wrist_force_increment_n"
+                        ]
+                    ),
+                    "consolidation_peak_moment_safety_score_nm": (
+                        final_monitor_summary[
+                            "peak_moment_safety_score_nm"
+                        ]
+                    ),
+                    "final_window_root_statistics": (
+                        final_window_root_statistics
+                    ),
+                    "final_window_wrist_statistics": (
+                        final_window_wrist_statistics
+                    ),
+                    "final_window_sample_count": len(
+                        final_window_root_samples
+                    ),
+                }
+                metrics["pre_lift_grasp_controller_evidence"].update(
+                    {
+                        "stable_implies_lift_ready": False,
+                        "lift_ready": bool(sequential_lift_ready),
+                        "consolidation_completed": True,
+                        "consolidation_phase_final": "lift_ready",
+                        "lift_ready_global_step": global_step,
+                        "payload_reference": metrics[
+                            "formal_payload_wrist_reference"
+                        ],
+                        "payload_reference_statistics": metrics[
+                            "formal_payload_wrist_reference_statistics"
+                        ],
+                        "payload_reference_sample_count": metrics[
+                            "formal_payload_wrist_reference_sample_count"
+                        ],
+                        "preconsolidation_payload_reference": metrics[
+                            "formal_preconsolidation_wrist_reference"
+                        ],
+                        "preconsolidation_payload_reference_statistics": (
+                            metrics[
+                                "formal_preconsolidation_wrist_"
+                                "reference_statistics"
+                            ]
+                        ),
+                    }
+                )
+            else:
+                metrics["pre_lift_grasp_controller_evidence"].update(
+                    {
+                        "stable_implies_lift_ready": False,
+                        "lift_ready": None,
+                        "consolidation_not_applicable": True,
+                    }
+                )
+
+            if (
+                physical_grasp.pre_lift_realized_state_rebase.enabled
+                and arguments.physical_grasp_method
+                == "sequential-compliant"
+                and not arguments.empty_hand_first_stage_diagnostic
+            ):
+                rebase = physical_grasp.pre_lift_realized_state_rebase
+                rebase_target_arm_before = current_arm_target.copy()
+                rebase_realized_arm = np.asarray(
+                    positions[arm_indices], dtype=np.float64
+                ).copy()
+                rebase_target_tcp_before = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(
+                            float(value)
+                            for value in rebase_target_arm_before
+                        )
+                    ),
+                    dtype=np.float64,
+                )
+                rebase_realized_tcp_before = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(float(value) for value in rebase_realized_arm)
+                    ),
+                    dtype=np.float64,
+                )
+                try:
+                    rebase_validation = validate_realized_state_rebase(
+                        rebase_target_arm_before,
+                        rebase_realized_arm,
+                        rebase_target_tcp_before,
+                        rebase_realized_tcp_before,
+                        rebase,
+                    )
+                except ValueError as rebase_error:
+                    formal_lift_terminal = True
+                    formal_lift_failure = {
+                        "reason": "pre_lift_realized_state_rebase_invalid",
+                        "stage": 0,
+                        "stage_step": 0,
+                        "global_step": global_step,
+                        "controller_terminal": True,
+                        "phase": "pre_lift_realized_state_rebase_validate",
+                        "detail": (
+                            f"{type(rebase_error).__name__}: {rebase_error}"
+                        ),
+                    }
+                    metrics["pre_lift_realized_state_rebase"] = {
+                        "status": "FAILED_CLOSED",
+                        "failure_reason": formal_lift_failure["reason"],
+                        "failure_detail": formal_lift_failure["detail"],
+                        "robot_joint_state_only": True,
+                        "object_truth_used": False,
+                        "contact_truth_used": False,
+                    }
+                    metrics["formal_lift_stages"] = []
+                    metrics["formal_lift_monitor"] = (
+                        formal_lift_monitor.summary()
+                    )
+                    run_formal_failure_recovery()
+
+                # Reset only the robot drive target to the same-step measured
+                # robot joint state.  This is not a robot or object pose write:
+                # the next physics step simply sees zero position error at the
+                # already-realized arm configuration.  The grasp targets,
+                # physical scene, and all sensor-origin hard gates are unchanged.
+                current_arm_target = rebase_realized_arm.copy()
+                lift_start = rebase_realized_arm.copy()
+                formal_recovery_lift_start_target = (
+                    rebase_realized_arm.copy()
+                )
+                formal_lift_traversed_arm_targets = []
+                rebase_root_samples = []
+                rebase_wrist_samples = []
+                phase = "pre_lift_realized_state_rebase_reference"
+                for rebase_step in range(rebase.reference_window_steps):
+                    positions, velocities = observe_and_step(
+                        current_arm_target, current_hand_target, True
+                    )
+                    measured_efforts = sample_post_tare_efforts()
+                    root_delta = measured_efforts - tare_efforts
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(
+                                positions[arm_indices]
+                                - current_arm_target
+                            )
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    if wrist_ft_monitor_error is not None:
+                        formal_lift_monitor.fail_closed(
+                            "wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            root_delta,
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                    controller_step_records.append(
+                        {
+                            "global_step": global_step,
+                            "phase": phase,
+                            "method": arguments.physical_grasp_method,
+                            "rebase_step": rebase_step,
+                            "finger_root_torque_proxy_nm": {
+                                name: float(root_delta[index])
+                                for index, name in enumerate(FINGERS)
+                            },
+                            **formal_kinematic_step_evidence(
+                                positions,
+                                velocities,
+                                current_arm_target,
+                                current_hand_target,
+                            ),
+                            **formal_wrist_step_evidence(positions),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor
+                                .last_moment_safety_evidence
+                            ),
+                            "arm_tracking_error_rad": arm_tracking,
+                            "wrist_ft_monitor_error": (
+                                wrist_ft_monitor_error
+                            ),
+                            "stable": monitor_ok,
+                            "failed": not monitor_ok,
+                            "failure_reason": (
+                                formal_lift_monitor.failure_reason
+                            ),
+                            "robot_target_rebased_to_measured_state": True,
+                        }
+                    )
+                    if not monitor_ok:
+                        formal_lift_terminal = True
+                        formal_lift_failure = {
+                            "reason": formal_lift_monitor.failure_reason,
+                            "stage": 0,
+                            "stage_step": rebase_step,
+                            "global_step": global_step,
+                            "controller_terminal": True,
+                            "phase": phase,
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor
+                                .last_moment_safety_evidence
+                            ),
+                        }
+                        metrics["pre_lift_realized_state_rebase"] = {
+                            "status": "FAILED_CLOSED",
+                            "failure_reason": formal_lift_failure["reason"],
+                            "validation": rebase_validation,
+                            "reference_steps_completed": rebase_step + 1,
+                            "sensor_origin_hard_gate_unchanged": True,
+                            "robot_joint_state_only": True,
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                        }
+                        metrics["formal_lift_stages"] = []
+                        metrics["formal_lift_monitor"] = (
+                            formal_lift_monitor.summary()
+                        )
+                        run_formal_failure_recovery()
+                    rebase_root_samples.append(root_delta.copy())
+                    rebase_wrist_samples.append(
+                        formal_latest_wrist_canonical.copy()
+                    )
+
+                rebase_root_stack = np.stack(rebase_root_samples)
+                rebase_wrist_stack = np.stack(rebase_wrist_samples)
+                rebase_root_mean_signed = np.mean(
+                    rebase_root_stack, axis=0
+                )
+                rebase_root_reference = tuple(
+                    max(abs(float(value)), 1.0e-6)
+                    for value in rebase_root_mean_signed
+                )
+                rebase_wrist_reference = np.asarray(
+                    np.mean(rebase_wrist_stack, axis=0),
+                    dtype=np.float64,
+                )
+                normalized_root = (
+                    np.abs(rebase_root_mean_signed)
+                    / np.asarray(
+                        physical_grasp.sequential.load_scale_nm,
+                        dtype=np.float64,
+                    )
+                )
+                rebase_entry_load_imbalance = float(
+                    np.max(normalized_root) - np.min(normalized_root)
+                )
+                rebase_entry_moment_scores = [
+                    float(
+                        evaluate_wrist_moment_safety(
+                            sample[3:],
+                            rebase_wrist_reference[3:],
+                            physical_grasp.stability
+                            .maximum_wrist_moment_nm,
+                        )["gate_score_nm"]
+                    )
+                    for sample in rebase_wrist_stack
+                ]
+                rebase_entry_force_scores = [
+                    float(
+                        np.linalg.norm(
+                            sample[:3] - rebase_wrist_reference[:3]
+                        )
+                    )
+                    for sample in rebase_wrist_stack
+                ]
+                rebase_maximum_entry_moment_score = max(
+                    rebase_entry_moment_scores
+                )
+                rebase_maximum_entry_force_score = max(
+                    rebase_entry_force_scores
+                )
+                rebase_failure_reason = None
+                if (
+                    rebase_entry_load_imbalance
+                    > rebase.maximum_entry_load_imbalance
+                ):
+                    rebase_failure_reason = (
+                        "pre_lift_rebase_entry_load_imbalance"
+                    )
+                elif (
+                    rebase_maximum_entry_moment_score
+                    > rebase.maximum_entry_moment_score_nm
+                ):
+                    rebase_failure_reason = (
+                        "pre_lift_rebase_entry_moment_score"
+                    )
+                elif (
+                    rebase_maximum_entry_force_score
+                    > physical_grasp.stability.maximum_wrist_force_n
+                ):
+                    rebase_failure_reason = (
+                        "pre_lift_rebase_entry_force_score"
+                    )
+                if rebase_failure_reason is not None:
+                    formal_lift_terminal = True
+                    formal_lift_failure = {
+                        "reason": rebase_failure_reason,
+                        "stage": 0,
+                        "stage_step": rebase.reference_window_steps - 1,
+                        "global_step": global_step,
+                        "controller_terminal": True,
+                        "phase": phase,
+                    }
+                    metrics["pre_lift_realized_state_rebase"] = {
+                        "status": "FAILED_CLOSED",
+                        "failure_reason": rebase_failure_reason,
+                        "validation": rebase_validation,
+                        "entry_load_imbalance": (
+                            rebase_entry_load_imbalance
+                        ),
+                        "maximum_entry_moment_score_nm": (
+                            rebase_maximum_entry_moment_score
+                        ),
+                        "maximum_entry_force_increment_n": (
+                            rebase_maximum_entry_force_score
+                        ),
+                        "sensor_origin_hard_gate_unchanged": True,
+                        "robot_joint_state_only": True,
+                        "object_truth_used": False,
+                        "contact_truth_used": False,
+                    }
+                    metrics["formal_lift_stages"] = []
+                    metrics["formal_lift_monitor"] = (
+                        formal_lift_monitor.summary()
+                    )
+                    run_formal_failure_recovery()
+
+                metrics["formal_pre_rebase_wrist_reference"] = list(
+                    metrics["formal_payload_wrist_reference"]
+                )
+                formal_lift_monitor = GraspStabilityMonitor(
+                    physical_grasp.stability,
+                    reference_load_nm=rebase_root_reference,
+                    load_scale_nm=(
+                        physical_grasp.sequential.load_scale_nm
+                    ),
+                    sample_period_s=1.0 / rate_hz,
+                    wrist_reference=rebase_wrist_reference,
+                )
+                formal_wrist_payload_reference = (
+                    rebase_wrist_reference.copy()
+                )
+                formal_latest_wrist_payload_increment = np.asarray(
+                    wrist_payload_increment(
+                        formal_latest_wrist_canonical,
+                        formal_wrist_payload_reference,
+                    ),
+                    dtype=np.float64,
+                )
+                metrics["formal_payload_wrist_reference"] = [
+                    float(value) for value in rebase_wrist_reference
+                ]
+                metrics["formal_payload_wrist_reference_sample_count"] = (
+                    len(rebase_wrist_samples)
+                )
+                metrics["formal_payload_wrist_reference_kind"] = (
+                    "pre_lift_realized_state_rebase_quasistatic"
+                )
+                metrics["formal_payload_wrist_reference_statistics"] = (
+                    reference_window_statistics(rebase_wrist_stack)
+                )
+                metrics["pre_lift_realized_state_rebase"] = {
+                    "status": "REBASED_LIFT_READY",
+                    "threshold_label": rebase.threshold_label,
+                    "validation": rebase_validation,
+                    "reference_window_steps": (
+                        rebase.reference_window_steps
+                    ),
+                    "final_root_reference_nm": [
+                        float(value) for value in rebase_root_reference
+                    ],
+                    "final_wrist_reference": [
+                        float(value) for value in rebase_wrist_reference
+                    ],
+                    "entry_load_imbalance": (
+                        rebase_entry_load_imbalance
+                    ),
+                    "maximum_entry_moment_score_nm": (
+                        rebase_maximum_entry_moment_score
+                    ),
+                    "maximum_entry_force_increment_n": (
+                        rebase_maximum_entry_force_score
+                    ),
+                    "sensor_origin_hard_gate_unchanged": True,
+                    "robot_joint_state_only": True,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "post_physics_object_pose_writes": 0,
+                }
+                metrics["pre_lift_grasp_controller_evidence"].update(
+                    {
+                        "pre_lift_realized_state_rebase_completed": True,
+                        "pre_lift_entry_moment_score_nm": (
+                            rebase_maximum_entry_moment_score
+                        ),
+                        "pre_lift_entry_load_imbalance": (
+                            rebase_entry_load_imbalance
+                        ),
+                        "payload_reference": metrics[
+                            "formal_payload_wrist_reference"
+                        ],
+                        "payload_reference_statistics": metrics[
+                            "formal_payload_wrist_reference_statistics"
+                        ],
+                        "payload_reference_sample_count": metrics[
+                            "formal_payload_wrist_reference_sample_count"
+                        ],
+                    }
+                )
+
+            if (
+                physical_grasp.pre_lift_arm_drive_compliance.enabled
+                and arguments.physical_grasp_method
+                == "sequential-compliant"
+                and not arguments.empty_hand_first_stage_diagnostic
+            ):
+                # B-V2-H6 retains its robot-arm gain change.  When the strict
+                # B-V2-H7 contract is enabled, the same 240-step window also
+                # changes only the three loaded finger-joint damping values
+                # from the one RUN08-derived value; targets and stiffness are
+                # untouched. Capture
+                # the existing position-drive effort from robot state and
+                # preserve it algebraically while Kp follows one bounded
+                # minimum-jerk transition.  No object/contact truth enters
+                # this controller, and the original sensor-origin hard gate
+                # remains active on every physics step.
+                compliance = (
+                    physical_grasp.pre_lift_arm_drive_compliance
+                )
+                nominal_arm_stiffness = float(pick.robot.arm_stiffness)
+                nominal_arm_damping = float(pick.robot.arm_damping)
+                compliance_initial_arm = np.asarray(
+                    positions[arm_indices], dtype=np.float64
+                ).copy()
+                compliance_initial_target = current_arm_target.copy()
+                compliance_position_preload = (
+                    capture_position_preload_nm(
+                        compliance_initial_target,
+                        compliance_initial_arm,
+                        nominal_arm_stiffness,
+                    )
+                )
+                compliance_transition_records = []
+                compliance_stability_root_samples = []
+                compliance_stability_wrist_samples = []
+                compliance_transition_peak_moment_score = 0.0
+                compliance_transition_peak_force_increment = 0.0
+                compliance_maximum_gain_readback_error = 0.0
+                compliance_maximum_effort_residual = 0.0
+                compliance_maximum_target_bias = 0.0
+                finger_damping = (
+                    physical_grasp.post_contact_finger_damping
+                )
+                finger_damping_hand_local_indices = np.asarray(
+                    select_post_contact_damping_hand_indices(
+                        tuple(pick.robot.active_hand_joint_names),
+                        tuple(
+                            int(index)
+                            for index in formal_finger_hand_indices
+                        ),
+                        finger_damping,
+                    ),
+                    dtype=np.int32,
+                )
+                finger_damping_dof_indices = hand_indices[
+                    finger_damping_hand_local_indices
+                ]
+                finger_damping_joint_names = tuple(
+                    pick.robot.active_hand_joint_names[int(index)]
+                    for index in finger_damping_hand_local_indices
+                )
+                finger_damping_transition_records = []
+                finger_damping_maximum_readback_error = 0.0
+
+                def fail_arm_drive_compliance(
+                    reason, phase_name, local_step, detail
+                ):
+                    nonlocal formal_lift_terminal
+                    nonlocal formal_lift_failure
+                    formal_lift_terminal = True
+                    formal_lift_failure = {
+                        "reason": reason,
+                        "stage": 0,
+                        "stage_step": local_step,
+                        "global_step": global_step,
+                        "controller_terminal": True,
+                        "phase": phase_name,
+                        "detail": detail,
+                        "wrist_moment_safety_evidence": dict(
+                            formal_lift_monitor
+                            .last_moment_safety_evidence
+                        ),
+                    }
+                    metrics["pre_lift_arm_drive_compliance"] = {
+                        "status": "FAILED_CLOSED",
+                        "failure_reason": reason,
+                        "failure_detail": detail,
+                        "transition_records_completed": len(
+                            compliance_transition_records
+                        ),
+                        "stability_records_completed": len(
+                            compliance_stability_root_samples
+                        ),
+                        "maximum_gain_readback_error": (
+                            compliance_maximum_gain_readback_error
+                        ),
+                        "maximum_position_effort_residual_nm": (
+                            compliance_maximum_effort_residual
+                        ),
+                        "maximum_target_bias_rad": (
+                            compliance_maximum_target_bias
+                        ),
+                        "transition_peak_moment_score_nm": (
+                            compliance_transition_peak_moment_score
+                        ),
+                        "transition_peak_force_increment_n": (
+                            compliance_transition_peak_force_increment
+                        ),
+                        "sensor_origin_hard_gate_unchanged": True,
+                        "payload_reference_rebased": False,
+                        "robot_joint_state_only": True,
+                        "object_truth_used": False,
+                        "contact_truth_used": False,
+                    }
+                    if finger_damping.enabled:
+                        metrics["post_contact_finger_damping"] = {
+                            "status": "FAILED_CLOSED",
+                            "failure_reason": reason,
+                            "threshold_label": finger_damping.threshold_label,
+                            "source_run_id": finger_damping.source_run_id,
+                            "damped_joint_names": list(
+                                finger_damping_joint_names
+                            ),
+                            "formal_finger_root_channels_unchanged": True,
+                            "transition_records_completed": len(
+                                finger_damping_transition_records
+                            ),
+                            "maximum_readback_error": (
+                                finger_damping_maximum_readback_error
+                            ),
+                            "sensor_origin_hard_gate_unchanged": True,
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                        }
+                    metrics["formal_lift_stages"] = []
+                    metrics["formal_lift_monitor"] = (
+                        formal_lift_monitor.summary()
+                    )
+                    run_formal_failure_recovery()
+
+                phase = "pre_lift_arm_drive_compliance_transition"
+                for compliance_step in range(
+                    compliance.transition_steps
+                ):
+                    realized_before_step = np.asarray(
+                        positions[arm_indices], dtype=np.float64
+                    ).copy()
+                    try:
+                        gain_step = derive_bumpless_drive_step(
+                            realized_before_step,
+                            compliance_position_preload,
+                            nominal_arm_stiffness,
+                            nominal_arm_damping,
+                            compliance_step,
+                            compliance,
+                        )
+                    except ValueError as compliance_error:
+                        fail_arm_drive_compliance(
+                            "arm_drive_compliance_derivation_invalid",
+                            phase,
+                            compliance_step,
+                            f"{type(compliance_error).__name__}: "
+                            f"{compliance_error}",
+                        )
+                    current_arm_target = np.asarray(
+                        gain_step["target_arm_rad"], dtype=np.float64
+                    )
+                    formal_recovery_lift_start_target = (
+                        current_arm_target.copy()
+                    )
+                    kps[arm_indices] = gain_step["applied_stiffness"]
+                    kds[arm_indices] = gain_step["applied_damping"]
+                    finger_damping_step = None
+                    if finger_damping.enabled:
+                        finger_damping_step = (
+                            derive_post_contact_finger_damping_step(
+                                compliance_step, finger_damping
+                            )
+                        )
+                        kds[finger_damping_dof_indices] = finger_damping_step[
+                            "applied_damping_nm_s_rad"
+                        ]
+                    controller.set_gains(
+                        kps=kps, kds=kds, save_to_usd=False
+                    )
+                    readback_kps, readback_kds = controller.get_gains()
+                    readback_kps = np.asarray(
+                        readback_kps, dtype=np.float64
+                    )
+                    readback_kds = np.asarray(
+                        readback_kds, dtype=np.float64
+                    )
+                    gain_readback_error = max(
+                        float(
+                            np.max(
+                                np.abs(
+                                    readback_kps[arm_indices]
+                                    - gain_step["applied_stiffness"]
+                                )
+                            )
+                        ),
+                        float(
+                            np.max(
+                                np.abs(
+                                    readback_kds[arm_indices]
+                                    - gain_step["applied_damping"]
+                                )
+                            )
+                        ),
+                    )
+                    finger_damping_readback_error = 0.0
+                    if finger_damping_step is not None:
+                        finger_damping_readback_error = float(
+                            np.max(
+                                np.abs(
+                                    readback_kds[finger_damping_dof_indices]
+                                    - finger_damping_step[
+                                        "applied_damping_nm_s_rad"
+                                    ]
+                                )
+                            )
+                        )
+                        finger_damping_maximum_readback_error = max(
+                            finger_damping_maximum_readback_error,
+                            finger_damping_readback_error,
+                        )
+                    compliance_maximum_gain_readback_error = max(
+                        compliance_maximum_gain_readback_error,
+                        gain_readback_error,
+                    )
+                    positions, velocities = observe_and_step(
+                        current_arm_target, current_hand_target, True
+                    )
+                    measured_efforts = sample_post_tare_efforts()
+                    root_delta = measured_efforts - tare_efforts
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(
+                                positions[arm_indices]
+                                - current_arm_target
+                            )
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    if wrist_ft_monitor_error is not None:
+                        formal_lift_monitor.fail_closed(
+                            "wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            root_delta,
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                    if gain_readback_error > 0.1:
+                        formal_lift_monitor.fail_closed(
+                            "arm_drive_gain_readback_mismatch"
+                        )
+                        monitor_ok = False
+                    if (
+                        finger_damping_step is not None
+                        and finger_damping_readback_error
+                        > finger_damping.maximum_readback_error
+                    ):
+                        formal_lift_monitor.fail_closed(
+                            "finger_damping_gain_readback_mismatch"
+                        )
+                        monitor_ok = False
+                    compliance_maximum_effort_residual = max(
+                        compliance_maximum_effort_residual,
+                        float(
+                            gain_step[
+                                "maximum_position_effort_residual_nm"
+                            ]
+                        ),
+                    )
+                    compliance_maximum_target_bias = max(
+                        compliance_maximum_target_bias,
+                        float(gain_step["maximum_target_bias_rad"]),
+                    )
+                    moment_score = float(
+                        formal_lift_monitor
+                        .last_moment_safety_evidence["gate_score_nm"]
+                    )
+                    force_increment = float(
+                        np.linalg.norm(
+                            formal_latest_wrist_payload_increment[:3]
+                        )
+                    )
+                    compliance_transition_peak_moment_score = max(
+                        compliance_transition_peak_moment_score,
+                        moment_score,
+                    )
+                    compliance_transition_peak_force_increment = max(
+                        compliance_transition_peak_force_increment,
+                        force_increment,
+                    )
+                    compliance_transition_records.append(
+                        {
+                            "global_step": global_step,
+                            "transition_step": compliance_step,
+                            "applied_stiffness": gain_step[
+                                "applied_stiffness"
+                            ],
+                            "applied_damping": gain_step[
+                                "applied_damping"
+                            ],
+                            "maximum_target_bias_rad": gain_step[
+                                "maximum_target_bias_rad"
+                            ],
+                            "maximum_position_effort_residual_nm": (
+                                gain_step[
+                                    "maximum_position_effort_residual_nm"
+                                ]
+                            ),
+                            "gain_readback_error": gain_readback_error,
+                            "moment_score_nm": moment_score,
+                            "force_increment_n": force_increment,
+                        }
+                    )
+                    if finger_damping_step is not None:
+                        finger_damping_transition_records.append(
+                            {
+                                **finger_damping_step,
+                                "global_step": global_step,
+                                "readback_error": (
+                                    finger_damping_readback_error
+                                ),
+                                "damped_joint_names": list(
+                                    finger_damping_joint_names
+                                ),
+                            }
+                        )
+                    controller_step_records.append(
+                        {
+                            "global_step": global_step,
+                            "phase": phase,
+                            "method": arguments.physical_grasp_method,
+                            "compliance_transition_step": compliance_step,
+                            "arm_drive_stiffness": gain_step[
+                                "applied_stiffness"
+                            ],
+                            "arm_drive_damping": gain_step[
+                                "applied_damping"
+                            ],
+                            "arm_drive_gain_readback_error": (
+                                gain_readback_error
+                            ),
+                            "arm_drive_position_effort_residual_nm": (
+                                gain_step[
+                                    "maximum_position_effort_residual_nm"
+                                ]
+                            ),
+                            "arm_drive_target_bias_rad": gain_step[
+                                "target_bias_rad"
+                            ],
+                            "finger_drive_damping_nm_s_rad": (
+                                None
+                                if finger_damping_step is None
+                                else finger_damping_step[
+                                    "applied_damping_nm_s_rad"
+                                ]
+                            ),
+                            "finger_drive_damping_readback_error": (
+                                finger_damping_readback_error
+                            ),
+                            "finger_drive_damping_joint_names": list(
+                                finger_damping_joint_names
+                            ),
+                            "finger_root_torque_proxy_nm": {
+                                name: float(root_delta[index])
+                                for index, name in enumerate(FINGERS)
+                            },
+                            **formal_kinematic_step_evidence(
+                                positions,
+                                velocities,
+                                current_arm_target,
+                                current_hand_target,
+                            ),
+                            **formal_wrist_step_evidence(positions),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor
+                                .last_moment_safety_evidence
+                            ),
+                            "arm_tracking_error_rad": arm_tracking,
+                            "wrist_ft_monitor_error": (
+                                wrist_ft_monitor_error
+                            ),
+                            "stable": monitor_ok,
+                            "failed": not monitor_ok,
+                            "failure_reason": (
+                                formal_lift_monitor.failure_reason
+                            ),
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                        }
+                    )
+                    if not monitor_ok:
+                        fail_arm_drive_compliance(
+                            formal_lift_monitor.failure_reason,
+                            phase,
+                            compliance_step,
+                            "sensor hard gate, grasp stability or gain "
+                            "readback failed during H6 transition",
+                        )
+
+                final_compliant_stiffness = (
+                    nominal_arm_stiffness
+                    * compliance.stiffness_scale
+                )
+                final_compliant_damping = (
+                    nominal_arm_damping * compliance.damping_scale
+                )
+                phase = "pre_lift_arm_drive_compliance_stability"
+                for stability_step in range(
+                    compliance.stability_window_steps
+                ):
+                    try:
+                        drive_target = compliant_path_drive_target(
+                            positions[arm_indices],
+                            compliance_position_preload,
+                            nominal_arm_stiffness,
+                            compliance,
+                        )
+                    except ValueError as compliance_error:
+                        fail_arm_drive_compliance(
+                            "arm_drive_compliance_path_invalid",
+                            phase,
+                            stability_step,
+                            f"{type(compliance_error).__name__}: "
+                            f"{compliance_error}",
+                        )
+                    current_arm_target = np.asarray(
+                        drive_target["target_arm_rad"],
+                        dtype=np.float64,
+                    )
+                    formal_recovery_lift_start_target = (
+                        current_arm_target.copy()
+                    )
+                    positions, velocities = observe_and_step(
+                        current_arm_target, current_hand_target, True
+                    )
+                    measured_efforts = sample_post_tare_efforts()
+                    root_delta = measured_efforts - tare_efforts
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(
+                                positions[arm_indices]
+                                - current_arm_target
+                            )
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    if wrist_ft_monitor_error is not None:
+                        formal_lift_monitor.fail_closed(
+                            "wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            root_delta,
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                    compliance_stability_root_samples.append(
+                        root_delta.copy()
+                    )
+                    compliance_stability_wrist_samples.append(
+                        formal_latest_wrist_canonical.copy()
+                    )
+                    controller_step_records.append(
+                        {
+                            "global_step": global_step,
+                            "phase": phase,
+                            "method": arguments.physical_grasp_method,
+                            "compliance_stability_step": stability_step,
+                            "arm_drive_stiffness": (
+                                final_compliant_stiffness
+                            ),
+                            "arm_drive_damping": final_compliant_damping,
+                            "arm_drive_target_bias_rad": drive_target[
+                                "target_bias_rad"
+                            ],
+                            "finger_drive_damping_nm_s_rad": (
+                                finger_damping.final_damping_nm_s_rad
+                                if finger_damping.enabled
+                                else pick.motion.grip_hand_damping
+                            ),
+                            "finger_root_torque_proxy_nm": {
+                                name: float(root_delta[index])
+                                for index, name in enumerate(FINGERS)
+                            },
+                            **formal_kinematic_step_evidence(
+                                positions,
+                                velocities,
+                                current_arm_target,
+                                current_hand_target,
+                            ),
+                            **formal_wrist_step_evidence(positions),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor
+                                .last_moment_safety_evidence
+                            ),
+                            "arm_tracking_error_rad": arm_tracking,
+                            "wrist_ft_monitor_error": (
+                                wrist_ft_monitor_error
+                            ),
+                            "stable": monitor_ok,
+                            "failed": not monitor_ok,
+                            "failure_reason": (
+                                formal_lift_monitor.failure_reason
+                            ),
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                        }
+                    )
+                    if not monitor_ok:
+                        fail_arm_drive_compliance(
+                            formal_lift_monitor.failure_reason,
+                            phase,
+                            stability_step,
+                            "sensor hard gate or grasp stability failed "
+                            "during H6 stability window",
+                        )
+
+                compliance_root_stack = np.stack(
+                    compliance_stability_root_samples
+                )
+                compliance_wrist_stack = np.stack(
+                    compliance_stability_wrist_samples
+                )
+                compliance_root_mean = np.mean(
+                    compliance_root_stack, axis=0
+                )
+                compliance_normalized_root = (
+                    np.abs(compliance_root_mean)
+                    / np.asarray(
+                        physical_grasp.sequential.load_scale_nm,
+                        dtype=np.float64,
+                    )
+                )
+                compliance_entry_load_imbalance = float(
+                    np.max(compliance_normalized_root)
+                    - np.min(compliance_normalized_root)
+                )
+                compliance_entry_moment_scores = [
+                    float(
+                        evaluate_wrist_moment_safety(
+                            tuple(
+                                float(value) for value in sample[3:]
+                            ),
+                            tuple(
+                                float(value)
+                                for value in formal_wrist_payload_reference[3:]
+                            ),
+                            physical_grasp.stability
+                            .maximum_wrist_moment_nm,
+                        )["gate_score_nm"]
+                    )
+                    for sample in compliance_wrist_stack
+                ]
+                compliance_entry_moment_score = max(
+                    compliance_entry_moment_scores
+                )
+                if (
+                    compliance_entry_load_imbalance
+                    > compliance.maximum_entry_load_imbalance
+                ):
+                    fail_arm_drive_compliance(
+                        "arm_drive_compliance_entry_load_imbalance",
+                        phase,
+                        compliance.stability_window_steps - 1,
+                        "H6 final stability-window load imbalance "
+                        "exceeds the 0.18 entry gate",
+                    )
+                if (
+                    compliance_entry_moment_score
+                    > compliance.maximum_entry_moment_score_nm
+                ):
+                    fail_arm_drive_compliance(
+                        "arm_drive_compliance_entry_moment_score",
+                        phase,
+                        compliance.stability_window_steps - 1,
+                        "H6 final stability-window moment score exceeds "
+                        "the 0.24 entry gate",
+                    )
+
+                formal_lift_compliant_path_arm = np.asarray(
+                    positions[arm_indices], dtype=np.float64
+                ).copy()
+                final_drive_target = compliant_path_drive_target(
+                    formal_lift_compliant_path_arm,
+                    compliance_position_preload,
+                    nominal_arm_stiffness,
+                    compliance,
+                )
+                current_arm_target = np.asarray(
+                    final_drive_target["target_arm_rad"],
+                    dtype=np.float64,
+                )
+                formal_lift_arm_drive_bias = np.asarray(
+                    final_drive_target["target_bias_rad"],
+                    dtype=np.float64,
+                )
+                formal_lift_compliant_position_preload = (
+                    compliance_position_preload.copy()
+                )
+                lift_start = formal_lift_compliant_path_arm.copy()
+                formal_recovery_lift_start_target = (
+                    current_arm_target.copy()
+                )
+                formal_lift_traversed_arm_targets = []
+                final_readback_kps, final_readback_kds = (
+                    controller.get_gains()
+                )
+                final_readback_kps = np.asarray(
+                    final_readback_kps, dtype=np.float64
+                )
+                final_readback_kds = np.asarray(
+                    final_readback_kds, dtype=np.float64
+                )
+                metrics["pre_lift_arm_drive_compliance"] = {
+                    "status": "COMPLIANT_LIFT_READY",
+                    "threshold_label": compliance.threshold_label,
+                    "nominal_arm_stiffness": nominal_arm_stiffness,
+                    "nominal_arm_damping": nominal_arm_damping,
+                    "final_arm_stiffness": final_compliant_stiffness,
+                    "final_arm_damping": final_compliant_damping,
+                    "final_arm_stiffness_readback": [
+                        float(value)
+                        for value in final_readback_kps[arm_indices]
+                    ],
+                    "final_arm_damping_readback": [
+                        float(value)
+                        for value in final_readback_kds[arm_indices]
+                    ],
+                    "transition_steps": compliance.transition_steps,
+                    "stability_window_steps": (
+                        compliance.stability_window_steps
+                    ),
+                    "position_preload_nm": [
+                        float(value)
+                        for value in compliance_position_preload
+                    ],
+                    "final_target_bias_rad": [
+                        float(value)
+                        for value in formal_lift_arm_drive_bias
+                    ],
+                    "maximum_target_bias_rad": (
+                        compliance_maximum_target_bias
+                    ),
+                    "maximum_position_effort_residual_nm": (
+                        compliance_maximum_effort_residual
+                    ),
+                    "maximum_gain_readback_error": (
+                        compliance_maximum_gain_readback_error
+                    ),
+                    "transition_peak_moment_score_nm": (
+                        compliance_transition_peak_moment_score
+                    ),
+                    "transition_peak_force_increment_n": (
+                        compliance_transition_peak_force_increment
+                    ),
+                    "entry_load_imbalance": (
+                        compliance_entry_load_imbalance
+                    ),
+                    "entry_moment_score_nm": (
+                        compliance_entry_moment_score
+                    ),
+                    "payload_reference_rebased": False,
+                    "sensor_origin_hard_gate_unchanged": True,
+                    "robot_joint_state_only": True,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "post_physics_object_pose_writes": 0,
+                }
+                if finger_damping.enabled:
+                    final_finger_damping_readback = [
+                        float(value)
+                        for value in final_readback_kds[
+                            finger_damping_dof_indices
+                        ]
+                    ]
+                    metrics["post_contact_finger_damping"] = {
+                        "status": "DAMPED_LIFT_READY",
+                        "threshold_label": finger_damping.threshold_label,
+                        "source_run_id": finger_damping.source_run_id,
+                        "include_preshape_joint": (
+                            finger_damping.include_preshape_joint
+                        ),
+                        "preshape_joint_name": (
+                            finger_damping.preshape_joint_name
+                        ),
+                        "preshape_extension_source_run_id": (
+                            finger_damping
+                            .preshape_extension_source_run_id
+                        ),
+                        "damped_joint_names": list(
+                            finger_damping_joint_names
+                        ),
+                        "source_load_increment_nm": (
+                            finger_damping.source_load_increment_nm
+                        ),
+                        "source_speed_rad_s": (
+                            finger_damping.source_speed_rad_s
+                        ),
+                        "initial_damping_nm_s_rad": (
+                            finger_damping.initial_damping_nm_s_rad
+                        ),
+                        "final_damping_nm_s_rad": (
+                            finger_damping.final_damping_nm_s_rad
+                        ),
+                        "transition_steps": finger_damping.transition_steps,
+                        "transition_records_completed": len(
+                            finger_damping_transition_records
+                        ),
+                        "final_readback_nm_s_rad": (
+                            final_finger_damping_readback
+                        ),
+                        "maximum_readback_error": (
+                            finger_damping_maximum_readback_error
+                        ),
+                        "finger_joint_count": len(
+                            finger_damping_joint_names
+                        ),
+                        "formal_finger_root_channels_unchanged": True,
+                        "finger_targets_modified": False,
+                        "finger_stiffness_modified": False,
+                        "sensor_origin_hard_gate_unchanged": True,
+                        "object_truth_used": False,
+                        "contact_truth_used": False,
+                        "post_physics_object_pose_writes": 0,
+                    }
+                metrics["pre_lift_grasp_controller_evidence"].update(
+                    {
+                        "pre_lift_arm_drive_compliance_completed": True,
+                        "pre_lift_entry_moment_score_nm": (
+                            compliance_entry_moment_score
+                        ),
+                        "pre_lift_entry_load_imbalance": (
+                            compliance_entry_load_imbalance
+                        ),
+                        "payload_reference_rebased_by_h6": False,
+                    }
+                )
+
+            if gravity_transfer_diagnostic_mode:
+                # B-V2-H15 diagnostic only.  H6 showed that retaining the
+                # captured position preload is statically safe, while RUN14
+                # and RUN15 showed that adding a lift path underneath that
+                # entire fixed bias leaves a 5.41 mm TCP realization gap.
+                # Transfer only the model-computed gravity component from the
+                # H6 position error into the ordinary PhysX actuation-force
+                # channel.  At every transition state:
+                #   K * bias + gravity_feedforward == captured H6 preload.
+                # Thus the diagnostic changes the representation of the
+                # already-carried load without a commanded lift or force step.
+                transfer = (
+                    physical_grasp.pre_lift_gravity_preload_transfer
+                )
+                if (
+                    arguments.physical_grasp_method
+                    != "sequential-compliant"
+                    or formal_lift_compliant_path_arm is None
+                    or formal_lift_compliant_position_preload is None
+                    or formal_lift_arm_drive_bias is None
+                ):
+                    raise RuntimeError(
+                        "H15 gravity transfer requires completed H6 "
+                        "sequential-compliant preparation"
+                    )
+                compliant_stiffness = float(
+                    pick.robot.arm_stiffness * compliance.stiffness_scale
+                )
+                actuator_effort_limits = np.asarray(
+                    controller.get_max_efforts(), dtype=np.float64
+                )[arm_indices]
+                if (
+                    actuator_effort_limits.shape != (7,)
+                    or not np.all(np.isfinite(actuator_effort_limits))
+                    or np.any(actuator_effort_limits <= 0.0)
+                ):
+                    raise RuntimeError(
+                        "H15 actuator effort limit readback is invalid"
+                    )
+                initial_applied_effort = np.asarray(
+                    robot.get_applied_joint_efforts(
+                        joint_indices=arm_indices
+                    ),
+                    dtype=np.float64,
+                )
+                if (
+                    initial_applied_effort.shape != (7,)
+                    or not np.all(np.isfinite(initial_applied_effort))
+                    or float(np.max(np.abs(initial_applied_effort)))
+                    > transfer.maximum_effort_readback_error_nm
+                ):
+                    raise RuntimeError(
+                        "H15 requires a zero explicit arm-effort starting state"
+                    )
+
+                def sample_h15_generalized_gravity():
+                    # Isaac Sim 6.0.1 exposes generalized gravity on the
+                    # articulation view, not on SingleArticulation.  This is
+                    # robot model/state dynamics only; no environment or
+                    # task-event feedback enters this calculation.
+                    values = np.asarray(
+                        robot._articulation_view.get_generalized_gravity_forces(
+                            joint_indices=arm_indices
+                        ),
+                        dtype=np.float64,
+                    )
+                    if values.shape == (1, 7):
+                        values = values[0]
+                    if values.shape != (7,) or not np.all(np.isfinite(values)):
+                        raise RuntimeError(
+                            "H15 generalized gravity readback is invalid"
+                        )
+                    return values.copy()
+
+                h15_preload = np.asarray(
+                    formal_lift_compliant_position_preload,
+                    dtype=np.float64,
+                ).copy()
+                h15_initial_positions = np.asarray(
+                    positions[arm_indices], dtype=np.float64
+                ).copy()
+                h15_initial_target = current_arm_target.copy()
+                h15_initial_target_gap = float(
+                    np.max(
+                        np.abs(h15_initial_target - h15_initial_positions)
+                    )
+                )
+                h15_initial_target_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(float(value) for value in h15_initial_target)
+                    ),
+                    dtype=np.float64,
+                )
+                h15_initial_actual_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(float(value) for value in h15_initial_positions)
+                    ),
+                    dtype=np.float64,
+                )
+                h15_initial_tcp_gap = float(
+                    np.linalg.norm(
+                        h15_initial_target_tcp[:3, 3]
+                        - h15_initial_actual_tcp[:3, 3]
+                    )
+                )
+                formal_arm_feedforward_effort = np.zeros(
+                    7, dtype=np.float64
+                )
+                h15_transition_records = []
+                h15_stability_records = []
+                h15_stability_root_samples = []
+                h15_stability_wrist_samples = []
+                h15_maximum_effort_readback_error = 0.0
+                h15_maximum_feedforward_step = 0.0
+                h15_maximum_continuity_residual = 0.0
+                h15_maximum_target_bias = h15_initial_target_gap
+                h15_peak_moment_score = 0.0
+                h15_peak_force_increment = 0.0
+                h15_actual_tcp_z_samples = [
+                    float(h15_initial_actual_tcp[2, 3])
+                ]
+
+                def fail_h15(reason, phase_name, local_step, detail):
+                    nonlocal formal_lift_terminal
+                    nonlocal formal_lift_failure
+                    formal_lift_terminal = True
+                    formal_lift_failure = {
+                        "reason": reason,
+                        "stage": 0,
+                        "stage_step": int(local_step),
+                        "global_step": int(global_step),
+                        "controller_terminal": True,
+                        "phase": phase_name,
+                        "detail": detail,
+                        "wrist_moment_safety_evidence": dict(
+                            formal_lift_monitor.last_moment_safety_evidence
+                        ),
+                    }
+                    metrics["pre_lift_gravity_preload_transfer"] = {
+                        "status": "FAILED_CLOSED",
+                        "classification": reason,
+                        "failure_detail": detail,
+                        "diagnostic_only": True,
+                        "dynamic_pass_claimed": False,
+                        "transition_records_completed": len(
+                            h15_transition_records
+                        ),
+                        "stability_records_completed": len(
+                            h15_stability_records
+                        ),
+                        "maximum_effort_readback_error_nm": (
+                            h15_maximum_effort_readback_error
+                        ),
+                        "maximum_feedforward_step_nm": (
+                            h15_maximum_feedforward_step
+                        ),
+                        "maximum_effort_continuity_residual_nm": (
+                            h15_maximum_continuity_residual
+                        ),
+                        "maximum_target_bias_rad": h15_maximum_target_bias,
+                        "peak_moment_score_nm": h15_peak_moment_score,
+                        "peak_force_increment_n": (
+                            h15_peak_force_increment
+                        ),
+                        "sensor_origin_hard_gate_unchanged": True,
+                        "robot_joint_state_and_dynamics_only": True,
+                        "object_truth_used": False,
+                        "contact_truth_used": False,
+                        "object_pose_written": False,
+                    }
+                    metrics["formal_lift_stages"] = []
+                    metrics["formal_lift_monitor"] = (
+                        formal_lift_monitor.summary()
+                    )
+                    run_formal_failure_recovery()
+
+                def apply_h15_step(drive_step, phase_name, local_step):
+                    nonlocal positions
+                    nonlocal velocities
+                    nonlocal current_arm_target
+                    nonlocal formal_recovery_lift_start_target
+                    nonlocal formal_arm_feedforward_effort
+                    nonlocal h15_maximum_effort_readback_error
+                    nonlocal h15_maximum_feedforward_step
+                    nonlocal h15_maximum_continuity_residual
+                    nonlocal h15_maximum_target_bias
+                    nonlocal h15_peak_moment_score
+                    nonlocal h15_peak_force_increment
+                    current_arm_target = np.asarray(
+                        drive_step["target_arm_rad"], dtype=np.float64
+                    )
+                    formal_recovery_lift_start_target = (
+                        current_arm_target.copy()
+                    )
+                    formal_arm_feedforward_effort = np.asarray(
+                        drive_step["gravity_feedforward_nm"],
+                        dtype=np.float64,
+                    )
+                    if np.any(
+                        np.abs(formal_arm_feedforward_effort)
+                        > actuator_effort_limits + 1.0e-6
+                    ):
+                        fail_h15(
+                            "gravity_feedforward_exceeds_actuator_readback",
+                            phase_name,
+                            local_step,
+                            "commanded gravity effort exceeds existing "
+                            "per-joint maxEffort readback",
+                        )
+                    positions, velocities = observe_and_step(
+                        current_arm_target,
+                        current_hand_target,
+                        True,
+                        formal_arm_feedforward_effort,
+                    )
+                    applied_effort = np.asarray(
+                        robot.get_applied_joint_efforts(
+                            joint_indices=arm_indices
+                        ),
+                        dtype=np.float64,
+                    )
+                    if applied_effort.shape != (7,) or not np.all(
+                        np.isfinite(applied_effort)
+                    ):
+                        fail_h15(
+                            "gravity_feedforward_readback_invalid",
+                            phase_name,
+                            local_step,
+                            "Isaac applied-effort readback is not seven finite values",
+                        )
+                    effort_readback_error = float(
+                        np.max(
+                            np.abs(
+                                applied_effort
+                                - formal_arm_feedforward_effort.astype(
+                                    np.float32
+                                ).astype(np.float64)
+                            )
+                        )
+                    )
+                    h15_maximum_effort_readback_error = max(
+                        h15_maximum_effort_readback_error,
+                        effort_readback_error,
+                    )
+                    h15_maximum_feedforward_step = max(
+                        h15_maximum_feedforward_step,
+                        float(drive_step["maximum_feedforward_step_nm"]),
+                    )
+                    h15_maximum_continuity_residual = max(
+                        h15_maximum_continuity_residual,
+                        float(
+                            drive_step[
+                                "maximum_effort_continuity_residual_nm"
+                            ]
+                        ),
+                    )
+                    h15_maximum_target_bias = max(
+                        h15_maximum_target_bias,
+                        float(drive_step["maximum_target_bias_rad"]),
+                    )
+                    measured_efforts = sample_post_tare_efforts()
+                    root_delta = measured_efforts - tare_efforts
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(
+                                positions[arm_indices]
+                                - current_arm_target
+                            )
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    if (
+                        effort_readback_error
+                        > transfer.maximum_effort_readback_error_nm
+                    ):
+                        formal_lift_monitor.fail_closed(
+                            "gravity_feedforward_readback_mismatch"
+                        )
+                        monitor_ok = False
+                    elif wrist_ft_monitor_error is not None:
+                        formal_lift_monitor.fail_closed(
+                            "wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            root_delta,
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                    moment_score = float(
+                        formal_lift_monitor.last_moment_safety_evidence[
+                            "gate_score_nm"
+                        ]
+                    )
+                    force_increment = float(
+                        np.linalg.norm(
+                            formal_latest_wrist_payload_increment[:3]
+                        )
+                    )
+                    h15_peak_moment_score = max(
+                        h15_peak_moment_score, moment_score
+                    )
+                    h15_peak_force_increment = max(
+                        h15_peak_force_increment, force_increment
+                    )
+                    actual_tcp = np.asarray(
+                        iiwa14_grasp_tcp_transform(
+                            tuple(
+                                float(value)
+                                for value in positions[arm_indices]
+                            )
+                        ),
+                        dtype=np.float64,
+                    )
+                    h15_actual_tcp_z_samples.append(float(actual_tcp[2, 3]))
+                    record = {
+                        "global_step": int(global_step),
+                        "phase": phase_name,
+                        "local_step": int(local_step),
+                        "diagnostic_only": True,
+                        "dynamic_pass_claimed": False,
+                        "generalized_gravity_source": (
+                            "Isaac PhysX articulation generalized gravity; "
+                            "robot model/state only"
+                        ),
+                        "drive_step": drive_step,
+                        "applied_effort_readback_nm": [
+                            float(value) for value in applied_effort
+                        ],
+                        "effort_readback_error_nm": effort_readback_error,
+                        "actuator_effort_limit_readback_nm": [
+                            float(value) for value in actuator_effort_limits
+                        ],
+                        "finger_root_torque_proxy_nm": {
+                            name: float(root_delta[index])
+                            for index, name in enumerate(FINGERS)
+                        },
+                        **formal_kinematic_step_evidence(
+                            positions,
+                            velocities,
+                            current_arm_target,
+                            current_hand_target,
+                        ),
+                        **formal_wrist_step_evidence(positions),
+                        "wrist_moment_safety_evidence": dict(
+                            formal_lift_monitor.last_moment_safety_evidence
+                        ),
+                        "arm_tracking_error_rad": arm_tracking,
+                        "wrist_ft_monitor_error": wrist_ft_monitor_error,
+                        "stable": monitor_ok,
+                        "failed": not monitor_ok,
+                        "failure_reason": formal_lift_monitor.failure_reason,
+                        "object_truth_used": False,
+                        "contact_truth_used": False,
+                        "object_pose_written": False,
+                    }
+                    controller_step_records.append(record)
+                    if not monitor_ok:
+                        fail_h15(
+                            formal_lift_monitor.failure_reason,
+                            phase_name,
+                            local_step,
+                            "sensor hard gate, effort readback or grasp "
+                            "stability failed during H15",
+                        )
+                    return root_delta.copy(), formal_latest_wrist_canonical.copy()
+
+                phase = "pre_lift_gravity_preload_transfer_transition"
+                for transfer_step in range(transfer.transition_steps):
+                    realized_before_step = np.asarray(
+                        positions[arm_indices], dtype=np.float64
+                    ).copy()
+                    gravity_before_step = sample_h15_generalized_gravity()
+                    try:
+                        drive_step = derive_gravity_preload_transfer_step(
+                            realized_before_step,
+                            h15_preload,
+                            gravity_before_step,
+                            compliant_stiffness,
+                            transfer_step,
+                            formal_arm_feedforward_effort,
+                            transfer,
+                        )
+                    except ValueError as transfer_error:
+                        fail_h15(
+                            "gravity_transfer_derivation_invalid",
+                            phase,
+                            transfer_step,
+                            f"{type(transfer_error).__name__}: "
+                            f"{transfer_error}",
+                        )
+                    root_sample, wrist_sample = apply_h15_step(
+                        drive_step, phase, transfer_step
+                    )
+                    h15_transition_records.append(
+                        {
+                            "global_step": int(global_step),
+                            "minimum_jerk_blend": drive_step[
+                                "minimum_jerk_blend"
+                            ],
+                            "maximum_target_bias_rad": drive_step[
+                                "maximum_target_bias_rad"
+                            ],
+                            "maximum_feedforward_step_nm": drive_step[
+                                "maximum_feedforward_step_nm"
+                            ],
+                            "maximum_effort_continuity_residual_nm": (
+                                drive_step[
+                                    "maximum_effort_continuity_residual_nm"
+                                ]
+                            ),
+                        }
+                    )
+
+                h15_hold_path = np.asarray(
+                    positions[arm_indices], dtype=np.float64
+                ).copy()
+                phase = "pre_lift_gravity_preload_transfer_stability"
+                for stability_step in range(transfer.stability_window_steps):
+                    gravity_before_step = sample_h15_generalized_gravity()
+                    try:
+                        drive_step = gravity_supported_path_drive_target(
+                            h15_hold_path,
+                            h15_preload,
+                            gravity_before_step,
+                            compliant_stiffness,
+                            formal_arm_feedforward_effort,
+                            transfer,
+                        )
+                    except ValueError as transfer_error:
+                        fail_h15(
+                            "gravity_hold_derivation_invalid",
+                            phase,
+                            stability_step,
+                            f"{type(transfer_error).__name__}: "
+                            f"{transfer_error}",
+                        )
+                    root_sample, wrist_sample = apply_h15_step(
+                        drive_step, phase, stability_step
+                    )
+                    h15_stability_root_samples.append(root_sample)
+                    h15_stability_wrist_samples.append(wrist_sample)
+                    h15_stability_records.append(
+                        {
+                            "global_step": int(global_step),
+                            "maximum_target_bias_rad": drive_step[
+                                "maximum_target_bias_rad"
+                            ],
+                            "maximum_feedforward_step_nm": drive_step[
+                                "maximum_feedforward_step_nm"
+                            ],
+                        }
+                    )
+
+                h15_root_mean = np.mean(
+                    np.stack(h15_stability_root_samples), axis=0
+                )
+                h15_normalized_root = np.abs(h15_root_mean) / np.asarray(
+                    physical_grasp.sequential.load_scale_nm,
+                    dtype=np.float64,
+                )
+                h15_entry_load_imbalance = float(
+                    np.max(h15_normalized_root)
+                    - np.min(h15_normalized_root)
+                )
+                h15_entry_moment_score = max(
+                    float(
+                        evaluate_wrist_moment_safety(
+                            tuple(float(value) for value in sample[3:]),
+                            tuple(
+                                float(value)
+                                for value in formal_wrist_payload_reference[3:]
+                            ),
+                            physical_grasp.stability.maximum_wrist_moment_nm,
+                        )["gate_score_nm"]
+                    )
+                    for sample in h15_stability_wrist_samples
+                )
+                if (
+                    h15_entry_load_imbalance
+                    > transfer.maximum_entry_load_imbalance
+                ):
+                    fail_h15(
+                        "gravity_transfer_entry_load_imbalance",
+                        phase,
+                        transfer.stability_window_steps - 1,
+                        "H15 stability-window load imbalance exceeds 0.18",
+                    )
+                if (
+                    h15_entry_moment_score
+                    > transfer.maximum_entry_moment_score_nm
+                ):
+                    fail_h15(
+                        "gravity_transfer_entry_moment_score",
+                        phase,
+                        transfer.stability_window_steps - 1,
+                        "H15 stability-window moment score exceeds 0.24 N*m",
+                    )
+                h15_final_positions = np.asarray(
+                    positions[arm_indices], dtype=np.float64
+                ).copy()
+                h15_final_target_gap = float(
+                    np.max(
+                        np.abs(current_arm_target - h15_final_positions)
+                    )
+                )
+                h15_final_target_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(float(value) for value in current_arm_target)
+                    ),
+                    dtype=np.float64,
+                )
+                h15_final_actual_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(float(value) for value in h15_final_positions)
+                    ),
+                    dtype=np.float64,
+                )
+                h15_final_tcp_gap = float(
+                    np.linalg.norm(
+                        h15_final_target_tcp[:3, 3]
+                        - h15_final_actual_tcp[:3, 3]
+                    )
+                )
+                formal_lift_compliant_path_arm = h15_hold_path.copy()
+                formal_lift_arm_drive_bias = (
+                    current_arm_target - h15_hold_path
+                )
+                metrics["pre_lift_gravity_preload_transfer"] = {
+                    "status": "CHARACTERIZATION_COMPLETED",
+                    "classification": (
+                        "H15_BUMPLESS_GRAVITY_TRANSFER_DIAGNOSTIC_COMPLETED"
+                    ),
+                    "threshold_label": transfer.threshold_label,
+                    "diagnostic_only": True,
+                    "dynamic_pass_claimed": False,
+                    "physical_lift_started": False,
+                    "transition_steps": transfer.transition_steps,
+                    "stability_window_steps": (
+                        transfer.stability_window_steps
+                    ),
+                    "transition_records_completed": len(
+                        h15_transition_records
+                    ),
+                    "stability_records_completed": len(
+                        h15_stability_records
+                    ),
+                    "position_preload_nm": [
+                        float(value) for value in h15_preload
+                    ],
+                    "final_gravity_feedforward_nm": [
+                        float(value)
+                        for value in formal_arm_feedforward_effort
+                    ],
+                    "actuator_effort_limit_readback_nm": [
+                        float(value) for value in actuator_effort_limits
+                    ],
+                    "initial_target_actual_max_gap_rad": (
+                        h15_initial_target_gap
+                    ),
+                    "final_target_actual_max_gap_rad": h15_final_target_gap,
+                    "initial_target_actual_tcp_gap_m": h15_initial_tcp_gap,
+                    "final_target_actual_tcp_gap_m": h15_final_tcp_gap,
+                    "target_actual_tcp_gap_reduction_m": (
+                        h15_initial_tcp_gap - h15_final_tcp_gap
+                    ),
+                    "actual_tcp_z_range_m": (
+                        max(h15_actual_tcp_z_samples)
+                        - min(h15_actual_tcp_z_samples)
+                    ),
+                    "maximum_effort_readback_error_nm": (
+                        h15_maximum_effort_readback_error
+                    ),
+                    "maximum_feedforward_step_nm": (
+                        h15_maximum_feedforward_step
+                    ),
+                    "maximum_effort_continuity_residual_nm": (
+                        h15_maximum_continuity_residual
+                    ),
+                    "maximum_target_bias_rad": h15_maximum_target_bias,
+                    "entry_load_imbalance": h15_entry_load_imbalance,
+                    "entry_moment_score_nm": h15_entry_moment_score,
+                    "peak_moment_score_nm": h15_peak_moment_score,
+                    "peak_force_increment_n": h15_peak_force_increment,
+                    "generalized_gravity_semantics": (
+                        "joint DOF forces required by Isaac PhysX to "
+                        "counteract gravity at the current robot pose"
+                    ),
+                    "position_plus_effort_same_action": True,
+                    "sensor_origin_hard_gate_unchanged": True,
+                    "robot_joint_state_and_dynamics_only": True,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "event_truth_used": False,
+                    "object_pose_written": False,
+                    "transition_records": h15_transition_records,
+                    "stability_records": h15_stability_records,
+                }
+                metrics["formal_lift_stages"] = []
+                metrics["formal_lift_monitor"] = (
+                    formal_lift_monitor.summary()
+                )
+                metrics["passed"] = False
+                metrics["formal_lift_terminal"] = True
+                raise RuntimeError(
+                    "H15 gravity-transfer hold characterization completed; "
+                    "DIAGNOSTIC_ONLY episode is not a grasp PASS"
+                )
+
+            if (
+                physical_grasp.pre_lift_centering.enabled
+                and arguments.physical_grasp_method
+                == "sequential-compliant"
+                and not arguments.empty_hand_first_stage_diagnostic
+            ):
+                centering = physical_grasp.pre_lift_centering
+                centering_origin_arm = current_arm_target.copy()
+                centering_origin_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(float(value) for value in centering_origin_arm)
+                    ),
+                    dtype=np.float64,
+                )
+                centering_probe_means = {}
+                centering_probe_records = []
+                centering_roundtrip_errors = []
+                centering_final_root_samples = []
+                centering_final_wrist_samples = []
+                centering_failure_detail = None
+
+                def fail_pre_lift_centering(reason, local_step):
+                    nonlocal formal_lift_terminal
+                    nonlocal formal_lift_failure
+                    formal_lift_terminal = True
+                    formal_lift_failure = {
+                        "reason": reason,
+                        "stage": 0,
+                        "stage_step": int(local_step),
+                        "global_step": global_step,
+                        "controller_terminal": True,
+                        "phase": phase,
+                        "wrist_moment_safety_evidence": dict(
+                            formal_lift_monitor
+                            .last_moment_safety_evidence
+                        ),
+                        "wrist_wrench_canonical": [
+                            float(value)
+                            for value in formal_latest_wrist_canonical
+                        ],
+                        "wrist_wrench_payload_reference_increment": [
+                            float(value)
+                            for value in formal_latest_wrist_payload_increment
+                        ],
+                    }
+                    metrics["pre_lift_wrench_centering"] = {
+                        "status": "FAILED_CLOSED",
+                        "failure_reason": reason,
+                        "failure_detail": centering_failure_detail,
+                        "probe_records": centering_probe_records,
+                        "sensor_origin_hard_gate_unchanged": True,
+                        "object_truth_used": False,
+                        "contact_truth_used": False,
+                    }
+                    metrics["formal_lift_stages"] = []
+                    metrics["formal_lift_monitor"] = (
+                        formal_lift_monitor.summary()
+                    )
+                    run_formal_failure_recovery()
+
+                def centering_control_step(
+                    target_arm, subphase, local_step, sample_sink=None
+                ):
+                    nonlocal current_arm_target
+                    nonlocal phase
+                    current_arm_target = np.asarray(
+                        target_arm, dtype=np.float64
+                    )
+                    phase = "pre_lift_wrench_centering_" + subphase
+                    positions, velocities = observe_and_step(
+                        current_arm_target, current_hand_target, True
+                    )
+                    measured_efforts = sample_post_tare_efforts()
+                    root_delta = measured_efforts - tare_efforts
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(
+                                positions[arm_indices]
+                                - current_arm_target
+                            )
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    wrist_evidence = formal_wrist_step_evidence(positions)
+                    roundtrip_error = float(
+                        wrist_evidence[
+                            "wrench_transform_roundtrip_max_abs_error"
+                        ]
+                    )
+                    centering_roundtrip_errors.append(roundtrip_error)
+                    if (
+                        roundtrip_error
+                        > centering.maximum_wrench_roundtrip_error
+                    ):
+                        formal_lift_monitor.fail_closed(
+                            "wrench_transform_roundtrip_error"
+                        )
+                        monitor_ok = False
+                    elif wrist_ft_monitor_error is not None:
+                        formal_lift_monitor.fail_closed(
+                            "wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            root_delta,
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                    record = {
+                        "global_step": global_step,
+                        "phase": phase,
+                        "method": arguments.physical_grasp_method,
+                        "centering_subphase": subphase,
+                        "centering_local_step": int(local_step),
+                        "finger_root_torque_proxy_nm": {
+                            name: float(root_delta[index])
+                            for index, name in enumerate(FINGERS)
+                        },
+                        **formal_kinematic_step_evidence(
+                            positions,
+                            velocities,
+                            current_arm_target,
+                            current_hand_target,
+                        ),
+                        **wrist_evidence,
+                        "wrist_moment_safety_evidence": dict(
+                            formal_lift_monitor
+                            .last_moment_safety_evidence
+                        ),
+                        "arm_tracking_error_rad": arm_tracking,
+                        "wrist_ft_monitor_error": wrist_ft_monitor_error,
+                        "stable": monitor_ok,
+                        "failed": not monitor_ok,
+                        "failure_reason": (
+                            formal_lift_monitor.failure_reason
+                        ),
+                    }
+                    controller_step_records.append(record)
+                    if sample_sink is not None:
+                        sample_sink.append(
+                            {
+                                "task_wrench": np.asarray(
+                                    wrist_evidence[
+                                        "wrist_wrench_empty_"
+                                        "compensated_task_frame"
+                                    ],
+                                    dtype=np.float64,
+                                ),
+                                "canonical_wrench": (
+                                    formal_latest_wrist_canonical.copy()
+                                ),
+                                "root_delta": root_delta.copy(),
+                                "roundtrip_error": roundtrip_error,
+                            }
+                        )
+                    return monitor_ok
+
+                def centering_move(target_arm, label):
+                    start_arm = current_arm_target.copy()
+                    for move_step in range(centering.probe_move_steps):
+                        command = np.asarray(
+                            interpolate_arm(
+                                tuple(float(value) for value in start_arm),
+                                tuple(float(value) for value in target_arm),
+                                float(move_step + 1)
+                                / float(centering.probe_move_steps),
+                            ),
+                            dtype=np.float64,
+                        )
+                        formal_lift_traversed_arm_targets.append(
+                            command.copy()
+                        )
+                        if not centering_control_step(
+                            command, label + "_move", move_step
+                        ):
+                            return False, move_step
+                    return True, centering.probe_move_steps - 1
+
+                def centering_hold(label, sample_count):
+                    samples = []
+                    total = centering.probe_settle_steps + sample_count
+                    for hold_step in range(total):
+                        sink = (
+                            samples
+                            if hold_step >= centering.probe_settle_steps
+                            else None
+                        )
+                        if not centering_control_step(
+                            current_arm_target,
+                            label + "_hold",
+                            hold_step,
+                            sink,
+                        ):
+                            return None, hold_step
+                    return samples, total - 1
+
+                probe_targets = {}
+                for label, xy in (
+                    ("plus_x", (centering.probe_offset_m, 0.0)),
+                    ("minus_x", (-centering.probe_offset_m, 0.0)),
+                    ("plus_y", (0.0, centering.probe_offset_m)),
+                    ("minus_y", (0.0, -centering.probe_offset_m)),
+                ):
+                    target_position = centering_origin_tcp[:3, 3].copy()
+                    target_position[:2] += np.asarray(xy, dtype=np.float64)
+                    probe_targets[label] = np.asarray(
+                        solve_fixed_q7_tcp_pose(
+                            tuple(
+                                float(value)
+                                for value in centering_origin_arm
+                            ),
+                            tuple(float(value) for value in target_position),
+                            target_rotation=centering_origin_tcp[:3, :3],
+                        ),
+                        dtype=np.float64,
+                    )
+
+                center_samples, local_step = centering_hold(
+                    "center", centering.probe_sample_steps
+                )
+                if center_samples is None:
+                    fail_pre_lift_centering(
+                        formal_lift_monitor.failure_reason, local_step
+                    )
+                centering_probe_means["center"] = np.mean(
+                    np.stack(
+                        [sample["task_wrench"] for sample in center_samples]
+                    ),
+                    axis=0,
+                )
+                for label in ("plus_x", "minus_x", "plus_y", "minus_y"):
+                    moved, local_step = centering_move(
+                        probe_targets[label], label
+                    )
+                    if not moved:
+                        fail_pre_lift_centering(
+                            formal_lift_monitor.failure_reason, local_step
+                        )
+                    probe_samples, local_step = centering_hold(
+                        label, centering.probe_sample_steps
+                    )
+                    if probe_samples is None:
+                        fail_pre_lift_centering(
+                            formal_lift_monitor.failure_reason, local_step
+                        )
+                    centering_probe_means[label] = np.mean(
+                        np.stack(
+                            [
+                                sample["task_wrench"]
+                                for sample in probe_samples
+                            ]
+                        ),
+                        axis=0,
+                    )
+                    centering_probe_records.append(
+                        {
+                            "label": label,
+                            "sample_count": len(probe_samples),
+                            "mean_empty_compensated_task_wrench": [
+                                float(value)
+                                for value in centering_probe_means[label]
+                            ],
+                        }
+                    )
+                    returned, local_step = centering_move(
+                        centering_origin_arm, label + "_return_center"
+                    )
+                    if not returned:
+                        fail_pre_lift_centering(
+                            formal_lift_monitor.failure_reason, local_step
+                        )
+                try:
+                    centering_solution = solve_bounded_xy_centering(
+                        centering_probe_means["center"],
+                        centering_probe_means["plus_x"],
+                        centering_probe_means["minus_x"],
+                        centering_probe_means["plus_y"],
+                        centering_probe_means["minus_y"],
+                        centering,
+                    )
+                except ValueError as centering_error:
+                    centering_failure_detail = (
+                        f"{type(centering_error).__name__}: "
+                        f"{centering_error}"
+                    )
+                    fail_pre_lift_centering(
+                        "pre_lift_centering_jacobian_invalid", 0
+                    )
+                correction_xy = np.asarray(
+                    centering_solution["correction_xy_m"],
+                    dtype=np.float64,
+                )
+                corrected_position = centering_origin_tcp[:3, 3].copy()
+                corrected_position[:2] += correction_xy
+                corrected_arm = np.asarray(
+                    solve_fixed_q7_tcp_pose(
+                        tuple(
+                            float(value)
+                            for value in centering_origin_arm
+                        ),
+                        tuple(float(value) for value in corrected_position),
+                        target_rotation=centering_origin_tcp[:3, :3],
+                    ),
+                    dtype=np.float64,
+                )
+                correction_start = current_arm_target.copy()
+                for correction_step in range(
+                    centering.correction_move_steps
+                ):
+                    command = np.asarray(
+                        interpolate_arm(
+                            tuple(
+                                float(value)
+                                for value in correction_start
+                            ),
+                            tuple(float(value) for value in corrected_arm),
+                            float(correction_step + 1)
+                            / float(centering.correction_move_steps),
+                        ),
+                        dtype=np.float64,
+                    )
+                    formal_lift_traversed_arm_targets.append(
+                        command.copy()
+                    )
+                    if not centering_control_step(
+                        command, "correction_move", correction_step
+                    ):
+                        fail_pre_lift_centering(
+                            formal_lift_monitor.failure_reason,
+                            correction_step,
+                        )
+                final_samples, local_step = centering_hold(
+                    "final_reference", centering.reference_window_steps
+                )
+                if final_samples is None:
+                    fail_pre_lift_centering(
+                        formal_lift_monitor.failure_reason, local_step
+                    )
+                final_root_stack = np.stack(
+                    [sample["root_delta"] for sample in final_samples]
+                )
+                final_wrist_stack = np.stack(
+                    [sample["canonical_wrench"] for sample in final_samples]
+                )
+                centered_root_mean_signed = np.mean(
+                    final_root_stack, axis=0
+                )
+                centered_root_reference = tuple(
+                    max(abs(float(value)), 1.0e-6)
+                    for value in centered_root_mean_signed
+                )
+                centered_wrist_reference = np.asarray(
+                    np.mean(final_wrist_stack, axis=0),
+                    dtype=np.float64,
+                )
+                normalized_root = np.abs(centered_root_mean_signed) / np.asarray(
+                    physical_grasp.sequential.load_scale_nm,
+                    dtype=np.float64,
+                )
+                entry_load_imbalance = float(
+                    np.max(normalized_root) - np.min(normalized_root)
+                )
+                entry_moment_scores = [
+                    float(
+                        evaluate_wrist_moment_safety(
+                            sample[3:],
+                            centered_wrist_reference[3:],
+                            physical_grasp.stability
+                            .maximum_wrist_moment_nm,
+                        )["gate_score_nm"]
+                    )
+                    for sample in final_wrist_stack
+                ]
+                entry_force_scores = [
+                    float(
+                        np.linalg.norm(
+                            sample[:3]
+                            - centered_wrist_reference[:3]
+                        )
+                    )
+                    for sample in final_wrist_stack
+                ]
+                maximum_entry_moment_score = max(entry_moment_scores)
+                maximum_entry_force_score = max(entry_force_scores)
+                maximum_roundtrip_error = max(
+                    centering_roundtrip_errors
+                )
+                if (
+                    entry_load_imbalance
+                    > centering.maximum_entry_load_imbalance
+                ):
+                    fail_pre_lift_centering(
+                        "pre_lift_entry_load_imbalance", local_step
+                    )
+                if (
+                    maximum_entry_moment_score
+                    > centering.maximum_entry_moment_score_nm
+                ):
+                    fail_pre_lift_centering(
+                        "pre_lift_entry_moment_score", local_step
+                    )
+                if (
+                    maximum_entry_force_score
+                    > physical_grasp.stability.maximum_wrist_force_n
+                ):
+                    fail_pre_lift_centering(
+                        "pre_lift_entry_force_score", local_step
+                    )
+                if (
+                    maximum_roundtrip_error
+                    > centering.maximum_wrench_roundtrip_error
+                ):
+                    fail_pre_lift_centering(
+                        "wrench_transform_roundtrip_error", local_step
+                    )
+                formal_lift_monitor = GraspStabilityMonitor(
+                    physical_grasp.stability,
+                    reference_load_nm=centered_root_reference,
+                    load_scale_nm=(
+                        physical_grasp.sequential.load_scale_nm
+                    ),
+                    sample_period_s=1.0 / rate_hz,
+                    wrist_reference=centered_wrist_reference,
+                )
+                formal_wrist_payload_reference = (
+                    centered_wrist_reference.copy()
+                )
+                formal_latest_wrist_payload_increment = np.asarray(
+                    wrist_payload_increment(
+                        formal_latest_wrist_canonical,
+                        formal_wrist_payload_reference,
+                    ),
+                    dtype=np.float64,
+                )
+                metrics["formal_payload_wrist_reference"] = [
+                    float(value) for value in centered_wrist_reference
+                ]
+                metrics["formal_payload_wrist_reference_sample_count"] = (
+                    len(final_samples)
+                )
+                metrics["formal_payload_wrist_reference_kind"] = (
+                    "pre_lift_wrench_centered_quasistatic"
+                )
+                metrics["formal_payload_wrist_reference_statistics"] = (
+                    reference_window_statistics(final_wrist_stack)
+                )
+                metrics["pre_lift_wrench_centering"] = {
+                    "status": "CENTERED_LIFT_READY",
+                    "threshold_label": centering.threshold_label,
+                    "z_target_unchanged": True,
+                    "orientation_target_unchanged": True,
+                    "probe_offset_m": centering.probe_offset_m,
+                    "probe_sample_count_per_point": (
+                        centering.probe_sample_steps
+                    ),
+                    "probe_records": centering_probe_records,
+                    "center_mean_empty_compensated_task_wrench": [
+                        float(value)
+                        for value in centering_probe_means["center"]
+                    ],
+                    "solution": centering_solution,
+                    "final_reference_sample_count": len(final_samples),
+                    "final_root_reference_nm": [
+                        float(value)
+                        for value in centered_root_reference
+                    ],
+                    "final_wrist_reference": [
+                        float(value)
+                        for value in centered_wrist_reference
+                    ],
+                    "entry_load_imbalance": entry_load_imbalance,
+                    "maximum_entry_moment_score_nm": (
+                        maximum_entry_moment_score
+                    ),
+                    "maximum_entry_force_increment_n": (
+                        maximum_entry_force_score
+                    ),
+                    "maximum_wrench_roundtrip_error": (
+                        maximum_roundtrip_error
+                    ),
+                    "sensor_origin_hard_gate_unchanged": True,
+                    "task_wrench_used_for_xy_only": True,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "post_physics_object_pose_writes": 0,
+                }
+                metrics["pre_lift_grasp_controller_evidence"].update(
+                    {
+                        "pre_lift_wrench_centering_completed": True,
+                        "pre_lift_entry_moment_score_nm": (
+                            maximum_entry_moment_score
+                        ),
+                        "pre_lift_entry_load_imbalance": (
+                            entry_load_imbalance
+                        ),
+                        "payload_reference": metrics[
+                            "formal_payload_wrist_reference"
+                        ],
+                        "payload_reference_statistics": metrics[
+                            "formal_payload_wrist_reference_statistics"
+                        ],
+                        "payload_reference_sample_count": metrics[
+                            "formal_payload_wrist_reference_sample_count"
+                        ],
+                    }
+                )
+                lift_start = corrected_arm.copy()
+                current_arm_target = corrected_arm.copy()
+                formal_recovery_lift_start_target = corrected_arm.copy()
+                formal_lift_traversed_arm_targets = []
+
+            if arguments.empty_hand_first_stage_diagnostic:
+                # EMPTY_HAND_FIRST_STAGE_REPLAY_DIAGNOSTIC_ONLY: the fingers
+                # stay at their open targets while the arm replays the
+                # realized stage-1 lift target path under the frozen wrist
+                # gates.  Diagnostic evidence only: never a grasp PASS, no
+                # fake root-load reference, no retained/imbalance/rate
+                # gates.  Exit 3 is reserved for the frozen gate
+                # observations and a clean stage-1 completion; every
+                # sensor/robot/evidence fault exits 1 with its reason and
+                # category preserved.
+                metrics["empty_hand_first_stage_diagnostic"] = {
+                    "mode": DIAGNOSTIC_MODE,
+                    "schema_version": (
+                        "kcg_empty_hand_first_stage_diagnostic_v1"
+                    ),
+                    "diagnostic_only": True,
+                    "granted_grasp_pass": False,
+                    "purpose": (
+                        "isolate arm/hand-own hand2arm wrench change "
+                        "from finger-plug-table coupling by replaying "
+                        "the stage-1 lift trajectory with open fingers"
+                    ),
+                    "open_hand_target": [
+                        float(value) for value in open_hand
+                    ],
+                    "stage1_reuses_realized_target_path": True,
+                }
+                metrics["diagnostic_only"] = True
+                metrics["passed"] = False
+                metrics["grasp_success_claimed"] = False
+                metrics["control_reads_object_truth"] = False
+                metrics["control_reads_contact_report"] = False
+                metrics[
+                    "empty_hand_diagnostic_posthoc_consumed_by_control"
+                ] = False
+                open_target = np.asarray(open_hand, dtype=np.float64)
+                if not np.all(np.isfinite(open_target)):
+                    raise RuntimeError(
+                        "empty-hand diagnostic open target is non-finite"
+                    )
+                if not np.array_equal(current_hand_target, open_target):
+                    raise RuntimeError(
+                        "empty-hand diagnostic entered with non-open "
+                        "hand target"
+                    )
+                phase = "empty_hand_diagnostic_stage_1"
+                lift_start_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(float(value) for value in lift_start)
+                    ),
+                    dtype=np.float64,
+                )
+                lift_stage = physical_grasp.lift_stages[0]
+                stage_start = lift_start.copy()
+                stage_tcp_position = lift_start_tcp[:3, 3].copy()
+                stage_tcp_position[2] += lift_stage.increment_m
+                stage_target = np.asarray(
+                    solve_fixed_q7_tcp_pose(
+                        tuple(float(value) for value in stage_start),
+                        tuple(float(value) for value in stage_tcp_position),
+                        target_rotation=lift_start_tcp[:3, :3],
+                    ),
+                    dtype=np.float64,
+                )
+                realized_stage_speed = (
+                    lift_stage.speed_m_s
+                    * realized_randomization.lift_speed_scale
+                )
+                move_steps = max(
+                    1,
+                    round(
+                        lift_stage.increment_m
+                        / realized_stage_speed
+                        * rate_hz
+                    ),
+                )
+                hold_steps_for_stage = round(lift_stage.hold_s * rate_hz)
+                stage_record = {
+                    "stage": 1,
+                    "increment_m": lift_stage.increment_m,
+                    "commanded_tcp_position_m": [
+                        float(value) for value in stage_tcp_position
+                    ],
+                    "nominal_speed_m_s": lift_stage.speed_m_s,
+                    "lift_speed_scale": (
+                        realized_randomization.lift_speed_scale
+                    ),
+                    "realized_speed_m_s": realized_stage_speed,
+                    "move_steps": move_steps,
+                    "hold_steps": hold_steps_for_stage,
+                    "passed_sensor_gate": True,
+                    "diagnostic_empty_hand": True,
+                }
+                termination = None
+                open_target_invariant_ok = True
+                stage_loop_completed_cleanly = False
+                for stage_step in range(move_steps + hold_steps_for_stage):
+                    if stage_step < move_steps:
+                        current_arm_target = np.asarray(
+                            interpolate_arm(
+                                tuple(float(value) for value in stage_start),
+                                tuple(float(value) for value in stage_target),
+                                float(stage_step + 1) / float(move_steps),
+                            ),
+                            dtype=np.float64,
+                        )
+                        formal_lift_traversed_arm_targets.append(
+                            current_arm_target.copy()
+                        )
+                    else:
+                        current_arm_target = stage_target.copy()
+                    positions, velocities = observe_and_step(
+                        current_arm_target, current_hand_target, True
+                    )
+                    if not np.array_equal(
+                        current_hand_target, open_target
+                    ):
+                        open_target_invariant_ok = False
+                        termination = {
+                            "kind": "sensor_or_robot_fault",
+                            "reason": (
+                                "empty_hand_open_target_invariant_broken"
+                            ),
+                            "stage_step": stage_step,
+                            "global_step": global_step,
+                        }
+                        break
+                    try:
+                        measured_efforts = sample_post_tare_efforts()
+                    except RuntimeError as effort_error:
+                        termination = {
+                            "kind": "sensor_or_robot_fault",
+                            "reason": "empty_hand_nonfinite_effort",
+                            "stage_step": stage_step,
+                            "global_step": global_step,
+                            "detail": str(effort_error),
+                        }
+                        break
+                    root_delta = measured_efforts - tare_efforts
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(
+                                positions[arm_indices] - current_arm_target
+                            )
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    if wrist_ft_monitor_error is not None:
+                        formal_lift_monitor.fail_closed(
+                            "empty_hand_wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                        step_failure_reason = (
+                            "empty_hand_wrist_ft_sensor_error"
+                        )
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                        step_failure_reason = (
+                            formal_lift_monitor.failure_reason
+                        )
+                    controller_step_records.append(
+                        {
+                            "global_step": global_step,
+                            "phase": phase,
+                            "method": arguments.physical_grasp_method,
+                            "diagnostic_empty_hand": True,
+                            "lift_stage": 1,
+                            "lift_stage_step": stage_step,
+                            "finger_root_torque_proxy_nm": {
+                                name: float(root_delta[index])
+                                for index, name in enumerate(FINGERS)
+                            },
+                            **formal_kinematic_step_evidence(
+                                positions,
+                                velocities,
+                                current_arm_target,
+                                current_hand_target,
+                            ),
+                            **formal_wrist_step_evidence(positions),
+                            "arm_tracking_error_rad": arm_tracking,
+                            "wrist_ft_monitor_error": (
+                                wrist_ft_monitor_error
+                            ),
+                            "stable": monitor_ok,
+                            "failed": not monitor_ok,
+                            "failure_reason": step_failure_reason,
+                        }
+                    )
+                    if not monitor_ok:
+                        kind = (
+                            "diagnostic_gate_observation"
+                            if step_failure_reason in ALLOWED_EXIT3_REASONS
+                            else "sensor_or_robot_fault"
+                        )
+                        termination = {
+                            "kind": kind,
+                            "reason": step_failure_reason,
+                            "stage_step": stage_step,
+                            "global_step": global_step,
+                        }
+                        formal_lift_terminal = True
+                        break
+                else:
+                    stage_loop_completed_cleanly = True
+                if termination is not None:
+                    stage_record.update(
+                        stage_record_failure_evidence(termination)
+                    )
+                stage1_completed = stage1_completed_flag(
+                    stage_loop_completed_cleanly, termination
+                )
+                formal_lift_stage_records.append(stage_record)
+                metrics["formal_lift_stages"] = formal_lift_stage_records
+                monitor_summary = formal_lift_monitor.summary()
+                metrics["formal_lift_monitor"] = monitor_summary
+                metrics["empty_hand_diagnostic_open_target_invariant"] = {
+                    "ok": open_target_invariant_ok,
+                    "target_rad": [
+                        float(value) for value in open_target
+                    ],
+                }
+                # Stage-terminal posthoc truth snapshot BEFORE any return
+                # command is executed.  It is log-only: its contact results
+                # never change commands, the monitor, the return plan, the
+                # exit code or diagnostic_completed; only a snapshot API
+                # failure marks the evidence package incomplete (exit 1).
+                snapshot_errors = []
+                try:
+                    metrics[
+                        "empty_hand_diagnostic_stage_terminal_snapshot"
+                    ] = capture_terminal_snapshot(
+                        "empty_hand_diagnostic_stage_terminal", phase
+                    )
+                except Exception as snapshot_error:
+                    snapshot_errors.append(
+                        "stage_terminal:"
+                        f"{type(snapshot_error).__name__}:{snapshot_error}"
+                    )
+                # Bounded arm return; skipped only when the sensor stream
+                # is unavailable (wrist sensor error or nonfinite samples).
+                return_record = {
+                    "attempted": False,
+                    "completed": False,
+                    "not_attempted_reason": None,
+                    "steps": 0,
+                    "return_error": None,
+                }
+                sensor_stream_unavailable = bool(
+                    wrist_ft_monitor_error is not None
+                    or (
+                        termination is not None
+                        and termination["reason"]
+                        in (
+                            "empty_hand_wrist_ft_sensor_error",
+                            "empty_hand_nonfinite_effort",
+                            "empty_hand_nonfinite_sensor_or_robot_state",
+                        )
+                    )
+                )
+                if not sensor_stream_unavailable:
+                    return_record["attempted"] = True
+                    try:
+                        phase = "empty_hand_diagnostic_return"
+                        for waypoint in plan_recovery_return(
+                            formal_lift_traversed_arm_targets,
+                            lift_start,
+                            physical_grasp.recovery,
+                        ):
+                            current_arm_target = waypoint
+                            positions, velocities = observe_and_step(
+                                current_arm_target,
+                                current_hand_target,
+                                True,
+                            )
+                            sample_post_tare_efforts()
+                            return_record["steps"] += 1
+                            controller_step_records.append(
+                                {
+                                    "global_step": global_step,
+                                    "phase": phase,
+                                    "method": (
+                                        arguments.physical_grasp_method
+                                    ),
+                                    "diagnostic_empty_hand": True,
+                                    "arm_target_rad": [
+                                        float(value)
+                                        for value in current_arm_target
+                                    ],
+                                    "hand_target_rad": [
+                                        float(value)
+                                        for value in current_hand_target
+                                    ],
+                                    **formal_kinematic_step_evidence(
+                                        positions,
+                                        velocities,
+                                        current_arm_target,
+                                        current_hand_target,
+                                    ),
+                                    **formal_wrist_step_evidence(positions),
+                                    "wrist_ft_monitor_error": (
+                                        wrist_ft_monitor_error
+                                    ),
+                                }
+                            )
+                        return_record["completed"] = True
+                    except Exception as return_error:
+                        return_record["return_error"] = (
+                            f"{type(return_error).__name__}: {return_error}"
+                        )
+                else:
+                    return_record["not_attempted_reason"] = (
+                        "sensor_stream_unavailable_for_safe_return"
+                    )
+                metrics["empty_hand_diagnostic_return"] = return_record
+                # Endpoint posthoc truth snapshot AFTER the return.
+                try:
+                    metrics[
+                        "empty_hand_diagnostic_endpoint_snapshot"
+                    ] = capture_terminal_snapshot(
+                        "empty_hand_diagnostic_endpoint", phase
+                    )
+                except Exception as snapshot_error:
+                    snapshot_errors.append(
+                        "endpoint:"
+                        f"{type(snapshot_error).__name__}:{snapshot_error}"
+                    )
+                metrics[
+                    "empty_hand_diagnostic_snapshots_control_isolated"
+                ] = True
+                metrics["empty_hand_diagnostic_snapshot_errors"] = list(
+                    snapshot_errors
+                )
+                classification = (
+                    classify_empty_hand_diagnostic_termination(
+                        monitor_failure_reason=monitor_summary[
+                            "failure_reason"
+                        ],
+                        termination_reason=(
+                            termination["reason"]
+                            if termination is not None
+                            else None
+                        ),
+                        stage1_completed=stage1_completed,
+                        open_target_invariant_ok=open_target_invariant_ok,
+                        sensor_fault_reason=wrist_ft_monitor_error,
+                        return_error=return_record["return_error"],
+                        snapshot_errors=tuple(snapshot_errors),
+                    )
+                )
+                if termination is not None:
+                    metrics["formal_lift_failure"] = {
+                        "reason": termination["reason"],
+                        "stage": 1,
+                        "stage_step": termination["stage_step"],
+                        "global_step": termination["global_step"],
+                        "controller_terminal": True,
+                        "kind": termination["kind"],
+                        "diagnostic_gate_observation": bool(
+                            termination["kind"]
+                            == "diagnostic_gate_observation"
+                        ),
+                        "sensor_or_robot_fault": bool(
+                            termination["kind"] == "sensor_or_robot_fault"
+                        ),
+                        "wrist_wrench_canonical": [
+                            float(value)
+                            for value in formal_latest_wrist_canonical
+                        ],
+                        "wrist_wrench_payload_reference_increment": [
+                            float(value)
+                            for value in (
+                                formal_latest_wrist_payload_increment
+                            )
+                        ],
+                    }
+                report_status = diagnostic_report_status(
+                    int(classification["exit_code"])
+                )
+                metrics["empty_hand_diagnostic_termination"] = {
+                    "exit_code": int(classification["exit_code"]),
+                    "reason": classification["reason"],
+                    "fault_category": classification["fault_category"],
+                    "stage1_completed": bool(stage1_completed),
+                    "gate_observed": bool(
+                        termination is not None
+                        and termination["kind"]
+                        == "diagnostic_gate_observation"
+                    ),
+                    "return": dict(return_record),
+                    "snapshot_errors": list(snapshot_errors),
+                }
+                metrics["empty_hand_diagnostic_completed"] = bool(
+                    report_status["empty_hand_diagnostic_completed"]
+                )
+                metrics["formal_lift_terminal"] = True
+                if wrist_ft_monitor is not None:
+                    wrist_report = wrist_ft_monitor.report()
+                    wrist_report["status"] = report_status["wrist_status"]
+                    if classification["exit_code"] != 3:
+                        wrist_report["diagnostic_failure_reason"] = (
+                            classification["reason"]
+                        )
+                        wrist_report["diagnostic_fault_category"] = (
+                            classification["fault_category"]
+                        )
+                        if wrist_ft_monitor_error is not None:
+                            wrist_report["runtime_error"] = (
+                                wrist_ft_monitor_error
+                            )
+                    metrics["virtual_wrist_ft_monitor"] = wrist_report
+                process_exit_code = int(classification["exit_code"])
+                metrics["process_exit_code"] = process_exit_code
+                print(_metrics_json(metrics), flush=True)
+                print(
+                    (
+                        report_status["console_label"]
+                        + ("" if classification["exit_code"] == 3
+                           else ": " + classification["reason"])
+                    ),
+                    flush=True,
+                )
+                return process_exit_code
+
+            if zero_lift_hold_mode:
+                # E2 characterization: after the normal grasp and reference,
+                # hold the exact same arm/hand command for a bounded duration
+                # under the original monitor/gates.  Any gate trigger stops
+                # immediately and runs the standard sensor-only recovery.
+                # Even a fully stable hold is CHARACTERIZATION_ONLY and can
+                # never become a grasp PASS.
+                #
+                # Keep the actual drive target active at branch entry.  With
+                # H6 enabled, lift_start is the realized path state while
+                # current_arm_target also contains the bumpless preload bias;
+                # commanding lift_start here would abruptly remove that bias
+                # and would no longer be a zero-command-change diagnostic.
+                zero_lift_arm_target = current_arm_target.copy()
+                hold_steps = max(
+                    1,
+                    round(
+                        physical_grasp.zero_lift_hold_duration_s * rate_hz
+                    ),
+                )
+                phase = "physical_grip_zero_lift_hold"
+                zero_lift_record = {
+                    "mode": "zero-lift-hold",
+                    "requested_duration_s": (
+                        physical_grasp.zero_lift_hold_duration_s
+                    ),
+                    "maximum_duration_s": (
+                        physical_grasp.zero_lift_hold_maximum_duration_s
+                    ),
+                    "hold_steps": hold_steps,
+                    "gate_triggered": False,
+                    "stable": True,
+                    "CHARACTERIZATION_ONLY": True,
+                    "characterization_completed": False,
+                    "passed": False,
+                    "held_arm_target_rad": [
+                        float(value) for value in zero_lift_arm_target
+                    ],
+                    "entry_path_state_rad": [
+                        float(value) for value in lift_start
+                    ],
+                    "maximum_abs_held_target_minus_path_state_rad": float(
+                        np.max(np.abs(zero_lift_arm_target - lift_start))
+                    ),
+                    "holds_exact_prebranch_arm_command": True,
+                }
+                for hold_step in range(hold_steps):
+                    positions, velocities = observe_and_step(
+                        zero_lift_arm_target, current_hand_target, True
+                    )
+                    measured_efforts = sample_post_tare_efforts()
+                    root_delta = measured_efforts - tare_efforts
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(positions[arm_indices] - lift_start)
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    if wrist_ft_monitor_error is not None:
+                        formal_lift_monitor.fail_closed(
+                            "wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                        step_failure_reason = "wrist_ft_sensor_error"
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            root_delta,
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                        step_failure_reason = (
+                            formal_lift_monitor.failure_reason
+                        )
+                    controller_step_records.append(
+                        {
+                            "global_step": global_step,
+                            "phase": phase,
+                            "method": arguments.physical_grasp_method,
+                            "lift_stage": 0,
+                            "lift_stage_step": hold_step,
+                            "zero_lift_hold": True,
+                            "finger_root_torque_proxy_nm": {
+                                name: float(root_delta[index])
+                                for index, name in enumerate(FINGERS)
+                            },
+                            **formal_kinematic_step_evidence(
+                                positions,
+                                velocities,
+                                zero_lift_arm_target,
+                                current_hand_target,
+                            ),
+                            **formal_wrist_step_evidence(positions),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor.last_moment_safety_evidence
+                            ),
+                            "arm_tracking_error_rad": arm_tracking,
+                            "wrist_ft_monitor_error": (
+                                wrist_ft_monitor_error
+                            ),
+                            "stable": monitor_ok,
+                            "failed": not monitor_ok,
+                            "failure_reason": step_failure_reason,
+                        }
+                    )
+                    if not monitor_ok:
+                        zero_lift_record.update(
+                            {
+                                "gate_triggered": True,
+                                "stable": False,
+                                "failure_reason": step_failure_reason,
+                                "failure_step": hold_step,
+                            }
+                        )
+                        formal_lift_terminal = True
+                        formal_lift_failure = {
+                            "reason": step_failure_reason,
+                            "stage": 0,
+                            "stage_step": hold_step,
+                            "global_step": global_step,
+                            "controller_terminal": True,
+                            "moment_trigger_component": (
+                                formal_lift_monitor.moment_trigger_component
+                            ),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor.last_moment_safety_evidence
+                            ),
+                            "wrist_wrench_canonical": [
+                                float(value)
+                                for value in (
+                                    formal_latest_wrist_canonical
+                                )
+                            ],
+                            "wrist_wrench_payload_reference_increment": [
+                                float(value)
+                                for value in (
+                                    formal_latest_wrist_payload_increment
+                                )
+                            ],
+                            "absolute_sensor_moment_norm_nm": moment_norm(
+                                formal_latest_wrist_canonical
+                            ),
+                            "moment_magnitude_increase_candidate_nm": (
+                                moment_magnitude_increase(
+                                    formal_latest_wrist_canonical,
+                                    formal_wrist_payload_reference,
+                                )
+                            ),
+                            "perpendicular_moment_delta_candidate": (
+                                perpendicular_moment_delta(
+                                    formal_latest_wrist_canonical,
+                                    formal_wrist_payload_reference,
+                                )
+                            ),
+                            "wrist_ft_monitor_error": (
+                                wrist_ft_monitor_error
+                            ),
+                        }
+                        break
+                metrics["formal_lift_stages"] = []
+                metrics["formal_lift_monitor"] = (
+                    formal_lift_monitor.summary()
+                )
+                metrics["zero_lift_hold"] = zero_lift_record
+                if formal_lift_failure is not None:
+                    run_formal_failure_recovery()
+                metrics["zero_lift_hold"].update(
+                    {
+                        "characterization_completed": True,
+                        "passed": False,
+                    }
+                )
+                metrics["passed"] = False
+                raise RuntimeError(
+                    "zero-lift hold characterization completed; "
+                    "CHARACTERIZATION_ONLY episode is not a grasp PASS"
+                )
+            # Staged mode below keeps the validated lift under the original
+            # monitor/gates; only per-step evidence fields were added.
+            # B-V2-H13 is applied only here, after the zero-lift branch has
+            # returned.  It holds the exact H6 drive target and all finger
+            # targets while one evidence-derived damping value is approached
+            # through a bounded minimum-jerk transition.  No target, Kp,
+            # reference, object state or contact truth is changed.
+            lift_phase_arm_damping = (
+                physical_grasp.lift_phase_arm_damping
+            )
+            h13_transition_records = []
+            h13_root_samples = []
+            if lift_phase_arm_damping.enabled:
+                if (
+                    arguments.physical_grasp_method
+                    != "sequential-compliant"
+                    or formal_lift_arm_drive_bias is None
+                    or formal_lift_compliant_path_arm is None
+                ):
+                    raise RuntimeError(
+                        "H13 lift-phase arm damping requires completed H6 "
+                        "sequential-compliant lift preparation"
+                    )
+                expected_h13_initial_damping = float(
+                    nominal_arm_damping * compliance.damping_scale
+                )
+                if not math.isclose(
+                    expected_h13_initial_damping,
+                    lift_phase_arm_damping.initial_damping_nm_s_rad,
+                    rel_tol=0.0,
+                    abs_tol=1.0e-12,
+                ):
+                    raise RuntimeError(
+                        "H13 initial damping does not match the completed "
+                        "H6 drive damping"
+                    )
+                h13_entry_arm_target = current_arm_target.copy()
+                h13_entry_hand_target = current_hand_target.copy()
+                h13_maximum_readback_error = 0.0
+                h13_peak_moment_score = 0.0
+                h13_peak_force_increment = 0.0
+                phase = "pre_lift_arm_damping_transition"
+                for h13_step in range(
+                    lift_phase_arm_damping.transition_steps
+                ):
+                    damping_step = derive_lift_phase_arm_damping_step(
+                        h13_step, lift_phase_arm_damping
+                    )
+                    applied_damping = float(
+                        damping_step["applied_damping_nm_s_rad"]
+                    )
+                    kds[arm_indices] = applied_damping
+                    controller.set_gains(
+                        kps=kps, kds=kds, save_to_usd=False
+                    )
+                    readback_kps, readback_kds = controller.get_gains()
+                    readback_kps = np.asarray(
+                        readback_kps, dtype=np.float64
+                    )
+                    readback_kds = np.asarray(
+                        readback_kds, dtype=np.float64
+                    )
+                    damping_readback_error = float(
+                        np.max(
+                            np.abs(
+                                readback_kds[arm_indices]
+                                - applied_damping
+                            )
+                        )
+                    )
+                    stiffness_readback_error = float(
+                        np.max(
+                            np.abs(
+                                readback_kps[arm_indices]
+                                - final_compliant_stiffness
+                            )
+                        )
+                    )
+                    h13_maximum_readback_error = max(
+                        h13_maximum_readback_error,
+                        damping_readback_error,
+                        stiffness_readback_error,
+                    )
+                    positions, velocities = observe_and_step(
+                        h13_entry_arm_target,
+                        h13_entry_hand_target,
+                        True,
+                    )
+                    measured_efforts = sample_post_tare_efforts()
+                    root_delta = measured_efforts - tare_efforts
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(
+                                positions[arm_indices]
+                                - h13_entry_arm_target
+                            )
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    if (
+                        h13_maximum_readback_error
+                        > lift_phase_arm_damping.maximum_readback_error
+                    ):
+                        formal_lift_monitor.fail_closed(
+                            "lift_phase_arm_damping_gain_readback_mismatch"
+                        )
+                        monitor_ok = False
+                    elif wrist_ft_monitor_error is not None:
+                        formal_lift_monitor.fail_closed(
+                            "wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            root_delta,
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                    moment_score = float(
+                        formal_lift_monitor.last_moment_safety_evidence[
+                            "gate_score_nm"
+                        ]
+                    )
+                    force_increment = float(
+                        np.linalg.norm(
+                            formal_latest_wrist_payload_increment[:3]
+                        )
+                    )
+                    h13_peak_moment_score = max(
+                        h13_peak_moment_score, moment_score
+                    )
+                    h13_peak_force_increment = max(
+                        h13_peak_force_increment, force_increment
+                    )
+                    h13_root_samples.append(root_delta.copy())
+                    h13_transition_records.append(
+                        {
+                            "global_step": int(global_step),
+                            **damping_step,
+                            "arm_drive_stiffness_nm_rad": (
+                                final_compliant_stiffness
+                            ),
+                            "arm_drive_damping_nm_s_rad": applied_damping,
+                            "damping_readback_error": (
+                                damping_readback_error
+                            ),
+                            "stiffness_readback_error": (
+                                stiffness_readback_error
+                            ),
+                            "arm_target_modified": False,
+                            "hand_target_modified": False,
+                            "payload_reference_rebased": False,
+                            "sensor_origin_hard_gate_unchanged": True,
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                            "object_pose_written": False,
+                        }
+                    )
+                    controller_step_records.append(
+                        {
+                            "global_step": global_step,
+                            "phase": phase,
+                            "method": arguments.physical_grasp_method,
+                            "lift_stage": 0,
+                            "lift_stage_step": h13_step,
+                            "lift_phase_arm_damping": (
+                                h13_transition_records[-1]
+                            ),
+                            "finger_root_torque_proxy_nm": {
+                                name: float(root_delta[index])
+                                for index, name in enumerate(FINGERS)
+                            },
+                            **formal_kinematic_step_evidence(
+                                positions,
+                                velocities,
+                                h13_entry_arm_target,
+                                h13_entry_hand_target,
+                            ),
+                            **formal_wrist_step_evidence(positions),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor
+                                .last_moment_safety_evidence
+                            ),
+                            "arm_tracking_error_rad": arm_tracking,
+                            "wrist_ft_monitor_error": (
+                                wrist_ft_monitor_error
+                            ),
+                            "stable": monitor_ok,
+                            "failed": not monitor_ok,
+                            "failure_reason": (
+                                formal_lift_monitor.failure_reason
+                            ),
+                        }
+                    )
+                    if not monitor_ok:
+                        formal_lift_terminal = True
+                        formal_lift_failure = {
+                            "reason": formal_lift_monitor.failure_reason,
+                            "stage": 0,
+                            "stage_step": h13_step,
+                            "global_step": global_step,
+                            "controller_terminal": True,
+                            "phase": phase,
+                            "moment_trigger_component": (
+                                formal_lift_monitor
+                                .moment_trigger_component
+                            ),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor
+                                .last_moment_safety_evidence
+                            ),
+                            "wrist_wrench_canonical": [
+                                float(value)
+                                for value in formal_latest_wrist_canonical
+                            ],
+                            "wrist_wrench_payload_reference_increment": [
+                                float(value)
+                                for value in (
+                                    formal_latest_wrist_payload_increment
+                                )
+                            ],
+                        }
+                        break
+                metrics["lift_phase_arm_damping"] = {
+                    "status": (
+                        "FAILED_CLOSED"
+                        if formal_lift_failure is not None
+                        else "DAMPED_LIFT_READY"
+                    ),
+                    "threshold_label": (
+                        lift_phase_arm_damping.threshold_label
+                    ),
+                    "source_lift_run_id": (
+                        lift_phase_arm_damping.source_lift_run_id
+                    ),
+                    "source_hold_run_id": (
+                        lift_phase_arm_damping.source_hold_run_id
+                    ),
+                    "source_median_velocity_ratio": (
+                        lift_phase_arm_damping
+                        .source_median_velocity_ratio
+                    ),
+                    "initial_damping_nm_s_rad": (
+                        lift_phase_arm_damping
+                        .initial_damping_nm_s_rad
+                    ),
+                    "final_damping_nm_s_rad": (
+                        lift_phase_arm_damping.final_damping_nm_s_rad
+                    ),
+                    "transition_steps": (
+                        lift_phase_arm_damping.transition_steps
+                    ),
+                    "transition_records_completed": len(
+                        h13_transition_records
+                    ),
+                    "maximum_gain_readback_error": (
+                        h13_maximum_readback_error
+                    ),
+                    "transition_peak_moment_score_nm": (
+                        h13_peak_moment_score
+                    ),
+                    "transition_peak_force_increment_n": (
+                        h13_peak_force_increment
+                    ),
+                    "arm_stiffness_modified": False,
+                    "arm_target_modified": False,
+                    "hand_target_modified": False,
+                    "payload_reference_rebased": False,
+                    "sensor_origin_hard_gate_unchanged": True,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "post_physics_object_pose_writes": 0,
+                }
+                if formal_lift_failure is not None:
+                    metrics["formal_lift_stages"] = []
+                    metrics["formal_lift_monitor"] = (
+                        formal_lift_monitor.summary()
+                    )
+                    run_formal_failure_recovery()
+
+            if stiffness_restore_diagnostic_mode:
+                # B-V2-H16 diagnostic only. H6 deliberately reduced the
+                # anchored arm position stiffness from the existing 24000
+                # N*m/rad robot setting to 6000 N*m/rad. H15 proved that
+                # replacing that anchor with a current-state-following force
+                # representation retreats the target instead of lifting the
+                # robot. Restore the already-authored nominal stiffness under
+                # the dynamically tested H13 damping, while preserving the
+                # actual H16-entry position-drive effort at every transition
+                # step. No lift target is issued in this branch.
+                restoration = (
+                    physical_grasp.pre_lift_arm_stiffness_restoration
+                )
+                if (
+                    arguments.physical_grasp_method
+                    != "sequential-compliant"
+                    or formal_lift_compliant_path_arm is None
+                    or formal_lift_compliant_position_preload is None
+                    or formal_lift_arm_drive_bias is None
+                    or not physical_grasp.lift_phase_arm_damping.enabled
+                    or len(h13_transition_records)
+                    != physical_grasp.lift_phase_arm_damping.transition_steps
+                ):
+                    raise RuntimeError(
+                        "H16 stiffness restoration requires completed H6 and "
+                        "H13 sequential-compliant preparation"
+                    )
+                h16_initial_stiffness = float(
+                    nominal_arm_stiffness * compliance.stiffness_scale
+                )
+                h16_restored_stiffness = float(nominal_arm_stiffness)
+                h16_damping = float(
+                    lift_phase_arm_damping.final_damping_nm_s_rad
+                )
+                entry_kps, entry_kds = controller.get_gains()
+                entry_kps = np.asarray(entry_kps, dtype=np.float64)
+                entry_kds = np.asarray(entry_kds, dtype=np.float64)
+                h16_maximum_gain_readback_error = max(
+                    float(
+                        np.max(
+                            np.abs(
+                                entry_kps[arm_indices]
+                                - h16_initial_stiffness
+                            )
+                        )
+                    ),
+                    float(
+                        np.max(
+                            np.abs(
+                                entry_kds[arm_indices] - h16_damping
+                            )
+                        )
+                    ),
+                )
+                h16_entry_path = np.asarray(
+                    positions[arm_indices], dtype=np.float64
+                ).copy()
+                h16_entry_target = current_arm_target.copy()
+                h16_position_preload = capture_position_preload_nm(
+                    h16_entry_target,
+                    h16_entry_path,
+                    h16_initial_stiffness,
+                )
+                h16_bias_step_guard = (
+                    derive_runtime_target_bias_step_envelope(
+                        tuple(
+                            float(value) for value in h16_position_preload
+                        ),
+                        h16_initial_stiffness,
+                        h16_restored_stiffness,
+                        h16_damping,
+                        restoration,
+                    )
+                )
+                h16_runtime_bias_step_envelope = float(
+                    h16_bias_step_guard[
+                        "runtime_target_bias_step_envelope_rad"
+                    ]
+                )
+                h16_previous_bias = (
+                    h16_position_preload / h16_initial_stiffness
+                )
+                h16_transition_records = []
+                h16_stability_root_samples = []
+                h16_stability_wrist_samples = []
+                h16_peak_moment_score = 0.0
+                h16_peak_force_increment = 0.0
+                h16_maximum_effort_residual = 0.0
+                h16_maximum_stiffness_step = 0.0
+                h16_maximum_bias_step = 0.0
+                h16_final_drive_target = None
+
+                def h16_summary(status, failure_reason=None, detail=None):
+                    return {
+                        "status": status,
+                        "classification": failure_reason,
+                        "failure_detail": detail,
+                        "threshold_label": restoration.threshold_label,
+                        "source_h6_run_id": restoration.source_h6_run_id,
+                        "source_h13_run_id": restoration.source_h13_run_id,
+                        "diagnostic_only": True,
+                        "dynamic_pass_claimed": False,
+                        "physical_lift_started": False,
+                        "transition_records_completed": len(
+                            h16_transition_records
+                        ),
+                        "stability_records_completed": len(
+                            h16_stability_root_samples
+                        ),
+                        "initial_stiffness_nm_rad": h16_initial_stiffness,
+                        "restored_stiffness_nm_rad": h16_restored_stiffness,
+                        "fixed_h13_damping_nm_s_rad": h16_damping,
+                        "entry_position_preload_nm": [
+                            float(value) for value in h16_position_preload
+                        ],
+                        "maximum_gain_readback_error": (
+                            h16_maximum_gain_readback_error
+                        ),
+                        "maximum_position_effort_residual_nm": (
+                            h16_maximum_effort_residual
+                        ),
+                        "maximum_stiffness_step_nm_rad": (
+                            h16_maximum_stiffness_step
+                        ),
+                        "maximum_target_bias_step_rad": (
+                            h16_maximum_bias_step
+                        ),
+                        "target_bias_step_guard": dict(
+                            h16_bias_step_guard
+                        ),
+                        "runtime_target_bias_step_envelope_rad": (
+                            h16_runtime_bias_step_envelope
+                        ),
+                        "absolute_schedule_target_bias_step_ceiling_rad": (
+                            h16_bias_step_guard[
+                                "absolute_schedule_target_bias_step_ceiling_rad"
+                            ]
+                        ),
+                        "offline_reference_maximum_target_bias_step_rad": (
+                            restoration.offline_reference_maximum_target_bias_step_rad
+                        ),
+                        "peak_moment_score_nm": h16_peak_moment_score,
+                        "peak_force_increment_n": (
+                            h16_peak_force_increment
+                        ),
+                        "anchored_position_stiffness_preserved": True,
+                        "feedforward_effort_used": False,
+                        "sensor_origin_hard_gate_unchanged": True,
+                        "robot_joint_state_only": True,
+                        "object_truth_used": False,
+                        "contact_truth_used": False,
+                        "event_truth_used": False,
+                        "object_pose_written": False,
+                    }
+
+                def fail_h16(reason, phase_name, local_step, detail):
+                    nonlocal formal_lift_terminal
+                    nonlocal formal_lift_failure
+                    formal_lift_terminal = True
+                    formal_lift_failure = {
+                        "reason": reason,
+                        "stage": 0,
+                        "stage_step": local_step,
+                        "global_step": global_step,
+                        "controller_terminal": True,
+                        "phase": phase_name,
+                        "detail": detail,
+                        "wrist_moment_safety_evidence": dict(
+                            formal_lift_monitor.last_moment_safety_evidence
+                        ),
+                    }
+                    metrics[
+                        "pre_lift_arm_stiffness_restoration"
+                    ] = h16_summary("FAILED_CLOSED", reason, detail)
+                    metrics["formal_lift_stages"] = []
+                    metrics["formal_lift_monitor"] = (
+                        formal_lift_monitor.summary()
+                    )
+                    run_formal_failure_recovery()
+
+                if (
+                    h16_maximum_gain_readback_error
+                    > restoration.maximum_gain_readback_error
+                ):
+                    fail_h16(
+                        "stiffness_restoration_entry_gain_mismatch",
+                        "pre_lift_arm_stiffness_restoration_entry",
+                        -1,
+                        "H16 entry Kp/Kd do not match the authorized H6/H13 set",
+                    )
+
+                # H16 recovery holds the latest target and slowly opens the
+                # hand. It does not replay a high-stiffness target path back
+                # to the larger H6 bias.
+                formal_lift_traversed_arm_targets = []
+                formal_recovery_lift_start_target = (
+                    current_arm_target.copy()
+                )
+                phase = "pre_lift_arm_stiffness_restoration_transition"
+                for h16_step in range(restoration.transition_steps):
+                    realized_before_step = np.asarray(
+                        positions[arm_indices], dtype=np.float64
+                    ).copy()
+                    try:
+                        restoration_step = derive_stiffness_restoration_step(
+                            tuple(float(value) for value in realized_before_step),
+                            tuple(float(value) for value in h16_position_preload),
+                            h16_initial_stiffness,
+                            h16_restored_stiffness,
+                            h16_damping,
+                            h16_step,
+                            tuple(float(value) for value in h16_previous_bias),
+                            restoration,
+                            runtime_target_bias_step_envelope_rad=(
+                                h16_runtime_bias_step_envelope
+                            ),
+                        )
+                    except ValueError as restoration_error:
+                        fail_h16(
+                            "stiffness_restoration_derivation_invalid",
+                            phase,
+                            h16_step,
+                            f"{type(restoration_error).__name__}: "
+                            f"{restoration_error}",
+                        )
+                    current_arm_target = np.asarray(
+                        restoration_step["target_arm_rad"], dtype=np.float64
+                    )
+                    formal_recovery_lift_start_target = (
+                        current_arm_target.copy()
+                    )
+                    h16_previous_bias = np.asarray(
+                        restoration_step["target_bias_rad"], dtype=np.float64
+                    )
+                    applied_stiffness = float(
+                        restoration_step["applied_stiffness_nm_rad"]
+                    )
+                    kps[arm_indices] = applied_stiffness
+                    kds[arm_indices] = h16_damping
+                    controller.set_gains(
+                        kps=kps, kds=kds, save_to_usd=False
+                    )
+                    readback_kps, readback_kds = controller.get_gains()
+                    readback_kps = np.asarray(
+                        readback_kps, dtype=np.float64
+                    )
+                    readback_kds = np.asarray(
+                        readback_kds, dtype=np.float64
+                    )
+                    gain_readback_error = max(
+                        float(
+                            np.max(
+                                np.abs(
+                                    readback_kps[arm_indices]
+                                    - applied_stiffness
+                                )
+                            )
+                        ),
+                        float(
+                            np.max(
+                                np.abs(
+                                    readback_kds[arm_indices] - h16_damping
+                                )
+                            )
+                        ),
+                    )
+                    h16_maximum_gain_readback_error = max(
+                        h16_maximum_gain_readback_error,
+                        gain_readback_error,
+                    )
+                    h16_maximum_effort_residual = max(
+                        h16_maximum_effort_residual,
+                        float(
+                            restoration_step[
+                                "maximum_position_effort_residual_nm"
+                            ]
+                        ),
+                    )
+                    h16_maximum_stiffness_step = max(
+                        h16_maximum_stiffness_step,
+                        float(restoration_step["stiffness_step_nm_rad"]),
+                    )
+                    h16_maximum_bias_step = max(
+                        h16_maximum_bias_step,
+                        float(
+                            restoration_step[
+                                "maximum_target_bias_step_rad"
+                            ]
+                        ),
+                    )
+                    positions, velocities = observe_and_step(
+                        current_arm_target, current_hand_target, True
+                    )
+                    measured_efforts = sample_post_tare_efforts()
+                    root_delta = measured_efforts - tare_efforts
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(
+                                positions[arm_indices] - current_arm_target
+                            )
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    if (
+                        h16_maximum_gain_readback_error
+                        > restoration.maximum_gain_readback_error
+                    ):
+                        formal_lift_monitor.fail_closed(
+                            "stiffness_restoration_gain_readback_mismatch"
+                        )
+                        monitor_ok = False
+                    elif wrist_ft_monitor_error is not None:
+                        formal_lift_monitor.fail_closed(
+                            "wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            root_delta,
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                    moment_score = float(
+                        formal_lift_monitor.last_moment_safety_evidence[
+                            "gate_score_nm"
+                        ]
+                    )
+                    force_increment = float(
+                        np.linalg.norm(
+                            formal_latest_wrist_payload_increment[:3]
+                        )
+                    )
+                    h16_peak_moment_score = max(
+                        h16_peak_moment_score, moment_score
+                    )
+                    h16_peak_force_increment = max(
+                        h16_peak_force_increment, force_increment
+                    )
+                    h16_transition_record = {
+                        "global_step": int(global_step),
+                        **restoration_step,
+                        "gain_readback_error": gain_readback_error,
+                        "arm_target_anchored_after_transition": True,
+                        "hand_target_modified": False,
+                        "payload_reference_rebased": False,
+                        "sensor_origin_hard_gate_unchanged": True,
+                        "object_truth_used": False,
+                        "contact_truth_used": False,
+                        "event_truth_used": False,
+                        "object_pose_written": False,
+                    }
+                    h16_transition_records.append(h16_transition_record)
+                    controller_step_records.append(
+                        {
+                            "global_step": global_step,
+                            "phase": phase,
+                            "method": arguments.physical_grasp_method,
+                            "lift_stage": 0,
+                            "lift_stage_step": h16_step,
+                            "diagnostic_only": True,
+                            "dynamic_pass_claimed": False,
+                            "physical_lift_started": False,
+                            "pre_lift_arm_stiffness_restoration": (
+                                h16_transition_record
+                            ),
+                            "finger_root_torque_proxy_nm": {
+                                name: float(root_delta[index])
+                                for index, name in enumerate(FINGERS)
+                            },
+                            **formal_kinematic_step_evidence(
+                                positions,
+                                velocities,
+                                current_arm_target,
+                                current_hand_target,
+                            ),
+                            **formal_wrist_step_evidence(positions),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor
+                                .last_moment_safety_evidence
+                            ),
+                            "arm_tracking_error_rad": arm_tracking,
+                            "wrist_ft_monitor_error": (
+                                wrist_ft_monitor_error
+                            ),
+                            "stable": monitor_ok,
+                            "failed": not monitor_ok,
+                            "failure_reason": (
+                                formal_lift_monitor.failure_reason
+                            ),
+                        }
+                    )
+                    if not monitor_ok:
+                        fail_h16(
+                            formal_lift_monitor.failure_reason,
+                            phase,
+                            h16_step,
+                            "sensor hard gate, gain readback or grasp stability "
+                            "failed during H16 stiffness restoration",
+                        )
+
+                h16_final_path = np.asarray(
+                    positions[arm_indices], dtype=np.float64
+                ).copy()
+                h16_final_drive_target = restored_nominal_drive_target(
+                    tuple(float(value) for value in h16_final_path),
+                    tuple(float(value) for value in h16_position_preload),
+                    h16_restored_stiffness,
+                    h16_damping,
+                    restoration,
+                )
+                current_arm_target = np.asarray(
+                    h16_final_drive_target["target_arm_rad"],
+                    dtype=np.float64,
+                )
+                formal_lift_compliant_path_arm = h16_final_path.copy()
+                formal_lift_arm_drive_bias = np.asarray(
+                    h16_final_drive_target["target_bias_rad"],
+                    dtype=np.float64,
+                )
+                formal_lift_compliant_position_preload = (
+                    h16_position_preload.copy()
+                )
+                lift_start = h16_final_path.copy()
+                formal_recovery_lift_start_target = (
+                    current_arm_target.copy()
+                )
+                phase = "pre_lift_arm_stiffness_restoration_stability"
+                for h16_hold_step in range(
+                    restoration.stability_window_steps
+                ):
+                    positions, velocities = observe_and_step(
+                        current_arm_target, current_hand_target, True
+                    )
+                    measured_efforts = sample_post_tare_efforts()
+                    root_delta = measured_efforts - tare_efforts
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(
+                                positions[arm_indices] - current_arm_target
+                            )
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    if wrist_ft_monitor_error is not None:
+                        formal_lift_monitor.fail_closed(
+                            "wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            root_delta,
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                    moment_score = float(
+                        formal_lift_monitor.last_moment_safety_evidence[
+                            "gate_score_nm"
+                        ]
+                    )
+                    force_increment = float(
+                        np.linalg.norm(
+                            formal_latest_wrist_payload_increment[:3]
+                        )
+                    )
+                    h16_peak_moment_score = max(
+                        h16_peak_moment_score, moment_score
+                    )
+                    h16_peak_force_increment = max(
+                        h16_peak_force_increment, force_increment
+                    )
+                    h16_stability_root_samples.append(root_delta.copy())
+                    h16_stability_wrist_samples.append(
+                        formal_latest_wrist_canonical.copy()
+                    )
+                    controller_step_records.append(
+                        {
+                            "global_step": global_step,
+                            "phase": phase,
+                            "method": arguments.physical_grasp_method,
+                            "lift_stage": 0,
+                            "lift_stage_step": h16_hold_step,
+                            "diagnostic_only": True,
+                            "dynamic_pass_claimed": False,
+                            "physical_lift_started": False,
+                            "pre_lift_arm_stiffness_restoration": {
+                                "stability_hold": True,
+                                "fixed_anchor_target": True,
+                                "applied_stiffness_nm_rad": (
+                                    h16_restored_stiffness
+                                ),
+                                "applied_damping_nm_s_rad": h16_damping,
+                                "target_bias_rad": [
+                                    float(value)
+                                    for value in formal_lift_arm_drive_bias
+                                ],
+                                "object_truth_used": False,
+                                "contact_truth_used": False,
+                                "event_truth_used": False,
+                                "object_pose_written": False,
+                            },
+                            "finger_root_torque_proxy_nm": {
+                                name: float(root_delta[index])
+                                for index, name in enumerate(FINGERS)
+                            },
+                            **formal_kinematic_step_evidence(
+                                positions,
+                                velocities,
+                                current_arm_target,
+                                current_hand_target,
+                            ),
+                            **formal_wrist_step_evidence(positions),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor
+                                .last_moment_safety_evidence
+                            ),
+                            "arm_tracking_error_rad": arm_tracking,
+                            "wrist_ft_monitor_error": (
+                                wrist_ft_monitor_error
+                            ),
+                            "stable": monitor_ok,
+                            "failed": not monitor_ok,
+                            "failure_reason": (
+                                formal_lift_monitor.failure_reason
+                            ),
+                        }
+                    )
+                    if not monitor_ok:
+                        fail_h16(
+                            formal_lift_monitor.failure_reason,
+                            phase,
+                            h16_hold_step,
+                            "sensor hard gate or grasp stability failed "
+                            "during H16 fixed-anchor stability hold",
+                        )
+
+                h16_root_stack = np.stack(
+                    h16_stability_root_samples
+                )
+                h16_root_mean = np.mean(h16_root_stack, axis=0)
+                h16_normalized_root = (
+                    np.abs(h16_root_mean)
+                    / np.asarray(
+                        physical_grasp.sequential.load_scale_nm,
+                        dtype=np.float64,
+                    )
+                )
+                h16_entry_load_imbalance = float(
+                    np.max(h16_normalized_root)
+                    - np.min(h16_normalized_root)
+                )
+                h16_entry_moment_score = max(
+                    float(
+                        evaluate_wrist_moment_safety(
+                            tuple(float(value) for value in sample[3:]),
+                            tuple(
+                                float(value)
+                                for value in formal_wrist_payload_reference[3:]
+                            ),
+                            physical_grasp.stability.maximum_wrist_moment_nm,
+                        )["gate_score_nm"]
+                    )
+                    for sample in h16_stability_wrist_samples
+                )
+                if (
+                    h16_entry_load_imbalance
+                    > restoration.maximum_entry_load_imbalance
+                ):
+                    fail_h16(
+                        "stiffness_restoration_entry_load_imbalance",
+                        phase,
+                        restoration.stability_window_steps - 1,
+                        "H16 stability load imbalance exceeds 0.18",
+                    )
+                if (
+                    h16_entry_moment_score
+                    > restoration.maximum_entry_moment_score_nm
+                ):
+                    fail_h16(
+                        "stiffness_restoration_entry_moment_score",
+                        phase,
+                        restoration.stability_window_steps - 1,
+                        "H16 stability moment score exceeds 0.24 N*m",
+                    )
+                h16_result = h16_summary(
+                    "RESTORED_ANCHORED_HOLD_READY"
+                )
+                h16_result.update(
+                    {
+                        "final_target_bias_rad": [
+                            float(value)
+                            for value in formal_lift_arm_drive_bias
+                        ],
+                        "maximum_final_target_bias_rad": float(
+                            np.max(
+                                np.abs(formal_lift_arm_drive_bias)
+                            )
+                        ),
+                        "entry_load_imbalance": (
+                            h16_entry_load_imbalance
+                        ),
+                        "entry_moment_score_nm": (
+                            h16_entry_moment_score
+                        ),
+                        "fixed_anchor_stability_completed": True,
+                    }
+                )
+                metrics["pre_lift_arm_stiffness_restoration"] = (
+                    h16_result
+                )
+                metrics["formal_lift_stages"] = []
+                metrics["formal_lift_monitor"] = (
+                    formal_lift_monitor.summary()
+                )
+                metrics["diagnostic_only"] = True
+                metrics["dynamic_pass_claimed"] = False
+                metrics["physical_lift_started"] = False
+                metrics["passed"] = False
+                raise RuntimeError(
+                    "H16 stiffness-restore hold characterization completed; "
+                    "DIAGNOSTIC_ONLY episode is not a grasp PASS"
+                )
+            lift_start_tcp = np.asarray(
+                iiwa14_grasp_tcp_transform(
+                    tuple(float(value) for value in lift_start)
                 ),
                 dtype=np.float64,
             )
-            observe_and_step(current_arm_target, current_hand_target, True)
-            sample_post_tare_efforts()
-        current_arm_target = pregrasp_arm.copy()
+            pregrasp_tcp = np.asarray(
+                iiwa14_grasp_tcp_transform(
+                    tuple(float(value) for value in pregrasp_arm)
+                ),
+                dtype=np.float64,
+            )
+            available_lift_m = float(
+                pregrasp_tcp[2, 3] - lift_start_tcp[2, 3]
+            )
+            requested_lift_m = sum(
+                stage.increment_m for stage in physical_grasp.lift_stages
+            )
+            if available_lift_m <= requested_lift_m:
+                raise RuntimeError(
+                    "validated pregrasp trajectory has insufficient lift range"
+                )
+            cumulative_lift_m = 0.0
+            lift_x_admittance = physical_grasp.lift_x_force_admittance
+            lift_x_correction_m = 0.0
+            lift_x_admittance_records = []
+            lift_x_maximum_abs_input_force_n = 0.0
+            lift_x_maximum_abs_correction_m = 0.0
+            lift_x_maximum_abs_step_m = 0.0
+            lift_xy_admittance = physical_grasp.lift_xy_force_admittance
+            lift_xy_correction_m = np.zeros(2, dtype=np.float64)
+            lift_xy_admittance_records = []
+            lift_xy_maximum_input_force_norm_n = 0.0
+            lift_xy_maximum_correction_norm_m = 0.0
+            lift_xy_maximum_step_norm_m = 0.0
+            lift_finger_balance_config = (
+                physical_grasp.lift_finger_load_balance
+            )
+            lift_finger_balance_controller = None
+            lift_finger_balance_records = []
+            lift_finger_absolute_config = (
+                physical_grasp.lift_finger_absolute_load_hold
+            )
+            lift_finger_absolute_controller = None
+            lift_finger_absolute_records = []
+            lift_finger_absolute_reference = None
+            lift_finger_absolute_reference_steps = []
+            lift_finger_root_load_suppression_config = (
+                physical_grasp
+                .lift_finger_root_load_two_sample_suppression
+            )
+            lift_finger_root_load_suppression_controller = (
+                LiftFingerRootLoadTwoSampleSuppression(
+                    lift_finger_root_load_suppression_config
+                )
+                if lift_finger_root_load_suppression_config.enabled
+                else None
+            )
+            lift_finger_root_load_suppression_records = []
+            lift_finger_fixed_target_config = (
+                physical_grasp.lift_finger_fixed_target_hold
+            )
+            lift_finger_fixed_target_controller = None
+            lift_finger_fixed_target_records = []
+            lift_finger_fixed_targets_rad = None
+            lift_finger_fixed_target_h17_record_count_at_activation = None
+            lift_finger_fixed_target_h17_cumulative_at_activation_rad = None
+            moment_support_controller = None
+            moment_support_records = []
+            moment_support_base_targets_rad = None
+            moment_support_h17_record_count_at_activation = None
+            moment_support_h17_cumulative_at_activation_rad = None
+            h18_vertical_force_ramp = (
+                physical_grasp.lift_task_space_vertical_force_ramp
+            )
+            h19_vertical_force_ramp = (
+                physical_grasp.lift_sensor_origin_vertical_force_ramp
+            )
+            pre_lift_vertical_force_xy_admittance = (
+                physical_grasp.pre_lift_vertical_force_xy_admittance
+            )
+            pre_lift_xy_nyquist_suppression = (
+                physical_grasp.pre_lift_xy_nyquist_suppression
+            )
+            pre_lift_quasistatic_lateral_preload_nulling = (
+                physical_grasp.pre_lift_quasistatic_lateral_preload_nulling
+            )
+            pre_lift_differential_finger_preload_diagnostic = (
+                physical_grasp
+                .pre_lift_differential_finger_preload_diagnostic
+            )
+            pre_lift_differential_finger_preload_correction = (
+                physical_grasp
+                .pre_lift_differential_finger_preload_correction
+            )
+            pre_lift_xy_admittance_enabled = bool(
+                pre_lift_vertical_force_xy_admittance.enabled
+                or pre_lift_xy_nyquist_suppression.enabled
+            )
+            if h19_vertical_force_ramp.enabled:
+                vertical_force_ramp = h19_vertical_force_ramp
+                vertical_force_metric_key = (
+                    "lift_sensor_origin_vertical_force_ramp"
+                )
+                vertical_force_phase = (
+                    "pre_lift_sensor_origin_vertical_force_ramp"
+                )
+                vertical_force_hypothesis_label = "H19"
+
+                def vertical_force_forward_kinematics(arm_rad):
+                    return sensor_origin_from_grasp_tcp_transform(
+                        arm_rad,
+                        pick.geometry_candidate.handbase_to_tcp_m,
+                        iiwa14_grasp_tcp_transform,
+                    )
+
+                vertical_force_application_frame = (
+                    h19_vertical_force_ramp.force_application_frame
+                )
+                vertical_force_hard_gate_reference_frame = (
+                    h19_vertical_force_ramp.hard_gate_reference_frame
+                )
+            else:
+                vertical_force_ramp = h18_vertical_force_ramp
+                vertical_force_metric_key = (
+                    "lift_task_space_vertical_force_ramp"
+                )
+                vertical_force_phase = (
+                    "pre_lift_task_space_vertical_force_ramp"
+                )
+                vertical_force_hypothesis_label = "H18"
+                vertical_force_forward_kinematics = (
+                    iiwa14_grasp_tcp_transform
+                )
+                vertical_force_application_frame = "grasp_tcp"
+                vertical_force_hard_gate_reference_frame = (
+                    "handbase_link_sensor_origin"
+                )
+            if pre_lift_vertical_force_xy_admittance.enabled:
+                vertical_force_metric_key = (
+                    "lift_vertical_force_xy_admittance_ramp"
+                )
+                vertical_force_phase = (
+                    "pre_lift_vertical_force_xy_admittance"
+                )
+                vertical_force_hypothesis_label = "H20"
+            elif pre_lift_quasistatic_lateral_preload_nulling.enabled:
+                vertical_force_metric_key = (
+                    "lift_preunloading_quasistatic_xy_then_vertical_force_ramp"
+                )
+                vertical_force_phase = (
+                    "pre_lift_h22_vertical_force_ramp"
+                )
+                vertical_force_hypothesis_label = "H22"
+            elif pre_lift_xy_nyquist_suppression.enabled:
+                vertical_force_metric_key = (
+                    "lift_vertical_force_xy_nyquist_suppressed_ramp"
+                )
+                vertical_force_phase = (
+                    "pre_lift_xy_nyquist_suppressed_admittance"
+                )
+                vertical_force_hypothesis_label = "H21"
+            if pre_lift_differential_finger_preload_correction.enabled:
+                vertical_force_metric_key = (
+                    "lift_h23_fixed_differential_preload_then_vertical_force_ramp"
+                )
+                vertical_force_phase = (
+                    "pre_lift_h23_fixed_correction_vertical_force_ramp"
+                )
+                vertical_force_hypothesis_label = "H23_FIXED_CORRECTION"
+            if lift_finger_root_load_suppression_config.enabled:
+                vertical_force_metric_key = (
+                    "lift_h24_two_sample_root_load_then_vertical_force_ramp"
+                )
+                vertical_force_phase = (
+                    "pre_lift_h24_two_sample_root_load_vertical_force_ramp"
+                )
+                vertical_force_hypothesis_label = "H24_TWO_SAMPLE_ROOT_LOAD"
+            if lift_finger_fixed_target_config.enabled:
+                vertical_force_metric_key = (
+                    "lift_h25_fixed_finger_targets_then_vertical_force_ramp"
+                )
+                vertical_force_phase = (
+                    "pre_lift_h25_fixed_finger_targets_vertical_force_ramp"
+                )
+                vertical_force_hypothesis_label = "H25_FIXED_FINGER_TARGETS"
+            if moment_support_config is not None:
+                vertical_force_metric_key = (
+                    "moment_constrained_support_transfer"
+                )
+                vertical_force_phase = (
+                    "b_v3_internal_force_centering"
+                )
+                vertical_force_hypothesis_label = (
+                    "B_V3_MOMENT_CONSTRAINED_SUPPORT_TRANSFER"
+                )
+            vertical_force_ramp_records = []
+            vertical_force_hold_records = []
+            vertical_force_target_n = 0.0
+            vertical_force_previous_n = 0.0
+            vertical_force_maximum_readback_error_nm = 0.0
+            vertical_force_maximum_joint_effort_nm = 0.0
+            vertical_force_maximum_joint_effort_step_nm = 0.0
+            vertical_force_maximum_virtual_work_residual_w = 0.0
+            vertical_force_peak_moment_score_nm = 0.0
+            vertical_force_peak_force_increment_n = 0.0
+            vertical_force_ramp_arm_target = None
+            vertical_force_ramp_actual_tcp_z_samples = []
+            vertical_force_actuator_effort_limits = None
+            pre_lift_vertical_force_xy_records = []
+            pre_lift_xy_nyquist_records = []
+            pre_lift_h22_records = []
+            pre_lift_h22_correction_at_ramp_start_m = None
+            pre_lift_h23_records = []
+            pre_lift_h23_correction_records = []
+            pre_lift_h23_correction_contract = None
+            pre_lift_h23_correction_new_reference_nm = None
+            pre_lift_h23_correction_final_targets_rad = None
+            pre_lift_h23_correction_h17_refreshed = False
+            pre_lift_xy_previous_raw_force_n = None
+            pre_lift_xy_previous_raw_input_global_step = None
+            pre_lift_xy_maximum_raw_input_force_norm_n = 0.0
+            pre_lift_xy_maximum_filtered_input_force_norm_n = 0.0
+            vertical_force_readback_tolerance_nm = (
+                physical_grasp.pre_lift_gravity_preload_transfer
+                .maximum_effort_readback_error_nm
+            )
+            if lift_finger_absolute_config.enabled:
+                if (
+                    arguments.physical_grasp_method
+                    != "sequential-compliant"
+                    or not sequential_controller.lift_ready
+                    or len(h13_root_samples)
+                    < physical_grasp.reference_window_steps
+                ):
+                    raise RuntimeError(
+                        "H17 absolute root-load hold requires sequential "
+                        "LIFT_READY and a complete trailing H13 reference "
+                        "window"
+                    )
+                reference_count = physical_grasp.reference_window_steps
+                reference_samples = np.stack(
+                    h13_root_samples[-reference_count:]
+                )
+                lift_finger_absolute_reference = np.mean(
+                    np.abs(reference_samples), axis=0
+                )
+                lift_finger_absolute_reference_steps = [
+                    int(record["global_step"])
+                    for record in h13_transition_records[-reference_count:]
+                ]
+                lift_finger_absolute_controller = (
+                    LiftFingerAbsoluteLoadHold(
+                        lift_finger_absolute_config,
+                        physical_grasp.sequential,
+                        base_targets_rad=current_hand_target[
+                            formal_finger_hand_indices
+                        ],
+                        open_targets_rad=sequential_controller.open_targets,
+                        closed_targets_rad=(
+                            sequential_controller.closed_targets
+                        ),
+                        initial_balance_total_rad=(
+                            sequential_controller.balance_total
+                        ),
+                        reference_root_torque_nm=(
+                            lift_finger_absolute_reference
+                        ),
+                    )
+                )
+            elif lift_finger_balance_config.enabled:
+                if (
+                    arguments.physical_grasp_method
+                    != "sequential-compliant"
+                    or not sequential_controller.lift_ready
+                ):
+                    raise RuntimeError(
+                        "H11 lift finger load balance requires the "
+                        "sequential-compliant controller at LIFT_READY"
+                    )
+                lift_finger_balance_controller = LiftFingerLoadBalance(
+                    lift_finger_balance_config,
+                    physical_grasp.sequential,
+                    base_targets_rad=current_hand_target[
+                        formal_finger_hand_indices
+                    ],
+                    open_targets_rad=sequential_controller.open_targets,
+                    closed_targets_rad=sequential_controller.closed_targets,
+                    initial_balance_total_rad=(
+                        sequential_controller.balance_total
+                    ),
+                )
+
+            if vertical_force_ramp.enabled:
+                if (
+                    arguments.formal_lift_mode != "staged"
+                    or arguments.physical_grasp_method
+                    != "sequential-compliant"
+                    or not lift_phase_arm_damping.enabled
+                    or lift_finger_absolute_controller is None
+                ):
+                    raise RuntimeError(
+                        "H18 vertical force ramp requires staged "
+                        "sequential-compliant lift with completed H13 and "
+                        "active H17"
+                    )
+                vertical_force_actuator_effort_limits = np.asarray(
+                    controller.get_max_efforts(), dtype=np.float64
+                )[arm_indices]
+                if (
+                    vertical_force_actuator_effort_limits.shape != (7,)
+                    or not np.all(
+                        np.isfinite(vertical_force_actuator_effort_limits)
+                    )
+                    or np.any(vertical_force_actuator_effort_limits <= 0.0)
+                ):
+                    raise RuntimeError(
+                        "H18 actuator effort limit readback is invalid"
+                    )
+                initial_applied_effort = np.asarray(
+                    robot.get_applied_joint_efforts(
+                        joint_indices=arm_indices
+                    ),
+                    dtype=np.float64,
+                )
+                if (
+                    initial_applied_effort.shape != (7,)
+                    or not np.all(np.isfinite(initial_applied_effort))
+                    or float(np.max(np.abs(initial_applied_effort)))
+                    > vertical_force_readback_tolerance_nm
+                ):
+                    raise RuntimeError(
+                        "H18 requires a zero explicit arm-effort starting state"
+                    )
+                vertical_force_target_n = frozen_payload_weight_force_n(
+                    tabletop.asset_profile.body_mass_kg,
+                    tabletop.asset_profile.nut_mass_kg,
+                    tabletop.physics.gravity_m_s2,
+                    physical_grasp.stability.maximum_wrist_force_n,
+                )
+                formal_arm_feedforward_effort = np.zeros(
+                    7, dtype=np.float64
+                )
+                vertical_force_ramp_arm_target = (
+                    current_arm_target.copy()
+                )
+                initial_actual_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(
+                            float(value)
+                            for value in positions[arm_indices]
+                        )
+                    ),
+                    dtype=np.float64,
+                )
+                vertical_force_ramp_actual_tcp_z_samples.append(
+                    float(initial_actual_tcp[2, 3])
+                )
+
+                def vertical_force_summary(status):
+                    return {
+                        "status": status,
+                        "threshold_label": vertical_force_ramp.threshold_label,
+                        "source_h12_run_id": (
+                            vertical_force_ramp.source_h12_run_id
+                        ),
+                        "source_h13_run_id": (
+                            vertical_force_ramp.source_h13_run_id
+                        ),
+                        "source_h17_run_id": (
+                            vertical_force_ramp.source_h17_run_id
+                        ),
+                        "source_h18_run_id": getattr(
+                            vertical_force_ramp,
+                            "source_h18_run_id",
+                            None,
+                        ),
+                        "force_application_frame": (
+                            vertical_force_application_frame
+                        ),
+                        "hard_gate_reference_frame": (
+                            vertical_force_hard_gate_reference_frame
+                        ),
+                        "application_and_hard_gate_collocated": (
+                            vertical_force_application_frame
+                            == vertical_force_hard_gate_reference_frame
+                        ),
+                        "handbase_to_grasp_tcp_m": float(
+                            pick.geometry_candidate.handbase_to_tcp_m
+                        ),
+                        "pre_lift_xy_admittance_enabled": (
+                            pre_lift_xy_admittance_enabled
+                        ),
+                        "pre_lift_xy_h20_enabled": (
+                            pre_lift_vertical_force_xy_admittance.enabled
+                        ),
+                        "pre_lift_xy_h21_enabled": (
+                            pre_lift_xy_nyquist_suppression.enabled
+                        ),
+                        "pre_lift_xy_h22_enabled": (
+                            pre_lift_quasistatic_lateral_preload_nulling.enabled
+                        ),
+                        "pre_lift_xy_source_h14_run_id": getattr(
+                            pre_lift_vertical_force_xy_admittance,
+                            "source_h14_run_id",
+                            None,
+                        ) if pre_lift_vertical_force_xy_admittance.enabled else None,
+                        "pre_lift_xy_source_h18_run_id": getattr(
+                            pre_lift_vertical_force_xy_admittance,
+                            "source_h18_run_id",
+                            None,
+                        ) if pre_lift_vertical_force_xy_admittance.enabled else None,
+                        "pre_lift_xy_h21_source_h20_run_id": getattr(
+                            pre_lift_xy_nyquist_suppression,
+                            "source_h20_run_id",
+                            None,
+                        ) if pre_lift_xy_nyquist_suppression.enabled else None,
+                        "pre_lift_xy_h22_source_h21_run_id": getattr(
+                            pre_lift_quasistatic_lateral_preload_nulling,
+                            "source_h21_run_id",
+                            None,
+                        ) if pre_lift_quasistatic_lateral_preload_nulling.enabled else None,
+                        "pre_lift_xy_h22_steps_source": getattr(
+                            pre_lift_quasistatic_lateral_preload_nulling,
+                            "steps_source",
+                            None,
+                        ) if pre_lift_quasistatic_lateral_preload_nulling.enabled else None,
+                        "pre_lift_xy_h22_steps_expected": (
+                            lift_phase_arm_damping.transition_steps
+                            if pre_lift_quasistatic_lateral_preload_nulling.enabled
+                            else 0
+                        ),
+                        "pre_lift_xy_h22_records_completed": len(
+                            pre_lift_h22_records
+                        ),
+                        "pre_lift_xy_h22_all_vertical_feedforward_zero": all(
+                            record["vertical_feedforward_zero"]
+                            for record in pre_lift_h22_records
+                        ),
+                        "pre_lift_xy_h22_payload_reference_rebased": False,
+                        "pre_lift_xy_h22_correction_total_bound_reset": False,
+                        "pre_lift_xy_h22_correction_at_ramp_start_m": (
+                            pre_lift_h22_correction_at_ramp_start_m
+                        ),
+                        "pre_lift_h23_fixed_correction_enabled": (
+                            pre_lift_differential_finger_preload_correction
+                            .enabled
+                        ),
+                        "pre_lift_h23_fixed_correction_contract": (
+                            pre_lift_h23_correction_contract
+                        ),
+                        "pre_lift_h23_fixed_correction_records_completed": len(
+                            pre_lift_h23_correction_records
+                        ),
+                        "pre_lift_h23_fixed_correction_final_targets_rad": (
+                            pre_lift_h23_correction_final_targets_rad
+                        ),
+                        "pre_lift_h23_fixed_correction_new_reference_nm": (
+                            pre_lift_h23_correction_new_reference_nm
+                        ),
+                        "pre_lift_h23_fixed_correction_h17_refreshed": (
+                            pre_lift_h23_correction_h17_refreshed
+                        ),
+                        "h24_two_sample_root_load_enabled": (
+                            lift_finger_root_load_suppression_config.enabled
+                        ),
+                        "h24_two_sample_root_load_records_completed": len(
+                            lift_finger_root_load_suppression_records
+                        ),
+                        "h25_fixed_target_hold_enabled": (
+                            lift_finger_fixed_target_config.enabled
+                        ),
+                        "h25_fixed_target_hold_active": (
+                            lift_finger_fixed_target_controller is not None
+                        ),
+                        "h25_fixed_targets_rad": lift_finger_fixed_targets_rad,
+                        "h25_fixed_target_records_completed": len(
+                            lift_finger_fixed_target_records
+                        ),
+                        "b_v3_moment_constrained_support_enabled": (
+                            moment_support_config is not None
+                        ),
+                        "b_v3_controller_active": (
+                            moment_support_controller is not None
+                        ),
+                        "b_v3_records_completed": len(
+                            moment_support_records
+                        ),
+                        "pre_lift_xy_records_completed": len(
+                            pre_lift_vertical_force_xy_records
+                        ),
+                        "pre_lift_xy_nyquist_records_completed": len(
+                            pre_lift_xy_nyquist_records
+                        ),
+                        "pre_lift_xy_maximum_input_force_norm_n": (
+                            lift_xy_maximum_input_force_norm_n
+                        ),
+                        "pre_lift_xy_maximum_correction_norm_m": (
+                            lift_xy_maximum_correction_norm_m
+                        ),
+                        "pre_lift_xy_maximum_step_norm_m": (
+                            lift_xy_maximum_step_norm_m
+                        ),
+                        "pre_lift_xy_maximum_raw_input_force_norm_n": (
+                            pre_lift_xy_maximum_raw_input_force_norm_n
+                        ),
+                        "pre_lift_xy_maximum_filtered_input_force_norm_n": (
+                            pre_lift_xy_maximum_filtered_input_force_norm_n
+                        ),
+                        "pre_lift_xy_raw_sensor_hard_gate_unchanged": True,
+                        "pre_lift_xy_hard_gate_detection_delay_steps": 0,
+                        "force_target_source": (
+                            vertical_force_ramp.force_target_source
+                        ),
+                        "ramp_steps_source": (
+                            vertical_force_ramp.ramp_steps_source
+                        ),
+                        "ramp_steps": (
+                            lift_phase_arm_damping.transition_steps
+                        ),
+                        "ramp_records_completed": len(
+                            vertical_force_ramp_records
+                        ),
+                        "staged_lift_hold_records_completed": len(
+                            vertical_force_hold_records
+                        ),
+                        "body_mass_kg": tabletop.asset_profile.body_mass_kg,
+                        "nut_mass_kg": tabletop.asset_profile.nut_mass_kg,
+                        "gravity_m_s2": tabletop.physics.gravity_m_s2,
+                        "target_world_up_force_n": vertical_force_target_n,
+                        "force_gate_n": (
+                            physical_grasp.stability.maximum_wrist_force_n
+                        ),
+                        "target_force_fraction_of_gate": (
+                            vertical_force_target_n
+                            / physical_grasp.stability.maximum_wrist_force_n
+                        ),
+                        "final_commanded_world_up_force_n": (
+                            vertical_force_previous_n
+                        ),
+                        "final_commanded_joint_effort_nm": [
+                            float(value)
+                            for value in formal_arm_feedforward_effort
+                        ],
+                        "actuator_effort_limit_readback_nm": [
+                            float(value)
+                            for value in vertical_force_actuator_effort_limits
+                        ],
+                        "maximum_effort_readback_error_nm": (
+                            vertical_force_maximum_readback_error_nm
+                        ),
+                        "maximum_abs_joint_effort_nm": (
+                            vertical_force_maximum_joint_effort_nm
+                        ),
+                        "maximum_abs_joint_effort_step_nm": (
+                            vertical_force_maximum_joint_effort_step_nm
+                        ),
+                        "maximum_virtual_work_residual_w": (
+                            vertical_force_maximum_virtual_work_residual_w
+                        ),
+                        "peak_moment_score_nm": (
+                            vertical_force_peak_moment_score_nm
+                        ),
+                        "peak_force_increment_n": (
+                            vertical_force_peak_force_increment_n
+                        ),
+                        "ramp_actual_tcp_z_range_m": (
+                            max(vertical_force_ramp_actual_tcp_z_samples)
+                            - min(vertical_force_ramp_actual_tcp_z_samples)
+                        ),
+                        "position_target_fixed_during_ramp": all(
+                            record["position_target_fixed_during_ramp"]
+                            for record in vertical_force_ramp_records
+                        ),
+                        "vertical_position_target_fixed_during_ramp": all(
+                            record[
+                                "vertical_position_target_fixed_during_ramp"
+                            ]
+                            for record in vertical_force_ramp_records
+                        ),
+                        "bounded_xy_target_change_authorized": bool(
+                            pre_lift_xy_admittance_enabled
+                        ),
+                        "pre_lift_xy_all_inputs_immediately_preceding": all(
+                            record[
+                                "input_is_immediately_preceding_sample"
+                            ]
+                            and record["output_global_step"]
+                            == record["input_global_step"] + 1
+                            for record in pre_lift_vertical_force_xy_records
+                        ),
+                        "pre_lift_xy_oldest_control_sample_age_at_most_one": all(
+                            record["oldest_control_sample_age_steps"] <= 1
+                            for record in pre_lift_xy_nyquist_records
+                        ),
+                        "pre_lift_xy_all_raw_peaks_recorded": all(
+                            record["raw_peaks_recorded"]
+                            for record in pre_lift_xy_nyquist_records
+                        ),
+                        "all_inputs_immediately_preceding": all(
+                            record["global_step"]
+                            == record["input_global_step"] + 1
+                            for record in vertical_force_ramp_records
+                        ),
+                        "recomputed_from_joint_state_during_staged_lift": (
+                            vertical_force_ramp
+                            .recompute_mapping_during_staged_lift
+                        ),
+                        "sensor_origin_hard_gate_unchanged": True,
+                        "robot_joint_state_only": True,
+                        "object_truth_used": False,
+                        "contact_truth_used": False,
+                        "event_truth_used": False,
+                        "object_pose_written": False,
+                    }
+
+                def fail_vertical_force_ramp(
+                    reason,
+                    phase_name,
+                    local_step,
+                    detail,
+                    failure_stage=0,
+                ):
+                    nonlocal formal_lift_terminal
+                    nonlocal formal_lift_failure
+                    formal_lift_terminal = True
+                    formal_lift_failure = {
+                        "reason": reason,
+                        "stage": int(failure_stage),
+                        "stage_step": int(local_step),
+                        "global_step": int(global_step),
+                        "controller_terminal": True,
+                        "phase": phase_name,
+                        "detail": detail,
+                        "wrist_moment_safety_evidence": dict(
+                            formal_lift_monitor.last_moment_safety_evidence
+                        ),
+                    }
+                    metrics[vertical_force_metric_key] = (
+                        vertical_force_summary("FAILED_CLOSED")
+                    )
+                    metrics["formal_lift_stages"] = []
+                    metrics["formal_lift_monitor"] = (
+                        formal_lift_monitor.summary()
+                    )
+                    run_formal_failure_recovery()
+
+                def h24_h17_control_input(
+                    raw_root_torque_nm,
+                    input_global_step,
+                    phase_name,
+                    local_step,
+                ):
+                    if lift_finger_root_load_suppression_controller is None:
+                        return np.asarray(raw_root_torque_nm), None
+                    try:
+                        h24_record = (
+                            lift_finger_root_load_suppression_controller.update(
+                                tuple(
+                                    float(value)
+                                    for value in raw_root_torque_nm
+                                ),
+                                int(input_global_step),
+                            )
+                        )
+                    except ValueError as h24_error:
+                        fail_vertical_force_ramp(
+                            "h24_root_load_input_invalid",
+                            phase_name,
+                            local_step,
+                            f"{type(h24_error).__name__}: {h24_error}",
+                        )
+                        raise RuntimeError(
+                            "H24 failed closed after safe recovery"
+                        ) from h24_error
+                    h24_record.update(
+                        {
+                            "phase": phase_name,
+                            "phase_step": int(local_step),
+                            "raw_hard_gate_sample_filtered": False,
+                            "formal_b_pass_claimed": False,
+                        }
+                    )
+                    lift_finger_root_load_suppression_records.append(
+                        h24_record
+                    )
+                    return (
+                        np.asarray(
+                            h24_record[
+                                "filtered_h17_control_root_torque_nm"
+                            ],
+                            dtype=np.float64,
+                        ),
+                        h24_record,
+                    )
+
+                def finalize_h24_record(h24_record):
+                    if h24_record is None:
+                        return
+                    h24_record.update(
+                        {
+                            "output_global_step": int(global_step),
+                            "newest_sample_age_at_output_steps": int(
+                                global_step
+                                - h24_record["current_input_global_step"]
+                            ),
+                            "oldest_sample_age_at_output_steps": int(
+                                global_step
+                                - h24_record["previous_input_global_step"]
+                            ),
+                        }
+                    )
+
+                if pre_lift_quasistatic_lateral_preload_nulling.enabled:
+                    h22_phase = (
+                        "pre_lift_quasistatic_lateral_preload_nulling"
+                    )
+                    phase = h22_phase
+                    h22_payload_reference_before = np.asarray(
+                        formal_wrist_payload_reference,
+                        dtype=np.float64,
+                    ).copy()
+                    if not np.array_equal(
+                        formal_arm_feedforward_effort,
+                        np.zeros(7, dtype=np.float64),
+                    ):
+                        fail_vertical_force_ramp(
+                            "h22_nonzero_vertical_feedforward_at_entry",
+                            phase,
+                            0,
+                            "H22 must start before the H18 vertical force ramp",
+                        )
+                    for h22_step_index in range(
+                        lift_phase_arm_damping.transition_steps
+                    ):
+                        h17_input_global_step = int(global_step)
+                        h17_control_input, h24_root_load_step = (
+                            h24_h17_control_input(
+                                root_delta,
+                                h17_input_global_step,
+                                phase,
+                                h22_step_index,
+                            )
+                        )
+                        h17_step = lift_finger_absolute_controller.update(
+                            h17_control_input
+                        )
+                        current_hand_target[
+                            formal_finger_hand_indices
+                        ] = np.asarray(
+                            h17_step["output_targets_rad"],
+                            dtype=np.float64,
+                        )
+                        pre_lift_xy_input_global_step = int(global_step)
+                        precommand_wrist_evidence = (
+                            formal_wrist_step_evidence(positions)
+                        )
+                        task_payload_increment = np.asarray(
+                            precommand_wrist_evidence[
+                                "wrist_wrench_payload_increment_task_frame"
+                            ],
+                            dtype=np.float64,
+                        )
+                        raw_task_payload_force_xy = tuple(
+                            float(value)
+                            for value in task_payload_increment[:2]
+                        )
+                        try:
+                            pre_lift_xy_nyquist_record = (
+                                two_sample_xy_control_input(
+                                    raw_task_payload_force_xy,
+                                    pre_lift_xy_previous_raw_force_n,
+                                )
+                            )
+                        except ValueError as nyquist_error:
+                            fail_vertical_force_ramp(
+                                "h22_xy_nyquist_input_invalid",
+                                phase,
+                                h22_step_index,
+                                f"{type(nyquist_error).__name__}: "
+                                f"{nyquist_error}",
+                            )
+                        control_task_payload_force_xy = tuple(
+                            float(value)
+                            for value in pre_lift_xy_nyquist_record[
+                                "filtered_control_task_force_xy_n"
+                            ]
+                        )
+                        pre_lift_xy_nyquist_record.update(
+                            {
+                                "current_input_global_step": int(
+                                    pre_lift_xy_input_global_step
+                                ),
+                                "previous_input_global_step": (
+                                    int(pre_lift_xy_input_global_step)
+                                    if pre_lift_xy_previous_raw_input_global_step
+                                    is None
+                                    else int(
+                                        pre_lift_xy_previous_raw_input_global_step
+                                    )
+                                ),
+                                "raw_hard_gate_sample_filtered": False,
+                                "object_truth_used": False,
+                                "contact_truth_used": False,
+                                "event_truth_used": False,
+                                "object_pose_written": False,
+                            }
+                        )
+                        pre_lift_xy_previous_raw_force_n = (
+                            raw_task_payload_force_xy
+                        )
+                        pre_lift_xy_previous_raw_input_global_step = int(
+                            pre_lift_xy_input_global_step
+                        )
+                        pre_lift_xy_maximum_raw_input_force_norm_n = max(
+                            pre_lift_xy_maximum_raw_input_force_norm_n,
+                            float(np.linalg.norm(raw_task_payload_force_xy)),
+                        )
+                        pre_lift_xy_maximum_filtered_input_force_norm_n = max(
+                            pre_lift_xy_maximum_filtered_input_force_norm_n,
+                            float(
+                                np.linalg.norm(
+                                    control_task_payload_force_xy
+                                )
+                            ),
+                        )
+                        actual_arm_tcp = np.asarray(
+                            iiwa14_grasp_tcp_transform(
+                                tuple(
+                                    float(value)
+                                    for value in positions[arm_indices]
+                                )
+                            ),
+                            dtype=np.float64,
+                        )
+                        try:
+                            pre_lift_xy_step = (
+                                derive_lift_xy_force_admittance_step(
+                                    tuple(control_task_payload_force_xy),
+                                    tuple(
+                                        tuple(float(value) for value in row)
+                                        for row in actual_arm_tcp[:3, :3]
+                                    ),
+                                    tuple(
+                                        float(value)
+                                        for value in lift_xy_correction_m
+                                    ),
+                                    lift_xy_admittance,
+                                )
+                            )
+                        except ValueError as pre_lift_xy_error:
+                            fail_vertical_force_ramp(
+                                "h22_xy_admittance_derivation_invalid",
+                                phase,
+                                h22_step_index,
+                                f"{type(pre_lift_xy_error).__name__}: "
+                                f"{pre_lift_xy_error}",
+                            )
+                        lift_xy_correction_m = np.asarray(
+                            pre_lift_xy_step["applied_correction_xy_m"],
+                            dtype=np.float64,
+                        )
+                        lift_xy_maximum_input_force_norm_n = max(
+                            lift_xy_maximum_input_force_norm_n,
+                            float(
+                                pre_lift_xy_step[
+                                    "task_lateral_force_norm_n"
+                                ]
+                            ),
+                        )
+                        lift_xy_maximum_correction_norm_m = max(
+                            lift_xy_maximum_correction_norm_m,
+                            float(
+                                pre_lift_xy_step[
+                                    "applied_correction_norm_m"
+                                ]
+                            ),
+                        )
+                        lift_xy_maximum_step_norm_m = max(
+                            lift_xy_maximum_step_norm_m,
+                            float(
+                                pre_lift_xy_step["applied_delta_norm_m"]
+                            ),
+                        )
+                        pre_lift_xy_nominal_arm = (
+                            vertical_force_ramp_arm_target.copy()
+                        )
+                        pre_lift_xy_nominal_tcp = np.asarray(
+                            iiwa14_grasp_tcp_transform(
+                                tuple(
+                                    float(value)
+                                    for value in pre_lift_xy_nominal_arm
+                                )
+                            ),
+                            dtype=np.float64,
+                        )
+                        pre_lift_xy_corrected_position = (
+                            pre_lift_xy_nominal_tcp[:3, 3].copy()
+                        )
+                        pre_lift_xy_corrected_position[:2] += (
+                            lift_xy_correction_m
+                        )
+                        try:
+                            pre_lift_xy_corrected_arm = np.asarray(
+                                solve_fixed_q7_tcp_pose(
+                                    tuple(
+                                        float(value)
+                                        for value in pre_lift_xy_nominal_arm
+                                    ),
+                                    tuple(
+                                        float(value)
+                                        for value in (
+                                            pre_lift_xy_corrected_position
+                                        )
+                                    ),
+                                    target_rotation=(
+                                        pre_lift_xy_nominal_tcp[:3, :3]
+                                    ),
+                                ),
+                                dtype=np.float64,
+                            )
+                        except ValueError as pre_lift_xy_ik_error:
+                            fail_vertical_force_ramp(
+                                "h22_xy_admittance_ik_invalid",
+                                phase,
+                                h22_step_index,
+                                f"{type(pre_lift_xy_ik_error).__name__}: "
+                                f"{pre_lift_xy_ik_error}",
+                            )
+                        current_arm_target = pre_lift_xy_corrected_arm
+                        corrected_target_tcp = np.asarray(
+                            iiwa14_grasp_tcp_transform(
+                                tuple(
+                                    float(value)
+                                    for value in current_arm_target
+                                )
+                            ),
+                            dtype=np.float64,
+                        )
+                        if abs(
+                            float(
+                                corrected_target_tcp[2, 3]
+                                - pre_lift_xy_nominal_tcp[2, 3]
+                            )
+                        ) > 1.0e-9:
+                            fail_vertical_force_ramp(
+                                "h22_changed_vertical_target",
+                                phase,
+                                h22_step_index,
+                                "H22 must keep the H18 vertical target fixed",
+                            )
+                        if not np.array_equal(
+                            formal_arm_feedforward_effort,
+                            np.zeros(7, dtype=np.float64),
+                        ):
+                            fail_vertical_force_ramp(
+                                "h22_nonzero_vertical_feedforward",
+                                phase,
+                                h22_step_index,
+                                "H22 vertical feedforward must remain zero",
+                            )
+                        positions, velocities = observe_and_step(
+                            current_arm_target,
+                            current_hand_target,
+                            True,
+                            formal_arm_feedforward_effort,
+                        )
+                        applied_effort = np.asarray(
+                            robot.get_applied_joint_efforts(
+                                joint_indices=arm_indices
+                            ),
+                            dtype=np.float64,
+                        )
+                        if applied_effort.shape != (7,) or not np.all(
+                            np.isfinite(applied_effort)
+                        ):
+                            fail_vertical_force_ramp(
+                                "h22_effort_readback_invalid",
+                                phase,
+                                h22_step_index,
+                                "Isaac applied-effort readback is not seven finite values",
+                            )
+                        effort_readback_error = float(
+                            np.max(
+                                np.abs(
+                                    applied_effort
+                                    - formal_arm_feedforward_effort.astype(
+                                        np.float32
+                                    ).astype(np.float64)
+                                )
+                            )
+                        )
+                        vertical_force_maximum_readback_error_nm = max(
+                            vertical_force_maximum_readback_error_nm,
+                            effort_readback_error,
+                        )
+                        measured_efforts = sample_post_tare_efforts()
+                        root_delta = measured_efforts - tare_efforts
+                        finalize_h24_record(h24_root_load_step)
+                        arm_tracking = float(
+                            np.max(
+                                np.abs(
+                                    positions[arm_indices]
+                                    - current_arm_target
+                                )
+                            )
+                        )
+                        finger_velocities = velocities[
+                            hand_indices[formal_finger_hand_indices]
+                        ]
+                        if (
+                            effort_readback_error
+                            > vertical_force_readback_tolerance_nm
+                        ):
+                            formal_lift_monitor.fail_closed(
+                                "h22_effort_readback_mismatch"
+                            )
+                            monitor_ok = False
+                        elif wrist_ft_monitor_error is not None:
+                            formal_lift_monitor.fail_closed(
+                                "wrist_ft_sensor_error"
+                            )
+                            monitor_ok = False
+                        else:
+                            monitor_ok = formal_lift_monitor.update(
+                                root_delta,
+                                formal_latest_wrist_canonical,
+                                arm_tracking_error_rad=arm_tracking,
+                                finger_velocities_rad_s=finger_velocities,
+                            )
+                        moment_score = float(
+                            formal_lift_monitor.last_moment_safety_evidence[
+                                "gate_score_nm"
+                            ]
+                        )
+                        force_increment = float(
+                            np.linalg.norm(
+                                formal_latest_wrist_payload_increment[:3]
+                            )
+                        )
+                        vertical_force_peak_moment_score_nm = max(
+                            vertical_force_peak_moment_score_nm,
+                            moment_score,
+                        )
+                        vertical_force_peak_force_increment_n = max(
+                            vertical_force_peak_force_increment_n,
+                            force_increment,
+                        )
+                        actual_tcp = np.asarray(
+                            iiwa14_grasp_tcp_transform(
+                                tuple(
+                                    float(value)
+                                    for value in positions[arm_indices]
+                                )
+                            ),
+                            dtype=np.float64,
+                        )
+                        vertical_force_ramp_actual_tcp_z_samples.append(
+                            float(actual_tcp[2, 3])
+                        )
+                        pre_lift_xy_record = {
+                            **pre_lift_xy_step,
+                            "phase": h22_phase,
+                            "preunloading_step": int(h22_step_index),
+                            "raw_task_payload_force_xy_n": list(
+                                raw_task_payload_force_xy
+                            ),
+                            "control_task_payload_force_xy_n": list(
+                                control_task_payload_force_xy
+                            ),
+                            "nyquist_suppression": (
+                                pre_lift_xy_nyquist_record
+                            ),
+                            "input_global_step": (
+                                pre_lift_xy_input_global_step
+                            ),
+                            "output_global_step": int(global_step),
+                            "input_is_immediately_preceding_sample": True,
+                            "nominal_arm_target_rad": [
+                                float(value)
+                                for value in pre_lift_xy_nominal_arm
+                            ],
+                            "corrected_arm_target_rad": [
+                                float(value)
+                                for value in pre_lift_xy_corrected_arm
+                            ],
+                            "vertical_target_modified": False,
+                            "sensor_origin_hard_gate_unchanged": True,
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                            "event_truth_used": False,
+                            "object_pose_written": False,
+                        }
+                        pre_lift_vertical_force_xy_records.append(
+                            pre_lift_xy_record
+                        )
+                        pre_lift_xy_nyquist_record[
+                            "output_global_step"
+                        ] = int(global_step)
+                        pre_lift_xy_nyquist_records.append(
+                            pre_lift_xy_nyquist_record
+                        )
+                        lift_xy_admittance_records.append(
+                            pre_lift_xy_record
+                        )
+                        h22_record = {
+                            "global_step": int(global_step),
+                            "input_global_step": h17_input_global_step,
+                            "preunloading_step": int(h22_step_index),
+                            "vertical_feedforward_zero": True,
+                            "commanded_joint_effort_nm": [
+                                float(value)
+                                for value in formal_arm_feedforward_effort
+                            ],
+                            "applied_effort_readback_nm": [
+                                float(value) for value in applied_effort
+                            ],
+                            "effort_readback_error_nm": (
+                                effort_readback_error
+                            ),
+                            "task_lateral_force_norm_n": float(
+                                pre_lift_xy_step[
+                                    "task_lateral_force_norm_n"
+                                ]
+                            ),
+                            "raw_task_payload_force_xy_n": list(
+                                raw_task_payload_force_xy
+                            ),
+                            "control_task_payload_force_xy_n": list(
+                                control_task_payload_force_xy
+                            ),
+                            "applied_correction_xy_m": list(
+                                lift_xy_correction_m
+                            ),
+                            "payload_reference_rebased": False,
+                            "correction_total_bound_reset": False,
+                            "sensor_origin_force_increment_n": (
+                                force_increment
+                            ),
+                            "sensor_origin_moment_gate_score_nm": (
+                                moment_score
+                            ),
+                            "sensor_origin_hard_gate_unchanged": True,
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                            "event_truth_used": False,
+                            "object_pose_written": False,
+                        }
+                        pre_lift_h22_records.append(h22_record)
+                        lift_finger_absolute_records.append(
+                            {
+                                "global_step": int(global_step),
+                                "stage": 0,
+                                "stage_step": int(h22_step_index),
+                                "preunloading_step": int(h22_step_index),
+                                "input_global_step": h17_input_global_step,
+                                "h24_two_sample_control_input": (
+                                    h24_root_load_step
+                                ),
+                                "load_error_nm": list(
+                                    h17_step["load_error_nm"]
+                                ),
+                                "applied_delta_closure_rad": list(
+                                    h17_step[
+                                        "applied_delta_closure_rad"
+                                    ]
+                                ),
+                                "common_mode_applied_delta_closure_rad": (
+                                    h17_step[
+                                        "common_mode_applied_delta_closure_rad"
+                                    ]
+                                ),
+                                "maximum_abs_cumulative_trim_rad": max(
+                                    abs(float(value))
+                                    for value in h17_step[
+                                        "cumulative_trim_closure_rad"
+                                    ]
+                                ),
+                            }
+                        )
+                        controller_step_records.append(
+                            {
+                                "global_step": int(global_step),
+                                "phase": phase,
+                                "method": arguments.physical_grasp_method,
+                                "lift_stage": 0,
+                                "lift_stage_step": int(h22_step_index),
+                                "physical_lift_started": False,
+                                "pre_lift_quasistatic_lateral_preload_nulling": (
+                                    h22_record
+                                ),
+                                "pre_lift_vertical_force_xy_admittance": (
+                                    pre_lift_xy_record
+                                ),
+                                "pre_lift_xy_nyquist_suppression": (
+                                    pre_lift_xy_nyquist_record
+                                ),
+                                "lift_finger_root_load_two_sample_suppression": (
+                                    h24_root_load_step
+                                ),
+                                "lift_finger_absolute_load_hold": {
+                                    **h17_step,
+                                    "input_global_step": (
+                                        h17_input_global_step
+                                    ),
+                                    "output_global_step": int(global_step),
+                                    "input_is_immediately_preceding_sample": (
+                                        h24_root_load_step is None
+                                    ),
+                                    "newest_input_is_immediately_preceding_sample": True,
+                                    "arm_target_modified": False,
+                                    "sensor_origin_hard_gate_unchanged": True,
+                                    "object_pose_written": False,
+                                },
+                                "finger_root_torque_proxy_nm": {
+                                    name: float(root_delta[index])
+                                    for index, name in enumerate(FINGERS)
+                                },
+                                **formal_kinematic_step_evidence(
+                                    positions,
+                                    velocities,
+                                    current_arm_target,
+                                    current_hand_target,
+                                ),
+                                **formal_wrist_step_evidence(positions),
+                                "wrist_moment_safety_evidence": dict(
+                                    formal_lift_monitor
+                                    .last_moment_safety_evidence
+                                ),
+                                "arm_tracking_error_rad": arm_tracking,
+                                "wrist_ft_monitor_error": (
+                                    wrist_ft_monitor_error
+                                ),
+                                "stable": monitor_ok,
+                                "failed": not monitor_ok,
+                                "failure_reason": (
+                                    formal_lift_monitor.failure_reason
+                                ),
+                            }
+                        )
+                        if not monitor_ok:
+                            fail_vertical_force_ramp(
+                                formal_lift_monitor.failure_reason,
+                                phase,
+                                h22_step_index,
+                                "sensor hard gate, zero-effort readback or "
+                                "grasp stability failed during H22",
+                            )
+                    if not np.array_equal(
+                        h22_payload_reference_before,
+                        formal_wrist_payload_reference,
+                    ):
+                        fail_vertical_force_ramp(
+                            "h22_payload_reference_changed",
+                            h22_phase,
+                            lift_phase_arm_damping.transition_steps - 1,
+                            "H22 must not rebase the grasped-payload reference",
+                        )
+                    pre_lift_h22_correction_at_ramp_start_m = [
+                        float(value) for value in lift_xy_correction_m
+                    ]
+
+                if pre_lift_differential_finger_preload_correction.enabled:
+                    h23_fix_phase = (
+                        "pre_lift_differential_finger_preload_correction"
+                    )
+                    phase = h23_fix_phase
+                    h23_fix_metric_key = (
+                        "pre_lift_differential_finger_preload_correction"
+                    )
+                    pre_lift_h23_correction_contract = (
+                        derive_fixed_correction_contract(
+                            pre_lift_differential_finger_preload_correction,
+                            physical_grasp.sequential,
+                            transition_steps=(
+                                lift_phase_arm_damping.transition_steps
+                            ),
+                            stability_steps=(
+                                physical_grasp.reference_window_steps
+                            ),
+                        )
+                    )
+                    h23_fix_arm_target = current_arm_target.copy()
+                    h23_fix_actual_arm_at_entry = positions[
+                        arm_indices
+                    ].copy()
+                    h23_fix_zero_feedforward = np.zeros(7, dtype=np.float64)
+                    h23_fix_payload_reference_before = np.asarray(
+                        formal_wrist_payload_reference,
+                        dtype=np.float64,
+                    ).copy()
+                    h23_fix_hand_baseline = current_hand_target.copy()
+                    h23_fix_baseline_finger_targets = np.asarray(
+                        current_hand_target[formal_finger_hand_indices],
+                        dtype=np.float64,
+                    )
+                    h23_fix_fixed_correction = np.asarray(
+                        pre_lift_h23_correction_contract[
+                            "fixed_correction_closure_rad"
+                        ],
+                        dtype=np.float64,
+                    )
+                    h23_fix_full_overlay = (
+                        apply_closure_correction_to_targets(
+                            h23_fix_baseline_finger_targets.tolist(),
+                            sequential_controller.open_targets,
+                            sequential_controller.closed_targets,
+                            h23_fix_fixed_correction.tolist(),
+                        )
+                    )
+                    pre_lift_h23_correction_final_targets_rad = list(
+                        h23_fix_full_overlay["corrected_targets_rad"]
+                    )
+                    h23_fix_prior_h17_reference_nm = list(
+                        lift_finger_absolute_controller.reference_absolute_load
+                    )
+                    h23_fix_prior_combined_balance_total_rad = list(
+                        h17_step["combined_balance_total_rad"]
+                    )
+                    h23_fix_schedule = []
+                    for h23_fix_step_index in range(
+                        int(
+                            pre_lift_h23_correction_contract[
+                                "transition_steps"
+                            ]
+                        )
+                    ):
+                        h23_fix_schedule.append(
+                            {
+                                **correction_step(
+                                    h23_fix_step_index,
+                                    int(
+                                        pre_lift_h23_correction_contract[
+                                            "transition_steps"
+                                        ]
+                                    ),
+                                    h23_fix_fixed_correction.tolist(),
+                                ),
+                                "subphase": "minimum_jerk_transition",
+                                "subphase_step": int(h23_fix_step_index),
+                            }
+                        )
+                    for h23_fix_stability_step in range(
+                        int(
+                            pre_lift_h23_correction_contract[
+                                "stability_steps"
+                            ]
+                        )
+                    ):
+                        h23_fix_schedule.append(
+                            {
+                                "step_index": int(
+                                    h23_fix_stability_step
+                                ),
+                                "minimum_jerk_blend": 1.0,
+                                "applied_correction_closure_rad": (
+                                    h23_fix_fixed_correction.tolist()
+                                ),
+                                "applied_correction_sum_rad": float(
+                                    np.sum(h23_fix_fixed_correction)
+                                ),
+                                "complete": True,
+                                "subphase": "fixed_target_stability",
+                                "subphase_step": int(
+                                    h23_fix_stability_step
+                                ),
+                            }
+                        )
+                    h23_fix_stability_root_samples = []
+                    h23_fix_maximum_effort_readback_error_nm = 0.0
+                    h23_fix_maximum_actual_arm_delta_rad = 0.0
+                    h23_fix_maximum_force_increment_n = 0.0
+                    h23_fix_maximum_moment_gate_score_nm = 0.0
+
+                    def h23_fix_summary(status):
+                        return {
+                            "status": status,
+                            "threshold_label": (
+                                pre_lift_differential_finger_preload_correction
+                                .threshold_label
+                            ),
+                            "contract": pre_lift_h23_correction_contract,
+                            "records_expected": len(h23_fix_schedule),
+                            "records_completed": len(
+                                pre_lift_h23_correction_records
+                            ),
+                            "transition_records_completed": sum(
+                                record["subphase"]
+                                == "minimum_jerk_transition"
+                                for record in pre_lift_h23_correction_records
+                            ),
+                            "stability_records_completed": sum(
+                                record["subphase"]
+                                == "fixed_target_stability"
+                                for record in pre_lift_h23_correction_records
+                            ),
+                            "baseline_finger_targets_rad": [
+                                float(value)
+                                for value in h23_fix_baseline_finger_targets
+                            ],
+                            "final_finger_targets_rad": (
+                                pre_lift_h23_correction_final_targets_rad
+                            ),
+                            "prior_h17_reference_nm": (
+                                h23_fix_prior_h17_reference_nm
+                            ),
+                            "new_h17_reference_nm": (
+                                pre_lift_h23_correction_new_reference_nm
+                            ),
+                            "prior_combined_balance_total_rad": (
+                                h23_fix_prior_combined_balance_total_rad
+                            ),
+                            "h17_equilibrium_refreshed": (
+                                pre_lift_h23_correction_h17_refreshed
+                            ),
+                            "arm_target_fixed_all_steps": all(
+                                record["arm_target_fixed"]
+                                for record in pre_lift_h23_correction_records
+                            ),
+                            "vertical_feedforward_zero_all_steps": all(
+                                record["vertical_feedforward_zero"]
+                                for record in pre_lift_h23_correction_records
+                            ),
+                            "wrist_payload_reference_rebased": bool(
+                                not np.array_equal(
+                                    h23_fix_payload_reference_before,
+                                    formal_wrist_payload_reference,
+                                )
+                            ),
+                            "maximum_effort_readback_error_nm": (
+                                h23_fix_maximum_effort_readback_error_nm
+                            ),
+                            "maximum_actual_arm_delta_rad": (
+                                h23_fix_maximum_actual_arm_delta_rad
+                            ),
+                            "maximum_sensor_force_increment_n": (
+                                h23_fix_maximum_force_increment_n
+                            ),
+                            "maximum_sensor_moment_gate_score_nm": (
+                                h23_fix_maximum_moment_gate_score_nm
+                            ),
+                            "raw_sensor_hard_gate_unchanged": True,
+                            "hard_gate_detection_delay_steps": 0,
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                            "event_truth_used": False,
+                            "object_pose_written": False,
+                            "formal_b_pass_claimed": False,
+                        }
+
+                    metrics[h23_fix_metric_key] = h23_fix_summary(
+                        "RUNNING"
+                    )
+                    if not np.array_equal(
+                        formal_arm_feedforward_effort,
+                        h23_fix_zero_feedforward,
+                    ):
+                        metrics[h23_fix_metric_key] = h23_fix_summary(
+                            "FAILED_CLOSED_NONZERO_VERTICAL_FEEDFORWARD_AT_ENTRY"
+                        )
+                        fail_vertical_force_ramp(
+                            "h23_fix_nonzero_vertical_feedforward_at_entry",
+                            h23_fix_phase,
+                            0,
+                            "H23 fixed correction must precede H18 force ramp",
+                        )
+                    for h23_fix_schedule_index, h23_fix_step in enumerate(
+                        h23_fix_schedule
+                    ):
+                        if not np.array_equal(
+                            current_arm_target, h23_fix_arm_target
+                        ):
+                            metrics[h23_fix_metric_key] = h23_fix_summary(
+                                "FAILED_CLOSED_ARM_TARGET_CHANGED"
+                            )
+                            fail_vertical_force_ramp(
+                                "h23_fix_arm_target_changed",
+                                h23_fix_phase,
+                                h23_fix_schedule_index,
+                                "H23 fixed correction requires invariant arm target",
+                            )
+                        if not np.array_equal(
+                            formal_arm_feedforward_effort,
+                            h23_fix_zero_feedforward,
+                        ):
+                            metrics[h23_fix_metric_key] = h23_fix_summary(
+                                "FAILED_CLOSED_NONZERO_VERTICAL_FEEDFORWARD"
+                            )
+                            fail_vertical_force_ramp(
+                                "h23_fix_nonzero_vertical_feedforward",
+                                h23_fix_phase,
+                                h23_fix_schedule_index,
+                                "H23 fixed correction requires zero vertical feedforward",
+                            )
+                        try:
+                            h23_fix_overlay = (
+                                apply_closure_correction_to_targets(
+                                    h23_fix_baseline_finger_targets.tolist(),
+                                    sequential_controller.open_targets,
+                                    sequential_controller.closed_targets,
+                                    h23_fix_step[
+                                        "applied_correction_closure_rad"
+                                    ],
+                                )
+                            )
+                        except ValueError as h23_fix_target_error:
+                            metrics[h23_fix_metric_key] = h23_fix_summary(
+                                "FAILED_CLOSED_TARGET_BOUND"
+                            )
+                            fail_vertical_force_ramp(
+                                "h23_fix_target_bound_invalid",
+                                h23_fix_phase,
+                                h23_fix_schedule_index,
+                                f"{type(h23_fix_target_error).__name__}: "
+                                f"{h23_fix_target_error}",
+                            )
+                        current_hand_target = h23_fix_hand_baseline.copy()
+                        current_hand_target[
+                            formal_finger_hand_indices
+                        ] = np.asarray(
+                            h23_fix_overlay["corrected_targets_rad"],
+                            dtype=np.float64,
+                        )
+                        positions, velocities = observe_and_step(
+                            h23_fix_arm_target,
+                            current_hand_target,
+                            True,
+                            h23_fix_zero_feedforward,
+                        )
+                        h23_fix_applied_effort = np.asarray(
+                            robot.get_applied_joint_efforts(
+                                joint_indices=arm_indices
+                            ),
+                            dtype=np.float64,
+                        )
+                        if (
+                            h23_fix_applied_effort.shape != (7,)
+                            or not np.all(np.isfinite(h23_fix_applied_effort))
+                        ):
+                            metrics[h23_fix_metric_key] = h23_fix_summary(
+                                "FAILED_CLOSED_EFFORT_READBACK_INVALID"
+                            )
+                            fail_vertical_force_ramp(
+                                "h23_fix_effort_readback_invalid",
+                                h23_fix_phase,
+                                h23_fix_schedule_index,
+                                "H23 fixed correction effort readback is invalid",
+                            )
+                        h23_fix_effort_readback_error = float(
+                            np.max(np.abs(h23_fix_applied_effort))
+                        )
+                        h23_fix_maximum_effort_readback_error_nm = max(
+                            h23_fix_maximum_effort_readback_error_nm,
+                            h23_fix_effort_readback_error,
+                        )
+                        measured_efforts = sample_post_tare_efforts()
+                        root_delta = measured_efforts - tare_efforts
+                        h23_fix_arm_tracking_error = float(
+                            np.max(
+                                np.abs(
+                                    positions[arm_indices]
+                                    - h23_fix_arm_target
+                                )
+                            )
+                        )
+                        h23_fix_actual_arm_delta = float(
+                            np.max(
+                                np.abs(
+                                    positions[arm_indices]
+                                    - h23_fix_actual_arm_at_entry
+                                )
+                            )
+                        )
+                        h23_fix_maximum_actual_arm_delta_rad = max(
+                            h23_fix_maximum_actual_arm_delta_rad,
+                            h23_fix_actual_arm_delta,
+                        )
+                        h23_fix_finger_velocities = velocities[
+                            hand_indices[formal_finger_hand_indices]
+                        ]
+                        h23_fix_wrist_evidence = (
+                            formal_wrist_step_evidence(positions)
+                        )
+                        if (
+                            h23_fix_effort_readback_error
+                            > vertical_force_readback_tolerance_nm
+                        ):
+                            formal_lift_monitor.fail_closed(
+                                "h23_fix_effort_readback_mismatch"
+                            )
+                            h23_fix_monitor_ok = False
+                        elif wrist_ft_monitor_error is not None:
+                            formal_lift_monitor.fail_closed(
+                                "wrist_ft_sensor_error"
+                            )
+                            h23_fix_monitor_ok = False
+                        else:
+                            h23_fix_monitor_ok = formal_lift_monitor.update(
+                                root_delta,
+                                formal_latest_wrist_canonical,
+                                arm_tracking_error_rad=(
+                                    h23_fix_arm_tracking_error
+                                ),
+                                finger_velocities_rad_s=(
+                                    h23_fix_finger_velocities
+                                ),
+                            )
+                        h23_fix_moment_score = float(
+                            formal_lift_monitor.last_moment_safety_evidence[
+                                "gate_score_nm"
+                            ]
+                        )
+                        h23_fix_force_increment = float(
+                            np.linalg.norm(
+                                formal_latest_wrist_payload_increment[:3]
+                            )
+                        )
+                        h23_fix_maximum_moment_gate_score_nm = max(
+                            h23_fix_maximum_moment_gate_score_nm,
+                            h23_fix_moment_score,
+                        )
+                        h23_fix_maximum_force_increment_n = max(
+                            h23_fix_maximum_force_increment_n,
+                            h23_fix_force_increment,
+                        )
+                        vertical_force_peak_moment_score_nm = max(
+                            vertical_force_peak_moment_score_nm,
+                            h23_fix_moment_score,
+                        )
+                        vertical_force_peak_force_increment_n = max(
+                            vertical_force_peak_force_increment_n,
+                            h23_fix_force_increment,
+                        )
+                        h23_fix_record = {
+                            "global_step": int(global_step),
+                            "correction_step": int(
+                                h23_fix_schedule_index
+                            ),
+                            "subphase": h23_fix_step["subphase"],
+                            "subphase_step": int(
+                                h23_fix_step["subphase_step"]
+                            ),
+                            "minimum_jerk_blend": float(
+                                h23_fix_step["minimum_jerk_blend"]
+                            ),
+                            "applied_correction_closure_rad": list(
+                                h23_fix_step[
+                                    "applied_correction_closure_rad"
+                                ]
+                            ),
+                            "applied_correction_sum_rad": float(
+                                h23_fix_step[
+                                    "applied_correction_sum_rad"
+                                ]
+                            ),
+                            "commanded_finger_targets_rad": list(
+                                h23_fix_overlay["corrected_targets_rad"]
+                            ),
+                            "absolute_root_load_nm": [
+                                float(value) for value in np.abs(root_delta)
+                            ],
+                            "arm_target_fixed": bool(
+                                np.array_equal(
+                                    current_arm_target, h23_fix_arm_target
+                                )
+                            ),
+                            "vertical_feedforward_zero": True,
+                            "applied_effort_readback_nm": [
+                                float(value)
+                                for value in h23_fix_applied_effort
+                            ],
+                            "effort_readback_error_nm": (
+                                h23_fix_effort_readback_error
+                            ),
+                            "sensor_origin_force_increment_n": (
+                                h23_fix_force_increment
+                            ),
+                            "sensor_origin_moment_gate_score_nm": (
+                                h23_fix_moment_score
+                            ),
+                            "h17_controller_updated": False,
+                            "wrist_payload_reference_rebased": False,
+                            "sensor_origin_hard_gate_unchanged": True,
+                            "hard_gate_detection_delay_steps": 0,
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                            "event_truth_used": False,
+                            "object_pose_written": False,
+                            "formal_b_pass_claimed": False,
+                        }
+                        pre_lift_h23_correction_records.append(
+                            h23_fix_record
+                        )
+                        if (
+                            h23_fix_step["subphase"]
+                            == "fixed_target_stability"
+                        ):
+                            h23_fix_stability_root_samples.append(
+                                root_delta.copy()
+                            )
+                        controller_step_records.append(
+                            {
+                                "global_step": int(global_step),
+                                "phase": h23_fix_phase,
+                                "method": arguments.physical_grasp_method,
+                                "physical_lift_started": False,
+                                h23_fix_metric_key: h23_fix_record,
+                                "finger_root_torque_proxy_nm": {
+                                    name: float(root_delta[index])
+                                    for index, name in enumerate(FINGERS)
+                                },
+                                **formal_kinematic_step_evidence(
+                                    positions,
+                                    velocities,
+                                    h23_fix_arm_target,
+                                    current_hand_target,
+                                ),
+                                **h23_fix_wrist_evidence,
+                                "wrist_moment_safety_evidence": dict(
+                                    formal_lift_monitor
+                                    .last_moment_safety_evidence
+                                ),
+                                "arm_tracking_error_rad": (
+                                    h23_fix_arm_tracking_error
+                                ),
+                                "wrist_ft_monitor_error": (
+                                    wrist_ft_monitor_error
+                                ),
+                                "stable": h23_fix_monitor_ok,
+                                "failed": not h23_fix_monitor_ok,
+                                "failure_reason": (
+                                    formal_lift_monitor.failure_reason
+                                ),
+                            }
+                        )
+                        metrics[h23_fix_metric_key] = h23_fix_summary(
+                            "RUNNING"
+                        )
+                        if not h23_fix_monitor_ok:
+                            metrics[h23_fix_metric_key] = h23_fix_summary(
+                                "FAILED_CLOSED_DURING_FIXED_CORRECTION"
+                            )
+                            fail_vertical_force_ramp(
+                                formal_lift_monitor.failure_reason,
+                                h23_fix_phase,
+                                h23_fix_schedule_index,
+                                "raw hard gate or grasp stability failed during H23 correction",
+                            )
+                    if not np.array_equal(
+                        h23_fix_payload_reference_before,
+                        formal_wrist_payload_reference,
+                    ):
+                        metrics[h23_fix_metric_key] = h23_fix_summary(
+                            "FAILED_CLOSED_WRIST_PAYLOAD_REFERENCE_CHANGED"
+                        )
+                        fail_vertical_force_ramp(
+                            "h23_fix_wrist_payload_reference_changed",
+                            h23_fix_phase,
+                            len(h23_fix_schedule) - 1,
+                            "H23 correction cannot rebase wrist payload reference",
+                        )
+                    if len(h23_fix_stability_root_samples) != int(
+                        pre_lift_h23_correction_contract["stability_steps"]
+                    ):
+                        metrics[h23_fix_metric_key] = h23_fix_summary(
+                            "FAILED_CLOSED_STABILITY_WINDOW_INCOMPLETE"
+                        )
+                        fail_vertical_force_ramp(
+                            "h23_fix_stability_window_incomplete",
+                            h23_fix_phase,
+                            len(h23_fix_schedule) - 1,
+                            "H23 correction needs the complete trailing root-load window",
+                        )
+                    pre_lift_h23_correction_new_reference_nm = [
+                        float(value)
+                        for value in np.mean(
+                            np.abs(
+                                np.stack(
+                                    h23_fix_stability_root_samples
+                                )
+                            ),
+                            axis=0,
+                        )
+                    ]
+                    try:
+                        lift_finger_absolute_controller = (
+                            LiftFingerAbsoluteLoadHold(
+                                lift_finger_absolute_config,
+                                physical_grasp.sequential,
+                                base_targets_rad=(
+                                    pre_lift_h23_correction_final_targets_rad
+                                ),
+                                open_targets_rad=(
+                                    sequential_controller.open_targets
+                                ),
+                                closed_targets_rad=(
+                                    sequential_controller.closed_targets
+                                ),
+                                initial_balance_total_rad=(
+                                    h23_fix_prior_combined_balance_total_rad
+                                ),
+                                reference_root_torque_nm=(
+                                    pre_lift_h23_correction_new_reference_nm
+                                ),
+                            )
+                        )
+                    except ValueError as h23_fix_reference_error:
+                        metrics[h23_fix_metric_key] = h23_fix_summary(
+                            "FAILED_CLOSED_H17_EQUILIBRIUM_REFRESH"
+                        )
+                        fail_vertical_force_ramp(
+                            "h23_fix_h17_equilibrium_refresh_invalid",
+                            h23_fix_phase,
+                            len(h23_fix_schedule) - 1,
+                            f"{type(h23_fix_reference_error).__name__}: "
+                            f"{h23_fix_reference_error}",
+                        )
+                    pre_lift_h23_correction_h17_refreshed = True
+                    if lift_finger_root_load_suppression_controller is not None:
+                        lift_finger_root_load_suppression_controller.reset_after_h17_reference_refresh()
+                    if (
+                        moment_support_config is not None
+                        or lift_finger_fixed_target_config.enabled
+                    ):
+                        realized_h23_targets = tuple(
+                            float(value)
+                            for value in current_hand_target[
+                                formal_finger_hand_indices
+                            ]
+                        )
+                        if realized_h23_targets != tuple(
+                            float(value)
+                            for value in pre_lift_h23_correction_final_targets_rad
+                        ):
+                            metrics[h23_fix_metric_key] = h23_fix_summary(
+                                "FAILED_CLOSED_POST_H23_TARGET_HANDOFF_MISMATCH"
+                            )
+                            fail_vertical_force_ramp(
+                                "post_h23_target_handoff_mismatch",
+                                h23_fix_phase,
+                                len(h23_fix_schedule) - 1,
+                                "post-H23 controller requires exact final targets at handoff",
+                            )
+                        h17_handoff_summary = (
+                            lift_finger_absolute_controller.summary()
+                        )
+                        if moment_support_config is not None:
+                            try:
+                                moment_support_controller = (
+                                    MomentConstrainedSupportTransfer(
+                                        moment_support_config,
+                                        base_targets_rad=realized_h23_targets,
+                                        open_targets_rad=(
+                                            sequential_controller.open_targets
+                                        ),
+                                        closed_targets_rad=(
+                                            sequential_controller.closed_targets
+                                        ),
+                                    )
+                                )
+                            except ValueError as b_v3_handoff_error:
+                                metrics[h23_fix_metric_key] = h23_fix_summary(
+                                    "FAILED_CLOSED_B_V3_TARGET_HANDOFF"
+                                )
+                                fail_vertical_force_ramp(
+                                    "b_v3_target_handoff_invalid",
+                                    h23_fix_phase,
+                                    len(h23_fix_schedule) - 1,
+                                    f"{type(b_v3_handoff_error).__name__}: "
+                                    f"{b_v3_handoff_error}",
+                                )
+                            moment_support_base_targets_rad = list(
+                                realized_h23_targets
+                            )
+                            moment_support_h17_record_count_at_activation = int(
+                                h17_handoff_summary["record_count"]
+                            )
+                            moment_support_h17_cumulative_at_activation_rad = [
+                                float(value)
+                                for value in h17_handoff_summary[
+                                    "final_cumulative_trim_rad"
+                                ]
+                            ]
+                        else:
+                            try:
+                                lift_finger_fixed_target_controller = (
+                                    LiftFingerFixedTargetHold(
+                                        lift_finger_fixed_target_config,
+                                        realized_h23_targets,
+                                    )
+                                )
+                            except ValueError as h25_handoff_error:
+                                metrics[h23_fix_metric_key] = h23_fix_summary(
+                                    "FAILED_CLOSED_H25_TARGET_HANDOFF"
+                                )
+                                fail_vertical_force_ramp(
+                                    "h25_target_handoff_invalid",
+                                    h23_fix_phase,
+                                    len(h23_fix_schedule) - 1,
+                                    f"{type(h25_handoff_error).__name__}: "
+                                    f"{h25_handoff_error}",
+                                )
+                            lift_finger_fixed_targets_rad = list(
+                                realized_h23_targets
+                            )
+                            lift_finger_fixed_target_h17_record_count_at_activation = int(
+                                h17_handoff_summary["record_count"]
+                            )
+                            lift_finger_fixed_target_h17_cumulative_at_activation_rad = [
+                                float(value)
+                                for value in h17_handoff_summary[
+                                    "final_cumulative_trim_rad"
+                                ]
+                            ]
+                    metrics[h23_fix_metric_key] = h23_fix_summary(
+                        "FIX_APPLIED_H17_EQUILIBRIUM_REFRESHED"
+                    )
+
+                if pre_lift_differential_finger_preload_diagnostic.enabled:
+                    h23_phase = (
+                        "pre_lift_differential_finger_preload_diagnostic"
+                    )
+                    phase = h23_phase
+                    h23_metric_key = (
+                        "pre_lift_differential_finger_preload_diagnostic"
+                    )
+                    h23_contract = derive_probe_contract(
+                        pre_lift_differential_finger_preload_diagnostic,
+                        physical_grasp.sequential,
+                        physical_grasp.pre_lift_centering,
+                    )
+                    h23_arm_target = current_arm_target.copy()
+                    h23_actual_arm_at_entry = positions[arm_indices].copy()
+                    h23_hand_baseline = current_hand_target.copy()
+                    h23_payload_reference_before = np.asarray(
+                        formal_wrist_payload_reference,
+                        dtype=np.float64,
+                    ).copy()
+                    h23_zero_feedforward = np.zeros(7, dtype=np.float64)
+                    h23_directions = np.asarray(
+                        sequential_controller.direction,
+                        dtype=np.float64,
+                    )
+                    h23_open_targets = np.asarray(
+                        sequential_controller.open_targets,
+                        dtype=np.float64,
+                    )
+                    h23_closed_targets = np.asarray(
+                        sequential_controller.closed_targets,
+                        dtype=np.float64,
+                    )
+                    h23_baseline_finger_targets = h23_hand_baseline[
+                        formal_finger_hand_indices
+                    ].copy()
+                    h23_probe_increment_rad = float(
+                        h23_contract["probe_increment_rad"]
+                    )
+                    h23_probe_endpoint = np.asarray(
+                        [
+                            sequential_controller._bounded_target(
+                                index,
+                                h23_baseline_finger_targets[index]
+                                + h23_directions[index]
+                                * h23_probe_increment_rad,
+                            )
+                            for index in range(3)
+                        ],
+                        dtype=np.float64,
+                    )
+                    h23_realized_probe_increments_rad = (
+                        h23_directions
+                        * (
+                            h23_probe_endpoint
+                            - h23_baseline_finger_targets
+                        )
+                    )
+                    h23_lower_target = np.minimum(
+                        h23_open_targets, h23_closed_targets
+                    )
+                    h23_upper_target = np.maximum(
+                        h23_open_targets, h23_closed_targets
+                    )
+                    h23_endpoint_inside_frozen_bounds = bool(
+                        np.all(
+                            h23_probe_endpoint
+                            >= h23_lower_target - 1.0e-12
+                        )
+                        and np.all(
+                            h23_probe_endpoint
+                            <= h23_upper_target + 1.0e-12
+                        )
+                    )
+                    h23_realized_probe_increments_valid = bool(
+                        np.all(h23_realized_probe_increments_rad > 0.0)
+                        and np.all(
+                            h23_realized_probe_increments_rad
+                            <= h23_probe_increment_rad + 1.0e-12
+                        )
+                    )
+                    h23_objective_windows = {
+                        **{
+                            f"baseline_{index}": []
+                            for index in range(4)
+                        },
+                        **{
+                            f"probe_{index}": []
+                            for index in range(3)
+                        },
+                    }
+                    h23_root_load_windows = {
+                        name: [] for name in h23_objective_windows
+                    }
+                    h23_schedule = []
+                    for sample_index in range(
+                        int(h23_contract["initial_baseline_steps"])
+                    ):
+                        h23_schedule.append(
+                            {
+                                "subphase": "initial_baseline",
+                                "finger_index": None,
+                                "finger_name": None,
+                                "subphase_step": sample_index,
+                                "probe_offset_rad": 0.0,
+                                "sample_window": "baseline_0",
+                            }
+                        )
+                    for h23_finger_index, h23_finger_name in enumerate(
+                        h23_contract["finger_probe_order"]
+                    ):
+                        h23_realized_probe_increment_rad = float(
+                            h23_realized_probe_increments_rad[
+                                h23_finger_index
+                            ]
+                        )
+                        for sample_index in range(
+                            int(h23_contract["probe_move_steps"])
+                        ):
+                            h23_offset = probe_offset_rad(
+                                sample_index,
+                                int(h23_contract["probe_move_steps"]),
+                                h23_realized_probe_increment_rad,
+                                returning=False,
+                            )["offset_rad"]
+                            h23_schedule.append(
+                                {
+                                    "subphase": "probe_outward",
+                                    "finger_index": h23_finger_index,
+                                    "finger_name": h23_finger_name,
+                                    "subphase_step": sample_index,
+                                    "probe_offset_rad": h23_offset,
+                                    "sample_window": None,
+                                }
+                            )
+                        for sample_index in range(
+                            int(h23_contract["sample_steps"])
+                        ):
+                            h23_schedule.append(
+                                {
+                                    "subphase": "probe_sample",
+                                    "finger_index": h23_finger_index,
+                                    "finger_name": h23_finger_name,
+                                    "subphase_step": sample_index,
+                                    "probe_offset_rad": (
+                                        h23_realized_probe_increment_rad
+                                    ),
+                                    "sample_window": (
+                                        f"probe_{h23_finger_index}"
+                                    ),
+                                }
+                            )
+                        for sample_index in range(
+                            int(h23_contract["probe_move_steps"])
+                        ):
+                            h23_offset = probe_offset_rad(
+                                sample_index,
+                                int(h23_contract["probe_move_steps"]),
+                                h23_realized_probe_increment_rad,
+                                returning=True,
+                            )["offset_rad"]
+                            h23_schedule.append(
+                                {
+                                    "subphase": "probe_return",
+                                    "finger_index": h23_finger_index,
+                                    "finger_name": h23_finger_name,
+                                    "subphase_step": sample_index,
+                                    "probe_offset_rad": h23_offset,
+                                    "sample_window": None,
+                                }
+                            )
+                        for sample_index in range(
+                            int(h23_contract["settle_steps"])
+                        ):
+                            h23_schedule.append(
+                                {
+                                    "subphase": "returned_baseline",
+                                    "finger_index": h23_finger_index,
+                                    "finger_name": h23_finger_name,
+                                    "subphase_step": sample_index,
+                                    "probe_offset_rad": 0.0,
+                                    "sample_window": (
+                                        f"baseline_{h23_finger_index + 1}"
+                                    ),
+                                }
+                            )
+
+                    h23_maximum_effort_readback_error_nm = 0.0
+                    h23_maximum_actual_arm_delta_rad = 0.0
+                    h23_maximum_force_increment_n = 0.0
+                    h23_maximum_moment_gate_score_nm = 0.0
+
+                    def h23_summary(status, analysis=None):
+                        return {
+                            "status": status,
+                            "threshold_label": (
+                                pre_lift_differential_finger_preload_diagnostic
+                                .threshold_label
+                            ),
+                            "source_h22_run_id": (
+                                pre_lift_differential_finger_preload_diagnostic
+                                .source_h22_run_id
+                            ),
+                            "contract": h23_contract,
+                            "diagnostic_only": True,
+                            "formal_b_pass_claimed": False,
+                            "correction_applied": False,
+                            "records_expected": int(
+                                h23_contract["total_expected_steps"]
+                            ),
+                            "records_completed": len(pre_lift_h23_records),
+                            "schedule_length": len(h23_schedule),
+                            "schedule_complete": bool(
+                                len(pre_lift_h23_records)
+                                == int(h23_contract["total_expected_steps"])
+                            ),
+                            "endpoint_inside_frozen_open_closed_bounds": (
+                                h23_endpoint_inside_frozen_bounds
+                            ),
+                            "baseline_finger_targets_rad": [
+                                float(value)
+                                for value in h23_baseline_finger_targets
+                            ],
+                            "probe_endpoint_finger_targets_rad": [
+                                float(value) for value in h23_probe_endpoint
+                            ],
+                            "commanded_maximum_probe_increment_rad": (
+                                h23_probe_increment_rad
+                            ),
+                            "realized_probe_increments_rad": [
+                                float(value)
+                                for value in h23_realized_probe_increments_rad
+                            ],
+                            "closure_directions": [
+                                float(value) for value in h23_directions
+                            ],
+                            "arm_target_fixed_all_steps": all(
+                                record["arm_target_fixed"]
+                                for record in pre_lift_h23_records
+                            ),
+                            "vertical_feedforward_zero_all_steps": all(
+                                record["vertical_feedforward_zero"]
+                                for record in pre_lift_h23_records
+                            ),
+                            "payload_reference_rebased": bool(
+                                not np.array_equal(
+                                    h23_payload_reference_before,
+                                    formal_wrist_payload_reference,
+                                )
+                            ),
+                            "maximum_effort_readback_error_nm": (
+                                h23_maximum_effort_readback_error_nm
+                            ),
+                            "maximum_actual_arm_delta_rad": (
+                                h23_maximum_actual_arm_delta_rad
+                            ),
+                            "maximum_sensor_force_increment_n": (
+                                h23_maximum_force_increment_n
+                            ),
+                            "maximum_sensor_moment_gate_score_nm": (
+                                h23_maximum_moment_gate_score_nm
+                            ),
+                            "raw_sensor_hard_gate_unchanged": True,
+                            "hard_gate_detection_delay_steps": 0,
+                            "h17_controller_updated_during_probe": False,
+                            "arm_xy_controller_updated_during_probe": False,
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                            "event_truth_used": False,
+                            "object_pose_written": False,
+                            "analysis": analysis,
+                        }
+
+                    if len(h23_schedule) != int(
+                        h23_contract["total_expected_steps"]
+                    ):
+                        metrics[h23_metric_key] = h23_summary(
+                            "PRECHECK_FAILED_SCHEDULE_LENGTH"
+                        )
+                        fail_vertical_force_ramp(
+                            "h23_schedule_length_mismatch",
+                            h23_phase,
+                            0,
+                            "H23 generated schedule does not match its derived contract",
+                        )
+                    if (
+                        not h23_endpoint_inside_frozen_bounds
+                        or not h23_realized_probe_increments_valid
+                    ):
+                        metrics[h23_metric_key] = h23_summary(
+                            "PRECHECK_FAILED_REALIZED_PROBE_INCREMENT"
+                        )
+                        fail_vertical_force_ramp(
+                            "h23_realized_probe_increment_invalid",
+                            h23_phase,
+                            0,
+                            "H23 needs one positive bounded realized increment per finger",
+                        )
+
+                    for h23_step_index, h23_step in enumerate(h23_schedule):
+                        if not np.array_equal(
+                            current_arm_target, h23_arm_target
+                        ):
+                            metrics[h23_metric_key] = h23_summary(
+                                "FAILED_CLOSED_ARM_TARGET_CHANGED"
+                            )
+                            fail_vertical_force_ramp(
+                                "h23_arm_target_changed",
+                                h23_phase,
+                                h23_step_index,
+                                "H23 diagnostic requires an invariant arm target",
+                            )
+                        if not np.array_equal(
+                            formal_arm_feedforward_effort,
+                            h23_zero_feedforward,
+                        ):
+                            metrics[h23_metric_key] = h23_summary(
+                                "FAILED_CLOSED_NONZERO_VERTICAL_FEEDFORWARD"
+                            )
+                            fail_vertical_force_ramp(
+                                "h23_nonzero_vertical_feedforward",
+                                h23_phase,
+                                h23_step_index,
+                                "H23 diagnostic requires zero vertical feedforward",
+                            )
+                        current_hand_target = h23_hand_baseline.copy()
+                        h23_finger_index = h23_step["finger_index"]
+                        if h23_finger_index is not None:
+                            h23_hand_index = int(
+                                formal_finger_hand_indices[
+                                    h23_finger_index
+                                ]
+                            )
+                            current_hand_target[h23_hand_index] = (
+                                h23_baseline_finger_targets[
+                                    h23_finger_index
+                                ]
+                                + h23_directions[h23_finger_index]
+                                * float(h23_step["probe_offset_rad"])
+                            )
+                        positions, velocities = observe_and_step(
+                            h23_arm_target,
+                            current_hand_target,
+                            True,
+                            h23_zero_feedforward,
+                        )
+                        applied_effort = np.asarray(
+                            robot.get_applied_joint_efforts(
+                                joint_indices=arm_indices
+                            ),
+                            dtype=np.float64,
+                        )
+                        if applied_effort.shape != (7,) or not np.all(
+                            np.isfinite(applied_effort)
+                        ):
+                            metrics[h23_metric_key] = h23_summary(
+                                "FAILED_CLOSED_EFFORT_READBACK_INVALID"
+                            )
+                            fail_vertical_force_ramp(
+                                "h23_effort_readback_invalid",
+                                h23_phase,
+                                h23_step_index,
+                                "H23 applied-effort readback is not seven finite values",
+                            )
+                        h23_effort_readback_error = float(
+                            np.max(np.abs(applied_effort))
+                        )
+                        h23_maximum_effort_readback_error_nm = max(
+                            h23_maximum_effort_readback_error_nm,
+                            h23_effort_readback_error,
+                        )
+                        measured_efforts = sample_post_tare_efforts()
+                        root_delta = measured_efforts - tare_efforts
+                        h23_arm_tracking_error = float(
+                            np.max(
+                                np.abs(
+                                    positions[arm_indices]
+                                    - h23_arm_target
+                                )
+                            )
+                        )
+                        h23_actual_arm_delta = float(
+                            np.max(
+                                np.abs(
+                                    positions[arm_indices]
+                                    - h23_actual_arm_at_entry
+                                )
+                            )
+                        )
+                        h23_maximum_actual_arm_delta_rad = max(
+                            h23_maximum_actual_arm_delta_rad,
+                            h23_actual_arm_delta,
+                        )
+                        h23_finger_velocities = velocities[
+                            hand_indices[formal_finger_hand_indices]
+                        ]
+                        h23_wrist_evidence = formal_wrist_step_evidence(
+                            positions
+                        )
+                        h23_task_payload_increment = np.asarray(
+                            h23_wrist_evidence[
+                                "wrist_wrench_payload_increment_task_frame"
+                            ],
+                            dtype=np.float64,
+                        )
+                        h23_sensor_payload_increment = np.asarray(
+                            h23_wrist_evidence[
+                                "wrist_wrench_payload_reference_increment"
+                            ],
+                            dtype=np.float64,
+                        )
+                        h23_objective = np.asarray(
+                            (
+                                h23_task_payload_increment[0]
+                                / float(h23_contract["objective_force_scale_n"]),
+                                h23_task_payload_increment[1]
+                                / float(h23_contract["objective_force_scale_n"]),
+                                h23_sensor_payload_increment[3]
+                                / float(h23_contract["objective_moment_scale_nm"]),
+                                h23_sensor_payload_increment[4]
+                                / float(h23_contract["objective_moment_scale_nm"]),
+                            ),
+                            dtype=np.float64,
+                        )
+                        if not np.all(np.isfinite(h23_objective)):
+                            metrics[h23_metric_key] = h23_summary(
+                                "FAILED_CLOSED_NONFINITE_OBJECTIVE"
+                            )
+                            fail_vertical_force_ramp(
+                                "h23_objective_nonfinite",
+                                h23_phase,
+                                h23_step_index,
+                                "H23 synchronized wrench objective is non-finite",
+                            )
+                        if (
+                            h23_effort_readback_error
+                            > vertical_force_readback_tolerance_nm
+                        ):
+                            formal_lift_monitor.fail_closed(
+                                "h23_effort_readback_mismatch"
+                            )
+                            h23_monitor_ok = False
+                        elif wrist_ft_monitor_error is not None:
+                            formal_lift_monitor.fail_closed(
+                                "wrist_ft_sensor_error"
+                            )
+                            h23_monitor_ok = False
+                        else:
+                            h23_monitor_ok = formal_lift_monitor.update(
+                                root_delta,
+                                formal_latest_wrist_canonical,
+                                arm_tracking_error_rad=(
+                                    h23_arm_tracking_error
+                                ),
+                                finger_velocities_rad_s=(
+                                    h23_finger_velocities
+                                ),
+                            )
+                        h23_moment_score = float(
+                            formal_lift_monitor.last_moment_safety_evidence[
+                                "gate_score_nm"
+                            ]
+                        )
+                        h23_force_increment = float(
+                            np.linalg.norm(
+                                formal_latest_wrist_payload_increment[:3]
+                            )
+                        )
+                        h23_maximum_moment_gate_score_nm = max(
+                            h23_maximum_moment_gate_score_nm,
+                            h23_moment_score,
+                        )
+                        h23_maximum_force_increment_n = max(
+                            h23_maximum_force_increment_n,
+                            h23_force_increment,
+                        )
+                        vertical_force_peak_moment_score_nm = max(
+                            vertical_force_peak_moment_score_nm,
+                            h23_moment_score,
+                        )
+                        vertical_force_peak_force_increment_n = max(
+                            vertical_force_peak_force_increment_n,
+                            h23_force_increment,
+                        )
+                        h23_record = {
+                            "global_step": int(global_step),
+                            "diagnostic_step": int(h23_step_index),
+                            "subphase": h23_step["subphase"],
+                            "subphase_step": int(h23_step["subphase_step"]),
+                            "finger_index": h23_finger_index,
+                            "finger_name": h23_step["finger_name"],
+                            "probe_offset_rad": float(
+                                h23_step["probe_offset_rad"]
+                            ),
+                            "commanded_maximum_probe_increment_rad": (
+                                h23_probe_increment_rad
+                            ),
+                            "realized_probe_increment_rad": (
+                                None
+                                if h23_finger_index is None
+                                else float(
+                                    h23_realized_probe_increments_rad[
+                                        h23_finger_index
+                                    ]
+                                )
+                            ),
+                            "sample_window": h23_step["sample_window"],
+                            "objective": [
+                                float(value) for value in h23_objective
+                            ],
+                            "absolute_root_load_nm": [
+                                float(value)
+                                for value in np.abs(root_delta)
+                            ],
+                            "arm_target_fixed": bool(
+                                np.array_equal(
+                                    current_arm_target, h23_arm_target
+                                )
+                            ),
+                            "vertical_feedforward_zero": True,
+                            "applied_effort_readback_nm": [
+                                float(value) for value in applied_effort
+                            ],
+                            "effort_readback_error_nm": (
+                                h23_effort_readback_error
+                            ),
+                            "sensor_origin_force_increment_n": (
+                                h23_force_increment
+                            ),
+                            "sensor_origin_moment_gate_score_nm": (
+                                h23_moment_score
+                            ),
+                            "sensor_origin_hard_gate_unchanged": True,
+                            "diagnostic_only": True,
+                            "correction_applied": False,
+                            "h17_controller_updated": False,
+                            "arm_xy_controller_updated": False,
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                            "event_truth_used": False,
+                            "object_pose_written": False,
+                        }
+                        pre_lift_h23_records.append(h23_record)
+                        h23_sample_window = h23_step["sample_window"]
+                        if h23_sample_window is not None:
+                            h23_objective_windows[h23_sample_window].append(
+                                h23_objective.copy()
+                            )
+                            h23_root_load_windows[h23_sample_window].append(
+                                np.abs(root_delta).copy()
+                            )
+                        controller_step_records.append(
+                            {
+                                "global_step": int(global_step),
+                                "phase": h23_phase,
+                                "method": arguments.physical_grasp_method,
+                                "physical_lift_started": False,
+                                h23_metric_key: h23_record,
+                                "finger_root_torque_proxy_nm": {
+                                    name: float(root_delta[index])
+                                    for index, name in enumerate(FINGERS)
+                                },
+                                **formal_kinematic_step_evidence(
+                                    positions,
+                                    velocities,
+                                    h23_arm_target,
+                                    current_hand_target,
+                                ),
+                                **h23_wrist_evidence,
+                                "wrist_moment_safety_evidence": dict(
+                                    formal_lift_monitor
+                                    .last_moment_safety_evidence
+                                ),
+                                "arm_tracking_error_rad": (
+                                    h23_arm_tracking_error
+                                ),
+                                "wrist_ft_monitor_error": (
+                                    wrist_ft_monitor_error
+                                ),
+                                "stable": h23_monitor_ok,
+                                "failed": not h23_monitor_ok,
+                                "failure_reason": (
+                                    formal_lift_monitor.failure_reason
+                                ),
+                            }
+                        )
+                        metrics[h23_metric_key] = h23_summary("RUNNING")
+                        if not h23_monitor_ok:
+                            metrics[h23_metric_key] = h23_summary(
+                                "FAILED_CLOSED_DURING_DIAGNOSTIC"
+                            )
+                            fail_vertical_force_ramp(
+                                formal_lift_monitor.failure_reason,
+                                h23_phase,
+                                h23_step_index,
+                                "sensor hard gate, zero-effort readback or grasp stability failed during H23",
+                            )
+
+                    if not np.array_equal(
+                        h23_payload_reference_before,
+                        formal_wrist_payload_reference,
+                    ):
+                        metrics[h23_metric_key] = h23_summary(
+                            "FAILED_CLOSED_PAYLOAD_REFERENCE_CHANGED"
+                        )
+                        fail_vertical_force_ramp(
+                            "h23_payload_reference_changed",
+                            h23_phase,
+                            len(h23_schedule) - 1,
+                            "H23 must not rebase the grasped-payload reference",
+                        )
+                    h23_baseline_objectives = [
+                        np.mean(
+                            np.stack(
+                                h23_objective_windows[f"baseline_{index}"]
+                            ),
+                            axis=0,
+                        )
+                        for index in range(4)
+                    ]
+                    h23_probe_objectives = [
+                        np.mean(
+                            np.stack(
+                                h23_objective_windows[f"probe_{index}"]
+                            ),
+                            axis=0,
+                        )
+                        for index in range(3)
+                    ]
+                    h23_baseline_root_loads = [
+                        np.mean(
+                            np.stack(
+                                h23_root_load_windows[f"baseline_{index}"]
+                            ),
+                            axis=0,
+                        )
+                        for index in range(4)
+                    ]
+                    h23_probe_root_loads = [
+                        np.mean(
+                            np.stack(
+                                h23_root_load_windows[f"probe_{index}"]
+                            ),
+                            axis=0,
+                        )
+                        for index in range(3)
+                    ]
+                    h23_analysis = analyze_differential_probe(
+                        baseline_objectives=h23_baseline_objectives,
+                        probe_objectives=h23_probe_objectives,
+                        baseline_root_loads_nm=h23_baseline_root_loads,
+                        probe_root_loads_nm=h23_probe_root_loads,
+                        probe_increment_rad=(
+                            h23_realized_probe_increments_rad.tolist()
+                        ),
+                        minimum_probe_response_nm=float(
+                            h23_contract["minimum_probe_response_nm"]
+                        ),
+                        damping_ratio=float(h23_contract["damping_ratio"]),
+                        prospective_correction_norm_limit_rad=float(
+                            h23_contract[
+                                "prospective_correction_norm_limit_rad"
+                            ]
+                        ),
+                    )
+                    h23_supported = bool(
+                        h23_analysis["diagnostic_supported"]
+                    )
+                    metrics[h23_metric_key] = h23_summary(
+                        (
+                            "DIAGNOSTIC_SUPPORTED"
+                            if h23_supported
+                            else "DIAGNOSTIC_REJECTED"
+                        ),
+                        h23_analysis,
+                    )
+                    metrics[vertical_force_metric_key] = (
+                        vertical_force_summary(
+                            "H23_DIAGNOSTIC_ONLY_NO_VERTICAL_RAMP"
+                        )
+                    )
+                    fail_vertical_force_ramp(
+                        (
+                            "h23_diagnostic_complete_supported"
+                            if h23_supported
+                            else "h23_diagnostic_complete_unsupported"
+                        ),
+                        h23_phase,
+                        len(h23_schedule) - 1,
+                        "H23 diagnostic completed; no prospective differential finger correction was applied",
+                    )
+
+                phase = vertical_force_phase
+                vertical_force_step_limit = (
+                    (
+                        moment_support_config.support_profile_samples + 4
+                    )
+                    * moment_support_config.stable_confirm_steps
+                    * 4
+                    if moment_support_config is not None
+                    else lift_phase_arm_damping.transition_steps
+                )
+                for vertical_force_step_index in range(
+                    vertical_force_step_limit
+                ):
+                    h17_input_global_step = None
+                    h17_step = None
+                    h24_root_load_step = None
+                    h25_fixed_target_step = None
+                    moment_support_step = None
+                    moment_support_input_global_step = None
+                    moment_support_input_task_force_xy_n = None
+                    moment_support_input_sensor_moment_nm = None
+                    if moment_support_config is not None:
+                        if moment_support_controller is None:
+                            fail_vertical_force_ramp(
+                                "b_v3_controller_not_activated",
+                                phase,
+                                vertical_force_step_index,
+                                "B-V3 must activate after the complete H23 stability window",
+                            )
+                        moment_support_input_global_step = int(global_step)
+                        b_v3_wrist_evidence = formal_wrist_step_evidence(
+                            positions
+                        )
+                        if (
+                            "wrist_wrench_payload_increment_task_frame"
+                            not in b_v3_wrist_evidence
+                        ):
+                            fail_vertical_force_ramp(
+                                "b_v3_task_wrench_transform_missing",
+                                phase,
+                                vertical_force_step_index,
+                                "B-V3 requires the robot-FK task-frame wrench transform",
+                            )
+                        moment_support_input_task_force_xy_n = tuple(
+                            float(value)
+                            for value in b_v3_wrist_evidence[
+                                "wrist_wrench_payload_increment_task_frame"
+                            ][:2]
+                        )
+                        moment_support_input_sensor_moment_nm = tuple(
+                            float(value)
+                            for value in formal_latest_wrist_payload_increment[
+                                3:
+                            ]
+                        )
+                        b_v3_gate_evidence = dict(
+                            formal_lift_monitor.last_moment_safety_evidence
+                        )
+                        try:
+                            moment_support_step = (
+                                moment_support_controller.update(
+                                    task_force_xy_n=(
+                                        moment_support_input_task_force_xy_n
+                                    ),
+                                    sensor_origin_moment_increment_xyz_nm=(
+                                        moment_support_input_sensor_moment_nm
+                                    ),
+                                    finger_root_torque_nm=tuple(
+                                        float(value) for value in root_delta
+                                    ),
+                                    raw_moment_gate_score_nm=float(
+                                        b_v3_gate_evidence["gate_score_nm"]
+                                    ),
+                                    raw_hard_gate_triggered=bool(
+                                        b_v3_gate_evidence["triggered"]
+                                    ),
+                                    input_global_step=(
+                                        moment_support_input_global_step
+                                    ),
+                                )
+                            )
+                        except (KeyError, ValueError, RuntimeError) as b_v3_error:
+                            fail_vertical_force_ramp(
+                                "b_v3_support_transfer_invalid",
+                                phase,
+                                vertical_force_step_index,
+                                f"{type(b_v3_error).__name__}: {b_v3_error}",
+                            )
+                        current_hand_target[
+                            formal_finger_hand_indices
+                        ] = np.asarray(
+                            moment_support_step["output_targets_rad"],
+                            dtype=np.float64,
+                        )
+                        phase = (
+                            "b_v3_"
+                            + str(moment_support_step["phase_after"]).lower()
+                        )
+                    elif lift_finger_fixed_target_config.enabled:
+                        if lift_finger_fixed_target_controller is None:
+                            fail_vertical_force_ramp(
+                                "h25_controller_not_activated",
+                                phase,
+                                vertical_force_step_index,
+                                "H25 must activate after the complete H23 stability window",
+                            )
+                        try:
+                            h25_fixed_target_step = (
+                                lift_finger_fixed_target_controller.update(
+                                    tuple(
+                                        float(value)
+                                        for value in current_hand_target[
+                                            formal_finger_hand_indices
+                                        ]
+                                    ),
+                                    tuple(
+                                        float(value) for value in root_delta
+                                    ),
+                                    int(global_step),
+                                    phase,
+                                    int(vertical_force_step_index),
+                                )
+                            )
+                        except ValueError as h25_error:
+                            fail_vertical_force_ramp(
+                                "h25_fixed_target_hold_invalid",
+                                phase,
+                                vertical_force_step_index,
+                                f"{type(h25_error).__name__}: {h25_error}",
+                            )
+                        current_hand_target[
+                            formal_finger_hand_indices
+                        ] = np.asarray(
+                            h25_fixed_target_step["output_targets_rad"],
+                            dtype=np.float64,
+                        )
+                    else:
+                        h17_input_global_step = int(global_step)
+                        h17_control_input, h24_root_load_step = (
+                            h24_h17_control_input(
+                                root_delta,
+                                h17_input_global_step,
+                                phase,
+                                vertical_force_step_index,
+                            )
+                        )
+                        h17_step = lift_finger_absolute_controller.update(
+                            h17_control_input
+                        )
+                        current_hand_target[
+                            formal_finger_hand_indices
+                        ] = np.asarray(
+                            h17_step["output_targets_rad"],
+                            dtype=np.float64,
+                        )
+                    pre_lift_xy_step = None
+                    pre_lift_xy_input_global_step = None
+                    pre_lift_xy_nominal_arm = None
+                    pre_lift_xy_corrected_arm = None
+                    pre_lift_xy_nyquist_record = None
+                    if pre_lift_xy_admittance_enabled:
+                        pre_lift_xy_input_global_step = int(global_step)
+                        precommand_wrist_evidence = (
+                            formal_wrist_step_evidence(positions)
+                        )
+                        task_payload_increment = np.asarray(
+                            precommand_wrist_evidence[
+                                "wrist_wrench_payload_increment_task_frame"
+                            ],
+                            dtype=np.float64,
+                        )
+                        raw_task_payload_force_xy = tuple(
+                            float(value)
+                            for value in task_payload_increment[:2]
+                        )
+                        control_task_payload_force_xy = (
+                            raw_task_payload_force_xy
+                        )
+                        if pre_lift_xy_nyquist_suppression.enabled:
+                            try:
+                                pre_lift_xy_nyquist_record = (
+                                    two_sample_xy_control_input(
+                                        raw_task_payload_force_xy,
+                                        pre_lift_xy_previous_raw_force_n,
+                                    )
+                                )
+                            except ValueError as nyquist_error:
+                                fail_vertical_force_ramp(
+                                    "pre_lift_xy_nyquist_input_invalid",
+                                    phase,
+                                    vertical_force_step_index,
+                                    f"{type(nyquist_error).__name__}: "
+                                    f"{nyquist_error}",
+                                )
+                            control_task_payload_force_xy = tuple(
+                                float(value)
+                                for value in pre_lift_xy_nyquist_record[
+                                    "filtered_control_task_force_xy_n"
+                                ]
+                            )
+                            pre_lift_xy_nyquist_record.update(
+                                {
+                                    "current_input_global_step": int(
+                                        pre_lift_xy_input_global_step
+                                    ),
+                                    "previous_input_global_step": (
+                                        int(pre_lift_xy_input_global_step)
+                                        if pre_lift_xy_previous_raw_input_global_step
+                                        is None
+                                        else int(
+                                            pre_lift_xy_previous_raw_input_global_step
+                                        )
+                                    ),
+                                    "raw_hard_gate_sample_filtered": False,
+                                    "object_truth_used": False,
+                                    "contact_truth_used": False,
+                                    "event_truth_used": False,
+                                    "object_pose_written": False,
+                                }
+                            )
+                            pre_lift_xy_previous_raw_force_n = (
+                                raw_task_payload_force_xy
+                            )
+                            pre_lift_xy_previous_raw_input_global_step = (
+                                int(pre_lift_xy_input_global_step)
+                            )
+                            pre_lift_xy_maximum_raw_input_force_norm_n = max(
+                                pre_lift_xy_maximum_raw_input_force_norm_n,
+                                float(
+                                    np.linalg.norm(
+                                        raw_task_payload_force_xy
+                                    )
+                                ),
+                            )
+                            pre_lift_xy_maximum_filtered_input_force_norm_n = max(
+                                pre_lift_xy_maximum_filtered_input_force_norm_n,
+                                float(
+                                    np.linalg.norm(
+                                        control_task_payload_force_xy
+                                    )
+                                ),
+                            )
+                        actual_arm_tcp = np.asarray(
+                            iiwa14_grasp_tcp_transform(
+                                tuple(
+                                    float(value)
+                                    for value in positions[arm_indices]
+                                )
+                            ),
+                            dtype=np.float64,
+                        )
+                        try:
+                            pre_lift_xy_step = (
+                                derive_lift_xy_force_admittance_step(
+                                    tuple(control_task_payload_force_xy),
+                                    tuple(
+                                        tuple(float(value) for value in row)
+                                        for row in actual_arm_tcp[:3, :3]
+                                    ),
+                                    tuple(
+                                        float(value)
+                                        for value in lift_xy_correction_m
+                                    ),
+                                    lift_xy_admittance,
+                                )
+                            )
+                        except ValueError as pre_lift_xy_error:
+                            fail_vertical_force_ramp(
+                                "pre_lift_xy_admittance_derivation_invalid",
+                                phase,
+                                vertical_force_step_index,
+                                f"{type(pre_lift_xy_error).__name__}: "
+                                f"{pre_lift_xy_error}",
+                            )
+                        lift_xy_correction_m = np.asarray(
+                            pre_lift_xy_step["applied_correction_xy_m"],
+                            dtype=np.float64,
+                        )
+                        lift_xy_maximum_input_force_norm_n = max(
+                            lift_xy_maximum_input_force_norm_n,
+                            float(
+                                pre_lift_xy_step[
+                                    "task_lateral_force_norm_n"
+                                ]
+                            ),
+                        )
+                        lift_xy_maximum_correction_norm_m = max(
+                            lift_xy_maximum_correction_norm_m,
+                            float(
+                                pre_lift_xy_step[
+                                    "applied_correction_norm_m"
+                                ]
+                            ),
+                        )
+                        lift_xy_maximum_step_norm_m = max(
+                            lift_xy_maximum_step_norm_m,
+                            float(pre_lift_xy_step["applied_delta_norm_m"]),
+                        )
+                        pre_lift_xy_nominal_arm = (
+                            vertical_force_ramp_arm_target.copy()
+                        )
+                        pre_lift_xy_nominal_tcp = np.asarray(
+                            iiwa14_grasp_tcp_transform(
+                                tuple(
+                                    float(value)
+                                    for value in pre_lift_xy_nominal_arm
+                                )
+                            ),
+                            dtype=np.float64,
+                        )
+                        pre_lift_xy_corrected_position = (
+                            pre_lift_xy_nominal_tcp[:3, 3].copy()
+                        )
+                        pre_lift_xy_corrected_position[:2] += (
+                            lift_xy_correction_m
+                        )
+                        try:
+                            pre_lift_xy_corrected_arm = np.asarray(
+                                solve_fixed_q7_tcp_pose(
+                                    tuple(
+                                        float(value)
+                                        for value in pre_lift_xy_nominal_arm
+                                    ),
+                                    tuple(
+                                        float(value)
+                                        for value in (
+                                            pre_lift_xy_corrected_position
+                                        )
+                                    ),
+                                    target_rotation=(
+                                        pre_lift_xy_nominal_tcp[:3, :3]
+                                    ),
+                                ),
+                                dtype=np.float64,
+                            )
+                        except ValueError as pre_lift_xy_ik_error:
+                            fail_vertical_force_ramp(
+                                "pre_lift_xy_admittance_ik_invalid",
+                                phase,
+                                vertical_force_step_index,
+                                f"{type(pre_lift_xy_ik_error).__name__}: "
+                                f"{pre_lift_xy_ik_error}",
+                            )
+                        current_arm_target = pre_lift_xy_corrected_arm
+                        corrected_target_tcp = np.asarray(
+                            iiwa14_grasp_tcp_transform(
+                                tuple(
+                                    float(value)
+                                    for value in current_arm_target
+                                )
+                            ),
+                            dtype=np.float64,
+                        )
+                        if abs(
+                            float(
+                                corrected_target_tcp[2, 3]
+                                - pre_lift_xy_nominal_tcp[2, 3]
+                            )
+                        ) > 1.0e-9:
+                            fail_vertical_force_ramp(
+                                "pre_lift_xy_changed_vertical_target",
+                                phase,
+                                vertical_force_step_index,
+                                "H20 must keep the H18 vertical target fixed",
+                            )
+                    elif (
+                        float(
+                            np.max(
+                                np.abs(
+                                    current_arm_target
+                                    - vertical_force_ramp_arm_target
+                                )
+                            )
+                        )
+                        > 1.0e-15
+                    ):
+                        fail_vertical_force_ramp(
+                            "vertical_force_ramp_position_target_changed",
+                            phase,
+                            vertical_force_step_index,
+                            f"{vertical_force_hypothesis_label} must retain "
+                            "the exact H6/H13 arm target",
+                        )
+                    vertical_force_profile_fraction = (
+                        float(
+                            moment_support_step[
+                                "support_profile_fraction"
+                            ]
+                        )
+                        if moment_support_step is not None
+                        else float(vertical_force_step_index + 1)
+                        / float(lift_phase_arm_damping.transition_steps)
+                    )
+                    try:
+                        vertical_force_step = derive_vertical_force_step(
+                            positions[arm_indices],
+                            velocities[arm_indices],
+                            tabletop.asset_profile.body_mass_kg,
+                            tabletop.asset_profile.nut_mass_kg,
+                            tabletop.physics.gravity_m_s2,
+                            physical_grasp.stability.maximum_wrist_force_n,
+                            vertical_force_profile_fraction,
+                            vertical_force_previous_n,
+                            formal_arm_feedforward_effort,
+                            vertical_force_actuator_effort_limits,
+                            vertical_force_forward_kinematics,
+                        )
+                    except ValueError as vertical_force_error:
+                        fail_vertical_force_ramp(
+                            "vertical_force_ramp_derivation_invalid",
+                            phase,
+                            vertical_force_step_index,
+                            f"{type(vertical_force_error).__name__}: "
+                            f"{vertical_force_error}",
+                        )
+                    formal_arm_feedforward_effort = np.asarray(
+                        vertical_force_step["joint_effort_nm"],
+                        dtype=np.float64,
+                    )
+                    positions, velocities = observe_and_step(
+                        current_arm_target,
+                        current_hand_target,
+                        True,
+                        formal_arm_feedforward_effort,
+                    )
+                    applied_effort = np.asarray(
+                        robot.get_applied_joint_efforts(
+                            joint_indices=arm_indices
+                        ),
+                        dtype=np.float64,
+                    )
+                    if applied_effort.shape != (7,) or not np.all(
+                        np.isfinite(applied_effort)
+                    ):
+                        fail_vertical_force_ramp(
+                            "vertical_force_ramp_effort_readback_invalid",
+                            phase,
+                            vertical_force_step_index,
+                            "Isaac applied-effort readback is not seven finite values",
+                        )
+                    effort_readback_error = float(
+                        np.max(
+                            np.abs(
+                                applied_effort
+                                - formal_arm_feedforward_effort.astype(
+                                    np.float32
+                                ).astype(np.float64)
+                            )
+                        )
+                    )
+                    vertical_force_maximum_readback_error_nm = max(
+                        vertical_force_maximum_readback_error_nm,
+                        effort_readback_error,
+                    )
+                    vertical_force_maximum_joint_effort_nm = max(
+                        vertical_force_maximum_joint_effort_nm,
+                        float(
+                            vertical_force_step[
+                                "maximum_abs_joint_effort_nm"
+                            ]
+                        ),
+                    )
+                    vertical_force_maximum_joint_effort_step_nm = max(
+                        vertical_force_maximum_joint_effort_step_nm,
+                        float(
+                            vertical_force_step[
+                                "maximum_abs_joint_effort_step_nm"
+                            ]
+                        ),
+                    )
+                    vertical_force_maximum_virtual_work_residual_w = max(
+                        vertical_force_maximum_virtual_work_residual_w,
+                        float(
+                            vertical_force_step[
+                                "virtual_work_residual_w"
+                            ]
+                        ),
+                    )
+                    measured_efforts = sample_post_tare_efforts()
+                    root_delta = measured_efforts - tare_efforts
+                    finalize_h24_record(h24_root_load_step)
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(
+                                positions[arm_indices]
+                                - current_arm_target
+                            )
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    if (
+                        effort_readback_error
+                        > vertical_force_readback_tolerance_nm
+                    ):
+                        formal_lift_monitor.fail_closed(
+                            "vertical_force_ramp_effort_readback_mismatch"
+                        )
+                        monitor_ok = False
+                    elif wrist_ft_monitor_error is not None:
+                        formal_lift_monitor.fail_closed(
+                            "wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            root_delta,
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                    moment_score = float(
+                        formal_lift_monitor.last_moment_safety_evidence[
+                            "gate_score_nm"
+                        ]
+                    )
+                    force_increment = float(
+                        np.linalg.norm(
+                            formal_latest_wrist_payload_increment[:3]
+                        )
+                    )
+                    vertical_force_peak_moment_score_nm = max(
+                        vertical_force_peak_moment_score_nm, moment_score
+                    )
+                    vertical_force_peak_force_increment_n = max(
+                        vertical_force_peak_force_increment_n,
+                        force_increment,
+                    )
+                    actual_tcp = np.asarray(
+                        iiwa14_grasp_tcp_transform(
+                            tuple(
+                                float(value)
+                                for value in positions[arm_indices]
+                            )
+                        ),
+                        dtype=np.float64,
+                    )
+                    vertical_force_ramp_actual_tcp_z_samples.append(
+                        float(actual_tcp[2, 3])
+                    )
+                    ramp_record = {
+                        "global_step": int(global_step),
+                        "input_global_step": (
+                            moment_support_input_global_step
+                            if moment_support_step is not None
+                            else (
+                                h25_fixed_target_step["input_global_step"]
+                                if h25_fixed_target_step is not None
+                                else h17_input_global_step
+                            )
+                        ),
+                        "ramp_step": int(vertical_force_step_index),
+                        "position_target_fixed_during_ramp": bool(
+                            np.array_equal(
+                                current_arm_target,
+                                vertical_force_ramp_arm_target,
+                            )
+                        ),
+                        "vertical_position_target_fixed_during_ramp": bool(
+                            pre_lift_xy_step is None
+                            or abs(
+                                float(
+                                    corrected_target_tcp[2, 3]
+                                    - pre_lift_xy_nominal_tcp[2, 3]
+                                )
+                            )
+                            <= 1.0e-9
+                        ),
+                        "bounded_xy_target_change_authorized": bool(
+                            pre_lift_xy_step is not None
+                        ),
+                        "applied_effort_readback_nm": [
+                            float(value) for value in applied_effort
+                        ],
+                        "effort_readback_error_nm": effort_readback_error,
+                        **vertical_force_step,
+                    }
+                    vertical_force_ramp_records.append(ramp_record)
+                    if pre_lift_xy_step is not None:
+                        pre_lift_xy_record = {
+                            **pre_lift_xy_step,
+                            "raw_task_payload_force_xy_n": list(
+                                raw_task_payload_force_xy
+                            ),
+                            "control_task_payload_force_xy_n": list(
+                                control_task_payload_force_xy
+                            ),
+                            "nyquist_suppression": (
+                                pre_lift_xy_nyquist_record
+                            ),
+                            "input_global_step": (
+                                pre_lift_xy_input_global_step
+                            ),
+                            "output_global_step": int(global_step),
+                            "input_is_immediately_preceding_sample": True,
+                            "nominal_arm_target_rad": [
+                                float(value)
+                                for value in pre_lift_xy_nominal_arm
+                            ],
+                            "corrected_arm_target_rad": [
+                                float(value)
+                                for value in pre_lift_xy_corrected_arm
+                            ],
+                            "vertical_target_modified": False,
+                            "sensor_origin_hard_gate_unchanged": True,
+                            "object_truth_used": False,
+                            "contact_truth_used": False,
+                            "event_truth_used": False,
+                            "object_pose_written": False,
+                        }
+                        pre_lift_vertical_force_xy_records.append(
+                            pre_lift_xy_record
+                        )
+                        if pre_lift_xy_nyquist_record is not None:
+                            pre_lift_xy_nyquist_record[
+                                "output_global_step"
+                            ] = int(global_step)
+                            pre_lift_xy_nyquist_records.append(
+                                pre_lift_xy_nyquist_record
+                            )
+                        lift_xy_admittance_records.append(
+                            pre_lift_xy_record
+                        )
+                    if h17_step is not None:
+                        lift_finger_absolute_records.append(
+                            {
+                                "global_step": int(global_step),
+                                "stage": 0,
+                                "stage_step": int(vertical_force_step_index),
+                                "input_global_step": h17_input_global_step,
+                                "h24_two_sample_control_input": (
+                                    h24_root_load_step
+                                ),
+                                "load_error_nm": list(
+                                    h17_step["load_error_nm"]
+                                ),
+                                "applied_delta_closure_rad": list(
+                                    h17_step["applied_delta_closure_rad"]
+                                ),
+                                "common_mode_applied_delta_closure_rad": (
+                                    h17_step[
+                                        "common_mode_applied_delta_closure_rad"
+                                    ]
+                                ),
+                                "maximum_abs_cumulative_trim_rad": max(
+                                    abs(float(value))
+                                    for value in h17_step[
+                                        "cumulative_trim_closure_rad"
+                                    ]
+                                ),
+                            }
+                        )
+                    if h25_fixed_target_step is not None:
+                        h17_h25_runtime_summary = (
+                            lift_finger_absolute_controller.summary()
+                        )
+                        h25_fixed_target_step.update(
+                            {
+                                "output_global_step": int(global_step),
+                                "raw_finger_root_torque_after_step_nm": [
+                                    float(value) for value in root_delta
+                                ],
+                                "raw_hard_gate_sample_filtered": False,
+                                "h17_record_count_after_step": int(
+                                    h17_h25_runtime_summary["record_count"]
+                                ),
+                                "h17_cumulative_closure_after_step_rad": [
+                                    float(value)
+                                    for value in h17_h25_runtime_summary[
+                                        "final_cumulative_trim_rad"
+                                    ]
+                                ],
+                            }
+                        )
+                        lift_finger_fixed_target_records.append(
+                            h25_fixed_target_step
+                        )
+                    if moment_support_step is not None:
+                        moment_support_step.update(
+                            {
+                                "output_global_step": int(global_step),
+                                "input_is_immediately_preceding_sample": bool(
+                                    int(global_step)
+                                    == moment_support_input_global_step + 1
+                                ),
+                                "input_task_force_xy_n": list(
+                                    moment_support_input_task_force_xy_n
+                                ),
+                                "input_sensor_origin_moment_increment_xyz_nm": list(
+                                    moment_support_input_sensor_moment_nm
+                                ),
+                                "raw_finger_root_torque_after_step_nm": [
+                                    float(value) for value in root_delta
+                                ],
+                                "raw_moment_gate_after_step": dict(
+                                    formal_lift_monitor
+                                    .last_moment_safety_evidence
+                                ),
+                                "raw_hard_gate_sample_filtered": False,
+                                "h17_target_updated": False,
+                                "h24_filter_used": False,
+                                "formal_b_pass_claimed": False,
+                            }
+                        )
+                        moment_support_records.append(moment_support_step)
+                    controller_step_records.append(
+                        {
+                            "global_step": int(global_step),
+                            "phase": phase,
+                            "method": arguments.physical_grasp_method,
+                            "lift_stage": 0,
+                            "lift_stage_step": int(
+                                vertical_force_step_index
+                            ),
+                            "physical_lift_started": False,
+                            vertical_force_metric_key: ramp_record,
+                            "pre_lift_vertical_force_xy_admittance": (
+                                None
+                                if pre_lift_xy_step is None
+                                else pre_lift_xy_record
+                            ),
+                            "pre_lift_xy_nyquist_suppression": (
+                                pre_lift_xy_nyquist_record
+                            ),
+                            "lift_finger_root_load_two_sample_suppression": (
+                                h24_root_load_step
+                            ),
+                            "lift_finger_absolute_load_hold": {
+                                **h17_step,
+                                "input_global_step": h17_input_global_step,
+                                "output_global_step": int(global_step),
+                                "input_is_immediately_preceding_sample": (
+                                    h24_root_load_step is None
+                                ),
+                                "newest_input_is_immediately_preceding_sample": True,
+                                "arm_target_modified": False,
+                                "sensor_origin_hard_gate_unchanged": True,
+                                "object_pose_written": False,
+                            } if h17_step is not None else None,
+                            "lift_finger_fixed_target_hold": (
+                                h25_fixed_target_step
+                            ),
+                            "moment_constrained_support_transfer": (
+                                moment_support_step
+                            ),
+                            "finger_root_torque_proxy_nm": {
+                                name: float(root_delta[index])
+                                for index, name in enumerate(FINGERS)
+                            },
+                            **formal_kinematic_step_evidence(
+                                positions,
+                                velocities,
+                                current_arm_target,
+                                current_hand_target,
+                            ),
+                            **formal_wrist_step_evidence(positions),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor
+                                .last_moment_safety_evidence
+                            ),
+                            "arm_tracking_error_rad": arm_tracking,
+                            "wrist_ft_monitor_error": wrist_ft_monitor_error,
+                            "stable": monitor_ok,
+                            "failed": not monitor_ok,
+                            "failure_reason": (
+                                formal_lift_monitor.failure_reason
+                            ),
+                        }
+                    )
+                    vertical_force_previous_n = float(
+                        vertical_force_step["world_up_force_n"]
+                    )
+                    if not monitor_ok:
+                        fail_vertical_force_ramp(
+                            formal_lift_monitor.failure_reason,
+                            phase,
+                            vertical_force_step_index,
+                            "sensor hard gate, effort readback or grasp "
+                            "stability failed during "
+                            f"{vertical_force_hypothesis_label}",
+                        )
+                    if (
+                        moment_support_step is not None
+                        and moment_support_step["commit_lift"]
+                    ):
+                        break
+                if (
+                    moment_support_controller is not None
+                    and moment_support_controller.phase != PHASE_LIFT_READY
+                ):
+                    fail_vertical_force_ramp(
+                        "b_v3_support_transfer_step_limit",
+                        phase,
+                        vertical_force_step_limit - 1,
+                        "B-V3 did not reach LIFT_READY within the bounded step budget",
+                    )
+                metrics[vertical_force_metric_key] = (
+                    vertical_force_summary("RAMP_COMPLETED_FORCE_HELD")
+                )
+            for stage_index, lift_stage in enumerate(
+                physical_grasp.lift_stages, start=1
+            ):
+                phase = f"physical_grip_lift_stage_{stage_index}"
+                stage_start = current_arm_target.copy()
+                stage_path_start = (
+                    stage_start.copy()
+                    if formal_lift_compliant_path_arm is None
+                    else formal_lift_compliant_path_arm.copy()
+                )
+                cumulative_lift_m += lift_stage.increment_m
+                stage_tcp_position = lift_start_tcp[:3, 3].copy()
+                stage_tcp_position[2] += cumulative_lift_m
+                stage_path_target = np.asarray(
+                    solve_fixed_q7_tcp_pose(
+                        tuple(float(value) for value in stage_path_start),
+                        tuple(float(value) for value in stage_tcp_position),
+                        target_rotation=lift_start_tcp[:3, :3],
+                    ),
+                    dtype=np.float64,
+                )
+                stage_target = (
+                    stage_path_target.copy()
+                    if formal_lift_arm_drive_bias is None
+                    else stage_path_target
+                    + formal_lift_arm_drive_bias
+                )
+                # Staged lift speed: nominal stage speed times the realized
+                # lift_speed_scale changes the move step count only; the hold
+                # durations and stage displacements are unchanged.  The
+                # zero-lift mode never consumes lift_speed_scale.
+                nominal_stage_speed = lift_stage.speed_m_s
+                realized_stage_speed = (
+                    nominal_stage_speed
+                    * realized_randomization.lift_speed_scale
+                )
+                move_steps = max(
+                    1,
+                    round(
+                        lift_stage.increment_m
+                        / realized_stage_speed
+                        * rate_hz
+                    ),
+                )
+                hold_steps_for_stage = round(lift_stage.hold_s * rate_hz)
+                stage_record = {
+                    "stage": stage_index,
+                    "increment_m": lift_stage.increment_m,
+                    "cumulative_commanded_lift_m": cumulative_lift_m,
+                    "commanded_tcp_position_m": [
+                        float(value) for value in stage_tcp_position
+                    ],
+                    "path_target_arm_rad": [
+                        float(value) for value in stage_path_target
+                    ],
+                    "drive_target_arm_rad": [
+                        float(value) for value in stage_target
+                    ],
+                    "arm_drive_preload_bias_rad": (
+                        None
+                        if formal_lift_arm_drive_bias is None
+                        else [
+                            float(value)
+                            for value in formal_lift_arm_drive_bias
+                        ]
+                    ),
+                    "nominal_speed_m_s": nominal_stage_speed,
+                    "lift_speed_scale": (
+                        realized_randomization.lift_speed_scale
+                    ),
+                    "realized_speed_m_s": realized_stage_speed,
+                    "move_steps": move_steps,
+                    "hold_steps": hold_steps_for_stage,
+                    "passed_sensor_gate": True,
+                    "arm_drive_damping_nm_s_rad": (
+                        lift_phase_arm_damping.final_damping_nm_s_rad
+                        if lift_phase_arm_damping.enabled
+                        else (
+                            final_compliant_damping
+                            if formal_lift_arm_drive_bias is not None
+                            else float(pick.robot.arm_damping)
+                        )
+                    ),
+                }
+                stage_failed = False
+                for stage_step in range(move_steps + hold_steps_for_stage):
+                    vertical_force_hold_step = None
+                    vertical_force_input_global_step = None
+                    vertical_force_effort_readback_error = None
+                    vertical_force_applied_effort = None
+                    lift_finger_absolute_step = None
+                    lift_finger_absolute_input_global_step = None
+                    h24_root_load_step = None
+                    h25_fixed_target_step = None
+                    moment_support_step = None
+                    moment_support_input_global_step = None
+                    moment_support_input_task_force_xy_n = None
+                    moment_support_input_sensor_moment_nm = None
+                    lift_finger_balance_step = None
+                    lift_finger_balance_input_global_step = None
+                    if moment_support_controller is not None:
+                        if moment_support_controller.phase != PHASE_LIFT_READY:
+                            fail_vertical_force_ramp(
+                                "b_v3_lift_started_before_ready",
+                                phase,
+                                stage_step,
+                                "B-V3 staged lift requires completed BREAKAWAY_COMMIT",
+                                failure_stage=stage_index,
+                            )
+                        moment_support_input_global_step = int(global_step)
+                        b_v3_wrist_evidence = formal_wrist_step_evidence(
+                            positions
+                        )
+                        moment_support_input_task_force_xy_n = tuple(
+                            float(value)
+                            for value in b_v3_wrist_evidence[
+                                "wrist_wrench_payload_increment_task_frame"
+                            ][:2]
+                        )
+                        moment_support_input_sensor_moment_nm = tuple(
+                            float(value)
+                            for value in formal_latest_wrist_payload_increment[
+                                3:
+                            ]
+                        )
+                        b_v3_gate_evidence = dict(
+                            formal_lift_monitor.last_moment_safety_evidence
+                        )
+                        try:
+                            moment_support_step = (
+                                moment_support_controller.update(
+                                    task_force_xy_n=(
+                                        moment_support_input_task_force_xy_n
+                                    ),
+                                    sensor_origin_moment_increment_xyz_nm=(
+                                        moment_support_input_sensor_moment_nm
+                                    ),
+                                    finger_root_torque_nm=tuple(
+                                        float(value) for value in root_delta
+                                    ),
+                                    raw_moment_gate_score_nm=float(
+                                        b_v3_gate_evidence["gate_score_nm"]
+                                    ),
+                                    raw_hard_gate_triggered=bool(
+                                        b_v3_gate_evidence["triggered"]
+                                    ),
+                                    input_global_step=(
+                                        moment_support_input_global_step
+                                    ),
+                                )
+                            )
+                        except (KeyError, ValueError, RuntimeError) as b_v3_error:
+                            fail_vertical_force_ramp(
+                                "b_v3_staged_lift_control_invalid",
+                                phase,
+                                stage_step,
+                                f"{type(b_v3_error).__name__}: {b_v3_error}",
+                                failure_stage=stage_index,
+                            )
+                        current_hand_target[
+                            formal_finger_hand_indices
+                        ] = np.asarray(
+                            moment_support_step["output_targets_rad"],
+                            dtype=np.float64,
+                        )
+                    elif lift_finger_fixed_target_config.enabled:
+                        if lift_finger_fixed_target_controller is None:
+                            fail_vertical_force_ramp(
+                                "h25_controller_not_activated",
+                                phase,
+                                stage_step,
+                                "H25 must remain active through staged lift",
+                                failure_stage=stage_index,
+                            )
+                        try:
+                            h25_fixed_target_step = (
+                                lift_finger_fixed_target_controller.update(
+                                    tuple(
+                                        float(value)
+                                        for value in current_hand_target[
+                                            formal_finger_hand_indices
+                                        ]
+                                    ),
+                                    tuple(
+                                        float(value) for value in root_delta
+                                    ),
+                                    int(global_step),
+                                    phase,
+                                    int(stage_step),
+                                )
+                            )
+                        except ValueError as h25_error:
+                            fail_vertical_force_ramp(
+                                "h25_fixed_target_hold_invalid",
+                                phase,
+                                stage_step,
+                                f"{type(h25_error).__name__}: {h25_error}",
+                                failure_stage=stage_index,
+                            )
+                        current_hand_target[
+                            formal_finger_hand_indices
+                        ] = np.asarray(
+                            h25_fixed_target_step["output_targets_rad"],
+                            dtype=np.float64,
+                        )
+                    elif lift_finger_absolute_controller is not None:
+                        # H17 consumes only the synchronized root-torque
+                        # sample from the immediately preceding physics step.
+                        # The fresh absolute references were frozen before
+                        # lift from the trailing existing H13 window.
+                        lift_finger_absolute_input_global_step = int(
+                            global_step
+                        )
+                        h17_control_input, h24_root_load_step = (
+                            h24_h17_control_input(
+                                root_delta,
+                                lift_finger_absolute_input_global_step,
+                                phase,
+                                stage_step,
+                            )
+                        )
+                        lift_finger_absolute_step = (
+                            lift_finger_absolute_controller.update(
+                                h17_control_input
+                            )
+                        )
+                        current_hand_target[
+                            formal_finger_hand_indices
+                        ] = np.asarray(
+                            lift_finger_absolute_step[
+                                "output_targets_rad"
+                            ],
+                            dtype=np.float64,
+                        )
+                    elif lift_finger_balance_controller is not None:
+                        # root_delta is the synchronized sensor sample from
+                        # the immediately preceding physical step.  Apply the
+                        # bounded target overlay before this step; the new
+                        # sample below can only affect the following command.
+                        lift_finger_balance_input_global_step = int(
+                            global_step
+                        )
+                        lift_finger_balance_step = (
+                            lift_finger_balance_controller.update(root_delta)
+                        )
+                        current_hand_target[
+                            formal_finger_hand_indices
+                        ] = np.asarray(
+                            lift_finger_balance_step[
+                                "output_targets_rad"
+                            ],
+                            dtype=np.float64,
+                        )
+                    lift_x_step = None
+                    lift_x_input_global_step = None
+                    lift_x_nominal_path_arm = None
+                    lift_x_corrected_path_arm = None
+                    lift_xy_step = None
+                    lift_xy_input_global_step = None
+                    lift_xy_nominal_path_arm = None
+                    lift_xy_corrected_path_arm = None
+                    if lift_xy_admittance.enabled:
+                        lift_xy_input_global_step = int(global_step)
+                        precommand_wrist_evidence = formal_wrist_step_evidence(
+                            positions
+                        )
+                        task_payload_increment = np.asarray(
+                            precommand_wrist_evidence[
+                                "wrist_wrench_payload_increment_task_frame"
+                            ],
+                            dtype=np.float64,
+                        )
+                        actual_arm_tcp = np.asarray(
+                            iiwa14_grasp_tcp_transform(
+                                tuple(
+                                    float(value)
+                                    for value in positions[arm_indices]
+                                )
+                            ),
+                            dtype=np.float64,
+                        )
+                        lift_xy_step = derive_lift_xy_force_admittance_step(
+                            tuple(
+                                float(value)
+                                for value in task_payload_increment[:2]
+                            ),
+                            tuple(
+                                tuple(float(value) for value in row)
+                                for row in actual_arm_tcp[:3, :3]
+                            ),
+                            tuple(
+                                float(value)
+                                for value in lift_xy_correction_m
+                            ),
+                            lift_xy_admittance,
+                        )
+                        lift_xy_correction_m = np.asarray(
+                            lift_xy_step["applied_correction_xy_m"],
+                            dtype=np.float64,
+                        )
+                        lift_xy_maximum_input_force_norm_n = max(
+                            lift_xy_maximum_input_force_norm_n,
+                            float(lift_xy_step["task_lateral_force_norm_n"]),
+                        )
+                        lift_xy_maximum_correction_norm_m = max(
+                            lift_xy_maximum_correction_norm_m,
+                            float(lift_xy_step["applied_correction_norm_m"]),
+                        )
+                        lift_xy_maximum_step_norm_m = max(
+                            lift_xy_maximum_step_norm_m,
+                            float(lift_xy_step["applied_delta_norm_m"]),
+                        )
+                        if stage_step < move_steps:
+                            lift_xy_nominal_path_arm = np.asarray(
+                                interpolate_arm(
+                                    tuple(
+                                        float(value)
+                                        for value in stage_path_start
+                                    ),
+                                    tuple(
+                                        float(value)
+                                        for value in stage_path_target
+                                    ),
+                                    float(stage_step + 1)
+                                    / float(move_steps),
+                                ),
+                                dtype=np.float64,
+                            )
+                        else:
+                            lift_xy_nominal_path_arm = (
+                                stage_path_target.copy()
+                            )
+                        lift_xy_nominal_tcp = np.asarray(
+                            iiwa14_grasp_tcp_transform(
+                                tuple(
+                                    float(value)
+                                    for value in lift_xy_nominal_path_arm
+                                )
+                            ),
+                            dtype=np.float64,
+                        )
+                        lift_xy_corrected_position = (
+                            lift_xy_nominal_tcp[:3, 3].copy()
+                        )
+                        lift_xy_corrected_position[:2] += (
+                            lift_xy_correction_m
+                        )
+                        lift_xy_corrected_path_arm = np.asarray(
+                            solve_fixed_q7_tcp_pose(
+                                tuple(
+                                    float(value)
+                                    for value in lift_xy_nominal_path_arm
+                                ),
+                                tuple(
+                                    float(value)
+                                    for value in lift_xy_corrected_position
+                                ),
+                                target_rotation=lift_start_tcp[:3, :3],
+                            ),
+                            dtype=np.float64,
+                        )
+                        current_arm_target = (
+                            lift_xy_corrected_path_arm
+                            if formal_lift_arm_drive_bias is None
+                            else lift_xy_corrected_path_arm
+                            + formal_lift_arm_drive_bias
+                        )
+                    elif lift_x_admittance.enabled:
+                        lift_x_input_global_step = int(global_step)
+                        precommand_wrist_evidence = formal_wrist_step_evidence(
+                            positions
+                        )
+                        task_payload_increment = np.asarray(
+                            precommand_wrist_evidence[
+                                "wrist_wrench_payload_increment_task_frame"
+                            ],
+                            dtype=np.float64,
+                        )
+                        lift_x_step = derive_lift_x_force_admittance_step(
+                            float(task_payload_increment[0]),
+                            lift_x_correction_m,
+                            lift_x_admittance,
+                        )
+                        lift_x_correction_m = float(
+                            lift_x_step["applied_correction_m"]
+                        )
+                        lift_x_maximum_abs_input_force_n = max(
+                            lift_x_maximum_abs_input_force_n,
+                            abs(float(task_payload_increment[0])),
+                        )
+                        lift_x_maximum_abs_correction_m = max(
+                            lift_x_maximum_abs_correction_m,
+                            abs(lift_x_correction_m),
+                        )
+                        lift_x_maximum_abs_step_m = max(
+                            lift_x_maximum_abs_step_m,
+                            abs(float(lift_x_step["applied_delta_m"])),
+                        )
+                        if stage_step < move_steps:
+                            lift_x_nominal_path_arm = np.asarray(
+                                interpolate_arm(
+                                    tuple(
+                                        float(value)
+                                        for value in stage_path_start
+                                    ),
+                                    tuple(
+                                        float(value)
+                                        for value in stage_path_target
+                                    ),
+                                    float(stage_step + 1)
+                                    / float(move_steps),
+                                ),
+                                dtype=np.float64,
+                            )
+                        else:
+                            lift_x_nominal_path_arm = (
+                                stage_path_target.copy()
+                            )
+                        lift_x_nominal_tcp = np.asarray(
+                            iiwa14_grasp_tcp_transform(
+                                tuple(
+                                    float(value)
+                                    for value in lift_x_nominal_path_arm
+                                )
+                            ),
+                            dtype=np.float64,
+                        )
+                        lift_x_corrected_position = (
+                            lift_x_nominal_tcp[:3, 3].copy()
+                        )
+                        lift_x_corrected_position[0] += (
+                            lift_x_correction_m
+                        )
+                        lift_x_corrected_path_arm = np.asarray(
+                            solve_fixed_q7_tcp_pose(
+                                tuple(
+                                    float(value)
+                                    for value in lift_x_nominal_path_arm
+                                ),
+                                tuple(
+                                    float(value)
+                                    for value in lift_x_corrected_position
+                                ),
+                                target_rotation=lift_start_tcp[:3, :3],
+                            ),
+                            dtype=np.float64,
+                        )
+                        current_arm_target = (
+                            lift_x_corrected_path_arm
+                            if formal_lift_arm_drive_bias is None
+                            else lift_x_corrected_path_arm
+                            + formal_lift_arm_drive_bias
+                        )
+                    elif stage_step < move_steps:
+                        current_arm_target = np.asarray(
+                            interpolate_arm(
+                                tuple(float(value) for value in stage_start),
+                                tuple(float(value) for value in stage_target),
+                                float(stage_step + 1) / float(move_steps),
+                            ),
+                            dtype=np.float64,
+                        )
+                    else:
+                        current_arm_target = stage_target.copy()
+                    if (
+                        stage_step < move_steps
+                        or lift_x_step is not None
+                        or lift_xy_step is not None
+                    ):
+                        formal_lift_traversed_arm_targets.append(
+                            current_arm_target.copy()
+                        )
+                    if vertical_force_ramp.enabled:
+                        vertical_force_input_global_step = int(global_step)
+                        try:
+                            vertical_force_hold_step = (
+                                derive_vertical_force_step(
+                                    positions[arm_indices],
+                                    velocities[arm_indices],
+                                    tabletop.asset_profile.body_mass_kg,
+                                    tabletop.asset_profile.nut_mass_kg,
+                                    tabletop.physics.gravity_m_s2,
+                                    physical_grasp.stability
+                                    .maximum_wrist_force_n,
+                                    1.0,
+                                    vertical_force_previous_n,
+                                    formal_arm_feedforward_effort,
+                                    vertical_force_actuator_effort_limits,
+                                    vertical_force_forward_kinematics,
+                                )
+                            )
+                        except ValueError as vertical_force_error:
+                            fail_vertical_force_ramp(
+                                "vertical_force_hold_derivation_invalid",
+                                phase,
+                                stage_step,
+                                f"{type(vertical_force_error).__name__}: "
+                                f"{vertical_force_error}",
+                                failure_stage=stage_index,
+                            )
+                        formal_arm_feedforward_effort = np.asarray(
+                            vertical_force_hold_step["joint_effort_nm"],
+                            dtype=np.float64,
+                        )
+                    positions, velocities = observe_and_step(
+                        current_arm_target,
+                        current_hand_target,
+                        True,
+                        formal_arm_feedforward_effort,
+                    )
+                    if vertical_force_hold_step is not None:
+                        vertical_force_applied_effort = np.asarray(
+                            robot.get_applied_joint_efforts(
+                                joint_indices=arm_indices
+                            ),
+                            dtype=np.float64,
+                        )
+                        if (
+                            vertical_force_applied_effort.shape != (7,)
+                            or not np.all(
+                                np.isfinite(vertical_force_applied_effort)
+                            )
+                        ):
+                            fail_vertical_force_ramp(
+                                "vertical_force_hold_effort_readback_invalid",
+                                phase,
+                                stage_step,
+                                "Isaac applied-effort readback is not seven finite values",
+                                failure_stage=stage_index,
+                            )
+                        vertical_force_effort_readback_error = float(
+                            np.max(
+                                np.abs(
+                                    vertical_force_applied_effort
+                                    - formal_arm_feedforward_effort.astype(
+                                        np.float32
+                                    ).astype(np.float64)
+                                )
+                            )
+                        )
+                        vertical_force_maximum_readback_error_nm = max(
+                            vertical_force_maximum_readback_error_nm,
+                            vertical_force_effort_readback_error,
+                        )
+                        vertical_force_maximum_joint_effort_nm = max(
+                            vertical_force_maximum_joint_effort_nm,
+                            float(
+                                vertical_force_hold_step[
+                                    "maximum_abs_joint_effort_nm"
+                                ]
+                            ),
+                        )
+                        vertical_force_maximum_joint_effort_step_nm = max(
+                            vertical_force_maximum_joint_effort_step_nm,
+                            float(
+                                vertical_force_hold_step[
+                                    "maximum_abs_joint_effort_step_nm"
+                                ]
+                            ),
+                        )
+                        vertical_force_maximum_virtual_work_residual_w = max(
+                            vertical_force_maximum_virtual_work_residual_w,
+                            float(
+                                vertical_force_hold_step[
+                                    "virtual_work_residual_w"
+                                ]
+                            ),
+                        )
+                        vertical_force_previous_n = float(
+                            vertical_force_hold_step["world_up_force_n"]
+                        )
+                    measured_efforts = sample_post_tare_efforts()
+                    root_delta = measured_efforts - tare_efforts
+                    finalize_h24_record(h24_root_load_step)
+                    arm_tracking = float(
+                        np.max(
+                            np.abs(
+                                positions[arm_indices] - current_arm_target
+                            )
+                        )
+                    )
+                    finger_velocities = velocities[
+                        hand_indices[formal_finger_hand_indices]
+                    ]
+                    if (
+                        vertical_force_effort_readback_error is not None
+                        and vertical_force_effort_readback_error
+                        > vertical_force_readback_tolerance_nm
+                    ):
+                        formal_lift_monitor.fail_closed(
+                            "vertical_force_hold_effort_readback_mismatch"
+                        )
+                        monitor_ok = False
+                        step_failure_reason = (
+                            "vertical_force_hold_effort_readback_mismatch"
+                        )
+                    elif wrist_ft_monitor_error is not None:
+                        # A frozen wrist sample would silently pass the
+                        # increment gates.  Fail closed on sensor loss.
+                        formal_lift_monitor.fail_closed(
+                            "wrist_ft_sensor_error"
+                        )
+                        monitor_ok = False
+                        step_failure_reason = "wrist_ft_sensor_error"
+                    else:
+                        monitor_ok = formal_lift_monitor.update(
+                            root_delta,
+                            formal_latest_wrist_canonical,
+                            arm_tracking_error_rad=arm_tracking,
+                            finger_velocities_rad_s=finger_velocities,
+                        )
+                        step_failure_reason = (
+                            formal_lift_monitor.failure_reason
+                        )
+                    if moment_support_step is not None:
+                        moment_support_step.update(
+                            {
+                                "output_global_step": int(global_step),
+                                "input_is_immediately_preceding_sample": bool(
+                                    int(global_step)
+                                    == moment_support_input_global_step + 1
+                                ),
+                                "input_task_force_xy_n": list(
+                                    moment_support_input_task_force_xy_n
+                                ),
+                                "input_sensor_origin_moment_increment_xyz_nm": list(
+                                    moment_support_input_sensor_moment_nm
+                                ),
+                                "raw_finger_root_torque_after_step_nm": [
+                                    float(value) for value in root_delta
+                                ],
+                                "raw_moment_gate_after_step": dict(
+                                    formal_lift_monitor
+                                    .last_moment_safety_evidence
+                                ),
+                                "lift_stage": int(stage_index),
+                                "lift_stage_step": int(stage_step),
+                                "raw_hard_gate_sample_filtered": False,
+                                "h17_target_updated": False,
+                                "h24_filter_used": False,
+                                "formal_b_pass_claimed": False,
+                            }
+                        )
+                        moment_support_records.append(moment_support_step)
+                    controller_step_records.append(
+                        {
+                            "global_step": global_step,
+                            "phase": phase,
+                            "method": arguments.physical_grasp_method,
+                            "lift_stage": stage_index,
+                            "lift_stage_step": stage_step,
+                            "arm_drive_damping_nm_s_rad": (
+                                lift_phase_arm_damping
+                                .final_damping_nm_s_rad
+                                if lift_phase_arm_damping.enabled
+                                else (
+                                    final_compliant_damping
+                                    if formal_lift_arm_drive_bias is not None
+                                    else float(pick.robot.arm_damping)
+                                )
+                            ),
+                            "finger_drive_damping_nm_s_rad": (
+                                physical_grasp.post_contact_finger_damping
+                                .final_damping_nm_s_rad
+                                if physical_grasp
+                                .post_contact_finger_damping.enabled
+                                else pick.motion.grip_hand_damping
+                            ),
+                            "finger_root_torque_proxy_nm": {
+                                name: float(root_delta[index])
+                                for index, name in enumerate(FINGERS)
+                            },
+                            "lift_finger_root_load_two_sample_suppression": (
+                                h24_root_load_step
+                            ),
+                            "lift_finger_fixed_target_hold": (
+                                h25_fixed_target_step
+                            ),
+                            "moment_constrained_support_transfer": (
+                                moment_support_step
+                            ),
+                            "lift_finger_absolute_load_hold": (
+                                None
+                                if lift_finger_absolute_step is None
+                                else {
+                                    **lift_finger_absolute_step,
+                                    "input_global_step": (
+                                        lift_finger_absolute_input_global_step
+                                    ),
+                                    "output_global_step": int(global_step),
+                                    "input_is_immediately_preceding_sample": (
+                                        h24_root_load_step is None
+                                    ),
+                                    "newest_input_is_immediately_preceding_sample": (
+                                        int(global_step)
+                                        == lift_finger_absolute_input_global_step
+                                        + 1
+                                    ),
+                                    "input_channels": [
+                                        "f1j2",
+                                        "f2j1",
+                                        "f3j2",
+                                    ],
+                                    "command_channels": [
+                                        "f1j2",
+                                        "f2j1",
+                                        "f3j2",
+                                    ],
+                                    "reference_source": (
+                                        lift_finger_absolute_config
+                                        .reference_window_source
+                                    ),
+                                    "reference_window_steps": (
+                                        physical_grasp.reference_window_steps
+                                    ),
+                                    "finger_stiffness_modified": False,
+                                    "arm_target_modified": False,
+                                    "arm_stiffness_modified": False,
+                                    "arm_damping_modified": False,
+                                    "vertical_trajectory_modified": False,
+                                    "sensor_origin_hard_gate_unchanged": True,
+                                    "object_pose_written": False,
+                                }
+                            ),
+                            "lift_finger_load_balance": (
+                                None
+                                if lift_finger_balance_step is None
+                                else {
+                                    **lift_finger_balance_step,
+                                    "input_global_step": (
+                                        lift_finger_balance_input_global_step
+                                    ),
+                                    "output_global_step": int(global_step),
+                                    "input_is_immediately_preceding_sample": (
+                                        int(global_step)
+                                        == lift_finger_balance_input_global_step
+                                        + 1
+                                    ),
+                                    "input_channels": [
+                                        "f1j2",
+                                        "f2j1",
+                                        "f3j2",
+                                    ],
+                                    "command_channels": [
+                                        "f1j2",
+                                        "f2j1",
+                                        "f3j2",
+                                    ],
+                                    "mean_closure_target_unchanged": True,
+                                    "finger_stiffness_modified": False,
+                                    "arm_target_modified": False,
+                                    "sensor_origin_hard_gate_unchanged": True,
+                                    "object_pose_written": False,
+                                }
+                            ),
+                            vertical_force_metric_key: (
+                                None
+                                if vertical_force_hold_step is None
+                                else {
+                                    **vertical_force_hold_step,
+                                    "input_global_step": (
+                                        vertical_force_input_global_step
+                                    ),
+                                    "output_global_step": int(global_step),
+                                    "input_is_immediately_preceding_sample": (
+                                        int(global_step)
+                                        == vertical_force_input_global_step + 1
+                                    ),
+                                    "applied_effort_readback_nm": [
+                                        float(value)
+                                        for value in (
+                                            vertical_force_applied_effort
+                                        )
+                                    ],
+                                    "effort_readback_error_nm": (
+                                        vertical_force_effort_readback_error
+                                    ),
+                                    "arm_position_target_modified": False,
+                                    "finger_target_modified": False,
+                                    "sensor_origin_hard_gate_unchanged": True,
+                                    "object_truth_used": False,
+                                    "contact_truth_used": False,
+                                    "event_truth_used": False,
+                                    "object_pose_written": False,
+                                }
+                            ),
+                            "lift_x_force_admittance": (
+                                None
+                                if lift_x_step is None
+                                else {
+                                    **lift_x_step,
+                                    "input_global_step": (
+                                        lift_x_input_global_step
+                                    ),
+                                    "output_global_step": int(global_step),
+                                    "input_is_immediately_preceding_sample": (
+                                        int(global_step)
+                                        == lift_x_input_global_step + 1
+                                    ),
+                                    "nominal_path_arm_rad": [
+                                        float(value)
+                                        for value in lift_x_nominal_path_arm
+                                    ],
+                                    "corrected_path_arm_rad": [
+                                        float(value)
+                                        for value in lift_x_corrected_path_arm
+                                    ],
+                                    "z_target_modified": False,
+                                    "orientation_target_modified": False,
+                                    "force_input_frame": (
+                                        "robot_fk_grasp_tcp_frame"
+                                    ),
+                                    "force_input_axis": "x",
+                                    "command_target_frame": "world",
+                                    "command_target_axis": "x",
+                                    "sensor_origin_hard_gate_unchanged": True,
+                                    "object_truth_used": False,
+                                    "contact_truth_used": False,
+                                }
+                            ),
+                            "lift_xy_force_admittance": (
+                                None
+                                if lift_xy_step is None
+                                else {
+                                    **lift_xy_step,
+                                    "input_global_step": (
+                                        lift_xy_input_global_step
+                                    ),
+                                    "output_global_step": int(global_step),
+                                    "input_is_immediately_preceding_sample": (
+                                        int(global_step)
+                                        == lift_xy_input_global_step + 1
+                                    ),
+                                    "rotation_input_global_step": (
+                                        lift_xy_input_global_step
+                                    ),
+                                    "rotation_from_robot_fk_only": True,
+                                    "nominal_path_arm_rad": [
+                                        float(value)
+                                        for value in lift_xy_nominal_path_arm
+                                    ],
+                                    "corrected_path_arm_rad": [
+                                        float(value)
+                                        for value in lift_xy_corrected_path_arm
+                                    ],
+                                    "z_target_modified": False,
+                                    "orientation_target_modified": False,
+                                    "force_input_frame": (
+                                        "robot_fk_grasp_tcp_frame"
+                                    ),
+                                    "force_input_axes": ["x", "y"],
+                                    "command_target_frame": "world",
+                                    "command_target_axes": ["x", "y"],
+                                    "sensor_origin_hard_gate_unchanged": True,
+                                    "object_truth_used": False,
+                                    "contact_truth_used": False,
+                                    "event_truth_used": False,
+                                    "object_pose_written": False,
+                                }
+                            ),
+                            **formal_kinematic_step_evidence(
+                                positions,
+                                velocities,
+                                current_arm_target,
+                                current_hand_target,
+                            ),
+                            **formal_wrist_step_evidence(positions),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor.last_moment_safety_evidence
+                            ),
+                            "arm_tracking_error_rad": arm_tracking,
+                            "wrist_ft_monitor_error": wrist_ft_monitor_error,
+                            "stable": monitor_ok,
+                            "failed": not monitor_ok,
+                            "failure_reason": step_failure_reason,
+                        }
+                    )
+                    if lift_x_step is not None:
+                        lift_x_admittance_records.append(
+                            {
+                                "global_step": int(global_step),
+                                "stage": int(stage_index),
+                                "stage_step": int(stage_step),
+                                "input_global_step": (
+                                    lift_x_input_global_step
+                                ),
+                                "task_payload_force_x_n": float(
+                                    lift_x_step[
+                                        "task_payload_force_x_n"
+                                    ]
+                                ),
+                                "applied_delta_m": float(
+                                    lift_x_step["applied_delta_m"]
+                                ),
+                                "applied_correction_m": float(
+                                    lift_x_step["applied_correction_m"]
+                                ),
+                            }
+                        )
+                    if lift_xy_step is not None:
+                        lift_xy_admittance_records.append(
+                            {
+                                "global_step": int(global_step),
+                                "stage": int(stage_index),
+                                "stage_step": int(stage_step),
+                                "input_global_step": (
+                                    lift_xy_input_global_step
+                                ),
+                                "task_payload_force_xy_n": list(
+                                    lift_xy_step[
+                                        "task_payload_force_xy_n"
+                                    ]
+                                ),
+                                "world_projected_force_xy_n": list(
+                                    lift_xy_step[
+                                        "world_projected_force_xy_n"
+                                    ]
+                                ),
+                                "applied_delta_xy_m": list(
+                                    lift_xy_step["applied_delta_xy_m"]
+                                ),
+                                "applied_correction_xy_m": list(
+                                    lift_xy_step[
+                                        "applied_correction_xy_m"
+                                    ]
+                                ),
+                                "applied_delta_norm_m": float(
+                                    lift_xy_step["applied_delta_norm_m"]
+                                ),
+                                "applied_correction_norm_m": float(
+                                    lift_xy_step[
+                                        "applied_correction_norm_m"
+                                    ]
+                                ),
+                            }
+                        )
+                    if lift_finger_balance_step is not None:
+                        lift_finger_balance_records.append(
+                            {
+                                "global_step": int(global_step),
+                                "stage": int(stage_index),
+                                "stage_step": int(stage_step),
+                                "input_global_step": (
+                                    lift_finger_balance_input_global_step
+                                ),
+                                "normalized_load_imbalance": float(
+                                    lift_finger_balance_step[
+                                        "normalized_load_imbalance"
+                                    ]
+                                ),
+                                "maximum_abs_applied_step_rad": max(
+                                    abs(float(value))
+                                    for value in lift_finger_balance_step[
+                                        "applied_delta_closure_rad"
+                                    ]
+                                ),
+                                "maximum_abs_cumulative_trim_rad": max(
+                                    abs(float(value))
+                                    for value in lift_finger_balance_step[
+                                        "cumulative_trim_closure_rad"
+                                    ]
+                                ),
+                                "zero_sum_residual_rad": float(
+                                    lift_finger_balance_step[
+                                        "zero_sum_residual_rad"
+                                    ]
+                                ),
+                            }
+                        )
+                    if lift_finger_absolute_step is not None:
+                        lift_finger_absolute_records.append(
+                            {
+                                "global_step": int(global_step),
+                                "stage": int(stage_index),
+                                "stage_step": int(stage_step),
+                                "input_global_step": (
+                                    lift_finger_absolute_input_global_step
+                                ),
+                                "load_error_nm": list(
+                                    lift_finger_absolute_step[
+                                        "load_error_nm"
+                                    ]
+                                ),
+                                "applied_delta_closure_rad": list(
+                                    lift_finger_absolute_step[
+                                        "applied_delta_closure_rad"
+                                    ]
+                                ),
+                                "common_mode_applied_delta_closure_rad": (
+                                    lift_finger_absolute_step[
+                                        "common_mode_applied_delta_closure_rad"
+                                    ]
+                                ),
+                                "maximum_abs_cumulative_trim_rad": max(
+                                    abs(float(value))
+                                    for value in lift_finger_absolute_step[
+                                        "cumulative_trim_closure_rad"
+                                    ]
+                                ),
+                            }
+                        )
+                    if h25_fixed_target_step is not None:
+                        h17_h25_runtime_summary = (
+                            lift_finger_absolute_controller.summary()
+                        )
+                        h25_fixed_target_step.update(
+                            {
+                                "output_global_step": int(global_step),
+                                "raw_finger_root_torque_after_step_nm": [
+                                    float(value) for value in root_delta
+                                ],
+                                "raw_hard_gate_sample_filtered": False,
+                                "lift_stage": int(stage_index),
+                                "h17_record_count_after_step": int(
+                                    h17_h25_runtime_summary["record_count"]
+                                ),
+                                "h17_cumulative_closure_after_step_rad": [
+                                    float(value)
+                                    for value in h17_h25_runtime_summary[
+                                        "final_cumulative_trim_rad"
+                                    ]
+                                ],
+                            }
+                        )
+                        lift_finger_fixed_target_records.append(
+                            h25_fixed_target_step
+                        )
+                    if vertical_force_hold_step is not None:
+                        vertical_force_hold_records.append(
+                            {
+                                "global_step": int(global_step),
+                                "stage": int(stage_index),
+                                "stage_step": int(stage_step),
+                                "input_global_step": (
+                                    vertical_force_input_global_step
+                                ),
+                                "world_up_force_n": float(
+                                    vertical_force_hold_step[
+                                        "world_up_force_n"
+                                    ]
+                                ),
+                                "maximum_abs_joint_effort_nm": float(
+                                    vertical_force_hold_step[
+                                        "maximum_abs_joint_effort_nm"
+                                    ]
+                                ),
+                                "maximum_abs_joint_effort_step_nm": float(
+                                    vertical_force_hold_step[
+                                        "maximum_abs_joint_effort_step_nm"
+                                    ]
+                                ),
+                                "effort_readback_error_nm": (
+                                    vertical_force_effort_readback_error
+                                ),
+                            }
+                        )
+                        vertical_force_peak_moment_score_nm = max(
+                            vertical_force_peak_moment_score_nm,
+                            float(
+                                formal_lift_monitor
+                                .last_moment_safety_evidence["gate_score_nm"]
+                            ),
+                        )
+                        vertical_force_peak_force_increment_n = max(
+                            vertical_force_peak_force_increment_n,
+                            float(
+                                np.linalg.norm(
+                                    formal_latest_wrist_payload_increment[:3]
+                                )
+                            ),
+                        )
+                    if not monitor_ok:
+                        stage_record.update(
+                            {
+                                "passed_sensor_gate": False,
+                                "failure_reason": step_failure_reason,
+                                "failure_step": stage_step,
+                            }
+                        )
+                        formal_lift_terminal = True
+                        formal_lift_failure = {
+                            "reason": step_failure_reason,
+                            "stage": stage_index,
+                            "stage_step": stage_step,
+                            "global_step": global_step,
+                            "controller_terminal": True,
+                            "moment_trigger_component": (
+                                formal_lift_monitor.moment_trigger_component
+                            ),
+                            "wrist_moment_safety_evidence": dict(
+                                formal_lift_monitor.last_moment_safety_evidence
+                            ),
+                            "wrist_wrench_canonical": [
+                                float(value)
+                                for value in formal_latest_wrist_canonical
+                            ],
+                            "wrist_wrench_payload_reference_increment": [
+                                float(value)
+                                for value in (
+                                    formal_latest_wrist_payload_increment
+                                )
+                            ],
+                            "absolute_sensor_moment_norm_nm": moment_norm(
+                                formal_latest_wrist_canonical
+                            ),
+                            "moment_magnitude_increase_candidate_nm": (
+                                moment_magnitude_increase(
+                                    formal_latest_wrist_canonical,
+                                    formal_wrist_payload_reference,
+                                )
+                            ),
+                            "perpendicular_moment_delta_candidate": (
+                                perpendicular_moment_delta(
+                                    formal_latest_wrist_canonical,
+                                    formal_wrist_payload_reference,
+                                )
+                            ),
+                            "wrist_ft_monitor_error": (
+                                wrist_ft_monitor_error
+                            ),
+                        }
+                        stage_failed = True
+                        break
+                formal_lift_stage_records.append(stage_record)
+                if stage_failed:
+                    break
+                if formal_lift_compliant_path_arm is not None:
+                    formal_lift_compliant_path_arm = (
+                        stage_path_target.copy()
+                    )
+            metrics["formal_lift_stages"] = formal_lift_stage_records
+            metrics["formal_lift_monitor"] = formal_lift_monitor.summary()
+            if vertical_force_ramp.enabled:
+                metrics[vertical_force_metric_key] = (
+                    vertical_force_summary(
+                        "FAILED_CLOSED"
+                        if formal_lift_failure is not None
+                        else "STAGED_LIFT_COMPLETED"
+                    )
+                )
+            if lift_xy_admittance.enabled:
+                metrics["lift_xy_force_admittance"] = {
+                    "status": (
+                        "FAILED_CLOSED"
+                        if formal_lift_failure is not None
+                        else "STAGED_LIFT_COMPLETED"
+                    ),
+                    "threshold_label": lift_xy_admittance.threshold_label,
+                    "source_run_id": lift_xy_admittance.source_run_id,
+                    "source_h8_run_id": (
+                        lift_xy_admittance.source_h8_run_id
+                    ),
+                    "source_target_stiffness_n_m": (
+                        lift_xy_admittance.source_target_stiffness_n_m
+                    ),
+                    "task_xy_compliance_m_n": (
+                        lift_xy_admittance.task_xy_compliance_m_n
+                    ),
+                    "maximum_total_correction_norm_m": (
+                        lift_xy_admittance
+                        .maximum_total_correction_norm_m
+                    ),
+                    "maximum_step_correction_norm_m": (
+                        lift_xy_admittance
+                        .maximum_step_correction_norm_m
+                    ),
+                    "record_count": len(lift_xy_admittance_records),
+                    "maximum_input_lateral_force_norm_n": (
+                        lift_xy_maximum_input_force_norm_n
+                    ),
+                    "maximum_applied_correction_norm_m": (
+                        lift_xy_maximum_correction_norm_m
+                    ),
+                    "maximum_applied_step_norm_m": (
+                        lift_xy_maximum_step_norm_m
+                    ),
+                    "final_applied_correction_xy_m": [
+                        float(value) for value in lift_xy_correction_m
+                    ],
+                    "all_inputs_immediately_preceding": all(
+                        record["global_step"]
+                        == record["input_global_step"] + 1
+                        for record in lift_xy_admittance_records
+                    ),
+                    "rotation_from_same_step_robot_fk_only": True,
+                    "task_payload_force_xy_only": True,
+                    "force_input_frame": "robot_fk_grasp_tcp_frame",
+                    "force_input_axes": ["x", "y"],
+                    "command_target_frame": "world",
+                    "command_target_axes": ["x", "y"],
+                    "z_target_modified": False,
+                    "orientation_target_modified": False,
+                    "finger_targets_modified": False,
+                    "sensor_origin_hard_gate_unchanged": True,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "event_truth_used": False,
+                    "post_physics_object_pose_writes": 0,
+                }
+            if lift_x_admittance.enabled:
+                metrics["lift_x_force_admittance"] = {
+                    "status": (
+                        "FAILED_CLOSED"
+                        if formal_lift_failure is not None
+                        else "STAGED_LIFT_COMPLETED"
+                    ),
+                    "threshold_label": lift_x_admittance.threshold_label,
+                    "source_run_id": lift_x_admittance.source_run_id,
+                    "source_target_stiffness_n_m": (
+                        lift_x_admittance.source_target_stiffness_n_m
+                    ),
+                    "task_x_compliance_m_n": (
+                        lift_x_admittance.task_x_compliance_m_n
+                    ),
+                    "maximum_total_correction_m": (
+                        lift_x_admittance.maximum_total_correction_m
+                    ),
+                    "maximum_step_correction_m": (
+                        lift_x_admittance.maximum_step_correction_m
+                    ),
+                    "record_count": len(lift_x_admittance_records),
+                    "maximum_abs_input_force_x_n": (
+                        lift_x_maximum_abs_input_force_n
+                    ),
+                    "maximum_abs_applied_correction_m": (
+                        lift_x_maximum_abs_correction_m
+                    ),
+                    "maximum_abs_applied_step_m": (
+                        lift_x_maximum_abs_step_m
+                    ),
+                    "final_applied_correction_m": lift_x_correction_m,
+                    "all_inputs_immediately_preceding": all(
+                        record["global_step"]
+                        == record["input_global_step"] + 1
+                        for record in lift_x_admittance_records
+                    ),
+                    "task_payload_force_x_only": True,
+                    "force_input_frame": "robot_fk_grasp_tcp_frame",
+                    "force_input_axis": "x",
+                    "command_target_frame": "world",
+                    "command_target_axis": "x",
+                    "z_target_modified": False,
+                    "orientation_target_modified": False,
+                    "finger_targets_modified": False,
+                    "sensor_origin_hard_gate_unchanged": True,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "post_physics_object_pose_writes": 0,
+                }
+            if lift_finger_root_load_suppression_controller is not None:
+                h24_summary = (
+                    lift_finger_root_load_suppression_controller.summary()
+                )
+                metrics[
+                    "lift_finger_root_load_two_sample_suppression"
+                ] = {
+                    "status": (
+                        "FAILED_CLOSED"
+                        if formal_lift_failure is not None
+                        else "STAGED_LIFT_COMPLETED"
+                    ),
+                    "threshold_label": (
+                        lift_finger_root_load_suppression_config
+                        .threshold_label
+                    ),
+                    "source_h22_run_id": (
+                        lift_finger_root_load_suppression_config
+                        .source_h22_run_id
+                    ),
+                    "source_h23_run_id": (
+                        lift_finger_root_load_suppression_config
+                        .source_h23_run_id
+                    ),
+                    "source_derivation_sha256": (
+                        lift_finger_root_load_suppression_config
+                        .source_derivation_sha256
+                    ),
+                    **h24_summary,
+                    "all_newest_inputs_immediately_preceding": all(
+                        record.get("newest_sample_age_at_output_steps") == 1
+                        for record in lift_finger_root_load_suppression_records
+                    ),
+                    "all_oldest_inputs_at_most_two_steps_old": all(
+                        record.get("oldest_sample_age_at_output_steps") <= 2
+                        for record in lift_finger_root_load_suppression_records
+                    ),
+                    "raw_sensor_hard_gate_unchanged": True,
+                    "raw_hard_gate_detection_delay_steps": 0,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "event_truth_used": False,
+                    "post_physics_object_pose_writes": 0,
+                    "formal_b_pass_claimed": False,
+                }
+            if lift_finger_fixed_target_controller is not None:
+                h25_summary = lift_finger_fixed_target_controller.summary()
+                h17_h25_end_summary = (
+                    lift_finger_absolute_controller.summary()
+                )
+                h17_h25_end_record_count = int(
+                    h17_h25_end_summary["record_count"]
+                )
+                h17_h25_end_cumulative_rad = [
+                    float(value)
+                    for value in h17_h25_end_summary[
+                        "final_cumulative_trim_rad"
+                    ]
+                ]
+                metrics["lift_finger_fixed_target_hold"] = {
+                    "status": (
+                        "FAILED_CLOSED"
+                        if formal_lift_failure is not None
+                        else "STAGED_LIFT_COMPLETED"
+                    ),
+                    "threshold_label": (
+                        lift_finger_fixed_target_config.threshold_label
+                    ),
+                    "source_h24_run_id": (
+                        lift_finger_fixed_target_config.source_h24_run_id
+                    ),
+                    "source_derivation_sha256": (
+                        lift_finger_fixed_target_config
+                        .source_derivation_sha256
+                    ),
+                    **h25_summary,
+                    "h18_start_finger_targets_rad": list(
+                        lift_finger_fixed_targets_rad
+                    ),
+                    "h17_record_count_at_activation": (
+                        lift_finger_fixed_target_h17_record_count_at_activation
+                    ),
+                    "h17_record_count_at_end": h17_h25_end_record_count,
+                    "h17_target_update_call_count_after_activation": (
+                        h17_h25_end_record_count
+                        - lift_finger_fixed_target_h17_record_count_at_activation
+                    ),
+                    "h17_cumulative_closure_at_activation_rad": list(
+                        lift_finger_fixed_target_h17_cumulative_at_activation_rad
+                    ),
+                    "h17_cumulative_closure_at_end_rad": (
+                        h17_h25_end_cumulative_rad
+                    ),
+                    "h17_cumulative_closure_change_after_activation_rad": [
+                        end - start
+                        for start, end in zip(
+                            lift_finger_fixed_target_h17_cumulative_at_activation_rad,
+                            h17_h25_end_cumulative_rad,
+                        )
+                    ],
+                    "records_completed": len(
+                        lift_finger_fixed_target_records
+                    ),
+                    "all_inputs_immediately_preceding": all(
+                        record["output_global_step"]
+                        == record["input_global_step"] + 1
+                        for record in lift_finger_fixed_target_records
+                    ),
+                    "all_raw_finger_root_samples_recorded": all(
+                        len(record["raw_finger_root_torque_nm"]) == 3
+                        and len(
+                            record["raw_finger_root_torque_after_step_nm"]
+                        ) == 3
+                        for record in lift_finger_fixed_target_records
+                    ),
+                    "raw_sensor_hard_gate_unchanged": True,
+                    "raw_hard_gate_detection_delay_steps": 0,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "event_truth_used": False,
+                    "post_physics_object_pose_writes": 0,
+                    "formal_b_pass_claimed": False,
+                }
+            if lift_finger_absolute_controller is not None:
+                lift_finger_absolute_summary = (
+                    lift_finger_absolute_controller.summary()
+                )
+                metrics["lift_finger_absolute_load_hold"] = {
+                    "status": (
+                        "SUPERSEDED_BY_H25_AFTER_H23_STABILITY_WINDOW"
+                        if lift_finger_fixed_target_config.enabled
+                        else (
+                            "FAILED_CLOSED"
+                            if formal_lift_failure is not None
+                            else "STAGED_LIFT_COMPLETED"
+                        )
+                    ),
+                    "threshold_label": (
+                        lift_finger_absolute_config.threshold_label
+                    ),
+                    "source_h11_run_id": (
+                        lift_finger_absolute_config.source_h11_run_id
+                    ),
+                    "source_h16_run_id": (
+                        lift_finger_absolute_config.source_h16_run_id
+                    ),
+                    "reference_window_source": (
+                        lift_finger_absolute_config.reference_window_source
+                    ),
+                    "reference_window_steps": len(
+                        lift_finger_absolute_reference_steps
+                    ),
+                    "reference_first_global_step": (
+                        lift_finger_absolute_reference_steps[0]
+                    ),
+                    "reference_last_global_step": (
+                        lift_finger_absolute_reference_steps[-1]
+                    ),
+                    "reference_root_torque_absolute_nm": [
+                        float(value)
+                        for value in lift_finger_absolute_reference
+                    ],
+                    **lift_finger_absolute_summary,
+                    "all_inputs_immediately_preceding": (
+                        not lift_finger_root_load_suppression_config.enabled
+                        and all(
+                        record["global_step"]
+                        == record["input_global_step"] + 1
+                        for record in lift_finger_absolute_records
+                        )
+                    ),
+                    "all_newest_inputs_immediately_preceding": all(
+                        record["global_step"]
+                        == record["input_global_step"] + 1
+                        for record in lift_finger_absolute_records
+                    ),
+                    "input_channels": ["f1j2", "f2j1", "f3j2"],
+                    "command_channels": ["f1j2", "f2j1", "f3j2"],
+                    "preshape_joint_target_modified": False,
+                    "h11_runtime_controller_instantiated": False,
+                    "finger_stiffness_modified": False,
+                    "arm_target_modified_by_h17": False,
+                    "arm_stiffness_modified_by_h17": False,
+                    "arm_damping_modified_by_h17": False,
+                    "vertical_trajectory_modified_by_h17": False,
+                    "sensor_origin_hard_gate_unchanged": True,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "event_truth_used": False,
+                    "post_physics_object_pose_writes": 0,
+                }
+                metrics["lift_finger_load_balance"] = {
+                    "status": "SUPERSEDED_BY_H17_RUNTIME",
+                    "configured_parameter_source_only": True,
+                    "runtime_controller_instantiated": False,
+                    "threshold_label": (
+                        lift_finger_balance_config.threshold_label
+                    ),
+                    "source_run_id": lift_finger_balance_config.source_run_id,
+                }
+            elif lift_finger_balance_controller is not None:
+                lift_finger_balance_summary = (
+                    lift_finger_balance_controller.summary()
+                )
+                metrics["lift_finger_load_balance"] = {
+                    "status": (
+                        "FAILED_CLOSED"
+                        if formal_lift_failure is not None
+                        else "STAGED_LIFT_COMPLETED"
+                    ),
+                    "threshold_label": (
+                        lift_finger_balance_config.threshold_label
+                    ),
+                    "source_run_id": (
+                        lift_finger_balance_config.source_run_id
+                    ),
+                    **lift_finger_balance_summary,
+                    "all_inputs_immediately_preceding": all(
+                        record["global_step"]
+                        == record["input_global_step"] + 1
+                        for record in lift_finger_balance_records
+                    ),
+                    "input_channels": ["f1j2", "f2j1", "f3j2"],
+                    "command_channels": ["f1j2", "f2j1", "f3j2"],
+                    "preshape_joint_target_modified": False,
+                    "mean_closure_target_unchanged": True,
+                    "finger_stiffness_modified": False,
+                    "arm_target_modified": False,
+                    "lift_x_admittance_modified": False,
+                    "lift_xy_admittance_modified": False,
+                    "sensor_origin_hard_gate_unchanged": True,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "event_truth_used": False,
+                    "post_physics_object_pose_writes": 0,
+                }
+            if formal_lift_failure is not None:
+                # Shared fail-closed path: terminal snapshot -> bounded
+                # sensor-only recovery -> recovery-end snapshot -> raise.
+                run_formal_failure_recovery()
+            sensor_gate_positions = np.asarray(
+                robot.get_joint_positions(), dtype=np.float64
+            )
+            sensor_gate_velocities = np.asarray(
+                robot.get_joint_velocities(), dtype=np.float64
+            )
+            sensor_gate_efforts = sample_post_tare_efforts()
+            sensor_gate_torque_deltas = sensor_gate_efforts - tare_efforts
+            sensor_gate_arm_tracking_error = float(
+                np.max(
+                    np.abs(
+                        sensor_gate_positions[arm_indices]
+                        - current_arm_target
+                    )
+                )
+            )
+            sensor_gate_loaded_channels = int(
+                np.count_nonzero(
+                    np.abs(sensor_gate_torque_deltas)
+                    >= pick.sensing.loaded_torque_threshold_nm
+                )
+            )
+            sensor_gate_maximum_torque_delta = float(
+                np.max(np.abs(sensor_gate_torque_deltas))
+            )
+            formal_sensor_control_ready = bool(
+                formal_lift_monitor is not None
+                and not formal_lift_monitor.failed
+                and formal_lift_failure is None
+                and formal_recovery_record is None
+                and grasp_controller_stable
+                and wrist_ft_monitor_error is None
+                and len(formal_lift_stage_records)
+                == len(physical_grasp.lift_stages)
+                and all(
+                    record["passed_sensor_gate"]
+                    for record in formal_lift_stage_records
+                )
+                and np.all(np.isfinite(sensor_gate_positions))
+                and np.all(np.isfinite(sensor_gate_velocities))
+                and np.all(np.isfinite(sensor_gate_efforts))
+                and sensor_gate_arm_tracking_error
+                <= physical_grasp.stability.maximum_arm_tracking_error_rad
+                and sensor_gate_loaded_channels
+                >= pick.sensing.minimum_loaded_channels
+                and sensor_gate_maximum_torque_delta
+                <= pick.sensing.maximum_absolute_torque_delta_nm
+            )
+            metrics["formal_sensor_control_gate"] = {
+                "status": (
+                    "READY_FOR_KEYED_VISUAL_OBSERVATION"
+                    if formal_sensor_control_ready
+                    else "REJECTED_SAFE_STOP"
+                ),
+                "passed": formal_sensor_control_ready,
+                "arm_tracking_error_rad": sensor_gate_arm_tracking_error,
+                "loaded_torque_channels": sensor_gate_loaded_channels,
+                "maximum_absolute_torque_delta_nm": (
+                    sensor_gate_maximum_torque_delta
+                ),
+                "wrist_ft_monitor_error": wrist_ft_monitor_error,
+                "allowed_inputs": [
+                    "robot_joint_positions",
+                    "robot_joint_velocities",
+                    "finger_root_joint_efforts",
+                    "wrist_ft_sensor_wrench",
+                ],
+                "object_pose_used": False,
+                "contact_report_used": False,
+            }
+            if arguments.keyed_visual_control:
+                phase = "keyed_visual_control_capture"
+                if not formal_sensor_control_ready:
+                    metrics["keyed_visual_control"] = {
+                        "status": "SKIPPED_SENSOR_GRASP_GATE_REJECTED",
+                        "rejection_code": "FORMAL_SENSOR_CONTROL_GATE_REJECTED",
+                        "capture_passed": False,
+                        "plan_authorized": False,
+                        "control_authorized": False,
+                        "safe_stop_required": True,
+                    }
+                else:
+                    try:
+                        import omni.replicator.core as rep
+
+                        from kcg_connector.d38999_keyed_public_spec_v2 import (
+                            PLUG_MODEL_ID,
+                        )
+                        from postgrasp_palm_keyed_visual_capture_runtime import (
+                            run_postgrasp_palm_keyed_visual_capture,
+                        )
+
+                        if (
+                            not live_camera_rig
+                            or "palm_prim" not in live_camera_rig
+                            or "palm_t_hc" not in live_camera_rig
+                        ):
+                            raise RuntimeError(
+                                "fixed Palm camera rig is unavailable"
+                            )
+                        visual_arm_q = np.asarray(
+                            robot.get_joint_positions(), dtype=np.float64
+                        )[arm_indices]
+                        visual_world_tcp = np.asarray(
+                            iiwa14_grasp_tcp_transform(
+                                tuple(float(value) for value in visual_arm_q)
+                            ),
+                            dtype=np.float64,
+                        )
+                        visual_tcp_from_handbase = np.eye(4, dtype=np.float64)
+                        visual_tcp_from_handbase[2, 3] = -float(
+                            pick.geometry_candidate.handbase_to_tcp_m
+                        )
+                        visual_world_handbase = (
+                            visual_world_tcp @ visual_tcp_from_handbase
+                        )
+                        configured_world_fixed = np.eye(4, dtype=np.float64)
+                        configured_world_fixed[:3, :3] = np.diag(
+                            (1.0, -1.0, -1.0)
+                        )
+                        configured_world_fixed[:3, 3] = np.asarray(
+                            tabletop.fixed_endpoint.receptacle_origin_m,
+                            dtype=np.float64,
+                        )
+                        configured_fixed_target_plug = np.eye(
+                            4, dtype=np.float64
+                        )
+                        configured_fixed_target_plug[2, 3] = -0.012
+                        metrics["keyed_visual_control"] = (
+                            run_postgrasp_palm_keyed_visual_capture(
+                                output_subdir=(
+                                    Path(arguments.output_dir)
+                                    .expanduser()
+                                    .resolve()
+                                    / "keyed_visual_control"
+                                ),
+                                stage=stage,
+                                world=world,
+                                simulation_app=simulation_app,
+                                robot=robot,
+                                arm_indices=arm_indices,
+                                rep=rep,
+                                palm_prim_path=live_camera_rig["palm_prim"],
+                                scene_schema_version=tabletop.schema_version,
+                                scene_profile_id=(
+                                    tabletop.asset_profile.profile_id
+                                ),
+                                fixed_orientation_token=(
+                                    tabletop.asset_profile
+                                    .fixed_endpoint_orientation
+                                ),
+                                keyed_model_id=PLUG_MODEL_ID,
+                                T_HC_frozen_configured=np.asarray(
+                                    live_camera_rig["palm_t_hc"],
+                                    dtype=np.float64,
+                                ),
+                                T_WH_from_actual_q=visual_world_handbase,
+                                T_WR_fixed_configured=configured_world_fixed,
+                                T_RP_target_configured=(
+                                    configured_fixed_target_plug
+                                ),
+                            )
+                        )
+                        metrics["keyed_visual_control"][
+                            "configured_prealign_gap_m"
+                        ] = 0.012
+                        metrics["keyed_visual_control"][
+                            "prealign_gap_source"
+                        ] = "SIM_TUNING_ONLY_FIRST_CANDIDATE"
+                    except Exception as visual_exception:  # noqa: BLE001
+                        metrics["keyed_visual_control"] = {
+                            "status": "ABORT_SAFE",
+                            "rejection_code": "KEYED_VISUAL_HOOK_EXCEPTION",
+                            "reason": (
+                                f"{type(visual_exception).__name__}: "
+                                f"{visual_exception}"
+                            ),
+                            "capture_passed": False,
+                            "plan_authorized": False,
+                            "control_authorized": False,
+                            "safe_stop_required": True,
+                        }
+        else:
+            lift_steps = round(pick.motion.lift_duration_s * rate_hz)
+            for index in range(lift_steps):
+                current_arm_target = np.asarray(
+                    interpolate_arm(
+                        tuple(float(value) for value in lift_start),
+                        tuple(float(value) for value in pregrasp_arm),
+                        float(index + 1) / float(lift_steps),
+                    ),
+                    dtype=np.float64,
+                )
+                observe_and_step(current_arm_target, current_hand_target, True)
+                sample_post_tare_efforts()
+            current_arm_target = pregrasp_arm.copy()
 
         phase = "unsupported_final_hold"
         hold_start_body_position, _ = body.get_world_pose()
@@ -2350,6 +17440,394 @@ def main():
                 "passed": passed,
             }
         )
+        if formal_grasp:
+            final_handbase_position, final_handbase_orientation = _world_pose(
+                Gf, Usd, UsdGeom, handbase_prim
+            )
+            postclosure_hand_transform = pose_transform(
+                postclosure_handbase_position,
+                _gf_quaternion_tuple(postclosure_handbase_orientation),
+            )
+            final_hand_transform = pose_transform(
+                final_handbase_position,
+                _gf_quaternion_tuple(final_handbase_orientation),
+            )
+            postclosure_body_transform = pose_transform(
+                postclosure_body_position, postclosure_body_orientation
+            )
+            final_body_transform = pose_transform(
+                final_body_position, final_body_orientation
+            )
+            postclosure_hand_to_plug = (
+                np.linalg.inv(postclosure_hand_transform)
+                @ postclosure_body_transform
+            )
+            final_hand_to_plug = (
+                np.linalg.inv(final_hand_transform) @ final_body_transform
+            )
+            nominal_world_tcp = np.asarray(
+                iiwa14_grasp_tcp_transform(
+                    tuple(
+                        float(value)
+                        for value in nominal_grasp_arm
+                    )
+                ),
+                dtype=np.float64,
+            )
+            tcp_from_handbase = np.eye(4, dtype=np.float64)
+            tcp_from_handbase[2, 3] = -float(
+                pick.geometry_candidate.handbase_to_tcp_m
+            )
+            nominal_world_handbase = nominal_world_tcp @ tcp_from_handbase
+            nominal_world_plug = np.eye(4, dtype=np.float64)
+            nominal_world_plug[:3, 3] = np.asarray(
+                pick.geometry_candidate.loose_settled_origin_m,
+                dtype=np.float64,
+            )
+            nominal_hand_to_plug = (
+                np.linalg.inv(nominal_world_handbase) @ nominal_world_plug
+            )
+            posthoc_pose_error = relative_pose_error(
+                nominal_hand_to_plug, final_hand_to_plug
+            )
+            posthoc_lift_slip = relative_pose_error(
+                postclosure_hand_to_plug, final_hand_to_plug
+            )
+            table_translation_xy = float(
+                np.linalg.norm(
+                    np.asarray(postclosure_body_position[:2])
+                    - np.asarray(settled_body_position[:2])
+                )
+            )
+            table_yaw_delta = math.atan2(
+                math.sin(
+                    _array_quaternion_yaw(postclosure_body_orientation)
+                    - _array_quaternion_yaw(settled_body_orientation)
+                ),
+                math.cos(
+                    _array_quaternion_yaw(postclosure_body_orientation)
+                    - _array_quaternion_yaw(settled_body_orientation)
+                ),
+            )
+            contact_steps = {}
+            for record in controller_step_records:
+                for name in record.get("contact_order", ()):
+                    contact_steps.setdefault(name, record["global_step"])
+            formal_posthoc_contact_gate = bool(
+                final_all_fingers_body_contact
+                and final_contacts["unexpected_robot_link_records"] == 0
+                and final_contacts["plug_table_records"] == 0
+            )
+            formal_lift_gate = bool(
+                formal_lift_monitor is not None
+                and not formal_lift_monitor.failed
+                and formal_recovery_record is None
+                and len(formal_lift_stage_records)
+                == len(physical_grasp.lift_stages)
+                and all(
+                    record["passed_sensor_gate"]
+                    for record in formal_lift_stage_records
+                )
+            )
+            passed = bool(
+                finite_throughout
+                and finite_final
+                and settled_on_table
+                and grasp_controller_stable
+                and formal_lift_gate
+                and formal_recovery_record is None
+                and force_gate
+                and formal_posthoc_contact_gate
+                and body_lift >= 0.045
+                and body_tcp_slip
+                <= acceptance.maximum_body_tcp_slip_m
+                and maximum_final_hold_displacement
+                <= acceptance.maximum_final_hold_displacement_m
+                and final_body_observable_linear_speed
+                <= acceptance.maximum_final_body_observable_linear_speed_m_s
+                and final_body_observable_angular_speed
+                <= acceptance.maximum_final_body_observable_angular_speed_rad_s
+            )
+            metrics.update(
+                {
+                    "control_pose_provider": "robot_fk_and_sensor_state_only",
+                    "truth_orientation_used": False,
+                    "control_reads_object_truth": False,
+                    "control_reads_contact_report": False,
+                    "posthoc_truth_evaluation_only": True,
+                    "formal_lift_terminal": formal_lift_terminal,
+                    "continuous_contact_path_verified": False,
+                    "grasp_controller": {
+                        "method": arguments.physical_grasp_method,
+                        "stable": grasp_controller_stable,
+                        "failure_reason": grasp_controller_failure_reason,
+                        "contact_order": grasp_controller_contact_order,
+                        "contact_global_steps": contact_steps,
+                    },
+                    "table_stage": {
+                        "translation_xy_m": table_translation_xy,
+                        "yaw_delta_rad": table_yaw_delta,
+                    },
+                    "posthoc_pose_error": posthoc_pose_error.as_dict(),
+                    "posthoc_lift_relative_slip": posthoc_lift_slip.as_dict(),
+                    "posthoc_t_hand_plug_actual": final_hand_to_plug.tolist(),
+                    "posthoc_t_hand_plug_nominal": nominal_hand_to_plug.tolist(),
+                    "formal_acceptance": {
+                        "sensor_lift_gate": formal_lift_gate,
+                        "episode_end_contact_gate": (
+                            formal_posthoc_contact_gate
+                        ),
+                        "minimum_total_lift_m": 0.045,
+                        "actual_body_lift_m": body_lift,
+                        "controller_stable": grasp_controller_stable,
+                        "post_grasp_stabilization_proxy_used": False,
+                        "recovery_record": formal_recovery_record,
+                        "passed": passed,
+                    },
+                    "passed": passed,
+                }
+            )
+        if arguments.postgrasp_snapshot_gate:
+            if not passed:
+                metrics["postgrasp_snapshot_gate"] = {
+                    "status": "SKIPPED_GRASP_NOT_PASSED",
+                    "snapshot_restore_verified": False,
+                    "control_authorized": False,
+                }
+            else:
+                try:
+                    from postgrasp_snapshot_gate_runtime import (
+                        run_postgrasp_snapshot_gate,
+                    )
+
+                    snapshot_gate_result = run_postgrasp_snapshot_gate(
+                        arguments=arguments,
+                        global_step=global_step,
+                        physics_step=global_step,
+                        body=body,
+                        nut=nut,
+                        robot=robot,
+                        hand_indices=hand_indices,
+                        robot_set_q=getattr(
+                            robot, "set_joint_positions", None
+                        ),
+                        robot_set_qd=getattr(
+                            robot, "set_joint_velocities", None
+                        ),
+                        current_arm_target=current_arm_target,
+                        current_hand_target=current_hand_target,
+                        observe_and_step=observe_and_step,
+                        sample_post_tare_efforts=sample_post_tare_efforts,
+                        formal_wrist_payload_reference=(
+                            formal_wrist_payload_reference
+                        ),
+                        get_latest_wrist_state=lambda: {
+                            "global_step": global_step,
+                            "canonical": np.asarray(
+                                formal_latest_wrist_canonical,
+                                dtype=np.float64,
+                            ).copy(),
+                            "error": wrist_ft_monitor_error,
+                        },
+                        tare_efforts=tare_efforts,
+                        stage_exporter=lambda path: stage.Export(str(path)),
+                        source_hashes=metrics.get("provenance", {}),
+                    )
+                    metrics["postgrasp_snapshot_gate"] = snapshot_gate_result
+                    metrics["object_pose_writes_before_snapshot_gate"] = (
+                        metrics["object_pose_writes_after_start"]
+                    )
+                    metrics["object_pose_writes_after_start"] += int(
+                        snapshot_gate_result.get(
+                            "object_pose_writes_at_restore_boundary", 0
+                        )
+                    )
+                    metrics["snapshot_restore_pose_write_scope"] = (
+                        "DIAGNOSTIC_INITIALIZATION_ONLY"
+                    )
+                except Exception as snapshot_exception:
+                    metrics["postgrasp_snapshot_gate"] = {
+                        "status": "SNAPSHOT_GATE_HOOK_ERROR_SAFE",
+                        "error": (
+                            f"{type(snapshot_exception).__name__}: "
+                            f"{snapshot_exception}"
+                        ),
+                        "snapshot_restore_verified": False,
+                        "control_authorized": False,
+                    }
+        if arguments.postgrasp_diag_mount_search:
+            if not passed:
+                metrics["postgrasp_diag_mount_search"] = {
+                    "status": "SKIPPED_GRASP_NOT_PASSED",
+                    "control_authorized": False,
+                }
+            else:
+                try:
+                    from postgrasp_diag_mount_search import (
+                        run_diagnostic_mount_search,
+                    )
+
+                    metrics["postgrasp_diag_mount_search"] = (
+                        run_diagnostic_mount_search(
+                            repository=repository,
+                            arguments=arguments,
+                            Gf=Gf,
+                            Usd=Usd,
+                            UsdGeom=UsdGeom,
+                            UsdLux=UsdLux,
+                            stage=stage,
+                            world=world,
+                            simulation_app=simulation_app,
+                            tabletop=tabletop,
+                            current_hand_target=current_hand_target,
+                            rate_hz=rate_hz,
+                            global_step=global_step,
+                            current_hand_transform=(
+                                np.asarray(
+                                    iiwa14_grasp_tcp_transform(
+                                        tuple(
+                                            float(value)
+                                            for value in final_positions[
+                                                arm_indices
+                                            ]
+                                        )
+                                    ),
+                                    dtype=np.float64,
+                                )
+                                @ tcp_from_handbase
+                            ),
+                            nominal_hand_to_plug=nominal_hand_to_plug,
+                            source_hashes=metrics.get("provenance", {}),
+                        )
+                    )
+                except Exception as diag_exception:
+                    metrics["postgrasp_diag_mount_search"] = {
+                        "status": "DIAG_HOOK_ERROR_SAFE",
+                        "error": (
+                            f"{type(diag_exception).__name__}: "
+                            f"{diag_exception}"
+                        ),
+                        "control_authorized": False,
+                    }
+        inline_palm_t_hp = None
+        if (
+            arguments.end_to_end_probe
+            and arguments.visual_chain_report is None
+            and not arguments.sim_truth_proxy_regression
+            and passed
+        ):
+            try:
+                from postgrasp_shadow_capture_runtime import (
+                    run_inline_palm_t_hp_capture,
+                )
+
+                if not live_camera_rig or "palm_t_hc" not in live_camera_rig:
+                    raise RuntimeError(
+                        "fixed palm camera mount is unavailable"
+                    )
+                measured_joint_positions = np.asarray(
+                    robot.get_joint_positions(), dtype=np.float64
+                )
+                measured_arm_q = measured_joint_positions[arm_indices][:7]
+
+                metrics["inline_palm_t_hp"] = run_inline_palm_t_hp_capture(
+                    repository=repository,
+                    arguments=arguments,
+                    Gf=Gf,
+                    Usd=Usd,
+                    UsdGeom=UsdGeom,
+                    UsdLux=UsdLux,
+                    stage=stage,
+                    world=world,
+                    simulation_app=simulation_app,
+                    tabletop=tabletop,
+                    pick=pick,
+                    robot=robot,
+                    arm_indices=arm_indices,
+                    actual_arm_q=measured_arm_q,
+                    palm_t_hc=np.asarray(
+                        live_camera_rig["palm_t_hc"], dtype=np.float64
+                    ),
+                    rate_hz=rate_hz,
+                )
+                inline_palm_t_hp = metrics["inline_palm_t_hp"]
+            except Exception as exception:  # noqa: BLE001
+                metrics["inline_palm_t_hp"] = {
+                    "status": "ABORT_SAFE",
+                    "capture_status": "NOT_RUN",
+                    "pose_valid": False,
+                    "control_authorized": False,
+                    "error": f"{type(exception).__name__}: {exception}",
+                }
+                inline_palm_t_hp = metrics["inline_palm_t_hp"]
+        if arguments.postgrasp_shadow_capture:
+            # POST_GRASP_SHADOW hook.  ``passed`` is already frozen above and
+            # this block can never flip it.  It is opt-in and the default
+            # runner path remains byte-for-byte behaviorally unchanged.
+            if not passed:
+                metrics["postgrasp_shadow"] = {
+                    "status": "SKIPPED_GRASP_NOT_PASSED",
+                    "passed_frozen_before_shadow": True,
+                    "shadow_authorized": False,
+                    "control_authorized": False,
+                }
+            else:
+                try:
+                    from postgrasp_shadow_capture_runtime import (
+                        run_postgrasp_shadow_capture,
+                    )
+
+                    metrics["postgrasp_shadow"] = (
+                        run_postgrasp_shadow_capture(
+                            repository=repository,
+                            arguments=arguments,
+                            Gf=Gf,
+                            Usd=Usd,
+                            UsdGeom=UsdGeom,
+                            UsdLux=UsdLux,
+                            stage=stage,
+                            world=world,
+                            simulation_app=simulation_app,
+                            tcp_prim=tcp_prim,
+                            tabletop=tabletop,
+                            body=body,
+                            robot=robot,
+                            arm_indices=arm_indices,
+                            current_arm_target=current_arm_target,
+                            current_hand_target=current_hand_target,
+                            observe_and_step=observe_and_step,
+                            sample_post_tare_efforts=sample_post_tare_efforts,
+                            rate_hz=rate_hz,
+                            global_step=global_step,
+                            pick=pick,
+                            physical_grasp=physical_grasp,
+                            tare_efforts=tare_efforts,
+                            nut_joint_state_provider=None,
+                            formal_wrist_payload_reference=(
+                                formal_wrist_payload_reference
+                            ),
+                            get_latest_wrist_state=lambda: {
+                                "global_step": global_step,
+                                "canonical": np.asarray(
+                                    formal_latest_wrist_canonical,
+                                    dtype=np.float64,
+                                ).copy(),
+                                "error": wrist_ft_monitor_error,
+                            },
+                            nominal_hand_to_plug=nominal_hand_to_plug,
+                            source_hashes=metrics.get("provenance", {}),
+                        )
+                    )
+                except Exception as shadow_exception:
+                    metrics["postgrasp_shadow"] = {
+                        "status": "SHADOW_HOOK_ERROR_SAFE",
+                        "error": (
+                            f"{type(shadow_exception).__name__}: "
+                            f"{shadow_exception}"
+                        ),
+                        "shadow_authorized": False,
+                        "control_authorized": False,
+                    }
         if arguments.insertion_probe:
             # Continue from the physical pick state in this exact World.  The
             # complete measured TCP-to-body transform is the hand-off contract;
@@ -2451,6 +17929,127 @@ def main():
                     )
                     insertion_step(result)
                 return np.asarray(target, dtype=np.float64)
+
+            def move_insertion_arm_cartesian(start, target_tcp, duration_s):
+                # TCP straight-line transport: the nut stays high instead of
+                # following the joint-space interpolation dip.
+                steps = round(duration_s * rate_hz)
+                start_tcp = np.asarray(
+                    iiwa14_grasp_tcp_transform(
+                        tuple(float(value) for value in start)
+                    ),
+                    dtype=np.float64,
+                )
+                target_position = np.asarray(
+                    target_tcp[:3, 3], dtype=np.float64
+                )
+                result = np.asarray(start, dtype=np.float64)
+                from scipy.spatial.transform import Rotation as _Rotation
+                from scipy.spatial.transform import Slerp as _Slerp
+
+                # two-segment cartesian path: raise vertically at the start
+                # position first (the plug clears the table), then move
+                # laterally and descend to the target.
+                raise_z = max(
+                    float(start_tcp[2, 3]),
+                    float(target_position[2]),
+                    0.36,
+                )
+                via_position = np.array(
+                    [start_tcp[0, 3], start_tcp[1, 3], raise_z],
+                    dtype=np.float64,
+                )
+                slerp = _Slerp(
+                    [0.0, 1.0],
+                    _Rotation.from_matrix(
+                        [start_tcp[:3, :3], np.asarray(target_tcp[:3, :3])]
+                    ),
+                )
+                half = max(1, steps // 2)
+
+                def _solve_step(seed, position, rotation):
+                    candidate = None
+                    try:
+                        candidate = np.asarray(
+                            solve_fixed_q7_tcp_pose(
+                                tuple(float(value) for value in seed),
+                                tuple(float(value) for value in position),
+                                target_rotation=rotation,
+                                maximum_iterations=40,
+                            ),
+                            dtype=np.float64,
+                        )
+                    except ValueError:
+                        from scipy.optimize import least_squares as _lsq
+
+                        bounds = [
+                            (-2.967, 2.967), (-2.094, 2.094),
+                            (-2.967, 2.967), (-2.094, 2.094),
+                            (-2.967, 2.967), (-2.094, 2.094),
+                        ]
+
+                        def _residual(q6):
+                            q = np.concatenate((q6, [seed[6]]))
+                            t = np.asarray(
+                                iiwa14_grasp_tcp_transform(
+                                    tuple(float(value) for value in q)
+                                ),
+                                dtype=np.float64,
+                            )
+                            return np.concatenate(
+                                (
+                                    t[:3, 3] - position,
+                                    (t[:3, :3] - rotation).ravel(),
+                                )
+                            )
+
+                        seed_clipped = np.clip(
+                            seed[:6],
+                            [b[0] for b in bounds],
+                            [b[1] for b in bounds],
+                        )
+                        robust = _lsq(
+                            _residual,
+                            seed_clipped,
+                            bounds=(
+                                [b[0] for b in bounds],
+                                [b[1] for b in bounds],
+                            ),
+                            max_nfev=2000,
+                            xtol=1.0e-12,
+                            ftol=1.0e-12,
+                            gtol=1.0e-12,
+                        )
+                        candidate = np.concatenate(
+                            (robust.x, [seed[6]])
+                        ).astype(np.float64)
+                    if candidate is not None:
+                        joint_delta = float(
+                            np.max(np.abs(candidate[:6] - seed[:6]))
+                        )
+                        if joint_delta <= 0.02:
+                            return candidate
+                    # keep the previous configuration: the motion slows
+                    # instead of jumping to a different IK branch
+                    return np.asarray(seed, dtype=np.float64)
+
+                for index in range(half):
+                    blend = float(index + 1) / float(half)
+                    position = start_tcp[:3, 3] + blend * (
+                        via_position - start_tcp[:3, 3]
+                    )
+                    rotation = slerp(0.0).as_matrix()
+                    result = _solve_step(result, position, rotation)
+                    insertion_step(result)
+                for index in range(half, steps):
+                    blend = float(index - half + 1) / float(steps - half)
+                    position = via_position + blend * (
+                        target_position - via_position
+                    )
+                    rotation = slerp(blend).as_matrix()
+                    result = _solve_step(result, position, rotation)
+                    insertion_step(result)
+                return result
 
             def measured_tcp_body_transforms():
                 tcp_position, tcp_orientation = _world_pose(
@@ -2648,15 +18247,129 @@ def main():
                         )
                 return current, measurement, all_corrections
 
+            visual_t_hp_requested = bool(
+                arguments.visual_chain_report is not None
+                or inline_palm_t_hp is not None
+            )
+            visual_hp_estimate = None
+            visual_gate_note = None
+            if visual_t_hp_requested:
+                from postgrasp_shadow_capture_runtime import (
+                    selected_t_hp_control_pose,
+                )
+
+                visual_source = "inline_palm_t_hp"
+                visual_stage = inline_palm_t_hp
+                outer_control_authorized = True
+                try:
+                    if arguments.visual_chain_report is not None:
+                        visual_source = "visual_chain_report"
+                        chain_report = json.loads(
+                            Path(arguments.visual_chain_report)
+                            .expanduser()
+                            .resolve()
+                            .read_text(encoding="utf-8")
+                        )
+                        outer_control_authorized = (
+                            chain_report.get("control_authorized") is True
+                        )
+                        visual_stage = chain_report.get("stage_t_hp")
+                    if outer_control_authorized:
+                        visual_hp_estimate = selected_t_hp_control_pose(
+                            visual_stage
+                        )
+                    visual_gate_note = {
+                        "source": visual_source,
+                        "control_gate": (
+                            "ACCEPTED"
+                            if visual_hp_estimate is not None
+                            else "REJECTED"
+                        ),
+                        "outer_control_authorized": (
+                            outer_control_authorized
+                        ),
+                        "pose_valid": (
+                            visual_stage.get("pose_valid")
+                            if isinstance(visual_stage, dict)
+                            else False
+                        ),
+                        "c2_resolution": (
+                            visual_stage.get("c2_resolution")
+                            if isinstance(visual_stage, dict)
+                            else None
+                        ),
+                        "covariance_calibration_status": (
+                            visual_stage.get(
+                                "covariance_calibration_status"
+                            )
+                            if isinstance(visual_stage, dict)
+                            else None
+                        ),
+                        "real_keying_modeled": (
+                            visual_stage.get("real_keying_modeled")
+                            if isinstance(visual_stage, dict)
+                            else False
+                        ),
+                        "keying_model_id": (
+                            visual_stage.get("keying_model_id")
+                            if isinstance(visual_stage, dict)
+                            else None
+                        ),
+                    }
+                except Exception as visual_exception:  # noqa: BLE001
+                    visual_gate_note = {
+                        "source": visual_source,
+                        "control_gate": "REJECTED",
+                        "error": (
+                            f"{type(visual_exception).__name__}: "
+                            f"{visual_exception}"
+                        ),
+                    }
+
             if not passed:
                 insertion_report = {
                     "passed": False,
                     "reason": "physical_pick_prerequisite_failed",
                 }
+            elif visual_t_hp_requested and visual_hp_estimate is None:
+                # A requested visual chain is never allowed to fall back to
+                # simulator body truth, nominal depth or a default C2 branch.
+                insertion_report = {
+                    "passed": False,
+                    "reason": "visual_t_hp_control_gate_rejected",
+                    "physical_insertion_included": False,
+                    "vision_included": True,
+                    "visual_planning_note": visual_gate_note,
+                    "real_keying_modeled": False,
+                }
+                passed = False
             else:
                 insertion_motion = insertion.motion
                 lift_tcp, lift_body = measured_tcp_body_transforms()
                 measured_tcp_to_body = np.linalg.inv(lift_tcp) @ lift_body
+                visual_tcp_to_body = None
+                visual_planning_note = None
+                if visual_hp_estimate is not None:
+                    from kcg_connector.d38999_inhand_multiview import (
+                        pose_matrix,
+                    )
+
+                    tcp_from_handbase_local = np.eye(4, dtype=np.float64)
+                    tcp_from_handbase_local[2, 3] = -float(
+                        pick.geometry_candidate.handbase_to_tcp_m
+                    )
+                    # this runtime's body frame matches the chain plug
+                    # frame convention (face at -z, rear at +z): no flip
+                    visual_tcp_to_body = (
+                        tcp_from_handbase_local
+                        @ pose_matrix(visual_hp_estimate)
+                    )
+                    measured_tcp_to_body = visual_tcp_to_body
+                    visual_planning_note = {
+                        "visual_estimate_used_for_planning": True,
+                        "visual_hp_xyz_rpy": visual_hp_estimate.tolist(),
+                        **visual_gate_note,
+                    }
                 nominal_safe_extra_gap = (
                     insertion_motion.transport_safe_tcp_position_m[2]
                     - insertion_motion.preinsert_tcp_position_m[2]
@@ -2667,18 +18380,10 @@ def main():
                 )
                 safe_body = desired_body_transform(safe_gap)
                 safe_tcp = safe_body @ np.linalg.inv(measured_tcp_to_body)
-                safe_arm = np.asarray(
-                    solve_fixed_q7_tcp_pose(
-                        insertion_motion.transport_safe_arm_rad,
-                        safe_tcp[:3, 3],
-                        target_rotation=safe_tcp[:3, :3],
-                    ),
-                    dtype=np.float64,
-                )
                 phase = "mixed_grip_transport_to_fixed_safe"
-                current_arm_target = move_insertion_arm(
+                current_arm_target = move_insertion_arm_cartesian(
                     current_arm_target,
-                    safe_arm,
+                    safe_tcp,
                     insertion_motion.transport_duration_s,
                 )
 
@@ -2784,6 +18489,7 @@ def main():
                     == 0
                 )
                 insertion_report = {
+                    "visual_planning_note": visual_planning_note,
                     "assembly_success_claimed": False,
                     "attachment": "none",
                     "collision_planned": False,
@@ -2825,6 +18531,10 @@ def main():
                     "object_pose_writes_after_start": 0,
                     "passed": insertion_passed,
                     "physical_insertion_included": True,
+                    "control_authorized": False,
+                    "execution_contract": (
+                        "SIM_GROUND_TRUTH_PROXY_REGRESSION_ONLY"
+                    ),
                     "pose_source": insertion.boundaries.pose_source,
                     "preinsert_alignment": {
                         "axis_error_rad": (
@@ -4663,6 +20373,245 @@ def main():
                             }
                             return stroke_report, rewind_report
 
+                        # Pre-stroke-1 grip conditioning.  Stroke 1 starts
+                        # from the insertion regrasp; one GUI run observed
+                        # the nut lagging q7 by 5.7 degrees through the
+                        # frozen 2-degree slip gate (the headless pass only
+                        # cleared it by 1.2 degrees).  Re-run the proven
+                        # release/regrasp/preload cycle (identical durations
+                        # and gains to the inter-stroke rewind, no q7
+                        # rotation) so stroke 1 begins from the same class
+                        # of conditioned grip as strokes 2 and 3.  Every
+                        # acceptance value is the frozen rewind one; a
+                        # drifting nut fails closed exactly like a rewind.
+                        # The inter-stroke rewind releases the fingers
+                        # only while the 0.05 N*m self-lock brake proxy
+                        # holds the nut; the proxy nut has no real thread
+                        # friction and would otherwise spin freely under
+                        # the rack/gravity torque.  Install the same brake
+                        # before this release and remove it with the same
+                        # proven zero-force sequence afterwards.
+                        pre_conditioning_brake = rewind_contract[
+                            "interstroke_self_lock_brake_proxy"
+                        ]
+                        pre_brake_target_degrees = math.degrees(
+                            unwrapped_nut_angle
+                        )
+                        world.pause()
+                        pre_conditioning_drive = (
+                            UsdPhysics.DriveAPI.Apply(
+                                hinge_prim, UsdPhysics.Tokens.angular
+                            )
+                        )
+                        pre_conditioning_drive.CreateTypeAttr(
+                            UsdPhysics.Tokens.force
+                        )
+                        pre_conditioning_drive.CreateStiffnessAttr(
+                            pre_conditioning_brake["stiffness"]
+                        )
+                        pre_conditioning_drive.CreateDampingAttr(
+                            pre_conditioning_brake["damping"]
+                        )
+                        pre_conditioning_drive.CreateTargetPositionAttr(
+                            pre_brake_target_degrees
+                        )
+                        pre_conditioning_drive.CreateTargetVelocityAttr(
+                            pre_conditioning_brake[
+                                "target_velocity_degrees_per_second"
+                            ]
+                        )
+                        pre_conditioning_drive.CreateMaxForceAttr(
+                            pre_conditioning_brake["maximum_force_nm"]
+                        )
+                        world.play()
+                        simulation_app.update()
+
+                        pre_stroke_conditioning = {
+                            "attempted": True,
+                            "brake_proxy_installed": True,
+                            "passed": False,
+                        }
+                        conditioning_start_nut = float(
+                            unwrapped_nut_angle
+                        )
+                        maximum_conditioning_nut_drift = 0.0
+                        conditioning_axial_drift = 0.0
+                        conditioning_body_start, _ = body.get_world_pose()
+                        conditioning_body_start = np.asarray(
+                            conditioning_body_start, dtype=np.float64
+                        )
+
+                        def update_conditioning_drift():
+                            nonlocal maximum_conditioning_nut_drift
+                            nonlocal conditioning_axial_drift
+                            update_nut_angle()
+                            conditioning_position, _ = (
+                                body.get_world_pose()
+                            )
+                            maximum_conditioning_nut_drift = max(
+                                maximum_conditioning_nut_drift,
+                                abs(
+                                    unwrapped_nut_angle
+                                    - conditioning_start_nut
+                                ),
+                            )
+                            conditioning_axial_drift = max(
+                                conditioning_axial_drift,
+                                abs(
+                                    float(
+                                        conditioning_position[2]
+                                        - conditioning_body_start[2]
+                                    )
+                                ),
+                            )
+
+                        phase = "end_to_end_pre_stroke1_release"
+                        pre_release_start = current_hand_target.copy()
+                        pre_release_steps = round(
+                            rewind_control["release_s"] * rate_hz
+                        )
+                        for index in range(pre_release_steps):
+                            blend = minimum_jerk_blend(
+                                float(index + 1)
+                                / float(pre_release_steps)
+                            )
+                            current_hand_target = (
+                                pre_release_start
+                                + blend
+                                * (
+                                    open_regrasp_hand
+                                    - pre_release_start
+                                )
+                            )
+                            end_to_end_step("nut_only", tare_nut)
+                            update_conditioning_drift()
+                        current_hand_target = open_regrasp_hand.copy()
+                        set_end_to_end_hand_gains(
+                            regrasp_control["open_hand_stiffness"],
+                            regrasp_control["open_hand_damping"],
+                        )
+
+                        phase = "end_to_end_pre_stroke1_open_settle"
+                        for _ in range(
+                            round(
+                                rewind_control["open_settle_s"] * rate_hz
+                            )
+                        ):
+                            end_to_end_step("clear", tare_nut)
+                            update_conditioning_drift()
+
+                        phase = "end_to_end_pre_stroke1_tare"
+                        pre_tare_samples = []
+                        for _ in range(
+                            round(
+                                rewind_control["second_open_tare_s"]
+                                * rate_hz
+                            )
+                        ):
+                            observe_and_step(
+                                current_arm_target,
+                                current_hand_target,
+                                False,
+                            )
+                            update_conditioning_drift()
+                            pre_tare_samples.append(
+                                np.asarray(
+                                    robot.get_measured_joint_efforts(
+                                        joint_indices=sensor_indices
+                                    ),
+                                    dtype=np.float64,
+                                )
+                            )
+                        tare_nut = np.mean(
+                            np.stack(pre_tare_samples), axis=0
+                        )
+                        set_end_to_end_hand_gains(
+                            regrasp_control["grip_hand_stiffness"],
+                            regrasp_control["grip_hand_damping"],
+                        )
+
+                        phase = "end_to_end_pre_stroke1_regrasp"
+                        pre_reclose_start = current_hand_target.copy()
+                        pre_reclose_steps = round(
+                            rewind_control["reclosure_s"] * rate_hz
+                        )
+                        for index in range(pre_reclose_steps):
+                            blend = minimum_jerk_blend(
+                                float(index + 1)
+                                / float(pre_reclose_steps)
+                            )
+                            current_hand_target = (
+                                pre_reclose_start
+                                + blend
+                                * (nut_regrasp_hand - pre_reclose_start)
+                            )
+                            end_to_end_step("nut_only", tare_nut)
+                            update_conditioning_drift()
+                        current_hand_target = nut_regrasp_hand.copy()
+
+                        phase = "end_to_end_pre_stroke1_preload"
+                        for _ in range(
+                            round(rewind_control["preload_s"] * rate_hz)
+                        ):
+                            end_to_end_step("nut_only", tare_nut)
+                            update_conditioning_drift()
+
+                        # Remove the brake with the proven zero-force
+                        # sequence so stroke 1 starts brake-free exactly
+                        # like every stroke after a rewind.
+                        remove_interstroke_brake(
+                            pre_conditioning_drive, tare_nut
+                        )
+                        set_end_to_end_hand_gains(
+                            regrasp_control["grip_hand_stiffness"],
+                            regrasp_control["grip_hand_damping"],
+                        )
+
+                        conditioning_snapshot = contact_snapshot()
+                        conditioning_contact_gate = bool(
+                            _all_fingers_have_nut_contact(
+                                conditioning_snapshot
+                            )
+                            and _zero_finger_body_contact(
+                                conditioning_snapshot
+                            )
+                            and conditioning_snapshot[
+                                "unexpected_robot_link_records"
+                            ]
+                            == 0
+                        )
+                        pre_stroke_conditioning.update(
+                            {
+                                "contact_gate": (
+                                    conditioning_contact_gate
+                                ),
+                                "drift_gate": bool(
+                                    maximum_conditioning_nut_drift
+                                    <= rewind_acceptance[
+                                        "maximum_released_nut_drift_rad"
+                                    ]
+                                ),
+                                "maximum_body_axial_drift_m": (
+                                    conditioning_axial_drift
+                                ),
+                                "maximum_nut_drift_rad": (
+                                    maximum_conditioning_nut_drift
+                                ),
+                            }
+                        )
+                        pre_stroke_conditioning["passed"] = bool(
+                            pre_stroke_conditioning["drift_gate"]
+                            and conditioning_contact_gate
+                        )
+                        metrics["pre_stroke1_grip_conditioning"] = (
+                            pre_stroke_conditioning
+                        )
+                        if pre_stroke_conditioning["passed"] is not True:
+                            raise RuntimeError(
+                                "pre-stroke-1 grip conditioning "
+                                "failed closed"
+                            )
+
                         stroke_reports = []
                         rewind_reports = []
                         for stroke_index in (1, 2, 3):
@@ -5142,7 +21091,11 @@ def main():
                             metrics["end_to_end"] = {
                                 "assembly_success_claimed": False,
                                 "continuous_collision_verified": False,
+                                "control_authorized": False,
                                 "control_pose_provider": "sim_ground_truth",
+                                "execution_contract": (
+                                    "SIM_GROUND_TRUTH_PROXY_REGRESSION_ONLY"
+                                ),
                                 "foundation_pose": False,
                                 "ground_truth_pose_used": True,
                                 "masked_rgbd_preflight_included": bool(
@@ -5177,18 +21130,95 @@ def main():
                     )
                 metrics["virtual_wrist_ft_monitor"] = wrist_report
             metrics["passed"] = passed
+        if arguments.keyed_visual_control:
+            posthoc_physics_audit_passed = bool(passed)
+            visual_result = metrics.get("keyed_visual_control", {})
+            keyed_visual_chain_completed = bool(
+                formal_sensor_control_ready
+                and visual_result.get("control_authorized") is True
+                and visual_result.get("safe_stop_required") is False
+            )
+            metrics["posthoc_physics_grasp_audit_passed"] = (
+                posthoc_physics_audit_passed
+            )
+            metrics["grasp_sensor_ready_before_keyed_visual_control"] = (
+                formal_sensor_control_ready
+            )
+            metrics["keyed_visual_control_chain_completed"] = (
+                keyed_visual_chain_completed
+            )
+            metrics["keyed_visual_safe_stop"] = bool(
+                visual_result.get("safe_stop_required") is True
+            )
+            passed = keyed_visual_chain_completed
+            metrics["passed"] = passed
+        # Normal legacy/synchronous/sequential exit semantics: 0 iff the
+        # top-level grasp PASS held; the single-finger path returns earlier
+        # with its own process_exit_code.
+        process_exit_code = 0 if passed else 1
+        if (
+            arguments.keyed_visual_control
+            and formal_sensor_control_ready
+            and metrics.get("keyed_visual_control", {}).get("capture_passed")
+            is True
+            and not passed
+        ):
+            # The requested same-episode chain captured a valid frame but a
+            # visual/accuracy/path gate stopped it.  Keep that distinct from a
+            # grasp/runtime failure while still returning non-zero.
+            process_exit_code = 3
+        if arguments.postgrasp_snapshot_gate:
+            gate_metrics = metrics.get("postgrasp_snapshot_gate", {})
+            gate_ok = (
+                gate_metrics.get("status") == "SNAPSHOT_GATE_VERIFIED"
+                and gate_metrics.get("snapshot_restore_verified") is True
+            )
+            metrics["grasp_passed_before_snapshot_gate"] = passed
+            metrics["snapshot_gate_verified"] = gate_ok
+            if passed and not gate_ok:
+                process_exit_code = 3
+                metrics["snapshot_gate_exit_code"] = process_exit_code
+        if arguments.postgrasp_diag_mount_search:
+            diag_metrics = metrics.get("postgrasp_diag_mount_search", {})
+            diag_completed = (
+                diag_metrics.get("status")
+                == "COMPLETED_DIAGNOSTIC_RAW_ONLY"
+            )
+            metrics["grasp_passed_before_diag"] = passed
+            metrics["diag_request_completed"] = diag_completed
+            if passed and not diag_completed:
+                process_exit_code = 2
+                metrics["diag_request_exit_code"] = process_exit_code
+        metrics["process_exit_code"] = process_exit_code
         print(_metrics_json(metrics), flush=True)
         print(
             result_marker + ("PASSED" if passed else "FAILED"),
             flush=True,
         )
     except BaseException as exception:
+        process_exit_code = 1
         metrics.update(
             {
                 "error": f"{type(exception).__name__}: {exception}",
                 "passed": False,
+                "process_exit_code": process_exit_code,
             }
         )
+        if formal_grasp and callable(capture_terminal_snapshot):
+            try:
+                metrics["formal_grasp_failure_evaluator_snapshot"] = (
+                    capture_terminal_snapshot(
+                        "formal_grasp_fail_closed_exception",
+                        "formal_grasp_failure_terminal",
+                    )
+                )
+                metrics[
+                    "formal_grasp_failure_snapshot_control_isolated"
+                ] = True
+            except Exception as snapshot_error:
+                metrics["formal_grasp_failure_evaluator_snapshot_error"] = (
+                    f"{type(snapshot_error).__name__}: {snapshot_error}"
+                )
         if tooth_probe is not None:
             metrics["nut_tooth_jitter_probe"] = tooth_probe.finalize()
         if wrist_ft_monitor is not None:
@@ -5204,6 +21234,33 @@ def main():
         print(_metrics_json(metrics), flush=True)
         print(result_marker + "FAILED", flush=True)
     finally:
+        if arguments.output_dir:
+            output_directory = Path(arguments.output_dir).expanduser().resolve()
+            output_directory.mkdir(parents=True, exist_ok=True)
+            (output_directory / "nominal_physics_report.json").write_text(
+                json.dumps(
+                    _json_safe(metrics),
+                    allow_nan=False,
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            with (output_directory / "controller_steps.jsonl").open(
+                "w", encoding="utf-8"
+            ) as stream:
+                for record in controller_step_records:
+                    stream.write(
+                        json.dumps(
+                            _json_safe(record),
+                            allow_nan=False,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                        )
+                        + "\n"
+                    )
         if arguments.keep_open and arguments.gui:
             print(
                 result_marker + "GUI REMAINS OPEN; "
@@ -5212,8 +21269,8 @@ def main():
             )
             while simulation_app.is_running():
                 simulation_app.update()
-        simulation_app.close(exit_code=0 if passed else 1)
-    return 0 if passed else 1
+        simulation_app.close(exit_code=process_exit_code)
+    return process_exit_code
 
 
 if __name__ == "__main__":

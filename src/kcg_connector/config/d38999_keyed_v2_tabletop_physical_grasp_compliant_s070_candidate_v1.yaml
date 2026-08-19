@@ -1,0 +1,142 @@
+# SUPERVISOR QUARANTINE: this pre-A2 candidate is retained as historical
+# diagnostic work only. The model-first runner gate forbids executing it until
+# checkpoint A0-A5 physical modeling is complete and accepted.
+# Single-variable compliant-hold candidate for the distinct keyed-v2 scene.
+# It preserves the nominal pose, timing, randomization and every safety gate;
+# only the final post-contact hand stiffness scale changes from 1.0 to 0.70.
+# This candidate must earn a fresh sensor-only lift result before it can be
+# considered for the Palm RGB-D chain.
+schema_version: kcg_d38999_tabletop_physical_grasp_v1
+
+base:
+  pick_config: src/kcg_connector/config/d38999_keyed_v2_tabletop_pick_v1.yaml
+  tabletop_config: src/kcg_connector/config/d38999_keyed_v2_tabletop_scene_v1.yaml
+  wrist_ft_config: src/kcg_connector/config/d38999_wrist_ft_monitor_v1.yaml
+  hand_frame: handbase_link
+  physics_rate_hz: 240
+
+detector:
+  threshold_label: SIM_TUNING_ONLY
+  lowpass_alpha: 0.18
+  derivative_alpha: 0.15
+  contact_sigma_multiplier: 6.0
+  minimum_contact_delta_nm: 0.020
+  release_ratio: 0.45
+  minimum_release_delta_nm: 0.008
+  minimum_rise_rate_nm_s: 0.040
+  maximum_stall_velocity_rad_s: 0.020
+  minimum_tracking_error_rad: 0.004
+  confirm_steps: 12
+  release_confirm_steps: 18
+  maximum_sample_gap_s: 0.0125
+  position_velocity_window_steps: 6
+
+sequential:
+  approach_rate_rad_s: 0.18
+  soft_hold_preload_rad: 0.006
+  load_build_rate_rad_s: 0.010
+  balance_gain_rad_per_load: 0.0015
+  maximum_balance_step_rad: 0.0010
+  maximum_balance_total_rad: 0.030
+  probe_increment_rad: 0.004
+  probe_settle_steps: 24
+  minimum_probe_response_nm: 0.002
+  maximum_probe_cross_coupling_ratio: 2.5
+  load_scale_nm: [0.30, 0.30, 0.30]
+  stable_minimum_normalized_load: 0.40
+  maximum_normalized_load_imbalance: 0.35
+  stable_confirm_steps: 48
+  maximum_approach_steps: 1440
+  maximum_load_build_steps: 720
+  soft_hold_window_steps: 24
+  approach_stiffness: 5.0
+  soft_hold_stiffness: 1.75
+  damping: 1.0
+  consolidation_threshold_label: SIM_TUNING_ONLY_A_CANDIDATE
+  soft_hold_stiffness_scale: 0.35
+  consolidation_final_stiffness_scale: 0.70
+  consolidation_ramp_steps: 120
+  consolidation_window_steps: 240
+
+synchronous:
+  closure_duration_s: 3.5
+  preload_duration_s: 0.5
+
+randomization_validation:
+  threshold_label: SIM_TUNING_ONLY
+  maximum_arm_joint_delta_rad: 0.05
+  maximum_fk_position_error_m: 1.0e-7
+  maximum_fk_rotation_error_rad: 1.0e-7
+
+single_finger:
+  threshold_label: SIM_TUNING_ONLY
+  soft_hold_steps: 24
+  minimum_release_travel_rad: 0.05
+  maximum_release_tracking_error_rad: 0.05
+  maximum_release_steps: 1200
+  maximum_approach_steps: 1440
+  approach_rate_rad_s: 0.18
+  release_rate_rad_s: 0.18
+
+reference:
+  window_steps: 120
+  evidence_only: true
+
+zero_lift_hold:
+  duration_s: 5.0
+  maximum_duration_s: 30.0
+
+terminal_evaluator:
+  lift_started_dz_m: 0.0005
+  posthoc_truth_evaluation_only: true
+
+lift:
+  stage_increment_m: [0.002, 0.010, 0.040]
+  stage_speed_m_s: [0.002, 0.004, 0.008]
+  stage_hold_s: [0.50, 0.50, 2.00]
+  maximum_root_torque_delta_nm: 2.0
+  minimum_retained_load_fraction: 0.45
+  maximum_normalized_load_imbalance: 0.80
+  maximum_load_rate_nm_s: 25.0
+  maximum_wrist_force_n: 8.0
+  maximum_wrist_moment_nm: 0.30
+  maximum_arm_tracking_error_rad: 0.030
+  maximum_finger_speed_rad_s: 0.80
+  loss_confirm_steps: 18
+
+recovery:
+  return_steps_per_waypoint: 2
+  settle_steps: 120
+  open_duration_s: 3.5
+
+randomization:
+  plug_x_offset_m: [0.0, 0.0]
+  plug_y_offset_m: [0.0, 0.0]
+  plug_yaw_deg: [0.0, 0.0]
+  arm_center_error_x_m: [0.0, 0.0]
+  arm_center_error_y_m: [0.0, 0.0]
+  finger_start_delay_steps: [0]
+  table_static_friction: [0.90, 0.90]
+  table_dynamic_friction: [0.75, 0.75]
+  fingertip_static_friction: [1.40, 1.40]
+  fingertip_dynamic_friction: [1.40, 1.40]
+  plug_mass_scale: [1.0, 1.0]
+  center_of_mass_offset_m: [0.0, 0.0]
+  lift_speed_scale: [1.0, 1.0]
+
+posthoc_acceptance:
+  minimum_total_lift_m: 0.045
+  minimum_hold_s: 2.0
+  maximum_hand_plug_translation_drift_m: 0.005
+  maximum_hand_plug_rotation_drift_rad: 0.08726646259971647
+  maximum_table_penetration_m: 0.002
+
+boundaries:
+  magnetic_force_allowed: false
+  pregrasp_latch_allowed: false
+  world_to_plug_joint_allowed: false
+  object_actuator_allowed: false
+  object_pose_write_after_reset_allowed: false
+  contact_truth_in_controller_allowed: false
+  post_grasp_stabilization_proxy_enabled: false
+  full_skill_rl_enabled: false

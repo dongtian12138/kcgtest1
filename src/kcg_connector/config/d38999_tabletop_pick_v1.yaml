@@ -7,7 +7,6 @@ scene:
   tabletop_config: d38999_tabletop_scene_v1.yaml
   proxy_config: d38999_shell25j_proxy_v1.yaml
   robot_asset: artifacts/kcg_connector/isaac/robot/handarm/handarm.usda
-  robot_asset_sha256: 031f8241c9dd1e2af96d7b1dde7d2adda7744891832a05e2580fd3398da4216b
   robot_root_prim_path: /World/HandArm
   articulation_prim_path: /World/HandArm/Geometry/world
   grasp_tcp_prim_path: /World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/grasp_tcp

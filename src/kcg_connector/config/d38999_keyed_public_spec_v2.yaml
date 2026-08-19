@@ -1,0 +1,253 @@
+# Public-specification D38999 Series III shell-25 / 25-61 / N-polarized
+# simulation model.  This is a new identity beside the old C2 proxies.  It is
+# not manufacturer CAD, a qualification record, or a real-hardware model.
+schema_version: kcg_d38999_keyed_public_spec_v2_v1
+enabled_for_simulation: true
+status: PUBLIC_SPEC_SIMULATION_GEOMETRY_READY
+
+identity:
+  pair_model_id: d38999_shell25j_25_61_n_keyed_public_spec_pair_v2
+  loose_plug_model_id: d38999_26kj61sn_keyed_proxy_v2
+  fixed_receptacle_model_id: d38999_20kj61pn_keyed_proxy_v2
+  loose_plug_dod_pin: D38999/26KJ61SN
+  fixed_receptacle_dod_pin: D38999/20KJ61PN
+  series: III
+  shell_size: 25
+  shell_size_code: J
+  insert_arrangement: 25-61
+  polarization: N
+  loose_contact_style: socket
+  fixed_contact_style: pin
+  contact_count: 61
+  contact_size: 20
+  selected_class: K
+  class_k_scope: stainless_steel_passivated_firewall_conductive_not_space_grade
+  certification_claim: none
+  real_hardware_identity_claimed: false
+  space_grade_claimed: false
+
+public_sources:
+  general_interface:
+    document: MIL-DTL-38999N with Amendment 2
+    issue_date: "2026-07-27"
+    detail: Figures 3 and 6, Series III shell 25
+    url: https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=22497
+  insert_pattern:
+    document: MIL-STD-1560C with Change 3
+    issue_date: "2021-02-03"
+    current_validation_notice: Notice 1, 2026-06-04
+    detail: Figure 9, arrangement 25-61, printed pages 165-166
+    url: https://quicksearch.dla.mil/qaDocDetails.aspx?ident_number=36980
+  receptacle_detail:
+    document: MIL-DTL-38999/20H with Amendment 1
+    issue_date: "2022-08-11"
+    url: https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=70615
+  plug_detail:
+    document: MIL-DTL-38999/26G with Amendment 4
+    issue_date: "2022-08-11"
+    url: https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=70618
+  vendor_catalog_cross_check:
+    loose_plug: https://www.te.com/en/product-ZPF000000000017182.html
+    fixed_receptacle: https://www.te.com/en/product-ZPF000000000090288.html
+
+# MIL-DTL-38999N A2 Figure 3.  Min/max values are retained rather than
+# silently choosing a nominal manufacturing value.
+interface_dimensions_mm:
+  receptacle:
+    h_bore_diameter_min: 35.84
+    h_bore_diameter_max: 35.99
+    j_keyway_outer_diameter_min: 37.92
+    j_keyway_outer_diameter_max: 38.20
+  plug:
+    w_between_keys_diameter_min: 35.61
+    w_between_keys_diameter_max: 35.77
+    v_over_keys_diameter_min: 37.57
+    v_over_keys_diameter_max: 37.85
+    # MIL-DTL-38999/26G A4 Figure 1, shell size J/25, dimension B.
+    b_rear_shell_diameter_basic: 44.30
+    b_rear_shell_diameter_plus: 0.20
+    b_rear_shell_diameter_minus: 0.00
+
+# MIL-DTL-38999N A2 Figure 6.  Angles are basic dimensions measured from the
+# main key/keyway centreline.  The insert itself does not rotate with them.
+keying:
+  main_key_angle_deg_bsc: 0.0
+  minor_key_angles_deg_bsc: [80.0, 142.0, 196.0, 293.0]
+  plug_main_key_width_nominal: 2.54
+  plug_main_key_width_plus: 0.03
+  plug_main_key_width_minus: 0.13
+  plug_minor_key_width_nominal: 1.32
+  plug_minor_key_width_plus: 0.03
+  plug_minor_key_width_minus: 0.13
+  receptacle_main_keyway_width_nominal: 3.20
+  receptacle_main_keyway_width_plus: 0.13
+  receptacle_main_keyway_width_minus: 0.03
+  receptacle_minor_keyway_width_nominal: 1.60
+  receptacle_minor_keyway_width_plus: 0.13
+  receptacle_minor_keyway_width_minus: 0.03
+  receptacle_minor_keyway_pattern_position_tolerance_total_mmc_mm: 0.10
+  plug_minor_key_pattern_position_tolerance_total_mmc_mm: 0.10
+  position_tolerance_is_feature_width_tolerance: false
+  plug_key_axial_length_min: 7.24
+  polarization_must_precede_coupling_and_contact: true
+
+# MIL-STD-1560C C3 section 5.1 and Figure 9.  Inch values are controlling;
+# the loader multiplies them by exactly 25.4 to obtain millimetres.
+contact_pattern:
+  controlling_unit: inch
+  view: front_face_of_pin_insert
+  socket_front_view: opposite_mirror_x_when_shown_with_same_screen_axes
+  local_assembly_frame_rule: use_same_table_once_and_mirror_through_the_mating_transform
+  socket_cavity_diameter_min_in: 0.049
+  pin_engaging_diameter_nominal_in: 0.040
+  pin_engaging_diameter_plus_minus_in: 0.001
+  positions_in:
+    - ["A", 0.196, 0.500]
+    - ["B", 0.314, 0.435]
+    - ["C", 0.413, 0.343]
+    - ["D", 0.485, 0.230]
+    - ["E", 0.527, 0.101]
+    - ["F", 0.536, -0.030]
+    - ["G", 0.511, -0.164]
+    - ["H", 0.454, -0.287]
+    - ["J", 0.368, -0.391]
+    - ["K", 0.259, -0.470]
+    - ["L", 0.134, -0.519]
+    - ["M", 0.000, -0.537]
+    - ["N", -0.134, -0.519]
+    - ["P", -0.259, -0.470]
+    - ["R", -0.368, -0.391]
+    - ["S", -0.454, -0.287]
+    - ["T", -0.511, -0.164]
+    - ["U", -0.536, -0.030]
+    - ["V", -0.527, 0.101]
+    - ["W", -0.485, 0.230]
+    - ["X", -0.413, 0.343]
+    - ["Y", -0.314, 0.435]
+    - ["Z", -0.196, 0.500]
+    - ["a", -0.068, 0.454]
+    - ["b", 0.068, 0.454]
+    - ["c", 0.173, 0.363]
+    - ["d", 0.285, 0.283]
+    - ["e", 0.362, 0.175]
+    - ["f", 0.399, 0.046]
+    - ["g", 0.392, -0.088]
+    - ["h", 0.341, -0.213]
+    - ["i", 0.251, -0.314]
+    - ["j", 0.133, -0.379]
+    - ["k", 0.000, -0.402]
+    - ["m", -0.133, -0.379]
+    - ["n", -0.251, -0.314]
+    - ["p", -0.341, -0.213]
+    - ["q", -0.392, -0.088]
+    - ["r", -0.399, 0.046]
+    - ["s", -0.362, 0.175]
+    - ["t", -0.285, 0.283]
+    - ["u", -0.173, 0.363]
+    - ["v", 0.000, 0.338]
+    - ["w", 0.147, 0.223]
+    - ["x", 0.237, 0.122]
+    - ["y", 0.267, -0.010]
+    - ["z", 0.228, -0.139]
+    - ["AA", 0.131, -0.233]
+    - ["BB", 0.000, -0.267]
+    - ["CC", -0.131, -0.233]
+    - ["DD", -0.228, -0.139]
+    - ["EE", -0.267, -0.010]
+    - ["FF", -0.237, 0.122]
+    - ["GG", -0.147, 0.223]
+    - ["HH", 0.000, 0.200]
+    - ["JJ", 0.105, 0.094]
+    - ["KK", 0.135, -0.041]
+    - ["LL", 0.000, -0.132]
+    - ["MM", -0.135, -0.041]
+    - ["NN", -0.105, 0.094]
+    - ["PP", 0.000, 0.000]
+
+# These three profiles are reported separately.  The last profile is an
+# adversarial aerospace-style stress budget, not a drawing-specified yaw.
+yaw_clearance_profiles:
+  nominal_centered:
+    slot_width_mm: 1.60
+    key_width_mm: 1.32
+    radius_mm: 18.855
+    derived_peak_to_peak_deg: 0.8509706248885368
+    required_p95_strictly_below_deg: 0.4254853124442684
+    derivation_kind: centered_nominal_public_dimensions
+    drawing_specified_mechanical_yaw_clearance: false
+  tight_size_centered:
+    slot_width_mm: 1.57
+    key_width_mm: 1.35
+    radius_mm: 18.925
+    derived_peak_to_peak_deg: 0.6661267828482448
+    required_p95_strictly_below_deg: 0.3330633914241224
+    derivation_kind: centered_tight_size_public_dimensions
+    drawing_specified_mechanical_yaw_clearance: false
+  adversarial_gdt_stress:
+    slot_width_mm: 1.37
+    key_width_mm: 1.35
+    radius_mm: 18.925
+    derivation: subtract_both_full_0_10mm_position_budgets_from_tight_width_gap
+    gdt_semantics: positional_pattern_tolerance_not_feature_width
+    stress_assumption: both_full_0_10mm_position_budgets_independently_consume_tangential_clearance
+    rigid_pattern_shift_note: rigid_shift_moves_window_center_without_reducing_window_width
+    derived_peak_to_peak_deg: 0.060550934851961585
+    required_p95_strictly_below_deg: 0.030275467425980793
+    derivation_kind: project_adversarial_gdt_stress_assumption
+    drawing_specified_mechanical_yaw_clearance: false
+    measured_hardware_clearance: false
+  simulation_acceptance_profile: adversarial_gdt_stress
+  selection_basis: project_fail_closed_shadow_stress_policy_not_spec_requirement
+  clearance_kind: peak_to_peak_virtual_yaw_window
+  source_kind: SPEC_TOLERANCE_DERIVED_CONSERVATIVE_SIMULATION_ONLY
+  real_measured_clearance_deg: null
+
+# The public drawings do not specify mass, centre of mass, or inertia.  These
+# values freeze the PhysX auto-computed properties of the immutable r4
+# collision geometry so checkpoint A does not silently change dynamics.  They
+# are simulation assumptions only and are never hardware truth.
+simulation_mass_properties:
+  source_kind: frozen_r4_physx_autocompute_snapshot_simulation_assumption_not_public_spec
+  source_asset_revision: keyed_v2_public_b_rear_r4
+  exact_hardware_mass_properties_available: false
+  runtime_randomization_enabled_for_checkpoint_a: false
+  body_assembly:
+    mass_kg: 0.23
+    center_of_mass_m: [0.0000027594312541623367, 0.0000015090811302798102, -0.024185307323932648]
+    diagonal_inertia_kg_m2: [0.000049906659114640206, 0.00004993189941160381, 0.00005680214235326275]
+    # PhysX property-query order is x, y, z, w.
+    principal_axes_xyzw: [0.0006416887044906616, -0.0008694019634276628, -0.13318125903606415, 0.9910910725593567]
+  coupling_nut:
+    mass_kg: 0.08
+    center_of_mass_m: [0.0, 0.0, -0.019999999552965164]
+    diagonal_inertia_kg_m2: [0.000014186663065629546, 0.000014186664884618949, 0.000023039996449369937]
+    principal_axes_xyzw: [0.0, 0.0, 0.0, 1.0]
+
+asset_geometry:
+  recommended_asset_name: d38999_shell25j_25_61_n_keyed_public_spec_v2.usda
+  root_prim: /World/D38999Shell25JKeyedPublicSpecV2
+  fixed_receptacle_suffix: /FixedReceptacle
+  loose_body_suffix: /LoosePlug/BodyAssembly
+  coupling_nut_suffix: /LoosePlug/CouplingNut
+  coupling_joint_suffix: /LoosePlug/CouplingNutJoint
+  contact_collision_mode: visual_only
+  key_collision_mode: five_key_and_matching_keyway_walls
+  collision_contact_offset_m_sim_assumption: 0.00001
+  collision_rest_offset_m_sim_assumption: 0.0
+  collision_offset_source: simulation_numeric_choice_not_public_spec
+  thread_collision_mode: unmodeled
+  authoring_profile: nominal_midpoint_geometry
+  visual_edge_bevel_mm_sim_assumption: 0.15
+  plug_socket_visual_front_offset_m_sim_assumption: 0.00005
+
+authorization:
+  simulation_geometry_use_allowed: true
+  synthetic_training_use_allowed: true
+  shadow_branch_selection_allowed_after_quality_gates: true
+  selected_for_control_allowed: false
+  simulation_insertion_control_authorized: false
+  robot_control_authorized: false
+  hardware_control_authorized: false
+  real_hardware_fidelity_claimed: false
+  space_qualification_claimed: false
+  real_assembly_success_claimed: false

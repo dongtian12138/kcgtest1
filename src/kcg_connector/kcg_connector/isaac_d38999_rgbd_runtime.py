@@ -220,7 +220,12 @@ def _validate_camera_world_contract(bindings, camera_prim, camera_config):
 
 
 def ensure_d38999_rgbd_stage_prims(
-    *, bindings: Mapping[str, Any], stage, tabletop, rgbd
+    *,
+    bindings: Mapping[str, Any],
+    stage,
+    tabletop,
+    rgbd,
+    camera_clipping_range_m=None,
 ):
     """Create once or strictly reuse fixed RGB-D camera and lighting prims.
 
@@ -306,6 +311,16 @@ def ensure_d38999_rgbd_stage_prims(
         tabletop.render.key_light_rotation_degrees_xyz,
     )
 
+    clipping_range_m = (
+        RGBD_CAMERA_CLIPPING_RANGE_M
+        if camera_clipping_range_m is None
+        else tuple(float(value) for value in camera_clipping_range_m)
+    )
+    if (
+        len(clipping_range_m) != 2
+        or not 0.0 < clipping_range_m[0] < clipping_range_m[1]
+    ):
+        raise ValueError("camera clipping range must satisfy 0 < near < far")
     camera_path = rgbd.camera.prim_path
     camera_prim = _prim_at_path(stage, camera_path)
     if camera_prim is None:
@@ -315,7 +330,7 @@ def ensure_d38999_rgbd_stage_prims(
             look_at=rgbd.camera.target_m,
             focal_length=RGBD_CAMERA_FOCAL_LENGTH_MM,
             horizontal_aperture=RGBD_CAMERA_HORIZONTAL_APERTURE_MM,
-            clipping_range=RGBD_CAMERA_CLIPPING_RANGE_M,
+            clipping_range=clipping_range_m,
             name=camera_name,
             parent=camera_parent_path,
         )
@@ -337,7 +352,7 @@ def ensure_d38999_rgbd_stage_prims(
     _require_prim_type(camera_prim, camera_path, "Camera")
     width, height = rgbd.camera.resolution
     camera_contract = {
-        "clippingRange": RGBD_CAMERA_CLIPPING_RANGE_M,
+        "clippingRange": clipping_range_m,
         "focalLength": RGBD_CAMERA_FOCAL_LENGTH_MM,
         "horizontalAperture": RGBD_CAMERA_HORIZONTAL_APERTURE_MM,
         "verticalAperture": (
@@ -1179,3 +1194,207 @@ def capture_d38999_rgbd_runtime(
         fixed_position_world_m=fixed_position,
         fixed_orientation_wxyz=fixed_orientation,
     )
+
+
+@dataclass(frozen=True)
+class D38999RgbdRawFormalCapture:
+    """Raw RGB+depth capture with no semantic annotator and no endpoint truth."""
+
+    metrics: dict[str, Any]
+    rgb: np.ndarray | None
+    depth: np.ndarray | None
+
+    @property
+    def passed(self) -> bool:
+        return self.metrics.get("passed") is True
+
+
+def _save_raw_formal_artifacts(*, bindings, rgbd, output_dir, rgb, depth):
+    Image = bindings["Image"]
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    Image.fromarray(np.asarray(rgb, dtype=np.uint8)).save(
+        output_path / rgbd.output.rgb_filename
+    )
+    np.save(output_path / rgbd.output.depth_numpy_filename, depth)
+
+
+def capture_d38999_rgbd_raw_formal(
+    *,
+    bindings: Mapping[str, Any],
+    simulation_app,
+    world,
+    stage,
+    tabletop,
+    rgbd,
+    output_dir: Path | str | None = None,
+    camera_clipping_range_m=None,
+    rt_subframes: int = 4,
+) -> D38999RgbdRawFormalCapture:
+    """Capture only Replicator ``rgb`` and ``distance_to_image_plane``.
+
+    This function has no semantic annotator, no endpoint labels, no endpoint
+    prim arguments, and no object pose/velocity calls.  Its success can
+    therefore never depend on Isaac semantic truth or object truth.
+    """
+    # ``ensure_d38999_rgbd_stage_prims`` validates the FK-authored camera
+    # transform with ``Usd.TimeCode.Default``; keep this transitive dependency
+    # explicit so a missing binding fails at the API boundary, not mid-capture.
+    required = {"Camera", "Gf", "Usd", "UsdGeom", "UsdLux", "rep"}
+    if output_dir is not None:
+        required.add("Image")
+    missing = sorted(required - set(bindings))
+    if missing:
+        raise ValueError(f"missing raw RGB-D runtime bindings: {missing}")
+
+    Camera = bindings["Camera"]
+    rep = bindings["rep"]
+
+    metrics: dict[str, Any] = {
+        "capture_kind": "raw_rgbd_formal_only",
+        "semantic_annotator_used": False,
+        "endpoint_semantic_read": False,
+        "endpoint_truth_read": False,
+        "object_pose_calls": 0,
+        "passed": False,
+    }
+    camera = None
+    render_product = None
+    annotators = []
+    rgba = None
+    depth = None
+    timeline_playing_before = bool(world.is_playing())
+    timeline_pause = None
+    try:
+        timeline_pause = pause_timeline_for_rgbd_capture(
+            world, simulation_app, was_playing=timeline_playing_before
+        )
+        metrics["timeline_pause"] = timeline_pause
+        if timeline_pause["paused_for_capture"] is not True:
+            raise RuntimeError("raw RGB-D capture could not pause the timeline")
+        camera_prim, stage_prim_lifecycle = ensure_d38999_rgbd_stage_prims(
+            bindings=bindings,
+            stage=stage,
+            tabletop=tabletop,
+            rgbd=rgbd,
+            camera_clipping_range_m=camera_clipping_range_m,
+        )
+        metrics["stage_prim_lifecycle"] = stage_prim_lifecycle
+        render_product = rep.create.render_product(
+            camera_prim, rgbd.camera.resolution, name="D38999RawFormalRenderProduct"
+        )
+        render_product_path = render_product.path
+        camera = Camera(
+            prim_path=rgbd.camera.prim_path,
+            name="d38999_raw_formal_camera",
+            frequency=rgbd.camera.frequency_hz,
+            resolution=rgbd.camera.resolution,
+            render_product_path=render_product_path,
+        )
+        rgb_annotator = rep.AnnotatorRegistry.get_annotator("rgb")
+        depth_annotator = rep.AnnotatorRegistry.get_annotator(
+            "distance_to_image_plane"
+        )
+        annotators.extend((rgb_annotator, depth_annotator))
+        for annotator in annotators:
+            annotator.attach([render_product_path])
+        metrics["render_pipeline"] = {
+            "annotator_api": "rep.AnnotatorRegistry.get_annotator",
+            "annotators": ["rgb", "distance_to_image_plane"],
+            "semantic_segmentation_requested": False,
+            "render_product_path": render_product_path,
+        }
+        if not isinstance(rt_subframes, int) or rt_subframes < 1:
+            raise ValueError("rt_subframes must be a positive integer")
+        metrics["render_pipeline"]["rt_subframes"] = int(rt_subframes)
+        render_start_s = __import__("time").perf_counter()
+        for _ in range(rgbd.camera.warmup_frames):
+            rep.orchestrator.step(
+                rt_subframes=int(rt_subframes),
+                delta_time=0.0,
+                pause_timeline=True,
+            )
+        metrics["render_pipeline"]["capture_render_seconds"] = float(
+            __import__("time").perf_counter() - render_start_s
+        )
+        rgba = np.asarray(rgb_annotator.get_data())
+        depth = np.asarray(depth_annotator.get_data(), dtype=np.float32)
+        if rgba.ndim not in (2, 3):
+            raise RuntimeError("raw RGB output must be 2D or 3D")
+        if rgba.ndim == 3 and rgba.shape[2] < 3:
+            raise RuntimeError("raw RGB output must have at least 3 channels")
+        if rgba.shape[:2] != depth.shape:
+            raise RuntimeError("raw RGB and depth shapes differ")
+        rgb = np.asarray(rgba[:, :, :3], dtype=np.uint8)
+        valid_depth = np.isfinite(depth) & (depth > 0.0)
+        if rgb.shape[:2] != depth.shape:
+            raise RuntimeError("raw RGB/depth shape mismatch")
+        finite_positive_depth_pixels = int(np.sum(valid_depth))
+        metrics["camera_frame_diagnostics"] = {
+            "depth_valid_fraction": float(np.mean(valid_depth)),
+            "finite_positive_depth_pixels": finite_positive_depth_pixels,
+            "minimum_finite_positive_depth_pixels_candidate": 1,
+            "inf_depth_pixels_preserved": int(
+                np.sum(np.isinf(depth))
+            ),
+            "rgb_maximum": int(np.max(rgb)),
+            "rgb_minimum": int(np.min(rgb)),
+            "rgb_mean": float(np.mean(rgb)),
+            "rgb_dtype": str(rgb.dtype),
+        }
+        metrics["camera"] = {
+            "clipping_range_m": list(camera.get_clipping_range()),
+            "focal_length_mm": camera.get_focal_length(),
+            "frame_id": rgbd.camera.frame_id,
+            "horizontal_aperture_mm": camera.get_horizontal_aperture(),
+            "intrinsics": np.asarray(
+                camera.get_intrinsics_matrix(), dtype=np.float64
+            ).tolist(),
+            "prim_path": rgbd.camera.prim_path,
+            "resolution": list(rgbd.camera.resolution),
+        }
+        if output_dir is not None:
+            _save_raw_formal_artifacts(
+                bindings=bindings,
+                rgbd=rgbd,
+                output_dir=output_dir,
+                rgb=rgb,
+                depth=depth,
+            )
+            metrics["output_directory"] = str(Path(output_dir))
+        metrics["passed"] = bool(
+            depth.shape == rgb.shape[:2]
+            and depth.size > 0
+            and np.all(np.isfinite(rgb))
+            and finite_positive_depth_pixels >= 1
+        )
+    finally:
+        cleanup = cleanup_rgbd_runtime_resources(
+            annotators, camera, render_product
+        )
+        metrics["resource_cleanup"] = cleanup
+        timeline_state = restore_timeline_after_rgbd_capture(
+            world, simulation_app, was_playing=timeline_playing_before
+        )
+        metrics["timeline_state"] = timeline_state
+        if timeline_pause is None or timeline_state["restored"] is not True:
+            metrics["passed"] = False
+        if cleanup["resources_released"] is not True:
+            metrics["passed"] = False
+    return D38999RgbdRawFormalCapture(
+        metrics=metrics,
+        rgb=rgb,
+        depth=depth,
+    )
+
+
+__all__ = [
+    "D38999RgbdRawFormalCapture",
+    "D38999RgbdRuntimeCapture",
+    "capture_d38999_rgbd_raw_formal",
+    "capture_d38999_rgbd_runtime",
+    "endpoint_projection_records",
+    "ensure_d38999_rgbd_stage_prims",
+    "pause_timeline_for_rgbd_capture",
+    "restore_timeline_after_rgbd_capture",
+]

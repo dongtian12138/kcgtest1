@@ -1,0 +1,87 @@
+schema_version: kcg_d38999_q7_twist_probe_v1
+enabled: true
+status: prepared_engage_nut_only_proxy_probe
+probe_id: stage120
+
+inputs:
+  assembly_baseline:
+    path: src/kcg_connector/config/d38999_assembly_baseline_v1.yaml
+    sha256: 4921246d03bbfead0c0c806402dadeb432ae913d66ba18c43cc179cb11d76f62
+  nut_regrasp_physx:
+    path: src/kcg_connector/config/d38999_nut_regrasp_physx_v2_fast.yaml
+    sha256: 0445e0f1dbc06d0b08b02852b4a95fa9abe27207a2992fd171caf149062502f8
+  passed_regrasp_run_1:
+    path: artifacts/kcg_connector/d38999_nut_regrasp_physx_v1/passed_run1.log
+    sha256: d2b53a2e9508b56025050a27afb5cdeca8780d32176059604d91ae4af0095cd9
+  passed_regrasp_run_2:
+    path: artifacts/kcg_connector/d38999_nut_regrasp_physx_v1/passed_run2.log
+    sha256: e0fd5532bea9b80bc1b364b80b19229450d6f0df8b26e70bfebfac2aca44785e
+  runner_source:
+    path: src/kcg_connector/isaac/d38999_nut_regrasp_smoke.py
+    sha256: f8a77d1b56982b7225a5b3e2858bcd6b4fe139c5487915e6e79fbab98311e13b
+  twist_contract_source:
+    path: src/kcg_connector/kcg_connector/d38999_twist_probe.py
+    sha256: 9920cdd1132062e992907f9f92d8930876fbeeef6feaa042fff5414156b1649a
+
+runtime_thread:
+  root_prim_path: /World/D38999NutRegrasp/RuntimeThreadProbe
+  prismatic_prim_path: /World/D38999NutRegrasp/RuntimeThreadProbe/InsertionPrismatic
+  rack_prim_path: /World/D38999NutRegrasp/RuntimeThreadProbe/ThreadCoupling
+  prismatic_axis: Z
+  lower_limit_m: -0.0031
+  upper_limit_m: 0.0001
+  rack_ratio_degrees_per_meter: 120000.0
+  filtered_pair_mode: proxy_false_contacts_only
+  expected_nut_segment_count: 24
+  expected_body_mating_segment_count: 20
+  expected_fixed_entry_segment_count: 20
+  expected_filtered_pair_count: 500
+
+probe:
+  q7_joint_name: iiwa_joint_7
+  q7_delta_rad: -2.0943951023931953
+  q7_speed_rad_s: 0.08726646259971647
+  motion_duration_s: 24.0
+  hold_settle_duration_s: 0.5
+  hold_evaluation_duration_s: 2.0
+  total_hold_duration_s: 2.5
+  expected_nut_delta_rad: 2.0943951023931953
+  expected_axial_travel_m: -0.001
+  lead_m_per_revolution: 0.003
+
+sensing:
+  torque_joint_names: [f1j2, f2j1, f3j2]
+  loaded_torque_threshold_nm: 0.020
+  minimum_loaded_channels: 3
+  operational_torque_target_nm: 1.8
+  hard_stop_nm: 2.0
+
+acceptance:
+  maximum_constraint_activation_translation_jump_m: 0.00025
+  maximum_constraint_activation_rotation_jump_rad: 0.004363323129985824
+  maximum_q7_tracking_error_rad: 0.017453292519943295
+  minimum_nut_progress_rad: 2.007128639793479
+  maximum_nut_progress_rad: 2.181661564992912
+  maximum_q7_to_nut_slip_rad: 0.03490658503988659
+  minimum_axial_progress_fraction: 0.90
+  maximum_helical_error_m: 0.00005
+  maximum_non_q7_arm_drift_rad: 0.010
+  maximum_body_lateral_drift_m: 0.00015
+  maximum_body_axis_error_rad: 0.008726646259971648
+  maximum_hold_q7_speed_rad_s: 0.008726646259971648
+  maximum_hold_nut_speed_rad_s: 0.008726646259971648
+  hold_axial_observable_window_steps: 5
+  maximum_hold_axial_speed_m_s: 0.00005
+  maximum_fixed_translation_drift_m: 0.000001
+  maximum_fixed_rotation_drift_rad: 0.00001
+
+boundaries:
+  real_thread_pitch_claimed: false
+  thread_teeth_collision_modeled: false
+  exact_proxy_collision_filter_required: true
+  attachment_allowed: false
+  object_pose_drive_allowed: false
+  object_pose_writes_after_start_allowed: false
+  physical_insertion_included: false
+  full_rotation_included: false
+  assembly_success_claimed: false

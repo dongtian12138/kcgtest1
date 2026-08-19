@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from dataclasses import dataclass
-import hashlib
 import math
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -116,9 +115,7 @@ class VirtualWristFtMonitorConfig:
     enabled: bool
     status: str
     wrist_design_path: str
-    wrist_design_sha256: str
     robot_asset_path: str
-    robot_asset_sha256: str
     measurement_joint: str
     metadata_joint_index_offset: int
     raw_frame: str
@@ -140,21 +137,17 @@ class VirtualWristFtMonitorConfig:
     monitored_contact_phases: tuple[str, ...]
     threshold_status: str
     threshold_source_artifact: str | None
-    threshold_source_artifact_sha256: str | None
     threshold_repeat_count: int
     safety_limits: tuple[float | None, ...]
     monitor_only: bool
 
 
-def _parse_input(document: Mapping[str, Any], label: str) -> tuple[str, str]:
-    _exact(document, {"path", "sha256"}, label)
+def _parse_input(document: Mapping[str, Any], label: str) -> str:
+    _exact(document, {"path"}, label)
     path = _text(document["path"], f"{label}.path")
-    digest = _text(document["sha256"], f"{label}.sha256")
-    if len(digest) != 64 or any(
-        character not in "0123456789abcdef" for character in digest
-    ):
-        raise ValueError(f"{label}.sha256 must be lowercase SHA-256")
-    return path, digest
+    if Path(path).is_absolute() or ".." in Path(path).parts:
+        raise ValueError(f"{label}.path must remain repository-relative")
+    return path
 
 
 def load_virtual_wrist_ft_monitor_config(
@@ -213,11 +206,11 @@ def load_virtual_wrist_ft_monitor_config(
 
     inputs = _mapping(root["inputs"], "inputs")
     _exact(inputs, {"wrist_ft_design", "robot_asset"}, "inputs")
-    wrist_path, wrist_sha = _parse_input(
+    wrist_path = _parse_input(
         _mapping(inputs["wrist_ft_design"], "inputs.wrist_ft_design"),
         "inputs.wrist_ft_design",
     )
-    robot_path, robot_sha = _parse_input(
+    robot_path = _parse_input(
         _mapping(inputs["robot_asset"], "inputs.robot_asset"),
         "inputs.robot_asset",
     )
@@ -374,7 +367,6 @@ def load_virtual_wrist_ft_monitor_config(
         {
             "status",
             "source_artifact",
-            "source_artifact_sha256",
             "repeat_count",
             "statistic",
             "margin_policy",
@@ -385,13 +377,11 @@ def load_virtual_wrist_ft_monitor_config(
         calibration["status"], "threshold_calibration.status"
     )
     source_artifact = calibration["source_artifact"]
-    source_digest = calibration["source_artifact_sha256"]
     repeat_count = _integer(
         calibration["repeat_count"], "threshold_calibration.repeat_count"
     )
     for key in (
         "source_artifact",
-        "source_artifact_sha256",
         "statistic",
         "margin_policy",
     ):
@@ -451,9 +441,7 @@ def load_virtual_wrist_ft_monitor_config(
         enabled=_boolean(root["enabled"], "enabled"),
         status=_text(root["status"], "status"),
         wrist_design_path=wrist_path,
-        wrist_design_sha256=wrist_sha,
         robot_asset_path=robot_path,
-        robot_asset_sha256=robot_sha,
         measurement_joint=_text(
             source["measurement_joint"], "source.measurement_joint"
         ),
@@ -500,7 +488,6 @@ def load_virtual_wrist_ft_monitor_config(
         monitored_contact_phases=monitored,
         threshold_status=threshold_status,
         threshold_source_artifact=source_artifact,
-        threshold_source_artifact_sha256=source_digest,
         threshold_repeat_count=repeat_count,
         safety_limits=limits,
         monitor_only=True,
@@ -510,18 +497,20 @@ def load_virtual_wrist_ft_monitor_config(
 def verify_virtual_wrist_ft_monitor_inputs(
     config: VirtualWristFtMonitorConfig, repository: str | Path
 ) -> dict[str, Path]:
-    """Verify both immutable inputs without importing Isaac or editing them."""
+    """Resolve the two canonical semantic inputs without fingerprinting them."""
 
     root = Path(repository).expanduser().resolve()
     resolved = {}
-    for name, relative, expected in (
-        (
-            "wrist_ft_design",
-            config.wrist_design_path,
-            config.wrist_design_sha256,
-        ),
-        ("robot_asset", config.robot_asset_path, config.robot_asset_sha256),
+    expected_paths = {
+        "wrist_ft_design": "src/kcg_connector/config/wrist_ft_v1_contract.yaml",
+        "robot_asset": "artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/handarm.usda",
+    }
+    for name, relative in (
+        ("wrist_ft_design", config.wrist_design_path),
+        ("robot_asset", config.robot_asset_path),
     ):
+        if relative != expected_paths[name]:
+            raise ValueError(f"{name} semantic path changed")
         path = (root / relative).resolve()
         try:
             path.relative_to(root)
@@ -531,9 +520,6 @@ def verify_virtual_wrist_ft_monitor_inputs(
             ) from error
         if not path.is_file():
             raise FileNotFoundError(path)
-        actual = hashlib.sha256(path.read_bytes()).hexdigest()
-        if actual != expected:
-            raise ValueError(f"{name} SHA-256 mismatch")
         resolved[name] = path
     return resolved
 

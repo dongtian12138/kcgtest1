@@ -8,6 +8,9 @@ import xml.etree.ElementTree as ElementTree
 
 
 _STRIPPED_TAGS = {"gazebo", "ros2_control", "transmission"}
+_WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
+_DESCRIPTION_PACKAGE_ROOT = _WORKSPACE_ROOT / "src" / "iiwa_description"
+_AUTHORITATIVE_XACRO = _DESCRIPTION_PACKAGE_ROOT / "urdf" / "handarm.urdf.xacro"
 
 
 def _local_name(tag):
@@ -52,33 +55,26 @@ def sanitize_urdf(xml_text, package_paths):
 
 
 def export_urdf(output_path):
-    """Expand the installed KUKA Xacro and write a clean standalone URDF."""
-    from ament_index_python.packages import get_package_share_directory
-
+    """Expand only the frozen workspace Xacro into a new standalone URDF."""
     xacro_executable = shutil.which("xacro")
     if xacro_executable is None:
         raise RuntimeError("xacro executable is unavailable; source ROS 2 Humble")
-
-    moveit_share = Path(get_package_share_directory("kcg_moveit1"))
-    description_share = Path(get_package_share_directory("iiwa_description"))
-    xacro_path = moveit_share / "config" / "handarm.urdf.xacro"
+    if not _AUTHORITATIVE_XACRO.is_file():
+        raise FileNotFoundError(_AUTHORITATIVE_XACRO)
     completed = subprocess.run(
-        [
-            xacro_executable,
-            str(xacro_path),
-            "use_gazebo:=false",
-            "start_at_cylinder_pregrasp:=false",
-        ],
+        [xacro_executable, str(_AUTHORITATIVE_XACRO)],
         check=True,
         capture_output=True,
         text=True,
     )
     sanitized = sanitize_urdf(
         completed.stdout,
-        {"iiwa_description": description_share},
+        {"iiwa_description": _DESCRIPTION_PACKAGE_ROOT},
     )
 
     output_path = Path(output_path).expanduser().resolve()
+    if output_path.exists():
+        raise FileExistsError(f"refusing to overwrite exported URDF: {output_path}")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(sanitized, encoding="utf-8")
     return output_path

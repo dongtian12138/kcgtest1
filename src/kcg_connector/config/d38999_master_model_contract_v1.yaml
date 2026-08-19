@@ -1,0 +1,608 @@
+schema_version: kcg_d38999_master_model_contract_v1
+contract_id: D38999_MASTER_MODEL_CONTRACT_V1
+status: FROZEN_FOR_MULTILAYER_V1
+
+scope:
+  source_class: equivalent_assumption
+  source_ref: artifacts/agent_control/DECISION_LOG.jsonl#TASK-R12-MULTILAYER-001
+  task: TASK-R12-MULTILAYER-MODEL
+  unique_authority_for:
+    - D38999_VISUAL_COMPLETE_V1
+    - D38999_ASSEMBLY_CONTROL_V1
+    - D38999_LOCAL_CONTACT_REFERENCE_V1
+  shared_generator: src/kcg_connector/isaac/build_d38999_multilayer_models.py
+  simulation_only: true
+  manufacturer_cad_claimed: false
+  manufactured_unit_fidelity_claimed: false
+  hardware_force_curve_claimed: false
+  space_qualification_claimed: false
+  formal_r12_frozen: false
+  hardware_authorized: false
+
+provenance_policy:
+  allowed_source_classes:
+    - public_source
+    - project_measurement
+    - derived
+    - equivalent_assumption
+  inheritance_rule: every parameter leaf inherits source_class and source_ref from its nearest enclosing mapping unless it declares a more specific source
+  public_source_meaning: value transcribed from a named public standard or public drawing
+  project_measurement_meaning: value measured in this simulation project; never a hardware measurement unless explicitly stated
+  derived_meaning: deterministic calculation from cited public or project inputs
+  equivalent_assumption_meaning: frozen simulation proxy or control-layer equivalence; not manufacturer truth
+  inferred_parameter_may_be_labeled_manufacturer_data: false
+
+authoritative_inputs:
+  source_class: equivalent_assumption
+  source_ref: artifacts/agent_control/tasks/TASK-R12-MULTILAYER-001/VALIDATION.json
+  physical_model_contract:
+    path: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml
+    sha256: 6068066a2ac0339fa83caf2cc0c28050e76ed7e56e960da1b29e121a083b650e
+  physical_acceptance_contract:
+    path: src/kcg_connector/config/d38999_keyed_v3_physical_acceptance_r12_v1.yaml
+    sha256: dd37d07d5bd87a97c3dbefe225c0eafd409fc783a6010eec8db9da397ce2cf76
+  public_spec_config:
+    path: src/kcg_connector/config/d38999_keyed_public_spec_v2.yaml
+    sha256: a42548597c0579016a1d8f43bc4acf375e8d53f2f6a70e9bc3b750ece958b81b
+  high_detail_generator:
+    path: src/kcg_connector/isaac/create_d38999_keyed_physical_r7_asset.py
+    sha256: 3aca52e407dd4806803cc343650c5782c30ac101f17e9ff583b9eff9618c13da
+  r12_config_builder:
+    path: src/kcg_connector/isaac/build_d38999_keyed_v3_physical_r12_configs.py
+    sha256: ae15d155aefd4f7fcae1cb9823d46f26e5589ab8436d5da1c6a0a9034b9e3dd4
+  high_detail_reference_manifest:
+    path: artifacts/agent_control/multilayer/HIGH_DETAIL_REFERENCE_MANIFEST.json
+    sha256: a8a5e48cdb29188f9e2a6baf3967501c9044dbf19b01b225a5656e7efa54dfcf
+
+identity:
+  source_class: public_source
+  source_ref: src/kcg_connector/config/d38999_keyed_public_spec_v2.yaml#identity
+  series: MIL-DTL-38999_series_III
+  shell_size: 25
+  insert_arrangement: 61
+  polarization: N
+  contact_count: 61
+  contact_size: 20
+  fixed_receptacle_contact_style: pin
+  loose_plug_contact_style: socket
+
+units:
+  source_class: equivalent_assumption
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#coordinate_contract
+  stage_length: meter
+  stage_mass: kilogram
+  configuration_angle: degree
+  runtime_angle: radian
+  public_contact_pattern_length: inch
+  inch_to_meter: 0.0254
+
+coordinate_frames:
+  source_class: equivalent_assumption
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#coordinate_contract
+  canonical_pair_root: /World/D38999Shell25JKeyedPhysicalV3
+  receptacle_datum_B:
+    component_suffix: /FixedReceptacle
+    origin: receptacle_datum_B_center
+    translation_m: [0.0, 0.0, 0.0]
+    local_plus_z: from_datum_B_toward_receptacle_interior
+    local_plus_x: main_keyway_centerline_zero_degrees
+  plug_datum_B:
+    component_suffix: /LoosePlug
+    origin: plug_datum_B_center
+    translation_m: [0.0, 0.0, 0.0]
+    local_plus_z: from_datum_B_toward_plug_rear
+    local_plus_x: main_key_centerline_zero_degrees
+  assembly_axis:
+    receptacle_local_vector: [0.0, 0.0, 1.0]
+    plug_translation_direction: opposite_plug_local_plus_z
+    local_z_axes_antiparallel_at_mating: true
+    local_x_axes_coincident_at_correct_N_key: true
+    separation_definition: signed_distance_between_datum_B_planes_along_receptacle_local_plus_z
+  contact_pattern_frame:
+    origin: insert_center
+    view: front_face_of_pin_insert
+    x_axis: main_keyway_centerline_zero_degrees
+    pin_side_z_axis: receptacle_local_plus_z
+    socket_side_rule: same_table_mirrored_once_by_mating_transform
+  tabletop_pose_reference:
+    fixed_endpoint_orientation_deg_xyz: [180.0, 0.0, 0.0]
+    loose_endpoint_orientation_deg_xyz: [180.0, 0.0, 0.0]
+
+major_dimensions:
+  source_class: public_source
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#public_geometry
+  parameter_source_rules:
+    transcribed_min_max_basic_and_tolerance_fields: public_source
+    nominal_midpoints_selected_from_public_ranges: derived
+    nominal_midpoint_derivation: arithmetic_midpoint_of_cited_public_min_and_max
+  receptacle_shell_25_class_k_mm:
+    mating_shell_F_diameter: {min: 39.02, max: 39.42}
+    bore_H_diameter: {min: 35.84, max: 35.99}
+    keyway_J_diameter: {min: 37.92, max: 38.20}
+    flange_S: {basic: 46.0, plus_minus: 0.3}
+    mounting_hole_pattern_R1: 38.10
+    mounting_hole_pattern_R2: 34.93
+    panel_thickness_M_max: 5.0
+    body_projection_Z_max: 31.5
+    red_band_back_edge_from_front_options: [12.4, 12.95]
+  plug_shell_25_class_k_mm:
+    inner_U_diameter: {min: 33.99, max: 34.34}
+    between_keys_W_diameter: {min: 35.61, max: 35.77}
+    over_keys_V_diameter: {min: 37.57, max: 37.85}
+    rear_body_B_diameter: {basic: 44.3, plus: 0.2, minus: 0.0}
+    coupling_nut_S_diameter_max: 48.0
+    overall_Z_max: 31.0
+    key_axial_length_min: 7.24
+  size20_contact_interface:
+    pin_engaging_diameter_in: {basic: 0.040, plus_minus: 0.001}
+    socket_cavity_diameter_min_in: 0.049
+    socket_entry_F_diameter_mm: {min: 1.24, nominal: 1.28, max: 1.32}
+    socket_entry_G_diameter_mm: {min: 2.16, nominal: 2.21, max: 2.26}
+    socket_entry_front_lip_axial_mm: {min: 0.0, nominal: 0.065, max: 0.13}
+    socket_entry_chamfer_angle_deg: {min: 43.0, nominal: 45.0, max: 47.0}
+    pin_barrier_E_diameter_mm: {min: 2.31, nominal: 2.375, max: 2.44}
+    pin_barrier_C_diameter_mm: {min: 1.83, nominal: 1.87, max: 1.91}
+    pin_barrier_D_diameter_max_mm: 0.97
+    pin_barrier_D_diameter_proxy_mm: 0.96
+    pin_barrier_total_axial_mm: {min: 1.19, nominal: 1.32, max: 1.45}
+    pin_barrier_tip_straight_axial_mm: {min: 0.51, nominal: 0.575, max: 0.64}
+    public_dimensions_define_force_curve: false
+
+keying:
+  source_class: public_source
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#public_geometry.keying_n
+  key_count: 5
+  keyway_count: 5
+  canonical_angles_deg: [0.0, 80.0, 142.0, 196.0, 293.0]
+  plug_local_authored_angles_deg:
+    source_class: derived
+    source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#a2_collision_authoring_blueprint.connector_shells_and_keying.plug_keys
+    values: [0.0, -80.0, -142.0, -196.0, -293.0]
+  main_key_width_mm: {basic: 2.54, plus: 0.03, minus: 0.13}
+  minor_key_width_mm: {basic: 1.32, plus: 0.03, minus: 0.13}
+  main_keyway_width_mm: {basic: 3.20, plus: 0.13, minus: 0.03}
+  minor_keyway_width_mm: {basic: 1.60, plus: 0.13, minus: 0.03}
+  polarization_precedes_thread_and_contact: true
+  nominal_collision_geometry:
+    source_class: equivalent_assumption
+    source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#a2_collision_authoring_blueprint.connector_shells_and_keying
+    receptacle_outer_radius_m: 0.01961
+    receptacle_clear_bore_radius_m: 0.0179575
+    keyway_slot_end_radius_m: 0.01903
+    keyway_local_z_interval_m: [0.0, 0.009]
+    plug_shell_radial_interval_m: [0.0170825, 0.017845]
+    plug_key_radial_interval_m: [0.017845, 0.018855]
+    plug_key_local_depth_interval_m: [0.0065, 0.01374]
+    plug_key_exact_axial_length_m: 0.00724
+    plug_key_leading_nose_axial_length_m: 0.00018
+    continuous_real_collision_required_in_assembly_control: true
+
+contact_layout:
+  source_class: public_source
+  source_ref: src/kcg_connector/config/d38999_keyed_public_spec_v2.yaml#contact_pattern.positions_in
+  pin_socket_pairs: 61
+  same_label_pairing_required: true
+  cross_label_effect_allowed: false
+  coordinate_unit: inch
+  coordinate_scale_m_per_in: 0.0254
+  center_frame: contact_pattern_frame
+  direction_rule:
+    source_class: derived
+    source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#coordinate_contract
+    pin_axis_in_fixed_receptacle_local: [0.0, 0.0, 1.0]
+    socket_axis_in_loose_plug_local: [0.0, 0.0, 1.0]
+    axes_antiparallel_after_mating_transform: true
+    every_pair_inherits_this_direction: true
+  pairs:
+    - {label: A, center_in: [0.196, 0.500]}
+    - {label: B, center_in: [0.314, 0.435]}
+    - {label: C, center_in: [0.413, 0.343]}
+    - {label: D, center_in: [0.485, 0.230]}
+    - {label: E, center_in: [0.527, 0.101]}
+    - {label: F, center_in: [0.536, -0.030]}
+    - {label: G, center_in: [0.511, -0.164]}
+    - {label: H, center_in: [0.454, -0.287]}
+    - {label: J, center_in: [0.368, -0.391]}
+    - {label: K, center_in: [0.259, -0.470]}
+    - {label: L, center_in: [0.134, -0.519]}
+    - {label: M, center_in: [0.000, -0.537]}
+    - {label: N, center_in: [-0.134, -0.519]}
+    - {label: P, center_in: [-0.259, -0.470]}
+    - {label: R, center_in: [-0.368, -0.391]}
+    - {label: S, center_in: [-0.454, -0.287]}
+    - {label: T, center_in: [-0.511, -0.164]}
+    - {label: U, center_in: [-0.536, -0.030]}
+    - {label: V, center_in: [-0.527, 0.101]}
+    - {label: W, center_in: [-0.485, 0.230]}
+    - {label: X, center_in: [-0.413, 0.343]}
+    - {label: Y, center_in: [-0.314, 0.435]}
+    - {label: Z, center_in: [-0.196, 0.500]}
+    - {label: a, center_in: [-0.068, 0.454]}
+    - {label: b, center_in: [0.068, 0.454]}
+    - {label: c, center_in: [0.173, 0.363]}
+    - {label: d, center_in: [0.285, 0.283]}
+    - {label: e, center_in: [0.362, 0.175]}
+    - {label: f, center_in: [0.399, 0.046]}
+    - {label: g, center_in: [0.392, -0.088]}
+    - {label: h, center_in: [0.341, -0.213]}
+    - {label: i, center_in: [0.251, -0.314]}
+    - {label: j, center_in: [0.133, -0.379]}
+    - {label: k, center_in: [0.000, -0.402]}
+    - {label: m, center_in: [-0.133, -0.379]}
+    - {label: n, center_in: [-0.251, -0.314]}
+    - {label: p, center_in: [-0.341, -0.213]}
+    - {label: q, center_in: [-0.392, -0.088]}
+    - {label: r, center_in: [-0.399, 0.046]}
+    - {label: s, center_in: [-0.362, 0.175]}
+    - {label: t, center_in: [-0.285, 0.283]}
+    - {label: u, center_in: [-0.173, 0.363]}
+    - {label: v, center_in: [0.000, 0.338]}
+    - {label: w, center_in: [0.147, 0.223]}
+    - {label: x, center_in: [0.237, 0.122]}
+    - {label: y, center_in: [0.267, -0.010]}
+    - {label: z, center_in: [0.228, -0.139]}
+    - {label: AA, center_in: [0.131, -0.233]}
+    - {label: BB, center_in: [0.000, -0.267]}
+    - {label: CC, center_in: [-0.131, -0.233]}
+    - {label: DD, center_in: [-0.228, -0.139]}
+    - {label: EE, center_in: [-0.267, -0.010]}
+    - {label: FF, center_in: [-0.237, 0.122]}
+    - {label: GG, center_in: [-0.147, 0.223]}
+    - {label: HH, center_in: [0.000, 0.200]}
+    - {label: JJ, center_in: [0.105, 0.094]}
+    - {label: KK, center_in: [0.135, -0.041]}
+    - {label: LL, center_in: [0.000, -0.132]}
+    - {label: MM, center_in: [-0.135, -0.041]}
+    - {label: NN, center_in: [-0.105, 0.094]}
+    - {label: PP, center_in: [0.000, 0.000]}
+
+axial_interface:
+  source_class: derived
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#public_geometry.axial_interface
+  parameter_source_rules:
+    fields_ending_public_range: public_source
+    fields_ending_nominal_proxy: equivalent_assumption
+    range_derivatives_without_nominal_proxy_suffix: derived
+  receptacle_depths_from_datum_B_mm:
+    static_seal_first_touch_public_range: [14.50, 14.73]
+    static_seal_first_touch_nominal_proxy: 14.615
+    pin_tip_M_public_range: [9.50, 10.54]
+    pin_tip_M_nominal_proxy: 10.02
+    pin_insert_face_N_public_range: [15.04, 15.46]
+    pin_insert_face_N_nominal_proxy: 15.25
+    pin_barrier_front_public_range: [13.72, 14.05]
+    pin_barrier_front_nominal_proxy: 13.93
+  plug_depths_from_datum_B_mm:
+    common_rear_control_plane_L_public_range: [15.01, 15.09]
+    common_rear_control_plane_L_nominal_proxy: 15.05
+    socket_insert_face_B_nominal_proxy: 0.14
+    socket_spring_touch_B_nominal_proxy: 2.00
+    socket_spring_depth_from_insert_face_nominal_proxy: 1.86
+  source_note: public ranges are public_source; fields ending nominal_proxy are equivalent_assumption selected within cited ranges
+
+elastic_contact_models:
+  source_class: equivalent_assumption
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#physical_proxy_boundaries.force_parameters
+  hardware_force_curve_claimed: false
+  socket_contact_per_label:
+    count: 61
+    high_detail_representation: six_fixed_annular_wedge_petals_per_socket
+    assembly_control_representation: one_traceable_same_label_smooth_radial_spring_damper
+    nominal_pin_diameter_m: 0.001016
+    nominal_radial_interference_m: 0.0000127
+    aggregate_stiffness_n_m: 24000.0
+    aggregate_damping_n_s_m: 0.6
+    maximum_physical_deflection_m: 0.000075
+    nominal_radial_preload_force_n: 0.3048
+    cross_label_effect_allowed: false
+  shell_spring_fingers:
+    count: 12
+    high_detail_representation: twelve_fixed_compliant_contact_segments
+    assembly_control_representation: continuous_annular_guidance_with_twelve_traceable_response_channels
+    per_segment_stiffness_n_m: 12000.0
+    per_segment_damping_n_s_m: 1.0
+    aggregate_stiffness_n_m: 144000.0
+    aggregate_damping_n_s_m: 12.0
+    nominal_radial_preload_m: 0.00008
+    complete_connector_axial_force_acceptance_n: [2.0, 156.0]
+  pin_isolation_seal_per_label:
+    count: 61
+    high_detail_representation: segmented_axisymmetric_pin_barrier_contact
+    assembly_control_representation: one_continuous_axial_response_per_label
+    per_label_effective_stiffness_n_m: 250.0
+    per_label_effective_damping_n_s_m: 0.02
+    nominal_first_touch_separation_m: 0.014305
+    nominal_post_contact_travel_to_bottoming_m: 0.000745
+    physical_normal_deflection_nominal_m: 0.000295
+    axial_travel_may_be_used_as_normal_spring_deflection: false
+    cross_label_effect_allowed: false
+  peripheral_seal:
+    high_detail_segment_count: 24
+    high_detail_representation: segmented_annular_compliant_contact_surfaces
+    assembly_control_representation: one_continuous_annular_axial_spring_damper
+    first_touch_separation_m: 0.014615
+    nominal_deflection_at_bottoming_m: 0.000435
+    aggregate_stiffness_n_m: 19200.0
+    aggregate_damping_n_s_m: 12.0
+    nominal_preload_force_at_bottoming_n: 8.352
+
+thread:
+  source_class: public_source
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#public_geometry.thread_shell_25
+  parameter_source_rules:
+    starts_form_pitch_lead_and_diameter_ranges: public_source
+    equally_spaced_start_phases_deg: derived
+    start_phase_derivation: phase_index_times_360_deg_divided_by_three_starts
+  starts: 3
+  form: modified_60_degree_stub
+  nominal_size_in: 1.625
+  pitch_in: 0.100
+  pitch_mm: 2.54
+  lead_in_per_revolution: 0.300
+  lead_mm_per_revolution: 7.62
+  start_phases_deg: [0.0, 120.0, 240.0]
+  external_diameters_in:
+    major: {min: 1.611, max: 1.623}
+    pitch: {min: 1.579, max: 1.589}
+    minor: {min: 1.533, max: 1.551}
+  internal_diameters_in:
+    minor: {min: 1.565, max: 1.577}
+    pitch: {min: 1.591, max: 1.603}
+    major: {min: 1.629, max: 1.649}
+  nominal_entry_separation_m:
+    source_class: equivalent_assumption
+    source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#public_geometry.axial_interface.thread_axial_controls.r7_force_transmitting_geometry
+    value: 0.00743
+  control_representation:
+    source_class: equivalent_assumption
+    source_ref: TASK-R12-MULTILAYER-MODEL:user_decision
+    type: explicit_three_start_helical_rotation_translation_constraint
+    positive_insertion_relation: axial_advance_m=-nut_rotation_rad*0.00762/(2*pi)
+    runtime_engagement_switch_allowed: false
+    software_axial_pose_write_allowed: false
+
+coupling_nut_motion:
+  source_class: equivalent_assumption
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#physical_proxy_boundaries.nut_body_bearing
+  joint_type: UsdPhysics.Joint
+  joint_suffix: /LoosePlug/CouplingNutJoint
+  body0_suffix: /LoosePlug/BodyAssembly
+  body1_suffix: /LoosePlug/CouplingNut
+  locked_degrees_of_freedom: [transX, transY, rotX, rotY]
+  free_degree_of_freedom: rotZ
+  limited_degree_of_freedom: transZ
+  transZ_backup_limits_m: {low: -0.00015, high: 0.00015}
+  physical_shoulder_endplay_m: {low: -0.00005, high: 0.00005}
+  shoulder_contacts_before_joint_backup_limit: true
+  joint_drive_allowed: false
+  joint_friction_substitute_for_detent_allowed: false
+  load_path: thread_to_nut_to_physical_shoulder_to_plug_body
+
+anti_decoupling:
+  source_class: equivalent_assumption
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#physical_proxy_boundaries.force_parameters.anti_decoupling_detent
+  cycle_count_per_revolution: 36
+  follower_count: 3
+  mean_radius_m: 0.022
+  forward_ramp_angle_deg: 8.0
+  reverse_face_angle_deg: 55.0
+  cam_radial_rise_m: 0.00005
+  per_follower_stiffness_n_m: 110000.0
+  per_follower_damping_n_s_m: 2.0
+  nominal_radial_preload_m: 0.000001
+  maximum_radial_deflection_m: 0.000051
+  high_detail_representation: continuous_cam_plus_36_teeth_and_three_sphere_followers
+  assembly_control_representation: bounded_36_period_directional_resistance
+  magnetic_mechanism_allowed: false
+  hardware_curve_claimed: false
+
+metal_stop:
+  source_class: equivalent_assumption
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#public_geometry.axial_interface.metal_bottoming
+  definition: physical_receptacle_engaging_shell_to_plug_internal_engaging_shell_contact
+  receptacle_stop_surface_depth_from_receptacle_B_m: 0.0
+  plug_stop_surface_depth_from_plug_B_m: 0.01505
+  nominal_bottoming_separation_m: 0.01505
+  calibration_range_m: [0.01501, 0.01509]
+  calibration_range_is_public_bottoming_depth_claim: false
+  determined_by_physical_collision_not_pose_or_boolean: true
+  assembly_control_collision:
+    type: continuous_real_collision
+    fixed_cap_radius_m: 0.01695
+    fixed_cap_axial_thickness_m: 0.0003
+    plug_stop_distribution_radius_m: 0.016
+
+mass_properties:
+  source_class: equivalent_assumption
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#realized_robot_hand_fixture_blueprint.fixture_load_path.connector_body_mass_derivation
+  source_description: frozen_uniform_axisymmetric_analytic_proxies_not_collision_geometry_union
+  exact_hardware_mass_properties_available: false
+  overlapping_visual_or_contact_proxy_volume_contributes_to_mass: false
+  principal_axes_quaternion_order: wxyz
+  bodies:
+    fixed_receptacle:
+      mass_kg: 0.30
+      center_of_mass_m: [0.0, 0.0, 0.00846]
+      diagonal_inertia_kg_m2: [0.0000359985675, 0.0000359985675, 0.000057682815]
+      principal_axes_wxyz: [1.0, 0.0, 0.0, 0.0]
+    loose_plug_body_assembly:
+      mass_kg: 0.23
+      center_of_mass_m: [0.0, 0.0, 0.01525]
+      diagonal_inertia_kg_m2: [0.0000461680916666667, 0.0000461680916666667, 0.0000566766]
+      principal_axes_wxyz: [1.0, 0.0, 0.0, 0.0]
+    coupling_nut:
+      mass_kg: 0.08
+      center_of_mass_m: [0.0, 0.0, 0.01425]
+      diagonal_inertia_kg_m2: [0.0000272978666666667, 0.0000272978666666667, 0.0000405124]
+      principal_axes_wxyz: [1.0, 0.0, 0.0, 0.0]
+    fixed_fixture:
+      mass_kg: 5.0
+      center_of_mass_m: [0.0, 0.0, 0.0]
+      diagonal_inertia_kg_m2: [0.0088333333333, 0.0088333333333, 0.0163333333333]
+      principal_axes_wxyz: [1.0, 0.0, 0.0, 0.0]
+
+material_roles:
+  source_class: equivalent_assumption
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#material_roles.roles
+  values:
+    fixture_and_receptacle: {static_friction: 0.35, dynamic_friction: 0.25, restitution: 0.0}
+    plug_shell_and_keys: {static_friction: 0.35, dynamic_friction: 0.25, restitution: 0.0}
+    coupling_thread: {static_friction: 0.20, dynamic_friction: 0.15, restitution: 0.0}
+    pin_and_socket: {static_friction: 0.30, dynamic_friction: 0.20, restitution: 0.0}
+    interfacial_pin_barrier: {static_friction: 0.80, dynamic_friction: 0.65, restitution: 0.0}
+    peripheral_seal: {static_friction: 0.80, dynamic_friction: 0.65, restitution: 0.0}
+    anti_decoupling_detent: {static_friction: 0.0, dynamic_friction: 0.0, restitution: 0.0}
+    coupling_bearing_and_shoulder: {static_friction: 0.10, dynamic_friction: 0.08, restitution: 0.0}
+
+assembly_events:
+  order_source_class: public_source
+  order_source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#public_geometry.mating_sequence
+  nominal_position_source_class: equivalent_assumption
+  nominal_position_source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_acceptance_r12_v1.yaml#benches.P1.pass.nominal_event_datum_B_separation_mm
+  event_count: 7
+  ordered:
+    - {ordinal: 1, name: five_key_polarization, nominal_separation_m: 0.00650}
+    - {ordinal: 2, name: three_start_thread_entry, nominal_separation_m: 0.00743}
+    - {ordinal: 3, name: spring_finger_engagement, nominal_separation_m: 0.01080}
+    - {ordinal: 4, name: first_pin_socket_spring_touch, nominal_separation_m: 0.01202}
+    - {ordinal: 5, name: pin_barrier_seal_contact, nominal_separation_m: 0.014305}
+    - {ordinal: 6, name: seal_compression, nominal_separation_m: 0.014615}
+    - {ordinal: 7, name: shell_to_shell_metal_bottoming, nominal_separation_m: 0.01505}
+  required_precedence_edges:
+    - [five_key_polarization, three_start_thread_entry]
+    - [five_key_polarization, first_pin_socket_spring_touch]
+    - [spring_finger_engagement, first_pin_socket_spring_touch]
+    - [three_start_thread_entry, shell_to_shell_metal_bottoming]
+    - [first_pin_socket_spring_touch, pin_barrier_seal_contact]
+    - [first_pin_socket_spring_touch, shell_to_shell_metal_bottoming]
+    - [pin_barrier_seal_contact, shell_to_shell_metal_bottoming]
+    - [seal_compression, shell_to_shell_metal_bottoming]
+
+project_measurement_evidence:
+  source_class: project_measurement
+  source_ref: artifacts/agent_control/tasks/TASK-R12-006C/H2_LOCAL_COMPARISON.json
+  measurement_is_hardware_data: false
+  diagnostic_only: true
+  high_detail_block_first_contact_m: 0.014301851511001606
+  high_detail_progress_after_first_contact_m: 0.0
+  high_detail_terminal_active_pair_count: 4392
+  maximum_force_component_n: 8.0
+  maximum_torque_component_nm: 0.1342005211433337
+  values_may_override_master_structure_parameters: false
+  allowed_future_use: equivalent_response_calibration_with_explicit_proxy_label_only
+
+acceptance_limits:
+  source_class: equivalent_assumption
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_acceptance_r12_v1.yaml#benches.P1
+  event_position_tolerance_m: 0.00005
+  force_component_limit_n_per_driven_body: 8.0
+  force_limit_semantics: each_driven_body_each_component_not_whole_robot_wrist_total
+  torque_component_limit_nm: 0.30
+  maximum_fixed_receptacle_translation_drift_m: 0.000005
+  maximum_noncompliant_hard_penetration_m: 0.00005
+  solver_error_count: 0
+  post_run_pose_write_count: 0
+  false_bottoming_count: 0
+
+logical_path_interface:
+  source_class: equivalent_assumption
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#coordinate_contract
+  logical_parts:
+    pair_root: D38999Pair
+    fixed_receptacle: FixedReceptacle
+    loose_plug: LoosePlug
+    body_assembly: LoosePlug/BodyAssembly
+    coupling_nut: LoosePlug/CouplingNut
+    coupling_nut_joint: LoosePlug/CouplingNutJoint
+    key_group: LoosePlug/BodyAssembly/PolarizingKeys
+    keyway_group: FixedReceptacle/MatingShell/KeywayShell
+    pin_template: FixedReceptacle/Contacts/Pin_{label}
+    socket_template: LoosePlug/BodyAssembly/Contacts/Socket_{label}
+    pin_barrier_template: FixedReceptacle/Contacts/Barrier_{label}
+    pin_isolation_response_template: PairEffects/PinIsolation_{label}
+    deep_pin_response_template: PairEffects/DeepPin_{label}
+    peripheral_seal: FixedReceptacle/PeripheralSeal
+    metal_stop_fixed: FixedReceptacle/MatingShell/MetalStop
+    metal_stop_plug: LoosePlug/BodyAssembly/InternalMatingShell/MetalStop
+  representation_roots:
+    D38999_VISUAL_COMPLETE_V1: /World/D38999MultilayerV1/D38999_VISUAL_COMPLETE_V1
+    D38999_ASSEMBLY_CONTROL_V1: /World/D38999MultilayerV1/D38999_ASSEMBLY_CONTROL_V1
+    D38999_LOCAL_CONTACT_REFERENCE_V1: /World/D38999MultilayerV1/D38999_LOCAL_CONTACT_REFERENCE_V1
+  every_representation_must_publish_mapping_table: true
+
+representation_requirements:
+  source_class: equivalent_assumption
+  source_ref: TASK-R12-MULTILAYER-MODEL:user_decision
+  shared_contract_required: true
+  shared_generator_required: true
+  D38999_VISUAL_COMPLETE_V1:
+    purpose: [rgb, depth, point_cloud, occlusion, paper_visualization]
+    visible_geometry_source:
+      path: artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/r12_candidate_02.usda
+      sha256: 5eb9ad82940e58a1592b6a66fd824c480ba24268cb1c20bcc84de653bb12c995
+    preserve_visible_pins_61: true
+    preserve_visible_sockets_61: true
+    preserve_visible_thread: true
+    preserve_visible_detent_teeth: true
+    preserve_visible_seals: true
+    every_visible_detail_dynamic_collision_required: false
+  D38999_ASSEMBLY_CONTROL_V1:
+    purpose: [grasping_later, visual_prealignment_later, key_finding_later, compliant_insertion, coupling_nut, batch_simulation]
+    continuous_real_collision_required_for: [shells, guidance_surfaces, five_keys_and_keyways, metal_stop]
+    segmented_socket_entry_micro_wedges_allowed: false
+    segmented_pin_barrier_micro_wedges_allowed: false
+    all_combination_micro_contact_allowed: false
+    pin_socket_labels_preserved: 61
+    same_label_effect_only: true
+    deep_pin_effect: per_label_equivalent_spring_damper
+    pin_isolation_seal_effect: per_label_continuous_axial_spring_damper
+    peripheral_seal_effect: continuous_annular_axial_spring_damper
+    thread_effect: explicit_rotation_translation_constraint
+    detent_effect: bounded_36_period_directional_resistance
+    metal_stop_effect: continuous_real_collision
+    magnetic_attraction_allowed: false
+    reduced_physical_action_to_fake_events_allowed: false
+  D38999_LOCAL_CONTACT_REFERENCE_V1:
+    direct_reference_path: artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/r12_candidate_02.usda
+    direct_reference_sha256: 5eb9ad82940e58a1592b6a66fd824c480ba24268cb1c20bcc84de653bb12c995
+    read_only: true
+    allowed_tests: [single_pin, local_thread, single_detent_contact, local_seal]
+    complete_robot_assembly_mainline_allowed: false
+    failed_evidence_may_be_modified: false
+
+truth_firewall:
+  source_class: equivalent_assumption
+  source_ref: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#truth_firewall
+  model_internal_relative_displacement_for_force_allowed: true
+  model_internal_pair_label_for_same_label_effect_allowed: true
+  internal_model_state_exposed_to_task_controller: false
+  controller_forbidden_inputs:
+    - object_pose_truth
+    - contact_object_name
+    - contact_normal
+    - contact_manifold
+    - thread_engagement_truth
+    - electrical_contact_truth
+    - event_truth
+  forbidden_mechanisms:
+    - object_pose_write_after_physics_start
+    - runtime_collision_teleport
+    - magnetic_attraction
+    - cross_label_pin_socket_effect
+  posthoc_physics_truth_for_audit_allowed: true
+
+authorization:
+  source_class: equivalent_assumption
+  source_ref: artifacts/agent_control/MASTER_STATE.json
+  generate_three_multilayer_representations: true
+  modify_high_detail_reference: false
+  overwrite_high_detail_reference: false
+  create_second_geometry_candidate: false
+  increase_socket_diameter: false
+  increase_force_limit: false
+  relax_formal_threshold: false
+  run_task_r12_006d: false
+  run_task_r12_006e: false
+  enter_robot_grasp_vision_or_rl: false
+  claim_formal_r12_complete: false
+  hardware_authorized: false

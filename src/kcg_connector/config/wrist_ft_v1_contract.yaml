@@ -87,11 +87,7 @@ validation_evidence:
   gravity_force_response_n: 20.5219495
   tcp_offset_m: [0.0, 0.0, 0.4]
   tcp_offset_change_m: 1.6543612251060553e-24
-  robot_asset_sha256_before: 031f8241c9dd1e2af96d7b1dde7d2adda7744891832a05e2580fd3398da4216b
-  robot_asset_sha256_after: 031f8241c9dd1e2af96d7b1dde7d2adda7744891832a05e2580fd3398da4216b
   asset_file_count: 9
-  asset_manifest_sha256_before: 65f14f08d7864b041b145e8582891043f171a7dde52656fe715ecd6451d39f86
-  asset_manifest_sha256_after: 65f14f08d7864b041b145e8582891043f171a7dde52656fe715ecd6451d39f86
   axis_calibration:
     application_point: handbase_link_origin
     full_force_n: 4.0

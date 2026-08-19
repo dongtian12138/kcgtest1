@@ -229,10 +229,10 @@ def test_quaternion_tail_diagnostics_are_sign_invariant_and_finite():
     assert statistics["rms"] > statistics["mean"]
 
 
-def test_source_pins_exact_21_body_plus_24_nut_collider_topology():
+def test_source_uses_allowlisted_asset_profile_collider_topology():
     source = SMOKE_PATH.read_text(encoding="utf-8")
-    assert '"body": 21' in source
-    assert '"nut": 24' in source
+    assert "tabletop.asset_profile.expected_body_collider_count" in source
+    assert "tabletop.asset_profile.expected_nut_collider_count" in source
     assert "plug_collision_counts != expected_plug_collision_counts" in source
 
 
@@ -369,7 +369,11 @@ def test_end_to_end_mode_reuses_rotation_and_returns_home():
     assert round(16.0 * 240 / 4.0) == 960
     assert round(24.0 * 240 / 1.4) == 4114
     assert '"q7_twist_rewind_and_return": q7_motion_speedup' in source
-    assert "ISAAC D38999 END TO END V1" in source
+    assert (
+        "ISAAC D38999 SIM GROUND TRUTH PROXY END TO END REGRESSION V1"
+        in source
+    )
+    assert '"--sim-truth-proxy-regression"' in source
     assert "evaluate_d38999_full_rotation" in source
     assert "validate_final_seating_contact_pairs" in source
     assert "for stroke_index in (1, 2, 3):" in source
@@ -432,7 +436,11 @@ def test_masked_rgbd_preflight_is_same_world_opt_in_and_fail_closed():
     assert '"robot motion"' in source
     assert "and pose_preflight_gate" in source
     assert '"pose_preflight_passed"' in source
-    assert "report.json" not in source
+    # The runner may write a report after the episode.  The preflight control
+    # region itself must not read a previous report or use it as an input.
+    preflight_region = source[settled_index:intentional_motion_index]
+    assert "nominal_physics_report.json" not in preflight_region
+    assert "read_text(" not in preflight_region
 
 
 def test_masked_rgbd_preflight_keeps_control_truth_boundary_explicit():
@@ -444,9 +452,11 @@ def test_masked_rgbd_preflight_keeps_control_truth_boundary_explicit():
     assert '"real_vision_included": False' in source
     assert '"masked_rgbd_preflight_included"' in source
     assert "if arguments.pose_preflight == \"masked-rgbd\":" in source
-    assert source.index(
-        "from isaacsim.sensors.camera import Camera"
-    ) > source.index('if arguments.pose_preflight == "masked-rgbd":')
+    quarantine = source.split(
+        "if arguments.sim_truth_proxy_regression:", 1
+    )[1].split("if not arguments.no_live_telemetry:", 1)[0]
+    assert 'if arguments.pose_preflight != "none":' in quarantine
+    assert "cannot combine with visual" in quarantine
 
 
 def test_rgbd_usd_lighting_binding_is_defined_for_headless_preflight():
@@ -565,8 +575,44 @@ def test_metrics_json_replaces_nonfinite_values_with_null():
 
 def test_process_exit_is_pinned_to_isaac_fast_shutdown_close_argument():
     source = SMOKE_PATH.read_text(encoding="utf-8")
-    expected = "simulation_app.close(exit_code=0 if passed else 1)"
+    # ``process_exit_code`` is the single source of truth so single-finger
+    # characterization can exit 3 while ordinary grasp paths exit 0/1.
+    expected = "simulation_app.close(exit_code=process_exit_code)"
     assert expected in source
     assert source.count("simulation_app.close(") == 1
-    assert "return 0 if passed else 1" in source
+    assert "process_exit_code = 0 if passed else 1" in source
+    assert "return process_exit_code" in source
     assert "raise SystemExit(main())" in source
+
+
+def test_h20_keeps_force_ramp_and_xy_overlay_as_distinct_auditable_records():
+    source = SMOKE_PATH.read_text(encoding="utf-8")
+    assert '"lift_vertical_force_xy_admittance_ramp"' in source
+    assert '"pre_lift_vertical_force_xy_admittance"' in source
+    assert '"vertical_position_target_fixed_during_ramp"' in source
+    assert '"pre_lift_xy_all_inputs_immediately_preceding"' in source
+    assert '"sensor_origin_hard_gate_unchanged": True' in source
+    assert '"object_truth_used": False' in source
+    assert '"contact_truth_used": False' in source
+    assert '"event_truth_used": False' in source
+    assert '"object_pose_written": False' in source
+
+
+def test_h21_filters_only_xy_control_and_keeps_raw_hard_gate_zero_delay():
+    source = SMOKE_PATH.read_text(encoding="utf-8")
+    assert "two_sample_xy_control_input(" in source
+    assert '"lift_vertical_force_xy_nyquist_suppressed_ramp"' in source
+    assert '"pre_lift_xy_nyquist_suppressed_admittance"' in source
+    assert '"raw_task_payload_force_xy_n"' in source
+    assert '"control_task_payload_force_xy_n"' in source
+    assert '"pre_lift_xy_nyquist_suppression"' in source
+    assert '"raw_hard_gate_sample_filtered": False' in source
+    assert '"pre_lift_xy_hard_gate_detection_delay_steps": 0' in source
+    assert '"pre_lift_xy_oldest_control_sample_age_at_most_one"' in source
+    assert '"pre_lift_xy_all_raw_peaks_recorded"' in source
+    assert "formal_lift_monitor.update(\n                            root_delta,\n                            formal_latest_wrist_canonical," in source
+    assert '"sensor_origin_hard_gate_unchanged": True' in source
+    assert '"object_truth_used": False' in source
+    assert '"contact_truth_used": False' in source
+    assert '"event_truth_used": False' in source
+    assert '"object_pose_written": False' in source

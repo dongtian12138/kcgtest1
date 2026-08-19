@@ -2280,7 +2280,10 @@ def test_same_world_rgbd_drives_adapter_plan_before_truth_evaluation():
         < truth_index
         < motion_index
     )
-    assert "capture.passed" not in source
+    # Later post-grasp vision may legitimately check post_grasp_capture.passed.
+    # The same-world pre-motion planner must not consume the capture aggregate
+    # PASS bit; it uses the validated adapter sample instead.
+    assert "capture.passed" not in source[:motion_index]
     truth_call = source[truth_index:motion_index]
     assert "capture.loose_position_world_m" in truth_call
     assert "capture.fixed_position_world_m" in truth_call

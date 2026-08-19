@@ -1,0 +1,174 @@
+# Historical audit of the official TE customer-view files and the selected
+# catalog identity.  The customer-view CAD remains useful for the external
+# envelope only; public-spec simulation keying now lives in the separate v2
+# contract below and never reinterprets or replaces the C2 proxy models.
+schema_version: kcg_d38999_keyed_v2_source_candidate_v1
+enabled: false
+status: SUPERSEDED_FOR_SIMULATION_BY_PUBLIC_SPEC_KEYED_V2
+
+identity:
+  identity_status: official_vendor_catalog_cross_checked_simulation_identity
+  selected_pair:
+    loose_plug:
+      dod_pin: D38999/26KJ61SN
+      role: straight_plug
+      series: III
+      service_class: K
+      shell_size_code: J
+      shell_size: 25
+      insert_arrangement: 25-61
+      contact_count: 61
+      contact_size: 20
+      contact_style: socket
+      polarization: N
+      vendor_catalog_candidate: TE Connectivity
+      vendor_product_id: ZPF000000000017182
+    fixed_receptacle:
+      dod_pin: D38999/20KJ61PN
+      role: wall_mount_receptacle
+      series: III
+      service_class: K
+      shell_size_code: J
+      shell_size: 25
+      insert_arrangement: 25-61
+      contact_count: 61
+      contact_size: 20
+      contact_style: pin
+      polarization: N
+      vendor_catalog_candidate: TE Connectivity
+      vendor_product_id: ZPF000000000090288
+  physical_unit_traceability:
+    complete_marking_photo_received: false
+    manufacturer_or_cage_verified: false
+    lot_or_certificate_verified: false
+    pair_matches_selected_catalog_parts: false
+
+official_sources:
+  vendor_product_pages:
+    loose_plug: https://www.te.com/en/product-ZPF000000000017182.html
+    fixed_receptacle: https://www.te.com/en/product-ZPF000000000090288.html
+  vendor_customer_view_step:
+    loose_plug:
+      source_url: "https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocFormat=3d_stp.zip&DocLang=English&DocNm=CVM_ZPF000000000017182&DocType=Customer+View+Model&PartCntxt=ZPF000000000017182"
+      local_archive: artifacts/kcg_connector/keyed_v2/vendor_cad_te_candidate/D38999-26KJ61SN_TE_STEP.zip
+      local_step: artifacts/kcg_connector/keyed_v2/vendor_cad_te_candidate/plug/c-zpf000000000017182-1-3d.stp
+      downloaded_and_opened: true
+    fixed_receptacle:
+      source_url: "https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocFormat=3d_stp.zip&DocLang=English&DocNm=CVM_ZPF000000000090288&DocType=Customer+View+Model&PartCntxt=ZPF000000000090288"
+      local_archive: artifacts/kcg_connector/keyed_v2/vendor_cad_te_candidate/D38999-20KJ61PN_TE_STEP.zip
+      local_step: artifacts/kcg_connector/keyed_v2/vendor_cad_te_candidate/receptacle/c-zpf000000000090288-1-3d.stp
+      downloaded_and_opened: true
+  vendor_customer_view_dxf:
+    loose_plug:
+      local_archive: artifacts/kcg_connector/keyed_v2/vendor_cad_te_candidate/D38999-26KJ61SN_TE_DXF.zip
+      local_dxf: artifacts/kcg_connector/keyed_v2/vendor_cad_te_candidate/plug_dxf/c-zpf000000000017182-1-2d.dxf
+      downloaded_and_opened: true
+    fixed_receptacle:
+      local_archive: artifacts/kcg_connector/keyed_v2/vendor_cad_te_candidate/D38999-20KJ61PN_TE_DXF.zip
+      local_dxf: artifacts/kcg_connector/keyed_v2/vendor_cad_te_candidate/receptacle_dxf/c-zpf000000000090288-1-2d.dxf
+      downloaded_and_opened: true
+  military_interface_sources:
+    connector_family_spec: https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=22497
+    insert_and_keying_standard: https://quicksearch.dla.mil/qaDocDetails.aspx?ident_number=36980
+
+cad_scope_audit:
+  source_kind: vendor_customer_view_external_geometry
+  plug_mating_face_contact_pattern_visible: false
+  receptacle_mating_face_contact_pattern_visible: false
+  dxf_front_views_show_blank_interface_only: true
+  dxf_declares_not_a_controlled_drawing: true
+  exact_25_61_insert_geometry_available: false
+  exact_master_and_secondary_key_geometry_available: false
+  exact_matching_keyway_geometry_available: false
+  sufficient_for_key_region_training: false
+  sufficient_for_keyway_collision: false
+  sufficient_for_unique_keyed_yaw_claim: false
+  license_and_redistribution_boundary_reviewed: false
+  integrity_binding_status: deferred_until_source_freeze_milestone
+
+public_spec_simulation_geometry:
+  source_contract: src/kcg_connector/config/d38999_keyed_public_spec_v2.yaml
+  status: PUBLIC_SPEC_SIMULATION_GEOMETRY_READY
+  exact_25_61_public_standard_coordinates_available: true
+  five_key_n_polarization_public_standard_geometry_available: true
+  matching_keyway_collision_proxy_available: true
+  generated_asset: artifacts/kcg_connector/isaac/keyed_v2_contact_offset_r2/d38999_shell25j_25_61_n_keyed_public_spec_v2.usda
+  generated_asset_revision_note: explicit_10um_contact_offset_zero_rest_offset
+  manufacturer_internal_interface_cad_claimed: false
+  hardware_metrology_claimed: false
+  formal_runtime_registered: false
+
+keying_reference:
+  source: MIL-DTL-38999N_Amendment_2_Figure_6_shell_size_25_polarization_N
+  meaning: public_basic_clocking_and_interface_tolerances_not_measured_hardware_clearance
+  secondary_key_or_keyway_positions_deg_bsc: [80.0, 142.0, 196.0, 293.0]
+  allowable_mating_yaw_clearance_deg: null
+  yaw_p95_acceptance_limit_deg: null
+  yaw_p95_rule: error_p95_must_be_less_than_half_measured_clearance
+  control_allowed_before_clearance_is_known: false
+  public_spec_simulation_profiles:
+    source_contract: src/kcg_connector/config/d38999_keyed_public_spec_v2.yaml
+    nominal_centered_peak_to_peak_deg: 0.8509706248885368
+    tight_size_centered_peak_to_peak_deg: 0.6661267828482448
+    adversarial_gdt_stress_peak_to_peak_deg: 0.060550934851961585
+    default_shadow_p95_strictly_below_deg: 0.030275467425980793
+    stress_profile_is_drawing_specified_clearance: false
+
+side_by_side_model_identity:
+  migration_mode: new_ids_no_in_place_upgrade
+  reserved_keyed_v2_model_ids:
+    loose_plug: d38999_26kj61sn_keyed_proxy_v2
+    fixed_receptacle: d38999_20kj61pn_keyed_proxy_v2
+  existing_v1_model_ids_reused: false
+  existing_v1_assets_modified: false
+  keyed_v2_geometry_created: true
+  keyed_v2_runtime_registered: false
+
+simulation_only_evidence:
+  isolated_palm_key_probe:
+    artifact: artifacts/kcg_connector/d38999_keyed_v2_palm_front_probe_v3/shadow_result.json
+    rendered_five_key_detection_passed: true
+    c2_branch_selected_for_shadow: true
+    control_authorized: false
+  yaw_collision_sweep:
+    artifact: artifacts/kcg_connector/d38999_keyed_v2_yaw_collision_sweep_v5_full/report.json
+    fixed_open_loop_yaw_and_gap_grid: true
+    zero_through_plus_minus_0_35_deg_clear_to_visual_contact_plane: true
+    plus_minus_0_5_and_180_deg_contact_at_keyway_entry: true
+    visual_electrical_contact_plane_margin_m: 0.012
+    coupling_ring_initial_engagement_sequence_evaluated: false
+    electrical_contact_sequence_physics_evaluated: false
+    control_authorized: false
+
+required_to_unblock_real_hardware_fidelity:
+  acceptable_paths:
+    - manufacturer_controlled_internal_interface_cad_for_exact_orderable_parts
+    - traceable_calibrated_scan_or_metrology_of_the_actual_mating_pair
+  still_missing:
+    - physical_unit_complete_marking_and_manufacturer_traceability
+    - exact_25_61_mating_face_geometry
+    - asymmetric_master_and_secondary_key_geometry_on_both_mates
+    - calibrated_object_frame_key_reference_directions
+    - measured_allowable_mating_yaw_clearance
+    - qualified_keyway_collision_geometry
+    - source_license_and_derived_asset_usage_boundary
+
+required_to_unblock_simulation_insertion_control:
+  still_missing:
+    - fixed_and_moving_robot_camera_probe_on_keyed_v2_scene
+    - held_out_synthetic_yaw_p95_gate
+    - occluded_out_of_frame_missing_depth_and_low_confidence_rejection_evidence
+    - coupling_ring_initial_engagement_collision_sequence
+    - physical_pin_socket_or_insert_face_collision_sequence
+    - runtime_truth_firewall
+    - insertion_truth_correction_removed
+
+authorization:
+  shadow_key_region_development_allowed: true
+  public_spec_simulation_keying_modeled: true
+  isolated_simulation_probe_allowed: true
+  unique_key_yaw_claimed: false
+  insertion_control_authorized: false
+  robot_control_authorized: false
+  real_keying_modeled: false
+  real_assembly_success_claimed: false

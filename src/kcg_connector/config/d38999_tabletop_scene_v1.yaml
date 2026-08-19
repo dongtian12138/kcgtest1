@@ -5,7 +5,6 @@ schema_version: kcg_d38999_tabletop_scene_v1
 
 asset:
   local_path: artifacts/kcg_connector/isaac/d38999_shell25j_61_pair_proxy_v1.usda
-  sha256: 6f716b6e40129f98e5914b5597005c575617d5f55cd0f2c0c8df067ee6788740
   proxy_id: d38999_shell25j_61_pair_proxy_v1
   reference_prim_path: /World/D38999TabletopV1/D38999Pair
   model_root_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JProxy

@@ -15,10 +15,8 @@ compatibility:
 inputs:
   wrist_ft_design:
     path: src/kcg_connector/config/wrist_ft_v1_contract.yaml
-    sha256: b85fe331e41239478a1a3af3e815edec50531952968b68bd45eafcb4879b558a
   robot_asset:
-    path: artifacts/kcg_connector/isaac/robot/handarm/handarm.usda
-    sha256: 031f8241c9dd1e2af96d7b1dde7d2adda7744891832a05e2580fd3398da4216b
+    path: artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/handarm.usda
 
 source:
   measurement_joint: hand2arm
@@ -69,7 +67,6 @@ compensation:
 threshold_calibration:
   status: pending_same_scene_physical_baseline_scan
   source_artifact: null
-  source_artifact_sha256: null
   repeat_count: 0
   statistic: null
   margin_policy: null

@@ -6,9 +6,9 @@
 GRASP → PREALIGN → INSERT → ENGAGE → SCREW → HOLD → PASSED
 ```
 
-最终目标仍是用 residual RL，并在更后期加入 VLA 高层技能选择，完成航天级圆形
-电连接器的抓取、对准、插入和旋拧。当前 `v1` 只是可验证的简化物理原型，不代表
-任何航天认证或真实连接器几何精度。
+最终目标仍是用 residual RL，并在更后期加入 VLA 高层技能选择，完成面向航天任务的
+MIL-DTL-38999 类圆形电连接器抓取、对准、插入和旋拧。当前模型不代表航天认证、
+space-grade 等级或制造件几何精度。
 
 ## 最终端到端任务定义
 
@@ -92,22 +92,58 @@ HOME
 明确空隙，固定端通过独立夹具安装，自由端位于相距至少 `0.30 m` 的抓取区并在重力
 下自然落桌。桌面与夹具是静态碰撞体，不再只是视觉背景。
 
-首个具体型号候选为：
+当前 public-spec 仿真身份固定为：
 
 - 自由端：`D38999/26KJ61SN`，straight plug、socket、shell `J/25`、insert `61`、
   N 键位；
 - 固定端：`D38999/20KJ61PN`，wall-mount receptacle、pin、shell `J/25`、insert
   `61`、N 键位。
 
-两者均是 Series III threaded 类型且公母互补。DLA 的公开 `/20H Amendment 1` 和
-`/26G Amendment 4` 规格页保存在
+两者均是 Series III threaded 类型且公母互补；TE 官方目录也能逐项对应这两个完整
+PIN。DLA 的公开 `/20H Amendment 1` 和 `/26G Amendment 4` 规格页保存在
 [`assets/public_specs/mil_dtl_38999`](assets/public_specs/mil_dtl_38999/SOURCE.md)，
-每个文件都有来源 URL、SHA-256、页数和公开发布说明。由于厂商网站许可没有明确允许
-把 STEP 再分发和修改，项目没有下载或转换厂商 CAD，而是从公开规格尺寸生成
-`d38999_shell25j_61_pair_proxy_v1.usda`。它包含 61 个可视 pin/socket、简化法兰、
-可碰撞外壳和独立 revolute coupling nut；螺纹牙、精确 insert、真实质量/惯量、接触
-材料和损伤阈值仍未知，因此只能叫 public-dimensional visual/physics proxy，不能
-声称厂商精确、MIL-DTL qualified 或 space-qualified。
+每个文件都有来源 URL、页数和公开发布说明。现在已把 TE 对应候选料号的官方
+Customer View Model STEP/DXF 下载到本地忽略的 `artifacts` 目录做来源审计；这些文件
+没有纳入仓库，许可和再分发边界也尚未确认。两端 STEP 和 DXF 的正脸都是空白接口，
+DXF 还明确声明并非受控图纸，因此没有 25-61 触点、主/次键或可用键槽碰撞细节，不能
+单独作为 keyed-v2 的内部接口真值。来源和范围审计记录在
+[`d38999_keyed_v2_source_candidate.yaml`](config/d38999_keyed_v2_source_candidate.yaml)。
+
+没有实物时，新的
+[`d38999_keyed_public_spec_v2.yaml`](config/d38999_keyed_public_spec_v2.yaml)
+直接以 MIL-DTL-38999N Amendment 2 的壳体/五键接口尺寸和 MIL-STD-1560C Change 3
+的 25-61 全部坐标建立独立仿真身份：主键为 `0°`，四个副键为
+`80°/142°/196°/293°`，并带匹配键槽碰撞。生成的
+`d38999_shell25j_25_61_n_keyed_public_spec_v2.usda` 与旧 v1 并存，不覆盖旧模型。
+它是可追溯的公开规格仿真模型，不是制造商内部 CAD、实物计量结果或硬件资格记录。
+
+当前 `d38999_shell25j_61_pair_proxy_v1.usda` 仍由公开规格尺寸生成；它包含 61 个可视
+pin/socket、简化法兰、可碰撞外壳和独立 revolute coupling nut，但触点排布和键几何
+不是 25-61 受控模型。螺纹牙、精确 insert、真实质量/惯量、接触材料和损伤阈值仍
+未知，因此只能叫 public-dimensional visual/physics proxy，不能声称厂商精确、
+MIL-DTL qualified 或 space-qualified。
+
+CPU 侧已经有严格拒绝的掌心 RGB-D 五键/主键方向检测器和 C2 两分支选择器；遮挡、
+出画、缺深度、低置信或非 N 五键图样都会拒绝。公开尺寸推导的 yaw 窗口分为 nominal、
+tight-size 和 adversarial-GD&T 三档；最严的 `0.06055°` 是显式工程压力假设，不是军标
+直接给出的实测间隙。当前只允许以它的一半 `0.03028°` 作为仿真 shadow p95 门，仍未
+接入插入控制，旧 v1 仍必须返回 `KEYED_GEOMETRY_UNAVAILABLE`。
+
+当前证据仍分成两段，不能拼成整链通过：旧桌面场景的 `camera_rig_probe_v5` 已验证
+Palm/Wrist 都是 `handbase_link` 的固定子相机，并在 Home 到 pregrasp 的 3072 个采样
+点保持固定外参；独立 keyed-v2 Palm 正脸探针 v3 已在实际渲染 RGB-D 中识别五键并只
+选择 shadow C2 分支。前者看的仍是旧 v1 插头，后者没有移动机器人和 Wrist，因此新的
+keyed-v2 双相机静止/移动探针仍是下一道门。两份报告都保持 `control_authorized=false`。
+
+keyed-v2 r2 的固定开环 yaw 碰撞扫描显示：正确 N 方向以及 `±0.35°` 能越过仿真视觉
+触点面；`±0.5°` 和 `180°` 在键槽入口首次发生键/键槽接触，距视觉触点面代理仍有
+`12 mm`。这只验证公开规格键槽代理的几何顺序；coupling nut/thread 在扫描中被隔离，
+pin/socket 和 insert face 仍是 visual-only，所以不能宣称螺纹初始啮合或真实电触点
+先后顺序已经物理验证，也不能据此开放插入控制。
+
+这里选用的 class K 是不锈钢钝化、防火墙、导电等级，不是 MIL-DTL 中的
+space-grade。若后续目标严格变成航天器真空/低放气资格，应另建 class G/H 或明确的
+space-profile 身份；不能把当前 K 型号改名为 space-qualified。
 
 已经通过的桌面节点如下：
 
@@ -404,16 +440,23 @@ src/kcg_connector/isaac/run_isaac_python.sh \
   src/kcg_connector/isaac/d38999_rgbd_bootstrap_smoke.py
 # 期待：ISAAC D38999 RGBD BOOTSTRAP V1 PASSED
 
-# 已验收 clean headless：同World RGB-D预检→完整代理流程
+# 最小相机安装探针：固定机器人、移动到安全路点并保存 Palm/Wrist 画面，随后早退
 src/kcg_connector/isaac/run_isaac_python.sh \
   src/kcg_connector/isaac/d38999_tabletop_pick_smoke.py \
-  --end-to-end-probe --smooth-demo --pose-preflight masked-rgbd
-# 期待：ISAAC D38999 END TO END V1 PASSED
+  --camera-rig-probe --no-live-telemetry \
+  --output-dir artifacts/kcg_connector/d38999_camera_rig_probe_next
+# 只验证仿真候选固定 T_HC 和视角；不抓取、不插入、不能代替真实手眼标定
 
-# 已验收 GUI：同一流程完整播放后自动关闭
+# 旧版真值/FixedJoint/螺纹代理的 headless 回归；不是视觉或正式装配验收
 src/kcg_connector/isaac/run_isaac_python.sh \
   src/kcg_connector/isaac/d38999_tabletop_pick_smoke.py \
-  --end-to-end-probe --smooth-demo --pose-preflight masked-rgbd --gui
+  --end-to-end-probe --sim-truth-proxy-regression --smooth-demo
+# 期待：ISAAC D38999 SIM GROUND TRUTH PROXY END TO END REGRESSION V1 PASSED
+
+# 同一旧代理回归的 GUI 播放；仍不产生正式装配证据
+src/kcg_connector/isaac/run_isaac_python.sh \
+  src/kcg_connector/isaac/d38999_tabletop_pick_smoke.py \
+  --end-to-end-probe --sim-truth-proxy-regression --smooth-demo --gui
 
 # 可选：只在同一已验收流程结束后保留最终 Home 静态画面
 # 在上条命令末尾追加 --keep-open，查看完后关闭 Isaac 窗口退出。
@@ -572,11 +615,12 @@ src/kcg_connector/isaac/run_isaac_python.sh \
 # 期待：ISAAC VIRTUAL WRIST FT PASSED
 ```
 
-上述桌面物理入口都可追加 `--gui --keep-open`。其中 `--end-to-end-probe` 会显示从
-Home 出发、抓取、对准插入、三段旋拧/回卷重抓、释放和返回 Home 的完整代理动画；
-`--smooth-demo` 只改变上述非接触展示节奏。`--pose-preflight masked-rgbd` 在首个手部/机械臂
-动作前于同一 World/episode 捕获，不 reset World、不写物体 pose，也不接管控制。
-`keep-open` 只保留最终 Home 画面，不会自动重播。RGB-D 产物位于
+上述桌面物理入口都可追加 `--gui --keep-open`。`--insertion-probe` 和
+`--end-to-end-probe` 当前都必须显式追加 `--sim-truth-proxy-regression`，并且只允许
+legacy 抓取；该路径使用物体 pose/contact 真值反馈和 FixedJoint/key/thread 代理，报告
+即使 PASS 也只能算仿真回归。正式抓取、视觉报告和 `masked-rgbd` 视觉预检不能与它
+组合。`--smooth-demo` 只改变旧代理流程的展示节奏，`keep-open` 只保留最终 Home 画面，
+不会自动重播。RGB-D 产物位于
 [`artifacts/kcg_connector/d38999_rgbd_bootstrap_v1`](../../artifacts/kcg_connector/d38999_rgbd_bootstrap_v1/report.json)，
 包含 RGB、semantic/depth preview、原始 depth NumPy 和 JSON 报告。
 
@@ -631,8 +675,9 @@ CUDA build 和 GPU，并校验当前源码/资产/config/curriculum/resolved sta
 
 - 当前使用的是 synthetic `world-prismatic + rack-and-pinion` 螺旋代理，没有真实
   螺纹牙面、间隙、碰撞、乱扣和咬死物理；`cross_thread` 目前只是测量一致性门槛。
-- 配置中的尺寸、质量、摩擦、键位和螺距都是 synthetic curriculum values，必须在
-  取得真实 CAD 和工程数据后替换。
+- 旧 v1 的键位/螺距及质量、摩擦仍是 synthetic；keyed public-spec v2 的壳体接口
+  尺寸、五键 N 图样和 25-61 坐标来自公开军标，但倒角、材料接触、质量/惯量、螺纹
+  和损伤阈值仍是仿真假设，不能当制造件真值。
 - 当前是单 Isaac Sim 环境。SAC actor/critic 在 CUDA 上更新，但还不是 Isaac Lab
   GPU 批量并行训练。
 - `residual-sac-smoke` 的 32-step 更新只证明 `Env → replay → CUDA update →

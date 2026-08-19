@@ -1,0 +1,125 @@
+# Formal-grasp candidate retained behind the physical-r7 release gates.
+# Geometry/FK are screening inputs; A2/A3 dynamics acceptance is still pending.
+schema_version: kcg_d38999_keyed_v2_tabletop_pick_v1
+
+scene:
+  tabletop_config: d38999_keyed_v2_tabletop_scene_v1.yaml
+  # Kept under the legacy field name for API compatibility; this is the
+  # physical-r7 source contract, not the old unkeyed proxy.
+  proxy_config: d38999_keyed_v2_physical_model_contract_v1.yaml
+  robot_asset: artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/handarm.usda
+  robot_root_prim_path: /World/HandArm
+  articulation_prim_path: /World/HandArm/Geometry/world
+  grasp_tcp_prim_path: /World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/grasp_tcp
+
+geometry_candidate:
+  # SUPERVISOR CHECKPOINT A GATE (2026-08-16): keep the nominal XY values
+  # below unchanged until the new keyed-v2 asset revision has frozen visible
+  # 61-socket geometry, mass/COM/inertia assumptions, render evidence, and
+  # semantic/readback acceptance. Only then may zero-random checkpoint B resume.
+  loose_settled_origin_m: [0.520, -0.210, 0.2305]
+  rear_body_radius_m: 0.02220
+  coupling_nut_outer_radius_m: 0.024
+  rear_body_world_z_interval_m: [0.200, 0.21545]
+  coupling_nut_world_z_interval_m: [0.200, 0.2325]
+  grip_local_z_interval_m: [0.42903, 0.44448]
+  handbase_to_tcp_m: 0.400
+  maximum_closed_finger_local_z_m: 0.41760
+  maximum_closure_swept_finger_local_z_m: 0.436673
+  minimum_predicted_terminal_finger_table_clearance_m: 0.010
+  predicted_closure_sweep_table_clearance_m: 0.007807
+  closure_sweep_collision_free: true
+  proposed_clearance_tcp_position_m: [0.520, -0.210, 0.24448]
+  proposed_clearance_arm_rad: [-0.129340616881, 0.415154160813, -0.403066037272, -1.119324443931, 0.159214032504, 1.636235747425, -0.107043622479]
+  proposed_clearance_nominal_table_margin_m: 0.007807
+  proposed_motion_implemented: true
+  screening_source: physical_r7_frozen_blueprint_geometry_only_A2_A3_not_run
+  dynamics_validated: false
+
+robot:
+  arm_joint_names: [iiwa_joint_1, iiwa_joint_2, iiwa_joint_3, iiwa_joint_4, iiwa_joint_5, iiwa_joint_6, iiwa_joint_7]
+  active_hand_joint_names: [f1j1, f1j2, f2j1, f3j2]
+  home_arm_rad: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  open_hand_rad: [1.0, 0.0, 0.0, 0.0]
+  arm_stiffness: 24000.0
+  arm_damping: 400.0
+  hand_stiffness: 25.0
+  hand_damping: 2.0
+
+motion:
+  interpolation: minimum_jerk
+  hand_open_duration_s: 16.0
+  approach_segments:
+    - name: home_to_safe_mid
+      duration_s: 6.2
+      target_arm_rad: [-0.1133152125, 0.2419650715, -0.1716717785, -0.3550775790, 0.0852878585, 0.9833095885, -0.0414886690]
+    - name: safe_mid_to_high_approach
+      duration_s: 3.7
+      target_arm_rad: [-0.1813043400, 0.3871441144, -0.2746748456, -0.5681241264, 0.1364605736, 1.5732953416, -0.0663818704]
+    - name: high_approach_to_pregrasp
+      duration_s: 2.5
+      target_arm_rad: [-0.2266304250, 0.4839301430, -0.3433435570, -0.7101551580, 0.1705757170, 1.9666191770, -0.0829773380]
+  pregrasp_hold_duration_s: 1.0
+  pregrasp_tcp_position_m: [0.520, -0.210, 0.360]
+  grasp_arm_rad: [-0.129340616881, 0.415154160813, -0.403066037272, -1.119324443931, 0.159214032504, 1.636235747425, -0.107043622479]
+  grasp_tcp_position_m: [0.520, -0.210, 0.24448]
+  closure_clearance_arm_rad: [-0.129340616881, 0.415154160813, -0.403066037272, -1.119324443931, 0.159214032504, 1.636235747425, -0.107043622479]
+  closure_clearance_tcp_position_m: [0.520, -0.210, 0.24448]
+  grasp_tcp_down_axis_world: [0.0, 0.0, -1.0]
+  descent_duration_s: 3.0
+  open_tare_duration_s: 0.5
+  grasp_hand_rad: [1.0, 0.765, 0.595, 0.765]
+  closure_duration_s: 3.5
+  closed_seating_duration_s: 1.5
+  preload_duration_s: 0.5
+  lift_duration_s: 3.0
+  final_hold_duration_s: 4.0
+  effort_sample_duration_s: 0.5
+  grip_hand_stiffness: 5.0
+  grip_hand_damping: 1.0
+  grip_static_friction: 1.4
+  grip_dynamic_friction: 1.4
+  grip_restitution: 0.0
+
+sensing:
+  torque_joint_names: [f1j2, f2j1, f3j2]
+  loaded_torque_threshold_nm: 0.020
+  minimum_loaded_channels: 2
+  operational_torque_target_nm: 1.8
+  maximum_absolute_torque_delta_nm: 2.0
+  fingertip_tactile_available: false
+
+acceptance:
+  maximum_grasp_tcp_position_error_m: 0.003
+  maximum_grasp_tcp_axis_error_rad: 0.03490658503988659
+  maximum_arm_tracking_error_rad: 0.020
+  maximum_endpoint_arm_tracking_error_rad: 0.020
+  maximum_joint_limit_violation_rad: 0.020
+  maximum_observed_joint_speed_rad_s: 1.0
+  maximum_final_observable_joint_speed_rad_s: 0.030
+  maximum_final_post_solver_joint_speed_rad_s: 0.050
+  minimum_body_lift_m: 0.080
+  minimum_final_bottom_clearance_m: 0.070
+  maximum_body_tcp_slip_m: 0.005
+  maximum_body_nut_separation_change_m: 0.001
+  maximum_final_hold_displacement_m: 0.002
+  maximum_final_body_observable_linear_speed_m_s: 0.020
+  maximum_final_body_observable_angular_speed_rad_s: 0.200
+  maximum_final_body_post_solver_linear_speed_m_s: 0.020
+  maximum_final_body_post_solver_angular_speed_rad_s: 0.200
+  maximum_fixed_translation_drift_m: 0.000001
+  maximum_fixed_rotation_drift_rad: 0.00001
+  require_zero_preclosure_robot_loose_plug_contacts: true
+  require_zero_robot_table_contacts: true
+  require_zero_robot_fixture_contacts: true
+  require_zero_robot_fixed_endpoint_contacts: true
+  require_zero_final_plug_table_contacts: true
+  require_only_finger_loose_plug_contacts: true
+  require_physical_grip_contact: true
+
+boundaries:
+  attachment_allowed: false
+  object_drive_allowed: false
+  object_pose_writes_after_start_allowed: false
+  collision_planned: false
+  self_collision_verified: false

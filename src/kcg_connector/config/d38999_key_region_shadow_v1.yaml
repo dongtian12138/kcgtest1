@@ -1,0 +1,101 @@
+# Palm-face public-spec keyed-v2 observation contract.  This stage may choose
+# one of two C2 hypotheses for isolated simulation shadow evaluation only; it
+# cannot authorize robot control or upgrade the old unkeyed v1 asset.
+schema_version: kcg_d38999_key_region_shadow_v1
+enabled: false
+isolated_simulation_probe_enabled: true
+status: ISOLATED_PUBLIC_SPEC_SIM_PROBE_PASSED_FORMAL_RUNTIME_NOT_REGISTERED
+threshold_label: SIM_TUNING_ONLY_CANDIDATE
+
+model_identity:
+  source_contract: src/kcg_connector/config/d38999_keyed_public_spec_v2.yaml
+  vendor_cad_scope_audit: src/kcg_connector/config/d38999_keyed_v2_source_candidate.yaml
+  required_model_id: d38999_26kj61sn_keyed_proxy_v2
+  current_c2_proxy_allowed_as_keyed_model: false
+  physical_unit_identity_verified: false
+  public_spec_simulation_key_geometry_available: true
+  generated_asset_available: true
+  manufacturer_internal_key_geometry_available: false
+  real_hardware_key_geometry_available: false
+  cpu_key_detector_baseline_available: true
+  isolated_rendered_probe_passed: true
+  isolated_rendered_probe_artifact: artifacts/kcg_connector/d38999_keyed_v2_palm_front_probe_v3/shadow_result.json
+  key_predictor_trained: false
+
+purpose:
+  input_hypothesis_count: 2
+  output: select_one_c2_branch_for_shadow_only
+  estimate_full_6d_pose: false
+  replace_five_dof_estimator: false
+  insertion_control_consumer_allowed: false
+
+formal_inputs:
+  allowed_fields:
+    - palm_rgb
+    - palm_depth_m
+    - connector_face_mask
+    - key_probability
+    - observation_occlusion_mask
+    - face_center_uv
+    - two_c2_branch_directions_uv
+    - fixed_T_HC_candidate
+    - actual_arm_q_rad
+  forbidden_fields:
+    - semantic_segmentation_truth
+    - object_pose_truth
+    - key_angle_truth
+    - collider_identity
+    - contact_report
+    - registered_truth_xy_m
+
+quality_gates:
+  key_probability_threshold: 0.65
+  minimum_key_pixels: 12
+  minimum_mean_key_probability: 0.72
+  minimum_key_region_fraction_of_face: 0.002
+  maximum_key_region_fraction_of_face: 0.15
+  maximum_secondary_component_mass_ratio: 0.35
+  minimum_valid_key_depth_fraction: 0.80
+  maximum_occluded_key_fraction: 0.10
+  maximum_occluded_face_fraction: 0.10
+  image_border_margin_px: 2
+  minimum_key_radial_distance_px: 5.0
+  maximum_branch_angular_error_rad: 0.4363323129985824
+  minimum_branch_angular_margin_rad: 1.0471975511965976
+  confidence_calibrated: false
+
+required_rejections:
+  - CONNECTOR_FACE_OUT_OF_FRAME
+  - KEY_REGION_OUT_OF_FRAME
+  - KEY_REGION_OCCLUDED
+  - KEY_REGION_OCCLUSION_UNKNOWN
+  - KEY_REGION_DEPTH_MISSING
+  - KEY_REGION_LOW_CONFIDENCE
+  - KEY_DIRECTION_DEGENERATE
+  - KEY_BRANCH_AMBIGUOUS
+  - KEYED_MODEL_ID_UNAVAILABLE
+  - KEYED_GEOMETRY_UNAVAILABLE
+
+accuracy_gate:
+  measured_allowable_mating_yaw_clearance_deg: null
+  required_yaw_error_p95_deg: null
+  rule: yaw_error_p95_must_be_less_than_half_measured_clearance
+  evaluation_dataset_status: NOT_AVAILABLE
+  control_allowed_before_gate_passes: false
+  public_spec_simulation_profile: adversarial_gdt_stress
+  public_spec_peak_to_peak_virtual_yaw_window_deg: 0.060550934851961585
+  public_spec_required_shadow_yaw_error_p95_strictly_below_deg: 0.030275467425980793
+  public_spec_profile_is_measured_hardware_clearance: false
+  public_spec_simulation_evaluation_dataset_status: NOT_AVAILABLE
+  isolated_single_frame_yaw_is_not_p95_evidence: true
+
+authorization:
+  shadow_branch_selection_allowed_after_quality_and_accuracy_gates_pass: true
+  isolated_simulation_probe_allowed: true
+  isolated_simulation_shadow_selection_authorized: false
+  formal_runtime_shadow_selection_registered: false
+  selected_for_control_field_allowed: false
+  covariance_calibration_status: UNVALIDATED
+  pose_valid: false
+  control_authorized: false
+  insertion_control_authorized: false

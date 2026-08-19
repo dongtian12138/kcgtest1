@@ -10,7 +10,9 @@ extrinsics are immutable.  The optimized state is one C2 branch of
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 import math
+from pathlib import Path
 from typing import Any, Mapping
 
 import cv2
@@ -82,6 +84,214 @@ def _cylinder(radius, z0, z1, label, azimuth=240, layers=20):
     normal = np.column_stack((np.cos(aa.ravel()), np.sin(aa.ravel()), np.zeros(aa.size)))
     edge = np.isclose(zz.ravel(), z0) | np.isclose(zz.ravel(), z1)
     return xyz, normal, np.full(len(xyz), label), edge
+
+
+PLUG_REAR_BODY = 5
+SHELL25J_CAD_PROFILE_ID = "d38999_shell25j_c2_visible_cad_v1"
+
+
+@dataclass(frozen=True)
+class Shell25JCadProfile:
+    plug_mating: CadPoints
+    plug_occluders: CadPoints
+    receptacle: CadPoints
+    metadata: dict[str, Any]
+
+
+def shell25j_contact_positions(count=61):
+    """Deterministic 1+6+12+18+24 layout copied from the bound generator."""
+    if count != 61:
+        raise ValueError("Shell25J visual contact layout requires 61 contacts")
+    positions = [(0.0, 0.0)]
+    for ring_index, ring_count in enumerate((6, 12, 18, 24), start=1):
+        radius_fraction = 0.20 * ring_index
+        angular_offset = 0.5 * math.pi / ring_count
+        for index in range(ring_count):
+            angle = 2.0 * math.pi * index / ring_count + angular_offset
+            positions.append(
+                (
+                    radius_fraction * math.cos(angle),
+                    radius_fraction * math.sin(angle),
+                )
+            )
+    return tuple(positions)
+
+
+def _box_points(center, size, rotation_z):
+    center = np.asarray(center, dtype=np.float64)
+    size = np.asarray(size, dtype=np.float64)
+    rotation = Rotation.from_euler("z", rotation_z).as_matrix()
+    half = 0.5 * size
+    x = np.linspace(-half[0], half[0], 4)
+    y = np.linspace(-half[1], half[1], 4)
+    z = np.linspace(-half[2], half[2], 4)
+    xx, yy, zz = np.meshgrid(x, y, z, indexing="ij")
+    local = np.column_stack((xx.ravel(), yy.ravel(), zz.ravel()))
+    world = local @ rotation.T + center
+    normals = []
+    edges = []
+    for point, lx, ly, lz in zip(local, xx.ravel(), yy.ravel(), zz.ravel()):
+        absx, absy, absz = abs(lx), abs(ly), abs(lz)
+        dominant = max((absx, 0), (absy, 1), (absz, 2))[1]
+        normal = np.zeros(3)
+        if dominant == 0:
+            normal[0] = np.sign(lx) if lx != 0 else 0.0
+        elif dominant == 1:
+            normal[1] = np.sign(ly) if ly != 0 else 0.0
+        else:
+            normal[2] = np.sign(lz) if lz != 0 else 0.0
+        normals.append(normal @ rotation.T)
+        edges.append(bool(absx == half[0] or absy == half[1] or absz == half[2]))
+    return world, np.asarray(normals), np.asarray(edges)
+
+
+def _disk_points(radius, z, count_r=3, count_theta=32):
+    xyz = [(0.0, 0.0, z)]
+    normals = [(0.0, 0.0, 1.0)]
+    edges = [False]
+    for ring in range(1, count_r + 1):
+        r = radius * ring / count_r
+        for index in range(count_theta):
+            angle = 2.0 * math.pi * index / count_theta
+            xyz.append((r * math.cos(angle), r * math.sin(angle), z))
+            normals.append((0.0, 0.0, 1.0))
+            edges.append(ring == count_r)
+    return np.asarray(xyz), np.asarray(normals), np.asarray(edges)
+
+
+def _load_shell25j_profile_geometry() -> tuple[Any, dict[str, Any]]:
+    from kcg_connector.d38999_proxy import load_d38999_shell25j_proxy
+
+    package_root = Path(__file__).resolve().parents[1]
+    config_path = package_root / "config/d38999_shell25j_proxy_v1.yaml"
+    config = load_d38999_shell25j_proxy(config_path)
+    metadata = {
+        "profile_id": SHELL25J_CAD_PROFILE_ID,
+        "config_path": str(config_path),
+        "config_sha256": hashlib.sha256(config_path.read_bytes()).hexdigest(),
+        "asset_sha256": hashlib.sha256(
+            (
+                Path(__file__).resolve().parents[3]
+                / "artifacts/kcg_connector/isaac"
+                / "d38999_shell25j_61_pair_proxy_v1.usda"
+            ).read_bytes()
+        ).hexdigest(),
+        "symmetry_order": 2,
+        "mating_shell_segment_count": 20,
+        "socket_count": 61,
+    }
+    return config, metadata
+
+
+def _cylinder_positive_points(radius, z0, z1, label, azimuth=96, layers=4):
+    angle = np.linspace(0.0, 2.0 * math.pi, azimuth, endpoint=False)
+    z = np.linspace(z0, z1, layers)
+    aa, zz = np.meshgrid(angle, z)
+    xyz = np.column_stack((radius * np.cos(aa.ravel()), radius * np.sin(aa.ravel()), zz.ravel()))
+    normal = np.column_stack((np.cos(aa.ravel()), np.sin(aa.ravel()), np.zeros(aa.size)))
+    edge = np.isclose(zz.ravel(), z0) | np.isclose(zz.ravel(), z1)
+    return xyz, normal, np.full(len(xyz), label), edge
+
+
+def shell25j_plug_cad_profile(
+    feature_set: str = "shell_plus_socket",
+) -> Shell25JCadProfile:
+    """Shell25J plug profile from the hash-bound proxy YAML loader.
+
+    All geometry values are read through ``load_d38999_shell25j_proxy`` and
+    therefore change with the bound config rather than silent local constants.
+    Positive-Z mating geometry and positive-Z nut/rear-body occluders follow
+    ``create_d38999_proxy_asset.py``.
+    """
+    config, metadata = _load_shell25j_profile_geometry()
+    plug = config.plug_geometry_m
+    if feature_set not in {"shell_only", "socket_only", "shell_plus_socket"}:
+        raise ValueError(f"unknown feature_set: {feature_set}")
+    parts = []
+    if feature_set in {"shell_only", "shell_plus_socket"}:
+        segment_radius = 0.5 * (
+            plug.mating_shell_inner_radius + plug.mating_shell_outer_radius
+        )
+        radial_size = plug.mating_shell_outer_radius - plug.mating_shell_inner_radius
+        tangential_size = 0.91 * 2.0 * math.pi * segment_radius / 20.0
+        for index in range(20):
+            angle = 2.0 * math.pi * index / 20.0
+            xyz, normal, edge = _box_points(
+                (
+                    segment_radius * math.cos(angle),
+                    segment_radius * math.sin(angle),
+                    0.5 * plug.mating_shell_length,
+                ),
+                (radial_size, tangential_size, plug.mating_shell_length),
+                angle,
+            )
+            parts.append((xyz, normal, np.full(len(xyz), PLUG_MATING), edge))
+    if feature_set in {"socket_only", "shell_plus_socket"}:
+        face_xyz, face_normal, face_edge = _disk_points(
+            plug.contact_face_radius, 0.001, 2, 32
+        )
+        parts.append((face_xyz, face_normal, np.full(len(face_xyz), PLUG_MATING), face_edge))
+        contact_scale = 0.90 * plug.contact_face_radius
+        for x_fraction, y_fraction in shell25j_contact_positions(61):
+            cx = contact_scale * x_fraction
+            cy = contact_scale * y_fraction
+            z = 0.00115
+            theta = np.linspace(0.0, 2.0 * math.pi, 12, endpoint=False)
+            xyz = np.column_stack((cx + plug.contact_visual_radius * np.cos(theta), cy + plug.contact_visual_radius * np.sin(theta), np.full(len(theta), z)))
+            normal = np.column_stack((np.cos(theta), np.sin(theta), np.zeros(len(theta))))
+            parts.append((xyz, normal, np.full(len(xyz), PLUG_MATING), np.ones(len(xyz), dtype=bool)))
+
+    def combine(part_list):
+        return CadPoints(
+            np.concatenate([item[0] for item in part_list], axis=0),
+            np.concatenate([item[1] for item in part_list], axis=0),
+            np.concatenate([item[2] for item in part_list]),
+            np.concatenate([item[3] for item in part_list]),
+        )
+
+    occluder_parts = []
+    nut_radius = 0.5 * (
+        plug.coupling_nut_inner_radius + plug.coupling_nut_outer_radius
+    )
+    nut_radial = plug.coupling_nut_outer_radius - plug.coupling_nut_inner_radius
+    nut_tangential = 0.91 * 2.0 * math.pi * nut_radius / plug.grip_segment_count
+    for index in range(plug.grip_segment_count):
+        angle = 2.0 * math.pi * index / plug.grip_segment_count
+        xyz, normal, edge = _box_points(
+            (
+                nut_radius * math.cos(angle),
+                nut_radius * math.sin(angle),
+                0.5 * plug.overall_length,
+            ),
+            (nut_radial, nut_tangential, plug.coupling_nut_length),
+            angle,
+        )
+        occluder_parts.append((xyz, normal, np.full(len(xyz), PLUG_NUT_BODY), edge))
+    xyz, normal, label, edge = _cylinder_positive_points(
+        plug.rear_body_radius,
+        plug.overall_length - plug.rear_body_length,
+        plug.overall_length,
+        PLUG_REAR_BODY,
+    )
+    occluder_parts.append((xyz, normal, label, edge))
+    _, receptacle_cad = proxy_cad_points()
+    return Shell25JCadProfile(
+        plug_mating=combine(parts),
+        plug_occluders=combine(occluder_parts),
+        receptacle=receptacle_cad,
+        metadata=metadata,
+    )
+
+
+def shell25j_cad_profile_metadata() -> dict[str, Any]:
+    return shell25j_plug_cad_profile().metadata
+
+
+def _legacy_axisymmetric_plug_profile(count=2000) -> CadPoints:
+    xyz, normal, label, edge = _ring(
+        0.01775, 0.005, PLUG_MATING, count=count, normal_z=-1.0
+    )
+    return CadPoints(xyz, normal, label, edge)
 
 
 def proxy_cad_points() -> tuple[CadPoints, CadPoints]:
@@ -441,6 +651,80 @@ def register_relative_pose_multiview(
         "whole_mask_centroid_used": False,
         "c2_yaw_hypothesis_rad": yaw_hypothesis_rad,
         "losses": ["mating_rim_rgb_subpixel_edge", "silhouette_distance_transform", "visible_depth_point_to_plane", "normal", "in_hand_kinematic_prior", "z_buffer_occlusion"],
+    }
+
+
+def group_whitened_observable_covariance(
+    jacobian,
+    residual,
+    group_sizes,
+    *,
+    lambda_cut_ratio: float = 1.0e-9,
+    mad_floor_ratio: float = 1.0e-6,
+) -> dict[str, Any]:
+    """Whiten residual groups, then invert the no-damping ``J^T J`` on its
+    observable subspace.
+
+    This helper is intentionally small and reused by the post-grasp shadow
+    estimator.  It never adds LM damping, never uses a robust-loss Hessian, and
+    never applies an online scalar inflation to the returned covariance.
+    ``lambda_cut_ratio`` and ``mad_floor_ratio`` are SIM_TUNING_ONLY_CANDIDATE
+    numerical thresholds, not authorization gates.
+    """
+    jac = np.asarray(jacobian, dtype=np.float64)
+    res = np.asarray(residual, dtype=np.float64)
+    sizes = tuple(int(value) for value in group_sizes)
+    if res.ndim != 1 or jac.ndim != 2 or jac.shape[0] != res.shape[0]:
+        raise ValueError("jacobian and residual shape mismatch")
+    if sum(sizes) != res.shape[0] or any(value <= 0 for value in sizes):
+        raise ValueError("group_sizes must partition the residual")
+    group_scales = []
+    start = 0
+    for size in sizes:
+        stop = start + size
+        chunk = res[start:stop]
+        median = float(np.median(chunk))
+        mad = float(np.median(np.abs(chunk - median)))
+        scale = 1.4826 * mad
+        scale = max(scale, mad_floor_ratio * max(1.0, float(np.max(np.abs(chunk)) + 1.0)))
+        group_scales.append(scale)
+        start = stop
+    group_scales = np.asarray(group_scales, dtype=np.float64)
+    scales = group_scales
+    if not np.all(np.isfinite(scales)) or np.any(scales <= 0.0):
+        raise ValueError("residual group scales are not finite and positive")
+    group_scale = np.repeat(scales, sizes)
+    rw = res / group_scale
+    jw = jac / group_scale[:, None]
+    hessian = jw.T @ jw
+    if not np.all(np.isfinite(hessian)):
+        raise ValueError("whitened Hessian is non-finite")
+    eigenvalues, eigenvectors = np.linalg.eigh(hessian)
+    eigenvalues = np.clip(eigenvalues, 0.0, None)
+    lambda_cut = lambda_cut_ratio * max(float(np.max(eigenvalues)), 1.0)
+    observable = eigenvalues > lambda_cut
+    rank = int(np.sum(observable))
+    covariance = np.zeros_like(hessian)
+    if rank > 0:
+        vals = eigenvalues[observable]
+        vecs = eigenvectors[:, observable]
+        covariance = (vecs / vals[None, :]) @ vecs.T
+    dof = max(1, res.shape[0] - rank)
+    chi2_dof = float(np.sum(rw ** 2)) / float(dof)
+    return {
+        "residual_group_scales": group_scales.tolist(),
+        "whitened_hessian": hessian.tolist(),
+        "eigenvalues": eigenvalues.tolist(),
+        "eigenvectors": eigenvectors.tolist(),
+        "lambda_cut": float(lambda_cut),
+        "lambda_cut_ratio": float(lambda_cut_ratio),
+        "observable_mask": observable.tolist(),
+        "observable_dofs": rank,
+        "covariance_observable_subspace": covariance.tolist(),
+        "chi2_dof": chi2_dof,
+        "lm_damping_added": False,
+        "robust_loss_used": False,
+        "calibration_status": "UNVALIDATED",
     }
 
 

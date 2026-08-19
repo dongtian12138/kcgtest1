@@ -1,0 +1,157 @@
+# Simulation-only, dual hand-camera mounting probe for the independent
+# public-spec keyed-v2 connector identity.  This contract stops at pregrasp;
+# it cannot authorize grasp, insertion, or any vision-driven robot command.
+schema_version: kcg_d38999_keyed_v2_hand_camera_probe_v1
+enabled: true
+mode: SIMULATION_ONLY_FIXED_HAND_CAMERA_PROBE
+
+assets:
+  robot: artifacts/kcg_connector/isaac/robot/handarm/handarm.usda
+  robot_root_prim: /World/HandArm
+  articulation_prim: /World/HandArm/Geometry/world
+  handbase_prim: /World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link
+  keyed_pair: artifacts/kcg_connector/isaac/keyed_v2_contact_offset_r2/d38999_shell25j_25_61_n_keyed_public_spec_v2.usda
+  keyed_asset_root_prim: /World/D38999Shell25JKeyedPublicSpecV2
+  keyed_reference_prim: /World/KeyedV2HandCameraProbe/KeyedPair
+  keyed_model_id: d38999_26kj61sn_keyed_proxy_v2
+  # The new plug body occupies local z=-40..0 mm.  Placing its mating face at
+  # z=240 mm leaves the rear body on the visual table top at z=200 mm.
+  loose_plug_origin_world_m: [0.520, -0.210, 0.240]
+  fixed_receptacle_origin_world_m: [0.550, 0.185, 0.240]
+
+camera_rig:
+  mount_contract: SIM_VISUAL_MOUNT_CANDIDATE_FIXED_T_HC_V5
+  parent_frame: handbase_link
+  resolution_px: [1280, 720]
+  channels_exactly: [rgb, distance_to_image_plane]
+  focal_length_mm: 24.0
+  horizontal_aperture_mm: 20.955
+  vertical_aperture_mm: 11.7871875
+  clipping_range_m: [0.02, 10.0]
+  camera_cv_axes: [x_right, y_down, z_forward]
+  usd_camera_forward_axis: minus_z
+  palm:
+    prim_suffix: /PalmCamera
+    role: PALM_RGBD_SHADOW_CAPABLE
+    v5_eye_handbase_m: [0.0, 0.0, 0.315]
+    v5_target_handbase_m: [0.0, 0.0, 0.448]
+    # Columns are the CV optical x/y/z axes expressed in handbase.
+    T_HC_cv:
+      - [1.0, 0.0, 0.0, 0.0]
+      - [0.0, 1.0, 0.0, 0.0]
+      - [0.0, 0.0, 1.0, 0.315]
+      - [0.0, 0.0, 0.0, 1.0]
+  wrist:
+    prim_suffix: /WristCamera
+    role: WRIST_LAYOUT_EVIDENCE_ONLY
+    v5_eye_handbase_m: [-0.150, 0.0, 0.060]
+    v5_target_handbase_m: [-0.090, 0.0, 0.480]
+    T_HC_cv:
+      - [0.9899494936611665, 0.0, 0.1414213562373095, -0.150]
+      - [0.0, 1.0, 0.0, 0.0]
+      - [-0.1414213562373095, 0.0, 0.9899494936611665, 0.060]
+      - [0.0, 0.0, 0.0, 1.0]
+
+robot:
+  arm_joint_names: [iiwa_joint_1, iiwa_joint_2, iiwa_joint_3, iiwa_joint_4, iiwa_joint_5, iiwa_joint_6, iiwa_joint_7]
+  active_hand_joint_names: [f1j1, f1j2, f2j1, f3j2]
+  home_arm_rad: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  open_hand_rad: [1.0, 0.0, 0.0, 0.0]
+  arm_stiffness: 24000.0
+  arm_damping: 400.0
+  hand_stiffness: 25.0
+  hand_damping: 2.0
+
+motion:
+  rate_hz: 240
+  interpolation: minimum_jerk
+  stationary_hold_s: 0.25
+  endpoint_hold_s: 0.10
+  hand_open_settle_s: 2.0
+  stationary_repeat_count: 2
+  approach_segments:
+    - name: home_to_safe_mid
+      duration_s: 6.2
+      target_arm_rad: [-0.1133152125, 0.2419650715, -0.1716717785, -0.3550775790, 0.0852878585, 0.9833095885, -0.0414886690]
+    - name: safe_mid_to_high_approach
+      duration_s: 3.7
+      target_arm_rad: [-0.1813043400, 0.3871441144, -0.2746748456, -0.5681241264, 0.1364605736, 1.5732953416, -0.0663818704]
+    - name: high_approach_to_pregrasp
+      duration_s: 2.5
+      target_arm_rad: [-0.2266304250, 0.4839301430, -0.3433435570, -0.7101551580, 0.1705757170, 1.9666191770, -0.0829773380]
+
+episodes:
+  - id: stationary_pregrasp_repeat
+    fresh_stage: true
+    initial_arm_pose: pregrasp
+    motion_kind: DIRECT_INITIALIZATION_THEN_FIXED_HOLD
+    capture_endpoints: [pregrasp_repeat_00, pregrasp_repeat_01]
+    rgbd_quality_required_endpoints: [pregrasp_repeat_00, pregrasp_repeat_01]
+  - id: home_safe_three_segment_to_pregrasp
+    fresh_stage: true
+    initial_arm_pose: home
+    motion_kind: PRECOMMITTED_SAFE_THREE_SEGMENT_TRAJECTORY
+    capture_endpoints: [home, home_to_safe_mid, safe_mid_to_high_approach, high_approach_to_pregrasp]
+    # A rigid hand camera can legitimately see only empty background at Home.
+    # Quality is therefore required at the observation goal, while every
+    # intermediate frame is still saved for human mount/layout review.
+    rgbd_quality_required_endpoints: [high_approach_to_pregrasp]
+
+capture:
+  warmup_frames: 5
+  rt_subframes: 4
+  endpoint_files_exactly: [rgb.png, depth_m.npy, depth_preview.png]
+  palm_shadow_at_pregrasp: true
+  wrist_shadow_allowed: false
+  palm_shadow_occlusion_policy: UNKNOWN_FAIL_CLOSED
+  palm_shadow_expected_rejection_code: KEY_REGION_OCCLUSION_UNKNOWN
+  palm_face_mask_source: CENTRAL_VALID_DEPTH_ROI_IMAGE_ONLY
+  branch_directions_uv: [[1.0, 0.0], [-1.0, 0.0]]
+
+thresholds:
+  maximum_T_HC_translation_residual_m: 0.000001
+  maximum_T_HC_rotation_residual_rad: 0.00001
+  maximum_endpoint_arm_tracking_error_rad: 0.03
+  minimum_rgb_dynamic_range: 8
+  minimum_rgb_standard_deviation: 1.0
+  minimum_valid_depth_pixels: 100
+  minimum_moving_rgb_mean_abs_difference: 1.0
+
+scene:
+  gravity_m_s2: [0.0, 0.0, 0.0]
+  visual_table_center_m: [0.550, 0.0, 0.160]
+  visual_table_size_m: [0.800, 0.900, 0.080]
+  dome_light_intensity: 900.0
+  key_light_intensity: 700.0
+
+directory_contract:
+  default_output: artifacts/kcg_connector/d38999_keyed_v2_hand_camera_probe_v1
+  existing_output_policy: REFUSE_OVERWRITE
+
+truth_firewall:
+  inference_channels_exactly: [rgb, distance_to_image_plane]
+  allowed_observations:
+    - robot_joint_positions_for_endpoint_tracking_audit
+    - handbase_and_camera_transforms_for_T_HC_residual_audit
+  forbidden_observations:
+    - semantic_segmentation_truth
+    - semantic_label_truth
+    - object_pose_truth
+    - keyed_object_transform_readback
+    - contact_report
+    - contact_point_truth
+    - collider_identity
+    - penetration_depth_truth
+    - physx_manifold_truth
+  image_or_truth_feedback_changes_motion: false
+
+authorization:
+  control_authorized: false
+  visual_control_authorized: false
+  insertion_control_authorized: false
+  grasp_authorized: false
+  selected_for_control_allowed: false
+  simulation_only: true
+  real_mount_calibrated: false
+  real_hardware_validated: false
+  viewpoint_human_review_required: true

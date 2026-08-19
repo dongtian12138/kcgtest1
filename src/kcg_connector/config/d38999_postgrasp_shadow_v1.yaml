@@ -1,0 +1,85 @@
+# Post-grasp RGB-D-only shadow capture/estimation contract.
+# Every new numeric value below is SIM_TUNING_ONLY_CANDIDATE and is not a
+# control/authorization gate.  The first implementation keeps all
+# shadow_authorized / control_authorized flags false.
+schema_version: kcg_d38999_postgrasp_shadow_v1
+threshold_label: SIM_TUNING_ONLY_CANDIDATE
+
+formal_inputs:
+  allowed_fields:
+    - view_id
+    - timestamp_utc
+    - rgb
+    - depth
+    - camera_intrinsics
+    - camera_prim_contract
+    - T_HC_fixed_mount_candidate
+    - actual_arm_q_rad
+    - T_WH_from_fk
+  forbidden_fields:
+    - semantic
+    - id_to_labels
+    - registered_truth_xy_m
+    - xy_error_m
+    - world_points_m
+    - object_truth
+    - contact_report
+    - collider_identity
+
+motion:
+  move_duration_s: 2.0
+  settle_duration_s: 0.5
+  per_command_max_joint_delta_rad: 0.05
+  planned_max_joint_inf_rad: 0.05
+  episode_max_joint_inf_rad: 0.20
+  threshold_label: SIM_TUNING_ONLY_CANDIDATE
+
+views:
+  wrist_camera_mount:
+    contract: SIM_VISUAL_MOUNT_CANDIDATE_FIXED_T_HC
+    control_authorized: false
+    # Camera-rig probe v5: move the lens outside the handbase envelope and
+    # keep the optical ray outside the hand until it reaches the work region.
+    eye_handbase_m: [-0.150, 0.0, 0.060]
+    target_handbase_m: [-0.090, 0.0, 0.480]
+  postgrasp_reference: V0
+  postgrasp_inhand_views: [V0, V1]
+  optional_third_view: V2
+  final_preinsert_views: [FINAL_PREINSERT_VIEW, MULTIVIEW_VIEW_1, MULTIVIEW_VIEW_2]
+  predefined_tcp_deltas:
+    V0: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    V1: [0.012, -0.006, -0.030, 0.06981317007977318, -0.17453292519943295, 0.0]
+    V2: [-0.012, 0.006, -0.030, -0.06981317007977318, 0.17453292519943295, 0.0]
+    FINAL_PREINSERT_VIEW: [0.0, 0.0, -0.012, 0.0, 0.0, 0.0]
+    MULTIVIEW_VIEW_1: [0.012, -0.006, -0.030, 0.06981317007977318, -0.17453292519943295, 0.0]
+    MULTIVIEW_VIEW_2: [-0.012, 0.006, -0.030, -0.06981317007977318, 0.17453292519943295, 0.0]
+  candidate_limits:
+    maximum_translation_m: 0.040
+    maximum_rotation_rad: 0.20943951023931953
+    optical_axis_min_deg: 25.0
+    optical_axis_max_deg: 70.0
+    pairwise_optical_axis_min_deg: 20.0
+    minimum_depth_valid_fraction: 0.05
+    minimum_central_depth_fraction: 0.02
+
+snapshot:
+  schema_version: kcg_d38999_postgrasp_snapshot_v1
+  settle_steps: 120
+  physics_rate_hz: 240
+  tail_steps: 60
+  restore_modes:
+    allowed: [ROOT_BODY_JOINT_STATE, NATIVE_ARTICULATION_STATE]
+    forbidden: [LINKED_BODY_POSE_WRITE]
+
+c2:
+  retain_hypotheses: 2
+  averaged: false
+  rz_sensitivity_unobservable: 1.0e-6
+  branch_5dof_consensus: [0.0005, 0.0005, 0.0005, 0.017453292519943295, 0.017453292519943295]
+
+covariance:
+  calibration_status_initial: UNVALIDATED
+  coverage_calibrated: false
+  shadow_authorized: false
+  control_authorized: false
+  lambda_cut_ratio: 1.0e-9

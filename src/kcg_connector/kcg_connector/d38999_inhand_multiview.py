@@ -43,6 +43,42 @@ def relative_delta(reference_pose, view_pose) -> np.ndarray:
     return matrix_pose(np.linalg.inv(pose_matrix(reference_pose)) @ pose_matrix(view_pose))
 
 
+C2_PLUG_FRAME_Z_ACTION_RAD = math.pi
+
+
+def c2_action_pose6(pose6) -> np.ndarray:
+    """Right-multiply a plug-frame pose by ``Rz(pi)`` as a matrix.
+
+    ``scipy`` RPY ``xyz`` means ``R = Rx.Ry.Rz``.  For non-zero Rx/Ry,
+    ``rz + pi`` is not the right action.  Compose the matrices, then convert
+    back to xyz RPY.
+    """
+    value = np.asarray(pose6, dtype=np.float64).copy()
+    if value.shape != (6,):
+        raise ValueError("pose6 must have shape (6,)")
+    matrix = pose_matrix(value)
+    rotation_z_pi = Rotation.from_euler(
+        "z", C2_PLUG_FRAME_Z_ACTION_RAD
+    ).as_matrix()
+    matrix[:3, :3] = matrix[:3, :3] @ rotation_z_pi
+    return matrix_pose(matrix)
+
+
+def c2_action_state12(state12) -> np.ndarray:
+    """C2 action on ``[T_hand_plug(6), T_receptacle_plug(6)]``.
+
+    Both plug-frame transforms are right-multiplied by the same ``Rz(pi)`` as
+    4x4 matrices and then converted back to xyz RPY.  The two branches are two
+    complete transform pairs and are never averaged.
+    """
+    result = np.asarray(state12, dtype=np.float64).copy()
+    if result.shape != (12,):
+        raise ValueError("state12 must have shape (12,)")
+    result[:6] = c2_action_pose6(result[:6])
+    result[6:] = c2_action_pose6(result[6:])
+    return result
+
+
 def camera_from_plug_pose(
     plug_pose_receptacle,
     mount_eye_plug,
@@ -168,4 +204,14 @@ def register_inhand_relative_pose_multiview(
     }
 
 
-__all__ = ["camera_from_plug_pose", "compose_pose", "matrix_pose", "pose_matrix", "register_inhand_relative_pose_multiview", "relative_delta"]
+__all__ = [
+    "C2_PLUG_FRAME_Z_ACTION_RAD",
+    "c2_action_pose6",
+    "c2_action_state12",
+    "camera_from_plug_pose",
+    "compose_pose",
+    "matrix_pose",
+    "pose_matrix",
+    "register_inhand_relative_pose_multiview",
+    "relative_delta",
+]

@@ -1,0 +1,273 @@
+# Frozen simulation-only RGB-D yaw dataset contract for the independent
+# D38999 keyed public-spec v2 identity.  Generation is allowed, but neither a
+# generated dataset nor an offline score can authorize insertion or control.
+schema_version: kcg_d38999_keyed_v2_yaw_dataset_v1
+enabled_for_generation: true
+status: CONTRACT_READY_DATASET_NOT_GENERATED
+
+identity:
+  dataset_id: d38999_keyed_v2_yaw_dataset_v1
+  keyed_model_id: d38999_26kj61sn_keyed_proxy_v2
+  asset: artifacts/kcg_connector/isaac/keyed_v2_contact_offset_r2/d38999_shell25j_25_61_n_keyed_public_spec_v2.usda
+  source_geometry_contract: src/kcg_connector/config/d38999_keyed_public_spec_v2.yaml
+  simulation_only: true
+  real_hardware_data_claimed: false
+
+frozen_schedule:
+  generator: splitmix64_v1
+  order: stable_fisher_yates_v1
+  sample_id_format: "{split}_{index:06d}"
+  yaw_range_deg: [-180.0, 180.0]
+  yaw_upper_bound_exclusive: true
+  yaw_strata: 64
+  yaw_within_stratum_fraction: 0.90
+  dev:
+    sampling_seed_u64: 389992561
+    order_seed_u64: 389992562
+    total: 1024
+    visible_valid:
+      count: 512
+      yaw_strata: 64
+      nuisance_per_stratum: 8
+    must_reject:
+      count: 512
+      categories:
+        KEY_REGION_OCCLUDED: 128
+        CONNECTOR_FACE_OUT_OF_FRAME: 128
+        KEY_REGION_DEPTH_MISSING: 128
+        KEY_REGION_LOW_CONFIDENCE: 128
+  heldout:
+    sampling_seed_u64: 389993071
+    order_seed_u64: 389993072
+    total: 3072
+    used_for_tuning: false
+    visible_valid:
+      count: 2048
+      yaw_strata: 64
+      nuisance_per_stratum: 32
+    must_reject:
+      count: 1024
+      categories:
+        KEY_REGION_OCCLUDED: 256
+        CONNECTOR_FACE_OUT_OF_FRAME: 256
+        KEY_REGION_DEPTH_MISSING: 256
+        KEY_REGION_LOW_CONFIDENCE: 256
+
+nuisance_ranges:
+  camera_axial_distance_m: [0.09, 0.14]
+  lateral_x_m: [-0.006, 0.006]
+  lateral_y_m: [-0.006, 0.006]
+  tilt_x_deg: [-8.0, 8.0]
+  tilt_y_deg: [-8.0, 8.0]
+  key_light_intensity: [500.0, 1400.0]
+  light_color_temperature_k: [3500.0, 7500.0]
+  light_azimuth_deg: [-180.0, 180.0]
+  exposure_ev: [-1.0, 1.0]
+  source: project_simulation_domain_randomization_not_public_spec
+
+reject_injections:
+  KEY_REGION_OCCLUDED:
+    occluded_face_fraction: [0.20, 0.50]
+    implementation: image_derived_face_mask_guided_foreground_occluder
+  CONNECTOR_FACE_OUT_OF_FRAME:
+    camera_framing_shift_fraction: [0.60, 0.85]
+    implementation: camera_aim_shift_independent_of_authored_object_pose
+  KEY_REGION_DEPTH_MISSING:
+    key_region_depth_dropout_fraction: [0.85, 1.00]
+    implementation: image_derived_key_annulus_depth_dropout
+  KEY_REGION_LOW_CONFIDENCE:
+    contrast_scale: [0.02, 0.06]
+    gaussian_blur_radius_px: [3.0, 6.0]
+    implementation: sensor_image_degradation_after_rgb_render
+
+camera:
+  prim_path: /World/KeyedV2YawDatasetCamera
+  render_product_name: D38999KeyedV2YawDatasetProduct
+  resolution_px: [640, 640]
+  focal_length_mm: 24.0
+  horizontal_aperture_mm: 20.955
+  vertical_aperture_mm: 20.955
+  clipping_range_m: [0.02, 1.0]
+  depth_channel: distance_to_image_plane
+  rgb_channel: rgb
+  semantic_annotator_allowed: false
+
+runtime_capture:
+  app_updates_after_annotator_attach: 2
+  replicator_warmup_frames: 4
+  per_sample_render_frames: 1
+  rt_subframes: 2
+  require_exact_resolution: true
+  require_nonempty_rgb: true
+  require_positive_finite_depth: true
+
+runtime_reports:
+  success_filename: generation_report.json
+  failure_filename: generation_failure.json
+  exclusive_create: true
+  report_write_before_app_close: true
+  traceback_on_failure: true
+  app_close_exit_code_success: 0
+  app_close_exit_code_failure: 1
+  preflight_success_generated_samples: 5
+  preflight_success_each_postcondition_count: 1
+  empty_output_directories_are_success: false
+  failure_fields_exactly:
+    - schema_version
+    - status
+    - exception_type
+    - exception_message
+    - generated_samples
+    - selected_mode
+    - selected_split
+    - control_authorized
+    - selected_for_control_allowed
+    - simulation_insertion_control_authorized
+    - robot_control_authorized
+    - hardware_control_authorized
+
+failure_diagnostics:
+  enabled: true
+  allowed_mode: PREFLIGHT_FAILURE_ONLY
+  root: diagnostics
+  sample_directory_format: "{sample_id}"
+  existing_sample_policy: REFUSE_OVERWRITE
+  files_exactly:
+    - rgb.png
+    - depth_m.npy
+    - connector_face_mask.npy
+    - occlusion_mask.npy
+    - diagnostic.json
+  occlusion_unknown_encoding: SCALAR_UNICODE_OCCLUSION_UNKNOWN
+  json_fields_exactly:
+    - expected
+    - observed
+    - face_pixels
+    - face_missing_depth_pixels
+    - valid_depth_pixels
+    - occlusion_pixels
+    - rgb_range
+    - rgb_std
+    - dataset_sample
+    - control
+    - truth_fields_included
+  forbidden_truth_fields:
+    - authored_yaw_deg
+    - authored_pose
+    - authored_light
+    - reject_injection
+    - expected_reject
+    - expected_reject_reason
+
+directory_contract:
+  default_output: artifacts/kcg_connector/d38999_keyed_v2_yaw_dataset_v1
+  existing_output_policy: REFUSE_OVERWRITE
+  inference_root: inference_inputs
+  truth_root: truth
+  split_directories: [dev, heldout]
+  inference_sample_files_exactly:
+    - rgb.png
+    - depth_m.npy
+    - connector_face_mask.npy
+    - occlusion_mask.npy
+    - intrinsics.json
+  connector_face_mask_source: RGB_DEPTH_IMAGE_DERIVED_ONLY
+  occlusion_mask_source: RGB_DEPTH_IMAGE_DERIVED_ONLY
+  occlusion_unknown_encoding: SCALAR_UNICODE_OCCLUSION_UNKNOWN
+  write_requires_pixel_postcondition_match: true
+  truth_record_fields:
+    - schema_version
+    - sample_id
+    - split
+    - authored_yaw_deg
+    - yaw_stratum
+    - authored_pose
+    - authored_light
+    - expected_reject
+    - expected_reject_reason
+    - reject_injection
+
+prediction_api_firewall:
+  allowed_fields_exactly:
+    - rgb
+    - depth_m
+    - connector_face_mask
+    - occlusion_mask
+    - intrinsics
+  forbidden_fields:
+    - semantic_segmentation_truth
+    - semantic_label_truth
+    - object_pose_truth
+    - authored_yaw_deg
+    - authored_pose
+    - authored_light
+    - expected_reject
+    - expected_reject_reason
+    - contact_report
+    - contact_point_truth
+    - collider_identity
+    - penetration_depth_truth
+    - physx_manifold_truth
+  truth_directory_visible_to_prediction_api: false
+  mask_may_use_semantics: false
+  occlusion_mask_may_use_reject_plan_or_truth: false
+  prediction_may_read_sample_id_semantics: false
+
+pixel_postcondition:
+  classes_exactly:
+    - VISIBLE_VALID
+    - KEY_REGION_OCCLUDED
+    - CONNECTOR_FACE_OUT_OF_FRAME
+    - KEY_REGION_DEPTH_MISSING
+    - KEY_REGION_LOW_CONFIDENCE
+  precedence:
+    - KEY_REGION_OCCLUDED
+    - CONNECTOR_FACE_OUT_OF_FRAME
+    - KEY_REGION_DEPTH_MISSING
+    - KEY_REGION_LOW_CONFIDENCE
+    - VISIBLE_VALID
+  classifier_inputs_exactly:
+    - rgb
+    - depth_m
+    - connector_face_mask
+    - occlusion_mask
+    - intrinsics
+  connector_face_mask_semantics: FINAL_RGBD_VISIBLE_CONNECTOR_FACE_EXCLUDES_OCCLUDER
+  occlusion_mask_semantics: FINAL_RGBD_FOREGROUND_OCCLUDER_ONLY_DISJOINT_FROM_FACE
+  missing_depth_support_semantics: RGB_FOREGROUND_INVALID_DEPTH_NO_VALID_DEPTH_IN_3X3
+  missing_depth_3x3_boundary_policy: OUT_OF_IMAGE_TREATED_AS_NO_VALID_DEPTH
+  missing_depth_component_connectivity: 8
+  missing_depth_minimum_component_pixels: 16
+  depth_missing_scope: SUBSTANTIAL_SIMULATED_DROPOUT_DATASET_POSTCONDITION_ONLY
+  refiner_key_centroid_3x3_strict_missing_depth_gate_replaced: false
+  empty_face_policy: ERROR_NO_WRITE
+  occlusion_unknown_policy: ERROR_NO_WRITE
+  expected_class_mismatch_policy: ERROR_NO_WRITE
+  image_border_margin_px: 2
+  minimum_face_pixels: 200
+  minimum_rgb_face_background_contrast: 18.0
+
+preflight:
+  explicit_cli_flag: --preflight
+  source_split: dev
+  deterministic_subset: one_frozen_sample_per_pixel_postcondition
+  required_classes:
+    - VISIBLE_VALID
+    - KEY_REGION_OCCLUDED
+    - CONNECTOR_FACE_OUT_OF_FRAME
+    - KEY_REGION_DEPTH_MISSING
+    - KEY_REGION_LOW_CONFIDENCE
+  default_output: artifacts/kcg_connector/d38999_keyed_v2_yaw_dataset_v1_preflight
+  existing_output_policy: REFUSE_OVERWRITE
+  success_requires_all_postconditions: true
+
+authorization:
+  dataset_generation_allowed: true
+  offline_evaluation_only: true
+  shadow_evidence_possible_after_heldout_gate: true
+  selected_for_control_allowed: false
+  simulation_insertion_control_authorized: false
+  robot_control_authorized: false
+  hardware_control_authorized: false
+  real_hardware_fidelity_claimed: false
+  real_assembly_success_claimed: false

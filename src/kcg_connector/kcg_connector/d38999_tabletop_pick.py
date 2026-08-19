@@ -18,6 +18,27 @@ from typing import Any, Mapping
 import yaml
 
 D38999_PICK_SCHEMA_VERSION = "kcg_d38999_tabletop_pick_v1"
+# FAST_CANDIDATE: identical geometry, IK targets and acceptance gates as
+# v1; only motion.final_hold_duration_s may differ (2.0 s instead of
+# 4.0 s).  The canonical duration tuple below switches on this exact
+# schema string, so a v1 config never silently accepts shortened holds.
+D38999_PICK_SCHEMA_VERSION_V2_FAST = "kcg_d38999_tabletop_pick_v2_fast"
+D38999_PICK_SCHEMA_VERSION_KEYED_V2 = (
+    "kcg_d38999_keyed_v2_tabletop_pick_v1"
+)
+D38999_PICK_SCHEMA_VERSION_KEYED_V2_XYCOMP_CANDIDATE = (
+    "kcg_d38999_keyed_v2_tabletop_pick_xycomp_candidate_v1"
+)
+D38999_PICK_SCHEMA_VERSION_MULTILAYER_GRASP = (
+    "kcg_d38999_multilayer_tabletop_pick_grasp_v1"
+)
+_KEYED_V2_PICK_SCHEMAS = frozenset(
+    (
+        D38999_PICK_SCHEMA_VERSION_KEYED_V2,
+        D38999_PICK_SCHEMA_VERSION_KEYED_V2_XYCOMP_CANDIDATE,
+        D38999_PICK_SCHEMA_VERSION_MULTILAYER_GRASP,
+    )
+)
 DEFAULT_D38999_PICK_CONFIG_PATH = (
     Path(__file__).resolve().parents[1] / "config/d38999_tabletop_pick_v1.yaml"
 )
@@ -38,6 +59,34 @@ EXPECTED_D38999_CLOSURE_CLEARANCE_ARM_RAD = (
     0.160080395004,
     1.646562177393,
     -0.107043622479,
+)
+EXPECTED_D38999_KEYED_V2_GRASP_ARM_RAD = (
+    -0.129340616881,
+    0.415154160813,
+    -0.403066037272,
+    -1.119324443931,
+    0.159214032504,
+    1.636235747425,
+    -0.107043622479,
+)
+EXPECTED_D38999_KEYED_V2_GRASP_TCP_POSITION_M = (
+    0.520,
+    -0.210,
+    0.24448,
+)
+EXPECTED_D38999_KEYED_V2_XYCOMP_GRASP_ARM_RAD = (
+    -0.130492893831,
+    0.416770989849,
+    -0.402233115109,
+    -1.116975714771,
+    0.159495264823,
+    1.636923213041,
+    -0.107043622479,
+)
+EXPECTED_D38999_KEYED_V2_XYCOMP_GRASP_TCP_POSITION_M = (
+    0.520574651334,
+    -0.210265856035,
+    0.24448,
 )
 EXPECTED_TORQUE_JOINT_NAMES = ("f1j2", "f2j1", "f3j2")
 EXPECTED_ARM_JOINT_NAMES = tuple(
@@ -79,7 +128,37 @@ EXPECTED_APPROACH_TARGETS = (
     ),
 )
 _PRIM_PATH_PATTERN = re.compile(r"^/World(?:/[A-Za-z_][A-Za-z0-9_]*)+$")
-_SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+_KEYED_V2_PROFILE_ID = (
+    "d38999_shell25j_25_61_n_keyed_physical_pair_v3"
+)
+_MULTILAYER_GRASP_PROFILE_ID = "D38999_ASSEMBLY_CONTROL_V1"
+_PICK_PROFILE_ALLOWLIST = {
+    D38999_PICK_SCHEMA_VERSION: {
+        "tabletop_config": "d38999_tabletop_scene_v1.yaml",
+        "source_config": "d38999_shell25j_proxy_v1.yaml",
+        "asset_profile_id": "d38999_shell25j_61_pair_proxy_v1",
+    },
+    D38999_PICK_SCHEMA_VERSION_V2_FAST: {
+        "tabletop_config": "d38999_tabletop_scene_v1.yaml",
+        "source_config": "d38999_shell25j_proxy_v1.yaml",
+        "asset_profile_id": "d38999_shell25j_61_pair_proxy_v1",
+    },
+    D38999_PICK_SCHEMA_VERSION_KEYED_V2: {
+        "tabletop_config": "d38999_keyed_v2_tabletop_scene_v1.yaml",
+        "source_config": "d38999_keyed_v2_physical_model_contract_v1.yaml",
+        "asset_profile_id": _KEYED_V2_PROFILE_ID,
+    },
+    D38999_PICK_SCHEMA_VERSION_KEYED_V2_XYCOMP_CANDIDATE: {
+        "tabletop_config": "d38999_keyed_v2_tabletop_scene_v1.yaml",
+        "source_config": "d38999_keyed_v2_physical_model_contract_v1.yaml",
+        "asset_profile_id": _KEYED_V2_PROFILE_ID,
+    },
+    D38999_PICK_SCHEMA_VERSION_MULTILAYER_GRASP: {
+        "tabletop_config": "d38999_multilayer_tabletop_scene_grasp_v1.yaml",
+        "source_config": "d38999_master_model_contract_v1.yaml",
+        "asset_profile_id": _MULTILAYER_GRASP_PROFILE_ID,
+    },
+}
 
 
 def _mapping(value: Any, label: str) -> Mapping[str, Any]:
@@ -167,7 +246,6 @@ class D38999PickScene:
     tabletop_config: str
     proxy_config: str
     robot_asset: str
-    robot_asset_sha256: str
     robot_root_prim_path: str
     articulation_prim_path: str
     grasp_tcp_prim_path: str
@@ -375,23 +453,19 @@ def iiwa14_grasp_tcp_transform(arm_rad: Any):
     return _matrix_multiply(result, _transform((0.0, 0.0, 0.445)))
 
 
-def _load_scene(value: Any) -> D38999PickScene:
+def _load_scene(value: Any, schema_version: str) -> D38999PickScene:
     document = _mapping(value, "scene")
     fields = tuple(D38999PickScene.__dataclass_fields__)
     _exact_keys(document, fields, "scene")
     asset = _text(document["robot_asset"], "scene.robot_asset")
     if Path(asset).is_absolute() or ".." in Path(asset).parts:
         raise ValueError("scene.robot_asset must be repository-relative")
-    digest = _text(document["robot_asset_sha256"], "scene.robot_asset_sha256")
-    if not _SHA256_PATTERN.fullmatch(digest):
-        raise ValueError("scene.robot_asset_sha256 must be lowercase SHA-256")
     result = D38999PickScene(
         tabletop_config=_text(
             document["tabletop_config"], "scene.tabletop_config"
         ),
         proxy_config=_text(document["proxy_config"], "scene.proxy_config"),
         robot_asset=asset,
-        robot_asset_sha256=digest,
         robot_root_prim_path=_prim_path(
             document["robot_root_prim_path"], "scene.robot_root_prim_path"
         ),
@@ -402,20 +476,28 @@ def _load_scene(value: Any) -> D38999PickScene:
             document["grasp_tcp_prim_path"], "scene.grasp_tcp_prim_path"
         ),
     )
-    if result.tabletop_config != "d38999_tabletop_scene_v1.yaml":
-        raise ValueError("scene must use the D38999 tabletop v1")
-    if result.proxy_config != "d38999_shell25j_proxy_v1.yaml":
-        raise ValueError("scene must use the D38999 shell-25/J proxy v1")
-    if (
-        result.robot_asset
-        != "artifacts/kcg_connector/isaac/robot/handarm/handarm.usda"
-    ):
+    profile = _PICK_PROFILE_ALLOWLIST[schema_version]
+    if result.tabletop_config != profile["tabletop_config"]:
+        if schema_version in (
+            D38999_PICK_SCHEMA_VERSION,
+            D38999_PICK_SCHEMA_VERSION_V2_FAST,
+        ):
+            raise ValueError("scene must use the D38999 tabletop v1")
+        raise ValueError("scene tabletop config differs from keyed-v2 profile")
+    if result.proxy_config != profile["source_config"]:
+        if schema_version in (
+            D38999_PICK_SCHEMA_VERSION,
+            D38999_PICK_SCHEMA_VERSION_V2_FAST,
+        ):
+            raise ValueError("scene must use the D38999 shell-25/J proxy v1")
+        raise ValueError("scene source config differs from keyed-v2 profile")
+    expected_robot_asset = (
+        "artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/handarm.usda"
+        if schema_version in _KEYED_V2_PICK_SCHEMAS
+        else "artifacts/kcg_connector/isaac/robot/handarm/handarm.usda"
+    )
+    if result.robot_asset != expected_robot_asset:
         raise ValueError("scene robot asset is not canonical")
-    if (
-        result.robot_asset_sha256
-        != "031f8241c9dd1e2af96d7b1dde7d2adda7744891832a05e2580fd3398da4216b"
-    ):
-        raise ValueError("scene robot asset digest is not canonical")
     expected_root = "/World/HandArm"
     if result.robot_root_prim_path != expected_root:
         raise ValueError("scene robot root is not canonical")
@@ -433,7 +515,9 @@ def _load_scene(value: Any) -> D38999PickScene:
     return result
 
 
-def _load_geometry(value: Any) -> D38999GeometryCandidate:
+def _load_geometry(
+    value: Any, schema_version: str
+) -> D38999GeometryCandidate:
     document = _mapping(value, "geometry_candidate")
     fields = tuple(D38999GeometryCandidate.__dataclass_fields__)
     _exact_keys(document, fields, "geometry_candidate")
@@ -517,36 +601,85 @@ def _load_geometry(value: Any) -> D38999GeometryCandidate:
             "geometry_candidate.dynamics_validated",
         ),
     )
+    keyed_v2 = schema_version in _KEYED_V2_PICK_SCHEMAS
+    xycomp_candidate = (
+        schema_version
+        == D38999_PICK_SCHEMA_VERSION_KEYED_V2_XYCOMP_CANDIDATE
+    )
+    keyed_grasp_position = (
+        EXPECTED_D38999_KEYED_V2_XYCOMP_GRASP_TCP_POSITION_M
+        if xycomp_candidate
+        else EXPECTED_D38999_KEYED_V2_GRASP_TCP_POSITION_M
+    )
+    keyed_grasp_arm = (
+        EXPECTED_D38999_KEYED_V2_XYCOMP_GRASP_ARM_RAD
+        if xycomp_candidate
+        else EXPECTED_D38999_KEYED_V2_GRASP_ARM_RAD
+    )
+    expected_profile_values = (
+        {
+            "loose_settled_origin_m": (0.520, -0.210, 0.2305),
+            "rear_body_radius_m": 0.02220,
+            "coupling_nut_outer_radius_m": 0.024,
+            "rear_body_world_z_interval_m": (0.200, 0.21545),
+            "coupling_nut_world_z_interval_m": (0.200, 0.2325),
+            "grip_local_z_interval_m": (0.42903, 0.44448),
+            "screening_source": (
+                "physical_r7_frozen_blueprint_geometry_only_A2_A3_not_run"
+            ),
+        }
+        if keyed_v2
+        else {
+            "loose_settled_origin_m": (0.520, -0.210, 0.200),
+            "rear_body_radius_m": 0.02215,
+            "coupling_nut_outer_radius_m": 0.024,
+            "rear_body_world_z_interval_m": (0.217, 0.231),
+            "coupling_nut_world_z_interval_m": (0.207, 0.224),
+            "grip_local_z_interval_m": (0.41748, 0.44148),
+            "screening_source": (
+                "iiwa14_urdf_fk_and_checked_in_finger_collision_stl"
+            ),
+        }
+    )
     expected = (
-        result.loose_settled_origin_m == (0.520, -0.210, 0.200)
-        and result.rear_body_radius_m == 0.02215
-        and result.coupling_nut_outer_radius_m == 0.0240
-        and result.rear_body_world_z_interval_m == (0.217, 0.231)
-        and result.coupling_nut_world_z_interval_m == (0.207, 0.224)
-        and result.grip_local_z_interval_m == (0.41748, 0.44148)
+        result.loose_settled_origin_m
+        == expected_profile_values["loose_settled_origin_m"]
+        and result.rear_body_radius_m
+        == expected_profile_values["rear_body_radius_m"]
+        and result.coupling_nut_outer_radius_m
+        == expected_profile_values["coupling_nut_outer_radius_m"]
+        and result.rear_body_world_z_interval_m
+        == expected_profile_values["rear_body_world_z_interval_m"]
+        and result.coupling_nut_world_z_interval_m
+        == expected_profile_values["coupling_nut_world_z_interval_m"]
+        and result.grip_local_z_interval_m
+        == expected_profile_values["grip_local_z_interval_m"]
         and result.handbase_to_tcp_m == 0.400
         and result.maximum_closed_finger_local_z_m == 0.41760
         and result.maximum_closure_swept_finger_local_z_m == 0.436673
         and result.minimum_predicted_terminal_finger_table_clearance_m == 0.010
-        and result.predicted_closure_sweep_table_clearance_m == 0.011807
+        and result.predicted_closure_sweep_table_clearance_m
+        == (0.007807 if keyed_v2 else 0.011807)
         and result.proposed_clearance_tcp_position_m
-        == (0.520, -0.210, 0.24848)
+        == (
+            keyed_grasp_position
+            if keyed_v2
+            else (0.520, -0.210, 0.24848)
+        )
         and result.proposed_clearance_arm_rad
         == (
-            -0.129948040338,
-            0.415863528857,
-            -0.404365705983,
-            -1.108380667037,
-            0.160080395004,
-            1.646562177393,
-            -0.107043622479,
+            keyed_grasp_arm
+            if keyed_v2
+            else EXPECTED_D38999_GRASP_ARM_RAD
         )
-        and result.proposed_clearance_nominal_table_margin_m == 0.011807
+        and result.proposed_clearance_nominal_table_margin_m
+        == (0.007807 if keyed_v2 else 0.011807)
         and result.screening_source
-        == "iiwa14_urdf_fk_and_checked_in_finger_collision_stl"
+        == expected_profile_values["screening_source"]
     )
     if not expected:
-        raise ValueError("geometry candidate is not canonical v1")
+        label = "keyed-v2" if keyed_v2 else "v1"
+        raise ValueError(f"geometry candidate is not canonical {label}")
     if result.dynamics_validated:
         raise ValueError(
             "geometry candidate must not claim dynamics validation"
@@ -616,7 +749,9 @@ def _load_robot(value: Any) -> D38999PickRobot:
     return result
 
 
-def _load_motion(value: Any, robot: D38999PickRobot) -> D38999PickMotion:
+def _load_motion(
+    value: Any, robot: D38999PickRobot, schema_version: str
+) -> D38999PickMotion:
     document = _mapping(value, "motion")
     fields = tuple(D38999PickMotion.__dataclass_fields__)
     _exact_keys(document, fields, "motion")
@@ -733,32 +868,54 @@ def _load_motion(value: Any, robot: D38999PickRobot) -> D38999PickMotion:
         raise ValueError("motion approach durations are not canonical v1")
     if result.pregrasp_tcp_position_m != (0.520, -0.210, 0.360):
         raise ValueError("motion pregrasp TCP is not canonical v1")
-    if result.grasp_arm_rad != EXPECTED_D38999_GRASP_ARM_RAD:
+    keyed_v2 = schema_version in _KEYED_V2_PICK_SCHEMAS
+    xycomp_candidate = (
+        schema_version
+        == D38999_PICK_SCHEMA_VERSION_KEYED_V2_XYCOMP_CANDIDATE
+    )
+    expected_grasp_arm = (
+        (
+            EXPECTED_D38999_KEYED_V2_XYCOMP_GRASP_ARM_RAD
+            if xycomp_candidate
+            else EXPECTED_D38999_KEYED_V2_GRASP_ARM_RAD
+        )
+        if keyed_v2
+        else EXPECTED_D38999_GRASP_ARM_RAD
+    )
+    expected_grasp_position = (
+        (
+            EXPECTED_D38999_KEYED_V2_XYCOMP_GRASP_TCP_POSITION_M
+            if xycomp_candidate
+            else EXPECTED_D38999_KEYED_V2_GRASP_TCP_POSITION_M
+        )
+        if keyed_v2
+        else (0.520, -0.210, 0.24848)
+    )
+    if result.grasp_arm_rad != expected_grasp_arm:
         raise ValueError("motion D38999 grasp IK is not canonical v1")
-    if result.grasp_tcp_position_m != (0.520, -0.210, 0.24848):
+    if result.grasp_tcp_position_m != expected_grasp_position:
         raise ValueError("motion D38999 grasp TCP is not canonical v1")
     if (
         result.closure_clearance_arm_rad
-        != EXPECTED_D38999_CLOSURE_CLEARANCE_ARM_RAD
+        != (
+            EXPECTED_D38999_KEYED_V2_GRASP_ARM_RAD
+            if keyed_v2 and not xycomp_candidate
+            else EXPECTED_D38999_KEYED_V2_XYCOMP_GRASP_ARM_RAD
+            if xycomp_candidate
+            else EXPECTED_D38999_CLOSURE_CLEARANCE_ARM_RAD
+        )
     ):
         raise ValueError("motion closure-clearance IK is not canonical v1")
-    if result.closure_clearance_tcp_position_m != (0.520, -0.210, 0.24848):
+    if result.closure_clearance_tcp_position_m != expected_grasp_position:
         raise ValueError("motion closure-clearance TCP is not canonical v1")
     if result.grasp_tcp_down_axis_world != (0.0, 0.0, -1.0):
         raise ValueError("motion grasp TCP axis must point down")
     if result.grasp_hand_rad != (1.0, 0.765, 0.595, 0.765):
         raise ValueError("motion D38999 hand target is not canonical v1")
     expected_durations = (
-        16.0,
-        1.0,
-        3.0,
-        0.5,
-        3.5,
-        1.5,
-        0.5,
-        3.0,
-        4.0,
-        0.5,
+        (16.0, 1.0, 3.0, 0.5, 3.5, 1.5, 0.5, 3.0, 2.0, 0.5)
+        if schema_version == D38999_PICK_SCHEMA_VERSION_V2_FAST
+        else (16.0, 1.0, 3.0, 0.5, 3.5, 1.5, 0.5, 3.0, 4.0, 0.5)
     )
     if (
         tuple(getattr(result, name) for name in duration_names)
@@ -1062,15 +1219,18 @@ def load_d38999_tabletop_pick_config(
         "boundaries",
     )
     _exact_keys(document, fields, "D38999 pick config")
-    if document["schema_version"] != D38999_PICK_SCHEMA_VERSION:
+    schema_version = document["schema_version"]
+    if schema_version not in _PICK_PROFILE_ALLOWLIST:
         raise ValueError("unsupported D38999 tabletop pick schema")
     robot = _load_robot(document["robot"])
     result = D38999TabletopPickConfig(
-        schema_version=D38999_PICK_SCHEMA_VERSION,
-        scene=_load_scene(document["scene"]),
-        geometry_candidate=_load_geometry(document["geometry_candidate"]),
+        schema_version=schema_version,
+        scene=_load_scene(document["scene"], schema_version),
+        geometry_candidate=_load_geometry(
+            document["geometry_candidate"], schema_version
+        ),
         robot=robot,
-        motion=_load_motion(document["motion"], robot),
+        motion=_load_motion(document["motion"], robot, schema_version),
         sensing=_load_sensing(document["sensing"]),
         acceptance=_load_acceptance(document["acceptance"]),
         boundaries=_load_boundaries(document["boundaries"]),
@@ -1085,9 +1245,8 @@ def verify_d38999_pick_dependencies(
     config_path: Path | str = DEFAULT_D38999_PICK_CONFIG_PATH,
     repository_root: Path | str | None = None,
 ) -> dict[str, Any]:
-    """Hash-pin and cross-check every local dependency before Isaac starts."""
+    """Cross-check the allowlisted local dependencies before Isaac starts."""
 
-    from .d38999_proxy import load_d38999_shell25j_proxy
     from .d38999_tabletop_scene import (
         load_d38999_tabletop_scene,
         verify_d38999_tabletop_asset,
@@ -1100,9 +1259,11 @@ def verify_d38999_pick_dependencies(
         else path.parents[3]
     )
     tabletop_path = path.parent / config.scene.tabletop_config
-    proxy_path = path.parent / config.scene.proxy_config
+    source_path = path.parent / config.scene.proxy_config
     tabletop = load_d38999_tabletop_scene(tabletop_path)
-    proxy = load_d38999_shell25j_proxy(proxy_path)
+    expected_profile = _PICK_PROFILE_ALLOWLIST[config.schema_version]
+    if tabletop.asset_profile.profile_id != expected_profile["asset_profile_id"]:
+        raise ValueError("pick and tabletop asset profiles differ")
     d38999_asset = verify_d38999_tabletop_asset(tabletop, repository)
     robot_asset = (repository / config.scene.robot_asset).resolve()
     try:
@@ -1111,35 +1272,112 @@ def verify_d38999_pick_dependencies(
         raise ValueError("robot asset escapes repository") from error
     if not robot_asset.is_file():
         raise ValueError("robot asset is missing")
-    robot_digest = (
-        __import__("hashlib").sha256(robot_asset.read_bytes()).hexdigest()
-    )
-    if robot_digest != config.scene.robot_asset_sha256:
-        raise ValueError("robot asset SHA-256 mismatch")
     candidate = config.geometry_candidate
-    if proxy.identity.proxy_id != tabletop.asset.proxy_id:
-        raise ValueError("D38999 proxy identity differs from tabletop asset")
-    if (
-        candidate.rear_body_radius_m != proxy.plug_geometry_m.rear_body_radius
-        or candidate.coupling_nut_outer_radius_m
-        != proxy.plug_geometry_m.coupling_nut_outer_radius
-    ):
-        raise ValueError("pick geometry differs from D38999 proxy contract")
+    source_key = "proxy"
+    if config.schema_version == D38999_PICK_SCHEMA_VERSION_MULTILAYER_GRASP:
+        source_model = _mapping(
+            yaml.safe_load(source_path.read_text(encoding="utf-8")),
+            "multilayer master model contract",
+        )
+        if (
+            source_model.get("schema_version")
+            != "kcg_d38999_master_model_contract_v1"
+            or source_model.get("status") != "FROZEN_FOR_MULTILAYER_V1"
+            or tabletop.asset.proxy_id != _MULTILAYER_GRASP_PROFILE_ID
+        ):
+            raise ValueError(
+                "multilayer master identity differs from tabletop"
+            )
+        expected_rear_radius = 0.02220
+        expected_nut_radius = 0.024
+        if not math.isclose(
+            candidate.rear_body_radius_m,
+            expected_rear_radius,
+            rel_tol=0.0,
+            abs_tol=1.0e-12,
+        ):
+            raise ValueError("pick rear body differs from multilayer authority")
+        if not math.isclose(
+            candidate.coupling_nut_outer_radius_m,
+            expected_nut_radius,
+            rel_tol=0.0,
+            abs_tol=1.0e-12,
+        ):
+            raise ValueError("pick coupling nut differs from human authority")
+        source_key = "source_model"
+    elif config.schema_version in _KEYED_V2_PICK_SCHEMAS:
+        from .d38999_keyed_v2_physical_model_contract import (
+            load_physical_model_contract,
+        )
+
+        source_model = load_physical_model_contract(source_path)
+        physical_pair_model_id = source_model.document["identity"][
+            "pair_model_id"
+        ]
+        if (
+            physical_pair_model_id != _KEYED_V2_PROFILE_ID
+            or tabletop.asset.proxy_id != physical_pair_model_id
+        ):
+            raise ValueError("keyed-v2 source identity differs from tabletop")
+        shells_and_keying = source_model.document[
+            "a2_collision_authoring_blueprint"
+        ]["connector_shells_and_keying"]
+        rear_bands = shells_and_keying["body_assembly_rear_body"][
+            "local_z_profile_bands"
+        ]
+        expected_rear_radius = max(
+            float(band["outer_radius_m"]) for band in rear_bands
+        )
+        expected_nut_radius = float(
+            shells_and_keying["coupling_nut"][
+                "public_outer_radius_max_selected_as_proxy_m"
+            ]
+        )
+        if not math.isclose(
+            candidate.rear_body_radius_m,
+            expected_rear_radius,
+            rel_tol=0.0,
+            abs_tol=1.0e-12,
+        ):
+            raise ValueError("pick rear body differs from frozen physical r7")
+        if not math.isclose(
+            candidate.coupling_nut_outer_radius_m,
+            expected_nut_radius,
+            rel_tol=0.0,
+            abs_tol=1.0e-12,
+        ):
+            raise ValueError(
+                "pick coupling nut differs from frozen physical r7"
+            )
+        source_key = "source_model"
+    else:
+        from .d38999_proxy import load_d38999_shell25j_proxy
+
+        source_model = load_d38999_shell25j_proxy(source_path)
+        if source_model.identity.proxy_id != tabletop.asset.proxy_id:
+            raise ValueError("D38999 proxy identity differs from tabletop asset")
+        if (
+            candidate.rear_body_radius_m
+            != source_model.plug_geometry_m.rear_body_radius
+            or candidate.coupling_nut_outer_radius_m
+            != source_model.plug_geometry_m.coupling_nut_outer_radius
+        ):
+            raise ValueError("pick geometry differs from D38999 proxy contract")
     if candidate.loose_settled_origin_m[:2] != (
         tabletop.loose_endpoint.initial_origin_m[:2]
     ):
         raise ValueError("pick XY center differs from D38999 tabletop")
     if not math.isclose(
         candidate.loose_settled_origin_m[2],
-        tabletop.table.top_z_m,
+        tabletop.loose_settled_origin_m[2],
         abs_tol=1.0e-12,
     ):
-        raise ValueError("pick settled origin differs from tabletop surface")
+        raise ValueError("pick settled origin differs from tabletop profile")
     result = {
         "d38999_asset": d38999_asset,
-        "proxy": proxy,
         "robot_asset": robot_asset,
         "tabletop": tabletop,
+        source_key: source_model,
     }
     return result
 
@@ -1147,6 +1385,9 @@ def verify_d38999_pick_dependencies(
 __all__ = [
     "DEFAULT_D38999_PICK_CONFIG_PATH",
     "D38999_PICK_SCHEMA_VERSION",
+    "D38999_PICK_SCHEMA_VERSION_KEYED_V2",
+    "D38999_PICK_SCHEMA_VERSION_KEYED_V2_XYCOMP_CANDIDATE",
+    "D38999_PICK_SCHEMA_VERSION_MULTILAYER_GRASP",
     "D38999TabletopPickConfig",
     "EXPECTED_D38999_CLOSURE_CLEARANCE_ARM_RAD",
     "EXPECTED_D38999_GRASP_ARM_RAD",

@@ -1,0 +1,38 @@
+[package]
+title = "D38999 CPU physics-only diagnostic"
+description = "Minimal no-render USD and PhysX experience for local model probes"
+version = "0.1.0"
+support_level = "Sample"
+
+[dependencies]
+"isaacsim.core.api" = {}
+"omni.usd" = {}
+"omni.physics" = {}
+"omni.physics.physx" = {}
+"omni.physics.stageupdate" = {}
+"omni.kit.loop-isaac" = {}
+"omni.kit.usd.layers" = {}
+
+[settings]
+renderer.enabled = ""
+renderer.active = ""
+app.vulkan = false
+app.content.emptyStageOnStart = true
+app.settings.persistent = false
+app.useFabricSceneDelegate = false
+app.fastShutdown = true
+app.file.ignoreUnsavedStage = true
+app.extensions.registryEnabled = false
+app.extensions.registryCacheFull = "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/extscache"
+app.runLoops.main.manualModeEnabled = true
+app.runLoops.main.rateLimitEnabled = false
+exts."omni.kit.registry.nucleus".cachePath = "/tmp/kcg-isaac-cpu-only-extension-cache"
+persistent.app.newStage.templatePath = ["/tmp/kcg-isaac-cpu-only-new-stage"]
+
+[settings.app.exts.folders]
+'++' = [
+    "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/apps",
+    "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/exts",
+    "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/extscache",
+    "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/extsDeprecated",
+]
