@@ -16439,9 +16439,13 @@ def main():
             if lift_x_admittance.enabled:
                 metrics["lift_x_force_admittance"] = {
                     "status": (
-                        "FAILED_CLOSED"
-                        if formal_lift_failure is not None
-                        else "STAGED_LIFT_COMPLETED"
+                        "SUPERSEDED_BY_B_V3_AFTER_H23_STABILITY_WINDOW"
+                        if moment_support_controller is not None
+                        else (
+                            "FAILED_CLOSED"
+                            if formal_lift_failure is not None
+                            else "STAGED_LIFT_COMPLETED"
+                        )
                     ),
                     "threshold_label": lift_x_admittance.threshold_label,
                     "source_run_id": lift_x_admittance.source_run_id,
@@ -16531,6 +16535,89 @@ def main():
                     "post_physics_object_pose_writes": 0,
                     "formal_b_pass_claimed": False,
                 }
+            if moment_support_controller is not None:
+                b_v3_summary = moment_support_controller.summary()
+                h17_b_v3_end_summary = (
+                    lift_finger_absolute_controller.summary()
+                )
+                h17_b_v3_end_record_count = int(
+                    h17_b_v3_end_summary["record_count"]
+                )
+                h17_b_v3_end_cumulative_rad = [
+                    float(value)
+                    for value in h17_b_v3_end_summary[
+                        "final_cumulative_trim_rad"
+                    ]
+                ]
+                metrics["moment_constrained_support_transfer"] = {
+                    "status": (
+                        "FAILED_CLOSED"
+                        if formal_lift_failure is not None
+                        else "STAGED_LIFT_COMPLETED"
+                    ),
+                    "task_id": moment_support_config.task_id,
+                    "threshold_label": moment_support_config.threshold_label,
+                    "config_path": str(moment_support_config_path),
+                    "evidence_bindings": list(
+                        moment_support_evidence_bindings
+                    ),
+                    **b_v3_summary,
+                    "h23_handoff_targets_rad": list(
+                        moment_support_base_targets_rad
+                    ),
+                    "h17_record_count_at_activation": (
+                        moment_support_h17_record_count_at_activation
+                    ),
+                    "h17_record_count_at_end": h17_b_v3_end_record_count,
+                    "h17_target_update_call_count_after_activation": (
+                        h17_b_v3_end_record_count
+                        - moment_support_h17_record_count_at_activation
+                    ),
+                    "h17_cumulative_closure_at_activation_rad": list(
+                        moment_support_h17_cumulative_at_activation_rad
+                    ),
+                    "h17_cumulative_closure_at_end_rad": (
+                        h17_b_v3_end_cumulative_rad
+                    ),
+                    "h17_cumulative_closure_change_after_activation_rad": [
+                        end - start
+                        for start, end in zip(
+                            moment_support_h17_cumulative_at_activation_rad,
+                            h17_b_v3_end_cumulative_rad,
+                        )
+                    ],
+                    "records_completed": len(moment_support_records),
+                    "all_inputs_immediately_preceding": all(
+                        record["input_is_immediately_preceding_sample"]
+                        for record in moment_support_records
+                    ),
+                    "all_raw_gate_samples_unfiltered": all(
+                        not record["raw_hard_gate_sample_filtered"]
+                        for record in moment_support_records
+                    ),
+                    "all_h17_target_updates_disabled": all(
+                        not record["h17_target_updated"]
+                        for record in moment_support_records
+                    ),
+                    "all_h24_filter_use_disabled": all(
+                        not record["h24_filter_used"]
+                        for record in moment_support_records
+                    ),
+                    "task_force_input_frame": "robot_fk_grasp_tcp_frame",
+                    "task_force_input_axes": ["x", "y"],
+                    "moment_input_frame": (
+                        "handbase_link_canonical_sensor_frame"
+                    ),
+                    "moment_input_axes": ["x", "y"],
+                    "raw_sensor_hard_gate_unchanged": True,
+                    "raw_hard_gate_detection_delay_steps": 0,
+                    "object_truth_used": False,
+                    "contact_truth_used": False,
+                    "contact_normal_used": False,
+                    "event_truth_used": False,
+                    "post_physics_object_pose_writes": 0,
+                    "formal_b_pass_claimed": False,
+                }
             if lift_finger_fixed_target_controller is not None:
                 h25_summary = lift_finger_fixed_target_controller.summary()
                 h17_h25_end_summary = (
@@ -16615,12 +16702,16 @@ def main():
                 )
                 metrics["lift_finger_absolute_load_hold"] = {
                     "status": (
-                        "SUPERSEDED_BY_H25_AFTER_H23_STABILITY_WINDOW"
-                        if lift_finger_fixed_target_config.enabled
+                        "SUPERSEDED_BY_B_V3_AFTER_H23_STABILITY_WINDOW"
+                        if moment_support_controller is not None
                         else (
-                            "FAILED_CLOSED"
-                            if formal_lift_failure is not None
-                            else "STAGED_LIFT_COMPLETED"
+                            "SUPERSEDED_BY_H25_AFTER_H23_STABILITY_WINDOW"
+                            if lift_finger_fixed_target_config.enabled
+                            else (
+                                "FAILED_CLOSED"
+                                if formal_lift_failure is not None
+                                else "STAGED_LIFT_COMPLETED"
+                            )
                         )
                     ),
                     "threshold_label": (
