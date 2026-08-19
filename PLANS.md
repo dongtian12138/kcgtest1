@@ -10,4 +10,5 @@
 - `artifacts/agent_control/MASTER_STATE.json`
 
 2026-08-19 清理前的旧 `TASK-R12-MULTILAYER` 计划原文保存在
-`docs/archive/TASK_R12_MULTILAYER_PLAN_legacy.md`，仅供历史追溯，不构成运行授权。
+`legacy_archive/outdated_docs/TASK_R12_MULTILAYER_PLAN_legacy.md`，仅供历史追溯，
+不构成运行授权。

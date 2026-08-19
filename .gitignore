@@ -12,6 +12,6 @@ log_verify/
 log_verify_isaac/
 bootstrap.log
 
-# ros1 原工程的 catkin 编译产物
-ros1_original/kcgtest1/build/
-ros1_original/kcgtest1/devel/
+# 统一归档区内 ROS 1 原工程的 Catkin 编译产物
+legacy_archive/ros1_original/kcgtest1/build/
+legacy_archive/ros1_original/kcgtest1/devel/

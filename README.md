@@ -30,8 +30,7 @@ D38999 类电连接器的识别、抓取、对准、插入、锁紧和回到 Hom
 | `src/kcg_rl/` | 早期 residual RL 实验 | 非当前动态主线 |
 | `tools/agent_control/` | 受控验证与证据工具 | 运维工具 |
 | `artifacts/` | 模型、运行日志、报告与冻结证据 | 数据区，不是源码区 |
-| `ros1_original/` | 原 ROS 1 工程 | 只读迁移来源 |
-| `docs/archive/` | 清理前的旧说明和交接文本 | 历史，不代表当前状态 |
+| `legacy_archive/` | 旧源码、文档、实验脚本和 ROS 1 工程 | 统一历史归档，不参加当前运行 |
 
 ## 构建与纯 CPU 检查
 

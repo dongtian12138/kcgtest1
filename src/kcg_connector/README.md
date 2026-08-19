@@ -52,4 +52,4 @@ PYTHONPATH=src/kcg_connector python3 -m pytest -q src/kcg_connector/test
 - 冻结模型、失败证据和历史运行均保存在 `artifacts/`，不随普通源码清理移动。
 
 清理前的长版阶段记录已原样保存为
-[`../../docs/archive/KCG_CONNECTOR_README_before_cleanup_20260819.md`](../../docs/archive/KCG_CONNECTOR_README_before_cleanup_20260819.md)。
+[`../../legacy_archive/outdated_docs/KCG_CONNECTOR_README_before_cleanup_20260819.md`](../../legacy_archive/outdated_docs/KCG_CONNECTOR_README_before_cleanup_20260819.md)。

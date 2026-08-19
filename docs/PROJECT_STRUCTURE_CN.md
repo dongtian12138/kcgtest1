@@ -27,10 +27,10 @@
 
 ## 历史与数据
 
-- `ros1_original/`：迁移来源，只读保留，不参加 ROS 2 构建。
 - `artifacts/agent_control/`：当前任务、状态、队列、门和不可覆盖历史。
 - `artifacts/kcg_connector/`：模型、轨迹、图像、运行日志、报告和交付包。
-- `docs/archive/`：过去 README、计划和交接说明；用于追溯，不用于判断当前状态。
+- `legacy_archive/`：统一保存退出主线的源码、旧文档、旧实验脚本和 ROS 1 迁移来源；
+  整棵目录不参加当前构建、默认测试或运行。
 
 ## 工具
 
