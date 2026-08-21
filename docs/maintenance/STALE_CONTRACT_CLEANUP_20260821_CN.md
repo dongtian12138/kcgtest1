@@ -52,7 +52,8 @@
 ## 第二轮回归与路径结论
 
 - 非 CARTS 套件：`2494 passed in 100.42s`；前后摘要唯一变化是被该套件明确排除的并发 CARTS 受力模块，没有用排除新失败、放宽断言或伪造摘要获得通过。
-- CARTS 套件：`437 passed in 414.35s`；`selected_candidate=null`、`NOT_CERTIFIABLE`、`dynamic_launch_allowed=false` 和三项冻结阻断保持不变。
+- 清理提交后的受控 CARTS 集成检查点为 `259de95`：接触范围受力根域审计已接入，但仍不计算受力裕度。最终套件 `455 passed in 416.35s`，测试前后 SHA-256 清单一致。
+- `selected_candidate=null`、碰撞/受力 `NOT_CERTIFIABLE`、`dynamic_launch_allowed=false` 和三项冻结阻断保持不变。
 - 活动源码不存在 `/home/noob/...` 运行时绑定。J599 已接受报告、生成资产和恢复示例中的绝对路径是来源记录，保留不改写，也不进入在线控制。
 - Python/pytest 缓存属于可重建数据；`.venv`、`build/install/log` 可能承载本机环境，未经单独审计没有批量删除。
 - 第二轮完成标签为 `post-deep-cleanup-20260821`；该标签与 Git 历史用于恢复退役文件，不代表动态验收通过。
