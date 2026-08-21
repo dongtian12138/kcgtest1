@@ -1,0 +1,124 @@
+{
+  "schema_version": "j599_25_35_final_validation_summary_v1",
+  "created_at_utc": "2026-08-20T13:26:36Z",
+  "task_id": "J599-25-35-CONNECTOR-ONLY-MODEL-AND-ISAAC-ASSEMBLY",
+  "status": "DYNAMIC_PASS",
+  "passed": true,
+  "identity": {
+    "plug_part_number": "J599/26FJ35PN",
+    "receptacle_part_number": "J599/20FJ35SN",
+    "shell_size": 25,
+    "insert_arrangement": "25-35",
+    "contact_count": 128,
+    "contact_size": "22D",
+    "polarization": "N",
+    "manufacturer": "UNKNOWN"
+  },
+  "runtime": {
+    "isaac_sim_package_version": "6.0.1.0",
+    "physics_hz": 240,
+    "gpu": "NVIDIA GeForce RTX 5070 Ti",
+    "operating_system": "Ubuntu 22.04.5 LTS"
+  },
+  "accepted_assets": {
+    "visual_usda": {
+      "path": "generated/j599_25_35_pair_visual.usda",
+      "sha256": "799c811c1946b858f080d678542beceea33352ef9a116dcea8eec9c47b8a7062"
+    },
+    "assembly_usda": {
+      "path": "generated/j599_25_35_pair_assembly.usda",
+      "sha256": "4c3a8de808810f17f0191f7490feac2146950262a5e84aa2f4755469841386c1"
+    },
+    "assembly_usdc": {
+      "path": "generated/j599_25_35_pair_assembly.usdc",
+      "sha256": "761316f993e10dd8c5cd8034f34e35db1d28867bf634e5e6a2f9dc0d52f7431f"
+    }
+  },
+  "lineage": {
+    "model_contract_sha256": "d12ebb66db49a36975a92aded7c5b4e6a3cfd551203853c38212373f0f85ade0",
+    "contact_table_sha256": "a95406d9f97b57bf908ea0a362f78d13ffdedf93c214c4e4232c59d5d47ce246",
+    "accepted_dynamic_runner_sha256": "ae7fdb506f5a749a6d90e1b791b9f00250d9b06630e74b04ebb623e94bf11f08",
+    "nominal_and_wrong_key_runner_match": true,
+    "assembly_asset_unchanged_during_both_accepted_runs": true
+  },
+  "static_validation": {
+    "report": "evidence/static_validation.json",
+    "status": "STATIC_PASS",
+    "passed": true,
+    "contact_table_count": 128,
+    "plug_pin_count": 128,
+    "receptacle_socket_count": 128,
+    "key_count": 5,
+    "keyway_count": 5,
+    "collision_prim_count": 343,
+    "contact_collision_api_count": 0,
+    "robot_or_hand_prim_count": 0
+  },
+  "nominal_threaded_assembly": {
+    "report": "evidence/isaac_nominal_run_07/report.json",
+    "status": "DYNAMIC_PASS",
+    "passed": true,
+    "all_gates_true": true,
+    "initial_yaw_deg": 0.0,
+    "axial_travel_m": 0.007996280677616596,
+    "final_face_error_m": 0.0000037206336855888367,
+    "relative_nut_angle_deg": 379.6784976177912,
+    "thread_relation_error_m": 0.000040247521959984114,
+    "hold_drift_m": 0.00002135336399078369,
+    "metal_stop_contact_sample_count": 14544,
+    "wrong_key_contact_sample_count": 0,
+    "maximum_hard_penetration_m": 3.7834979593753815e-9,
+    "maximum_equivalent_contact_force_n": 0.7539217919111252,
+    "drive_max_torque_nm": 0.0095,
+    "maximum_thread_equivalent_axial_force_n": 7.833367508950928,
+    "post_start_object_pose_write_count": 0,
+    "solver_error_count": 0,
+    "physicsusd_error_count": 0
+  },
+  "wrong_key_collision_block": {
+    "report": "evidence/isaac_wrong_key_run_03/report.json",
+    "status": "DYNAMIC_PASS",
+    "passed": true,
+    "all_gates_true": true,
+    "initial_yaw_deg": 3.0,
+    "thread_proxy_active": false,
+    "thread_relation_applicable": false,
+    "linear_force_limit_n": 7.833367508950928,
+    "final_face_error_m": 0.007240290753543377,
+    "axial_travel_m": 0.0007597096264362335,
+    "wrong_key_contact_sample_count": 1248,
+    "metal_stop_contact_sample_count": 0,
+    "maximum_hard_penetration_m": 0.0005008731968700886,
+    "maximum_equivalent_contact_force_n": 25.12026458502291,
+    "contact_force_is_not_drive_force": true,
+    "scope": "physical_key_collision_block_negative_case_only",
+    "post_start_object_pose_write_count": 0,
+    "solver_error_count": 0,
+    "physicsusd_error_count": 0
+  },
+  "nonaccepted_history": {
+    "isaac_nominal_run_01": "prephysics_identity_readback_validator_error",
+    "isaac_nominal_run_02": "unbounded_post_stop_velocity_command",
+    "isaac_nominal_run_03": "revolute_position_target_single_turn_wrap",
+    "isaac_wrong_key_run_01": "blocked_thread_proxy_slip",
+    "isaac_wrong_key_run_02": "blocked_rack_proxy_numerically_unsuitable",
+    "isaac_nominal_run_06": "invalid_environment_startup_no_report"
+  },
+  "isolation": {
+    "task_write_root": "j599_25_35_standard_interface_v1",
+    "old_model_used_as_build_dependency": false,
+    "old_model_modification_performed_by_this_task": false,
+    "robot_or_hand_files_modified_by_this_task": false,
+    "robot_or_hand_prims_in_asset": 0,
+    "shared_project_formal_gate_claimed": false
+  },
+  "claims": {
+    "connector_only_simulation_dynamic_pass": true,
+    "importable_into_isaac_sim": true,
+    "robot_or_hand_assembly_claimed": false,
+    "real_hardware_assembly_success_claimed": false,
+    "hardware_authorized": false,
+    "manufacturer_exact_fidelity": false,
+    "electrical_contact_deformation_validated": false
+  }
+}

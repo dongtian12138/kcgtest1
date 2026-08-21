@@ -1,0 +1,358 @@
+{
+  "all_views_nonblank": true,
+  "asset_saved": false,
+  "claims": {
+    "hardware_authorized": false,
+    "manufacturer_exact_fidelity": false,
+    "render_is_dynamic_assembly_evidence": false,
+    "static_mated_pose_is_dynamic_success_evidence": false
+  },
+  "contact_sheet": {
+    "file": "00_contact_sheet_3x3.png",
+    "sha256": "0de306f7586c640a8bcecd57365aaf008db7495001606e49b865f9e6e74e7da3",
+    "size_bytes": 678242
+  },
+  "created_at_utc": "2026-08-20T13:41:01.277901+00:00",
+  "human_visual_review_complete": false,
+  "identity_readback": {
+    "contact_count": 128,
+    "hardware_authorized": false,
+    "hardware_exact_fidelity": false,
+    "plug_part_number": "J599/26FJ35PN",
+    "polarization": "N",
+    "receptacle_part_number": "J599/20FJ35SN"
+  },
+  "identity_readback_exact": true,
+  "passed": true,
+  "resolution": [
+    960,
+    960
+  ],
+  "schema_version": "j599_25_35_multiview_render_report_v1",
+  "session_layer_only_overrides": true,
+  "source_asset": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/generated/j599_25_35_pair_assembly.usdc",
+  "source_asset_sha256_after": "761316f993e10dd8c5cd8034f34e35db1d28867bf634e5e6a2f9dc0d52f7431f",
+  "source_asset_sha256_before": "761316f993e10dd8c5cd8034f34e35db1d28867bf634e5e6a2f9dc0d52f7431f",
+  "source_asset_unchanged": true,
+  "status": "STATIC_PASS",
+  "task_id": "J599-25-35-MULTIVIEW-VISUAL-REVIEW",
+  "timeline_started": false,
+  "view_count": 9,
+  "views": {
+    "01_pair_preassembly_oblique": {
+      "caption": "Pair - default import pose",
+      "eye_m": [
+        0.105,
+        0.078,
+        0.05
+      ],
+      "file": "01_pair_preassembly_oblique.png",
+      "mean_rgb": [
+        216.27845377604166,
+        217.70214626736112,
+        220.24285807291668
+      ],
+      "near_black_pixel_fraction": 5.4253472222222224e-06,
+      "nonblank_passed": true,
+      "pose": "default",
+      "sha256": "e1dd6b303af28a5a7a50945dcebfb91b345bd238257a489007c58afffb31da04",
+      "shape": [
+        960,
+        960,
+        3
+      ],
+      "shown_endpoint": "both",
+      "size_bytes": 181273,
+      "std_rgb": [
+        20.275473875504208,
+        21.046329221186067,
+        19.693440461659414
+      ],
+      "target_m": [
+        0.0,
+        0.0,
+        0.002
+      ]
+    },
+    "02_pair_preassembly_side": {
+      "caption": "Pair - default side view",
+      "eye_m": [
+        0.13,
+        0.0,
+        0.008
+      ],
+      "file": "02_pair_preassembly_side.png",
+      "mean_rgb": [
+        204.85262586805555,
+        206.9252463107639,
+        210.5429220920139
+      ],
+      "near_black_pixel_fraction": 0.00130859375,
+      "nonblank_passed": true,
+      "pose": "default",
+      "sha256": "e5bdd8166adbf65665507144849d619ed1c58dba3863fe45fa9bf56c838bdeae",
+      "shape": [
+        960,
+        960,
+        3
+      ],
+      "shown_endpoint": "both",
+      "size_bytes": 180032,
+      "std_rgb": [
+        31.689820271342896,
+        32.08535026466771,
+        30.319261741193582
+      ],
+      "target_m": [
+        0.0,
+        0.0,
+        0.002
+      ]
+    },
+    "03_pair_static_mated_oblique": {
+      "caption": "Pair - static mated pose",
+      "eye_m": [
+        0.105,
+        0.078,
+        0.042
+      ],
+      "file": "03_pair_static_mated_oblique.png",
+      "mean_rgb": [
+        216.94891167534723,
+        219.02753038194444,
+        221.47190538194445
+      ],
+      "near_black_pixel_fraction": 0.0,
+      "nonblank_passed": true,
+      "pose": "static_mated",
+      "sha256": "758cf0cdcd3c96a8fd31a018b25d04b3282c6fb5a6ee9281fcc441bca07ea8a8",
+      "shape": [
+        960,
+        960,
+        3
+      ],
+      "shown_endpoint": "both",
+      "size_bytes": 145388,
+      "std_rgb": [
+        19.52761542879924,
+        17.979335634982974,
+        16.16692421440691
+      ],
+      "target_m": [
+        0.0,
+        0.0,
+        -0.002
+      ]
+    },
+    "04_plug_mating_front": {
+      "caption": "J599/26 plug - mating front",
+      "eye_m": [
+        0.0,
+        0.0,
+        -0.1
+      ],
+      "file": "04_plug_mating_front.png",
+      "mean_rgb": [
+        184.97713758680555,
+        188.42166015625,
+        189.5344411892361
+      ],
+      "near_black_pixel_fraction": 0.0,
+      "nonblank_passed": true,
+      "pose": "default",
+      "sha256": "e7646c9ae46e23549a2c05fa8fbced853181a7cfbfbadc67a3c7172307f7e918",
+      "shape": [
+        960,
+        960,
+        3
+      ],
+      "shown_endpoint": "plug",
+      "size_bytes": 379758,
+      "std_rgb": [
+        59.96036257927518,
+        56.52343630723494,
+        56.68493722417501
+      ],
+      "target_m": [
+        0.0,
+        0.0,
+        0.008
+      ]
+    },
+    "05_plug_mating_oblique": {
+      "caption": "J599/26 plug - mating oblique",
+      "eye_m": [
+        0.07,
+        0.055,
+        -0.07
+      ],
+      "file": "05_plug_mating_oblique.png",
+      "mean_rgb": [
+        205.92507161458335,
+        207.14555121527778,
+        205.98726888020835
+      ],
+      "near_black_pixel_fraction": 1.8446180555555556e-05,
+      "nonblank_passed": true,
+      "pose": "default",
+      "sha256": "ad16b6cd4c1aed4ef341d5a1aeb6e88dfec8a34d7276fbd96a4f2072ce4a76ac",
+      "shape": [
+        960,
+        960,
+        3
+      ],
+      "shown_endpoint": "plug",
+      "size_bytes": 276169,
+      "std_rgb": [
+        39.97847931651723,
+        39.77047845756588,
+        47.5129839437018
+      ],
+      "target_m": [
+        0.0,
+        0.0,
+        0.01
+      ]
+    },
+    "06_plug_rear_oblique": {
+      "caption": "J599/26 plug - rear oblique",
+      "eye_m": [
+        0.072,
+        0.055,
+        0.105
+      ],
+      "file": "06_plug_rear_oblique.png",
+      "mean_rgb": [
+        221.1552907986111,
+        222.86638888888888,
+        224.85059244791665
+      ],
+      "near_black_pixel_fraction": 0.0,
+      "nonblank_passed": true,
+      "pose": "default",
+      "sha256": "ede755508fe2abed4111803765a55f266c0642c16fdd128e67760965721b75eb",
+      "shape": [
+        960,
+        960,
+        3
+      ],
+      "shown_endpoint": "plug",
+      "size_bytes": 129164,
+      "std_rgb": [
+        13.561436906457313,
+        12.304010824040914,
+        10.832395365932737
+      ],
+      "target_m": [
+        0.0,
+        0.0,
+        0.02
+      ]
+    },
+    "07_receptacle_mating_front": {
+      "caption": "J599/20 receptacle - mating front",
+      "eye_m": [
+        0.0,
+        0.0,
+        0.09
+      ],
+      "file": "07_receptacle_mating_front.png",
+      "mean_rgb": [
+        200.0153125,
+        204.42219618055555,
+        206.838740234375
+      ],
+      "near_black_pixel_fraction": 0.0,
+      "nonblank_passed": true,
+      "pose": "default",
+      "sha256": "33b295b303d9237b62f93a8868de5b1e7f12e58ce69908cc42aa2b94a53c29a2",
+      "shape": [
+        960,
+        960,
+        3
+      ],
+      "shown_endpoint": "fixed",
+      "size_bytes": 374621,
+      "std_rgb": [
+        46.14940778001266,
+        43.83014629630562,
+        42.36008649940099
+      ],
+      "target_m": [
+        0.0,
+        0.0,
+        -0.006
+      ]
+    },
+    "08_receptacle_mating_oblique": {
+      "caption": "J599/20 receptacle - mating oblique",
+      "eye_m": [
+        0.07,
+        0.055,
+        0.07
+      ],
+      "file": "08_receptacle_mating_oblique.png",
+      "mean_rgb": [
+        213.00051323784723,
+        214.9735915798611,
+        216.81476019965277
+      ],
+      "near_black_pixel_fraction": 0.0,
+      "nonblank_passed": true,
+      "pose": "default",
+      "sha256": "f975388cd3ff65aec81c229d980359069ef07863c098b1c71c0a3ad595d1e50f",
+      "shape": [
+        960,
+        960,
+        3
+      ],
+      "shown_endpoint": "fixed",
+      "size_bytes": 260734,
+      "std_rgb": [
+        33.08686062252502,
+        31.853959478463707,
+        30.829288329333973
+      ],
+      "target_m": [
+        0.0,
+        0.0,
+        -0.007
+      ]
+    },
+    "09_receptacle_rear_oblique": {
+      "caption": "J599/20 receptacle - rear oblique",
+      "eye_m": [
+        0.07,
+        0.055,
+        -0.1
+      ],
+      "file": "09_receptacle_rear_oblique.png",
+      "mean_rgb": [
+        208.45430013020834,
+        211.34351345486112,
+        214.65826822916668
+      ],
+      "near_black_pixel_fraction": 0.0,
+      "nonblank_passed": true,
+      "pose": "default",
+      "sha256": "2822129ec2e4cabb8c3c38ca65b1b14d1c649d9ca9b8e96213e4fe0dfc83b4bb",
+      "shape": [
+        960,
+        960,
+        3
+      ],
+      "shown_endpoint": "fixed",
+      "size_bytes": 133252,
+      "std_rgb": [
+        27.23712184694615,
+        24.314462882581935,
+        20.833173827619554
+      ],
+      "target_m": [
+        0.0,
+        0.0,
+        -0.015
+      ]
+    }
+  }
+}

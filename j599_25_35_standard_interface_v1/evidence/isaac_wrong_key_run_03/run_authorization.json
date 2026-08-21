@@ -1,0 +1,19 @@
+{
+  "asset_sha256_before_run": "761316f993e10dd8c5cd8034f34e35db1d28867bf634e5e6a2f9dc0d52f7431f",
+  "case": "wrong_key_3deg",
+  "contract_sha256_before_run": "d12ebb66db49a36975a92aded7c5b4e6a3cfd551203853c38212373f0f85ade0",
+  "created_at_utc": "2026-08-20T13:19:20.676977+00:00",
+  "hypothesis": {
+    "case": "wrong_key_3deg",
+    "expected_result": "The plug remains above the contract wrong-key stop threshold and cannot be reported assembled.",
+    "failure_criterion": "The wrong-key case reaches the nominal final plane or the collider/solver evidence is unavailable.",
+    "hypothesis": "A 3 degree yaw error causes a real five-key/keyway collision and prevents false full insertion under a bounded connector-only force fixture.",
+    "id": "J35-DYN-H2-WRONG-KEY-BLOCKS",
+    "unique_change": "Run a fresh, independent five-key negative case at 3 degrees yaw with the numerically unstable blocked-thread proxy isolated and an explicit 7.83 N prismatic force limit."
+  },
+  "robot_or_hand_included": false,
+  "schema_version": "j599_25_35_dynamic_run_authorization_v1",
+  "source_asset_write_allowed": false,
+  "source_plan": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/plans/BUILD_AND_VALIDATION_PLAN.json",
+  "source_plan_sha256": "69246108c58eb7ea2e9f99792dbf36291bf6052c140ce402b1dbd7376ceeea86"
+}

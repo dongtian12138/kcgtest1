@@ -1,0 +1,52 @@
+{
+  "schema_version": "j599_25_35_multiview_render_plan_v1",
+  "created_at_utc": "2026-08-20T13:36:07Z",
+  "task_id": "J599-25-35-MULTIVIEW-VISUAL-REVIEW",
+  "status": "STATIC_PASS",
+  "source_asset": "generated/j599_25_35_pair_assembly.usdc",
+  "source_asset_sha256": "761316f993e10dd8c5cd8034f34e35db1d28867bf634e5e6a2f9dc0d52f7431f",
+  "hypothesis": {
+    "id": "J35-RENDER-H1-FAITHFUL-ASSET-MULTIVIEW",
+    "hypothesis": "Nine direct Isaac Sim renders of the accepted assembly USDC are sufficient for a human to review the modeled plug, receptacle, contact faces, rear geometry, default preassembly pose and an explicitly labeled static mated pose.",
+    "unique_change": "Create an isolated read-only render script and a new multiview_v1 output directory; author camera, lights, visibility and static pose overrides only in the USD session layer.",
+    "expected_result": "Nine 960x960 nonblank PNG files and one contact sheet are generated, the two requested part-number identities read back exactly, and the source USDC SHA-256 remains unchanged.",
+    "failure_criterion": "Any expected view is missing or blank, identity/count readback fails, the source asset changes, the timeline starts, or a file outside j599_25_35_standard_interface_v1 is modified by this render task."
+  },
+  "views": [
+    "01_pair_preassembly_oblique",
+    "02_pair_preassembly_side",
+    "03_pair_static_mated_oblique",
+    "04_plug_mating_front",
+    "05_plug_mating_oblique",
+    "06_plug_rear_oblique",
+    "07_receptacle_mating_front",
+    "08_receptacle_mating_oblique",
+    "09_receptacle_rear_oblique"
+  ],
+  "truth_boundaries": {
+    "render_is_dynamic_assembly_evidence": false,
+    "static_mated_pose_is_dynamic_success_evidence": false,
+    "human_visual_review_complete_before_user_review": false,
+    "hardware_authorized": false,
+    "manufacturer_exact_fidelity": false
+  },
+  "isolation": {
+    "allowed_root": "j599_25_35_standard_interface_v1",
+    "source_asset_write_allowed": false,
+    "old_model_or_hand_files_allowed": false,
+    "timeline_start_allowed": false
+  },
+  "accepted_evidence": {
+    "render_report": "renders/multiview_v1/render_report.json",
+    "contact_sheet": "renders/multiview_v1/00_contact_sheet_3x3.png",
+    "view_count": 9,
+    "resolution": [
+      960,
+      960
+    ],
+    "all_views_nonblank": true,
+    "source_asset_unchanged": true,
+    "timeline_started": false,
+    "human_visual_review_complete": false
+  }
+}

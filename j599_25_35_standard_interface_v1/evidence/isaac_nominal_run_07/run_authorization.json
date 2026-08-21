@@ -1,0 +1,19 @@
+{
+  "asset_sha256_before_run": "761316f993e10dd8c5cd8034f34e35db1d28867bf634e5e6a2f9dc0d52f7431f",
+  "case": "nominal",
+  "contract_sha256_before_run": "d12ebb66db49a36975a92aded7c5b4e6a3cfd551203853c38212373f0f85ade0",
+  "created_at_utc": "2026-08-20T13:24:25.988229+00:00",
+  "hypothesis": {
+    "case": "nominal",
+    "expected_result": "The plug reaches the defined final face plane, the nut completes the commanded turn, the 7.62 mm/rev relation stays within contract tolerance, and the hold remains stable.",
+    "failure_criterion": "Final-depth, screw-relation, hold-drift, solver-error or post-start-pose-write gate fails.",
+    "hypothesis": "With N keys aligned, an explicit no-hand prismatic/revolute test fixture can insert and tighten the two connector bodies in Isaac Sim while collisions remain active.",
+    "id": "J35-DYN-H1-NOMINAL-N-KEY-ASSEMBLY",
+    "unique_change": "Run the nominal aligned test scene in one fresh Isaac process."
+  },
+  "robot_or_hand_included": false,
+  "schema_version": "j599_25_35_dynamic_run_authorization_v1",
+  "source_asset_write_allowed": false,
+  "source_plan": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/plans/BUILD_AND_VALIDATION_PLAN.json",
+  "source_plan_sha256": "69246108c58eb7ea2e9f99792dbf36291bf6052c140ce402b1dbd7376ceeea86"
+}

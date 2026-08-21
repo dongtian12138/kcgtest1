@@ -1,0 +1,2573 @@
+{
+  "axial_travel_m": 0.007996280677616596,
+  "case": "nominal",
+  "claims": {
+    "connector_only_simulation_dynamic_pass": true,
+    "hardware_authorized": false,
+    "manufacturer_exact_fidelity": false,
+    "old_project_formal_gate_claimed": false,
+    "real_hardware_assembly_success_claimed": false,
+    "result_claim": "simulation_connector_only_assembly_validation",
+    "robot_or_hand_assembly_claimed": false
+  },
+  "contact_aggregates": [
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_000",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_000"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.749431248754263e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_000",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_001"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.11063095880672336,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7536513041704893e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_000",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_047"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.7539217919111252,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.749431248754263e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_001",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_000"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7475394997745752e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_001",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_001"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7367710825055838e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_001",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_002"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.00218020286411047,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7366255633533e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_002",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_001"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7364800442010164e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_002",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_002"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7110141925513744e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_002",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_003"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.005533676594495773,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.710723154246807e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_003",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_002"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7150887288153172e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_003",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_003"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.6766716726124287e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_003",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_004"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.020401063375175,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.6763806343078613e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_004",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_003"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.676526153460145e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_004",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_004"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.623848220333457e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_004",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_005"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0442713825032115,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.6232661437243223e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_005",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_004"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.619482645764947e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_005",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_005"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.5538535080850124e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_005",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_006"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.07298717508092523,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.5541445463895798e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_006",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_005"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.5604018699377775e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_006",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_006"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.484295353293419e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_006",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_007"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.1035934779793024,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.484295353293419e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_007",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_006"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.4844408724457026e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_007",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_007"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.398148015141487e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_007",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_008"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.13615042436867952,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.398148015141487e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_008",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_007"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.398148015141487e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_008",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_008"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.3028329703956842e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_008",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_009"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.16901551745831966,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.3031240087002516e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_009",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_008"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.3013777788728476e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_009",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_009"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.1992233339697123e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_009",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_010"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.19764281809329987,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.1995143722742796e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_010",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_009"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.195003278553486e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_010",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_010"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.0877556633204222e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_010",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_011"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.21837467327713966,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.0880467016249895e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_011",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_010"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.0876101441681385e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_011",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_011"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 9.777431841939688e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_011",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_012"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.2236220519989729,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 9.777431841939688e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_012",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_011"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 9.787618182599545e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_012",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_012"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 8.686038199812174e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_012",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_013"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.26410382241010666,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 8.67876224219799e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_013",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_012"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 8.712231647223234e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_013",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_013"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 7.55098881199956e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_013",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_014"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.24714689701795578,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 7.553899195045233e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_014",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_013"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 7.566995918750763e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_014",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_014"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 6.413029041141272e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_014",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_015"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.22282985039055347,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 6.415939424186945e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_015",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_014"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 6.397021934390068e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_015",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_015"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 5.2896211855113506e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_015",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_016"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.18179110251367092,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 5.291076377034187e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_016",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_015"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 5.3085386753082275e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_016",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_016"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 4.265166353434324e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_016",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_017"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.13760099653154612,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 4.2680767364799976e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_017",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_016"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 4.215689841657877e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_017",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_017"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 3.259629011154175e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_017",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_018"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.09678784059360623,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 3.2610842026770115e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_018",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_017"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 3.298919182270765e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_018",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_018"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 2.440356183797121e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_018",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_019"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.05960284732282162,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 2.431625034660101e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_019",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_018"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 2.4898326955735683e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_019",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_019"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7302227206528187e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_019",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_020"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.05729563068598509,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7389538697898388e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_020",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_019"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.6472768038511276e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_020",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_020"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 4.270077624823898e-08,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.0288204066455364e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_020",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_021"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.05943317664787173,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.0331859812140465e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_021",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_020"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 2.3053780751070008e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.1059455573558807e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_021",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_021"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 2.198530637542717e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 6.257323548197746e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_021",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_022"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.04223637166433036,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 6.1409082263708115e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_022",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_021"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 4.113489922019653e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 5.617039278149605e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_022",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_022"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 3.0979072107584216e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 8.003553375601768e-10,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_022",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_023"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.026644727331586182,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 8.149072527885437e-10,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_023",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_022"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 4.606336005963385e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 4.802132025361061e-10,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_023",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_023"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 1.2983832675672602e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": -3.332388587296009e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_023",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_024"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 6.878293561385362e-05,
+      "metal_stop_pair": true,
+      "minimum_separation_m": -3.3178366720676422e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_024",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_023"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.02833529084455222,
+      "metal_stop_pair": true,
+      "minimum_separation_m": -3.055902197957039e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_024",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_024"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0022707782773068175,
+      "metal_stop_pair": true,
+      "minimum_separation_m": -3.7107383832335472e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_024",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_025"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.010793103429023176,
+      "metal_stop_pair": true,
+      "minimum_separation_m": -3.6961864680051804e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_025",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_024"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0006334863428492099,
+      "metal_stop_pair": true,
+      "minimum_separation_m": -3.768946044147015e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_025",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_025"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 4.876265961684112e-05,
+      "metal_stop_pair": true,
+      "minimum_separation_m": -3.7834979593753815e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_025",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_026"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 2.1913588170718867e-05,
+      "metal_stop_pair": true,
+      "minimum_separation_m": -1.4260876923799515e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_026",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_025"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.00029222997909528203,
+      "metal_stop_pair": true,
+      "minimum_separation_m": -1.5425030142068863e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_026",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_026"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 2.1051965291007946e-05,
+      "metal_stop_pair": true,
+      "minimum_separation_m": -1.5279510989785194e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_026",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_027"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 3.4072218113578856e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 3.3760443329811096e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_027",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_026"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.034101675264537334,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 3.6816345527768135e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_027",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_027"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 3.1092304197954945e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 3.7834979593753815e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_027",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_028"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 3.583782017813064e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 7.8580342233181e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_028",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_027"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.051721661584451795,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 7.843482308089733e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_028",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_028"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 4.595312930177897e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 7.785274647176266e-09,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_028",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_029"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 1.6701869753887877e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.3242242857813835e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_029",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_028"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.05850178305990994,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.391163095831871e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_029",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_029"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 1.4046781871002167e-06,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.3853423297405243e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_029",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_030"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 2.075103111565113e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_030",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_029"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.055851187789812684,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.9863364286720753e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_030",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_030"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.9936123862862587e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_030",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_031"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 2.792512532323599e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_031",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_030"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.07841059472411871,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 2.8085196390748024e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_031",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_031"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 2.805609256029129e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_031",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_032"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 3.712193574756384e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_032",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_031"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.11702869087457657,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 3.720924723893404e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_032",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_032"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 3.712193574756384e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_032",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_033"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 4.7177309170365334e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_033",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_032"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.15930389519780874,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 4.7308276407420635e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_033",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_033"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 4.72791725769639e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_033",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_034"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 5.8033037930727005e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_034",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_033"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.20053057931363583,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 5.857145879417658e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_034",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_034"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 5.848414730280638e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_034",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_035"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 6.979098543524742e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_035",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_034"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.22569900378584862,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 6.986374501138926e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_035",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_035"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 6.980553735047579e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_035",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_036"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 8.144706953316927e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_036",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_035"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.22581316530704498,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 8.118513505905867e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_036",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_036"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 8.124334271997213e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_036",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_037"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 9.246286936104298e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_037",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_036"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.22484184242784977,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 9.230279829353094e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_037",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_037"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 9.227369446307421e-08,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_037",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_038"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.0339135769754648e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_038",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_037"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.2141324244439602,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.0327494237571955e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_038",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_038"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.0324583854526281e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_038",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_039"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.1417432688176632e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_039",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_038"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.19883260130882263,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.1439260561019182e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_039",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_039"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.1436350177973509e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_039",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_040"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.2484088074415922e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_040",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_039"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.17339426558464766,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.2466625776141882e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_040",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_040"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.2463715393096209e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_040",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_041"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.345470082014799e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_041",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_040"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.14250630978494883,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.3504177331924438e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_041",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_041"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.3504177331924438e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_041",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_042"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.4413672033697367e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_042",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_041"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.11523670982569456,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.4358374755829573e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_042",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_042"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.4361285138875246e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_042",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_043"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.517619239166379e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_043",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_042"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.09470694931223989,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.5148543752729893e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_043",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_043"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.5144178178161383e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_043",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_044"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.5861587598919868e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_044",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_043"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.07946704979985952,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.592707121744752e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_044",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_044"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.5932891983538866e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_044",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_045"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.6525154933333397e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_045",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_044"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.06347795482724905,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.644948497414589e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_045",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_045"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.6455305740237236e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_045",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_046"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.6912235878407955e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_046",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_045"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.04463473800569773,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.6982085071504116e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_046",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_046"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.6982085071504116e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_046",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_047"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.730950316414237e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_047",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_000"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7513229977339506e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_047",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_046"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.041002496145665646,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7328420653939247e-07,
+      "wrong_key_pair": false
+    },
+    {
+      "active_sample_count": 101,
+      "collider_paths": [
+        "/World/J599_25_35_N_Pair/LoosePlug_J599_26FJ35PN/Body/Physics/MetalStop/Segment_047",
+        "/World/J599_25_35_N_Pair/FixedReceptacle_J599_20FJ35SN/Physics/MetalStop/Segment_047"
+      ],
+      "collision_roles": [
+        "plug_metal_stop",
+        "fixed_metal_stop"
+      ],
+      "first_step": 753,
+      "last_step": 853,
+      "maximum_equivalent_force_n": 0.0,
+      "metal_stop_pair": true,
+      "minimum_separation_m": 1.7329875845462084e-07,
+      "wrong_key_pair": false
+    }
+  ],
+  "created_at_utc": "2026-08-20T13:24:58.527013+00:00",
+  "final_body_position_m": [
+    -2.748181486822432e-07,
+    3.260119285641849e-08,
+    3.7206336855888367e-06
+  ],
+  "final_face_error_m": 3.7206336855888367e-06,
+  "final_nut_position_m": [
+    -2.2084660145083035e-07,
+    3.449404317734661e-08,
+    -3.3453747164458036e-05
+  ],
+  "fixed_command_schedule": {
+    "drive_damping_nm_per_deg_s": 0.01,
+    "drive_duration_s": 3.15,
+    "drive_max_torque_nm": 0.0095,
+    "drive_mode": "angular_velocity_thread_proxy",
+    "drive_speed_deg_s": 120.0,
+    "drive_step_count_from_lead": 756,
+    "drive_target_rotation_deg_from_lead": 377.9527559055118,
+    "feedback_or_contact_truth_used_to_change_schedule": false,
+    "hold_steps": 240,
+    "linear_damping_n_s_per_m": null,
+    "linear_force_limit_n": null,
+    "linear_stiffness_n_per_m": null,
+    "linear_target_position_m": null,
+    "maximum_thread_equivalent_axial_force_n": 7.833367508950928,
+    "physics_hz": 240,
+    "post_start_drive_command_write_count": 2,
+    "thread_proxy_active": true
+  },
+  "fixture_authored_before_physics": true,
+  "fresh_process_required": true,
+  "gates": {
+    "final_face_plane_reached": true,
+    "finite_terminal_state": true,
+    "identity_metadata_readback_exact": true,
+    "initial_pose_preserved_after_reset": true,
+    "metal_stop_contact_observed": true,
+    "nominal_hold_drift_within_tolerance": true,
+    "physicsusd_error_count_zero": true,
+    "post_start_object_pose_write_count_zero": true,
+    "robot_or_hand_prim_count_zero": true,
+    "solver_error_count_zero": true,
+    "thread_relation_within_tolerance": true,
+    "wrong_key_contact_not_observed": true
+  },
+  "helical_expected_travel_m": 0.00803652819957658,
+  "hold_drift_m": 2.135336399078369e-05,
+  "hold_start_body_z_m": 2.1443702280521393e-05,
+  "hypothesis_id": "J35-DYN-H1-NOMINAL-N-KEY-ASSEMBLY",
+  "identity_metadata_readback": {
+    "plug_part_number": "J599/26FJ35PN",
+    "receptacle_part_number": "J599/20FJ35SN",
+    "root": {
+      "j599:contactCount": 128,
+      "j599:hardwareAuthorized": false,
+      "j599:hardwareExactFidelity": false,
+      "j599:partNumbers": "J599/26FJ35PN,J599/20FJ35SN",
+      "j599:polarization": "N"
+    }
+  },
+  "initial_body_position_m": [
+    -6.875774051959385e-21,
+    3.3097337205887975e-27,
+    0.008000001311302185
+  ],
+  "initial_nut_position_m": [
+    6.209169229583361e-19,
+    -2.6516421602252366e-20,
+    0.00800000037997961
+  ],
+  "inputs": {
+    "asset": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/generated/j599_25_35_pair_assembly.usdc",
+    "asset_sha256": "761316f993e10dd8c5cd8034f34e35db1d28867bf634e5e6a2f9dc0d52f7431f",
+    "build_plan": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/plans/BUILD_AND_VALIDATION_PLAN.json",
+    "build_plan_sha256": "69246108c58eb7ea2e9f99792dbf36291bf6052c140ce402b1dbd7376ceeea86",
+    "contract": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/config/model_contract.json",
+    "contract_sha256": "d12ebb66db49a36975a92aded7c5b4e6a3cfd551203853c38212373f0f85ade0",
+    "fixture_stage": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/evidence/isaac_nominal_run_07/fixture_stage_prephysics.usda",
+    "fixture_stage_sha256": "afc04120091cf0560b19c6fc6645e39c4c881193d14ae6bae23492edf83ec9a8"
+  },
+  "kit_portable_root": "/tmp/j599-nominal-a8ubaatb",
+  "maximum_equivalent_contact_force_n": 0.7539217919111252,
+  "maximum_hard_penetration_m": 3.7834979593753815e-09,
+  "metal_stop_contact_sample_count": 14544,
+  "object_pose_write_after_physics_start_count": 0,
+  "passed": true,
+  "physicsusd_error_count": 0,
+  "physicsusd_errors": [],
+  "prephysics_initial_yaw_deg": 0.0,
+  "relative_nut_angle_deg": 379.6784976177912,
+  "reset_body_position_after_zero_drive_frame_m": [
+    -6.869890083617749e-21,
+    1.2768816153302243e-26,
+    0.008000001311302185
+  ],
+  "reset_contact_pair_count": 0,
+  "runner_sha256": "ae7fdb506f5a749a6d90e1b791b9f00250d9b06630e74b04ebb623e94bf11f08",
+  "schema_version": "j599_25_35_isaac_dynamic_case_v1",
+  "simulation_started": true,
+  "solver_error_count": 0,
+  "solver_errors": [],
+  "source_asset_sha256_after_run": "761316f993e10dd8c5cd8034f34e35db1d28867bf634e5e6a2f9dc0d52f7431f",
+  "source_asset_unchanged": true,
+  "status": "DYNAMIC_PASS",
+  "task_id": "J599-25-35-CONNECTOR-ONLY-MODEL-AND-ISAAC-ASSEMBLY",
+  "thread_relation_applicable": true,
+  "thread_relation_error_m": 4.0247521959984114e-05,
+  "wrong_key_contact_sample_count": 0
+}

@@ -1,0 +1,78 @@
+{
+  "checks": {
+    "binary_root_present": true,
+    "both_metal_stops_present": true,
+    "contact_collision_api_count_zero": true,
+    "contact_table_ids_exact": true,
+    "contract_hardware_authorized_false": true,
+    "coupling_nut_joint_present": true,
+    "five_keys_present": true,
+    "five_keyways_present": true,
+    "fixed_keyway_collision_present": true,
+    "hardware_authorized_false": true,
+    "hardware_exact_fidelity_false": true,
+    "pin_ids_exact": true,
+    "plug_guide_collision_present": true,
+    "plug_keys_have_collision": true,
+    "robot_or_hand_prim_count_zero": true,
+    "root_contact_count_128": true,
+    "root_polarization_n": true,
+    "root_representation_assembly": true,
+    "socket_ids_exact": true
+  },
+  "collision_role_counts": {
+    "fixed_keyway_blocking_shell": 160,
+    "fixed_keyway_sidewall": 10,
+    "fixed_metal_stop": 48,
+    "plug_continuous_guide_shell": 72,
+    "plug_metal_stop": 48,
+    "plug_polarizing_key": 5
+  },
+  "counts": {
+    "contact_collision_api": 0,
+    "contact_table": 128,
+    "keys": 5,
+    "keyways": 5,
+    "plug_pins": 128,
+    "receptacle_sockets": 128,
+    "robot_or_hand_prims": 0
+  },
+  "created_at_utc": "2026-08-20T13:28:56.601049+00:00",
+  "inputs": {
+    "assembly": {
+      "path": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/generated/j599_25_35_pair_assembly.usda",
+      "sha256": "4c3a8de808810f17f0191f7490feac2146950262a5e84aa2f4755469841386c1"
+    },
+    "binary": {
+      "path": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/generated/j599_25_35_pair_assembly.usdc",
+      "sha256": "761316f993e10dd8c5cd8034f34e35db1d28867bf634e5e6a2f9dc0d52f7431f"
+    },
+    "contacts": {
+      "path": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/data/contact_positions_25_35.csv",
+      "sha256": "a95406d9f97b57bf908ea0a362f78d13ffdedf93c214c4e4232c59d5d47ce246"
+    },
+    "contract": {
+      "path": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/config/model_contract.json",
+      "sha256": "d12ebb66db49a36975a92aded7c5b4e6a3cfd551203853c38212373f0f85ade0"
+    }
+  },
+  "metadata": {
+    "contact_count": 128,
+    "hardware_authorized": false,
+    "hardware_exact_fidelity": false,
+    "polarization": "N",
+    "representation": "assembly"
+  },
+  "passed": true,
+  "schema_version": "j599_static_validation_report_v1",
+  "status": "STATIC_PASS",
+  "truth_boundary": {
+    "hardware_authorized": false,
+    "simulation_is_hardware_acceptance": false,
+    "static_pass_is_dynamic_pass": false
+  },
+  "unexpected_paths": {
+    "contact_collision_paths": [],
+    "robot_or_hand_paths": []
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "schema_version": "j599_25_35_standard_interface_contract_v1",
+  "model_id": "J599_25_35_N_STANDARD_INTERFACE_V1",
+  "status": "CONTRACT_FROZEN_FOR_ISOLATED_BUILD",
+  "scope": {
+    "modeling_only": true,
+    "connector_only_isaac_validation": true,
+    "robot_or_hand_included": false,
+    "old_model_modification_allowed": false,
+    "hardware_authorized": false,
+    "hardware_exact_fidelity": false
+  },
+  "identity": {
+    "user_supplied_part_numbers": [
+      "J599/26FJ35PN",
+      "J599/20FJ35SN"
+    ],
+    "standard_family": "GJB599/J599 Series III, interface-compatible naming with MIL-DTL-38999 Series III",
+    "manufacturer": "UNKNOWN",
+    "series": "III",
+    "shell_size": 25,
+    "shell_size_code": "J",
+    "insert_arrangement": "25-35",
+    "polarization": "N",
+    "contact_count": 128,
+    "contact_size": "22D",
+    "finish_class": "F",
+    "finish_description": "aluminum alloy, electroless nickel",
+    "plug": {
+      "part_number": "J599/26FJ35PN",
+      "shell_style": "straight plug",
+      "contact_style": "pin"
+    },
+    "receptacle": {
+      "part_number": "J599/20FJ35SN",
+      "shell_style": "wall-mount square-flange receptacle",
+      "contact_style": "socket"
+    }
+  },
+  "source_registry": {
+    "j599_identity_and_use": {
+      "kind": "vendor_technical_guide_cross_check",
+      "url": "https://ht693.com.cn/home/a/4/56pspa/resource/2024/08/20/66c40d1e2286b.pdf",
+      "relevant_pages": [3, 9, 10, 43, 44, 45],
+      "claims_used": [
+        "J599 model-code grammar",
+        "F electroless-nickel aluminum shell",
+        "J shell code means shell size 25",
+        "35 means 128 size-22D contacts",
+        "P pin, S socket, N normal keying",
+        "three-start coupling and five guide keys",
+        "representative masses only"
+      ],
+      "manufacturer_specific_hardware_truth": false
+    },
+    "insert_coordinates": {
+      "kind": "public_interface_standard",
+      "document": "MIL-STD-1560C with Change 3",
+      "url": "https://weaponssupportapps.dla.mil/Downloads/MilSpec/Docs/MIL-STD-1560/std1560.pdf",
+      "sha256": "45edb45edeed726c1a7836c145ba9210a074da3765903f2c32d6717a296f9290",
+      "printed_pages": [154, 155, 156],
+      "controlling_unit": "inch"
+    },
+    "receptacle_detail": {
+      "kind": "public_detail_specification",
+      "document": "MIL-DTL-38999/20H with Amendment 1",
+      "url": "https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=70615",
+      "local_reference": "src/kcg_connector/assets/public_specs/mil_dtl_38999/dtl38999ss20.pdf",
+      "sha256": "91dcccb1bcb301fd09f3a6176f3ca99c0b36934d216f28ab74501fe0b491266f"
+    },
+    "plug_detail": {
+      "kind": "public_detail_specification",
+      "document": "MIL-DTL-38999/26G with Amendment 4",
+      "url": "https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=70618",
+      "local_reference": "src/kcg_connector/assets/public_specs/mil_dtl_38999/dtl38999ss26.pdf",
+      "sha256": "2db5e7470508eaa52ab64f0f0005a650c43cbbf27191dfbec427854fb6948894"
+    },
+    "general_interface": {
+      "kind": "public_general_specification",
+      "document": "MIL-DTL-38999, Series III interface figures",
+      "url": "https://quicksearch.dla.mil/qsDocDetails.aspx?ident_number=22497"
+    }
+  },
+  "units": {
+    "stage_length": "meter",
+    "source_contact_coordinates": "inch",
+    "inch_to_meter": 0.0254,
+    "angles": "degree"
+  },
+  "public_interface_geometry": {
+    "receptacle_shell_mm": {
+      "mating_shell_outer_diameter_min": 39.02,
+      "mating_shell_outer_diameter_max": 39.42,
+      "bore_diameter_min": 35.84,
+      "bore_diameter_max": 35.99,
+      "keyway_outer_diameter_min": 37.92,
+      "keyway_outer_diameter_max": 38.20,
+      "flange_width_basic": 46.0,
+      "flange_width_tolerance": 0.3,
+      "mount_hole_pattern_1": 38.10,
+      "mount_hole_pattern_2": 34.93,
+      "front_or_rear_panel_thickness_max": 5.0,
+      "overall_projection_max": 31.5
+    },
+    "plug_shell_mm": {
+      "between_keys_diameter_min": 35.61,
+      "between_keys_diameter_max": 35.77,
+      "over_keys_diameter_min": 37.57,
+      "over_keys_diameter_max": 37.85,
+      "rear_body_diameter_basic": 44.3,
+      "rear_body_diameter_plus": 0.2,
+      "coupling_nut_diameter_max": 48.0,
+      "overall_length_max": 31.0,
+      "key_axial_length_min": 7.24
+    },
+    "keying_n": {
+      "key_count": 5,
+      "keyway_count": 5,
+      "main_key_angle": 0.0,
+      "minor_key_angles": [80.0, 142.0, 196.0, 293.0],
+      "plug_main_key_width_basic_mm": 2.54,
+      "plug_main_key_width_plus_mm": 0.03,
+      "plug_main_key_width_minus_mm": 0.13,
+      "plug_minor_key_width_basic_mm": 1.32,
+      "plug_minor_key_width_plus_mm": 0.03,
+      "plug_minor_key_width_minus_mm": 0.13,
+      "receptacle_main_keyway_width_basic_mm": 3.20,
+      "receptacle_main_keyway_width_plus_mm": 0.13,
+      "receptacle_main_keyway_width_minus_mm": 0.03,
+      "receptacle_minor_keyway_width_basic_mm": 1.60,
+      "receptacle_minor_keyway_width_plus_mm": 0.13,
+      "receptacle_minor_keyway_width_minus_mm": 0.03
+    },
+    "contacts": {
+      "position_file": "data/contact_positions_25_35.csv",
+      "coordinate_view": "front face of pin insert",
+      "pin_working_diameter_mm": 0.76,
+      "socket_visual_entry_diameter_mm": 1.2446,
+      "same_number_pairing_only": true,
+      "collision_mode": "visual_only"
+    },
+    "thread": {
+      "starts": 3,
+      "form": "modified 60 degree stub",
+      "nominal_size_in": 1.625,
+      "pitch_in": 0.100,
+      "pitch_mm": 2.54,
+      "lead_in_per_revolution": 0.300,
+      "lead_mm_per_revolution": 7.62,
+      "start_phases_deg": [0.0, 120.0, 240.0]
+    }
+  },
+  "representative_mass_properties": {
+    "source_kind": "single_public_j599_vendor_guide_not_purchased_hardware_measurement",
+    "plug_total_mass_kg": 0.0754,
+    "receptacle_total_mass_kg": 0.0965,
+    "plug_body_mass_kg_simulation_split": 0.0504,
+    "coupling_nut_mass_kg_simulation_split": 0.025,
+    "exact_center_of_mass_known": false,
+    "exact_inertia_known": false,
+    "inertia_source": "analytic_axisymmetric_simulation_assumption"
+  },
+  "simulation_geometry": {
+    "authoring_profile": "nominal_midpoint_public_interface_plus_labeled_visual_assumptions",
+    "root_prim": "/World/J599_25_35_N_Pair",
+    "mating_axis": "+Z from receptacle toward approaching plug",
+    "initial_plug_face_z_m": 0.008,
+    "final_plug_face_z_m": 0.0,
+    "receptacle_insert_radius_m": 0.0165,
+    "receptacle_bore_radius_m": 0.0179575,
+    "receptacle_keyway_outer_radius_m": 0.01903,
+    "receptacle_shell_outer_radius_m": 0.01961,
+    "plug_guide_radius_m": 0.017845,
+    "plug_key_outer_radius_m": 0.018855,
+    "plug_key_length_m": 0.00724,
+    "plug_body_radius_m": 0.02215,
+    "coupling_nut_outer_radius_m": 0.024,
+    "visual_body_lengths_m": {
+      "receptacle": 0.0315,
+      "plug": 0.031,
+      "coupling_nut": 0.014
+    },
+    "physics_representation": {
+      "receptacle_bore": "segmented annular convex keyway shell",
+      "plug_guide": "continuous cylinder plus five key convex boxes",
+      "contacts": "visual only, no all-combination micro-collision",
+      "metal_stop": "segmented annular real collision",
+      "thread": "explicit rotation-translation fixture relation using 7.62 mm/rev",
+      "coupling_nut": "separate rigid body with revolute joint",
+      "magnetic_attraction": false,
+      "hidden_fixed_support_for_plug": false,
+      "object_pose_write_after_physics_start": false
+    },
+    "visual_assumptions_not_standard_dimensions": [
+      "rear wire-side relief and boot shoulder shape",
+      "knurl tooth profile and tooth count",
+      "insert depth and color",
+      "contact protrusion depth",
+      "small edge bevels",
+      "internal hidden construction"
+    ]
+  },
+  "acceptance": {
+    "static": {
+      "contact_ids_exactly_1_through_128": true,
+      "pin_socket_world_xy_pair_error_max_m": 1e-09,
+      "key_and_keyway_count": 5,
+      "nominal_key_clearance_positive": true,
+      "wrong_yaw_deg_for_negative_case": 3.0,
+      "wrong_yaw_must_interfere": true,
+      "contact_collision_api_count": 0,
+      "hardware_authorized_must_remain_false": true
+    },
+    "isaac_dynamic": {
+      "independent_process_required": true,
+      "robot_or_hand_prim_count": 0,
+      "nominal_case_must_reach_final_face_z_tolerance_m": 0.00035,
+      "nominal_hold_steps": 240,
+      "nominal_hold_drift_max_m": 0.00025,
+      "wrong_key_case_must_stop_above_face_z_m": 0.0015,
+      "thread_relation_error_max_m": 0.00025,
+      "post_start_object_pose_write_count": 0,
+      "solver_error_count": 0,
+      "result_claim": "simulation_connector_only_assembly_validation"
+    }
+  },
+  "authorization": {
+    "isaac_sim_import_and_connector_only_validation_allowed": true,
+    "robot_integration_allowed_in_this_task": false,
+    "hand_or_finger_changes_allowed": false,
+    "old_asset_overwrite_allowed": false,
+    "hardware_control_allowed": false,
+    "hardware_authorized": false,
+    "hardware_exact_fidelity": false,
+    "real_hardware_assembly_success_claimed": false
+  }
+}

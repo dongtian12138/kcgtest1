@@ -1,0 +1,116 @@
+{
+  "schema_version": "j599_isolated_build_validation_plan_v1",
+  "task_id": "J599-25-35-CONNECTOR-ONLY-MODEL-AND-ISAAC-ASSEMBLY",
+  "created_at_utc": "2026-08-20T12:36:00Z",
+  "authority": "USER_REQUESTED_NEW_ISOLATED_MODEL_KEEP_OLD_MODEL_AND_AVOID_HAND_WORK",
+  "status": "DYNAMIC_PASS",
+  "isolation": {
+    "allowed_root": "j599_25_35_standard_interface_v1",
+    "protected_existing_roots": [
+      "src/kcg_connector",
+      "artifacts/kcg_connector",
+      "artifacts/agent_control"
+    ],
+    "shared_dependency_edits_allowed": false,
+    "robot_or_hand_files_allowed": false,
+    "kill_or_reconfigure_other_dialog_processes_allowed": false
+  },
+  "build_hypothesis": {
+    "id": "J35-BUILD-H1-STANDARD-INTERFACE-PARAMETRIC-USD",
+    "hypothesis": "A deterministic OpenUSD asset using the official 25-35 coordinates, nominal shell-25 interface dimensions, five N-position keys/keyways and a separate coupling nut can represent this unknown-manufacturer J599 pair without reusing or modifying the old 61-contact asset.",
+    "unique_change": "Create files only under the isolated J599 directory.",
+    "expected_result": "Visual and assembly USD layers contain 128 correctly indexed pin/socket pairs, five compatible keys/keyways, distinct plug/body/nut rigid-body roles and explicit provenance metadata.",
+    "failure_criterion": "Any old path changes, missing/duplicate contact IDs, wrong pin/socket roles, non-positive nominal key clearance, or generated USD that cannot be opened by the Isaac runtime."
+  },
+  "static_validation_hypothesis": {
+    "id": "J35-STATIC-H1-CONTRACT-GEOMETRY-CONSISTENCY",
+    "hypothesis": "The generated asset and contract are internally consistent before an Isaac process is started.",
+    "unique_change": "No geometry change during validation; read-only checks only.",
+    "expected_result": "All static acceptance fields in config/model_contract.json pass and contacts remain visual-only.",
+    "failure_criterion": "Any count, coordinate, role, key-clearance, thread-relation, collision-role or authorization check fails."
+  },
+  "dynamic_validation_hypotheses": [
+    {
+      "id": "J35-DYN-H1-NOMINAL-N-KEY-ASSEMBLY",
+      "case": "nominal",
+      "hypothesis": "With N keys aligned, an explicit no-hand prismatic/revolute test fixture can insert and tighten the two connector bodies in Isaac Sim while collisions remain active.",
+      "unique_change": "Run the nominal aligned test scene in one fresh Isaac process.",
+      "expected_result": "The plug reaches the defined final face plane, the nut completes the commanded turn, the 7.62 mm/rev relation stays within contract tolerance, and the hold remains stable.",
+      "failure_criterion": "Final-depth, screw-relation, hold-drift, solver-error or post-start-pose-write gate fails."
+    },
+    {
+      "id": "J35-DYN-H2-WRONG-KEY-BLOCKS",
+      "case": "wrong_key_3deg",
+      "hypothesis": "A 3 degree yaw error causes a real five-key/keyway collision and prevents false full insertion under a bounded connector-only force fixture.",
+      "unique_change": "Run a fresh, independent five-key negative case at 3 degrees yaw with the numerically unstable blocked-thread proxy isolated and an explicit 7.83 N prismatic force limit.",
+      "expected_result": "The plug remains above the contract wrong-key stop threshold and cannot be reported assembled.",
+      "failure_criterion": "The wrong-key case reaches the nominal final plane or the collider/solver evidence is unavailable."
+    }
+  ],
+  "dynamic_correction_history": [
+    {
+      "evidence": "isaac_nominal_run_02",
+      "observation": "A five-second velocity command reached and held the metal stop, but continued nut rotation produced a 10.37 mm terminal screw-relation error.",
+      "classification": "UNBOUNDED_VELOCITY_COMMAND_AFTER_METAL_STOP"
+    },
+    {
+      "evidence": "isaac_nominal_run_03",
+      "observation": "A 377.95 degree revolute position target was interpreted modulo one turn and moved only 0.230 mm, while the free-motion screw relation remained accurate to 1.25 micrometers.",
+      "classification": "REVOLUTE_POSITION_TARGET_SINGLE_TURN_WRAP"
+    },
+    {
+      "id": "J35-DYN-H3-PRECOMPUTED-MULTITURN-VELOCITY-CUTOFF",
+      "unique_change": "Use the original velocity drive only for the 756 steps computed from 8 mm travel, 7.62 mm/rev lead, 120 deg/s, and 240 Hz; then command zero velocity for the fixed hold.",
+      "expected_result": "The aligned plug reaches the metal stop without accumulating post-stop nut over-rotation, and terminal screw-relation error remains within 0.25 mm.",
+      "failure_criterion": "The final face, hold, metal-stop, screw-relation, solver, or no-pose-write gate fails."
+    },
+    {
+      "evidence": "isaac_wrong_key_run_01",
+      "observation": "The 3 degree plug stopped at z=7.239 mm with 12064 wrong-key contact samples and no metal-stop contact, but the 0.12 N m drive caused the rack proxy to slip after blockage.",
+      "classification": "BLOCKED_THREAD_PROXY_DRIVE_TORQUE_EXCEEDS_REQUIRED_ASSEMBLY_FORCE"
+    },
+    {
+      "id": "J35-DYN-H4-BOUNDED-THREAD-REACTION",
+      "unique_change": "Reduce the common maximum nut-drive torque from 0.12 N m to 0.0095 N m, equivalent to at most 7.83 N axial screw force at the 7.62 mm lead; keep geometry, yaw cases, timing, speed, and gates unchanged.",
+      "expected_result": "The aligned case still reaches the stop, while wrong-key contact reacts the bounded drive without rack-proxy slip beyond the 0.25 mm screw-relation tolerance.",
+      "failure_criterion": "Either the aligned revalidation fails or the wrong-key terminal screw-relation error remains above 0.25 mm."
+    },
+    {
+      "evidence": "isaac_wrong_key_run_02",
+      "observation": "The lower torque retained the physical key block but did not stabilize the deliberately jammed rack proxy, so thread-relation evidence from a wrong-key jam is invalid.",
+      "classification": "BLOCKED_RACK_PROXY_NUMERICALLY_UNSUITABLE_FOR_KEY_NEGATIVE_CASE"
+    },
+    {
+      "id": "J35-DYN-H5-INDEPENDENT-WRONG-KEY-FORCE-BLOCK",
+      "unique_change": "For the wrong-key case only, do not author the rack coupling; drive the existing prismatic fixture toward full insertion with a 7.83 N force cap. Keep the nominal threaded assembly case unchanged.",
+      "expected_result": "The 3 degree plug produces labelled key/keyway contacts, remains above z=1.5 mm, never touches the metal stop, and holds without solver errors or pose writes.",
+      "failure_criterion": "Any key collision, depth, metal-stop, solver, finite-state, or no-pose-write gate fails."
+    }
+  ],
+  "truth_and_claim_boundaries": {
+    "generated_file_is_dynamic_pass": false,
+    "exit_code_zero_is_dynamic_pass": false,
+    "static_pass_is_dynamic_pass": false,
+    "simulation_pass_is_hardware_pass": false,
+    "hardware_authorized": false,
+    "manufacturer_exact_fidelity_claimed": false
+  },
+  "accepted_evidence": {
+    "static": {
+      "path": "evidence/static_validation.json",
+      "status": "STATIC_PASS",
+      "passed": true
+    },
+    "nominal_threaded_assembly": {
+      "path": "evidence/isaac_nominal_run_07/report.json",
+      "status": "DYNAMIC_PASS",
+      "passed": true
+    },
+    "wrong_key_collision_block": {
+      "path": "evidence/isaac_wrong_key_run_03/report.json",
+      "status": "DYNAMIC_PASS",
+      "passed": true,
+      "thread_relation_applicable": false
+    }
+  }
+}

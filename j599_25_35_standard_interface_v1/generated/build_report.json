@@ -1,0 +1,69 @@
+{
+  "assembly_counts": {
+    "collision_prims": 343,
+    "keys": 5,
+    "keyways": 5,
+    "plug_pins": 128,
+    "receptacle_sockets": 128,
+    "robot_or_hand_prims": 0
+  },
+  "claims": {
+    "dynamic_assembly_passed": false,
+    "generated_file_alone_is_acceptance": false,
+    "hardware_authorized": false,
+    "manufacturer_exact_fidelity": false
+  },
+  "collision_role_counts": {
+    "fixed_keyway_blocking_shell": 160,
+    "fixed_keyway_sidewall": 10,
+    "fixed_metal_stop": 48,
+    "plug_continuous_guide_shell": 72,
+    "plug_metal_stop": 48,
+    "plug_polarizing_key": 5
+  },
+  "contact_table_sha256": "a95406d9f97b57bf908ea0a362f78d13ffdedf93c214c4e4232c59d5d47ce246",
+  "contract_sha256": "d12ebb66db49a36975a92aded7c5b4e6a3cfd551203853c38212373f0f85ade0",
+  "created_at_utc": "2026-08-20T12:55:49.812630+00:00",
+  "input_checks": {
+    "contact_count": 128,
+    "contact_ids_exact": true,
+    "key_count": 5,
+    "max_contact_radius_m": 0.014097,
+    "nominal_key_clearances_m": [
+      0.00066,
+      0.0002800000000000001,
+      0.0002800000000000001,
+      0.0002800000000000001,
+      0.0002800000000000001
+    ],
+    "wrong_yaw_interferes_analytic": true
+  },
+  "model_id": "J599_25_35_N_STANDARD_INTERFACE_V1",
+  "outputs": {
+    "assembly_usda": {
+      "path": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/generated/j599_25_35_pair_assembly.usda",
+      "sha256": "4c3a8de808810f17f0191f7490feac2146950262a5e84aa2f4755469841386c1",
+      "size_bytes": 870689
+    },
+    "assembly_usdc": {
+      "path": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/generated/j599_25_35_pair_assembly.usdc",
+      "sha256": "761316f993e10dd8c5cd8034f34e35db1d28867bf634e5e6a2f9dc0d52f7431f",
+      "size_bytes": 66882
+    },
+    "visual_usda": {
+      "path": "/home/noob/WorkPlace/kcgtest1/j599_25_35_standard_interface_v1/generated/j599_25_35_pair_visual.usda",
+      "sha256": "799c811c1946b858f080d678542beceea33352ef9a116dcea8eec9c47b8a7062",
+      "size_bytes": 498304
+    }
+  },
+  "schema_version": "j599_asset_build_report_v1",
+  "status": "GENERATED_NOT_DYNAMICALLY_VALIDATED",
+  "visual_counts": {
+    "collision_prims": 0,
+    "keys": 5,
+    "keyways": 0,
+    "plug_pins": 128,
+    "receptacle_sockets": 128,
+    "robot_or_hand_prims": 0
+  }
+}
