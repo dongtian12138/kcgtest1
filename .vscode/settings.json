@@ -1,0 +1,27 @@
+{
+  "files.exclude": {
+    "**/.pytest_cache": true,
+    "**/.venv": true,
+    "**/__pycache__": true,
+    "**/build": true,
+    "**/install": true,
+    "**/log": true
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.venv/**": true,
+    "**/artifacts/**": true,
+    "**/build/**": true,
+    "**/install/**": true,
+    "**/legacy_archive/**": true,
+    "**/log/**": true
+  },
+  "search.exclude": {
+    "**/.venv/**": true,
+    "**/artifacts/**": true,
+    "**/build/**": true,
+    "**/install/**": true,
+    "**/legacy_archive/**": true,
+    "**/log/**": true
+  }
+}

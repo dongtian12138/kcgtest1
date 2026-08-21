@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<robot name="handarm" xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:include filename="iiwa14.xacro"/>
-  <xacro:include filename="hand.xacro"/>
-</robot>

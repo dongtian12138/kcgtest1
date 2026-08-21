@@ -8,15 +8,16 @@ D38999 类电连接器的识别、抓取、对准、插入、锁紧和回到 Hom
 
 ## 当前从哪里开始
 
+- 新对话轻量入口：[`CURRENT_CONTEXT_CN.md`](CURRENT_CONTEXT_CN.md)
 - 人工查看当前状态：[`artifacts/agent_control/CURRENT_STATUS_CN.md`](artifacts/agent_control/CURRENT_STATUS_CN.md)
-- Agent 恢复入口：[`artifacts/agent_control/AUTONOMOUS_RESUME_CN.md`](artifacts/agent_control/AUTONOMOUS_RESUME_CN.md)
-- 当前任务与禁止项：[`artifacts/agent_control/CURRENT_TASK.md`](artifacts/agent_control/CURRENT_TASK.md)
+- 当前任务原始合同：[`artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TASK_SWITCH_PLAN.json`](artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TASK_SWITCH_PLAN.json)
+- 完整历史恢复入口（按需）：[`artifacts/agent_control/AUTONOMOUS_RESUME_CN.md`](artifacts/agent_control/AUTONOMOUS_RESUME_CN.md)
 - D38999 主包：[`src/kcg_connector/README.md`](src/kcg_connector/README.md)
 - 工程目录说明：[`docs/PROJECT_STRUCTURE_CN.md`](docs/PROJECT_STRUCTURE_CN.md)
 - 证据保留规则：[`docs/ARTIFACT_RETENTION_CN.md`](docs/ARTIFACT_RETENTION_CN.md)
 
-状态、当前节点、安全门语义和运行授权只以磁盘中的最新控制文件为准，不从本 README
-推断。本文件刻意不固化瞬时任务名，避免任务切换后再次产生过时说明。
+普通工作先按轻量入口定向读取；历史审计、状态冲突、正式 gate 变更和动态启动仍以磁盘
+中的原始控制文件与运行产物为准，不能从本 README 推断。
 
 ## 目录边界
 
@@ -39,12 +40,12 @@ source /opt/ros/humble/setup.bash
 colcon build --symlink-install
 ```
 
-抓取控制器的一个纯 CPU 定向回归示例（是否属于当前节点仍以控制面为准）：
+一个不绑定历史运行器源码哈希的纯 CPU 基础回归示例：
 
 ```bash
 PYTHONPATH=src/kcg_connector \
 python3 -m pytest -q \
-  src/kcg_connector/test/test_moment_constrained_support_transfer.py
+  src/kcg_connector/test/test_geometry.py
 ```
 
 不要从 README 直接猜测并启动 Isaac。动态运行前必须先读取当前控制面、完成对应预检，
@@ -54,8 +55,9 @@ python3 -m pytest -q \
 
 - Git 跟踪源码、配置、测试和当前说明；`build/`、`install/`、`log/`、`.venv/` 与
   运行证据不进入普通提交。
-- `artifacts/` 约 18 GB，其中有不可替代的失败证据与冻结模型。本轮整理不删除、
-  不移动这些内容；仅跟踪其入口说明。
-- 清理前完整源码状态由本地标签 `pre-cleanup-20260819` 锚定，旧文件可从该标签逐项
-  恢复；整理结果位于分支 `cleanup/project-structure-20260819`。
+- `artifacts/` 体积会随运行增长，其中有不可替代的失败证据与冻结模型。可删除每次
+  Isaac 独立环境自动生成的 cache，但不得据此删除轨迹、报告、日志或冻结资产。
+- 本轮合同清理前的已提交源码由本地标签 `pre-contract-cleanup-20260821` 锚定；被移出
+  主线的文件用 `git show <tag>:<path>` 或 `git archive` 恢复，不在主分支重复保存源码 ZIP。
+- 当前有效分支以 `git branch --show-current` 的实时结果为准；未经明确要求不推送标签或提交。
 - 禁止用 `git reset --hard`、强制推送或批量删除来“变干净”。

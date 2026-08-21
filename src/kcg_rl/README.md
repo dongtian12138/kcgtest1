@@ -70,7 +70,8 @@ Stable-Baselines3 2.7.1 只安装在本项目 `.venv` 中，不写入 HaMeR 环�
 
 ```bash
 cd ~/WorkPlace/kcgtest1
-/home/noob/WorkPlace/hamer/.conda-env/bin/python -m venv \
+export HAMER_ENV_PREFIX=/path/to/hamer/.conda-env
+"${HAMER_ENV_PREFIX}/bin/python" -m venv \
   --system-site-packages .venv
 .venv/bin/python -m pip install \
   -r src/kcg_rl/requirements-training.txt

@@ -11,7 +11,3 @@ __pycache__/
 log_verify/
 log_verify_isaac/
 bootstrap.log
-
-# 统一归档区内 ROS 1 原工程的 Catkin 编译产物
-legacy_archive/ros1_original/kcgtest1/build/
-legacy_archive/ros1_original/kcgtest1/devel/

@@ -1,39 +1,54 @@
-# 过时与非主线文件统一归档
+# 历史源码恢复入口
 
-`legacy_archive/` 是本工程唯一的过时文件集中区。这里的内容不参加当前 ROS 2 构建、
-默认测试、Isaac 动态运行或正式验收，也不能作为最新任务状态和授权依据。
+`legacy_archive/` 不参加当前 ROS 2 构建、默认测试、Isaac 动态运行或正式验收。
+已被 Git 跟踪过的旧源码、ROS 1 工程、旧文档和一次性工具不再在主分支保存第二份
+散文件或源码 ZIP；统一从本地标签 `pre-contract-cleanup-20260821` 恢复。
 
-2026-08-19 本轮只移动、不删除文件。移动前的完整源码状态仍由 Git 标签
-`pre-cleanup-20260819` 保留。
+## Git 历史恢复
 
-## 当前内容
+查看标签中的历史文件清单：
 
-| 当前路径 | 原路径 | 盘点文件数 | 归档原因 |
-| --- | --- | ---: | --- |
-| `retired_source/` | `attic/` | 24 | 已结束的八小时窗口、倒计时和封包脚手架及其测试 |
-| `outdated_docs/` | `docs/archive/` | 7 | 清理前 README、旧计划、迁移说明和外部交接文本 |
-| `legacy_tools/keyed_v2/` | `tools/experiments/legacy_keyed_v2/` | 35 | 无当前主线引用的一次性视觉、键位和诊断脚本 |
-| `ros1_original/` | `ros1_original/` | 1098 | 不参与 ROS 2 构建的 ROS 1/Catkin 迁移来源及旧构建产物 |
-| `generated_cache_snapshot/` | 活动树各处 | 832 | Python、pytest 和包元数据的现有可再生成缓存 |
-| `empty_placeholders/` | `src/kcg_connector/` | 0 | 两个没有内容、没有本地引用的扩展占位目录 |
+```bash
+git ls-tree -r --name-only pre-contract-cleanup-20260821 legacy_archive/
+```
 
-盘点合计 1997 个文件（含本索引）、约 100 MiB；其中 ROS 1 `build/`、`devel/`、
-Python 缓存和包元数据仍由 Git 忽略。归档的目的只是让主工程路径清晰，不把历史文件
-重新包装成当前功能。
+读取单个文件，不改工作树：
 
-## 使用边界
+```bash
+git show pre-contract-cleanup-20260821:legacy_archive/outdated_docs/README_before_cleanup_20260819.md
+```
 
-1. 当前入口仍是根目录 `README.md` 和 `artifacts/agent_control/` 控制面。
-2. 不要直接运行或导入本目录中的源码、测试和脚本；需要恢复时先重新审计。
-3. `artifacts/` 中的冻结模型、动态日志和证据没有移动到这里，必须保持原路径。
-4. `build/`、`install/`、`log/` 和 `.venv/` 是当前可重建工作环境，不属于本归档。
-5. 本目录中的旧文档可能含历史路径或旧状态，只用于追溯。
+导出整个旧归档到临时 tar：
 
-## 本轮验证约定
+```bash
+git archive --format=tar pre-contract-cleanup-20260821 legacy_archive/ \
+  > /tmp/kcgtest1-legacy-before-contract-cleanup.tar
+```
 
-- 假设编号：`PROJECT-ARCHIVE-H1`。
-- 唯一改变：把已审计的非主线文件移动到本目录，并同步导航与收集规则。
-- 预期结果：活动路径不再引用旧位置；默认 pytest 不收集归档测试；当前 B-V5 定向回归
-  仍通过；Git 差异中没有内容删除。
-- 失败判据：出现失效活动链接、归档测试被收集、定向回归失败、冻结文件摘要变化或
-  Git 不能识别原文件为可恢复移动。
+不要用 `git checkout --` 覆盖当前工作树；需要恢复某项实现时先在临时目录审计。
+
+## 唯一额外归档
+
+`RETIRED_B_GRASP_ROUTES_20260820.zip` 保存旧提交中没有的 B_GOAL_MODE、fast-pick、
+minimal-v2 和 PAD 兼容性路线。它们只作论文/诊断 baseline，不是当前候选或运行授权。
+
+- 成员数：138
+- 大小：616538 bytes
+- SHA-256：`626c55f8beeb2285bf19247766545356f31fc60641878fbd5d70c5cd1235a6f4`
+- 已排除：`__pycache__/` 和 `*.pyc`
+
+校验：
+
+```bash
+(cd legacy_archive && sha256sum -c RETIRED_B_GRASP_ROUTES_20260820.zip.sha256)
+unzip -t legacy_archive/RETIRED_B_GRASP_ROUTES_20260820.zip
+```
+
+## 清理说明
+
+先前临时生成的 `LEGACY_CODE_SNAPSHOT_20260821.zip` 已删除，因为它重复封装 Git
+已有内容，并混入881个可再生成缓存条目。该包不包含需要单独保留的冻结运行证据；
+唯一的未提交 B 路线已由上面的小包接替。
+
+`artifacts/` 中的模型、动态日志、失败证据和交付归档没有移入或删除。ZIP 校验通过
+也只证明归档完整，不证明任何抓取、装配或动态验收通过。
