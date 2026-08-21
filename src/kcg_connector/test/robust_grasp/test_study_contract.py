@@ -154,10 +154,10 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
     )
     assert interpretation[
         "top_level_candidate_accepted_output_channels"
-    ] == [
+    ] == (
         "STATIC_EXACT_GRASP_CANDIDATE",
         "STATIC_CERTIFIED_SEQUENTIAL_CLOSURE_POLICY",
-    ]
+    )
     assert interpretation[
         "top_level_candidate_and_policy_mutually_exclusive"
     ] is True
@@ -336,6 +336,7 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
     assert ranking["failure_retention"] == {
         "retain_every_generation_attempt": True,
         "retain_every_unique_accepted_candidate": True,
+        "retain_every_unique_accepted_policy": True,
         "retain_every_generation_and_evaluation_failure": True,
         "failure_reason_or_exception_required": True,
         "failed_candidate_drop_allowed": False,
@@ -352,6 +353,12 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
         "allowed_with_current_bindings": False,
         "formal_ranked_keys_must_be_empty": True,
         "selected_candidate_must_be_none": True,
+        "contact_range_policy_handling": (
+            "FAIL_CLOSED_BEFORE_COLLISION_OR_WRENCH_UNTIL_"
+            "POLICY_AWARE_CONSUMERS_EXIST"
+        ),
+        "contact_range_policy_collision_invocations_before_support": 0,
+        "contact_range_policy_wrench_invocations_before_support": 0,
         "required_collision_claim_scope": COMPLETE_CLEARANCE_SCOPE,
         "current_uncertainty_claim_scope": (
             FRICTION_INTERVAL_ONLY_CERTIFIED_UNCERTAINTY_SCOPE
