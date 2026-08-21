@@ -57,7 +57,12 @@ from kcg_connector.grasp.robust.interval_kinematics import (
     IntervalTransverseRootCertificate,
     METHOD_ID as INTERVAL_KINEMATICS_METHOD_ID,
 )
-from kcg_connector.grasp.robust.object_model import file_sha256
+from kcg_connector.grasp.robust.object_model import (
+    AssetProvenance,
+    ObjectGraspModel,
+    TriangleMesh,
+    file_sha256,
+)
 from kcg_connector.grasp.robust.ray_closure import (
     CLAIM_LIMITATIONS as RAY_CLOSURE_CLAIM_LIMITATIONS,
     CANDIDATE_REPRESENTATIVE_ROLE,
@@ -90,6 +95,19 @@ from kcg_connector.grasp.robust.ray_closure import (
     _float64_array_hex,
     _hand_model_manifest,
 )
+from kcg_connector.grasp.robust.robust_wrench import (
+    LinearProgramSolverOptions,
+)
+from kcg_connector.grasp.robust.task_wrench_evaluator import (
+    CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS,
+    CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS,
+    CONTACT_RANGE_POLICY_WRENCH_METHOD_ID,
+    CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE,
+    FRICTION_INTERVAL_ONLY_CERTIFIED_UNCERTAINTY_SCOPE,
+    ContactRangePolicyWrenchState,
+    TaskWrenchEvaluationError,
+    TaskWrenchEvaluator,
+)
 
 
 def _backend() -> DirectedIntervalKinematics:
@@ -109,7 +127,7 @@ def _backend() -> DirectedIntervalKinematics:
             origin_xyz_m=(0.0, 10.0 * index, 0.0),
             origin_rpy_rad=(0.0, 0.0, 0.0),
             axis=(1.0, 0.0, 0.0),
-            limit=JointLimit(0.0, 1.0),
+            limit=JointLimit(0.0, 1.0, effort=100.0),
         )
         pads[pad_name] = PadGeometry(
             name=pad_name,
@@ -118,6 +136,7 @@ def _backend() -> DirectedIntervalKinematics:
             origin_xyz_m=(0.0, 0.0, 0.0),
             origin_rpy_rad=(0.0, 0.0, 0.0),
             geometry=GeometrySpec("box", (1.0, 1.0, 1.0)),
+            normal_force_capacity_n=1.0,
         )
         finger_joints[finger_name] = (joint_name,)
     hand = ThreeFingerHandModel(
@@ -143,6 +162,46 @@ def _source_triangles() -> np.ndarray:
             ((0.5, 0.0, 0.0), (0.5, 1.0, 0.0), (0.5, 0.0, 1.0)),
         ),
         dtype=np.float64,
+    )
+
+
+def _task_object_triangles() -> np.ndarray:
+    return np.asarray(
+        (
+            (
+                (100.0, 0.0, 0.0),
+                (100.0, 1.0, 0.0),
+                (100.0, 0.0, 1.0),
+            ),
+        ),
+        dtype=np.float64,
+    )
+
+
+def _task_object_model() -> ObjectGraspModel:
+    triangles = _task_object_triangles()
+    mesh = TriangleMesh(
+        vertices_m=triangles[0],
+        faces=np.asarray(((0, 1, 2),), dtype=np.int64),
+        face_semantics=("external",),
+    )
+    return ObjectGraspModel(
+        mesh=mesh,
+        provenance=AssetProvenance(
+            source_path="synthetic_policy_wrench_fixture.stl",
+            source_sha256=hashlib.sha256(
+                b"synthetic policy wrench fixture"
+            ).hexdigest(),
+            source_class="SYNTHETIC_ANALYTIC_TEST_FIXTURE",
+            source_format="ASCII_STL",
+            source_unit="m",
+            meters_per_source_unit=1.0,
+        ),
+        assembly_axis=np.asarray((0.0, 0.0, 1.0)),
+        mass_kg=1.0,
+        center_of_mass_m=np.asarray((100.0, 0.25, 0.25)),
+        inertia_kg_m2=np.diag((0.01, 0.01, 0.01)),
+        allowed_contact_semantics=frozenset(("external",)),
     )
 
 
@@ -582,25 +641,16 @@ def _fixture(tmp_path: Path, *, budget: int = 6):
     )
     links = tuple(row[0] for row in terminal_rows)
     terminals = tuple(row[1] for row in terminal_rows)
-    object_triangles = np.asarray(
-        (
-            (
-                (100.0, 0.0, 0.0),
-                (100.0, 1.0, 0.0),
-                (100.0, 0.0, 1.0),
-            ),
-        ),
-        dtype=np.float64,
-    )
+    object_triangles = _task_object_triangles()
     object_surface = HashBoundObjectSurface(
         object_id="object_fixture",
         source_asset_sha256=hashlib.sha256(b"object fixture").hexdigest(),
         geometry_sha256=triangle_surface_geometry_sha256(
             object_triangles
         ),
-        ray_closure_object_geometry_sha256=hashlib.sha256(
-            b"Ray object fixture"
-        ).hexdigest(),
+        ray_closure_object_geometry_sha256=(
+            _task_object_model().geometry_sha256
+        ),
         triangles_object_m=object_triangles,
     )
     inventory = build_self_collision_pair_inventory(
