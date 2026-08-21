@@ -35,8 +35,16 @@ a31d4c0e7cb911f0371c257b0784506388f0f52d1d07401c1b1c2239fa47a783  MODEL_MAPPING.
 
 本轮清理不执行这类删除。
 
-## 可直接重建但本轮保留
+## 可直接重建项与本机环境边界
 
-根目录的 `build/`、`install/`、`log/`、`.pytest_cache/` 和 `.venv/` 已由 Git 忽略。
-它们不是证据主库，必要时可以重建；但当前动态主线仍在开发，本轮不删除现有环境或
-构建产物，避免引入无关停机。
+根目录的 `build/`、`install/`、`log/`、`.pytest_cache/`、`__pycache__/` 和
+`.venv/` 已由 Git 忽略。Python/pytest 缓存可直接删除并自动重建；`.venv/` 与
+`build/install/log` 可能影响本机开发环境或 ROS 工作区，未经单独审计不批量删除。
+
+## J599 独立证据归档
+
+`j599_25_35_standard_interface_v1/evidence/` 的接受摘要和两组接受报告继续展开保留。
+原始接触流、轨迹、临时物理场景和中间运行已进入
+`evidence_archive/J599_25_35_FULL_EVIDENCE_20260820.tar.gz`；压缩包自身哈希、原始
+54 个文件逐文件哈希和恢复命令位于同目录。该归档只减少重复展开数据，不改变报告
+结论，也不能把 connector-only 仿真通过升级为机器人装配或真实硬件通过。

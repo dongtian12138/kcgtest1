@@ -21,7 +21,7 @@
 3. 外部交付证据仅保留已校验归档及校验文件，不保留重复解压树。
 4. 每次提交只暂存本轮清理文件，不混入并行进行的 CARTS、J599 或依赖配置修改。
 
-## 审计与处理结果
+## 第一轮审计与处理结果
 
 - 清理前非 CARTS 套件：`3287 passed, 249 failed, 7 errors in 143.85s`。全部失败/错误集中在25个旧合同测试文件，主要为源码/配置/USD 的历史 SHA-256 漂移。
 - 另有37个测试直接读取或解析已退役的 21372 行 `d38999_tabletop_pick_smoke.py`；与上述集合合并后退役54个测试文件。
@@ -31,6 +31,31 @@
 - 当前 CARTS-Grasp 套件：`417 passed in 411.08s`，退出码0；清理未修改或暂存 `grasp/robust`、`isaac/robust_grasp`、CARTS 配置及其测试。
 - 活动源码/说明（排除历史证据区和仅说明适用范围的文档）中 `/home/noob/...` 运行路径绑定为0。
 - 退役内容通过本地标签 `pre-contract-cleanup-20260821` 恢复；唯一未被该提交历史覆盖的 B 路线另存138成员的小型校验归档。
+
+## 第二轮深度依赖清理
+
+- 清理前先提交当前 CARTS 源码、配置和测试，再提交 J599 公共标准模型与可恢复证据归档；保护标签为 `current-carts-j599-checkpoint-20260821`。
+- 另一个静态检查点 `53411e4` 保存接触范围防碰撞实现、方法合同和压缩冻结快照。它通过 `437 passed in 414.35s` 的完整 CARTS 回归，受检文件测试前后 SHA-256 清单一致；这不是 Isaac、抓取或硬件通过。
+- 按“当前任务入口、导入/调用、测试、配置、说明引用”做依赖闭包后，退役52个 Python、8份 YAML、1份 JSON 和2份 Markdown，共63个文件、44763行、1842812 bytes。
+- Python 退役内容包括26个无入向引用的一次性 Isaac 入口，以及已经禁用或仅作事后评价的视觉XY、FoundationPose readiness CLI、姿态注册迁移、key-yaw、posthoc shadow/diagnostic mount、旧到位/螺母重抓等完整自包含分支。
+- 删除后包根目录不存在无入向引用的 Python 模块；保留的零文本入向 Isaac 文件仅是有意供人工直接启动的通用探针，或当前 TE/J35 的 build、inspect、validate、write 工具。
+- `d38999_tabletop_pick_smoke.py` 虽约1 MB，仍被现有验证脚本、兼容包装器和下游配置引用；`d38999_keyed_v2_physical_model_contract.py` 仍是 v3/R12/多层生成链的传递依赖。二者属于“历史兼容但仍有调用者”，不能在本轮按文件大小删除。
+- 478 KB 的 `d38999_keyed_v2_frozen_contract_snapshot.py` 已缩为小型加载器，数据进入42728 bytes 的 gzip 包。旧字面量与新解压数据的10组冻结值规范 SHA-256 均为 `e40f382e38b8353aa534a7d88de945cfc377cf43a0d80f098960e67923621331`；临时安装树能从 ROS share 目录加载，相关定向测试 `176 passed`。
+
+## J599 证据收敛
+
+- 原 `evidence/` 展开树共54个文件、118529464 bytes；先生成确定性归档 `evidence_archive/J599_25_35_FULL_EVIDENCE_20260820.tar.gz`，大小4764159 bytes，SHA-256 为 `e60901e937f55166aff46de6212621b552ba714eb944e0791b49ca62ecb5bfc7`。
+- 归档成员路径安全检查为0项异常；独立重建与原归档逐字节相同，解压后的54个文件逐一通过原始 SHA-256 清单。
+- 验证后移除47个重复展开的原始流、轨迹、临时场景和中间结果；继续直接保留接受摘要、静态验证、名义组和错键组报告/授权共7份文件。
+- 接受清单19/19摘要通过，J599 合同测试6/6通过。该目录仍只是公共标准接口模型，不是厂商原始 CAD，也不构成机器人装配或真实硬件验收。
+
+## 第二轮回归与路径结论
+
+- 非 CARTS 套件：`2494 passed in 100.42s`；前后摘要唯一变化是被该套件明确排除的并发 CARTS 受力模块，没有用排除新失败、放宽断言或伪造摘要获得通过。
+- CARTS 套件：`437 passed in 414.35s`；`selected_candidate=null`、`NOT_CERTIFIABLE`、`dynamic_launch_allowed=false` 和三项冻结阻断保持不变。
+- 活动源码不存在 `/home/noob/...` 运行时绑定。J599 已接受报告、生成资产和恢复示例中的绝对路径是来源记录，保留不改写，也不进入在线控制。
+- Python/pytest 缓存属于可重建数据；`.venv`、`build/install/log` 可能承载本机环境，未经单独审计没有批量删除。
+- 第二轮完成标签为 `post-deep-cleanup-20260821`；该标签与 Git 历史用于恢复退役文件，不代表动态验收通过。
 
 ## 恢复示例
 

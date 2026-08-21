@@ -1,12 +1,12 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-21T13:28:34Z
+> 快照时间：2026-08-21T14:38:24Z
 > 用途：新对话、上下文压缩恢复和普通源码工作先读本文件，避免默认加载完整历史台账。
 > 边界：本文件是当前状态的轻量路由，不覆盖追加式历史证据；出现冲突、时间漂移或准备动态运行时必须回查原始控制文件和运行产物。
 
 ## 一句话状态
 
-当前研究主线是 `CARTS-GRASP-CROSS-OBJECT-V1`：三个入口生成的三指接触范围抓取计划已传到顶层固定预算生成器和断点，排名器也会在误用这种计划时显式拒绝；当前完整静态回归 `420 passed`。但整机防碰撞、接触范围受力评价和非摩擦误差标定尚未完成，因此没有正式候选且禁止启动 Isaac。
+当前研究主线是 `CARTS-GRASP-CROSS-OBJECT-V1`：三指接触范围计划已进入顶层生成器、断点和一部分手部连续防碰撞检查，当前完整静态回归 `437 passed`。但检查范围还不包括实体包含关系、权威整机/环境全路径和接触范围受力评价，非摩擦误差也未标定，因此没有正式候选且禁止启动 Isaac。
 
 ## 当前权威字段
 
@@ -20,22 +20,23 @@
 - 动态启动：`dynamic_launch_allowed=false`
 - B阶段正式通过：`formal_b_passed=false`
 - 真实硬件授权：`hardware_authorized=false`
-- 进程快照：2026-08-21T12:40:28Z 未发现活动 Isaac/目标 runner；动态前必须重新核对，不能沿用本快照。
-- 工作树状态：当前 CARTS-Grasp、TE/J35 脚本与 J599 标准模型尚未纳入 Git；本次整理正在对它们建立可恢复检查点。最新 CARTS 源码已完成 `420 passed in 415.80s`，且测试前后源码哈希一致。
+- 进程快照：2026-08-21T14:38:24Z 未发现活动 Isaac、目标 runner 或 pytest；动态前必须重新核对，不能沿用本快照。
+- 最新 CARTS 完整静态回归：`437 passed in 414.35s`，测试前后受检文件 SHA-256 清单一致。
 
 ## 已有证据与不能声称的内容
 
-- 任务控制面的最新完整持久快照仍记录 `414 passed in 392.53s`；其后 Q/R/S 三个子节点均有独立 `STATIC_PASS` 结果。当前工作树另行实测 `420 passed in 415.80s`，退出码0，且测试前后受检源码哈希完全一致。这是当前静态回归证据，不写回历史控制面，也不升级为动态通过。
-- study canonical SHA-256：`eb7fbebc008cdc7dc48fe58475c165bec2f0a9614d03d607087d6ceb205da9be`，`freeze_eligible=false`。
+- 任务控制面的最新持久快照仍记录 `420 passed in 410.94s`；其后本地检查点 `53411e4` 在稳定工作树实测 `437 passed in 414.35s`。两者都只是静态程序证据，不升级为仿真或动态通过。
+- study canonical SHA-256：`fd3ee314f6b956a22e3c5c5eba95a68b1aaddab630d500c75da5a0fcca7b5dab`，`freeze_eligible=false`。
 - 三根手指的蓝色接触表面均从原始末端STL精确提取为2479面；旧程序报告的每指11个缺失面已确认是假缺失，当前遗漏为0且原始顶点未移动。
 - 已完成 V9 多精度区间顺序闭合、对象/手/PAD/方向模型绑定、四 lane 固定预算生成、共同 QMC 的 rank-only 绑定和连续表面碰撞内核。
-- 先前18个合成抓法入口测试失败的原因已确认并修正：三个入口现在保留display-only近似抓法和三指接触范围；正式`candidate`仍为空，正式轨迹复核仍以`REPRESENTATIVE_PROPOSAL_ONLY_PENDING_ROOT_INTERVAL_PROPAGATION`拒绝近似值。
+- 三个抓法入口现在把三指接触范围组成不可变顺序闭合计划并传到顶层生成器与断点；正式`candidate`仍为空，display-only近似值仍不能进入正式轨迹复核或排名。
+- 手部非PAD表面对对象和自碰撞现已能覆盖注册接触范围及两个独立闭合阶段的完整乘积；当前仍是 `NOT_CERTIFIABLE`，因为实体包含、权威整机/环境全路径和接触范围受力评价尚未接通。
 - 以上只是静态方法与协议证据，不证明 current/TE 双对象离线候选通过，更不证明 Isaac 抓取、离桌、40 mm 抬升、保持、扰动或真实硬件成功。
 
 ## 当前三个阻断条件
 
 1. `MISSING_FORMAL_ROOT_INTERVAL_CANDIDATE_PROPAGATION`
-   - 还需把三指首次接触的可能范围形成一份可供防碰撞、受力评价和排序共同消费的正式抓法；禁止直接使用显示用近似值。
+   - 接触范围计划已到达顶层、断点和部分手部防碰撞；还需让受力评价和正式排序直接检查整个范围，禁止使用显示用近似值。
 2. `MISSING_COMPLETE_HAND_ENVIRONMENT_CONTINUOUS_COLLISION_BINDING`
    - 还需完成 PAD 连续表面、实体外部/包含关系、权威 17-link 和环境碰撞覆盖证书。
 3. `MISSING_CALIBRATED_NONFRICTION_UNCERTAINTY_BOUNDS`
@@ -46,7 +47,8 @@
 ## 当前主线文件
 
 - 任务切换合同：`artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TASK_SWITCH_PLAN.json`
-- 最新静态快照：`artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/STATIC_PROGRESS_20260821T123331Z.json`
+- 最新静态快照：`artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/STATIC_PROGRESS_20260821T134214Z.json`
+- 接触范围计划最终静态证据：`artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/FORMAL_CANDIDATE_SUBNODE_U_RESULT_20260821T134214Z.json`
 - 接触范围计划传递证据：`artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/FORMAL_CANDIDATE_SUBNODE_Q_RESULT_20260821T130539Z.json`
 - 顶层生成与断点证据：`artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/FORMAL_CANDIDATE_SUBNODE_R_RESULT_20260821T131631Z.json`
 - 排名器闭门拒绝证据：`artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/FORMAL_CANDIDATE_SUBNODE_S_RESULT_20260821T131843Z.json`
@@ -56,16 +58,15 @@
 - 当前配置：`src/kcg_connector/config/carts_grasp_v1.yaml`、`carts_grasp_objects_v1.yaml`、`carts_hand_contact_v1.yaml`、`carts_collision_roster_v1.yaml`
 - 第二对象来源：`j599_25_35_standard_interface_v1/` 与 TE/J35 派生脚本；既有 `TE_J35_PHYSX_V1.usda` 只是装配 smoke 夹具，不是抓取通过证据。
 
-## 2026-08-21 Python 与归档清理
+## 2026-08-21 Python、文档与归档清理
 
-- 仓库中的 `.py` 总数从 2852 降到 1552；其中 1040 个是 `.venv` 第三方依赖，`src/kcg_connector/` 当前有451个。两轮合计让1300个 Python 文件退出普通检索。
-- 当前 CARTS 版本化范围为28个方法模块、2个 Isaac 接口和24个测试；当前完整静态回归为 `420 passed`。新对话默认只读这些路径，不遍历其他历史/下游实现。
-- 已退役57个绑定旧单体运行器、源码文本或历史 SHA-256 的测试，以及13个无当前调用者/依赖测试文件才能加载的历史模块；剩余非 CARTS 套件实测 `2580 passed in 108.72s`，退出码0。
-- Git 标签 `pre-contract-cleanup-20260821` 保存清理前的已提交历史。主分支不再复制保存已跟踪源码 ZIP；唯一未被旧提交覆盖的 B 路线封装为 `legacy_archive/RETIRED_B_GRASP_ROUTES_20260820.zip`，138个成员、616538 bytes、SHA-256 `626c55f8beeb2285bf19247766545356f31fc60641878fbd5d70c5cd1235a6f4`。
-- 已删除多组与现有 ZIP/tar 逐字节相同的交付包解压副本；原压缩包、SHA-256 旁车、内部 manifest 和唯一运行数据保留。
-- `.vscode/settings.json` 会隐藏可再生成目录，并把 `.venv`、`artifacts`、`legacy_archive`、`build/install/log` 排除出搜索和文件监视；证据目录仍可在资源管理器中手动展开。
-- `kcg_connector.grasp` 公共 API 改为按需导入；导入 `grasp.robust` 不再顺带加载 7 个旧 B 控制模块。兼容 API 和相关回归为 `141 passed`。
-- 活动源码和说明中不再存在 `/home/noob/...` 的机器绝对路径绑定；仓库适用范围说明和个人学习文档中的路径文字不作为运行路径。
+- 工程内 `.py` 从清理前 2852 个降到 1500 个；其中 1040 个属于 `.venv`，当前普通源码区451个，`src/kcg_connector/` 399个。第二轮另外退役52个无当前入向依赖的 Python、8份旧 YAML、1份旧 JSON 和2份旧说明。
+- 当前 CARTS 范围为28个方法模块、2个 Isaac 接口、24个测试和4份配置；新对话只按当前任务定向读取，不遍历历史台账或旧下游实现。
+- 第二轮删除63个文件、44763行、约1.84 MB；冻结合同的478 KB Python 数据字面量改为约3 KB加载器加42.7 KB压缩包，解压前后10组冻结值规范哈希一致。
+- 第二轮非 CARTS 套件实测 `2494 passed in 100.42s`；冻结合同/安装树与方法合同定向测试 `176 passed`；CARTS 完整套件 `437 passed in 414.35s`。均为静态证据。
+- Git 回退点依次为 `pre-contract-cleanup-20260821`、`post-contract-cleanup-20260821` 和 `current-carts-j599-checkpoint-20260821`；本地检查点 `53411e4` 保存最新 CARTS 与压缩快照，尚未推送远端。
+- J599 原54个展开证据已形成可恢复压缩归档并逐文件复核，直接保留7份接受摘要/报告；这不改变其公共标准模型、非厂商原始 CAD、非真实硬件验收的边界。
+- 当前活动源码没有 `/home/noob/...` 运行时绑定；J599 已接受报告、生成资产和恢复示例中的绝对路径只作不可改写的来源记录，不参与在线控制。
 
 ## 永久边界
 
