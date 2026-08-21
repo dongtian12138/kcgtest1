@@ -93,7 +93,7 @@ candidate_optimization:
       package: scipy
       version: 1.8.0
       python_manifest_path: src/kcg_connector/setup.py
-      python_manifest_sha256: 4e8b68a5dd12f6c746248876cdfbf57ca5bda81fcd832fa985a7dbe06d55e076
+      python_manifest_sha256: bde1b207d15a35018de4ea91c05bf26d8b143366dcb3eadec4346f2456913765
       ros_package: python3-scipy
       ros_manifest_path: src/kcg_connector/package.xml
       ros_manifest_sha256: 3e37fbe688ad739472109af4da6f39b4a03e09eef07eb456ddddd64acd95340b
@@ -116,6 +116,39 @@ candidate_optimization:
   display_only_proposal_formal_eligible: false
   contact_range_policy_downstream_status: PENDING_POLICY_AWARE_COLLISION_AND_WRENCH
   output_claim: STATIC_V9_EXACT_CANDIDATE_OR_CONTACT_RANGE_POLICY_ACCEPTANCE_ONLY
+
+contact_range_policy_collision:
+  implementation_type_id: kcg_connector.grasp.robust.full_hand_collision.ContactRangePolicyCollisionCertificate
+  method_id: CARTS_FULL_HAND_CONTACT_RANGE_POLICY_COLLISION_AGGREGATOR_V1
+  independent_two_phase_method_id: CARTS_MP_INTERVAL_INDEPENDENT_TWO_PHASE_SURFACE_PAIR_V1
+  phase_domain_rule: COMPLETE_CARTESIAN_PRODUCT_OF_BOTH_REGISTERED_PHASE_INTERVALS
+  link_dependency_rule: EVERY_LINK_MUST_DEPEND_ON_AT_MOST_ONE_CLOSURE_SUPPORT
+  same_support_rule: SHARED_OR_SINGLE_SUPPORT_PHASE_PATH
+  cross_support_rule: INDEPENDENT_SUPPORT_PHASE_PRODUCT
+  display_approximation_used_as_formal_evidence: false
+  endpoint_or_finite_corner_sampling_allowed: false
+  srdf_exemptions_applied: false
+  exact_candidate_collision_path_changed: false
+  current_state: NOT_CERTIFIABLE
+  checkable_scope: HAND_LINK_NONPAD_OBJECT_AND_SELF_PAIR_CONTACT_RANGE_CLOSURE_ONLY
+  mandatory_blockers:
+    - SOLID_CONTAINMENT_OR_INITIAL_OUTSIDE_CERTIFICATE_UNAVAILABLE
+    - AUTHORITATIVE_FULL_HAND_COLLISION_LINK_ROSTER_NOT_PROVEN
+    - ARM_ENVIRONMENT_APPROACH_CLOSURE_LIFT_COLLISION_UNAVAILABLE
+  claim_limitations:
+    - CONTACT_RANGE_POLICY_SEQUENTIAL_CLOSURE_SUPERSET_ONLY
+    - EVERY_LINK_MUST_DEPEND_ON_AT_MOST_ONE_CLOSURE_SUPPORT
+    - CROSS_SUPPORT_SELF_PAIRS_USE_COMPLETE_TWO_PHASE_PRODUCT
+    - MOVING_SURFACE_VS_STATIC_OBJECT_AND_SELF_SURFACE_PAIRS_ONLY
+    - NOT_SOLID_CONTAINMENT_OR_INTERIOR_EXCLUSION
+    - NOT_CONTINUOUS_PAD_SURFACE_OR_ALLOWED_ENDPOINT_PATCH_CERTIFICATE
+    - AUTHORITATIVE_FULL_HAND_COLLISION_LINK_ROSTER_NOT_BOUND
+    - NOT_ARM_OR_ENVIRONMENT_APPROACH_CLOSURE_OR_LIFT_COLLISION
+    - NO_SRDF_NEVER_OR_ADJACENT_EXEMPTIONS_APPLIED
+    - DISPLAY_APPROXIMATION_IS_NOT_READ_AS_FORMAL_EVIDENCE
+    - POTENTIAL_CONTACT_TANGENCY_AND_COPLANARITY_REMAIN_UNRESOLVED
+  formal_selection_allowed: false
+  isaac_launch_allowed: false
 
 post_generation_ranking:
   implementation_type_id: kcg_connector.grasp.robust.post_generation_ranker.PostGenerationRankOnlyPipeline
@@ -183,7 +216,7 @@ ray_closure:
       package: mpmath
       version: 1.2.1
       manifest_path: src/kcg_connector/setup.py
-      manifest_sha256: 4e8b68a5dd12f6c746248876cdfbf57ca5bda81fcd832fa985a7dbe06d55e076
+      manifest_sha256: bde1b207d15a35018de4ea91c05bf26d8b143366dcb3eadec4346f2456913765
     decimal_precision: 80
     decimal_precision_role: NUMERICAL_INTERVAL_ARITHMETIC_PRECISION_NOT_PHYSICAL_ACCEPTANCE_THRESHOLD
     precision_convergence_values: [50, 80, 120]

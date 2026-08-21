@@ -30,6 +30,9 @@ METHOD_ID = "CARTS_MP_INTERVAL_MOVING_STATIC_SURFACE_STRICT_AABB_BVH_V1"
 MOVING_PAIR_METHOD_ID = (
     "CARTS_MP_INTERVAL_MOVING_SURFACE_PAIR_RELATIVE_AXIS_V1"
 )
+INDEPENDENT_MOVING_PAIR_METHOD_ID = (
+    "CARTS_MP_INTERVAL_INDEPENDENT_TWO_PHASE_SURFACE_PAIR_V1"
+)
 CLAIM_LIMITATIONS = (
     "MOVING_LINK_SURFACE_VS_STATIC_OBJECT_SURFACE_ONLY",
     "NOT_SOLID_CONTAINMENT_OR_INTERIOR_EXCLUSION",
@@ -41,6 +44,17 @@ CLAIM_LIMITATIONS = (
 )
 MOVING_PAIR_CLAIM_LIMITATIONS = (
     "TWO_MOVING_LINK_SURFACES_ONLY",
+    "NO_SEMANTIC_COLLISION_PAIR_EXEMPTIONS_APPLIED",
+    "NOT_SOLID_CONTAINMENT_OR_INTERIOR_EXCLUSION",
+    "NOT_ENVIRONMENT_COLLISION",
+    "NOT_FULL_HAND_OR_MULTI_PAIR_PATH_CERTIFICATE",
+    "INDEPENDENT_POINT_INTERVALS_DO_NOT_EXPLOIT_FK_CORRELATION",
+    "POTENTIAL_CONTACT_TANGENCY_AND_COPLANARITY_ARE_UNRESOLVED",
+    "RELATIVE_AXIS_SEPARATION_SUFFICIENT_NOT_NECESSARY",
+)
+INDEPENDENT_MOVING_PAIR_CLAIM_LIMITATIONS = (
+    "TWO_MOVING_LINK_SURFACES_WITH_INDEPENDENT_SCALAR_PHASES_ONLY",
+    "FULL_CARTESIAN_PRODUCT_OF_BOTH_REGISTERED_PHASE_INTERVALS",
     "NO_SEMANTIC_COLLISION_PAIR_EXEMPTIONS_APPLIED",
     "NOT_SOLID_CONTAINMENT_OR_INTERIOR_EXCLUSION",
     "NOT_ENVIRONMENT_COLLISION",
@@ -442,6 +456,232 @@ class MovingSurfacePairCollisionCertificate:
         ):
             raise ContinuousCollisionError(
                 "moving-pair unresolved certificate is inconsistent"
+            )
+
+
+@dataclass(frozen=True)
+class IndependentMotionPhaseBox:
+    """One closed box in two independently varying closure phases."""
+
+    first_phase: IntervalBounds
+    second_phase: IntervalBounds
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.first_phase, IntervalBounds) or not isinstance(
+            self.second_phase, IntervalBounds
+        ):
+            raise ContinuousCollisionError(
+                "independent moving-pair phase box is malformed"
+            )
+
+
+@dataclass(frozen=True)
+class IndependentMovingSurfacePairCollisionAudit:
+    method_id: str
+    interval_kinematics_method_id: str
+    first_link_name: str
+    second_link_name: str
+    first_surface_geometry_sha256: str
+    second_surface_geometry_sha256: str
+    pair_contract_sha256: str
+    first_triangle_count: int
+    second_triangle_count: int
+    pair_count_per_phase_box: int
+    maximum_subdivision_phase_boxes: int
+    processed_phase_box_count: int
+    certified_free_leaf_phase_box_count: int
+    subdivided_phase_box_count: int
+    point_motion_evaluation_count: int
+    relative_coordinate_interval_evaluation_count: int
+    pair_universe_count: int
+    pair_coverage_count: int
+    strictly_separated_pair_count: int
+    potential_overlap_pair_observation_count: int
+    terminal_unresolved_pair_count: int
+    all_processed_pairs_accounted_for: bool
+    entire_phase_product_covered: bool
+    unresolved_reason: str
+    claim_limitations: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if self.method_id != INDEPENDENT_MOVING_PAIR_METHOD_ID:
+            raise ContinuousCollisionError(
+                "independent moving-pair audit method mismatch"
+            )
+        if self.interval_kinematics_method_id != (
+            INTERVAL_KINEMATICS_METHOD_ID
+        ):
+            raise ContinuousCollisionError(
+                "independent moving-pair interval backend mismatch"
+            )
+        if (
+            not str(self.first_link_name)
+            or not str(self.second_link_name)
+            or self.first_link_name == self.second_link_name
+        ):
+            raise ContinuousCollisionError(
+                "independent moving-pair audit needs distinct links"
+            )
+        for value in (
+            self.first_surface_geometry_sha256,
+            self.second_surface_geometry_sha256,
+            self.pair_contract_sha256,
+        ):
+            if len(value) != 64 or any(
+                character not in "0123456789abcdef"
+                for character in value
+            ):
+                raise ContinuousCollisionError(
+                    "independent moving-pair digest is invalid"
+                )
+        integer_fields = (
+            self.first_triangle_count,
+            self.second_triangle_count,
+            self.pair_count_per_phase_box,
+            self.maximum_subdivision_phase_boxes,
+            self.processed_phase_box_count,
+            self.certified_free_leaf_phase_box_count,
+            self.subdivided_phase_box_count,
+            self.point_motion_evaluation_count,
+            self.relative_coordinate_interval_evaluation_count,
+            self.pair_universe_count,
+            self.pair_coverage_count,
+            self.strictly_separated_pair_count,
+            self.potential_overlap_pair_observation_count,
+            self.terminal_unresolved_pair_count,
+        )
+        if any(
+            not isinstance(value, int)
+            or isinstance(value, bool)
+            or value < 0
+            for value in integer_fields
+        ):
+            raise ContinuousCollisionError(
+                "independent moving-pair counters must be non-negative"
+            )
+        if (
+            self.first_triangle_count == 0
+            or self.second_triangle_count == 0
+            or self.maximum_subdivision_phase_boxes == 0
+            or self.pair_count_per_phase_box
+            != self.first_triangle_count * self.second_triangle_count
+            or self.processed_phase_box_count
+            > self.maximum_subdivision_phase_boxes
+            or self.pair_universe_count
+            != self.processed_phase_box_count
+            * self.pair_count_per_phase_box
+            or self.pair_coverage_count > self.pair_universe_count
+            or self.strictly_separated_pair_count
+            + self.potential_overlap_pair_observation_count
+            != self.pair_coverage_count
+            or self.certified_free_leaf_phase_box_count
+            > self.processed_phase_box_count
+        ):
+            raise ContinuousCollisionError(
+                "independent moving-pair coverage arithmetic is inconsistent"
+            )
+        if self.all_processed_pairs_accounted_for != (
+            self.pair_coverage_count == self.pair_universe_count
+        ):
+            raise ContinuousCollisionError(
+                "independent moving-pair accounting flag is inconsistent"
+            )
+        if self.all_processed_pairs_accounted_for:
+            expected_point_evaluations = (
+                self.processed_phase_box_count
+                * 3
+                * (
+                    self.first_triangle_count
+                    + self.second_triangle_count
+                )
+            )
+            expected_relative_evaluations = (
+                self.processed_phase_box_count
+                * self.pair_count_per_phase_box
+                * 27
+            )
+            if (
+                self.point_motion_evaluation_count
+                != expected_point_evaluations
+                or self.relative_coordinate_interval_evaluation_count
+                != expected_relative_evaluations
+            ):
+                raise ContinuousCollisionError(
+                    "independent moving-pair interval coverage is incomplete"
+                )
+        if self.entire_phase_product_covered and (
+            self.processed_phase_box_count
+            != 2 * self.subdivided_phase_box_count + 1
+            or self.certified_free_leaf_phase_box_count
+            != self.subdivided_phase_box_count + 1
+            or self.terminal_unresolved_pair_count != 0
+        ):
+            raise ContinuousCollisionError(
+                "independent moving-pair free partition is incomplete"
+            )
+        if (
+            self.claim_limitations
+            != INDEPENDENT_MOVING_PAIR_CLAIM_LIMITATIONS
+            or not str(self.unresolved_reason)
+        ):
+            raise ContinuousCollisionError(
+                "independent moving-pair limitations or reason changed"
+            )
+
+
+@dataclass(frozen=True)
+class IndependentMovingSurfacePairCollisionCertificate:
+    state: ContinuousCollisionState
+    searched_phase_box: IndependentMotionPhaseBox
+    certified_free_leaf_phase_boxes: tuple[
+        IndependentMotionPhaseBox, ...
+    ]
+    unresolved_phase_box: IndependentMotionPhaseBox | None
+    audit: IndependentMovingSurfacePairCollisionAudit
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.state, ContinuousCollisionState)
+            or not isinstance(
+                self.searched_phase_box, IndependentMotionPhaseBox
+            )
+        ):
+            raise ContinuousCollisionError(
+                "independent moving-pair certificate is malformed"
+            )
+        leaves = tuple(self.certified_free_leaf_phase_boxes)
+        if not all(
+            isinstance(value, IndependentMotionPhaseBox)
+            for value in leaves
+        ):
+            raise ContinuousCollisionError(
+                "independent moving-pair free leaves are malformed"
+            )
+        object.__setattr__(self, "certified_free_leaf_phase_boxes", leaves)
+        if self.audit.certified_free_leaf_phase_box_count != len(leaves):
+            raise ContinuousCollisionError(
+                "independent moving-pair free-leaf count is inconsistent"
+            )
+        if self.state is ContinuousCollisionState.CERTIFIED_FREE:
+            if (
+                self.unresolved_phase_box is not None
+                or not leaves
+                or not self.audit.entire_phase_product_covered
+                or not self.audit.all_processed_pairs_accounted_for
+                or self.audit.unresolved_reason != "NONE"
+            ):
+                raise ContinuousCollisionError(
+                    "independent moving-pair free certificate is inconsistent"
+                )
+        elif (
+            not isinstance(
+                self.unresolved_phase_box, IndependentMotionPhaseBox
+            )
+            or self.audit.entire_phase_product_covered
+            or self.audit.unresolved_reason == "NONE"
+        ):
+            raise ContinuousCollisionError(
+                "independent moving-pair unresolved certificate is inconsistent"
             )
 
 
@@ -1152,6 +1392,29 @@ def _moving_pair_contract_sha256(
     return digest.hexdigest()
 
 
+def _independent_moving_pair_contract_sha256(
+    *,
+    first_link_name: str,
+    first_surface_hash: str,
+    first_motion_hash: str,
+    second_link_name: str,
+    second_surface_hash: str,
+    second_motion_hash: str,
+) -> str:
+    digest = hashlib.sha256()
+    digest.update(b"CARTS_INDEPENDENT_TWO_PHASE_SURFACE_PAIR_CONTRACT_V1\0")
+    for value in (
+        first_link_name,
+        first_surface_hash,
+        first_motion_hash,
+        second_link_name,
+        second_surface_hash,
+        second_motion_hash,
+    ):
+        _update_text(digest, value)
+    return digest.hexdigest()
+
+
 def _enclose_moving_surface_vertices(
     *,
     backend: DirectedIntervalKinematics,
@@ -1586,17 +1849,398 @@ def certify_moving_link_surfaces_separated_from_each_other(
     )
 
 
+def _independent_moving_pair_certificate(
+    *,
+    state: ContinuousCollisionState,
+    searched_phase_box: IndependentMotionPhaseBox,
+    free_leaves: list[IndependentMotionPhaseBox],
+    unresolved_phase_box: IndependentMotionPhaseBox | None,
+    first_link_name: str,
+    second_link_name: str,
+    first_surface_hash: str,
+    second_surface_hash: str,
+    pair_contract_hash: str,
+    first_triangle_count: int,
+    second_triangle_count: int,
+    maximum_phase_boxes: int,
+    counters: _MovingPairCounters,
+    terminal_unresolved_pairs: int,
+    entire_phase_product_covered: bool,
+    unresolved_reason: str,
+) -> IndependentMovingSurfacePairCollisionCertificate:
+    audit = IndependentMovingSurfacePairCollisionAudit(
+        method_id=INDEPENDENT_MOVING_PAIR_METHOD_ID,
+        interval_kinematics_method_id=INTERVAL_KINEMATICS_METHOD_ID,
+        first_link_name=first_link_name,
+        second_link_name=second_link_name,
+        first_surface_geometry_sha256=first_surface_hash,
+        second_surface_geometry_sha256=second_surface_hash,
+        pair_contract_sha256=pair_contract_hash,
+        first_triangle_count=first_triangle_count,
+        second_triangle_count=second_triangle_count,
+        pair_count_per_phase_box=(
+            first_triangle_count * second_triangle_count
+        ),
+        maximum_subdivision_phase_boxes=maximum_phase_boxes,
+        processed_phase_box_count=counters.processed_intervals,
+        certified_free_leaf_phase_box_count=(
+            counters.free_leaf_intervals
+        ),
+        subdivided_phase_box_count=counters.subdivisions,
+        point_motion_evaluation_count=counters.point_motion_evaluations,
+        relative_coordinate_interval_evaluation_count=(
+            counters.relative_coordinate_interval_evaluations
+        ),
+        pair_universe_count=counters.pair_universe,
+        pair_coverage_count=counters.pair_coverage,
+        strictly_separated_pair_count=counters.strictly_separated_pairs,
+        potential_overlap_pair_observation_count=(
+            counters.potential_overlap_pairs
+        ),
+        terminal_unresolved_pair_count=terminal_unresolved_pairs,
+        all_processed_pairs_accounted_for=(
+            counters.pair_coverage == counters.pair_universe
+        ),
+        entire_phase_product_covered=entire_phase_product_covered,
+        unresolved_reason=unresolved_reason,
+        claim_limitations=INDEPENDENT_MOVING_PAIR_CLAIM_LIMITATIONS,
+    )
+    return IndependentMovingSurfacePairCollisionCertificate(
+        state=state,
+        searched_phase_box=searched_phase_box,
+        certified_free_leaf_phase_boxes=tuple(free_leaves),
+        unresolved_phase_box=unresolved_phase_box,
+        audit=audit,
+    )
+
+
+def certify_independent_link_motion_surfaces_separated_from_each_other(
+    *,
+    backend: DirectedIntervalKinematics,
+    first_link_name: str,
+    second_link_name: str,
+    first_q_start: Sequence[float] | np.ndarray,
+    first_direction: Sequence[float] | np.ndarray,
+    first_phase: IntervalBounds,
+    second_q_start: Sequence[float] | np.ndarray,
+    second_direction: Sequence[float] | np.ndarray,
+    second_phase: IntervalBounds,
+    object_from_hand_base: Sequence[Sequence[float]] | np.ndarray,
+    first_triangles_link_m: (
+        Sequence[Sequence[Sequence[float]]] | np.ndarray
+    ),
+    second_triangles_link_m: (
+        Sequence[Sequence[Sequence[float]]] | np.ndarray
+    ),
+    maximum_subdivision_phase_boxes: int,
+) -> IndependentMovingSurfacePairCollisionCertificate:
+    """Certify separation on the Cartesian product of two link paths.
+
+    The two scalar phases vary independently.  Every processed node encloses
+    the complete rectangular phase product, never only its diagonal or a
+    finite set of samples.  Strict relative-axis separation is sufficient for
+    a free leaf; every other leaf is bisected or returned unresolved.
+    """
+
+    if not isinstance(backend, DirectedIntervalKinematics):
+        raise ContinuousCollisionError(
+            "independent moving-pair collision needs interval kinematics"
+        )
+    first_link = str(first_link_name)
+    second_link = str(second_link_name)
+    if not first_link or not second_link or first_link == second_link:
+        raise ContinuousCollisionError(
+            "independent moving-pair collision needs distinct links"
+        )
+    if not isinstance(first_phase, IntervalBounds) or not isinstance(
+        second_phase, IntervalBounds
+    ):
+        raise ContinuousCollisionError(
+            "independent moving-pair phases must be explicit intervals"
+        )
+    if (
+        not isinstance(maximum_subdivision_phase_boxes, int)
+        or isinstance(maximum_subdivision_phase_boxes, bool)
+        or maximum_subdivision_phase_boxes <= 0
+    ):
+        raise ContinuousCollisionError(
+            "maximum_subdivision_phase_boxes must be positive"
+        )
+    available_links = {backend.hand_model.base_link}
+    for joint in backend.hand_model.joints.values():
+        available_links.add(joint.parent_link)
+        available_links.add(joint.child_link)
+    if first_link not in available_links or second_link not in available_links:
+        raise ContinuousCollisionError(
+            "independent moving-pair link is outside the hand model"
+        )
+    joint_count = len(backend.hand_model.independent_joint_names)
+    first_start = np.asarray(first_q_start, dtype=np.float64)
+    first_path_direction = np.asarray(first_direction, dtype=np.float64)
+    second_start = np.asarray(second_q_start, dtype=np.float64)
+    second_path_direction = np.asarray(second_direction, dtype=np.float64)
+    if any(
+        value.shape != (joint_count,) or not np.all(np.isfinite(value))
+        for value in (
+            first_start,
+            first_path_direction,
+            second_start,
+            second_path_direction,
+        )
+    ):
+        raise ContinuousCollisionError(
+            "independent moving-pair paths must match joint coordinates"
+        )
+    base = _proper_se3(object_from_hand_base)
+    first_surface, first_hash = _canonical_surface(
+        first_triangles_link_m,
+        label=f"independent moving link surface {first_link}",
+    )
+    second_surface, second_hash = _canonical_surface(
+        second_triangles_link_m,
+        label=f"independent moving link surface {second_link}",
+    )
+    first_motion_hash = _motion_contract_sha256(
+        backend=backend,
+        link_name=first_link,
+        q_start=first_start,
+        direction=first_path_direction,
+        phase=first_phase,
+        base_transform=base,
+    )
+    second_motion_hash = _motion_contract_sha256(
+        backend=backend,
+        link_name=second_link,
+        q_start=second_start,
+        direction=second_path_direction,
+        phase=second_phase,
+        base_transform=base,
+    )
+    pair_contract_hash = _independent_moving_pair_contract_sha256(
+        first_link_name=first_link,
+        first_surface_hash=first_hash,
+        first_motion_hash=first_motion_hash,
+        second_link_name=second_link,
+        second_surface_hash=second_hash,
+        second_motion_hash=second_motion_hash,
+    )
+    searched_box = IndependentMotionPhaseBox(first_phase, second_phase)
+    counters = _MovingPairCounters()
+    free_leaves: list[IndependentMotionPhaseBox] = []
+    pending: list[IndependentMotionPhaseBox] = [searched_box]
+    pair_count = len(first_surface) * len(second_surface)
+    first_total_width = first_phase.upper - first_phase.lower
+    second_total_width = second_phase.upper - second_phase.lower
+
+    while pending:
+        phase_box = pending.pop()
+        if counters.processed_intervals >= maximum_subdivision_phase_boxes:
+            return _independent_moving_pair_certificate(
+                state=ContinuousCollisionState.UNRESOLVED,
+                searched_phase_box=searched_box,
+                free_leaves=free_leaves,
+                unresolved_phase_box=phase_box,
+                first_link_name=first_link,
+                second_link_name=second_link,
+                first_surface_hash=first_hash,
+                second_surface_hash=second_hash,
+                pair_contract_hash=pair_contract_hash,
+                first_triangle_count=len(first_surface),
+                second_triangle_count=len(second_surface),
+                maximum_phase_boxes=maximum_subdivision_phase_boxes,
+                counters=counters,
+                terminal_unresolved_pairs=0,
+                entire_phase_product_covered=False,
+                unresolved_reason="SUBDIVISION_PHASE_BOX_BUDGET_EXHAUSTED",
+            )
+        counters.processed_intervals += 1
+        counters.pair_universe += pair_count
+        try:
+            first_lower, first_upper = _enclose_moving_surface_vertices(
+                backend=backend,
+                link_name=first_link,
+                triangles_link_m=first_surface,
+                q_start=first_start,
+                direction=first_path_direction,
+                interval=phase_box.first_phase,
+                base_transform=base,
+                counters=counters,
+            )
+            second_lower, second_upper = _enclose_moving_surface_vertices(
+                backend=backend,
+                link_name=second_link,
+                triangles_link_m=second_surface,
+                q_start=second_start,
+                direction=second_path_direction,
+                interval=phase_box.second_phase,
+                base_transform=base,
+                counters=counters,
+            )
+        except _MovingPairBackendUnresolved as error:
+            return _independent_moving_pair_certificate(
+                state=ContinuousCollisionState.UNRESOLVED,
+                searched_phase_box=searched_box,
+                free_leaves=free_leaves,
+                unresolved_phase_box=phase_box,
+                first_link_name=first_link,
+                second_link_name=second_link,
+                first_surface_hash=first_hash,
+                second_surface_hash=second_hash,
+                pair_contract_hash=pair_contract_hash,
+                first_triangle_count=len(first_surface),
+                second_triangle_count=len(second_surface),
+                maximum_phase_boxes=maximum_subdivision_phase_boxes,
+                counters=counters,
+                terminal_unresolved_pairs=0,
+                entire_phase_product_covered=False,
+                unresolved_reason=error.reason,
+            )
+
+        overlap_pairs = 0
+        for first_face_index in range(len(first_surface)):
+            for second_face_index in range(len(second_surface)):
+                separated = _relative_triangle_pair_strictly_separated(
+                    first_lower=first_lower[first_face_index],
+                    first_upper=first_upper[first_face_index],
+                    second_lower=second_lower[second_face_index],
+                    second_upper=second_upper[second_face_index],
+                    counters=counters,
+                )
+                counters.pair_coverage += 1
+                if separated:
+                    counters.strictly_separated_pairs += 1
+                else:
+                    counters.potential_overlap_pairs += 1
+                    overlap_pairs += 1
+        if overlap_pairs == 0:
+            counters.free_leaf_intervals += 1
+            free_leaves.append(phase_box)
+            continue
+        if counters.processed_intervals >= maximum_subdivision_phase_boxes:
+            return _independent_moving_pair_certificate(
+                state=ContinuousCollisionState.UNRESOLVED,
+                searched_phase_box=searched_box,
+                free_leaves=free_leaves,
+                unresolved_phase_box=phase_box,
+                first_link_name=first_link,
+                second_link_name=second_link,
+                first_surface_hash=first_hash,
+                second_surface_hash=second_hash,
+                pair_contract_hash=pair_contract_hash,
+                first_triangle_count=len(first_surface),
+                second_triangle_count=len(second_surface),
+                maximum_phase_boxes=maximum_subdivision_phase_boxes,
+                counters=counters,
+                terminal_unresolved_pairs=overlap_pairs,
+                entire_phase_product_covered=False,
+                unresolved_reason="SUBDIVISION_PHASE_BOX_BUDGET_EXHAUSTED",
+            )
+
+        first_width = (
+            phase_box.first_phase.upper - phase_box.first_phase.lower
+        )
+        second_width = (
+            phase_box.second_phase.upper - phase_box.second_phase.lower
+        )
+        first_relative_width = (
+            first_width / first_total_width
+            if first_total_width > 0.0
+            else 0.0
+        )
+        second_relative_width = (
+            second_width / second_total_width
+            if second_total_width > 0.0
+            else 0.0
+        )
+        split_first = first_relative_width >= second_relative_width
+        selected = (
+            phase_box.first_phase if split_first else phase_box.second_phase
+        )
+        midpoint = selected.lower + 0.5 * (
+            selected.upper - selected.lower
+        )
+        if not selected.lower < midpoint < selected.upper:
+            return _independent_moving_pair_certificate(
+                state=ContinuousCollisionState.UNRESOLVED,
+                searched_phase_box=searched_box,
+                free_leaves=free_leaves,
+                unresolved_phase_box=phase_box,
+                first_link_name=first_link,
+                second_link_name=second_link,
+                first_surface_hash=first_hash,
+                second_surface_hash=second_hash,
+                pair_contract_hash=pair_contract_hash,
+                first_triangle_count=len(first_surface),
+                second_triangle_count=len(second_surface),
+                maximum_phase_boxes=maximum_subdivision_phase_boxes,
+                counters=counters,
+                terminal_unresolved_pairs=overlap_pairs,
+                entire_phase_product_covered=False,
+                unresolved_reason="ADJACENT_BINARY64_PHASE_BOX_ENDPOINTS",
+            )
+        lower_half = IntervalBounds(selected.lower, midpoint)
+        upper_half = IntervalBounds(midpoint, selected.upper)
+        counters.subdivisions += 1
+        if split_first:
+            pending.append(
+                IndependentMotionPhaseBox(
+                    upper_half, phase_box.second_phase
+                )
+            )
+            pending.append(
+                IndependentMotionPhaseBox(
+                    lower_half, phase_box.second_phase
+                )
+            )
+        else:
+            pending.append(
+                IndependentMotionPhaseBox(
+                    phase_box.first_phase, upper_half
+                )
+            )
+            pending.append(
+                IndependentMotionPhaseBox(
+                    phase_box.first_phase, lower_half
+                )
+            )
+
+    return _independent_moving_pair_certificate(
+        state=ContinuousCollisionState.CERTIFIED_FREE,
+        searched_phase_box=searched_box,
+        free_leaves=free_leaves,
+        unresolved_phase_box=None,
+        first_link_name=first_link,
+        second_link_name=second_link,
+        first_surface_hash=first_hash,
+        second_surface_hash=second_hash,
+        pair_contract_hash=pair_contract_hash,
+        first_triangle_count=len(first_surface),
+        second_triangle_count=len(second_surface),
+        maximum_phase_boxes=maximum_subdivision_phase_boxes,
+        counters=counters,
+        terminal_unresolved_pairs=0,
+        entire_phase_product_covered=True,
+        unresolved_reason="NONE",
+    )
+
+
 __all__ = [
     "CLAIM_LIMITATIONS",
     "ContinuousCollisionAudit",
     "ContinuousCollisionCertificate",
     "ContinuousCollisionError",
     "ContinuousCollisionState",
+    "INDEPENDENT_MOVING_PAIR_CLAIM_LIMITATIONS",
+    "INDEPENDENT_MOVING_PAIR_METHOD_ID",
+    "IndependentMotionPhaseBox",
+    "IndependentMovingSurfacePairCollisionAudit",
+    "IndependentMovingSurfacePairCollisionCertificate",
     "METHOD_ID",
     "MOVING_PAIR_CLAIM_LIMITATIONS",
     "MOVING_PAIR_METHOD_ID",
     "MovingSurfacePairCollisionAudit",
     "MovingSurfacePairCollisionCertificate",
+    "certify_independent_link_motion_surfaces_separated_from_each_other",
     "certify_moving_link_surfaces_separated_from_each_other",
     "certify_moving_link_surface_separated_from_static_surface",
 ]

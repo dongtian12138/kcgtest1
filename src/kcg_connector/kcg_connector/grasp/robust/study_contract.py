@@ -30,6 +30,13 @@ import yaml
 import numpy as np
 import scipy
 
+from .continuous_collision import INDEPENDENT_MOVING_PAIR_METHOD_ID
+from .full_hand_collision import (
+    CONTACT_RANGE_POLICY_CLAIM_LIMITATIONS,
+    CONTACT_RANGE_POLICY_MANDATORY_BLOCKERS,
+    CONTACT_RANGE_POLICY_METHOD_ID,
+    ContactRangePolicyCollisionCertificate,
+)
 from .grasp_optimizer import deterministic_sobol
 from .hand_contract import (
     CARTSHandContract,
@@ -97,7 +104,7 @@ _NUMERICAL_ROLE = "NUMERICAL_SOLVER_PROTOCOL_NOT_PHYSICAL_ACCEPTANCE_GATE"
 _FROZEN_SCHEMA = "carts_frozen_study_contract_v1"
 _SCIPY_VERSION = "1.8.0"
 _SETUP_MANIFEST_SHA256 = (
-    "4e8b68a5dd12f6c746248876cdfbf57ca5bda81fcd832fa985a7dbe06d55e076"
+    "bde1b207d15a35018de4ea91c05bf26d8b143366dcb3eadec4346f2456913765"
 )
 _PACKAGE_XML_SHA256 = (
     "3e37fbe688ad739472109af4da6f39b4a03e09eef07eb456ddddd64acd95340b"
@@ -342,6 +349,25 @@ _METHOD_SCHEMA = {
         "display_only_proposal_formal_eligible": _LEAF,
         "contact_range_policy_downstream_status": _LEAF,
         "output_claim": _LEAF,
+    },
+    "contact_range_policy_collision": {
+        "implementation_type_id": _LEAF,
+        "method_id": _LEAF,
+        "independent_two_phase_method_id": _LEAF,
+        "phase_domain_rule": _LEAF,
+        "link_dependency_rule": _LEAF,
+        "same_support_rule": _LEAF,
+        "cross_support_rule": _LEAF,
+        "display_approximation_used_as_formal_evidence": _LEAF,
+        "endpoint_or_finite_corner_sampling_allowed": _LEAF,
+        "srdf_exemptions_applied": _LEAF,
+        "exact_candidate_collision_path_changed": _LEAF,
+        "current_state": _LEAF,
+        "checkable_scope": _LEAF,
+        "mandatory_blockers": _LEAF,
+        "claim_limitations": _LEAF,
+        "formal_selection_allowed": _LEAF,
+        "isaac_launch_allowed": _LEAF,
     },
     "post_generation_ranking": {
         "implementation_type_id": _LEAF,
@@ -1049,6 +1075,50 @@ def _validate_method(document: Mapping[str, Any]) -> None:
             candidate[field],
             expected,
             f"method.candidate_optimization.{field}",
+        )
+
+    policy_collision = _mapping(
+        document["contact_range_policy_collision"],
+        "method.contact_range_policy_collision",
+    )
+    for field, expected in {
+        "implementation_type_id": _implementation_type_id(
+            ContactRangePolicyCollisionCertificate
+        ),
+        "method_id": CONTACT_RANGE_POLICY_METHOD_ID,
+        "independent_two_phase_method_id": (
+            INDEPENDENT_MOVING_PAIR_METHOD_ID
+        ),
+        "phase_domain_rule": (
+            "COMPLETE_CARTESIAN_PRODUCT_OF_BOTH_REGISTERED_PHASE_INTERVALS"
+        ),
+        "link_dependency_rule": (
+            "EVERY_LINK_MUST_DEPEND_ON_AT_MOST_ONE_CLOSURE_SUPPORT"
+        ),
+        "same_support_rule": "SHARED_OR_SINGLE_SUPPORT_PHASE_PATH",
+        "cross_support_rule": "INDEPENDENT_SUPPORT_PHASE_PRODUCT",
+        "display_approximation_used_as_formal_evidence": False,
+        "endpoint_or_finite_corner_sampling_allowed": False,
+        "srdf_exemptions_applied": False,
+        "exact_candidate_collision_path_changed": False,
+        "current_state": "NOT_CERTIFIABLE",
+        "checkable_scope": (
+            "HAND_LINK_NONPAD_OBJECT_AND_SELF_PAIR_CONTACT_RANGE_"
+            "CLOSURE_ONLY"
+        ),
+        "mandatory_blockers": list(
+            CONTACT_RANGE_POLICY_MANDATORY_BLOCKERS
+        ),
+        "claim_limitations": list(
+            CONTACT_RANGE_POLICY_CLAIM_LIMITATIONS
+        ),
+        "formal_selection_allowed": False,
+        "isaac_launch_allowed": False,
+    }.items():
+        _exact(
+            policy_collision[field],
+            expected,
+            f"method.contact_range_policy_collision.{field}",
         )
     sobol_design = _mapping(
         candidate["sobol_design"],
@@ -2444,6 +2514,35 @@ def audit_study_contract(
             "top_level_contact_range_policy_downstream_status": (
                 CONTACT_RANGE_POLICY_DOWNSTREAM_STATUS
             ),
+            "contact_range_policy_collision_implementation_type_id": (
+                _implementation_type_id(
+                    ContactRangePolicyCollisionCertificate
+                )
+            ),
+            "contact_range_policy_collision_method_id": (
+                CONTACT_RANGE_POLICY_METHOD_ID
+            ),
+            "contact_range_policy_collision_independent_two_phase_method_id": (
+                INDEPENDENT_MOVING_PAIR_METHOD_ID
+            ),
+            "contact_range_policy_collision_phase_domain_rule": (
+                "COMPLETE_CARTESIAN_PRODUCT_OF_BOTH_REGISTERED_"
+                "PHASE_INTERVALS"
+            ),
+            "contact_range_policy_collision_display_approximation_used": False,
+            "contact_range_policy_collision_finite_sampling_allowed": False,
+            "contact_range_policy_collision_current_state": (
+                "NOT_CERTIFIABLE"
+            ),
+            "contact_range_policy_collision_checkable_scope": (
+                "HAND_LINK_NONPAD_OBJECT_AND_SELF_PAIR_CONTACT_RANGE_"
+                "CLOSURE_ONLY"
+            ),
+            "contact_range_policy_collision_mandatory_blockers": list(
+                CONTACT_RANGE_POLICY_MANDATORY_BLOCKERS
+            ),
+            "contact_range_policy_collision_formal_selection_allowed": False,
+            "contact_range_policy_collision_isaac_launch_allowed": False,
             "legacy_grasp_optimizer_formal_eligible": False,
             "post_generation_ranking_binding_status": (
                 "BOUND_TO_PRODUCTION_POST_GENERATION_RANK_ONLY_PIPELINE"

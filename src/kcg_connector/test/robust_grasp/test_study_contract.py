@@ -9,6 +9,15 @@ import numpy as np
 import pytest
 import yaml
 
+from kcg_connector.grasp.robust.continuous_collision import (
+    INDEPENDENT_MOVING_PAIR_METHOD_ID,
+)
+from kcg_connector.grasp.robust.full_hand_collision import (
+    CONTACT_RANGE_POLICY_CLAIM_LIMITATIONS,
+    CONTACT_RANGE_POLICY_MANDATORY_BLOCKERS,
+    CONTACT_RANGE_POLICY_METHOD_ID,
+    ContactRangePolicyCollisionCertificate,
+)
 from kcg_connector.grasp.robust.grasp_optimizer import deterministic_sobol
 from kcg_connector.grasp.robust.hand_contract import load_carts_hand_contract
 from kcg_connector.grasp.robust.post_generation_ranker import (
@@ -91,7 +100,7 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
         audit.canonical_json_bytes
     ).hexdigest()
     assert audit.canonical_sha256 == (
-        "40e019e06a30970568c7ed1150c59c3bbf7c7a30a38446ac3ca1460d6a687c43"
+        "fd3ee314f6b956a22e3c5c5eba95a68b1aaddab630d500c75da5a0fcca7b5dab"
     )
     assert audit.canonical_manifest["status"] == "NOT_FREEZE_ELIGIBLE"
     assert audit.canonical_manifest["study"]["transfer_object_role"] == (
@@ -167,6 +176,44 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
     assert interpretation[
         "top_level_contact_range_policy_downstream_status"
     ] == "PENDING_POLICY_AWARE_COLLISION_AND_WRENCH"
+    assert interpretation[
+        "contact_range_policy_collision_implementation_type_id"
+    ] == (
+        f"{ContactRangePolicyCollisionCertificate.__module__}."
+        f"{ContactRangePolicyCollisionCertificate.__qualname__}"
+    )
+    assert interpretation["contact_range_policy_collision_method_id"] == (
+        CONTACT_RANGE_POLICY_METHOD_ID
+    )
+    assert interpretation[
+        "contact_range_policy_collision_independent_two_phase_method_id"
+    ] == INDEPENDENT_MOVING_PAIR_METHOD_ID
+    assert interpretation[
+        "contact_range_policy_collision_phase_domain_rule"
+    ] == "COMPLETE_CARTESIAN_PRODUCT_OF_BOTH_REGISTERED_PHASE_INTERVALS"
+    assert interpretation[
+        "contact_range_policy_collision_display_approximation_used"
+    ] is False
+    assert interpretation[
+        "contact_range_policy_collision_finite_sampling_allowed"
+    ] is False
+    assert interpretation[
+        "contact_range_policy_collision_current_state"
+    ] == "NOT_CERTIFIABLE"
+    assert interpretation[
+        "contact_range_policy_collision_checkable_scope"
+    ] == "HAND_LINK_NONPAD_OBJECT_AND_SELF_PAIR_CONTACT_RANGE_CLOSURE_ONLY"
+    assert tuple(
+        interpretation[
+            "contact_range_policy_collision_mandatory_blockers"
+        ]
+    ) == CONTACT_RANGE_POLICY_MANDATORY_BLOCKERS
+    assert interpretation[
+        "contact_range_policy_collision_formal_selection_allowed"
+    ] is False
+    assert interpretation[
+        "contact_range_policy_collision_isaac_launch_allowed"
+    ] is False
     assert interpretation["legacy_grasp_optimizer_formal_eligible"] is False
     assert interpretation["post_generation_ranking_binding_status"] == (
         "BOUND_TO_PRODUCTION_POST_GENERATION_RANK_ONLY_PIPELINE"
@@ -311,6 +358,47 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
         "DISABLED_FOR_V1"
     )
     assert "selection" not in candidate
+    policy_collision = method["contact_range_policy_collision"]
+    assert policy_collision["implementation_type_id"] == (
+        f"{ContactRangePolicyCollisionCertificate.__module__}."
+        f"{ContactRangePolicyCollisionCertificate.__qualname__}"
+    )
+    assert policy_collision["method_id"] == CONTACT_RANGE_POLICY_METHOD_ID
+    assert policy_collision["independent_two_phase_method_id"] == (
+        INDEPENDENT_MOVING_PAIR_METHOD_ID
+    )
+    assert policy_collision["phase_domain_rule"] == (
+        "COMPLETE_CARTESIAN_PRODUCT_OF_BOTH_REGISTERED_PHASE_INTERVALS"
+    )
+    assert policy_collision["link_dependency_rule"] == (
+        "EVERY_LINK_MUST_DEPEND_ON_AT_MOST_ONE_CLOSURE_SUPPORT"
+    )
+    assert policy_collision["same_support_rule"] == (
+        "SHARED_OR_SINGLE_SUPPORT_PHASE_PATH"
+    )
+    assert policy_collision["cross_support_rule"] == (
+        "INDEPENDENT_SUPPORT_PHASE_PRODUCT"
+    )
+    assert policy_collision[
+        "display_approximation_used_as_formal_evidence"
+    ] is False
+    assert policy_collision[
+        "endpoint_or_finite_corner_sampling_allowed"
+    ] is False
+    assert policy_collision["srdf_exemptions_applied"] is False
+    assert policy_collision["exact_candidate_collision_path_changed"] is False
+    assert policy_collision["current_state"] == "NOT_CERTIFIABLE"
+    assert policy_collision["checkable_scope"] == (
+        "HAND_LINK_NONPAD_OBJECT_AND_SELF_PAIR_CONTACT_RANGE_CLOSURE_ONLY"
+    )
+    assert tuple(policy_collision["mandatory_blockers"]) == (
+        CONTACT_RANGE_POLICY_MANDATORY_BLOCKERS
+    )
+    assert tuple(policy_collision["claim_limitations"]) == (
+        CONTACT_RANGE_POLICY_CLAIM_LIMITATIONS
+    )
+    assert policy_collision["formal_selection_allowed"] is False
+    assert policy_collision["isaac_launch_allowed"] is False
     ranking = method["post_generation_ranking"]
     assert ranking["implementation_type_id"] == (
         "kcg_connector.grasp.robust.post_generation_ranker."
@@ -758,6 +846,65 @@ def test_top_level_candidate_contract_drift_fails_closed(
     parent[path[-1]] = value
     with pytest.raises(StudyContractError, match=message):
         _audit(method=_write_yaml(tmp_path, "candidate_drift.yaml", document))
+
+
+@pytest.mark.parametrize(
+    ("path", "value", "message"),
+    (
+        (
+            ("independent_two_phase_method_id",),
+            "SHARED_PHASE_DIAGONAL_ONLY",
+            "independent_two_phase_method_id",
+        ),
+        (
+            ("phase_domain_rule",),
+            "FINITE_CORNERS_ONLY",
+            "phase_domain_rule",
+        ),
+        (
+            ("display_approximation_used_as_formal_evidence",),
+            True,
+            "display_approximation_used_as_formal_evidence",
+        ),
+        (
+            ("endpoint_or_finite_corner_sampling_allowed",),
+            True,
+            "endpoint_or_finite_corner_sampling_allowed",
+        ),
+        (("current_state",), "CERTIFIED", "current_state"),
+        (("mandatory_blockers",), [], "mandatory_blockers"),
+        (("claim_limitations",), [], "claim_limitations"),
+        (("formal_selection_allowed",), True, "formal_selection_allowed"),
+        (("isaac_launch_allowed",), True, "isaac_launch_allowed"),
+    ),
+)
+def test_contact_range_policy_collision_contract_drift_fails_closed(
+    tmp_path: Path,
+    path: tuple[str, ...],
+    value: Any,
+    message: str,
+) -> None:
+    document = _document(METHOD)
+    parent = document["contact_range_policy_collision"]
+    for key in path[:-1]:
+        parent = parent[key]
+    parent[path[-1]] = value
+    with pytest.raises(StudyContractError, match=message):
+        _audit(method=_write_yaml(tmp_path, "policy_collision_drift.yaml", document))
+
+
+def test_contact_range_policy_collision_missing_or_extra_fields_fail_closed(
+    tmp_path: Path,
+) -> None:
+    missing = _document(METHOD)
+    del missing["contact_range_policy_collision"]["claim_limitations"]
+    with pytest.raises(StudyContractError, match="missing=.*claim_limitations"):
+        _audit(method=_write_yaml(tmp_path, "policy_collision_missing.yaml", missing))
+
+    extra = _document(METHOD)
+    extra["contact_range_policy_collision"]["unregistered_shortcut"] = True
+    with pytest.raises(StudyContractError, match="extra=.*unregistered_shortcut"):
+        _audit(method=_write_yaml(tmp_path, "policy_collision_extra.yaml", extra))
 
 
 @pytest.mark.parametrize(

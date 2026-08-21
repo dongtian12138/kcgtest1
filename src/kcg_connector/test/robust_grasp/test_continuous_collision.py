@@ -13,9 +13,12 @@ from kcg_connector.grasp.robust.continuous_collision import (
     CLAIM_LIMITATIONS,
     ContinuousCollisionError,
     ContinuousCollisionState,
+    INDEPENDENT_MOVING_PAIR_CLAIM_LIMITATIONS,
+    INDEPENDENT_MOVING_PAIR_METHOD_ID,
     METHOD_ID,
     MOVING_PAIR_CLAIM_LIMITATIONS,
     MOVING_PAIR_METHOD_ID,
+    certify_independent_link_motion_surfaces_separated_from_each_other,
     certify_moving_link_surfaces_separated_from_each_other,
     certify_moving_link_surface_separated_from_static_surface,
 )
@@ -169,6 +172,46 @@ def _certify_pair(
             _moving_triangle() if second_surface is None else second_surface
         ),
         maximum_subdivision_intervals=maximum_intervals,
+    )
+
+
+def _certify_independent_pair(
+    *,
+    second_origin_y: float = 3.0,
+    first_q_start: np.ndarray | None = None,
+    first_direction: np.ndarray | None = None,
+    first_phase: IntervalBounds = IntervalBounds(0.0, 1.0),
+    second_q_start: np.ndarray | None = None,
+    second_direction: np.ndarray | None = None,
+    second_phase: IntervalBounds = IntervalBounds(0.0, 1.0),
+    maximum_phase_boxes: int = 1,
+):
+    return certify_independent_link_motion_surfaces_separated_from_each_other(
+        backend=_backend(second_origin_y=second_origin_y),
+        first_link_name="link_a",
+        second_link_name="link_b",
+        first_q_start=(
+            np.zeros(3) if first_q_start is None else first_q_start
+        ),
+        first_direction=(
+            np.asarray((1.0, 0.0, 0.0))
+            if first_direction is None
+            else first_direction
+        ),
+        first_phase=first_phase,
+        second_q_start=(
+            np.zeros(3) if second_q_start is None else second_q_start
+        ),
+        second_direction=(
+            np.asarray((0.0, 1.0, 0.0))
+            if second_direction is None
+            else second_direction
+        ),
+        second_phase=second_phase,
+        object_from_hand_base=np.eye(4),
+        first_triangles_link_m=_moving_triangle(),
+        second_triangles_link_m=_moving_triangle(),
+        maximum_subdivision_phase_boxes=maximum_phase_boxes,
     )
 
 
@@ -616,3 +659,60 @@ def test_moving_pair_public_api_has_no_semantic_exemption_input() -> None:
         "srdf",
     }
     assert parameters.isdisjoint(forbidden_parameters)
+
+
+def test_independent_pair_covers_complete_free_phase_product() -> None:
+    certificate = _certify_independent_pair(second_origin_y=4.0)
+
+    assert certificate.state is ContinuousCollisionState.CERTIFIED_FREE
+    assert certificate.unresolved_phase_box is None
+    assert certificate.audit.method_id == INDEPENDENT_MOVING_PAIR_METHOD_ID
+    assert certificate.audit.claim_limitations == (
+        INDEPENDENT_MOVING_PAIR_CLAIM_LIMITATIONS
+    )
+    assert certificate.audit.entire_phase_product_covered
+    assert certificate.audit.processed_phase_box_count == 1
+    assert certificate.audit.certified_free_leaf_phase_box_count == 1
+    assert certificate.audit.pair_coverage_count == 1
+    assert certificate.audit.point_motion_evaluation_count == 6
+    assert (
+        certificate.audit.relative_coordinate_interval_evaluation_count
+        == 27
+    )
+
+
+def test_independent_pair_checks_product_not_shared_phase_diagonal() -> None:
+    shared_diagonal = _certify_pair(
+        second_origin_y=0.0,
+        q_start=np.asarray((0.0, 1.0, 0.0)),
+        direction=np.asarray((1.0, 1.0, 0.0)),
+        maximum_intervals=3,
+    )
+    independent_product = _certify_independent_pair(
+        second_origin_y=0.0,
+        first_q_start=np.zeros(3),
+        first_direction=np.asarray((1.0, 0.0, 0.0)),
+        second_q_start=np.asarray((0.0, 1.0, 0.0)),
+        second_direction=np.asarray((0.0, 1.0, 0.0)),
+        maximum_phase_boxes=1,
+    )
+
+    assert shared_diagonal.state is ContinuousCollisionState.CERTIFIED_FREE
+    assert independent_product.state is ContinuousCollisionState.UNRESOLVED
+    assert independent_product.audit.unresolved_reason == (
+        "SUBDIVISION_PHASE_BOX_BUDGET_EXHAUSTED"
+    )
+    assert independent_product.audit.terminal_unresolved_pair_count == 1
+
+
+def test_independent_pair_budget_exhaustion_never_claims_free() -> None:
+    certificate = _certify_independent_pair(
+        second_origin_y=0.0,
+        maximum_phase_boxes=1,
+    )
+
+    assert certificate.state is ContinuousCollisionState.UNRESOLVED
+    assert certificate.unresolved_phase_box is not None
+    assert not certificate.audit.entire_phase_product_covered
+    assert certificate.audit.processed_phase_box_count == 1
+    assert certificate.audit.potential_overlap_pair_observation_count == 1

@@ -24,7 +24,10 @@ setup(
                 "requirements-torch-cu128.txt",
             ],
         ),
-        (os.path.join("share", package_name, "config"), glob("config/*.yaml")),
+        (
+            os.path.join("share", package_name, "config"),
+            glob("config/*.yaml") + glob("config/*.json.gz"),
+        ),
         (os.path.join("share", package_name, "isaac"), glob("isaac/*.py")),
         (
             os.path.join(

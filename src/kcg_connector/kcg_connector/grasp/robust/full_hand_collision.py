@@ -34,7 +34,9 @@ from kcg_connector.grasp.robust.collision_contract import (
 from kcg_connector.grasp.robust.continuous_collision import (
     ContinuousCollisionCertificate,
     ContinuousCollisionState,
+    IndependentMovingSurfacePairCollisionCertificate,
     MovingSurfacePairCollisionCertificate,
+    certify_independent_link_motion_surfaces_separated_from_each_other,
     certify_moving_link_surfaces_separated_from_each_other,
     certify_moving_link_surface_separated_from_static_surface,
 )
@@ -49,6 +51,7 @@ from kcg_connector.grasp.robust.interval_kinematics import (
 )
 from kcg_connector.grasp.robust.object_model import load_stl_mesh
 from kcg_connector.grasp.robust.ray_closure import (
+    CANDIDATE_REPRESENTATIVE_ROLE,
     CLOSURE_FOCUS_METHOD,
     CLOSURE_PARAMETER_DOMAIN_ID,
     CLOSURE_SUFFIX_DOMINANCE_ARGUMENT,
@@ -59,12 +62,18 @@ from kcg_connector.grasp.robust.ray_closure import (
     MODEL_CONTRACT_DIGEST_METHOD_ID,
     PARAMETER_LAYOUT_PREFIX,
     RAY_EVALUATION_POLICY,
+    REPRESENTATIVE_PROPOSAL_FAILURE_REASON,
+    CertifiedSequentialClosurePolicy,
+    RayClosureAudit,
     RayClosureEvaluation,
     WITNESS_RULE,
 )
 
 
 METHOD_ID = "CARTS_FULL_HAND_SEQUENTIAL_CLOSURE_COLLISION_AGGREGATOR_V1"
+CONTACT_RANGE_POLICY_METHOD_ID = (
+    "CARTS_FULL_HAND_CONTACT_RANGE_POLICY_COLLISION_AGGREGATOR_V1"
+)
 SURFACE_HASH_METHOD_ID = (
     "CARTS_UNORIENTED_UNORDERED_TRIANGLE_SURFACE_V1"
 )
@@ -84,6 +93,24 @@ CLAIM_LIMITATIONS = (
     "NO_EXACT_ALLOWED_PAD_ENDPOINT_PATCH_CERTIFICATE_IS_AVAILABLE",
     "AUTHORITATIVE_FULL_HAND_COLLISION_LINK_ROSTER_NOT_BOUND",
     "POTENTIAL_CONTACT_TANGENCY_AND_COPLANARITY_REMAIN_UNRESOLVED",
+)
+CONTACT_RANGE_POLICY_CLAIM_LIMITATIONS = (
+    "CONTACT_RANGE_POLICY_SEQUENTIAL_CLOSURE_SUPERSET_ONLY",
+    "EVERY_LINK_MUST_DEPEND_ON_AT_MOST_ONE_CLOSURE_SUPPORT",
+    "CROSS_SUPPORT_SELF_PAIRS_USE_COMPLETE_TWO_PHASE_PRODUCT",
+    "MOVING_SURFACE_VS_STATIC_OBJECT_AND_SELF_SURFACE_PAIRS_ONLY",
+    "NOT_SOLID_CONTAINMENT_OR_INTERIOR_EXCLUSION",
+    "NOT_CONTINUOUS_PAD_SURFACE_OR_ALLOWED_ENDPOINT_PATCH_CERTIFICATE",
+    "AUTHORITATIVE_FULL_HAND_COLLISION_LINK_ROSTER_NOT_BOUND",
+    "NOT_ARM_OR_ENVIRONMENT_APPROACH_CLOSURE_OR_LIFT_COLLISION",
+    "NO_SRDF_NEVER_OR_ADJACENT_EXEMPTIONS_APPLIED",
+    "DISPLAY_APPROXIMATION_IS_NOT_READ_AS_FORMAL_EVIDENCE",
+    "POTENTIAL_CONTACT_TANGENCY_AND_COPLANARITY_REMAIN_UNRESOLVED",
+)
+CONTACT_RANGE_POLICY_MANDATORY_BLOCKERS = (
+    "SOLID_CONTAINMENT_OR_INITIAL_OUTSIDE_CERTIFICATE_UNAVAILABLE",
+    "AUTHORITATIVE_FULL_HAND_COLLISION_LINK_ROSTER_NOT_PROVEN",
+    "ARM_ENVIRONMENT_APPROACH_CLOSURE_LIFT_COLLISION_UNAVAILABLE",
 )
 
 
@@ -888,6 +915,337 @@ class FullHandClosureCollisionCertificate:
             )
 
 
+@dataclass(frozen=True)
+class PolicyLinkObjectPathCertificate:
+    link_name: str
+    closure_support_index: int | None
+    collision_domain: str
+    certificate: ContinuousCollisionCertificate
+
+
+@dataclass(frozen=True)
+class PolicySelfPairPathCertificate:
+    first_link_name: str
+    second_link_name: str
+    first_closure_support_index: int | None
+    second_closure_support_index: int | None
+    motion_relation: str
+    certificate: (
+        MovingSurfacePairCollisionCertificate
+        | IndependentMovingSurfacePairCollisionCertificate
+    )
+
+
+@dataclass(frozen=True)
+class ContactRangePolicyCollisionAudit:
+    method_id: str
+    interval_kinematics_method_id: str
+    ray_closure_method_id: str
+    policy_sha256: str
+    v9_audit_and_policy_sha256: str
+    object_id: str
+    object_source_asset_sha256: str
+    object_surface_geometry_sha256: str
+    ray_closure_object_geometry_sha256: str
+    ray_model_contract_sha256: str
+    link_surface_bindings: tuple[tuple[str, str, str], ...]
+    terminal_partition_bindings: tuple[tuple[str, str, str], ...]
+    self_pair_inventory_sha256: str
+    support_phase_upper_bounds: tuple[float, float, float]
+    link_support_bindings: tuple[tuple[str, int], ...]
+    maximum_subdivision_intervals: int
+    subdivision_intervals_used: int
+    subdivision_intervals_remaining: int
+    link_count: int
+    terminal_link_count: int
+    self_pair_count: int
+    expected_link_object_domain_count: int
+    evaluated_link_object_domain_count: int
+    certified_free_link_object_domain_count: int
+    expected_self_pair_domain_count: int
+    evaluated_self_pair_domain_count: int
+    certified_free_self_pair_domain_count: int
+    all_link_object_domains_covered: bool
+    all_self_pair_domains_covered: bool
+    policy_contact_ranges_consumed: bool
+    display_approximation_used_as_formal_evidence: bool
+    srdf_exemptions_applied: bool
+    pad_endpoint_continuous_surface_certificate_present: bool
+    checkable_collision_gates_passed: bool
+    blockers: tuple[str, ...]
+    claim_limitations: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if (
+            self.method_id != CONTACT_RANGE_POLICY_METHOD_ID
+            or self.interval_kinematics_method_id
+            != INTERVAL_KINEMATICS_METHOD_ID
+            or self.ray_closure_method_id != RAY_CLOSURE_METHOD_ID
+        ):
+            raise FullHandCollisionError(
+                "contact-range collision method binding changed"
+            )
+        digest_values = (
+            self.policy_sha256,
+            self.v9_audit_and_policy_sha256,
+            self.object_source_asset_sha256,
+            self.object_surface_geometry_sha256,
+            self.ray_closure_object_geometry_sha256,
+            self.ray_model_contract_sha256,
+            self.self_pair_inventory_sha256,
+            *(row[1] for row in self.link_surface_bindings),
+            *(row[2] for row in self.link_surface_bindings),
+            *(row[1] for row in self.terminal_partition_bindings),
+            *(row[2] for row in self.terminal_partition_bindings),
+        )
+        if any(not _valid_sha256(value) for value in digest_values):
+            raise FullHandCollisionError(
+                "contact-range collision audit contains an invalid digest"
+            )
+        link_names = tuple(row[0] for row in self.link_surface_bindings)
+        terminal_names = tuple(
+            row[0] for row in self.terminal_partition_bindings
+        )
+        support_names = tuple(row[0] for row in self.link_support_bindings)
+        support_indices = tuple(
+            row[1] for row in self.link_support_bindings
+        )
+        if (
+            not self.object_id
+            or link_names != tuple(sorted(link_names))
+            or len(set(link_names)) != len(link_names)
+            or terminal_names != tuple(sorted(terminal_names))
+            or len(set(terminal_names)) != len(terminal_names)
+            or not set(terminal_names) <= set(link_names)
+            or support_names != link_names
+            or any(value not in (-1, 0, 1, 2) for value in support_indices)
+            or self.blockers != tuple(sorted(set(self.blockers)))
+        ):
+            raise FullHandCollisionError(
+                "contact-range collision identifiers are not canonical"
+            )
+        if (
+            len(self.support_phase_upper_bounds) != 3
+            or any(
+                not math.isfinite(value) or value <= 0.0
+                for value in self.support_phase_upper_bounds
+            )
+        ):
+            raise FullHandCollisionError(
+                "contact-range collision support phases are invalid"
+            )
+        integer_fields = (
+            self.maximum_subdivision_intervals,
+            self.subdivision_intervals_used,
+            self.subdivision_intervals_remaining,
+            self.link_count,
+            self.terminal_link_count,
+            self.self_pair_count,
+            self.expected_link_object_domain_count,
+            self.evaluated_link_object_domain_count,
+            self.certified_free_link_object_domain_count,
+            self.expected_self_pair_domain_count,
+            self.evaluated_self_pair_domain_count,
+            self.certified_free_self_pair_domain_count,
+        )
+        if any(
+            not isinstance(value, int)
+            or isinstance(value, bool)
+            or value < 0
+            for value in integer_fields
+        ):
+            raise FullHandCollisionError(
+                "contact-range collision counters must be nonnegative"
+            )
+        if (
+            self.maximum_subdivision_intervals == 0
+            or self.subdivision_intervals_used
+            + self.subdivision_intervals_remaining
+            != self.maximum_subdivision_intervals
+            or self.link_count != len(link_names)
+            or self.terminal_link_count != len(terminal_names)
+            or self.terminal_link_count != 3
+            or self.self_pair_count
+            != self.link_count * (self.link_count - 1) // 2
+            or self.expected_link_object_domain_count != self.link_count
+            or self.expected_self_pair_domain_count != self.self_pair_count
+            or self.certified_free_link_object_domain_count
+            > self.evaluated_link_object_domain_count
+            or self.certified_free_self_pair_domain_count
+            > self.evaluated_self_pair_domain_count
+        ):
+            raise FullHandCollisionError(
+                "contact-range collision coverage arithmetic is inconsistent"
+            )
+        if self.all_link_object_domains_covered != (
+            self.evaluated_link_object_domain_count
+            == self.expected_link_object_domain_count
+        ) or self.all_self_pair_domains_covered != (
+            self.evaluated_self_pair_domain_count
+            == self.expected_self_pair_domain_count
+        ):
+            raise FullHandCollisionError(
+                "contact-range collision coverage flags are inconsistent"
+            )
+        expected_checkable = (
+            self.all_link_object_domains_covered
+            and self.all_self_pair_domains_covered
+            and self.certified_free_link_object_domain_count
+            == self.expected_link_object_domain_count
+            and self.certified_free_self_pair_domain_count
+            == self.expected_self_pair_domain_count
+        )
+        if self.checkable_collision_gates_passed != expected_checkable:
+            raise FullHandCollisionError(
+                "contact-range collision checkable flag is inconsistent"
+            )
+        if (
+            self.policy_contact_ranges_consumed is not True
+            or self.display_approximation_used_as_formal_evidence
+            or self.srdf_exemptions_applied
+            or self.pad_endpoint_continuous_surface_certificate_present
+            or not self.blockers
+            or self.claim_limitations
+            != CONTACT_RANGE_POLICY_CLAIM_LIMITATIONS
+        ):
+            raise FullHandCollisionError(
+                "contact-range collision claim boundary was weakened"
+            )
+
+
+@dataclass(frozen=True)
+class ContactRangePolicyCollisionCertificate:
+    state: FullHandClosureCollisionState
+    link_object_certificates: tuple[
+        PolicyLinkObjectPathCertificate, ...
+    ]
+    self_pair_certificates: tuple[PolicySelfPairPathCertificate, ...]
+    audit: ContactRangePolicyCollisionAudit
+
+    def __post_init__(self) -> None:
+        if self.state is not FullHandClosureCollisionState.NOT_CERTIFIABLE:
+            raise FullHandCollisionError(
+                "contact-range V1 cannot claim a certified full hand"
+            )
+        object_rows = tuple(self.link_object_certificates)
+        self_rows = tuple(self.self_pair_certificates)
+        object.__setattr__(self, "link_object_certificates", object_rows)
+        object.__setattr__(self, "self_pair_certificates", self_rows)
+        if (
+            len(object_rows)
+            != self.audit.evaluated_link_object_domain_count
+            or len(self_rows)
+            != self.audit.evaluated_self_pair_domain_count
+        ):
+            raise FullHandCollisionError(
+                "contact-range collision child counts are inconsistent"
+            )
+        link_hashes = {
+            name: geometry
+            for name, _source, geometry in self.audit.link_surface_bindings
+        }
+        terminal_hashes = {
+            name: geometry
+            for name, _partition, geometry in (
+                self.audit.terminal_partition_bindings
+            )
+        }
+        support_by_link = dict(self.audit.link_support_bindings)
+        object_names = tuple(row.link_name for row in object_rows)
+        if (
+            object_names != tuple(sorted(object_names))
+            or len(set(object_names)) != len(object_names)
+            or not set(object_names) <= set(link_hashes)
+        ):
+            raise FullHandCollisionError(
+                "contact-range link/object children are not canonical"
+            )
+        for row in object_rows:
+            child = row.certificate.audit
+            expected_terminal = row.link_name in terminal_hashes
+            expected_hash = (
+                terminal_hashes[row.link_name]
+                if expected_terminal
+                else link_hashes[row.link_name]
+            )
+            if (
+                row.closure_support_index
+                != (
+                    None
+                    if support_by_link[row.link_name] == -1
+                    else support_by_link[row.link_name]
+                )
+                or row.collision_domain
+                != (
+                    "TERMINAL_EXACT_NONPAD_FORBIDDEN_SURFACE"
+                    if expected_terminal
+                    else "FULL_LINK_SURFACE"
+                )
+                or child.link_name != row.link_name
+                or child.moving_surface_geometry_sha256 != expected_hash
+                or child.static_surface_geometry_sha256
+                != self.audit.object_surface_geometry_sha256
+            ):
+                raise FullHandCollisionError(
+                    "contact-range link/object child binding drifted"
+                )
+        self_keys = tuple(
+            (row.first_link_name, row.second_link_name) for row in self_rows
+        )
+        expected_keys = tuple(itertools.combinations(tuple(link_hashes), 2))
+        if self_keys != tuple(sorted(self_keys)) or not set(
+            self_keys
+        ) <= set(expected_keys):
+            raise FullHandCollisionError(
+                "contact-range self-pair children are not canonical"
+            )
+        for row in self_rows:
+            first_support = support_by_link[row.first_link_name]
+            second_support = support_by_link[row.second_link_name]
+            expected_independent = (
+                first_support >= 0
+                and second_support >= 0
+                and first_support != second_support
+            )
+            child = row.certificate.audit
+            if (
+                row.first_closure_support_index
+                != (None if first_support == -1 else first_support)
+                or row.second_closure_support_index
+                != (None if second_support == -1 else second_support)
+                or row.motion_relation
+                != (
+                    "INDEPENDENT_SUPPORT_PHASE_PRODUCT"
+                    if expected_independent
+                    else "SHARED_OR_SINGLE_SUPPORT_PHASE_PATH"
+                )
+                or isinstance(
+                    row.certificate,
+                    IndependentMovingSurfacePairCollisionCertificate,
+                )
+                != expected_independent
+                or child.first_link_name != row.first_link_name
+                or child.second_link_name != row.second_link_name
+                or child.first_surface_geometry_sha256
+                != link_hashes[row.first_link_name]
+                or child.second_surface_geometry_sha256
+                != link_hashes[row.second_link_name]
+            ):
+                raise FullHandCollisionError(
+                    "contact-range self-pair child binding drifted"
+                )
+        if sum(
+            row.certificate.state is ContinuousCollisionState.CERTIFIED_FREE
+            for row in object_rows
+        ) != self.audit.certified_free_link_object_domain_count or sum(
+            row.certificate.state is ContinuousCollisionState.CERTIFIED_FREE
+            for row in self_rows
+        ) != self.audit.certified_free_self_pair_domain_count:
+            raise FullHandCollisionError(
+                "contact-range free child counts were not recomputed"
+            )
+
+
 def _segment_sha256(segment: SequentialClosureSegment) -> str:
     digest = hashlib.sha256()
     digest.update(METHOD_ID.encode("ascii") + b"\0SEGMENT\0")
@@ -995,15 +1353,14 @@ def _terminal_pad_runtime_geometry_evidence(
     return digest.hexdigest(), len(points), len(faces)
 
 
-def _validate_v9_model_binding(
+def _validate_v9_model_audit_binding(
     *,
     backend: DirectedIntervalKinematics,
-    evaluation: RayClosureEvaluation,
+    audit: RayClosureAudit,
     segments: tuple[SequentialClosureSegment, ...],
     object_surface: HashBoundObjectSurface,
     terminal_surfaces: tuple[TerminalForbiddenSurface, ...],
 ) -> None:
-    audit = evaluation.audit
     if (
         audit.model_binding_complete is not True
         or audit.model_binding_status != MODEL_BINDING_COMPLETE_STATUS
@@ -1244,6 +1601,23 @@ def _validate_v9_model_binding(
         raise FullHandCollisionError(
             "V9 PAD audit hashes/links differ from terminal partitions"
         )
+
+
+def _validate_v9_model_binding(
+    *,
+    backend: DirectedIntervalKinematics,
+    evaluation: RayClosureEvaluation,
+    segments: tuple[SequentialClosureSegment, ...],
+    object_surface: HashBoundObjectSurface,
+    terminal_surfaces: tuple[TerminalForbiddenSurface, ...],
+) -> None:
+    _validate_v9_model_audit_binding(
+        backend=backend,
+        audit=evaluation.audit,
+        segments=segments,
+        object_surface=object_surface,
+        terminal_surfaces=terminal_surfaces,
+    )
 
 
 def _validate_v9_path_binding(
@@ -1507,6 +1881,564 @@ def _validate_terminal_bindings(
                 f"{terminal.link_name}"
             )
     return collision_domains, blockers
+
+
+def _contact_range_policy_evidence_sha256(
+    policy: CertifiedSequentialClosurePolicy,
+    audit: RayClosureAudit,
+) -> str:
+    payload = {
+        "policy_sha256": policy.policy_sha256,
+        "ray_closure_method_id": audit.method_id,
+        "model_binding_status": audit.model_binding_status,
+        "object_geometry_sha256": audit.object_geometry_sha256,
+        "model_contract_sha256": audit.model_contract_sha256,
+        "pad_order": list(audit.pad_order),
+        "pad_geometry_sha256": list(audit.pad_geometry_sha256),
+        "pad_runtime_geometry_sha256": list(
+            audit.pad_runtime_geometry_sha256
+        ),
+        "pad_link_names": list(audit.pad_link_names),
+        "closing_directions_physical": _float64_array_hex(
+            audit.closing_directions_physical
+        ),
+        "candidate_role": audit.candidate_role,
+        "candidate_exact_contact_endpoint_certified": (
+            audit.candidate_exact_contact_endpoint_certified
+        ),
+    }
+    return hashlib.sha256(
+        _canonical_json(payload).encode("utf-8")
+    ).hexdigest()
+
+
+def _independent_source_joint_name(
+    hand_model: object,
+    joint_name: str,
+) -> str:
+    active: set[str] = set()
+    cursor = str(joint_name)
+    while True:
+        if cursor in active:
+            raise FullHandCollisionError(
+                "contact-range collision found a cyclic mimic relation"
+            )
+        active.add(cursor)
+        joint = hand_model.joints.get(cursor)
+        if joint is None:
+            raise FullHandCollisionError(
+                "contact-range collision mimic source is absent"
+            )
+        if joint.mimic is None:
+            return cursor
+        cursor = joint.mimic.source_joint
+
+
+def _link_closure_support_index(
+    *,
+    hand_model: object,
+    link_name: str,
+    supports: tuple[tuple[str, ...], ...],
+) -> int | None:
+    by_child = {
+        joint.child_link: name
+        for name, joint in hand_model.joints.items()
+    }
+    closure_source_to_support = {
+        name: index
+        for index, support in enumerate(supports)
+        for name in support
+    }
+    influences: set[int] = set()
+    cursor = str(link_name)
+    visited: set[str] = set()
+    while cursor != hand_model.base_link:
+        if cursor in visited:
+            raise FullHandCollisionError(
+                "contact-range collision found a cyclic link ancestry"
+            )
+        visited.add(cursor)
+        joint_name = by_child.get(cursor)
+        if joint_name is None:
+            raise FullHandCollisionError(
+                f"collision link is disconnected from the hand base: {link_name}"
+            )
+        joint = hand_model.joints[joint_name]
+        if joint.movable:
+            source = _independent_source_joint_name(hand_model, joint_name)
+            support_index = closure_source_to_support.get(source)
+            if support_index is not None:
+                influences.add(support_index)
+        cursor = joint.parent_link
+    if len(influences) > 1:
+        raise FullHandCollisionError(
+            "POLICY_LINK_DEPENDS_ON_MULTIPLE_CLOSURE_SUPPORTS:"
+            f"{link_name}"
+        )
+    return next(iter(influences)) if influences else None
+
+
+def _validate_contact_range_policy_binding(
+    *,
+    backend: DirectedIntervalKinematics,
+    policy: CertifiedSequentialClosurePolicy,
+    audit: RayClosureAudit,
+    object_surface: HashBoundObjectSurface,
+    terminal_surfaces: tuple[TerminalForbiddenSurface, ...],
+) -> tuple[tuple[SequentialClosureSegment, ...], tuple[IntervalBounds, ...]]:
+    if not isinstance(policy, CertifiedSequentialClosurePolicy) or not isinstance(
+        audit, RayClosureAudit
+    ):
+        raise FullHandCollisionError(
+            "contact-range collision needs a certified policy and V9 audit"
+        )
+    if (
+        audit.failure_reason != REPRESENTATIVE_PROPOSAL_FAILURE_REASON
+        or audit.candidate_role != CANDIDATE_REPRESENTATIVE_ROLE
+        or audit.candidate_exact_contact_endpoint_certified
+        or not audit.full_verified_pad_mesh_used
+        or audit.pad_face_subset_input_allowed
+        or audit.subdivision_budget_exhausted
+    ):
+        raise FullHandCollisionError(
+            "contact-range collision needs the registered V9 policy outcome"
+        )
+    joint_names = tuple(backend.hand_model.independent_joint_names)
+    if (
+        policy.independent_joint_names != joint_names
+        or policy.pad_order != audit.pad_order
+        or policy.independent_actuation_supports
+        != audit.independent_actuation_supports
+        or policy.closing_directions_physical
+        != audit.closing_directions_physical
+        or policy.object_geometry_sha256 != audit.object_geometry_sha256
+        or policy.model_contract_sha256 != audit.model_contract_sha256
+        or len(audit.possible_first_contact_set_sha256) != 3
+    ):
+        raise FullHandCollisionError(
+            "contact-range policy differs from its V9 model/path binding"
+        )
+    initial = np.asarray(
+        policy.initial_independent_joint_positions_rad,
+        dtype=np.float64,
+    )
+    if initial.shape != (len(joint_names),):
+        raise FullHandCollisionError(
+            "contact-range policy initial state dimension changed"
+        )
+    try:
+        backend.hand_model.resolve_joint_positions(initial)
+    except ValueError as error:
+        raise FullHandCollisionError(
+            "contact-range policy initial state violates hand limits"
+        ) from error
+    joint_index = {name: index for index, name in enumerate(joint_names)}
+    phases: list[IntervalBounds] = []
+    segments: list[SequentialClosureSegment] = []
+    if len(audit.pad_link_names) != 3:
+        raise FullHandCollisionError(
+            "contact-range V9 audit does not bind three PAD links"
+        )
+    for index, (pad_name, support, direction, contact_set, link_name) in enumerate(
+        zip(
+            policy.pad_order,
+            policy.independent_actuation_supports,
+            policy.closing_directions_physical,
+            policy.possible_first_contact_sets,
+            audit.pad_link_names,
+        )
+    ):
+        if len(support) != 1:
+            raise FullHandCollisionError(
+                "contact-range collision V1 needs one closure joint per finger"
+            )
+        support_index = joint_index[support[0]]
+        if not _binary64_array_equal(
+            (initial[support_index],),
+            (audit.closure_open_joint_positions_rad[index],),
+        ):
+            raise FullHandCollisionError(
+                "contact-range policy does not start at the V9 open value"
+            )
+        upper = float(contact_set.guaranteed_earliest_phase_upper)
+        if not math.isfinite(upper) or upper <= 0.0:
+            raise FullHandCollisionError(
+                "contact-range policy has no positive guaranteed stop bound"
+            )
+        if any(
+            root.semantic_classification
+            != ALLOWED_V9_CONTACT_CLASSIFICATION
+            or root.certificate.phase.lower < 0.0
+            or root.certificate.phase.lower > upper
+            for root in contact_set.possible_earliest_roots
+        ):
+            raise FullHandCollisionError(
+                "contact-range policy root set is not a valid earliest event set"
+            )
+        endpoint = initial + upper * np.asarray(direction, dtype=np.float64)
+        try:
+            backend.hand_model.resolve_joint_positions(endpoint)
+        except ValueError as error:
+            raise FullHandCollisionError(
+                "contact-range policy guaranteed path leaves joint limits"
+            ) from error
+        phase = IntervalBounds(0.0, upper)
+        phases.append(phase)
+        segments.append(
+            SequentialClosureSegment(
+                segment_index=index,
+                pad_name=pad_name,
+                active_link_name=link_name,
+                q_start=tuple(float(value) for value in initial),
+                direction=direction,
+                phase=phase,
+                maximum_subdivision_intervals=1,
+            )
+        )
+    segment_rows = tuple(segments)
+    _validate_v9_model_audit_binding(
+        backend=backend,
+        audit=audit,
+        segments=segment_rows,
+        object_surface=object_surface,
+        terminal_surfaces=terminal_surfaces,
+    )
+    return segment_rows, tuple(phases)
+
+
+def certify_full_hand_contact_range_policy_closure(
+    *,
+    backend: DirectedIntervalKinematics,
+    link_surfaces: Sequence[HashBoundLinkSurface],
+    terminal_forbidden_surfaces: Sequence[TerminalForbiddenSurface],
+    object_surface: HashBoundObjectSurface,
+    self_pair_inventory: SelfCollisionPairInventory,
+    sequential_closure_policy: CertifiedSequentialClosurePolicy,
+    v9_audit: RayClosureAudit,
+    maximum_subdivision_intervals: int,
+) -> ContactRangePolicyCollisionCertificate:
+    """Check every reachable contact-stop closure state conservatively.
+
+    Each collision link is proven to depend on at most one disjoint closure
+    support.  Link/object and same-support pairs reuse scalar interval paths;
+    cross-support pairs cover the complete Cartesian product of both phases.
+    The PAD endpoint, containment, authoritative arm/environment roster,
+    approach, and lift obligations remain mandatory blockers in this V1.
+    """
+
+    if not isinstance(backend, DirectedIntervalKinematics):
+        raise FullHandCollisionError(
+            "contact-range collision needs DirectedIntervalKinematics"
+        )
+    if not isinstance(object_surface, HashBoundObjectSurface) or not isinstance(
+        self_pair_inventory, SelfCollisionPairInventory
+    ):
+        raise FullHandCollisionError(
+            "contact-range collision object or self-pair inventory is invalid"
+        )
+    if (
+        not isinstance(maximum_subdivision_intervals, int)
+        or isinstance(maximum_subdivision_intervals, bool)
+        or maximum_subdivision_intervals <= 0
+    ):
+        raise FullHandCollisionError(
+            "contact-range collision budget must be positive"
+        )
+    link_rows = tuple(link_surfaces)
+    terminal_rows = tuple(terminal_forbidden_surfaces)
+    if not link_rows or not all(
+        isinstance(row, HashBoundLinkSurface) for row in link_rows
+    ) or not all(
+        isinstance(row, TerminalForbiddenSurface) for row in terminal_rows
+    ):
+        raise FullHandCollisionError(
+            "contact-range collision surfaces are malformed"
+        )
+    link_by_name = {row.link_name: row for row in link_rows}
+    terminal_by_name = {row.link_name: row for row in terminal_rows}
+    if (
+        len(link_by_name) != len(link_rows)
+        or len(terminal_by_name) != len(terminal_rows)
+        or tuple(sorted(link_by_name)) != self_pair_inventory.link_names
+    ):
+        raise FullHandCollisionError(
+            "contact-range collision surfaces do not match the inventory"
+        )
+    segments, support_phases = _validate_contact_range_policy_binding(
+        backend=backend,
+        policy=sequential_closure_policy,
+        audit=v9_audit,
+        object_surface=object_surface,
+        terminal_surfaces=terminal_rows,
+    )
+    if set(row.active_link_name for row in segments) != set(terminal_by_name):
+        raise FullHandCollisionError(
+            "contact-range policy PAD links differ from terminal partitions"
+        )
+    collision_domains, blockers = _validate_terminal_bindings(
+        link_surfaces=link_by_name,
+        terminal_surfaces=terminal_rows,
+    )
+    supports = sequential_closure_policy.independent_actuation_supports
+    support_by_link = {
+        name: _link_closure_support_index(
+            hand_model=backend.hand_model,
+            link_name=name,
+            supports=supports,
+        )
+        for name in self_pair_inventory.link_names
+    }
+    initial = np.asarray(
+        sequential_closure_policy.initial_independent_joint_positions_rad,
+        dtype=np.float64,
+    )
+    directions = tuple(
+        np.asarray(row, dtype=np.float64)
+        for row in sequential_closure_policy.closing_directions_physical
+    )
+    zero_direction = np.zeros_like(initial)
+    zero_phase = IntervalBounds(0.0, 0.0)
+    object_from_hand = np.asarray(
+        sequential_closure_policy.object_from_hand,
+        dtype=np.float64,
+    ).reshape(4, 4)
+    remaining_budget = maximum_subdivision_intervals
+    link_object_children: list[PolicyLinkObjectPathCertificate] = []
+    self_pair_children: list[PolicySelfPairPathCertificate] = []
+
+    for link_name in self_pair_inventory.link_names:
+        if remaining_budget == 0:
+            blockers.append(
+                "POLICY_SHARED_BUDGET_EXHAUSTED_BEFORE_LINK_OBJECT:"
+                f"{link_name}"
+            )
+            continue
+        support_index = support_by_link[link_name]
+        direction = (
+            zero_direction
+            if support_index is None
+            else directions[support_index]
+        )
+        phase = (
+            zero_phase
+            if support_index is None
+            else support_phases[support_index]
+        )
+        surface = collision_domains[link_name]
+        child = certify_moving_link_surface_separated_from_static_surface(
+            backend=backend,
+            link_name=link_name,
+            q_start=initial,
+            direction=direction,
+            phase=phase,
+            object_from_hand_base=object_from_hand,
+            moving_triangles_link_m=surface.triangles_link_m,
+            static_triangles_object_m=object_surface.triangles_object_m,
+            maximum_subdivision_intervals=remaining_budget,
+        )
+        remaining_budget -= child.audit.processed_interval_count
+        link_object_children.append(
+            PolicyLinkObjectPathCertificate(
+                link_name=link_name,
+                closure_support_index=support_index,
+                collision_domain=(
+                    "TERMINAL_EXACT_NONPAD_FORBIDDEN_SURFACE"
+                    if link_name in terminal_by_name
+                    else "FULL_LINK_SURFACE"
+                ),
+                certificate=child,
+            )
+        )
+        if child.state is not ContinuousCollisionState.CERTIFIED_FREE:
+            blockers.append(
+                "POLICY_LINK_OBJECT_RANGE_UNRESOLVED:"
+                f"{link_name}:{child.audit.unresolved_reason}"
+            )
+
+    for first_link, second_link in self_pair_inventory.all_pairs:
+        if remaining_budget == 0:
+            blockers.append(
+                "POLICY_SHARED_BUDGET_EXHAUSTED_BEFORE_SELF_PAIR:"
+                f"{first_link}:{second_link}"
+            )
+            continue
+        first_support = support_by_link[first_link]
+        second_support = support_by_link[second_link]
+        first_surface = link_by_name[first_link]
+        second_surface = link_by_name[second_link]
+        independent_product = (
+            first_support is not None
+            and second_support is not None
+            and first_support != second_support
+        )
+        if independent_product:
+            child_pair = (
+                certify_independent_link_motion_surfaces_separated_from_each_other(
+                    backend=backend,
+                    first_link_name=first_link,
+                    second_link_name=second_link,
+                    first_q_start=initial,
+                    first_direction=directions[first_support],
+                    first_phase=support_phases[first_support],
+                    second_q_start=initial,
+                    second_direction=directions[second_support],
+                    second_phase=support_phases[second_support],
+                    object_from_hand_base=object_from_hand,
+                    first_triangles_link_m=(
+                        first_surface.triangles_link_m
+                    ),
+                    second_triangles_link_m=(
+                        second_surface.triangles_link_m
+                    ),
+                    maximum_subdivision_phase_boxes=remaining_budget,
+                )
+            )
+            used = child_pair.audit.processed_phase_box_count
+            relation = "INDEPENDENT_SUPPORT_PHASE_PRODUCT"
+        else:
+            shared_support = (
+                first_support
+                if first_support is not None
+                else second_support
+            )
+            child_pair = certify_moving_link_surfaces_separated_from_each_other(
+                backend=backend,
+                first_link_name=first_link,
+                second_link_name=second_link,
+                q_start=initial,
+                direction=(
+                    zero_direction
+                    if shared_support is None
+                    else directions[shared_support]
+                ),
+                phase=(
+                    zero_phase
+                    if shared_support is None
+                    else support_phases[shared_support]
+                ),
+                object_from_hand_base=object_from_hand,
+                first_triangles_link_m=first_surface.triangles_link_m,
+                second_triangles_link_m=second_surface.triangles_link_m,
+                maximum_subdivision_intervals=remaining_budget,
+            )
+            used = child_pair.audit.processed_interval_count
+            relation = "SHARED_OR_SINGLE_SUPPORT_PHASE_PATH"
+        remaining_budget -= used
+        self_pair_children.append(
+            PolicySelfPairPathCertificate(
+                first_link_name=first_link,
+                second_link_name=second_link,
+                first_closure_support_index=first_support,
+                second_closure_support_index=second_support,
+                motion_relation=relation,
+                certificate=child_pair,
+            )
+        )
+        if child_pair.state is not ContinuousCollisionState.CERTIFIED_FREE:
+            blockers.append(
+                "POLICY_SELF_PAIR_RANGE_UNRESOLVED:"
+                f"{first_link}:{second_link}:"
+                f"{child_pair.audit.unresolved_reason}"
+            )
+
+    for segment in segments:
+        blockers.append(
+            f"{PAD_SURFACE_BLOCKER_PREFIX}:"
+            f"{segment.pad_name}:{segment.active_link_name}"
+        )
+    blockers.extend(CONTACT_RANGE_POLICY_MANDATORY_BLOCKERS)
+    free_link_object = sum(
+        row.certificate.state is ContinuousCollisionState.CERTIFIED_FREE
+        for row in link_object_children
+    )
+    free_self_pair = sum(
+        row.certificate.state is ContinuousCollisionState.CERTIFIED_FREE
+        for row in self_pair_children
+    )
+    ordered_link_bindings = tuple(
+        (
+            name,
+            link_by_name[name].source_asset_sha256,
+            link_by_name[name].geometry_sha256,
+        )
+        for name in self_pair_inventory.link_names
+    )
+    ordered_terminal_bindings = tuple(
+        (
+            name,
+            terminal_by_name[name].partition.partition_sha256,
+            terminal_by_name[name].nonpad_forbidden_surface.geometry_sha256,
+        )
+        for name in sorted(terminal_by_name)
+    )
+    expected_self_pairs = len(self_pair_inventory.all_pairs)
+    audit = ContactRangePolicyCollisionAudit(
+        method_id=CONTACT_RANGE_POLICY_METHOD_ID,
+        interval_kinematics_method_id=INTERVAL_KINEMATICS_METHOD_ID,
+        ray_closure_method_id=RAY_CLOSURE_METHOD_ID,
+        policy_sha256=sequential_closure_policy.policy_sha256,
+        v9_audit_and_policy_sha256=(
+            _contact_range_policy_evidence_sha256(
+                sequential_closure_policy, v9_audit
+            )
+        ),
+        object_id=object_surface.object_id,
+        object_source_asset_sha256=object_surface.source_asset_sha256,
+        object_surface_geometry_sha256=object_surface.geometry_sha256,
+        ray_closure_object_geometry_sha256=(
+            object_surface.ray_closure_object_geometry_sha256
+        ),
+        ray_model_contract_sha256=v9_audit.model_contract_sha256,
+        link_surface_bindings=ordered_link_bindings,
+        terminal_partition_bindings=ordered_terminal_bindings,
+        self_pair_inventory_sha256=self_pair_inventory.inventory_sha256,
+        support_phase_upper_bounds=tuple(
+            row.upper for row in support_phases
+        ),
+        link_support_bindings=tuple(
+            (
+                name,
+                -1 if support_by_link[name] is None else support_by_link[name],
+            )
+            for name in self_pair_inventory.link_names
+        ),
+        maximum_subdivision_intervals=maximum_subdivision_intervals,
+        subdivision_intervals_used=(
+            maximum_subdivision_intervals - remaining_budget
+        ),
+        subdivision_intervals_remaining=remaining_budget,
+        link_count=len(link_rows),
+        terminal_link_count=len(terminal_rows),
+        self_pair_count=expected_self_pairs,
+        expected_link_object_domain_count=len(link_rows),
+        evaluated_link_object_domain_count=len(link_object_children),
+        certified_free_link_object_domain_count=free_link_object,
+        expected_self_pair_domain_count=expected_self_pairs,
+        evaluated_self_pair_domain_count=len(self_pair_children),
+        certified_free_self_pair_domain_count=free_self_pair,
+        all_link_object_domains_covered=(
+            len(link_object_children) == len(link_rows)
+        ),
+        all_self_pair_domains_covered=(
+            len(self_pair_children) == expected_self_pairs
+        ),
+        policy_contact_ranges_consumed=True,
+        display_approximation_used_as_formal_evidence=False,
+        srdf_exemptions_applied=False,
+        pad_endpoint_continuous_surface_certificate_present=False,
+        checkable_collision_gates_passed=(
+            free_link_object == len(link_rows)
+            and free_self_pair == expected_self_pairs
+        ),
+        blockers=tuple(sorted(set(blockers))),
+        claim_limitations=CONTACT_RANGE_POLICY_CLAIM_LIMITATIONS,
+    )
+    return ContactRangePolicyCollisionCertificate(
+        state=FullHandClosureCollisionState.NOT_CERTIFIABLE,
+        link_object_certificates=tuple(link_object_children),
+        self_pair_certificates=tuple(self_pair_children),
+        audit=audit,
+    )
 
 
 def certify_full_hand_sequential_closure(
@@ -1808,6 +2740,11 @@ def certify_full_hand_sequential_closure(
 __all__ = [
     "ALLOWED_V9_CONTACT_CLASSIFICATION",
     "CLAIM_LIMITATIONS",
+    "CONTACT_RANGE_POLICY_CLAIM_LIMITATIONS",
+    "CONTACT_RANGE_POLICY_MANDATORY_BLOCKERS",
+    "CONTACT_RANGE_POLICY_METHOD_ID",
+    "ContactRangePolicyCollisionAudit",
+    "ContactRangePolicyCollisionCertificate",
     "FullHandClosureCollisionAudit",
     "FullHandClosureCollisionCertificate",
     "FullHandClosureCollisionState",
@@ -1817,10 +2754,13 @@ __all__ = [
     "LinkObjectPathCertificate",
     "METHOD_ID",
     "PAD_SURFACE_BLOCKER_PREFIX",
+    "PolicyLinkObjectPathCertificate",
+    "PolicySelfPairPathCertificate",
     "SURFACE_HASH_METHOD_ID",
     "SelfPairPathCertificate",
     "SequentialClosureSegment",
     "TerminalForbiddenSurface",
+    "certify_full_hand_contact_range_policy_closure",
     "certify_full_hand_sequential_closure",
     "triangle_surface_geometry_sha256",
 ]
