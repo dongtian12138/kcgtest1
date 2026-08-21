@@ -79,6 +79,9 @@ COMPLETE_CONTINUOUS_TRAJECTORY_CLEARANCE_SCOPE = (
 CONTACT_RANGE_POLICY_WRENCH_METHOD_ID = (
     "CARTS_CONTACT_RANGE_POLICY_WRENCH_DOMAIN_AUDIT_V1"
 )
+CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE = (
+    "ALL_POSSIBLE_EARLIEST_ROOTS_PER_PAD"
+)
 CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE = (
     "COMPLETE_CARTESIAN_PRODUCT_OF_ALL_POSSIBLE_EARLIEST_ROOTS"
 )
@@ -414,6 +417,7 @@ class ContactRangePolicyWrenchAudit:
     pad_domains: tuple[ContactRangePadWrenchDomain, ...]
     possible_root_counts: tuple[int, int, int]
     total_possible_root_count: int
+    root_domain_rule: str
     cartesian_product_count: int
     cartesian_product_rule: str
     scenario_count: int
@@ -462,6 +466,8 @@ class ContactRangePolicyWrenchAudit:
             or counts != tuple(len(row.roots) for row in domains)
             or any(value <= 0 for value in counts)
             or self.total_possible_root_count != sum(counts)
+            or self.root_domain_rule
+            != CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE
             or self.cartesian_product_count != math.prod(counts)
             or self.cartesian_product_rule
             != CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE
@@ -523,6 +529,7 @@ class ContactRangePolicyWrenchAudit:
             "pad_domains": [row.as_dict() for row in self.pad_domains],
             "possible_root_counts": list(self.possible_root_counts),
             "total_possible_root_count": self.total_possible_root_count,
+            "root_domain_rule": self.root_domain_rule,
             "cartesian_product_count": self.cartesian_product_count,
             "cartesian_product_rule": self.cartesian_product_rule,
             "scenario_count": self.scenario_count,
@@ -1084,6 +1091,7 @@ class TaskWrenchEvaluator:
             pad_domains=pad_domains,
             possible_root_counts=counts,
             total_possible_root_count=sum(counts),
+            root_domain_rule=CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE,
             cartesian_product_count=math.prod(counts),
             cartesian_product_rule=CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE,
             scenario_count=int(scenarios.shape[0]),
@@ -1713,6 +1721,7 @@ __all__ = [
     "CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS",
     "CONTACT_RANGE_POLICY_WRENCH_METHOD_ID",
     "CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE",
+    "CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE",
     "ContactActuationModel",
     "ContactRangePadWrenchDomain",
     "ContactRangePolicyWrenchAudit",

@@ -150,6 +150,39 @@ contact_range_policy_collision:
   formal_selection_allowed: false
   isaac_launch_allowed: false
 
+contact_range_policy_wrench:
+  implementation_type_id: kcg_connector.grasp.robust.task_wrench_evaluator.ContactRangePolicyWrenchCertificate
+  method_id: CARTS_CONTACT_RANGE_POLICY_WRENCH_DOMAIN_AUDIT_V1
+  root_domain_rule: ALL_POSSIBLE_EARLIEST_ROOTS_PER_PAD
+  cartesian_product_rule: COMPLETE_CARTESIAN_PRODUCT_OF_ALL_POSSIBLE_EARLIEST_ROOTS
+  policy_collision_binding_required: true
+  qmc_role: FRICTION_INTERVAL_ONLY_NOT_CONTACT_GEOMETRY_SAMPLING
+  display_approximation_used_as_formal_evidence: false
+  finite_contact_geometry_sampling_allowed: false
+  exact_candidate_wrench_path_changed: false
+  exact_candidate_wrench_invocations: 0
+  current_state: NOT_CERTIFIABLE
+  contact_range_margin_computed: false
+  interval_contact_jacobian_certificate_present: false
+  parametric_wrench_lower_bound_certificate_present: false
+  mandatory_blockers:
+    - INTERVAL_CONTACT_JACOBIAN_CERTIFICATE_UNAVAILABLE
+    - PARAMETRIC_CONTACT_RANGE_WRENCH_LOWER_BOUND_UNAVAILABLE
+    - CALIBRATED_NONFRICTION_UNCERTAINTY_BOUNDS_UNAVAILABLE
+  claim_limitations:
+    - CONTACT_RANGE_POLICY_ROOT_DOMAIN_BINDING_ONLY
+    - ALL_POSSIBLE_EARLIEST_ROOTS_AND_CARTESIAN_PRODUCT_COUNT_BOUND
+    - NO_DISPLAY_APPROXIMATION_AS_FORMAL_EVIDENCE
+    - NO_FINITE_CONTACT_GEOMETRY_SAMPLING_AS_FORMAL_EVIDENCE
+    - NO_EXACT_FINAL_JOINT_OR_CONTACT_SUBSTITUTION
+    - NO_INTERVAL_CONTACT_JACOBIAN_CERTIFICATE
+    - NO_PARAMETRIC_CONTACT_RANGE_WRENCH_LOWER_BOUND
+    - FRICTION_INTERVAL_ONLY_OTHER_UNCERTAINTIES_UNCALIBRATED
+    - NORMAL_FORCE_CAPACITY_IS_UNCALIBRATED_OPTIMIZATION_BOUND
+    - NOT_COLLISION_OR_DYNAMIC_EVIDENCE
+  formal_selection_allowed: false
+  isaac_launch_allowed: false
+
 post_generation_ranking:
   implementation_type_id: kcg_connector.grasp.robust.post_generation_ranker.PostGenerationRankOnlyPipeline
   method_id: CARTS_POST_GENERATION_COMMON_QMC_LEXICOGRAPHIC_RANKER_V1

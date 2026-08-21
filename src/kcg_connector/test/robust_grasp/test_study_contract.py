@@ -38,7 +38,13 @@ from kcg_connector.grasp.robust.study_contract import (
     build_frozen_study_contract,
 )
 from kcg_connector.grasp.robust.task_wrench_evaluator import (
+    CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS,
+    CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS,
+    CONTACT_RANGE_POLICY_WRENCH_METHOD_ID,
+    CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE,
+    CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE,
     FRICTION_INTERVAL_ONLY_CERTIFIED_UNCERTAINTY_SCOPE,
+    ContactRangePolicyWrenchCertificate,
 )
 
 
@@ -100,7 +106,7 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
         audit.canonical_json_bytes
     ).hexdigest()
     assert audit.canonical_sha256 == (
-        "fd3ee314f6b956a22e3c5c5eba95a68b1aaddab630d500c75da5a0fcca7b5dab"
+        "7b1c0e7a20a7404a24eacf1c5923f91f4af27e96c9bca6798d14a0ce697ed664"
     )
     assert audit.canonical_manifest["status"] == "NOT_FREEZE_ELIGIBLE"
     assert audit.canonical_manifest["study"]["transfer_object_role"] == (
@@ -213,6 +219,48 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
     ] is False
     assert interpretation[
         "contact_range_policy_collision_isaac_launch_allowed"
+    ] is False
+    assert interpretation[
+        "contact_range_policy_wrench_implementation_type_id"
+    ] == (
+        f"{ContactRangePolicyWrenchCertificate.__module__}."
+        f"{ContactRangePolicyWrenchCertificate.__qualname__}"
+    )
+    assert interpretation["contact_range_policy_wrench_method_id"] == (
+        CONTACT_RANGE_POLICY_WRENCH_METHOD_ID
+    )
+    assert interpretation[
+        "contact_range_policy_wrench_root_domain_rule"
+    ] == CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE
+    assert interpretation[
+        "contact_range_policy_wrench_cartesian_product_rule"
+    ] == CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE
+    assert interpretation[
+        "contact_range_policy_wrench_collision_binding_required"
+    ] is True
+    assert interpretation[
+        "contact_range_policy_wrench_display_approximation_used"
+    ] is False
+    assert interpretation[
+        "contact_range_policy_wrench_finite_sampling_allowed"
+    ] is False
+    assert interpretation[
+        "contact_range_policy_wrench_exact_candidate_invocations"
+    ] == 0
+    assert interpretation[
+        "contact_range_policy_wrench_current_state"
+    ] == "NOT_CERTIFIABLE"
+    assert not interpretation[
+        "contact_range_policy_wrench_margin_computed"
+    ]
+    assert tuple(
+        interpretation["contact_range_policy_wrench_mandatory_blockers"]
+    ) == CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS
+    assert interpretation[
+        "contact_range_policy_wrench_formal_selection_allowed"
+    ] is False
+    assert interpretation[
+        "contact_range_policy_wrench_isaac_launch_allowed"
     ] is False
     assert interpretation["legacy_grasp_optimizer_formal_eligible"] is False
     assert interpretation["post_generation_ranking_binding_status"] == (
@@ -399,6 +447,46 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
     )
     assert policy_collision["formal_selection_allowed"] is False
     assert policy_collision["isaac_launch_allowed"] is False
+    policy_wrench = method["contact_range_policy_wrench"]
+    assert policy_wrench["implementation_type_id"] == (
+        f"{ContactRangePolicyWrenchCertificate.__module__}."
+        f"{ContactRangePolicyWrenchCertificate.__qualname__}"
+    )
+    assert policy_wrench["method_id"] == (
+        CONTACT_RANGE_POLICY_WRENCH_METHOD_ID
+    )
+    assert policy_wrench["root_domain_rule"] == (
+        CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE
+    )
+    assert policy_wrench["cartesian_product_rule"] == (
+        CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE
+    )
+    assert policy_wrench["policy_collision_binding_required"] is True
+    assert policy_wrench["qmc_role"] == (
+        "FRICTION_INTERVAL_ONLY_NOT_CONTACT_GEOMETRY_SAMPLING"
+    )
+    assert not policy_wrench[
+        "display_approximation_used_as_formal_evidence"
+    ]
+    assert not policy_wrench["finite_contact_geometry_sampling_allowed"]
+    assert not policy_wrench["exact_candidate_wrench_path_changed"]
+    assert policy_wrench["exact_candidate_wrench_invocations"] == 0
+    assert policy_wrench["current_state"] == "NOT_CERTIFIABLE"
+    assert not policy_wrench["contact_range_margin_computed"]
+    assert not policy_wrench[
+        "interval_contact_jacobian_certificate_present"
+    ]
+    assert not policy_wrench[
+        "parametric_wrench_lower_bound_certificate_present"
+    ]
+    assert tuple(policy_wrench["mandatory_blockers"]) == (
+        CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS
+    )
+    assert tuple(policy_wrench["claim_limitations"]) == (
+        CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS
+    )
+    assert policy_wrench["formal_selection_allowed"] is False
+    assert policy_wrench["isaac_launch_allowed"] is False
     ranking = method["post_generation_ranking"]
     assert ranking["implementation_type_id"] == (
         "kcg_connector.grasp.robust.post_generation_ranker."
@@ -905,6 +993,69 @@ def test_contact_range_policy_collision_missing_or_extra_fields_fail_closed(
     extra["contact_range_policy_collision"]["unregistered_shortcut"] = True
     with pytest.raises(StudyContractError, match="extra=.*unregistered_shortcut"):
         _audit(method=_write_yaml(tmp_path, "policy_collision_extra.yaml", extra))
+
+
+@pytest.mark.parametrize(
+    ("path", "value", "message"),
+    (
+        (("method_id",), "UNREGISTERED_WRENCH", "method_id"),
+        (("root_domain_rule",), "ONE_ROOT_PER_PAD", "root_domain_rule"),
+        (
+            ("cartesian_product_rule",),
+            "ONE_DISPLAY_COMBINATION",
+            "cartesian_product_rule",
+        ),
+        (
+            ("policy_collision_binding_required",),
+            False,
+            "policy_collision_binding_required",
+        ),
+        (
+            ("display_approximation_used_as_formal_evidence",),
+            True,
+            "display_approximation_used_as_formal_evidence",
+        ),
+        (
+            ("finite_contact_geometry_sampling_allowed",),
+            True,
+            "finite_contact_geometry_sampling_allowed",
+        ),
+        (("exact_candidate_wrench_invocations",), 1, "exact_candidate"),
+        (("current_state",), "CERTIFIED", "current_state"),
+        (("contact_range_margin_computed",), True, "contact_range_margin"),
+        (("mandatory_blockers",), [], "mandatory_blockers"),
+        (("claim_limitations",), [], "claim_limitations"),
+        (("formal_selection_allowed",), True, "formal_selection_allowed"),
+        (("isaac_launch_allowed",), True, "isaac_launch_allowed"),
+    ),
+)
+def test_contact_range_policy_wrench_contract_drift_fails_closed(
+    tmp_path: Path,
+    path: tuple[str, ...],
+    value: Any,
+    message: str,
+) -> None:
+    document = _document(METHOD)
+    parent = document["contact_range_policy_wrench"]
+    for key in path[:-1]:
+        parent = parent[key]
+    parent[path[-1]] = value
+    with pytest.raises(StudyContractError, match=message):
+        _audit(method=_write_yaml(tmp_path, "policy_wrench_drift.yaml", document))
+
+
+def test_contact_range_policy_wrench_missing_or_extra_fields_fail_closed(
+    tmp_path: Path,
+) -> None:
+    missing = _document(METHOD)
+    del missing["contact_range_policy_wrench"]["claim_limitations"]
+    with pytest.raises(StudyContractError, match="missing=.*claim_limitations"):
+        _audit(method=_write_yaml(tmp_path, "policy_wrench_missing.yaml", missing))
+
+    extra = _document(METHOD)
+    extra["contact_range_policy_wrench"]["unregistered_shortcut"] = True
+    with pytest.raises(StudyContractError, match="extra=.*unregistered_shortcut"):
+        _audit(method=_write_yaml(tmp_path, "policy_wrench_extra.yaml", extra))
 
 
 @pytest.mark.parametrize(

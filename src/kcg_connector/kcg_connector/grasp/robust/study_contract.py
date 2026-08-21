@@ -73,7 +73,13 @@ from .surface_anchored_closure import (
     SurfaceAnchoredRayClosureModel,
 )
 from .task_wrench_evaluator import (
+    CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS,
+    CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS,
+    CONTACT_RANGE_POLICY_WRENCH_METHOD_ID,
+    CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE,
+    CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE,
     FRICTION_INTERVAL_ONLY_CERTIFIED_UNCERTAINTY_SCOPE,
+    ContactRangePolicyWrenchCertificate,
 )
 from .top_level_candidate_generator import (
     ALLOWED_TOTAL_ATTEMPT_BUDGETS,
@@ -364,6 +370,26 @@ _METHOD_SCHEMA = {
         "exact_candidate_collision_path_changed": _LEAF,
         "current_state": _LEAF,
         "checkable_scope": _LEAF,
+        "mandatory_blockers": _LEAF,
+        "claim_limitations": _LEAF,
+        "formal_selection_allowed": _LEAF,
+        "isaac_launch_allowed": _LEAF,
+    },
+    "contact_range_policy_wrench": {
+        "implementation_type_id": _LEAF,
+        "method_id": _LEAF,
+        "root_domain_rule": _LEAF,
+        "cartesian_product_rule": _LEAF,
+        "policy_collision_binding_required": _LEAF,
+        "qmc_role": _LEAF,
+        "display_approximation_used_as_formal_evidence": _LEAF,
+        "finite_contact_geometry_sampling_allowed": _LEAF,
+        "exact_candidate_wrench_path_changed": _LEAF,
+        "exact_candidate_wrench_invocations": _LEAF,
+        "current_state": _LEAF,
+        "contact_range_margin_computed": _LEAF,
+        "interval_contact_jacobian_certificate_present": _LEAF,
+        "parametric_wrench_lower_bound_certificate_present": _LEAF,
         "mandatory_blockers": _LEAF,
         "claim_limitations": _LEAF,
         "formal_selection_allowed": _LEAF,
@@ -1119,6 +1145,41 @@ def _validate_method(document: Mapping[str, Any]) -> None:
             policy_collision[field],
             expected,
             f"method.contact_range_policy_collision.{field}",
+        )
+    policy_wrench = _mapping(
+        document["contact_range_policy_wrench"],
+        "method.contact_range_policy_wrench",
+    )
+    for field, expected in {
+        "implementation_type_id": _implementation_type_id(
+            ContactRangePolicyWrenchCertificate
+        ),
+        "method_id": CONTACT_RANGE_POLICY_WRENCH_METHOD_ID,
+        "root_domain_rule": CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE,
+        "cartesian_product_rule": CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE,
+        "policy_collision_binding_required": True,
+        "qmc_role": "FRICTION_INTERVAL_ONLY_NOT_CONTACT_GEOMETRY_SAMPLING",
+        "display_approximation_used_as_formal_evidence": False,
+        "finite_contact_geometry_sampling_allowed": False,
+        "exact_candidate_wrench_path_changed": False,
+        "exact_candidate_wrench_invocations": 0,
+        "current_state": "NOT_CERTIFIABLE",
+        "contact_range_margin_computed": False,
+        "interval_contact_jacobian_certificate_present": False,
+        "parametric_wrench_lower_bound_certificate_present": False,
+        "mandatory_blockers": list(
+            CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS
+        ),
+        "claim_limitations": list(
+            CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS
+        ),
+        "formal_selection_allowed": False,
+        "isaac_launch_allowed": False,
+    }.items():
+        _exact(
+            policy_wrench[field],
+            expected,
+            f"method.contact_range_policy_wrench.{field}",
         )
     sobol_design = _mapping(
         candidate["sobol_design"],
@@ -2543,6 +2604,34 @@ def audit_study_contract(
             ),
             "contact_range_policy_collision_formal_selection_allowed": False,
             "contact_range_policy_collision_isaac_launch_allowed": False,
+            "contact_range_policy_wrench_implementation_type_id": (
+                _implementation_type_id(
+                    ContactRangePolicyWrenchCertificate
+                )
+            ),
+            "contact_range_policy_wrench_method_id": (
+                CONTACT_RANGE_POLICY_WRENCH_METHOD_ID
+            ),
+            "contact_range_policy_wrench_root_domain_rule": (
+                CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE
+            ),
+            "contact_range_policy_wrench_cartesian_product_rule": (
+                CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE
+            ),
+            "contact_range_policy_wrench_collision_binding_required": True,
+            "contact_range_policy_wrench_qmc_role": (
+                "FRICTION_INTERVAL_ONLY_NOT_CONTACT_GEOMETRY_SAMPLING"
+            ),
+            "contact_range_policy_wrench_display_approximation_used": False,
+            "contact_range_policy_wrench_finite_sampling_allowed": False,
+            "contact_range_policy_wrench_exact_candidate_invocations": 0,
+            "contact_range_policy_wrench_current_state": "NOT_CERTIFIABLE",
+            "contact_range_policy_wrench_margin_computed": False,
+            "contact_range_policy_wrench_mandatory_blockers": list(
+                CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS
+            ),
+            "contact_range_policy_wrench_formal_selection_allowed": False,
+            "contact_range_policy_wrench_isaac_launch_allowed": False,
             "legacy_grasp_optimizer_formal_eligible": False,
             "post_generation_ranking_binding_status": (
                 "BOUND_TO_PRODUCTION_POST_GENERATION_RANK_ONLY_PIPELINE"

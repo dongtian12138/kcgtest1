@@ -103,6 +103,7 @@ from kcg_connector.grasp.robust.task_wrench_evaluator import (
     CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS,
     CONTACT_RANGE_POLICY_WRENCH_METHOD_ID,
     CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE,
+    CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE,
     FRICTION_INTERVAL_ONLY_CERTIFIED_UNCERTAINTY_SCOPE,
     ContactRangePolicyWrenchState,
     TaskWrenchEvaluationError,
@@ -806,6 +807,51 @@ def _certify_policy(
     )
 
 
+_POLICY_WRENCH_LP_OPTIONS = LinearProgramSolverOptions.from_mapping(
+    {
+        "solver": "SCIPY_HIGHS",
+        "constraint_scaling": "ROW_AND_COLUMN_INF_NORM",
+        "maximum_iterations": 10000,
+        "primal_feasibility_tolerance": 1.0e-9,
+        "dual_feasibility_tolerance": 1.0e-9,
+        "ipm_optimality_tolerance": 1.0e-10,
+        "physical_acceptance_gate": False,
+    }
+)
+
+
+def _policy_wrench_evaluator() -> TaskWrenchEvaluator:
+    return TaskWrenchEvaluator(
+        object_model=_task_object_model(),
+        characteristic_radius_m=0.1,
+        friction_coefficient_interval=(0.3, 0.6),
+        uncertainty_claim_scope=(
+            FRICTION_INTERVAL_ONLY_CERTIFIED_UNCERTAINTY_SCOPE
+        ),
+        gravity_direction_object=(0.0, 0.0, -1.0),
+        task_frame_rotation_object=np.eye(3),
+        gravity_acceleration_m_s2=9.81,
+        lift_acceleration_m_s2=0.0,
+        maximum_inner_approximation_relative_error=0.1,
+        cone_edge_multiplier=1,
+        solver_options=_POLICY_WRENCH_LP_OPTIONS,
+    )
+
+
+def _evaluate_policy_wrench(policy_fixture):
+    fixture, policy, policy_audit = policy_fixture
+    collision_certificate = _certify_policy(policy_fixture)
+    evaluator = _policy_wrench_evaluator()
+    certificate = evaluator.evaluate_contact_range_policy(
+        policy,
+        np.asarray(((0.0,), (0.5,), (1.0,)), dtype=np.float64),
+        v9_audit=policy_audit,
+        hand_model=fixture[0].hand_model,
+        policy_collision_certificate=collision_certificate,
+    )
+    return evaluator, collision_certificate, certificate
+
+
 def _certify(fixture):
     (
         backend,
@@ -1367,3 +1413,143 @@ def test_contact_range_policy_shared_budget_cannot_claim_full_coverage(
         )
         for row in certificate.audit.blockers
     )
+
+
+def test_contact_range_policy_wrench_consumes_every_root_but_stays_blocked(
+    tmp_path: Path,
+) -> None:
+    _, collision_certificate, certificate = _evaluate_policy_wrench(
+        _policy_fixture(tmp_path)
+    )
+
+    assert certificate.state is ContactRangePolicyWrenchState.NOT_CERTIFIABLE
+    assert certificate.audit.method_id == CONTACT_RANGE_POLICY_WRENCH_METHOD_ID
+    assert certificate.audit.claim_limitations == (
+        CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS
+    )
+    assert certificate.audit.blockers == (
+        CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS
+    )
+    assert certificate.audit.possible_root_counts == (1, 1, 1)
+    assert certificate.audit.total_possible_root_count == 3
+    assert certificate.audit.root_domain_rule == (
+        CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE
+    )
+    assert certificate.audit.cartesian_product_count == 1
+    assert certificate.audit.cartesian_product_rule == (
+        CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE
+    )
+    assert certificate.audit.policy_contact_root_domains_consumed
+    assert certificate.audit.complete_cartesian_product_bound
+    assert not (
+        certificate.audit.display_approximation_used_as_formal_evidence
+    )
+    assert not (
+        certificate.audit.finite_contact_geometry_sampling_used_as_formal_evidence
+    )
+    assert certificate.audit.exact_candidate_wrench_invocation_count == 0
+    assert not certificate.audit.contact_range_margin_computed
+    assert not certificate.audit.interval_contact_jacobian_certificate_present
+    assert not (
+        certificate.audit.parametric_wrench_lower_bound_certificate_present
+    )
+    assert not certificate.audit.formal_selection_allowed
+    assert certificate.task_margins is None
+    assert certificate.hard_bound_minimum_task_margin is None
+    assert certificate.peak_normal_force_n is None
+    assert certificate.joint_torque_utilization is None
+    assert len(certificate.audit.policy_collision_binding_sha256) == 64
+    assert collision_certificate.audit.checkable_collision_gates_passed
+
+
+def test_contact_range_policy_wrench_ignores_display_only_value(
+    tmp_path: Path,
+) -> None:
+    fixture, policy, policy_audit = _policy_fixture(tmp_path)
+    contact_sets = list(policy.possible_first_contact_sets)
+    root = contact_sets[0].possible_earliest_roots[0]
+    implicit = root.certificate.implicit_root
+    changed_display = implicit.isolating_interval.lower + 0.75 * (
+        implicit.isolating_interval.upper
+        - implicit.isolating_interval.lower
+    )
+    changed_root = replace(
+        root,
+        certificate=replace(
+            root.certificate,
+            implicit_root=replace(
+                implicit,
+                display_approximation=changed_display,
+            ),
+        ),
+    )
+    contact_sets[0] = PossibleFirstContactSet.from_certified_roots(
+        (changed_root,)
+    )
+    changed_policy = replace(
+        policy,
+        possible_first_contact_sets=tuple(contact_sets),
+    )
+
+    assert changed_policy.policy_sha256 == policy.policy_sha256
+    reference = _evaluate_policy_wrench((fixture, policy, policy_audit))[2]
+    changed = _evaluate_policy_wrench(
+        (fixture, changed_policy, policy_audit)
+    )[2]
+
+    assert changed.audit.audit_sha256 == reference.audit.audit_sha256
+    assert changed.audit.pad_domains == reference.audit.pad_domains
+    assert changed.audit.blockers == reference.audit.blockers
+
+
+def test_contact_range_policy_wrench_does_not_call_exact_point_solver(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fixture, policy, policy_audit = _policy_fixture(tmp_path)
+    collision_certificate = _certify_policy(
+        (fixture, policy, policy_audit)
+    )
+    evaluator = _policy_wrench_evaluator()
+
+    def _unexpected_exact_point_solver(*args, **kwargs):
+        del args, kwargs
+        raise AssertionError("exact-point wrench solver must not be called")
+
+    monkeypatch.setattr(
+        evaluator,
+        "evaluate_task_wrench",
+        _unexpected_exact_point_solver,
+    )
+    certificate = evaluator.evaluate_contact_range_policy(
+        policy,
+        np.asarray(((0.25,), (0.75,)), dtype=np.float64),
+        v9_audit=policy_audit,
+        hand_model=fixture[0].hand_model,
+        policy_collision_certificate=collision_certificate,
+    )
+
+    assert certificate.state is ContactRangePolicyWrenchState.NOT_CERTIFIABLE
+    assert certificate.audit.exact_candidate_wrench_invocation_count == 0
+
+
+def test_contact_range_policy_wrench_model_drift_fails_closed(
+    tmp_path: Path,
+) -> None:
+    fixture, policy, policy_audit = _policy_fixture(tmp_path)
+    collision_certificate = _certify_policy(
+        (fixture, policy, policy_audit)
+    )
+    drifted_policy = replace(policy, model_contract_sha256="f" * 64)
+
+    with pytest.raises(
+        TaskWrenchEvaluationError,
+        match="differs from its wrench model binding",
+    ):
+        _policy_wrench_evaluator().evaluate_contact_range_policy(
+            drifted_policy,
+            np.asarray(((0.5,),), dtype=np.float64),
+            v9_audit=policy_audit,
+            hand_model=fixture[0].hand_model,
+            policy_collision_certificate=collision_certificate,
+        )
