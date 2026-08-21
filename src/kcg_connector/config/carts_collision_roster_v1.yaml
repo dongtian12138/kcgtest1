@@ -1,0 +1,59 @@
+schema_version: carts_collision_roster_v1
+method_id: CARTS_AUTHORITATIVE_AGGREGATE_XACRO_COLLISION_LINK_ROSTER_V1
+authority_scope: AGGREGATE_XACRO_COLLISION_MESH_ROSTER_AND_BYTE_LINEAGE_ONLY
+xacro_execution_used: false
+include_policy: RELATIVE_DIRECT_INCLUDE_CLOSURE_WITHOUT_XACRO_PROGRAM_ELEMENTS
+mesh_unit_policy: ROS_URDF_SI_METRE_CONVENTION_WITH_EXPLICIT_PER_MESH_UNIT_M
+
+aggregate_source:
+  path: src/iiwa_description/urdf/handarm.urdf.xacro
+  sha256: b4ee760ec9d2306e172dc71f697a087f5788c32f89dd3c2e80a2f1e7897af399
+
+include_sources:
+  - path: src/iiwa_description/urdf/iiwa14.xacro
+    sha256: 0bda9afbdb5204d6606ece542e79590c780b5b0d84f3478ea38a37a640d2297d
+  - path: src/iiwa_description/urdf/hand.xacro
+    sha256: b7ddf62c62b8127816e5ba8ecefb72c257622952e3aa2211355a6a61f4d1097f
+
+package_roots:
+  iiwa_description: src/iiwa_description
+
+required_collision_link_count: 17
+required_self_pair_count: 136
+excluded_noncollision_links: [world, iiwa_link_ee, grasp_tcp]
+
+links:
+  - {ordinal: 0, link_name: iiwa_link_0, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/iiwa14/collision/link_0_s.stl, repository_path: src/iiwa_description/meshes/iiwa14/collision/link_0_s.stl, sha256: 29bcea03963a5c280668d3efc8cb6e68cd2fe2b66b699008727b596e63119c4d, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 1, link_name: iiwa_link_1, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/iiwa14/collision/link_1_s.stl, repository_path: src/iiwa_description/meshes/iiwa14/collision/link_1_s.stl, sha256: cbbfbce48345e69b838426f9df754d5187c6a5ff2b9afc7aae767038991a2611, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 2, link_name: iiwa_link_2, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/iiwa14/collision/link_2_s.stl, repository_path: src/iiwa_description/meshes/iiwa14/collision/link_2_s.stl, sha256: 6458dba3378afcecc74cf5837d5e4bda65656b36f432f904958eb2ca49331869, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 3, link_name: iiwa_link_3, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/iiwa14/collision/link_3_s.stl, repository_path: src/iiwa_description/meshes/iiwa14/collision/link_3_s.stl, sha256: 82926e1cf70d4dabeda1ff5166442e013a9e7ebea50d38b4fee4a28cdf49f5de, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 4, link_name: iiwa_link_4, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/iiwa14/collision/link_4_s.stl, repository_path: src/iiwa_description/meshes/iiwa14/collision/link_4_s.stl, sha256: 38d41e0e2dfacc4687feaa39a6be4f9428424653994c173106a0b2ea1b641d5c, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 5, link_name: iiwa_link_5, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/iiwa14/collision/link_5_s.stl, repository_path: src/iiwa_description/meshes/iiwa14/collision/link_5_s.stl, sha256: 995681a55c15b0f732a6ecc5a35e1682e9a139679424358fb53ff67f5a13e6fa, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 6, link_name: iiwa_link_6, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/iiwa14/collision/link_6_s.stl, repository_path: src/iiwa_description/meshes/iiwa14/collision/link_6_s.stl, sha256: c8ba0d7142ea6a11d60b281d5e6bff69895aa1e9734977eb3a09cc64ebec7c48, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 7, link_name: iiwa_link_7, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/iiwa14/collision/link_7_s.stl, repository_path: src/iiwa_description/meshes/iiwa14/collision/link_7_s.stl, sha256: a093ebd1dfdcf7399682c50a8d2af42ee9919947a86b1a201b92e2b0f9ee816b, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 8, link_name: handbase_link, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/hand/collision/handbase_link_convex.stl, repository_path: src/iiwa_description/meshes/hand/collision/handbase_link_convex.stl, sha256: 148d97ca0b88e5cc4dcaf7a00fbdb2c0234480125ee604331836f31d623065c3, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 9, link_name: f1Link1, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/hand/collision/f1Link1_convex.stl, repository_path: src/iiwa_description/meshes/hand/collision/f1Link1_convex.stl, sha256: 71ac06e81fddbe7924c6272929d2cc16b6ee1a0987a6b2c9a7090335c03d06d4, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 10, link_name: f1Link2, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/hand/collision/f1Link2_convex.stl, repository_path: src/iiwa_description/meshes/hand/collision/f1Link2_convex.stl, sha256: 0120af92411f3258dede198f79628a214e578dc002df096eb81cc3b95d597313, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 11, link_name: f1Link3, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/hand/collision/f1Link3_convex.stl, repository_path: src/iiwa_description/meshes/hand/collision/f1Link3_convex.stl, sha256: 86acaf02b370cf023f59a34416fdba532dfabb94b8976c13a4c446b64e91216f, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 12, link_name: f2Link1, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/hand/collision/f2Link1_convex.stl, repository_path: src/iiwa_description/meshes/hand/collision/f2Link1_convex.stl, sha256: 2990044347ac9350568501f4992cf41c4fd4f7419b8f9369d27fee73715b5869, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 13, link_name: f2Link2, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/hand/collision/f2Link2_convex.stl, repository_path: src/iiwa_description/meshes/hand/collision/f2Link2_convex.stl, sha256: a53197b77445bc0d05a50537396ac609a9c690ba8c710073a77d0f4920df7903, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 14, link_name: f3Link1, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/hand/collision/f3Link1_convex.stl, repository_path: src/iiwa_description/meshes/hand/collision/f3Link1_convex.stl, sha256: 8567dbd754288535c8a82ce2c363637128d958f488c565fda1876bfee681626c, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 15, link_name: f3Link2, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/hand/collision/f3Link2_convex.stl, repository_path: src/iiwa_description/meshes/hand/collision/f3Link2_convex.stl, sha256: 78995f212014aa445b9094cea426a9efaef6559404f61ef548b0e3f4c8b12829, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+  - {ordinal: 16, link_name: f3Link3, collision_ordinal: 0, mesh_uri: package://iiwa_description/meshes/hand/collision/f3Link3_convex.stl, repository_path: src/iiwa_description/meshes/hand/collision/f3Link3_convex.stl, sha256: 8fdd428a7454098feeb6d55c5a707507193b719cbdfd7c2d3570110fa6a6c687, unit: m, origin_xyz_m: [0.0, 0.0, 0.0], origin_rpy_rad: [0.0, 0.0, 0.0], scale: [1.0, 1.0, 1.0]}
+
+motion_binding:
+  complete: false
+  missing_evidence: HASH_BOUND_ARM_IK_AND_APPROACH_CLOSURE_LIFT_TRAJECTORY
+  fixed_arm_during_local_finger_closure_allowed_only_after_arm_pose_binding: true
+
+terminal_pad_role_binding:
+  complete: false
+  reason: TERMINAL_COLLISION_STL_AND_VERIFIED_PAD_VISUAL_SOURCE_DO_NOT_SHARE_SOURCE_FACE_INDICES
+  nearest_surface_or_tolerance_mapping_allowed: false
+
+solid_boundary_binding:
+  complete: false
+  reason: SELF_INTERSECTION_NESTING_AND_MATERIAL_OUTWARD_NOT_CERTIFIED
+  closed_orientable_positive_volume_is_not_sufficient: true
+
+formal_collision_roster_eligible: false

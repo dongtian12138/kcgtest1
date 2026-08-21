@@ -1,0 +1,319 @@
+schema_version: carts_grasp_v1
+method: CARTS-Grasp
+claim_scope: SIMULATION_ONLY_ZERO_OBJECT_TUNING_CROSS_MODEL_STUDY
+
+shared_protocol:
+  object_specific_algorithm_tuning_allowed: false
+  legacy_candidate_import_allowed: false
+  legacy_h_chain_import_allowed: false
+  online_object_ground_truth_allowed: false
+  online_contact_truth_allowed: false
+  hardware_authorized: false
+
+surface_model:
+  assembly_axis_source: OBJECT_CONTRACT
+  deterministic_surface_sampling: AREA_STRATIFIED_SOBOL
+  pad_footprint_source: HAND_CONTACT_MODEL
+  functional_surface_mask_source: OBJECT_CONTRACT_PLUS_GENERAL_TOPOLOGY
+  mesh_convergence_levels: [1, 2, 4]
+  contact_orientation_feasible_set: DERIVED_FROM_PAD_NORMAL_CONE_JOINT_LIMITS_AND_ASSEMBLY_AXIS
+  object_specific_normal_component_thresholds_allowed: false
+  analytic_primitive_tessellation:
+    maximum_relative_sagitta_error: 0.001
+    convergence_resolution_multipliers: [1, 2, 4]
+    edge_count_derivation: 1_MINUS_COS_PI_OVER_E_LE_MAXIMUM_RELATIVE_SAGITTA_ERROR
+
+candidate_optimization:
+  method_id: CARTS_DIRECT_V9_PLUS_FIXED_SINGLE_ANCHOR_STRATIFIED_GENERATOR_V1
+  v9_certifier:
+    implementation_type_id: kcg_connector.grasp.robust.ray_closure.RayClosureSurfaceModel
+    method_id: CARTS_SEQUENTIAL_MP_INTERVAL_FINITE_PAD_WITNESS_CLOSURE_CERTIFIER_V9
+    parameter_domain_id: SINGLE_EXCLUSIVE_CLOSURE_JOINT_FULL_OPEN_ENDPOINT_PLUS_NONCLOSURE_PRESHAPE_FULL_URDF_LIMITS_PLUS_PER_PAD_FULL_PATH_LIPSCHITZ_SWEPT_TASK_AABB_OVERLAP_INTERSECTION_PLUS_HALF_OPEN_YAW_AND_CANONICAL_DEGENERATE_AXES_V3
+    parameter_layout:
+      - assembly_axis_yaw_unit
+      - axial_target_unit
+      - lateral_task_x_unit
+      - lateral_task_y_unit
+      - preshape_joint_unit:f1j1
+  fixed_anchor_mapper:
+    implementation_type_id: kcg_connector.grasp.robust.surface_anchored_closure.SurfaceAnchoredRayClosureModel
+    method_id: CARTS_CANONICAL_AREA_MEASURE_FIXED_PAD_SURFACE_ANCHOR_V9_PARAMETER_POSE_PROPOSAL_V1
+    parameter_domain_id: HALF_OPEN_ASSEMBLY_YAW_X_TWO_DIMENSIONAL_RESIDUAL_CDF_CANONICAL_UNORIENTED_TRIANGLE_AREA_CHART_X_CLOSURE_PHASE_X_UNIFORM_PAD_SOURCE_WINDING_SIGN_CERTIFIED_WITNESS_BRANCH_X_NONCLOSURE_PRESHAPE_WITH_EXTERNAL_EXACT_PREPARED_PAD_NAME_V1
+    parameter_layout:
+      - assembly_axis_yaw_unit
+      - object_surface_residual_cdf_unit
+      - object_surface_split_unit
+      - anchor_closure_phase_unit
+      - anchor_witness_branch_unit
+      - preshape_joint_unit:f1j1
+  hand_binding:
+    dimension_and_layout_source: HASH_BOUND_HAND_URDF_PLUS_CLOSURE_ACTUATION_AND_PAD_ORDER
+    runtime_object_identity_required: true
+    preshape_joint_names: [f1j1]
+    prepared_pad_order: [finger_1_pad, finger_2_pad, finger_3_pad]
+  lane_order: [DIRECT_V9, SURFACE_PAD_A, SURFACE_PAD_B, SURFACE_PAD_C]
+  lanes:
+    DIRECT_V9:
+      dimension: 5
+      sobol_seed: 20260820
+      anchor_pad_ordinal: null
+      anchor_pad_name: null
+      maximum_prefix_design_sha256: 465fe40f4bf0bb4b1e659f67f702a0baefdde17579eeaf442059bc3c0a87f537
+    SURFACE_PAD_A:
+      dimension: 6
+      sobol_seed: 20260821
+      anchor_pad_ordinal: 0
+      anchor_pad_name: finger_1_pad
+      maximum_prefix_design_sha256: f21412d91685e8c116cc9ef195fd7baf4e9f3725ec5566abe9ede805371c0816
+    SURFACE_PAD_B:
+      dimension: 6
+      sobol_seed: 20260822
+      anchor_pad_ordinal: 1
+      anchor_pad_name: finger_2_pad
+      maximum_prefix_design_sha256: e694f5be3a6853508f3495eaed3fcbc6988ae569363b85d9675b216f1ab2579b
+    SURFACE_PAD_C:
+      dimension: 6
+      sobol_seed: 20260823
+      anchor_pad_ordinal: 2
+      anchor_pad_name: finger_3_pad
+      maximum_prefix_design_sha256: aaa5a1ca60ae9448b5ccca3b606085666bc4006d51ff94a6c1c8d18d72252aac
+  schedule_rule: ROUND_ROBIN_DIRECT_THEN_PAD_A_THEN_PAD_B_THEN_PAD_C
+  allowed_total_attempt_budgets: [128, 256, 512]
+  main_total_attempt_budget: 256
+  maximum_points_per_lane: 128
+  proposal_failure_consumes_attempt: true
+  duplicate_consumes_attempt: true
+  replacement_sampling_allowed: false
+  maximum_v9_evaluations_equals_attempt_budget: true
+  deduplication_rule: CANONICAL_V9_FIVE_BIG_ENDIAN_BINARY64_VALUES_EXACT_BYTES_BEFORE_V9
+  sobol_design:
+    generator: SCIPY_STATS_QMC_SOBOL_VIA_DETERMINISTIC_SOBOL
+    scipy_version: 1.8.0
+    dependency:
+      package: scipy
+      version: 1.8.0
+      python_manifest_path: src/kcg_connector/setup.py
+      python_manifest_sha256: 4e8b68a5dd12f6c746248876cdfbf57ca5bda81fcd832fa985a7dbe06d55e076
+      ros_package: python3-scipy
+      ros_manifest_path: src/kcg_connector/package.xml
+      ros_manifest_sha256: 3e37fbe688ad739472109af4da6f39b4a03e09eef07eb456ddddd64acd95340b
+    scramble: true
+    optimization: null
+    generate_common_maximum_then_take_lane_prefix: true
+    maximum_points_per_lane: 128
+    realized_design_hashes_are_contract_bound: true
+  local_refinement:
+    method_id: CANONICAL_V9_DYADIC_STENCIL_V1
+    execution_status: DISABLED_FOR_V1
+    evaluation_budget: 0
+    ranking_eligible: false
+  external_lane_registry_supported: false
+  legacy_grasp_optimizer_formal_eligible: false
+  accepted_output_channels:
+    - STATIC_EXACT_GRASP_CANDIDATE
+    - STATIC_CERTIFIED_SEQUENTIAL_CLOSURE_POLICY
+  candidate_and_policy_mutually_exclusive: true
+  display_only_proposal_formal_eligible: false
+  contact_range_policy_downstream_status: PENDING_POLICY_AWARE_COLLISION_AND_WRENCH
+  output_claim: STATIC_V9_EXACT_CANDIDATE_OR_CONTACT_RANGE_POLICY_ACCEPTANCE_ONLY
+
+post_generation_ranking:
+  implementation_type_id: kcg_connector.grasp.robust.post_generation_ranker.PostGenerationRankOnlyPipeline
+  method_id: CARTS_POST_GENERATION_COMMON_QMC_LEXICOGRAPHIC_RANKER_V1
+  input_type_id: kcg_connector.grasp.robust.top_level_candidate_generator.TopLevelGenerationResult
+  output_type_id: kcg_connector.grasp.robust.post_generation_ranker.PostGenerationRankResult
+  execution_role: RANK_ONLY_WITHOUT_GENERATION_REFINEMENT_REPLACEMENT_OR_RETRY
+  selection: LEXICOGRAPHIC
+  selection_order:
+    - hard_bound_minimum_task_margin
+    - qmc_lower_tail_mean_task_margin
+    - minimum_peak_normal_force_n
+    - minimum_joint_torque_utilization
+    - maximum_trajectory_clearance_m
+  tie_break_rule: FIRST_TOP_LEVEL_ATTEMPT_INDEX_THEN_V9_PARAMETER_KEY_HEX
+  common_scenarios:
+    method_id: CARTS_COMMON_SCRAMBLED_SOBOL_FRICTION_DIAGNOSTIC_V1
+    source: SHARED_UNCERTAINTY_PROTOCOL
+    identical_realizations_for_every_candidate: true
+    candidate_specific_resampling_allowed: false
+    scenario_design: SCRAMBLED_SOBOL
+    scipy_version: 1.8.0
+    dimension: 1
+    scenario_count: 128
+    sobol_seed: 20260820
+    scramble: true
+    optimization: null
+    identity_encoding: BIG_ENDIAN_BINARY64_ROW_MAJOR
+    design_sha256: dd1115f4bd4c52c29fa29261037fe7ef96d79bca10dad6c7a8a066eef3f05631
+  failure_retention:
+    retain_every_generation_attempt: true
+    retain_every_unique_accepted_candidate: true
+    retain_every_unique_accepted_policy: true
+    retain_every_generation_and_evaluation_failure: true
+    failure_reason_or_exception_required: true
+    failed_candidate_drop_allowed: false
+    collision_invocations_per_unique_accepted_candidate: 1
+    wrench_invocations_per_unique_accepted_candidate: 1
+    retry_allowed: false
+    replacement_after_failure_allowed: false
+  formal_selection:
+    status: EMPTY_UNTIL_FORMAL_ROOT_INTERVAL_CANDIDATE_PROPAGATION_COMPLETE_COLLISION_AND_CALIBRATED_FULL_UNCERTAINTY
+    allowed_with_current_bindings: false
+    formal_ranked_keys_must_be_empty: true
+    selected_candidate_must_be_none: true
+    contact_range_policy_handling: FAIL_CLOSED_BEFORE_COLLISION_OR_WRENCH_UNTIL_POLICY_AWARE_CONSUMERS_EXIST
+    contact_range_policy_collision_invocations_before_support: 0
+    contact_range_policy_wrench_invocations_before_support: 0
+    required_collision_claim_scope: COMPLETE_HAND_OBJECT_ENVIRONMENT_APPROACH_CLOSURE_LIFT_CONTINUOUS_COLLISION_CERTIFIED_LOWER_BOUND
+    current_uncertainty_claim_scope: CERTIFIED_SET_CONTAINS_ONLY_DECLARED_FRICTION_INTERVAL_ALL_OTHER_UNCERTAINTIES_REQUIRE_CALIBRATION
+    required_additional_uncertainty_binding: MISSING_CALIBRATED_NONFRICTION_UNCERTAINTY_BOUNDS
+
+ray_closure:
+  method_id: CARTS_SEQUENTIAL_MP_INTERVAL_FINITE_PAD_WITNESS_CLOSURE_CERTIFIER_V9
+  maximum_subdivision_intervals: 4096
+  maximum_subdivision_intervals_role: PRE_REGISTERED_COMPUTE_BUDGET_NOT_PHYSICAL_ACCEPTANCE_THRESHOLD
+  subdivision_budget_exhaustion_policy: FAIL_CLOSED_REJECT_CANDIDATE_WITH_AUDIT
+  budget_convergence_values: [1024, 2048, 4096, 8192]
+  budget_convergence_role: COMPUTE_CONVERGENCE_AUDIT_NOT_PHYSICAL_PASS_GATE
+  adjacent_budget_result_stability_report_required: true
+  physical_acceptance_gate: false
+  interval_backend:
+    method_id: MPMATH_DIRECTED_INTERVAL_SECOND_ORDER_URDF_JET_V1
+    dependency:
+      package: mpmath
+      version: 1.2.1
+      manifest_path: src/kcg_connector/setup.py
+      manifest_sha256: 4e8b68a5dd12f6c746248876cdfbf57ca5bda81fcd832fa985a7dbe06d55e076
+    decimal_precision: 80
+    decimal_precision_role: NUMERICAL_INTERVAL_ARITHMETIC_PRECISION_NOT_PHYSICAL_ACCEPTANCE_THRESHOLD
+    precision_convergence_values: [50, 80, 120]
+    precision_convergence_role: NUMERICAL_PRECISION_CONVERGENCE_AUDIT_NOT_PHYSICAL_PASS_GATE
+    maximum_root_bisection_iterations: 256
+    maximum_root_bisection_iterations_role: PRE_REGISTERED_COMPUTE_BUDGET_NOT_PHYSICAL_ACCEPTANCE_THRESHOLD
+    root_budget_convergence_values: [128, 256, 512]
+    root_budget_exhaustion_policy: FAIL_CLOSED_UNRESOLVED
+    predicate_policy: STRICT_INTERVAL_SEPARATION_FROM_ZERO_NO_GEOMETRIC_TOLERANCE
+    adjacent_precision_result_stability_report_required: true
+    physical_acceptance_gate: false
+  closure_parameter_domain:
+    domain_id: SINGLE_EXCLUSIVE_CLOSURE_JOINT_FULL_OPEN_ENDPOINT_PLUS_NONCLOSURE_PRESHAPE_FULL_URDF_LIMITS_PLUS_PER_PAD_FULL_PATH_LIPSCHITZ_SWEPT_TASK_AABB_OVERLAP_INTERSECTION_PLUS_HALF_OPEN_YAW_AND_CANONICAL_DEGENERATE_AXES_V3
+    coordinate_space: UNIT_HYPERCUBE
+    dimension: 5
+    parameter_layout:
+      - assembly_axis_yaw_unit
+      - axial_target_unit
+      - lateral_task_x_unit
+      - lateral_task_y_unit
+      - preshape_joint_unit:f1j1
+    dimension_and_layout_source: HAND_URDF_JOINT_LIMITS_PLUS_CLOSURE_ACTUATION_CONTRACT
+    assembly_axis_yaw:
+      coordinate_name: assembly_axis_yaw_unit
+      unit_interval: HALF_OPEN_ZERO_TO_ONE
+      physical_mapping: TWO_PI_ROTATION_ABOUT_OBJECT_ASSEMBLY_AXIS
+      source: OBJECT_CONTRACT_ASSEMBLY_AXIS_AND_TASK_FRAME
+    placement:
+      coordinate_names: [axial_target_unit, lateral_task_x_unit, lateral_task_y_unit]
+      unit_interval: CLOSED_ZERO_TO_ONE
+      physical_bounds_source: OBJECT_CONTRACT_PLANNING_GEOMETRY_BOUNDS_INTERSECTED_WITH_FULL_CLOSURE_SWEPT_PAD_AABB
+      zero_width_axis_convention: UNIT_COORDINATE_MUST_EQUAL_ZERO
+    preshape:
+      coordinate_prefix: preshape_joint_unit
+      joint_names: [f1j1]
+      unit_interval: CLOSED_ZERO_TO_ONE
+      joint_selection_source: POSITIVE_SPAN_NONCLOSURE_INDEPENDENT_JOINTS_FROM_HAND_URDF_AND_CLOSURE_ACTUATION_CONTRACT
+      physical_bounds_source: FULL_URDF_JOINT_LIMITS
+
+linear_program:
+  solver: SCIPY_HIGHS
+  constraint_scaling: ROW_AND_COLUMN_INF_NORM
+  maximum_iterations: 10000
+  primal_feasibility_tolerance: 1.0e-9
+  dual_feasibility_tolerance: 1.0e-9
+  ipm_optimality_tolerance: 1.0e-10
+  tolerance_convergence_multipliers: [0.1, 1.0, 10.0]
+  physical_acceptance_gate: false
+
+contact_model:
+  type: POINT_CONTACT_WITH_FRICTION_AND_FINITE_PAD_FEASIBILITY
+  friction_cone_approximation: CERTIFIED_INNER_REGULAR_POLYGON
+  maximum_inner_approximation_relative_error: 0.001
+  cone_edge_convergence_multiplier: 2
+  normal_force_capacity_source: HAND_CONTACT_MODEL
+  joint_torque_limits_source: URDF_AND_ACTUATOR_CONTRACT
+
+uncertainty:
+  scenario_design: SCRAMBLED_SOBOL
+  scenario_role: BOUNDED_INTERVAL_QMC_SENSITIVITY_NOT_PROBABILITY_RISK
+  probability_distribution_claimed: false
+  scenario_count: 128
+  nested_convergence_scenario_count: 256
+  nested_convergence_role: SAME_SEED_SCRAMBLED_SOBOL_PREFIX_EXTENSION_NOT_INDEPENDENT_VALIDATION
+  sobol_seed: 20260820
+  lower_tail_fraction: 0.10
+  report_hard_bound_minimum: true
+  per_object_interval_source: OBJECT_CONTRACT
+  post_result_interval_changes_allowed: false
+
+task_wrench:
+  representation: CONVEX_POLYTOPE
+  gravity_acceleration_m_s2: 9.80665
+  gravity_acceleration_source: EXACT_CONVENTIONAL_STANDARD_GRAVITY
+  task_frame_source: OBJECT_CONTRACT_CAD_DATUM
+  required_wrench:
+    gravity: true
+    lift_acceleration_m_s2: 0.10
+  disturbance_body: CENTRALLY_SYMMETRIC_UNIT_6D_CROSS_POLYTOPE
+  force_normalization: OBJECT_WEIGHT
+  moment_normalization: OBJECT_WEIGHT_TIMES_CHARACTERISTIC_RADIUS
+  characteristic_radius_source: MASS_DISTRIBUTION_RMS_RADIUS_SQRT_TRACE_I_COM_OVER_2M
+  binary_quality_pass_threshold_allowed: false
+
+controller:
+  architecture: PASSIVE_OBJECT_IMPEDANCE_PLUS_GRASP_NULLSPACE_FORCE_QP
+  force_target_source: ROBUST_OPTIMIZER
+  fixed_force_increment_allowed: false
+  object_pose_feedback_source: ESTIMATOR_ONLY
+  contact_feedback_source: PROPRIOCEPTION_WRIST_FT_OR_PHYSICAL_TACTILE_ONLY
+  qp_regularization_source: FORCE_QP_NUMERICAL_CONTRACT
+
+passive_impedance_numerics:
+  matrix_symmetry_absolute_tolerance: 1.0e-12
+  semidefinite_eigenvalue_tolerance: 1.0e-12
+  rotation_orthogonality_tolerance: 1.0e-12
+  homogeneous_row_tolerance: 1.0e-12
+  passivity_balance_tolerance: 1.0e-12
+
+force_qp:
+  solver: SCIPY_SLSQP_WITH_HIGHS_FEASIBILITY
+  constraint_scaling: CALLER_SUPPLIED_WRENCH_SCALES
+  maximum_iterations: 2000
+  objective_tolerance: 1.0e-11
+  equality_tolerance: 1.0e-8
+  inequality_tolerance: 1.0e-8
+  linear_independence_tolerance: 1.0e-10
+  feasibility_dual_tolerance: 1.0e-9
+  regularization: 1.0e-8
+  physical_acceptance_gate: false
+
+numerical_convergence:
+  tolerance_multipliers: [0.1, 1.0, 10.0]
+  result_stability_required: true
+  physical_acceptance_gate: false
+
+dynamic_protocol:
+  lift_targets_m: [0.0005, 0.002, 0.010, 0.040]
+  hold_duration_s: 2.0
+  disturbance_direction_design: SPHERICAL_FIBONACCI_PAIRED_6D
+  disturbance_direction_count: 24
+  dimensionless_amplitudes: [0.00, 0.25, 0.50, 0.75, 1.00, 1.25, 1.50]
+  pulse_duration_s: 0.20
+  paired_random_seeds: [1103, 2207, 3313, 4421, 5527, 6637, 7741, 8851]
+  independent_isaac_process_per_trial: true
+
+reporting:
+  confidence_level: 0.95
+  report_all_failures: true
+  success_unit: CONNECTOR_TRIAL
+  physics_step_is_independent_sample: false
+  generated_images_as_evidence_allowed: false
+  figure_data_sources: [RAW_JSON, RAW_CSV, FROZEN_CAD, CANDIDATE_BUNDLE]

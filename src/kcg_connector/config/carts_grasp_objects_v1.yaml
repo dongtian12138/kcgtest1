@@ -1,0 +1,155 @@
+schema_version: carts_grasp_objects_v1
+study_id: CARTS-GRASP-CROSS-OBJECT-V1
+claim_scope: SIMULATION_ONLY_ZERO_OBJECT_TUNING_CROSS_MODEL_CASE_STUDY
+
+shared_method_config: src/kcg_connector/config/carts_grasp_v1.yaml
+shared_method_config_required_for_every_object: true
+object_specific_algorithm_hyperparameters_allowed: false
+hardware_authorized: false
+
+transfer_protocol:
+  development_object: current_d38999_26kj61sn_public_spec
+  frozen_transfer_object: te_deutsch_d38999_26fj35pn_step
+  transfer_object_geometry_seen_before_method_freeze: true
+  prospective_double_blind_claim_allowed: false
+  candidate_ids_or_contact_coordinates_shared_between_objects: false
+
+objects:
+  current_d38999_26kj61sn_public_spec:
+    identity:
+      connector: D38999/26KJ61SN_PUBLIC_SPEC_MODEL
+      shell_size: 25
+      contact_count: 61
+      source_class: PUBLIC_SPEC_SIMULATION_MODEL_NOT_VENDOR_CAD
+    frames:
+      length_unit: m
+      assembly_axis_object: [0.0, 0.0, 1.0]
+      task_frame_rotation_object:
+        - [1.0, 0.0, 0.0]
+        - [0.0, 1.0, 0.0]
+        - [0.0, 0.0, 1.0]
+      task_frame_source: PUBLIC_SPEC_MODEL_CAD_DATUM
+      nominal_validation_gravity_direction_object: [0.0, 0.0, -1.0]
+    planning_geometry:
+      format: CARTS_GRASP_VISUAL_SUBTREE_NPZ_V1
+      path: artifacts/carts_grasp/CARTS_GRASP_V1/object_models/current_d38999/full_loose_plug_visual_mesh.npz
+      sha256: ff3dea949aa5c2f320bd4c2907d78fa86a5930cbbbdf3739f50d7f4a1848201e
+      manifest: artifacts/carts_grasp/CARTS_GRASP_V1/object_models/current_d38999/full_loose_plug_visual_mesh_manifest.json
+      manifest_sha256: d928105e6e28760a8ec11fdaaf4969bc6e51d7a8962fa8e5892ad42c6643e9cc
+      source_stage: artifacts/kcg_connector/isaac/d38999_multilayer_v1/D38999_VISUAL_COMPLETE_V1.usda
+      source_stage_sha256: 69fe6dc3ca9caace8bb26cd0cfad68c0eb84111f09697da6068cd91802d65c0a
+      source_subtree: /World/D38999MultilayerV1/D38999_VISUAL_COMPLETE_V1/D38999Pair/LoosePlug
+      allowed_surface_semantic: EXTERNALLY_FIRST_VISIBLE_PAD_REACHABLE_SURFACE
+      semantic_authority: SHARED_DIRECTIONAL_FIRST_HIT_WITH_TASK_FUNCTIONAL_MASK_PENDING
+      simulator_truth_used: false
+    physical_properties:
+      source_class: FROZEN_EQUIVALENT_SIMULATION_ASSUMPTION
+      source_contract: src/kcg_connector/config/d38999_master_model_contract_v1.yaml
+      source_contract_sha256: 57010b3c6f8d2214712427193ef7b9b57ede3089a882aa88033f89774215c68b
+      component_composition:
+        body_assembly:
+          mass_kg: 0.23
+          center_of_mass_m: [0.0, 0.0, 0.01525]
+          diagonal_inertia_kg_m2: [0.0000461680916666667, 0.0000461680916666667, 0.0000566766]
+        coupling_nut:
+          mass_kg: 0.08
+          center_of_mass_m: [0.0, 0.0, 0.01425]
+          diagonal_inertia_kg_m2: [0.0000272978666666667, 0.0000272978666666667, 0.0000405124]
+      planning_rigid_composition:
+        method: PARALLEL_AXIS_COMPOSITION_OF_FROZEN_COMPONENTS
+        mass_kg: 0.31
+        center_of_mass_m: [0.0, 0.0, 0.014991935483870969]
+        inertia_kg_m2:
+          - [0.00007352531317204307, 0.0, 0.0]
+          - [0.0, 0.00007352531317204307, 0.0]
+          - [0.0, 0.0, 0.000097189]
+        vendor_hardware_truth_claimed: false
+    contact_material_uncertainty:
+      model: BOUNDED_COULOMB_INTERVAL_FROM_FROZEN_STATIC_AND_DYNAMIC_VALUES
+      friction_coefficient: [0.45, 0.55]
+      source_class: FROZEN_SIMULATION_MATERIAL_ROLE_NOT_HARDWARE_CALIBRATION
+      source: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#material_roles.roles.coupling_nut_outer_grip
+      source_sha256: 6068066a2ac0339fa83caf2cc0c28050e76ed7e56e960da1b29e121a083b650e
+      vendor_friction_claimed: false
+      probability_distribution_claimed: false
+    uncertainty_calibration:
+      simulation_mass_com_inertia_randomized: false
+      perception_pose_residual_source: PENDING_MATCHED_RGBD_CALIBRATION
+      surface_normal_residual_source: PENDING_MESH_CONVERGENCE_STUDY
+      joint_and_torque_residual_source: PENDING_PROPRIOCEPTIVE_TRACKING_CALIBRATION
+      placeholder_numeric_bounds_allowed: false
+    dynamic_eligibility:
+      allowed: false
+      reason: PENDING_GENERAL_SURFACE_MASK_SHARED_UNCERTAINTY_CALIBRATION_AND_FULL_COLLISION_STATIC_GATE
+
+  te_deutsch_d38999_26fj35pn_step:
+    identity:
+      connector: D38999/26FJ35PN
+      manufacturer: TE_CONNECTIVITY_DEUTSCH
+      te_catalog_number: DTS26F25-35PN_V001
+      shell_size: 25
+      insert_arrangement: 35
+      contact_count: 128
+      source_class: OFFICIAL_TE_CUSTOMER_VIEW_MODEL_STEP
+    frames:
+      length_unit: m
+      source_step_length_unit: mm
+      assembly_axis_object: [0.0, 0.0, 1.0]
+      task_frame_rotation_object:
+        - [1.0, 0.0, 0.0]
+        - [0.0, 1.0, 0.0]
+        - [0.0, 0.0, 1.0]
+      task_frame_source: OFFICIAL_STEP_CAD_DATUM
+      nominal_validation_gravity_direction_object: [0.0, 0.0, -1.0]
+    original_cad:
+      path: artifacts/kcg_connector/vendor_cad_reference/te_deutsch_j35_equivalent_step_multiview_v1/source/c-ydts26f25-35pnv001-99-3d.stp
+      sha256: 27a8125236894d01d48ac12f8f777a0951f1926c5ed62a210d05f092d575301c
+      solid_count: 1
+      face_count: 2068
+      geometry_audit: artifacts/kcg_connector/isaac/te_j35_engineering_v1/STEP_GEOMETRY_AUDIT.json
+      geometry_audit_sha256: 0822a669608a42a69e909b4b49c40fd470db1a5f7e75b81d6e33e25d16699eb4
+    planning_geometry:
+      format: BINARY_STL_TESSELLATION_FROM_ORIGINAL_STEP
+      path: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_VISUAL.stl
+      sha256: 89bbf4ba3b8b5fb388276a378a820bb7547e676e97f0b9e2635b7862a86aa617
+      source_unit: mm
+      watertight: true
+      winding_consistent: true
+      allowed_surface_semantic: EXTERNALLY_FIRST_VISIBLE_PAD_REACHABLE_SURFACE
+      semantic_derivation: FIRST_INTERSECTION_FROM_HAND_CLOSING_RAYS_PLUS_HAND_KINEMATIC_FEASIBILITY
+      part_number_specific_z_or_radius_cutoffs_allowed: false
+      simulator_truth_used: false
+    physical_properties:
+      mass_source_class: INITIAL_SIMULATION_VALUE_NOT_VENDOR_MEASUREMENT
+      mass_source: src/kcg_connector/config/te_j35_simulation_v1.yaml#mass
+      mass_source_sha256: 8ae0eb01ccd149e53a57dec51558efb4794fdc513bd1002fdcbc05057d72e745
+      mass_kg: 0.31
+      com_and_inertia_source_class: UNIFORM_DENSITY_EQUIVALENT_FROM_WATERTIGHT_STEP_TESSELLATION
+      uniform_density_kg_m3: 10784.942763793735
+      center_of_mass_m: [0.0000033654747537864324, 0.0000014076390705697556, -0.018135482728838786]
+      inertia_kg_m2:
+        - [0.00005698805727194714, 0.000000011853068453635424, -0.000000009595396905528908]
+        - [0.000000011853068453635424, 0.00005694076813569268, -0.00000002468846151765062]
+        - [-0.000000009595396905528908, -0.00000002468846151765062, 0.00008219210715431102]
+      vendor_hardware_truth_claimed: false
+    contact_material_uncertainty:
+      model: SHARED_STUDY_MATERIAL_CLASS_BOUNDED_COULOMB_INTERVAL
+      friction_coefficient: [0.45, 0.55]
+      source_class: SHARED_STUDY_SIMULATION_ASSUMPTION_FROM_DEVELOPMENT_MATERIAL_ROLE
+      source: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml#material_roles.roles.coupling_nut_outer_grip
+      source_sha256: 6068066a2ac0339fa83caf2cc0c28050e76ed7e56e960da1b29e121a083b650e
+      vendor_friction_claimed: false
+      probability_distribution_claimed: false
+    uncertainty_calibration:
+      simulation_mass_com_inertia_randomized: false
+      perception_pose_residual_source: PENDING_MATCHED_RGBD_CALIBRATION
+      surface_normal_residual_source: PENDING_MESH_CONVERGENCE_STUDY
+      joint_and_torque_residual_source: PENDING_PROPRIOCEPTIVE_TRACKING_CALIBRATION
+      placeholder_numeric_bounds_allowed: false
+    dynamic_model:
+      existing_te_j35_physx_v1_eligible: false
+      required_representation: FREE_ACTIVITY_PLUG_WITH_COMPLETE_EXTERNAL_COLLISION_TABLE_AND_HAND
+      current_status: NOT_BUILT
+    dynamic_eligibility:
+      allowed: false
+      reason: PENDING_GENERAL_SURFACE_MASK_SHARED_UNCERTAINTY_CALIBRATION_AND_FREE_PHYSX_MODEL

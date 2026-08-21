@@ -1,0 +1,53 @@
+schema_version: kcg_te_j35_simulation_v1
+
+identity:
+  plug: D38999/26FJ35PN
+  receptacle: D38999/20FJ35SN
+  shell_size: 25
+  insert_arrangement: 35
+  contact_count: 128
+  polarization: N
+
+visual_assets:
+  plug_complete: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_VISUAL.usdc
+  plug_body: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_BODY_VISUAL.usdc
+  coupling_nut: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_COUPLING_NUT_VISUAL.usdc
+  receptacle: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_20FJ35SN_VISUAL.usdc
+
+assembly_frame:
+  axis: Z
+  receptacle_mating_face_z_m: 0.0
+  plug_visual_rotation_xyz_deg: [180.0, 0.0, 0.0]
+  initial_face_gap_m: 0.004
+
+keying:
+  angles_deg: [0.0, 80.0, 142.0, 196.0, 293.0]
+  plug_shell_radius_m: 0.017845
+  plug_key_outer_radius_m: 0.018855
+  receptacle_bore_radius_m: 0.0179575
+  receptacle_keyway_outer_radius_m: 0.01903
+  main_key_width_m: 0.00254
+  minor_key_width_m: 0.00132
+  main_keyway_width_m: 0.00320
+  minor_keyway_width_m: 0.00160
+  engagement_length_m: 0.00724
+
+thread:
+  starts: 3
+  start_phases_deg: [0.0, 120.0, 240.0]
+  lead_m_per_revolution: 0.00762
+  working_rotation_deg: 360.0
+  axial_travel_m: 0.00762
+  direction: 1
+
+collision:
+  receptacle_wall_segment_count: 180
+  receptacle_wall_outer_radius_m: 0.0206
+  key_clearance_extra_m: 0.00005
+  contact_face_stop_radius_m: 0.0157
+  contact_face_stop_thickness_m: 0.0005
+
+mass:
+  plug_body_kg: 0.23
+  coupling_nut_kg: 0.08
+  note: initial simulation values; replace when the two real parts are weighed
