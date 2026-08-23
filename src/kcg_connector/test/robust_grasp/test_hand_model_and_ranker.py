@@ -225,6 +225,14 @@ def test_sobol_and_optimizer_are_reproducible(
     second_design = deterministic_sobol(dimension=2, count=8, seed=71)
     assert np.array_equal(first_design, second_design)
 
+    high_dimensional = deterministic_sobol(
+        dimension=26, count=16, seed=20260823
+    )
+    assert all(
+        np.unique(high_dimensional[:, index]).size == 16
+        for index in range(high_dimensional.shape[1])
+    )
+
     class Surface:
         parameter_dimension = 1
 

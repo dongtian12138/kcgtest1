@@ -20,9 +20,7 @@ from kcg_connector.grasp.robust.object_model import (
     ObjectGraspModel,
     TriangleMesh,
 )
-from kcg_connector.grasp.robust.robust_wrench import (
-    LinearProgramSolverOptions,
-)
+from kcg_connector.grasp.robust.robust_wrench import LinearProgramSolverOptions
 import kcg_connector.grasp.robust.task_wrench_evaluator as evaluator_module
 from kcg_connector.grasp.robust.task_wrench_evaluator import (
     COMPLETE_CONTINUOUS_TRAJECTORY_CLEARANCE_SCOPE,
@@ -824,3 +822,44 @@ def test_evaluator_source_contains_no_connector_or_legacy_tokens() -> None:
         ("cad" + "_").lower(),
     )
     assert all(token not in source for token in forbidden)
+
+
+def test_prescribed_scale_burdens_are_surfaced_at_lambda_one() -> None:
+    model = _object_model(mass_kg=1.0)
+    hand = _AnalyticHand(normal_force_capacity_n=10.0)
+    evaluator = _evaluator(
+        model,
+        friction_interval=(0.1, 0.1),
+        characteristic_radius_m=0.005,
+        gravity_acceleration_m_s2=1.0,
+    )
+    candidate = _symmetric_candidate()
+    evaluation = evaluator.evaluate_task_wrench(
+        candidate, np.asarray(((0.5,),)), hand_model=hand
+    )
+    assert evaluation.task_margins == pytest.approx((2.0,), rel=1.0e-9)
+    assert evaluation.prescribed_task_peak_normal_force_n is not None
+    assert evaluation.prescribed_task_joint_torque_utilization is not None
+    assert evaluation.prescribed_task_peak_normal_force_n > 0.0
+    assert evaluation.prescribed_task_peak_normal_force_n < (
+        evaluation.peak_normal_force_n - 1.0e-9
+    )
+    assert evaluation.diagnostics["prescribed_task_scale"] == 1.0
+
+
+def test_infeasible_prescribed_scale_keeps_computed_margin() -> None:
+    evaluator = _evaluator(
+        _object_model(mass_kg=1.0),
+        friction_interval=(0.1, 0.1),
+        characteristic_radius_m=0.005,
+        gravity_acceleration_m_s2=1.0,
+    )
+    evaluation = evaluator.evaluate_task_wrench(
+        _symmetric_candidate(),
+        np.asarray(((0.1,),)),
+        hand_model=_AnalyticHand(normal_force_capacity_n=4.0),
+    )
+    assert evaluation.hard_bound_minimum_task_margin < 1.0
+    assert evaluation.prescribed_task_peak_normal_force_n is None
+    assert evaluation.prescribed_task_joint_torque_utilization is None
+    assert evaluation.diagnostics["prescribed_task_scale_feasible"] is False

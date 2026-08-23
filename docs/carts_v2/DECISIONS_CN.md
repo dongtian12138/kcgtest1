@@ -23,3 +23,11 @@
 - 力语义：另求 `lambda=1` 的最小单指负担；旧极限 lambda 处峰值力不得写成规定任务所需力。
 - 时间影响：减少旧证书依赖，预计节省超过 60 分钟；不改变 50 mm、2 s、真值隔离和双对象同参数。
 - 监督结论：Academic 与 Complexity 均 `APPROVE_WITH_REQUIRED_SIMPLIFICATIONS`。
+
+## 2026-08-23T15:55:41Z — LOCAL_CORRECTION
+
+- 高维 Sobol 不能把 `bits` 设成场景数的最小指数；该组合在新 SciPy 中会退化，旧离线报告已撤回并重算。
+- 冻结数值环境为项目 `.venv`，26×16 设计完整写入结果 JSON，SHA-256 为 `6aea2d6e5bc384445e1accf7636435142356eaf96a425481d17299a5cdcd93c1`。
+- “对象位姿误差”收窄为实际实现的共同接触点平移和重力方向误差，不声称完整手—物体刚体位姿误差。
+- URDF `100 N·m` 归类为 `UNKNOWN_UNCALIBRATED_MODEL_VALUE`；只报告实际广义关节力矩，不声称关节或腕部硬件利用率。
+- B 的 `candidate_46` 只通过离线任务门；IK、路径碰撞、初始穿透和控制器未闭合前，研究动态门保持 false。

@@ -73,9 +73,12 @@ from kcg_connector.grasp.robust.ray_closure import (
 )
 from kcg_connector.grasp.robust.robust_wrench import (
     LinearProgramSolverOptions,
+    PolyhedralContactWrenchModel,
+    PrescribedTaskScaleBurdenResult,
     TaskWrenchMarginResult,
     build_polyhedral_contact_wrench_model,
     maximum_task_wrench_polytope_margin,
+    prescribed_task_scale_burden,
 )
 
 
@@ -139,6 +142,15 @@ _ALLOWED_POLICY_CONTACT_CLASSIFICATION = (
 
 class TaskWrenchEvaluationError(RuntimeError):
     """Fail-closed result when a margin cannot be numerically certified."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        reason_code: str = "EVALUATION_UNRESOLVED",
+    ) -> None:
+        super().__init__(message)
+        self.reason_code = str(reason_code)
 
 
 class ContactRangePolicyWrenchState(str, Enum):
@@ -303,6 +315,8 @@ class TaskWrenchOnlyEvaluation:
     peak_normal_force_n: float
     joint_torque_utilization: float
     diagnostics: Mapping[str, Any]
+    prescribed_task_peak_normal_force_n: float | None = None
+    prescribed_task_joint_torque_utilization: float | None = None
 
     def __post_init__(self) -> None:
         margins = tuple(float(value) for value in self.task_margins)
@@ -325,12 +339,35 @@ class TaskWrenchOnlyEvaluation:
             )
         if not isinstance(self.diagnostics, Mapping):
             raise ValueError("task-wrench-only diagnostics must be a mapping")
+        prescribed = tuple(
+            None if value is None else float(value)
+            for value in (
+                self.prescribed_task_peak_normal_force_n,
+                self.prescribed_task_joint_torque_utilization,
+            )
+        )
+        if any(
+            value is not None
+            and (not math.isfinite(value) or value < 0.0)
+            for value in prescribed
+        ):
+            raise ValueError(
+                "prescribed task-scale burdens must be finite and non-negative"
+            )
         object.__setattr__(self, "task_margins", margins)
         object.__setattr__(
             self, "hard_bound_minimum_task_margin", scalars[0]
         )
         object.__setattr__(self, "peak_normal_force_n", scalars[1])
         object.__setattr__(self, "joint_torque_utilization", scalars[2])
+        object.__setattr__(
+            self, "prescribed_task_peak_normal_force_n", prescribed[0]
+        )
+        object.__setattr__(
+            self,
+            "prescribed_task_joint_torque_utilization",
+            prescribed[1],
+        )
         object.__setattr__(self, "diagnostics", _deep_freeze(self.diagnostics))
 
 
@@ -1814,7 +1851,7 @@ class TaskWrenchEvaluator:
         bounds = np.concatenate((effort, effort, -preload_normal_forces_n))
         return matrix, bounds
 
-    def _solve_margin(
+    def _solve_inputs(
         self,
         *,
         candidate: GraspCandidate,
@@ -1822,7 +1859,7 @@ class TaskWrenchEvaluator:
         friction_coefficient: float,
         actuation: ContactActuationModel,
         contact_inputs: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
-    ) -> TaskWrenchMarginResult:
+    ) -> tuple[PolyhedralContactWrenchModel, tuple[np.ndarray, np.ndarray]]:
         del candidate, hand_model
         points, compressive_axes, tangents, capacities, preload = contact_inputs
         constraint_matrix, constraint_bounds = self._constraint_matrix(
@@ -1857,6 +1894,27 @@ class TaskWrenchEvaluator:
                 -torque_utilization_from_rays,
             )
         )
+        return model, (
+            model.normal_force_matrix,
+            signed_torque_utilization_from_rays,
+        )
+
+    def _solve_margin(
+        self,
+        *,
+        candidate: GraspCandidate,
+        hand_model: ThreeFingerHandModel,
+        friction_coefficient: float,
+        actuation: ContactActuationModel,
+        contact_inputs: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+    ) -> TaskWrenchMarginResult:
+        model, load_groups = self._solve_inputs(
+            candidate=candidate,
+            hand_model=hand_model,
+            friction_coefficient=friction_coefficient,
+            actuation=actuation,
+            contact_inputs=contact_inputs,
+        )
         result = maximum_task_wrench_polytope_margin(
             model,
             nominal_external_wrench=(
@@ -1864,15 +1922,17 @@ class TaskWrenchEvaluator:
             ),
             disturbance_vertices=self.task_wrench_definition.disturbance_vertices,
             solver_options=self.solver_options,
-            lexicographic_ray_load_groups=(
-                model.normal_force_matrix,
-                signed_torque_utilization_from_rays,
-            ),
+            lexicographic_ray_load_groups=load_groups,
         )
         if not result.solver_success or result.maximum_margin is None:
             raise TaskWrenchEvaluationError(
                 "task-wrench LP failed closed: "
-                f"status={result.solver_status}, message={result.solver_message}"
+                f"status={result.solver_status}, message={result.solver_message}",
+                reason_code=(
+                    "NOMINAL_LOAD_INFEASIBLE"
+                    if result.solver_status == 2
+                    else "MARGIN_SOLVE_UNRESOLVED"
+                ),
             )
         if (
             result.maximum_scaled_equilibrium_residual is None
@@ -1961,6 +2021,52 @@ class TaskWrenchEvaluator:
             )
         return result
 
+    def _solve_prescribed_burden(
+        self,
+        *,
+        candidate: GraspCandidate,
+        hand_model: ThreeFingerHandModel,
+        friction_coefficient: float,
+        actuation: ContactActuationModel,
+        contact_inputs: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
+    ) -> PrescribedTaskScaleBurdenResult:
+        model, load_groups = self._solve_inputs(
+            candidate=candidate,
+            hand_model=hand_model,
+            friction_coefficient=friction_coefficient,
+            actuation=actuation,
+            contact_inputs=contact_inputs,
+        )
+        result = prescribed_task_scale_burden(
+            model,
+            nominal_external_wrench=(
+                self.task_wrench_definition.nominal_external_wrench
+            ),
+            disturbance_vertices=self.task_wrench_definition.disturbance_vertices,
+            prescribed_task_scale=1.0,
+            solver_options=self.solver_options,
+            lexicographic_ray_load_groups=load_groups,
+        )
+        if not result.solver_success or not result.feasible_at_prescribed_scale:
+            raise TaskWrenchEvaluationError(
+                "prescribed task-scale burden is inconsistent with a previously "
+                "certified margin at or above one: "
+                f"status={result.solver_status}, message={result.solver_message}",
+                reason_code="PRESCRIBED_SCALE_SOLVE_INCONSISTENT",
+            )
+        if (
+            result.peak_normal_force_n is None
+            or result.peak_joint_torque_utilization is None
+            or not math.isfinite(result.peak_normal_force_n)
+            or not math.isfinite(result.peak_joint_torque_utilization)
+            or result.peak_normal_force_n < 0.0
+            or result.peak_joint_torque_utilization < 0.0
+        ):
+            raise TaskWrenchEvaluationError(
+                "prescribed task-scale burden omitted finite non-negative burdens"
+            )
+        return result
+
     @staticmethod
     def _trajectory_clearance(
         *,
@@ -2000,28 +2106,70 @@ class TaskWrenchEvaluator:
         )
         contact_inputs = self._contact_inputs(candidate, hand_model)
         actuation = self.independent_joint_torque_map(candidate, hand_model)
-        scenario_results = tuple(
-            self._solve_margin(
+        requested_frictions = tuple(float(value) for value in friction_values) + (
+            float(self.friction_coefficient_interval[0]),
+        )
+        margin_by_friction: dict[float, TaskWrenchMarginResult] = {}
+        for friction in requested_frictions:
+            if friction in margin_by_friction:
+                continue
+            margin_by_friction[friction] = self._solve_margin(
                 candidate=candidate,
                 hand_model=hand_model,
-                friction_coefficient=float(friction),
+                friction_coefficient=friction,
                 actuation=actuation,
                 contact_inputs=contact_inputs,
             )
-            for friction in friction_values
+        scenario_results = tuple(
+            margin_by_friction[float(friction)] for friction in friction_values
         )
-        lower_bound_result = self._solve_margin(
-            candidate=candidate,
-            hand_model=hand_model,
-            friction_coefficient=self.friction_coefficient_interval[0],
-            actuation=actuation,
-            contact_inputs=contact_inputs,
-        )
-        all_results = scenario_results + (lower_bound_result,)
+        lower_bound_result = margin_by_friction[
+            float(self.friction_coefficient_interval[0])
+        ]
+        unique_margin_results = tuple(margin_by_friction.values())
         margins = tuple(float(result.maximum_margin) for result in scenario_results)
 
+        prescribed_by_friction: dict[
+            float, PrescribedTaskScaleBurdenResult | None
+        ] = {}
+        for friction, margin_result in margin_by_friction.items():
+            prescribed_by_friction[friction] = (
+                self._solve_prescribed_burden(
+                    candidate=candidate,
+                    hand_model=hand_model,
+                    friction_coefficient=friction,
+                    actuation=actuation,
+                    contact_inputs=contact_inputs,
+                )
+                if float(margin_result.maximum_margin) >= 1.0
+                else None
+            )
+        prescribed_results = tuple(
+            prescribed_by_friction[float(friction)] for friction in friction_values
+        )
+        prescribed_lower_bound = prescribed_by_friction[
+            float(self.friction_coefficient_interval[0])
+        ]
+        unique_prescribed = tuple(
+            result for result in prescribed_by_friction.values() if result is not None
+        )
+        prescribed_feasible = len(unique_prescribed) == len(margin_by_friction)
+        prescribed_peak_normal_force = (
+            max(float(result.peak_normal_force_n) for result in unique_prescribed)
+            if prescribed_feasible
+            else None
+        )
+        prescribed_torque_utilization = (
+            max(
+                float(result.peak_joint_torque_utilization)
+                for result in unique_prescribed
+            )
+            if prescribed_feasible
+            else None
+        )
+
         lexicographic_loads = tuple(
-            result.lexicographic_optimal_loads for result in all_results
+            result.lexicographic_optimal_loads for result in unique_margin_results
         )
         if any(loads is None for loads in lexicographic_loads):
             raise TaskWrenchEvaluationError(
@@ -2035,8 +2183,12 @@ class TaskWrenchEvaluator:
         )
 
         def stage_diagnostics(
-            result: TaskWrenchMarginResult,
+            result: (
+                TaskWrenchMarginResult | PrescribedTaskScaleBurdenResult | None
+            ),
         ) -> tuple[Mapping[str, Any], ...]:
+            if result is None:
+                return ()
             return tuple(
                 MappingProxyType(
                     {
@@ -2054,6 +2206,16 @@ class TaskWrenchEvaluator:
                     }
                 )
                 for stage in result.lexicographic_stage_results
+            )
+
+        def prescribed_burdens(
+            result: PrescribedTaskScaleBurdenResult | None,
+        ) -> tuple[float | None, float | None]:
+            if result is None:
+                return (None, None)
+            return (
+                float(result.peak_normal_force_n),
+                float(result.peak_joint_torque_utilization),
             )
 
         diagnostics: Mapping[str, Any] = MappingProxyType(
@@ -2108,6 +2270,24 @@ class TaskWrenchEvaluator:
                     "PEAK_PAD_NORMAL_FORCE_N",
                     "PEAK_ABSOLUTE_INDEPENDENT_JOINT_TORQUE_UTILIZATION",
                 ),
+                "prescribed_task_scale": 1.0,
+                "prescribed_task_scale_feasible": prescribed_feasible,
+                "prescribed_scale_burden_semantics": (
+                    "MINIMUM_PEAK_BURDEN_AT_EXACT_PRESCRIBED_TASK_SCALE"
+                ),
+                "scenario_prescribed_scale_burdens": tuple(
+                    prescribed_burdens(result)
+                    for result in prescribed_results
+                ),
+                "hard_bound_prescribed_scale_burdens": prescribed_burdens(
+                    prescribed_lower_bound
+                ),
+                "scenario_prescribed_scale_stage_reports": tuple(
+                    stage_diagnostics(result) for result in prescribed_results
+                ),
+                "hard_bound_prescribed_scale_stage_reports": stage_diagnostics(
+                    prescribed_lower_bound
+                ),
                 "scenario_lexicographic_optimal_loads": tuple(
                     tuple(float(value) for value in result.lexicographic_optimal_loads)
                     for result in scenario_results
@@ -2151,6 +2331,10 @@ class TaskWrenchEvaluator:
             ),
             peak_normal_force_n=peak_normal_force,
             joint_torque_utilization=maximum_torque_utilization,
+            prescribed_task_peak_normal_force_n=prescribed_peak_normal_force,
+            prescribed_task_joint_torque_utilization=(
+                prescribed_torque_utilization
+            ),
             diagnostics=diagnostics,
         )
 

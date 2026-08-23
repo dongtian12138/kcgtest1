@@ -12,6 +12,7 @@ from kcg_connector.grasp.robust.robust_wrench import (
     friction_cone_inner_relative_error,
     maximum_task_wrench_polytope_margin,
     minimum_regular_polygon_edges,
+    prescribed_task_scale_burden,
 )
 from kcg_connector.grasp.robust.uncertainty import (
     lower_tail_cvar,
@@ -490,3 +491,88 @@ def test_scrambled_sobol_scenarios_are_seeded_balanced_and_bounded() -> None:
     assert np.all(first.values >= first.lower_bounds)
     assert np.all(first.values <= first.upper_bounds)
     assert len(first.records()) == 8
+
+
+def _prescribed_arguments(model, *, scale):
+    return {
+        "nominal_external_wrench": (0.0, 0.0, -0.5, 0.0, 0.0, 0.0),
+        "disturbance_vertices": [[0.0, 0.0, -0.1, 0.0, 0.0, 0.0]],
+        "prescribed_task_scale": scale,
+        "solver_options": LP_OPTIONS,
+        "lexicographic_ray_load_groups": _three_level_load_groups(model),
+    }
+
+
+def test_prescribed_task_scale_burden_pins_scale_not_maximum_margin() -> None:
+    model = _three_level_degenerate_model()
+    margin_result = maximum_task_wrench_polytope_margin(
+        model,
+        nominal_external_wrench=(0.0, 0.0, -0.5, 0.0, 0.0, 0.0),
+        disturbance_vertices=[[0.0, 0.0, -0.1, 0.0, 0.0, 0.0]],
+        solver_options=LP_OPTIONS,
+        lexicographic_ray_load_groups=_three_level_load_groups(model),
+    )
+    assert margin_result.solver_success, margin_result.solver_message
+    assert margin_result.maximum_margin == pytest.approx(5.0)
+    assert margin_result.lexicographic_optimal_loads == pytest.approx(
+        (1.0 / 3.0, 0.0), abs=LP_OPTIONS.primal_feasibility_tolerance
+    )
+    at_max = prescribed_task_scale_burden(
+        model,
+        **_prescribed_arguments(
+            model, scale=float(margin_result.maximum_margin)
+        ),
+    )
+    assert at_max.solver_success, at_max.solver_message
+    assert at_max.feasible_at_prescribed_scale
+    assert at_max.prescribed_task_scale == pytest.approx(5.0)
+    assert (
+        at_max.peak_normal_force_n,
+        at_max.peak_joint_torque_utilization,
+    ) == pytest.approx(
+        margin_result.lexicographic_optimal_loads,
+        abs=LP_OPTIONS.primal_feasibility_tolerance,
+    )
+    at_one = prescribed_task_scale_burden(
+        model, **_prescribed_arguments(model, scale=1.0)
+    )
+    assert at_one.solver_success, at_one.solver_message
+    assert at_one.feasible_at_prescribed_scale
+    assert at_one.prescribed_task_scale == pytest.approx(1.0)
+    assert at_one.peak_normal_force_n == pytest.approx(0.2, abs=1.0e-8)
+    assert at_one.peak_joint_torque_utilization == pytest.approx(0.0, abs=1.0e-8)
+    assert at_one.peak_normal_force_n < (
+        margin_result.lexicographic_optimal_loads[0] - 1.0e-6
+    )
+    assert tuple(
+        stage.stage_name for stage in at_one.lexicographic_stage_results
+    ) == (
+        "CHECK_FEASIBILITY_AT_PRESCRIBED_TASK_SCALE",
+        "MINIMIZE_LEXICOGRAPHIC_RAY_LOAD_GROUP_0_AT_PRESCRIBED_TASK_SCALE",
+        "MINIMIZE_LEXICOGRAPHIC_RAY_LOAD_GROUP_1_AT_PRESCRIBED_TASK_SCALE",
+    )
+
+
+def test_prescribed_task_scale_infeasible_scale_fails_closed() -> None:
+    model = _three_level_degenerate_model()
+    result = prescribed_task_scale_burden(
+        model, **_prescribed_arguments(model, scale=6.0)
+    )
+    assert not result.solver_success
+    assert not result.feasible_at_prescribed_scale
+    assert result.peak_normal_force_n is None
+    assert result.peak_joint_torque_utilization is None
+    assert (
+        result.lexicographic_stage_results[0].stage_name
+        == "CHECK_FEASIBILITY_AT_PRESCRIBED_TASK_SCALE"
+    )
+    assert "CHECK_FEASIBILITY_AT_PRESCRIBED_TASK_SCALE" in result.solver_message
+
+
+@pytest.mark.parametrize("scale", (-1.0, float("nan"), float("inf")))
+def test_prescribed_task_scale_rejects_invalid_scale(scale) -> None:
+    model = _three_level_degenerate_model()
+    with pytest.raises(ValueError):
+        prescribed_task_scale_burden(
+            model, **_prescribed_arguments(model, scale=scale)
+        )

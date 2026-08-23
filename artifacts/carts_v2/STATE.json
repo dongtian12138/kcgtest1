@@ -1,18 +1,18 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-23T14:56:17Z",
+  "updated_at_utc": "2026-08-23T15:55:41Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_MODEL_AND_CANDIDATE_GENERATION",
+  "current_milestone": "V2_TOP3_VALIDATION_AND_RESEARCH_DYNAMIC_ENTRY",
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": false,
-    "reason": "V2 candidate, bounded controller and initial-penetration checks are not yet available"
+    "reason": "Top-3 IK, full-path collision, initial-penetration checks and bounded controller are not jointly closed"
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
@@ -20,8 +20,26 @@
     "development": "current_d38999_26kj61sn_public_spec",
     "holdout": "te_deutsch_d38999_26fj35pn_step"
   },
-  "same_main_parameters_frozen": false,
-  "candidate_results": {},
+  "same_main_parameters_frozen": true,
+  "scenario_design_sha256": "6aea2d6e5bc384445e1accf7636435142356eaf96a425481d17299a5cdcd93c1",
+  "candidate_results": {
+    "current_d38999_26kj61sn_public_spec": {
+      "candidate_count": 48,
+      "fast_survive_count": 5,
+      "top_candidate": "candidate_07",
+      "worst_task_margin": 0.6902788208999142,
+      "offline_task_gate_passed": false
+    },
+    "te_deutsch_d38999_26fj35pn_step": {
+      "candidate_count": 48,
+      "fast_survive_count": 9,
+      "top_candidate": "candidate_46",
+      "worst_task_margin": 1.0332243177980778,
+      "required_peak_normal_force_n": 7.828609711906763,
+      "maximum_generalized_joint_torque_nm": 0.9865279327188741,
+      "offline_task_gate_passed": true
+    }
+  },
   "isaac": {
     "version": "6.0.1.0",
     "python": "/home/noob/WorkPlace/isaacsim/.conda-env/bin/python",
@@ -56,9 +74,11 @@
     },
     "latest_run": null
   },
-  "evidence_level": "ISAAC_ENVIRONMENT_PHYSICS_SMOKE",
+  "evidence_level": "OFFLINE_ALGORITHM_WITH_ISAAC_ENVIRONMENT_SMOKE",
   "blockers": [
-    "V2_OFFLINE_PIPELINE_NOT_IMPLEMENTED",
-    "V2_RESEARCH_CONTROLLER_NOT_IMPLEMENTED"
+    "TOP3_IK_AND_FULL_PATH_COLLISION_UNRESOLVED",
+    "V2_RESEARCH_CONTROLLER_NOT_IMPLEMENTED",
+    "OBJECT_A_ROBUST_MARGIN_BELOW_ONE",
+    "OBJECT_B_FREE_TABLETOP_PHYSX_MODEL_NOT_BUILT"
   ]
 }

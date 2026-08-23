@@ -691,30 +691,9 @@ def _stage_result(
     )
 
 
-def maximum_task_wrench_polytope_margin(
-    model: PolyhedralContactWrenchModel,
-    *,
-    nominal_external_wrench: Sequence[float],
-    disturbance_vertices: Sequence[Sequence[float]],
-    solver_options: LinearProgramSolverOptions,
-    lexicographic_ray_load_groups: Sequence[Sequence[Sequence[float]]],
-) -> TaskWrenchMarginResult:
-    """Certify margin, peak load, then secondary load with three sparse LPs.
-
-    Checking every vertex is sufficient because both the disturbance polytope
-    and the linearly constrained realizable wrench set are convex.  Contact
-    allocations are independent across vertices; the coverage factor is shared.
-    Exactly two explicit ray-load groups are required.  Each row maps one
-    vertex's ray coefficients to a load bounded by the stage epigraph.  The
-    first group's optimum is retained as an exact upper bound in the second
-    load stage, while the maximum margin is retained as an exact equality in
-    both load stages.
-    """
-
+def _task_scale_inputs(model, nominal_external_wrench, disturbance_vertices, groups):
     nominal = _finite_vector(
-        nominal_external_wrench,
-        shape=(6,),
-        name="nominal_external_wrench",
+        nominal_external_wrench, shape=(6,), name="nominal_external_wrench"
     )
     vertices = np.asarray(disturbance_vertices, dtype=np.float64)
     if vertices.shape == (6,):
@@ -722,290 +701,255 @@ def maximum_task_wrench_polytope_margin(
     if (
         vertices.ndim != 2
         or vertices.shape[1:] != (6,)
-        or vertices.shape[0] < 1
+        or len(vertices) < 1
         or not np.all(np.isfinite(vertices))
+        or not np.any(vertices != 0.0)
     ):
-        raise ValueError("disturbance_vertices must have finite shape (K, 6), K >= 1")
-    if not np.any(vertices != 0.0):
-        raise ValueError("at least one disturbance vertex must be non-zero")
+        raise ValueError("disturbance_vertices must be finite non-zero (K, 6)")
+    load_groups = tuple(np.asarray(group, dtype=np.float64) for group in groups)
+    if len(load_groups) != 2 or any(
+        group.ndim != 2
+        or len(group) < 1
+        or group.shape[1] != model.ray_count
+        or not np.all(np.isfinite(group))
+        for group in load_groups
+    ):
+        raise ValueError("exactly two finite ray-load groups are required")
+    return nominal, vertices, load_groups
 
-    vertex_count = int(vertices.shape[0])
-    ray_count = model.ray_count
-    load_groups = tuple(
-        np.asarray(group, dtype=np.float64)
-        for group in lexicographic_ray_load_groups
-    )
-    if len(load_groups) != 2:
-        raise ValueError(
-            "lexicographic_ray_load_groups must contain exactly two groups"
-        )
-    for index, group in enumerate(load_groups):
-        if (
-            group.ndim != 2
-            or group.shape[0] < 1
-            or group.shape[1] != ray_count
-            or not np.all(np.isfinite(group))
-        ):
-            raise ValueError(
-                f"lexicographic ray-load group {index} must have finite "
-                f"shape (L, {ray_count}), L >= 1"
-            )
-    constraint_count = int(model.ray_constraint_matrix.shape[0])
-    base_variable_count = vertex_count * ray_count + 1
-    gamma_index = base_variable_count - 1
 
-    grasp_blocks = block_diag(
+def _fixed_scale_program(model, nominal, vertices, scale):
+    vertex_count = len(vertices)
+    equality = block_diag(
         [csr_matrix(model.grasp_matrix)] * vertex_count, format="csr"
     )
-    equality = hstack(
-        [grasp_blocks, csr_matrix(vertices.reshape(-1, 1))], format="csr"
+    equality_target = np.tile(-nominal, vertex_count) - scale * vertices.reshape(-1)
+    inequality = block_diag(
+        [csr_matrix(model.ray_constraint_matrix)] * vertex_count, format="csr"
     )
-    equality_target = np.tile(-nominal, vertex_count)
+    inequality_target = np.tile(model.ray_constraint_upper_bounds, vertex_count)
+    return equality, equality_target, inequality, inequality_target
 
-    constraint_blocks = block_diag(
-        [csr_matrix(model.ray_constraint_matrix)] * vertex_count,
-        format="csr",
-    )
-    inequality = hstack(
-        [
-            constraint_blocks,
-            csr_matrix((vertex_count * constraint_count, 1)),
-        ],
-        format="csr",
-    )
-    inequality_target = np.tile(
-        model.ray_constraint_upper_bounds, vertex_count
-    )
 
-    stage_results: list[TaskWrenchLexicographicStageResult] = []
-
-    def failed_result(
-        stage: TaskWrenchLexicographicStageResult,
-    ) -> TaskWrenchMarginResult:
-        return TaskWrenchMarginResult(
-            solver_success=False,
-            solver_status=stage.solver_status,
-            solver_message=(
-                f"{stage.stage_name} failed closed: {stage.solver_message}"
-            ),
-            solver_options=solver_options,
-            constraint_scaling_implementation=_SCALING_IMPLEMENTATION,
-            maximum_margin=None,
-            nominal_external_wrench=_readonly(nominal),
-            disturbance_vertices=_readonly(vertices),
-            ray_coefficients_by_vertex=None,
-            contact_forces_by_vertex=None,
-            normal_forces_by_vertex=None,
-            lexicographic_optimal_loads=None,
-            lexicographic_stage_results=tuple(stage_results),
-            equality_augmented_row_inf_norms=(
-                stage.equality_augmented_row_inf_norms
-            ),
-            inequality_augmented_row_inf_norms=(
-                stage.inequality_augmented_row_inf_norms
-            ),
-            column_inf_norms_after_row_scaling=(
-                stage.column_inf_norms_after_row_scaling
-            ),
-            maximum_equilibrium_residual=stage.maximum_equilibrium_residual,
-            maximum_inequality_violation=stage.maximum_inequality_violation,
-            maximum_scaled_equilibrium_residual=(
-                stage.maximum_scaled_equilibrium_residual
-            ),
-            maximum_scaled_inequality_violation=(
-                stage.maximum_scaled_inequality_violation
-            ),
+def _solve_fixed_scale_burdens(
+    *, model, nominal, vertices, scale, solver_options, load_groups,
+    check_feasibility, stage_suffix,
+):
+    equality, equality_target, inequality, inequality_target = _fixed_scale_program(
+        model, nominal, vertices, scale
+    )
+    base_count = equality.shape[1]
+    stages: list[TaskWrenchLexicographicStageResult] = []
+    if check_feasibility:
+        solve = _solve_explicitly_equilibrated_linear_program(
+            objective=np.zeros(base_count), equality=equality,
+            equality_target=equality_target, inequality=inequality,
+            inequality_target=inequality_target,
+            bounds=((0.0, None),) * base_count, solver_options=solver_options,
         )
-
-    margin_objective = np.zeros(base_variable_count, dtype=np.float64)
-    margin_objective[gamma_index] = -1.0
-    margin_solve = _solve_explicitly_equilibrated_linear_program(
-        objective=margin_objective,
-        equality=equality,
-        equality_target=equality_target,
-        inequality=inequality,
-        inequality_target=inequality_target,
-        bounds=((0.0, None),) * base_variable_count,
-        solver_options=solver_options,
-    )
-    maximum_margin = (
-        float(margin_solve.physical_solution[gamma_index])
-        if margin_solve.solver_success
-        and margin_solve.physical_solution is not None
-        else None
-    )
-    margin_stage = _stage_result(
-        stage_name="MAXIMIZE_SHARED_TASK_MARGIN",
-        solve=margin_solve,
-        optimal_value=maximum_margin,
-    )
-    stage_results.append(margin_stage)
-    if not margin_stage.solver_success or maximum_margin is None:
-        return failed_result(margin_stage)
-
+        stages.append(_stage_result(
+            stage_name="CHECK_FEASIBILITY_AT_PRESCRIBED_TASK_SCALE",
+            solve=solve, optimal_value=0.0 if solve.solver_success else None,
+        ))
+        if not solve.solver_success:
+            return stages, [], None
     group_blocks = tuple(
-        block_diag(
-            [csr_matrix(group)] * vertex_count,
-            format="csr",
-        )
+        block_diag([csr_matrix(group)] * len(vertices), format="csr")
         for group in load_groups
     )
     optimal_loads: list[float] = []
-    final_solve: _ScaledLinearProgramSolve | None = None
-    for group_index, current_blocks in enumerate(group_blocks):
-        variable_count = base_variable_count + 1
-        epigraph_index = variable_count - 1
-        staged_equality = hstack(
-            [equality, csr_matrix((equality.shape[0], 1))],
-            format="csr",
-        )
-        gamma_row = csr_matrix(
-            (
-                np.asarray((1.0,)),
-                (np.asarray((0,)), np.asarray((gamma_index,))),
-            ),
-            shape=(1, variable_count),
-        )
-        staged_equality = vstack(
-            (staged_equality, gamma_row), format="csr"
-        )
-        staged_equality_target = np.concatenate(
-            (equality_target, np.asarray((maximum_margin,)))
-        )
-
-        staged_inequality_rows: list[csr_matrix] = [
-            hstack(
-                [inequality, csr_matrix((inequality.shape[0], 1))],
-                format="csr",
-            )
-        ]
-        staged_inequality_targets: list[np.ndarray] = [inequality_target]
-        for previous_index, previous_optimum in enumerate(optimal_loads):
-            previous_blocks = group_blocks[previous_index]
-            staged_inequality_rows.append(
-                hstack(
-                    [
-                        previous_blocks,
-                        csr_matrix((previous_blocks.shape[0], 1)),
-                        csr_matrix((previous_blocks.shape[0], 1)),
-                    ],
-                    format="csr",
-                )
-            )
-            staged_inequality_targets.append(
-                np.full(
-                    previous_blocks.shape[0],
-                    previous_optimum,
-                    dtype=np.float64,
-                )
-            )
-        current_epigraph_column = csr_matrix(
-            -np.ones((current_blocks.shape[0], 1), dtype=np.float64)
-        )
-        staged_inequality_rows.append(
-            hstack(
-                [
-                    current_blocks,
-                    csr_matrix((current_blocks.shape[0], 1)),
-                    current_epigraph_column,
-                ],
-                format="csr",
-            )
-        )
-        staged_inequality_targets.append(
-            np.zeros(current_blocks.shape[0], dtype=np.float64)
-        )
-        staged_inequality = vstack(
-            staged_inequality_rows, format="csr"
-        )
-        staged_inequality_target = np.concatenate(
-            staged_inequality_targets
-        )
-        load_objective = np.zeros(variable_count, dtype=np.float64)
-        load_objective[epigraph_index] = 1.0
-        load_solve = _solve_explicitly_equilibrated_linear_program(
-            objective=load_objective,
-            equality=staged_equality,
-            equality_target=staged_equality_target,
-            inequality=staged_inequality,
-            inequality_target=staged_inequality_target,
-            bounds=((0.0, None),) * variable_count,
+    final_solve = None
+    for index, current in enumerate(group_blocks):
+        rows = [hstack([inequality, csr_matrix((inequality.shape[0], 1))])]
+        targets = [inequality_target]
+        for previous, optimum in zip(group_blocks, optimal_loads):
+            rows.append(hstack([previous, csr_matrix((previous.shape[0], 1))]))
+            targets.append(np.full(previous.shape[0], optimum))
+        rows.append(hstack([current, -np.ones((current.shape[0], 1))]))
+        targets.append(np.zeros(current.shape[0]))
+        objective = np.zeros(base_count + 1)
+        objective[-1] = 1.0
+        solve = _solve_explicitly_equilibrated_linear_program(
+            objective=objective,
+            equality=hstack([equality, csr_matrix((equality.shape[0], 1))]),
+            equality_target=equality_target,
+            inequality=vstack(rows, format="csr"),
+            inequality_target=np.concatenate(targets),
+            bounds=((0.0, None),) * (base_count + 1),
             solver_options=solver_options,
         )
-        optimal_load = (
-            float(load_solve.physical_solution[epigraph_index])
-            if load_solve.solver_success
-            and load_solve.physical_solution is not None
-            else None
+        optimum = (
+            float(solve.physical_solution[-1])
+            if solve.solver_success and solve.physical_solution is not None else None
         )
-        load_stage = _stage_result(
-            stage_name=(
-                f"MINIMIZE_LEXICOGRAPHIC_RAY_LOAD_GROUP_{group_index}"
-            ),
-            solve=load_solve,
-            optimal_value=optimal_load,
-        )
-        stage_results.append(load_stage)
-        if not load_stage.solver_success or optimal_load is None:
-            return failed_result(load_stage)
-        optimal_loads.append(optimal_load)
-        final_solve = load_solve
+        stages.append(_stage_result(
+            stage_name=f"MINIMIZE_LEXICOGRAPHIC_RAY_LOAD_GROUP_{index}{stage_suffix}",
+            solve=solve, optimal_value=optimum,
+        ))
+        if optimum is None:
+            return stages, optimal_loads, None
+        optimal_loads.append(optimum)
+        final_solve = solve
+    return stages, optimal_loads, final_solve
 
-    if final_solve is None or final_solve.physical_solution is None:
-        raise RuntimeError("two required lexicographic load stages were not solved")
-    final_base_solution = final_solve.physical_solution[:base_variable_count]
-    ray_coefficients = final_base_solution[:-1].reshape(
-        vertex_count, ray_count
+
+def maximum_task_wrench_polytope_margin(
+    model: PolyhedralContactWrenchModel, *, nominal_external_wrench,
+    disturbance_vertices, solver_options, lexicographic_ray_load_groups,
+) -> TaskWrenchMarginResult:
+    """Maximize task scale, then minimize the two physical burden groups."""
+
+    nominal, vertices, groups = _task_scale_inputs(
+        model, nominal_external_wrench, disturbance_vertices,
+        lexicographic_ray_load_groups,
     )
-    contact_forces = np.asarray(
-        [
-            (model.contact_force_matrix @ coefficients).reshape(
-                model.contact_count, 3
-            )
-            for coefficients in ray_coefficients
-        ],
-        dtype=np.float64,
+    base_equality, target, base_inequality, inequality_target = (
+        _fixed_scale_program(model, nominal, vertices, 0.0)
     )
-    normal_forces = np.asarray(
-        [model.normal_force_matrix @ coefficients for coefficients in ray_coefficients],
-        dtype=np.float64,
+    equality = hstack([base_equality, csr_matrix(vertices.reshape(-1, 1))])
+    inequality = hstack(
+        [base_inequality, csr_matrix((base_inequality.shape[0], 1))]
     )
-    final_stage = stage_results[-1]
+    objective = np.zeros(equality.shape[1])
+    objective[-1] = -1.0
+    margin_solve = _solve_explicitly_equilibrated_linear_program(
+        objective=objective, equality=equality, equality_target=target,
+        inequality=inequality, inequality_target=inequality_target,
+        bounds=((0.0, None),) * len(objective), solver_options=solver_options,
+    )
+    maximum_margin = (
+        float(margin_solve.physical_solution[-1])
+        if margin_solve.solver_success and margin_solve.physical_solution is not None
+        else None
+    )
+    margin_stage = _stage_result(
+        stage_name="MAXIMIZE_SHARED_TASK_MARGIN", solve=margin_solve,
+        optimal_value=maximum_margin,
+    )
+    stages = [margin_stage]
+    if maximum_margin is not None:
+        load_stages, loads, final_solve = _solve_fixed_scale_burdens(
+            model=model, nominal=nominal, vertices=vertices, scale=maximum_margin,
+            solver_options=solver_options, load_groups=groups,
+            check_feasibility=False, stage_suffix="",
+        )
+        stages.extend(load_stages)
+    else:
+        loads, final_solve = [], None
+    final_stage = stages[-1]
+    success = final_solve is not None and final_solve.physical_solution is not None
+    if success:
+        rays = final_solve.physical_solution[:-1].reshape(len(vertices), model.ray_count)
+        forces = np.asarray([
+            (model.contact_force_matrix @ row).reshape(model.contact_count, 3)
+            for row in rays
+        ])
+        normals = np.asarray([model.normal_force_matrix @ row for row in rays])
+    else:
+        rays = forces = normals = None
     return TaskWrenchMarginResult(
-        solver_success=True,
-        solver_status=final_stage.solver_status,
+        solver_success=success, solver_status=final_stage.solver_status,
         solver_message="; ".join(
-            f"{stage.stage_name}: {stage.solver_message}"
-            for stage in stage_results
-        ),
-        solver_options=solver_options,
+            f"{stage.stage_name}: {stage.solver_message}" for stage in stages
+        ), solver_options=solver_options,
         constraint_scaling_implementation=_SCALING_IMPLEMENTATION,
-        maximum_margin=maximum_margin,
+        maximum_margin=maximum_margin if success else None,
         nominal_external_wrench=_readonly(nominal),
         disturbance_vertices=_readonly(vertices),
-        ray_coefficients_by_vertex=_readonly(ray_coefficients),
-        contact_forces_by_vertex=_readonly(contact_forces),
-        normal_forces_by_vertex=_readonly(normal_forces),
-        lexicographic_optimal_loads=(
-            float(optimal_loads[0]),
-            float(optimal_loads[1]),
-        ),
-        lexicographic_stage_results=tuple(stage_results),
-        equality_augmented_row_inf_norms=(
-            final_stage.equality_augmented_row_inf_norms
-        ),
-        inequality_augmented_row_inf_norms=(
-            final_stage.inequality_augmented_row_inf_norms
-        ),
-        column_inf_norms_after_row_scaling=(
-            final_stage.column_inf_norms_after_row_scaling
-        ),
+        ray_coefficients_by_vertex=None if rays is None else _readonly(rays),
+        contact_forces_by_vertex=None if forces is None else _readonly(forces),
+        normal_forces_by_vertex=None if normals is None else _readonly(normals),
+        lexicographic_optimal_loads=None if not success else tuple(loads),
+        lexicographic_stage_results=tuple(stages),
+        equality_augmented_row_inf_norms=final_stage.equality_augmented_row_inf_norms,
+        inequality_augmented_row_inf_norms=final_stage.inequality_augmented_row_inf_norms,
+        column_inf_norms_after_row_scaling=final_stage.column_inf_norms_after_row_scaling,
         maximum_equilibrium_residual=final_stage.maximum_equilibrium_residual,
         maximum_inequality_violation=final_stage.maximum_inequality_violation,
-        maximum_scaled_equilibrium_residual=(
-            final_stage.maximum_scaled_equilibrium_residual
-        ),
-        maximum_scaled_inequality_violation=(
-            final_stage.maximum_scaled_inequality_violation
-        ),
+        maximum_scaled_equilibrium_residual=final_stage.maximum_scaled_equilibrium_residual,
+        maximum_scaled_inequality_violation=final_stage.maximum_scaled_inequality_violation,
+    )
+
+
+@dataclass(frozen=True)
+class PrescribedTaskScaleBurdenResult:
+    """Lexicographic burden certificate at one fixed task scale.
+
+    ``gamma`` is pinned to ``prescribed_task_scale`` instead of being
+    maximised, so the two burdens are minima needed at exactly that task
+    scale, not at the maximum margin.
+    """
+
+    solver_success: bool
+    solver_status: int
+    solver_message: str
+    prescribed_task_scale: float
+    feasible_at_prescribed_scale: bool
+    peak_normal_force_n: float | None
+    peak_joint_torque_utilization: float | None
+    lexicographic_stage_results: tuple[TaskWrenchLexicographicStageResult, ...]
+
+
+def _prescribed_task_scale_failure(
+    *,
+    scale: float,
+    stages: Sequence[TaskWrenchLexicographicStageResult],
+    feasible: bool,
+) -> PrescribedTaskScaleBurdenResult:
+    stage = stages[-1]
+    return PrescribedTaskScaleBurdenResult(
+        solver_success=False,
+        solver_status=stage.solver_status,
+        solver_message=f"{stage.stage_name} failed closed: {stage.solver_message}",
+        prescribed_task_scale=scale,
+        feasible_at_prescribed_scale=feasible,
+        peak_normal_force_n=None,
+        peak_joint_torque_utilization=None,
+        lexicographic_stage_results=tuple(stages),
+    )
+
+
+def prescribed_task_scale_burden(
+    model: PolyhedralContactWrenchModel,
+    *,
+    nominal_external_wrench: Sequence[float],
+    disturbance_vertices: Sequence[Sequence[float]],
+    prescribed_task_scale: float,
+    solver_options: LinearProgramSolverOptions,
+    lexicographic_ray_load_groups: Sequence[Sequence[Sequence[float]]],
+) -> PrescribedTaskScaleBurdenResult:
+    """Minimum burdens with the shared task scale pinned to one value.
+
+    Reuses the contact model and the explicitly equilibrated LP machinery;
+    the coverage variable is fixed, so every vertex equilibrium becomes
+    ``G r = -w - scale * d``.  A zero-objective feasibility phase fails
+    closed before any burden stage runs.
+    """
+
+    scale = float(prescribed_task_scale)
+    if not math.isfinite(scale) or scale < 0.0:
+        raise ValueError("prescribed_task_scale must be finite and non-negative")
+    nominal, vertices, groups = _task_scale_inputs(
+        model, nominal_external_wrench, disturbance_vertices,
+        lexicographic_ray_load_groups,
+    )
+    stages, loads, final_solve = _solve_fixed_scale_burdens(
+        model=model, nominal=nominal, vertices=vertices, scale=scale,
+        solver_options=solver_options, load_groups=groups,
+        check_feasibility=True, stage_suffix="_AT_PRESCRIBED_TASK_SCALE",
+    )
+    if final_solve is None:
+        return _prescribed_task_scale_failure(
+            scale=scale, stages=stages, feasible=len(stages) > 1
+        )
+    final_stage = stages[-1]
+    return PrescribedTaskScaleBurdenResult(
+        solver_success=True,
+        solver_status=final_stage.solver_status,
+        solver_message="; ".join(f"{stage.stage_name}: {stage.solver_message}" for stage in stages),
+        prescribed_task_scale=scale,
+        feasible_at_prescribed_scale=True,
+        peak_normal_force_n=float(loads[0]),
+        peak_joint_torque_utilization=float(loads[1]),
+        lexicographic_stage_results=tuple(stages),
     )

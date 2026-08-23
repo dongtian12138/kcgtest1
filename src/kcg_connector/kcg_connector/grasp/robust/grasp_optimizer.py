@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import inspect
 import math
 from typing import Any, Mapping, Protocol, Sequence, runtime_checkable
 import warnings
@@ -388,17 +387,7 @@ def deterministic_sobol(
     except ImportError as exc:  # pragma: no cover - scipy is an offline dependency
         raise OptimizationError("deterministic Sobol design requires scipy.stats.qmc") from exc
 
-    sobol_parameters = inspect.signature(qmc.Sobol).parameters
-    sobol_keywords: dict[str, Any] = {
-        "d": dimension,
-        "scramble": True,
-        "seed": seed,
-    }
-    if "bits" in sobol_parameters:
-        sobol_keywords["bits"] = max(1, int(math.ceil(math.log2(count))))
-    if "optimization" in sobol_parameters:
-        sobol_keywords["optimization"] = None
-    engine = qmc.Sobol(**sobol_keywords)
+    engine = qmc.Sobol(d=dimension, scramble=True, seed=seed)
     if count & (count - 1) == 0:
         points = engine.random_base2(int(math.log2(count)))
     else:
@@ -410,6 +399,8 @@ def deterministic_sobol(
         (0.0 <= result) & (result < 1.0)
     ):
         raise OptimizationError("Sobol implementation returned an invalid design")
+    if any(np.unique(result[:, index]).size != count for index in range(dimension)):
+        raise OptimizationError("Sobol implementation returned a degenerate design")
     return result
 
 
