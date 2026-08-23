@@ -12,6 +12,11 @@
   "closure_survive_count": 5,
   "fast_survive_count": 5,
   "task_survive_count": 0,
+  "exact_validation": {
+    "top_k_count": 3,
+    "backend_invocation_count": 0,
+    "all_formally_resolved": false
+  },
   "scenario_design": {
     "method": "SCRAMBLED_SOBOL",
     "shape": [
@@ -488,13 +493,14 @@
     "scipy_version": "1.10.1"
   },
   "timings_s": {
-    "load_inputs": 2.8846104571130127,
-    "candidate_generation": 0.11651881202124059,
-    "closure_prediction": 1.7903408911079168,
-    "fast_filter": 0.05551378894597292,
-    "task_quality": 1.279819605872035,
-    "selection": 4.518195055425167e-05,
-    "total": 6.126848737010732
+    "load_inputs": 2.912281926954165,
+    "candidate_generation": 0.06008821609430015,
+    "closure_prediction": 1.8006780541036278,
+    "fast_filter": 0.052069783909246325,
+    "task_quality": 1.291130434954539,
+    "selection": 6.388616748154163e-05,
+    "exact_validation": 1.7029931768774986e-05,
+    "total": 6.116329332115129
   },
   "top_candidates": [
     {
@@ -511,6 +517,9 @@
       "wrist_load_utilization": null,
       "wrist_load_utilization_source": "UNKNOWN",
       "path_minimum_clearance_m": null,
+      "exact_validation_status": "UNRESOLVED_INTERFACE_MISMATCH",
+      "exact_validation_reason": "V2 requests 0.050 m lift but frozen backend build_candidate_route_collision_certificate covers 0.040 m",
+      "exact_backend_invoked": false,
       "sensitivity": 0.9461593556592511,
       "failure_reason": "PRESCRIBED_TASK_SCALE_INFEASIBLE_UNDER_OPERATION_CAP",
       "nominal_balance_infeasible_count": 0,
@@ -610,6 +619,9 @@
       "wrist_load_utilization": null,
       "wrist_load_utilization_source": "UNKNOWN",
       "path_minimum_clearance_m": null,
+      "exact_validation_status": "UNRESOLVED_INTERFACE_MISMATCH",
+      "exact_validation_reason": "V2 requests 0.050 m lift but frozen backend build_candidate_route_collision_certificate covers 0.040 m",
+      "exact_backend_invoked": false,
       "sensitivity": null,
       "failure_reason": "ONE_OR_MORE_SCENARIOS_CANNOT_BALANCE_NOMINAL_LOAD",
       "nominal_balance_infeasible_count": 1,
@@ -709,6 +721,9 @@
       "wrist_load_utilization": null,
       "wrist_load_utilization_source": "UNKNOWN",
       "path_minimum_clearance_m": null,
+      "exact_validation_status": "UNRESOLVED_INTERFACE_MISMATCH",
+      "exact_validation_reason": "V2 requests 0.050 m lift but frozen backend build_candidate_route_collision_certificate covers 0.040 m",
+      "exact_backend_invoked": false,
       "sensitivity": null,
       "failure_reason": "ONE_OR_MORE_SCENARIOS_CANNOT_BALANCE_NOMINAL_LOAD",
       "nominal_balance_infeasible_count": 8,

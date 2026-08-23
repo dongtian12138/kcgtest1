@@ -12,6 +12,11 @@
   "closure_survive_count": 9,
   "fast_survive_count": 9,
   "task_survive_count": 1,
+  "exact_validation": {
+    "top_k_count": 3,
+    "backend_invocation_count": 0,
+    "all_formally_resolved": false
+  },
   "scenario_design": {
     "method": "SCRAMBLED_SOBOL",
     "shape": [
@@ -488,13 +493,14 @@
     "scipy_version": "1.10.1"
   },
   "timings_s": {
-    "load_inputs": 22.870211330940947,
-    "candidate_generation": 0.15343445190228522,
-    "closure_prediction": 2.8294929759576917,
-    "fast_filter": 0.45958774304017425,
-    "task_quality": 2.9349535589572042,
-    "selection": 4.343106411397457e-05,
-    "total": 29.247723491862416
+    "load_inputs": 22.503746413160115,
+    "candidate_generation": 0.09813803108409047,
+    "closure_prediction": 2.8202332630753517,
+    "fast_filter": 0.4151516759302467,
+    "task_quality": 2.9260598900727928,
+    "selection": 4.3463194742798805e-05,
+    "exact_validation": 1.4621065929532051e-05,
+    "total": 28.76338735758327
   },
   "top_candidates": [
     {
@@ -511,6 +517,9 @@
       "wrist_load_utilization": null,
       "wrist_load_utilization_source": "UNKNOWN",
       "path_minimum_clearance_m": null,
+      "exact_validation_status": "UNRESOLVED_INTERFACE_MISMATCH",
+      "exact_validation_reason": "V2 requests 0.050 m lift but frozen backend build_candidate_route_collision_certificate covers 0.040 m",
+      "exact_backend_invoked": false,
       "sensitivity": 0.5248103663339878,
       "failure_reason": "",
       "nominal_balance_infeasible_count": 0,
@@ -610,6 +619,9 @@
       "wrist_load_utilization": null,
       "wrist_load_utilization_source": "UNKNOWN",
       "path_minimum_clearance_m": null,
+      "exact_validation_status": "UNRESOLVED_INTERFACE_MISMATCH",
+      "exact_validation_reason": "V2 requests 0.050 m lift but frozen backend build_candidate_route_collision_certificate covers 0.040 m",
+      "exact_backend_invoked": false,
       "sensitivity": 0.5168464844569111,
       "failure_reason": "PRESCRIBED_TASK_SCALE_INFEASIBLE_UNDER_OPERATION_CAP",
       "nominal_balance_infeasible_count": 0,
@@ -709,6 +721,9 @@
       "wrist_load_utilization": null,
       "wrist_load_utilization_source": "UNKNOWN",
       "path_minimum_clearance_m": null,
+      "exact_validation_status": "UNRESOLVED_INTERFACE_MISMATCH",
+      "exact_validation_reason": "V2 requests 0.050 m lift but frozen backend build_candidate_route_collision_certificate covers 0.040 m",
+      "exact_backend_invoked": false,
       "sensitivity": 0.8863178875293564,
       "failure_reason": "PRESCRIBED_TASK_SCALE_INFEASIBLE_UNDER_OPERATION_CAP",
       "nominal_balance_infeasible_count": 0,

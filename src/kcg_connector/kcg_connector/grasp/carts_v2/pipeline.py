@@ -11,10 +11,14 @@ import numpy as np
 from kcg_connector.grasp.carts_v2.candidate_generator import generate_candidates
 from kcg_connector.grasp.carts_v2.closure_predictor import SequentialClosurePredictor
 from kcg_connector.grasp.carts_v2.fast_filter import fast_filter_predictions
+from kcg_connector.grasp.carts_v2.legacy_exact_validator import (
+    validate_top_candidates,
+)
 from kcg_connector.grasp.carts_v2.models import (
     CandidateSeed,
     ClosurePrediction,
     FastFilterResult,
+    ExactValidationResult,
     SelectedCandidate,
     TaskQualityResult,
     V2Inputs,
@@ -35,6 +39,7 @@ class OfflinePipelineResult:
     fast_filter_results: tuple[FastFilterResult, ...]
     task_quality_results: tuple[TaskQualityResult, ...]
     selected_top: tuple[SelectedCandidate, ...]
+    exact_validation_results: tuple[ExactValidationResult, ...]
     scenario_design: np.ndarray
     timings_s: dict[str, float]
 
@@ -80,6 +85,10 @@ def run_offline_pipeline(
         predictions, filters, qualities, top_k=top_k
     )
     timings["selection"] = time.perf_counter() - started
+
+    started = time.perf_counter()
+    exact_results = validate_top_candidates(inputs, selected)
+    timings["exact_validation"] = time.perf_counter() - started
     timings["total"] = sum(
         value for key, value in timings.items() if key != "total"
     )
@@ -90,6 +99,7 @@ def run_offline_pipeline(
         fast_filter_results=filters,
         task_quality_results=qualities,
         selected_top=selected,
+        exact_validation_results=exact_results,
         scenario_design=design,
         timings_s=timings,
     )

@@ -190,6 +190,18 @@ class SelectedCandidate:
     offline_task_gate_passed: bool
 
 
+@dataclass(frozen=True)
+class ExactValidationResult:
+    candidate_id: str
+    status: str
+    reason: str
+    requested_lift_distance_m: float
+    backend_lift_distance_m: float
+    backend_invoked: bool
+    path_minimum_clearance_m: float | None
+    elapsed_s: float
+
+
 def joint_positions_for_phases(
     inputs: V2Inputs, phases: tuple[float, float, float]
 ) -> np.ndarray:

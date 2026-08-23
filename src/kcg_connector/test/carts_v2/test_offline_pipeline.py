@@ -38,6 +38,14 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
             for index in range(26)
         )
         assert len(result.selected_top) == 3
+        assert len(result.exact_validation_results) == 3
+        assert all(
+            row.status == "UNRESOLVED_INTERFACE_MISMATCH"
+            and not row.backend_invoked
+            and row.requested_lift_distance_m == 0.05
+            and row.backend_lift_distance_m == 0.04
+            for row in result.exact_validation_results
+        )
         survivors = [
             row
             for row in result.closure_predictions

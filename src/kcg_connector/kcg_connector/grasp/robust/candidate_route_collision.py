@@ -58,6 +58,7 @@ from kcg_connector.grasp.robust.top_level_candidate_generator import (
 
 
 METHOD_ID = "CARTS_COMPLETE_11_JOINT_ROUTE_INTERVAL_COLLISION_V2"
+BACKEND_LIFT_DISTANCE_M = 0.04
 PAD_ROOT_BINDING_METHOD_ID = (
     "CARTS_FULL_AUTHORIZED_PAD_ROOT_INDEPENDENT_CLOSED_SHELL_ROLE_V1"
 )
@@ -1491,8 +1492,12 @@ def build_candidate_route_collision_certificate(
                 lower: float = parameter_lower,
                 upper: float = parameter_upper,
             ) -> _IntervalSurface:
-                lower_translation = np.asarray((0.0, 0.0, 0.04 * lower))
-                upper_translation = np.asarray((0.0, 0.0, 0.04 * upper))
+                lower_translation = np.asarray(
+                    (0.0, 0.0, BACKEND_LIFT_DISTANCE_M * lower)
+                )
+                upper_translation = np.asarray(
+                    (0.0, 0.0, BACKEND_LIFT_DISTANCE_M * upper)
+                )
                 nominal_translation = 0.5 * (
                     lower_translation + upper_translation
                 )
@@ -1632,6 +1637,7 @@ def build_candidate_route_collision_certificate(
 
 __all__ = [
     "CLAIM_LIMITATIONS",
+    "BACKEND_LIFT_DISTANCE_M",
     "METHOD_ID",
     "PAD_ROOT_BINDING_METHOD_ID",
     "CandidateRouteCollisionCertificate",

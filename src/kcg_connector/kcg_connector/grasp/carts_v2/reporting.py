@@ -92,9 +92,13 @@ def _candidate_rows(result: OfflinePipelineResult):
 
 def _selected_json(result: OfflinePipelineResult) -> list[dict[str, object]]:
     rows = []
+    exact_by_id = {
+        row.candidate_id: row for row in result.exact_validation_results
+    }
     for selected in result.selected_top:
         quality = selected.task_quality
         prediction = selected.prediction
+        exact = exact_by_id[prediction.seed.candidate_id]
         rows.append(
             {
                 "rank": selected.rank,
@@ -120,6 +124,9 @@ def _selected_json(result: OfflinePipelineResult) -> list[dict[str, object]]:
                 "wrist_load_utilization": quality.wrist_load_utilization,
                 "wrist_load_utilization_source": "UNKNOWN",
                 "path_minimum_clearance_m": selected.path_minimum_clearance_m,
+                "exact_validation_status": exact.status,
+                "exact_validation_reason": exact.reason,
+                "exact_backend_invoked": exact.backend_invoked,
                 "sensitivity": quality.sensitivity,
                 "failure_reason": quality.failure_reason,
                 "nominal_balance_infeasible_count": (
@@ -254,6 +261,16 @@ def write_offline_report(
         "task_survive_count": sum(
             row.status == "TASK_SURVIVE" for row in result.task_quality_results
         ),
+        "exact_validation": {
+            "top_k_count": len(result.exact_validation_results),
+            "backend_invocation_count": sum(
+                row.backend_invoked for row in result.exact_validation_results
+            ),
+            "all_formally_resolved": all(
+                row.status == "CERTIFIED_FREE"
+                for row in result.exact_validation_results
+            ),
+        },
         "scenario_design": {
             "method": "SCRAMBLED_SOBOL",
             "shape": list(result.scenario_design.shape),
