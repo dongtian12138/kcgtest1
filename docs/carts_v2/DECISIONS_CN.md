@@ -116,3 +116,10 @@
 - 从同一 `698a2bb` HEAD 建立 `/tmp/kcgtest1-carts-v2-integration-20260823`，以原工作区作为内容源精确暂存本轮路径。
 - 代码与离线数据提交为 `4d90a52`；原工作区 HEAD 仍为 `698a2bb`，因此 IDE 会继续显示工作树修改。
 - 远端推送结果在文档提交后记录；禁止把临时克隆机制解释成原工作区已同步。
+
+## 2026-08-23T21:44:03Z — 远端失败与可恢复交付
+
+- 文档提交为 `58c9503`；推送 `carts-grasp-v2-rebuild-20260823` 失败，原因为 `Couldn't connect to server`，未发生远端写入。
+- 本地保留 `/tmp/kcgtest1-carts-v2-integration-20260823`；另生成增量 bundle，要求起点 `698a2bb`，包含到 `58c9503`。
+- bundle 为 802,864 B，SHA-256 `b22d65dd19d7b468ac7a1d0cfe2a8c46f9b784d1473f884b93124a9f44c3a9d1`，已通过 `git bundle verify`。
+- 网络恢复后只允许普通 push 同名 V2 分支，禁止 force push；原工作区同步仍需恢复 `.git` 写权限。
