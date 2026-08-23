@@ -9,6 +9,7 @@ D38999 类电连接器的识别、抓取、对准、插入、锁紧和回到 Hom
 ## 当前从哪里开始
 
 - 新对话轻量入口：[`CURRENT_CONTEXT_CN.md`](CURRENT_CONTEXT_CN.md)
+- ChatGPT Pro 当前算法审查入口：[`docs/reviews/CARTS_GRASP_CHATGPT_PRO_REVIEW_20260823_CN.md`](docs/reviews/CARTS_GRASP_CHATGPT_PRO_REVIEW_20260823_CN.md)
 - 人工查看当前状态：[`artifacts/agent_control/CURRENT_STATUS_CN.md`](artifacts/agent_control/CURRENT_STATUS_CN.md)
 - 当前任务原始合同：[`artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TASK_SWITCH_PLAN.json`](artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TASK_SWITCH_PLAN.json)
 - 完整历史恢复入口（按需）：[`artifacts/agent_control/AUTONOMOUS_RESUME_CN.md`](artifacts/agent_control/AUTONOMOUS_RESUME_CN.md)

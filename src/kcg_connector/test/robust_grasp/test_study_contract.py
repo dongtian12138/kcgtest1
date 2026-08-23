@@ -20,6 +20,9 @@ from kcg_connector.grasp.robust.full_hand_collision import (
 )
 from kcg_connector.grasp.robust.grasp_optimizer import deterministic_sobol
 from kcg_connector.grasp.robust.hand_contract import load_carts_hand_contract
+from kcg_connector.grasp.robust.interval_kinematics import (
+    INTERVAL_GEOMETRIC_JACOBIAN_METHOD_ID,
+)
 from kcg_connector.grasp.robust.post_generation_ranker import (
     COMPLETE_CLEARANCE_SCOPE,
     METHOD_ID as POST_GENERATION_RANKER_METHOD_ID,
@@ -40,6 +43,7 @@ from kcg_connector.grasp.robust.study_contract import (
 from kcg_connector.grasp.robust.task_wrench_evaluator import (
     CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS,
     CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS,
+    CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE,
     CONTACT_RANGE_POLICY_WRENCH_METHOD_ID,
     CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE,
     CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE,
@@ -98,7 +102,6 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
 
     assert audit.freeze_eligible is False
     assert audit.preregistration_blockers == (
-        "MISSING_FORMAL_ROOT_INTERVAL_CANDIDATE_PROPAGATION",
         "MISSING_COMPLETE_HAND_ENVIRONMENT_CONTINUOUS_COLLISION_BINDING",
         "MISSING_CALIBRATED_NONFRICTION_UNCERTAINTY_BOUNDS",
     )
@@ -106,7 +109,7 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
         audit.canonical_json_bytes
     ).hexdigest()
     assert audit.canonical_sha256 == (
-        "7b1c0e7a20a7404a24eacf1c5923f91f4af27e96c9bca6798d14a0ce697ed664"
+        "fd421d99b7aca4a03d20c1d5e51454c4f3b7072ad5d0bed3aca971e47aded467"
     )
     assert audit.canonical_manifest["status"] == "NOT_FREEZE_ELIGIBLE"
     assert audit.canonical_manifest["study"]["transfer_object_role"] == (
@@ -236,6 +239,15 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
         "contact_range_policy_wrench_cartesian_product_rule"
     ] == CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE
     assert interpretation[
+        "contact_range_policy_wrench_interval_geometric_jacobian_method_id"
+    ] == INTERVAL_GEOMETRIC_JACOBIAN_METHOD_ID
+    assert interpretation[
+        "contact_range_policy_wrench_interval_policy_margin_method_id"
+    ] == "CARTS_BOUNDED_DYADIC_INTERVAL_POLICY_MARGIN_SEARCH_V1"
+    assert interpretation[
+        "contact_range_policy_wrench_joint_position_domain_rule"
+    ] == CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE
+    assert interpretation[
         "contact_range_policy_wrench_collision_binding_required"
     ] is True
     assert interpretation[
@@ -253,6 +265,24 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
     assert not interpretation[
         "contact_range_policy_wrench_margin_computed"
     ]
+    assert interpretation[
+        "contact_range_policy_wrench_interval_contact_jacobian_certificate_present"
+    ] is True
+    assert interpretation[
+        "contact_range_policy_wrench_midpoint_margin_proposal_role"
+    ] == "COMPLETE_ROOT_PRODUCT_INTERVAL_MATRIX_MIDPOINT_LP_UPPER_PROPOSAL_ONLY"
+    assert interpretation[
+        "contact_range_policy_wrench_midpoint_margin_proposal_used_as_formal_evidence"
+    ] is False
+    assert interpretation[
+        "contact_range_policy_wrench_certified_margin_search_rule"
+    ] == "HALVE_UNTIL_FIRST_COMPLETE_CERTIFICATE_THEN_BISECT_KEEP_HIGHEST_CERTIFIED"
+    assert interpretation[
+        "contact_range_policy_wrench_maximum_certification_attempts"
+    ] == 12
+    assert interpretation[
+        "contact_range_policy_wrench_returned_margin_requires_complete_interval_certificate"
+    ] is True
     assert tuple(
         interpretation["contact_range_policy_wrench_mandatory_blockers"]
     ) == CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS
@@ -279,14 +309,14 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
         "post_generation_ranking_common_scenario_method_id"
     ] == POST_GENERATION_SCENARIO_METHOD_ID
     assert interpretation[
-        "post_generation_policy_aware_ranking_guard"
-    ] == "POLICY_AWARE_COLLISION_AND_WRENCH_REQUIRED_BEFORE_RANKING"
+        "post_generation_policy_aware_ranking_status"
+    ] == "POLICY_AWARE_COLLISION_AND_WRENCH_CONSUMERS_ACTIVE"
     assert interpretation[
-        "post_generation_policy_collision_invocations_before_support"
-    ] == 0
+        "post_generation_policy_collision_invocations_per_unique_policy"
+    ] == 1
     assert interpretation[
-        "post_generation_policy_wrench_invocations_before_support"
-    ] == 0
+        "post_generation_policy_wrench_invocations_after_valid_collision_binding"
+    ] == 1
     assert interpretation[
         "post_generation_ranking_common_scenario_dimension"
     ] == POST_GENERATION_SCENARIO_DIMENSION
@@ -461,6 +491,15 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
     assert policy_wrench["cartesian_product_rule"] == (
         CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE
     )
+    assert policy_wrench["interval_geometric_jacobian_method_id"] == (
+        INTERVAL_GEOMETRIC_JACOBIAN_METHOD_ID
+    )
+    assert policy_wrench["interval_policy_margin_method_id"] == (
+        "CARTS_BOUNDED_DYADIC_INTERVAL_POLICY_MARGIN_SEARCH_V1"
+    )
+    assert policy_wrench["joint_position_domain_rule"] == (
+        CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE
+    )
     assert policy_wrench["policy_collision_binding_required"] is True
     assert policy_wrench["qmc_role"] == (
         "FRICTION_INTERVAL_ONLY_NOT_CONTACT_GEOMETRY_SAMPLING"
@@ -473,12 +512,28 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
     assert policy_wrench["exact_candidate_wrench_invocations"] == 0
     assert policy_wrench["current_state"] == "NOT_CERTIFIABLE"
     assert not policy_wrench["contact_range_margin_computed"]
-    assert not policy_wrench[
+    assert policy_wrench[
         "interval_contact_jacobian_certificate_present"
-    ]
+    ] is True
     assert not policy_wrench[
         "parametric_wrench_lower_bound_certificate_present"
     ]
+    assert policy_wrench["midpoint_margin_proposal_role"] == (
+        "COMPLETE_ROOT_PRODUCT_INTERVAL_MATRIX_MIDPOINT_LP_UPPER_PROPOSAL_ONLY"
+    )
+    assert not policy_wrench[
+        "midpoint_margin_proposal_used_as_formal_evidence"
+    ]
+    assert policy_wrench["certified_margin_search_rule"] == (
+        "HALVE_UNTIL_FIRST_COMPLETE_CERTIFICATE_THEN_BISECT_KEEP_HIGHEST_CERTIFIED"
+    )
+    assert policy_wrench["maximum_certification_attempts"] == 12
+    assert policy_wrench["maximum_certification_attempts_role"] == (
+        "PRE_REGISTERED_COMPUTE_BUDGET_NOT_PHYSICAL_ACCEPTANCE_THRESHOLD"
+    )
+    assert policy_wrench[
+        "returned_margin_requires_complete_interval_certificate"
+    ] is True
     assert tuple(policy_wrench["mandatory_blockers"]) == (
         CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS
     )
@@ -518,23 +573,27 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
         "failed_candidate_drop_allowed": False,
         "collision_invocations_per_unique_accepted_candidate": 1,
         "wrench_invocations_per_unique_accepted_candidate": 1,
+        "collision_invocations_per_unique_accepted_policy": 1,
+        "wrench_invocations_after_valid_policy_collision_binding": 1,
         "retry_allowed": False,
         "replacement_after_failure_allowed": False,
     }
     assert ranking["formal_selection"] == {
-        "status": (
-            "EMPTY_UNTIL_FORMAL_ROOT_INTERVAL_CANDIDATE_PROPAGATION_"
-            "COMPLETE_COLLISION_AND_CALIBRATED_FULL_UNCERTAINTY"
-        ),
+        "status": "EMPTY_UNTIL_COMPLETE_COLLISION_AND_CALIBRATED_FULL_UNCERTAINTY",
         "allowed_with_current_bindings": False,
         "formal_ranked_keys_must_be_empty": True,
+        "formal_ranked_policy_keys_must_be_empty": True,
         "selected_candidate_must_be_none": True,
+        "selected_contact_range_policy_must_be_none": True,
         "contact_range_policy_handling": (
-            "FAIL_CLOSED_BEFORE_COLLISION_OR_WRENCH_UNTIL_"
-            "POLICY_AWARE_CONSUMERS_EXIST"
+            "EVALUATE_ONCE_WITH_POLICY_COLLISION_AND_WRENCH_WITHOUT_"
+            "DISPLAY_MIDPOINT"
         ),
-        "contact_range_policy_collision_invocations_before_support": 0,
-        "contact_range_policy_wrench_invocations_before_support": 0,
+        "contact_range_policy_ranking_status": (
+            "POLICY_AWARE_COLLISION_AND_WRENCH_CONSUMERS_ACTIVE"
+        ),
+        "contact_range_policy_collision_invocations_per_unique_policy": 1,
+        "contact_range_policy_wrench_invocations_after_valid_collision_binding": 1,
         "required_collision_claim_scope": COMPLETE_CLEARANCE_SCOPE,
         "current_uncertainty_claim_scope": (
             FRICTION_INTERVAL_ONLY_CERTIFIED_UNCERTAINTY_SCOPE
@@ -577,11 +636,13 @@ def test_real_contract_audit_binds_top_generator_but_retains_true_blockers(
         "hand.finger_2_pad.finite_footprint",
         "hand.finger_3_pad.finite_footprint",
         f"objects.{DEVELOPMENT}.planning_geometry",
+        f"objects.{DEVELOPMENT}.material_boundary_evidence",
         f"objects.{DEVELOPMENT}.planning_geometry_manifest",
         f"objects.{DEVELOPMENT}.source_stage",
         f"objects.{DEVELOPMENT}.physical_source",
         f"objects.{DEVELOPMENT}.contact_material_source",
         f"objects.{TRANSFER}.planning_geometry",
+        f"objects.{TRANSFER}.material_boundary_evidence",
         f"objects.{TRANSFER}.original_cad",
         f"objects.{TRANSFER}.geometry_audit",
         f"objects.{TRANSFER}.mass_source",
@@ -1574,7 +1635,6 @@ def test_formal_freeze_reports_remaining_non_rayclosure_blockers() -> None:
             repository_root=REPOSITORY,
         )
     assert captured.value.blockers == (
-        "MISSING_FORMAL_ROOT_INTERVAL_CANDIDATE_PROPAGATION",
         "MISSING_COMPLETE_HAND_ENVIRONMENT_CONTINUOUS_COLLISION_BINDING",
         "MISSING_CALIBRATED_NONFRICTION_UNCERTAINTY_BOUNDS",
     )

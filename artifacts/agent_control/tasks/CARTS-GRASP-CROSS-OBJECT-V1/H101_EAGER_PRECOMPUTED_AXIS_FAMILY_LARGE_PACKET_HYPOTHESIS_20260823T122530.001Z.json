@@ -1,0 +1,43 @@
+{
+  "schema_version": "carts_h101_eager_precomputed_axis_family_large_packet_hypothesis_v1",
+  "recorded_at_utc": "2026-08-23T12:25:30.001Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H101-EAGER-PRECOMPUTED-AXIS-FAMILY-LARGE-PACKET",
+  "status": "TARGETED_FIX_IN_PROGRESS",
+  "prerequisite_evidence": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H100_TERMINAL_FORCE_WORK_EXPLOSION_DIAGNOSTIC_RESULT_20260823T122115.231Z.json",
+  "diagnosis": "H99 proved that skipping child narrowphase can preserve false uncertainty, create unnecessary subdivisions, and duplicate pair work. Eager child narrowphase is therefore required. The remaining H97 cost is inside repeated all-axis pair packets: the same moving self-axis projections are recomputed for every static partner, the same static self-axis projections are recomputed for every moving partner, all 17 axes are concatenated into one temporary tensor, and 16,384-pair packets require many repeated NumPy calls.",
+  "single_structural_bundle": [
+    "Restore complete narrowphase on every non-empty child AABB frontier before any further subdivision. Remove halving deferral and terminal-only force as production decisions.",
+    "Precompute each moving triangle's four self-axis projection bounds and norms once per motion interval, then gather them for every static partner.",
+    "Precompute each static triangle's four self-axis projection bounds and norms once in the prepared object surface, then gather them for every moving partner.",
+    "Evaluate moving-self, static-self, and nine edge-cross axis families over the same complete pair packet without survivor compaction and without concatenating a 17-axis tensor. Combine their strict-separation masks only after all families are evaluated.",
+    "Raise the fixed pair packet cap from 16,384 to 65,536 so repeated Python/NumPy dispatch and index gathering are amortized over four times as many pairs. Never materialize the full candidate pair universe.",
+    "Replace H99 deferral audit fields with eager-child interval and pair-packet counts. Preserve exact pair coverage, immutable parent frontier inheritance, strict inequalities, and fail-closed terminal results."
+  ],
+  "validation_sequence": [
+    "Require the H100 geometry to close after one eager child evaluation without creating sibling terminal work.",
+    "Compare the family-split implementation against the complete 17-axis reference for exact and bounded moving boxes, including real overlap that must remain unresolved.",
+    "Run the continuous-collision, full-hand-collision, and study-contract tests once.",
+    "Run one shared 90-second comparison of 155, 174, 14, and 198. Do not run a separate real candidate first and do not stop after the first completed candidate."
+  ],
+  "expected_result": "All correctness comparisons and related tests pass; candidate 14 f1Link3 completes in at most 10 seconds; all retained candidates receive their required exact/contact and collision checks within 90 seconds or expose a causally different downstream blocker.",
+  "failure_criteria": [
+    "Any child is subdivided while a non-empty AABB frontier has not received full narrowphase.",
+    "The family-split mask differs from the complete 17-axis reference or any previously unresolved overlap becomes certified free without strict separating evidence.",
+    "Pair coverage, terminal unresolved count, geometry, physical thresholds, 4096 interval budget, candidate order, or fail-closed behavior changes.",
+    "Candidate 14 f1Link3 remains above 10 seconds, all four candidates do not finish within 90 seconds, or peak allocation causes an infrastructure failure."
+  ],
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "narrowphase_pair_packet_size_before": 16384,
+  "narrowphase_pair_packet_size_after": 65536,
+  "whole_top4_external_wall_limit_seconds": 90,
+  "candidate_14_f1Link3_target_seconds": 10,
+  "geometry_change_allowed": false,
+  "physical_threshold_change_allowed": false,
+  "parameter_grid_search_allowed": false,
+  "separate_real_candidate_probe_allowed": false,
+  "formal_selected_candidate": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

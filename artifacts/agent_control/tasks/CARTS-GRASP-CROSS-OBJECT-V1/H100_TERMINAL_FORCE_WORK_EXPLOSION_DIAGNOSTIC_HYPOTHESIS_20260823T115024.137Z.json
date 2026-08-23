@@ -1,0 +1,24 @@
+{
+  "schema_version": "carts_h100_terminal_force_work_explosion_diagnostic_hypothesis_v1",
+  "recorded_at_utc": "2026-08-23T11:50:24.137Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H100-TERMINAL-FORCE-WORK-EXPLOSION-DIAGNOSTIC",
+  "status": "INVESTIGATING",
+  "prerequisite_evidence": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H99_AMORTIZED_HALVING_NARROWPHASE_DEFER_RESULT_20260823T115024.137Z.json",
+  "single_diagnostic_question": "Does the H99 force-at-terminal rule duplicate a broad deferred pair frontier across many terminal leaves, making the sum of terminal narrowphase pair evaluations exceed eager parent-to-child evaluation?",
+  "allowed_diagnostic": [
+    "Inspect the child frontier and subdivision control flow.",
+    "Run one deterministic synthetic case that creates more than one terminal leaf and reports deferred observations, terminal-force invocations, and narrowphase pair evaluations.",
+    "Do not run any real candidate or Isaac process during this diagnostic."
+  ],
+  "expected_result": "The code path and synthetic counters show multiple terminal-force invocations after deferral, with the same unresolved pairs evaluated independently in sibling terminal leaves.",
+  "failure_criterion": "The diagnostic shows no duplicated terminal work or locates the elapsed time outside child frontier classification; in that case the next fix must target the measured alternative mechanism.",
+  "geometry_change_allowed": false,
+  "physical_threshold_change_allowed": false,
+  "candidate_run_allowed": false,
+  "parameter_grid_search_allowed": false,
+  "formal_selected_candidate": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

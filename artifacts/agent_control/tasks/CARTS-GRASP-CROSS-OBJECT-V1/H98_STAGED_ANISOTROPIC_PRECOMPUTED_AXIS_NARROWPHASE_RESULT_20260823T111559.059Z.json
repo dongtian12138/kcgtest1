@@ -1,0 +1,92 @@
+{
+  "schema_version": "carts_h98_staged_anisotropic_precomputed_axis_narrowphase_result_v1",
+  "recorded_at_utc": "2026-08-23T11:15:59.059Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H98-STAGED-ANISOTROPIC-PRECOMPUTED-AXIS-NARROWPHASE",
+  "status": "OFFLINE_PASS_CORRECTNESS_PERFORMANCE_REGRESSION_TOP4_INCOMPLETE",
+  "source_hypothesis": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H98_STAGED_ANISOTROPIC_PRECOMPUTED_AXIS_NARROWPHASE_HYPOTHESIS_20260823T105139.410Z.json",
+  "implemented_bundle": [
+    "Replaced isotropic moving-vertex balls with componentwise Cartesian interval boxes and outward-rounded axis projections.",
+    "Precomputed static triangle edges, normals, in-plane axes, projection bounds, and axis norms once in the prepared object surface.",
+    "Evaluated static axes, moving axes, and edge-cross axes in three survivor-only stages with exact per-stage accounting."
+  ],
+  "static_validation": {
+    "focused_test_count": 5,
+    "focused_test_seconds": 0.10,
+    "related_continuous_full_hand_study_test_count": 190,
+    "related_test_seconds": 9.47,
+    "all_passed": true,
+    "componentwise_box_corner_enclosure_passed": true,
+    "staged_matches_all_axis_reference_passed": true,
+    "real_overlap_remains_unresolved": true
+  },
+  "required_top4_comparison": {
+    "external_wall_limit_seconds": 90,
+    "process_exit_code": 124,
+    "natural_return": false,
+    "stop_after_first_success": false,
+    "all_four_exact_contact_evaluations_completed": true,
+    "all_four_collision_checks_completed": false,
+    "runtime_build_seconds": 14.362409306922927,
+    "all_four_exact_results_completed_at_total_seconds": 33.618669050047174,
+    "aggregate_input_build_seconds": 15.062972363783047,
+    "terminal_partition_build_seconds": 0.6268195689190179,
+    "prepared_object_build_seconds": 6.5640670489519835,
+    "shared_collision_context_ready_at_total_seconds": 55.881053765071556,
+    "exact_results": [
+      {"attempt_index": 155, "seconds": 4.481939360033721, "status": "STATIC_V9_POLICY_ACCEPTED"},
+      {"attempt_index": 174, "seconds": 5.408256510971114, "status": "V9_REJECTED_NO_FIRST_CONTACT_FOR_FINGER_3_PAD"},
+      {"attempt_index": 14, "seconds": 5.44441029895097, "status": "STATIC_V9_POLICY_ACCEPTED"},
+      {"attempt_index": 198, "seconds": 3.7769158789888024, "status": "STATIC_V9_POLICY_ACCEPTED"}
+    ],
+    "collision_results": [
+      {
+        "attempt_index": 155,
+        "collision_seconds": 5.967712653102353,
+        "f1Link3_seconds": 5.179244724102318,
+        "processed_intervals": 120,
+        "terminal_unresolved_pair_count": 3,
+        "frontier_pair_evaluation_count": 1698056,
+        "narrowphase_pair_evaluation_count": 906894,
+        "static_axis_separated_pair_count": 20241,
+        "moving_axis_separated_pair_count": 26094,
+        "edge_cross_axis_separated_pair_count": 11393,
+        "total_axis_separated_pair_count": 57728,
+        "all_three_axis_stage_survivor_pair_count": 849166,
+        "all_three_axis_stage_survivor_fraction": 0.936344,
+        "state": "UNRESOLVED_ADJACENT_BINARY64_PHASE_ENDPOINTS"
+      },
+      {"attempt_index": 174, "collision_checked": false, "reason": "EXACT_CONTACT_REJECTED"},
+      {
+        "attempt_index": 14,
+        "collision_checked": "STARTED_NOT_COMPLETED",
+        "f1Link3_started_at_total_seconds": 62.612149314023554,
+        "observed_f1Link3_lower_bound_seconds": 27.387850685976446
+      },
+      {"attempt_index": 198, "collision_checked": false, "reason": "TOP4_WALL_LIMIT_REACHED_DURING_CANDIDATE_14"}
+    ]
+  },
+  "performance_comparison": {
+    "candidate_155_h97_f1Link3_seconds": 4.392169429920614,
+    "candidate_155_h98_f1Link3_seconds": 5.179244724102318,
+    "candidate_155_slowdown_fraction": 0.1792,
+    "candidate_14_h97_f1Link3_seconds": 21.220486799022183,
+    "candidate_14_h98_observed_lower_bound_seconds": 27.387850685976446,
+    "candidate_14_minimum_slowdown_fraction": 0.2906,
+    "candidate_14_target_seconds": 10.0,
+    "candidate_14_target_met": false,
+    "whole_top4_target_seconds": 90.0,
+    "whole_top4_target_met": false
+  },
+  "root_cause": "Only 6.37 percent of candidate-155 narrowphase pairs were removed by all three staged axis families, while 93.63 percent paid three rounds of gathering, projection, and survivor compaction. The tighter box reduced narrowphase pair count by only 0.36 percent versus H97, so staged allocation overhead exceeded the saved work. Candidate 14 did not finish its hotspot within the remaining 27.39 seconds.",
+  "next_hypothesis": "CARTS-H99-AMORTIZED-HALVING-NARROWPHASE-DEFER",
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "final_selection_requires_all_retained_candidates_checked": true,
+  "candidate_result_written": false,
+  "generation_checkpoint_written": false,
+  "formal_selected_candidate": null,
+  "formal_selected_contact_range_policy": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

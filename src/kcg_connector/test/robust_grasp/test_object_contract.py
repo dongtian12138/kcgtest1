@@ -9,12 +9,20 @@ import pytest
 import yaml
 
 import kcg_connector.grasp.robust.object_contract as object_contract_module
+from kcg_connector.grasp.robust.material_boundary import MaterialBoundaryCertificate
 from kcg_connector.grasp.robust.object_contract import (
     ObjectContractError,
     load_object_contract,
     mass_distribution_rms_radius,
 )
+from kcg_connector.grasp.robust.object_material_boundary import (
+    CURRENT_REPRESENTATION,
+    SINGLE_REPRESENTATION,
+)
 from kcg_connector.grasp.robust.object_model import CARTS_VISUAL_SUBTREE_NPZ
+from kcg_connector.grasp.robust.positive_solid_union import (
+    PositiveSolidAggregateCertificate,
+)
 from kcg_connector.grasp.robust.surface_orientation import (
     SurfaceBoundaryRole,
     audit_surface_orientation,
@@ -82,6 +90,16 @@ def test_current_real_object_contract_is_hash_bound_and_not_dynamic_pass() -> No
     assert not orientation.formal_outward_eligible
     with pytest.raises(FrozenInstanceError):
         orientation.formal_outward_eligible = True  # type: ignore[misc]
+    material = loaded.material_boundary_evidence
+    assert material.representation == CURRENT_REPRESENTATION
+    assert material.formal_material_boundary_eligible is True
+    assert isinstance(material.certificate, PositiveSolidAggregateCertificate)
+    assert material.certificate.source_component_count == 7642
+    assert material.certificate.embedded_positive_solid_count == 7642
+    assert material.certificate.source_face_count == 145588
+    assert material.certificate.certificate_sha256 == (
+        "01c554d25565a0aeb271ccd9cafa6775d1ae046bc882bcf26f3f30ed8c54bdaa"
+    )
     assert loaded.task_frame_rotation_object.flags.writeable is False
     assert loaded.nominal_validation_gravity_direction_object.flags.writeable is False
     assert set(loaded.verified_source_sha256) == {
@@ -90,6 +108,8 @@ def test_current_real_object_contract_is_hash_bound_and_not_dynamic_pass() -> No
         "planning_geometry_manifest",
         "planning_geometry_source_stage",
         "physical_source_contract",
+        "material_boundary_evidence",
+        "material_boundary_role_authority",
     }
     assert not loaded.uncertainty_calibrated
     assert not loaded.dynamic_eligible
@@ -129,6 +149,14 @@ def test_transfer_object_uses_the_same_hash_bound_material_interval_without_scor
         "f221241afd04e1ecb5c73c8bff437fdcb23856b3fd6a483a3fad1ccd714a6b63"
     )
     assert not orientation.formal_outward_eligible
+    material = loaded.material_boundary_evidence
+    assert material.representation == SINGLE_REPRESENTATION
+    assert material.formal_material_boundary_eligible is True
+    assert isinstance(material.certificate, MaterialBoundaryCertificate)
+    assert material.certificate.source_face_count == 687036
+    assert material.certificate.certificate_sha256 == (
+        "567006240de22af81d2331f24df98d542f69677b22f26daa58b082a45ec52b80"
+    )
     assert not loaded.dynamic_eligible
 
 

@@ -9,6 +9,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import kcg_connector.grasp.robust.continuous_collision as collision_module
+
 from kcg_connector.grasp.robust.continuous_collision import (
     CLAIM_LIMITATIONS,
     ContinuousCollisionError,
@@ -18,9 +20,11 @@ from kcg_connector.grasp.robust.continuous_collision import (
     METHOD_ID,
     MOVING_PAIR_CLAIM_LIMITATIONS,
     MOVING_PAIR_METHOD_ID,
+    PREPARED_STATIC_SURFACE_METHOD_ID,
     certify_independent_link_motion_surfaces_separated_from_each_other,
     certify_moving_link_surfaces_separated_from_each_other,
     certify_moving_link_surface_separated_from_static_surface,
+    prepare_static_triangle_surface,
 )
 from kcg_connector.grasp.robust.hand_model import (
     GeometrySpec,
@@ -114,6 +118,17 @@ def _static_triangle(
         ),
         dtype=np.float64,
     )
+
+
+def _moving_triangle_point_bounds(
+    x_lower: float,
+    x_upper: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    lower = np.array(_moving_triangle(), copy=True)
+    upper = np.array(_moving_triangle(), copy=True)
+    lower[:, :, 0] += x_lower
+    upper[:, :, 0] += x_upper
+    return lower, upper
 
 
 def _certify(
@@ -295,6 +310,424 @@ def test_all_faces_are_covered_not_only_initially_nearest_face() -> None:
     assert certificate.audit.all_processed_pairs_accounted_for
 
 
+def test_triangle_narrowphase_resolves_coplanar_aabb_overlap() -> None:
+    coplanar_disjoint = np.asarray(
+        (
+            (
+                (0.0, 0.8, 0.8),
+                (0.0, 1.8, 0.8),
+                (0.0, 0.8, 1.8),
+            ),
+        ),
+        dtype=np.float64,
+    )
+
+    certificate = _certify(
+        static=coplanar_disjoint,
+        direction=np.zeros(3),
+        maximum_intervals=1,
+    )
+
+    assert certificate.state is ContinuousCollisionState.CERTIFIED_FREE
+    assert certificate.audit.narrowphase_pair_evaluation_count == 1
+    assert (
+        certificate.audit.narrowphase_strictly_separated_pair_count == 1
+    )
+    assert certificate.audit.potential_overlap_pair_observation_count == 0
+
+
+def test_triangle_narrowphase_never_clears_real_overlap() -> None:
+    overlapping = np.asarray(
+        (
+            (
+                (0.0, 0.2, 0.2),
+                (0.0, 0.8, 0.2),
+                (0.0, 0.2, 0.8),
+            ),
+        ),
+        dtype=np.float64,
+    )
+
+    certificate = _certify(
+        static=overlapping,
+        direction=np.zeros(3),
+        maximum_intervals=1,
+    )
+
+    assert certificate.state is ContinuousCollisionState.UNRESOLVED
+    assert certificate.audit.narrowphase_pair_evaluation_count == 1
+    assert (
+        certificate.audit.narrowphase_strictly_separated_pair_count == 0
+    )
+    assert certificate.audit.potential_overlap_pair_observation_count == 1
+
+
+def test_componentwise_projection_encloses_every_vertex_box_corner() -> None:
+    lower = np.asarray(
+        (
+            (
+                (-0.2, -0.1, -0.3),
+                (0.8, -0.4, 0.1),
+                (-0.5, 0.7, 0.2),
+            ),
+        ),
+        dtype=np.float64,
+    )
+    upper = np.asarray(
+        (
+            (
+                (0.4, 0.3, 0.2),
+                (1.1, 0.2, 0.6),
+                (0.2, 1.3, 0.9),
+            ),
+        ),
+        dtype=np.float64,
+    )
+    (
+        _triangle_lower,
+        _triangle_upper,
+        midpoint,
+        half_extent,
+        _moving_edges,
+        _moving_stage_axes,
+        _moving_stage_projection_minimum,
+        _moving_stage_projection_maximum,
+        _moving_stage_axis_norm,
+        _moving_coordinate_scale,
+    ) = collision_module._moving_triangle_packet_geometry(lower, upper)
+    axes = np.asarray(
+        (
+            (
+                (1.0, 0.0, 0.0),
+                (0.0, -2.0, 0.0),
+                (0.0, 0.0, 3.0),
+                (1.0, -2.0, 0.5),
+                (-0.25, 0.75, 1.5),
+            ),
+        ),
+        dtype=np.float64,
+    )
+
+    projection_lower, projection_upper = (
+        collision_module._moving_projection_interval_bounds(
+            moving_triangles_midpoint_m=midpoint,
+            moving_vertex_motion_half_extent_upper_m=half_extent,
+            candidate_axes=axes,
+        )
+    )
+
+    corner_selectors = np.asarray(
+        tuple(
+            (x_upper, y_upper, z_upper)
+            for x_upper in (False, True)
+            for y_upper in (False, True)
+            for z_upper in (False, True)
+        ),
+        dtype=np.bool_,
+    )
+    for vertex_index in range(3):
+        corners = np.where(
+            corner_selectors,
+            upper[0, vertex_index],
+            lower[0, vertex_index],
+        )
+        corner_projections = corners @ axes[0].T
+        assert np.all(corner_projections >= projection_lower[0])
+        assert np.all(corner_projections <= projection_upper[0])
+
+
+@pytest.mark.parametrize("bounded_motion", (False, True))
+def test_precomputed_axis_families_match_all_axis_reference(
+    bounded_motion: bool,
+) -> None:
+    moving = np.concatenate(
+        (
+            _moving_triangle(),
+            _moving_triangle() + np.asarray((0.0, 2.0, 0.0)),
+        )
+    )
+    lower = np.array(moving, copy=True)
+    upper = np.array(moving, copy=True)
+    if bounded_motion:
+        lower -= np.asarray((0.08, 0.03, 0.05))
+        upper += np.asarray((0.12, 0.07, 0.09))
+    static = np.concatenate(
+        (
+            _static_triangle(0.0),
+            _static_triangle(2.0),
+            _static_triangle(0.0, z_offset=3.0),
+        )
+    )
+    prepared = prepare_static_triangle_surface(static)
+    (
+        _triangle_lower,
+        _triangle_upper,
+        midpoint,
+        half_extent,
+        moving_edges,
+        moving_stage_axes,
+        moving_stage_projection_minimum,
+        moving_stage_projection_maximum,
+        moving_stage_axis_norm,
+        moving_coordinate_scale,
+    ) = collision_module._moving_triangle_packet_geometry(lower, upper)
+    moving_faces = np.repeat(
+        np.arange(len(moving), dtype=np.int64),
+        prepared.triangle_count,
+    )
+    static_faces = np.tile(
+        np.arange(prepared.triangle_count, dtype=np.int64),
+        len(moving),
+    )
+    family_split = (
+        prepared._bvh._precomputed_axis_family_strict_separation_mask(
+            moving_faces=moving_faces,
+            static_faces=static_faces,
+            midpoint_m=midpoint,
+            half_extent_upper_m=half_extent,
+            moving_edges_m=moving_edges,
+            moving_stage_axes=moving_stage_axes,
+            moving_stage_projection_minimum=(
+                moving_stage_projection_minimum
+            ),
+            moving_stage_projection_maximum=(
+                moving_stage_projection_maximum
+            ),
+            moving_stage_axis_norm=moving_stage_axis_norm,
+            moving_coordinate_scale_m=moving_coordinate_scale,
+        )
+    )
+    reference = (
+        collision_module._moving_triangle_triangle_strict_separation_mask(
+            moving_triangles_midpoint_m=midpoint[moving_faces],
+            moving_vertex_motion_half_extent_upper_m=(
+                half_extent[moving_faces]
+            ),
+            fixed_triangles_m=prepared.triangles_object_m[static_faces],
+        )
+    )
+
+    assert np.array_equal(family_split, reference)
+
+
+def test_root_aggregates_multiple_bvh_leaves_into_one_pair_packet() -> None:
+    static = np.concatenate(
+        tuple(_static_triangle(value) for value in np.linspace(0.1, 0.8, 8))
+    )
+    prepared = prepare_static_triangle_surface(static)
+    lower, upper = _moving_triangle_point_bounds(0.0, 1.0)
+    counters = collision_module._Counters()
+
+    root = prepared._bvh.classify_moving_triangles_packet(
+        lower, upper, counters
+    )
+
+    assert prepared.triangle_count == 8
+    assert counters.bvh_leaf_visits > 1
+    assert counters.leaf_pair_evaluations == 8
+    assert counters.narrowphase_pair_evaluations == 8
+    assert counters.narrowphase_pair_packets == 1
+    assert counters.narrowphase_root_pair_packets == 1
+    assert counters.narrowphase_child_pair_packets == 0
+    assert counters.pair_coverage == 8
+    assert counters.potential_overlap_pairs == 8
+    assert root.pair_count == 8
+    assert np.array_equal(root.pair_ids, np.arange(8, dtype=np.int64))
+
+
+def test_child_narrowphase_is_eager_before_subdivision() -> None:
+    prepared = prepare_static_triangle_surface(
+        np.concatenate(
+            (
+                _static_triangle(0.25),
+                _static_triangle(0.50),
+                _static_triangle(0.75),
+            )
+        )
+    )
+    root_lower, root_upper = _moving_triangle_point_bounds(0.0, 1.0)
+    child_lower, child_upper = _moving_triangle_point_bounds(0.0, 0.6)
+    grandchild_lower, grandchild_upper = _moving_triangle_point_bounds(
+        0.0, 0.3
+    )
+    root = prepared._bvh.classify_moving_triangles_packet(
+        root_lower, root_upper, collision_module._Counters()
+    )
+    child_counters = collision_module._Counters()
+    child = prepared._bvh.classify_parent_pair_frontier_packet(
+        child_lower, child_upper, root, child_counters
+    )
+    grandchild_counters = collision_module._Counters()
+    grandchild = prepared._bvh.classify_parent_pair_frontier_packet(
+        grandchild_lower,
+        grandchild_upper,
+        child,
+        grandchild_counters,
+    )
+
+    assert root.pair_count == 3
+    assert child.pair_count == 2
+    assert child_counters.narrowphase_pair_evaluations == 2
+    assert child_counters.narrowphase_invocation_intervals == 1
+    assert child_counters.narrowphase_eager_child_intervals == 1
+    assert child_counters.narrowphase_pair_packets == 1
+    assert grandchild.pair_count == 1
+    assert grandchild_counters.narrowphase_invocation_intervals == 1
+    assert grandchild_counters.narrowphase_eager_child_intervals == 1
+    assert grandchild_counters.narrowphase_pair_packets == 1
+    assert grandchild_counters.narrowphase_pair_evaluations == 1
+
+
+def test_eager_child_avoids_h99_sibling_terminal_duplication() -> None:
+    coplanar_disjoint = np.asarray(
+        (
+            (
+                (0.0, 0.8, 0.8),
+                (0.0, 1.8, 0.8),
+                (0.0, 0.8, 1.8),
+            ),
+        ),
+        dtype=np.float64,
+    )
+    prepared = prepare_static_triangle_surface(coplanar_disjoint)
+    moving = _moving_triangle()
+    root_lower = moving - np.asarray((0.0, 1.0, 1.0))
+    root_upper = moving + np.asarray((0.0, 1.0, 1.0))
+    root = prepared._bvh.classify_moving_triangles_packet(
+        root_lower, root_upper, collision_module._Counters()
+    )
+    counters = collision_module._Counters()
+
+    child = prepared._bvh.classify_parent_pair_frontier_packet(
+        moving,
+        moving,
+        root,
+        counters,
+    )
+
+    assert root.pair_count == 1
+    assert child.pair_count == 0
+    assert counters.narrowphase_invocation_intervals == 1
+    assert counters.narrowphase_eager_child_intervals == 1
+    assert counters.narrowphase_pair_packets == 1
+    assert counters.narrowphase_pair_evaluations == 1
+
+
+def test_parent_pair_frontier_is_monotone_and_matches_full_recheck() -> None:
+    prepared = prepare_static_triangle_surface(
+        np.concatenate((_static_triangle(0.25), _static_triangle(0.75)))
+    )
+    parent_lower, parent_upper = _moving_triangle_point_bounds(0.0, 1.0)
+    child_lower, child_upper = _moving_triangle_point_bounds(0.0, 0.4)
+    grandchild_lower, grandchild_upper = _moving_triangle_point_bounds(
+        0.0, 0.1
+    )
+
+    root_counters = collision_module._Counters()
+    root = prepared._bvh.classify_moving_triangles_packet(
+        parent_lower, parent_upper, root_counters
+    )
+    child_counters = collision_module._Counters()
+    child = prepared._bvh.classify_parent_pair_frontier_packet(
+        child_lower, child_upper, root, child_counters
+    )
+    child_reference_counters = collision_module._Counters()
+    child_reference = prepared._bvh.classify_moving_triangles_packet(
+        child_lower, child_upper, child_reference_counters
+    )
+    grandchild_counters = collision_module._Counters()
+    grandchild = prepared._bvh.classify_parent_pair_frontier_packet(
+        grandchild_lower,
+        grandchild_upper,
+        child,
+        grandchild_counters,
+    )
+    grandchild_reference_counters = collision_module._Counters()
+    grandchild_reference = prepared._bvh.classify_moving_triangles_packet(
+        grandchild_lower,
+        grandchild_upper,
+        grandchild_reference_counters,
+    )
+
+    assert root.pair_count == 2
+    assert child.pair_count == 1
+    assert grandchild.pair_count == 0
+    assert np.array_equal(child.pair_ids, child_reference.pair_ids)
+    assert np.array_equal(
+        grandchild.pair_ids, grandchild_reference.pair_ids
+    )
+    assert set(child.pair_ids).issubset(set(root.pair_ids))
+    assert set(grandchild.pair_ids).issubset(set(child.pair_ids))
+    assert root_counters.root_bvh_intervals == 1
+    assert child_counters.root_bvh_intervals == 0
+    assert child_counters.frontier_pair_evaluations == 2
+    assert grandchild_counters.frontier_pair_evaluations == 1
+    assert grandchild_counters.inherited_strictly_separated_pairs == 1
+    assert grandchild_counters.pair_coverage == 2
+    assert grandchild_counters.strictly_separated_pairs == 2
+    assert grandchild_counters.potential_overlap_pairs == 0
+    assert not root.pair_ids.flags.writeable
+
+
+def test_persistent_frontier_matches_full_recheck_certificate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    static = np.concatenate(
+        (_static_triangle(0.5), _static_triangle(0.0, z_offset=2.0))
+    )
+    optimized = _certify(static=static, maximum_intervals=7)
+    full_packet = (
+        collision_module._StaticTriangleBVH.classify_moving_triangles_packet
+    )
+
+    def full_recheck_reference(
+        self,
+        point_lower_m,
+        point_upper_m,
+        _parent_frontier,
+        counters,
+    ):
+        root_bvh_count = counters.root_bvh_intervals
+        result = full_packet(self, point_lower_m, point_upper_m, counters)
+        counters.root_bvh_intervals = root_bvh_count
+        return result
+
+    monkeypatch.setattr(
+        collision_module._StaticTriangleBVH,
+        "classify_parent_pair_frontier_packet",
+        full_recheck_reference,
+    )
+    reference = _certify(static=static, maximum_intervals=7)
+
+    assert optimized.state == reference.state
+    assert optimized.unresolved_interval == reference.unresolved_interval
+    assert (
+        optimized.certified_free_leaf_intervals
+        == reference.certified_free_leaf_intervals
+    )
+    assert (
+        optimized.audit.processed_interval_count
+        == reference.audit.processed_interval_count
+    )
+    assert optimized.audit.pair_universe_count == reference.audit.pair_universe_count
+    assert optimized.audit.pair_coverage_count == reference.audit.pair_coverage_count
+    assert (
+        optimized.audit.terminal_unresolved_pair_count
+        == reference.audit.terminal_unresolved_pair_count
+    )
+    assert optimized.audit.root_bvh_interval_count == 1
+    assert optimized.audit.inherited_strictly_separated_pair_count > 0
+    assert optimized.audit.frontier_pair_evaluation_count > 0
+    assert optimized.audit.narrowphase_eager_child_interval_count > 0
+    assert optimized.audit.narrowphase_pair_packet_count > 0
+    assert optimized.audit.all_processed_pairs_accounted_for
+    assert reference.audit.all_processed_pairs_accounted_for
+    assert (
+        optimized.audit.leaf_pair_evaluation_count
+        < reference.audit.leaf_pair_evaluation_count
+    )
+
+
 def test_common_proper_se3_preserves_free_certificate_and_counts() -> None:
     static = _static_triangle(10.0)
     reference = _certify(static=static)
@@ -415,6 +848,163 @@ def test_face_order_and_each_face_winding_do_not_change_certificate() -> None:
         permuted.audit.strictly_separated_pair_count
         == reference.audit.strictly_separated_pair_count
     )
+
+
+def test_prepared_static_surface_matches_direct_and_rejects_mismatch() -> None:
+    static = np.concatenate(
+        (_static_triangle(3.0), _static_triangle(4.0, z_offset=2.0))
+    )
+    direct = _certify(static=static)
+    prepared = prepare_static_triangle_surface(
+        static[::-1, ::-1, :],
+        expected_geometry_sha256=(
+            direct.audit.static_surface_geometry_sha256
+        ),
+    )
+
+    reused = _certify(static=prepared)
+
+    assert prepared.method_id == PREPARED_STATIC_SURFACE_METHOD_ID
+    assert prepared.triangle_count == len(static)
+    assert reused == direct
+    assert not prepared.triangles_object_m.flags.writeable
+    with pytest.raises(ValueError):
+        prepared.triangles_object_m[0, 0, 0] = 9.0
+    with pytest.raises(ContinuousCollisionError, match="hash mismatch"):
+        prepare_static_triangle_surface(
+            static,
+            expected_geometry_sha256="0" * 64,
+        )
+
+
+def test_surface_collision_uses_one_batch_fk_per_link_and_interval(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    backend = _backend(second_origin_y=5.0)
+    batch_calls: list[tuple[str, int]] = []
+    original_batch = backend.point_motion_many
+
+    def counted_batch(**kwargs):
+        points = np.asarray(kwargs["points_local_m"])
+        batch_calls.append((str(kwargs["link_name"]), len(points)))
+        return original_batch(**kwargs)
+
+    def scalar_must_not_run(**_kwargs):
+        raise AssertionError("scalar point_motion must not run")
+
+    monkeypatch.setattr(backend, "point_motion_many", counted_batch)
+    monkeypatch.setattr(backend, "point_motion", scalar_must_not_run)
+    moving = np.concatenate(
+        (
+            _moving_triangle(),
+            _moving_triangle() + np.asarray((0.0, 2.0, 0.0)),
+        )
+    )
+
+    static_certificate = (
+        certify_moving_link_surface_separated_from_static_surface(
+            backend=backend,
+            link_name="link_a",
+            q_start=np.zeros(3),
+            direction=np.asarray((1.0, 0.0, 0.0)),
+            phase=IntervalBounds(0.0, 1.0),
+            object_from_hand_base=np.eye(4),
+            moving_triangles_link_m=moving,
+            static_triangles_object_m=_static_triangle(10.0),
+            maximum_subdivision_intervals=1,
+        )
+    )
+    pair_certificate = certify_moving_link_surfaces_separated_from_each_other(
+        backend=backend,
+        first_link_name="link_a",
+        second_link_name="link_b",
+        q_start=np.zeros(3),
+        direction=np.zeros(3),
+        phase=IntervalBounds(0.0, 1.0),
+        object_from_hand_base=np.eye(4),
+        first_triangles_link_m=moving,
+        second_triangles_link_m=_moving_triangle(),
+        maximum_subdivision_intervals=1,
+    )
+
+    assert static_certificate.state is ContinuousCollisionState.CERTIFIED_FREE
+    assert pair_certificate.state is ContinuousCollisionState.CERTIFIED_FREE
+    assert batch_calls == [("link_a", 6), ("link_a", 6), ("link_b", 3)]
+    assert static_certificate.audit.point_motion_evaluation_count == 6
+    assert pair_certificate.audit.point_motion_evaluation_count == 9
+
+
+def test_packet_static_bvh_matches_per_face_reference_accounting() -> None:
+    static = np.concatenate(
+        tuple(
+            _static_triangle(x_coordinate, z_offset=z_offset)
+            for x_coordinate, z_offset in (
+                (0.0, 0.0),
+                (1.0, 0.0),
+                (2.0, 2.0),
+                (3.0, 2.0),
+                (4.0, 4.0),
+            )
+        )
+    )
+    prepared = prepare_static_triangle_surface(static)
+    moving_lower = np.asarray(
+        (
+            (-0.1, -0.1, -0.1),
+            (1.5, 0.2, 0.2),
+            (10.0, 10.0, 10.0),
+            (2.5, 0.0, 2.0),
+        ),
+        dtype=np.float64,
+    )
+    moving_upper = np.asarray(
+        (
+            (0.1, 0.1, 0.1),
+            (2.5, 0.8, 0.8),
+            (11.0, 11.0, 11.0),
+            (3.5, 1.0, 3.0),
+        ),
+        dtype=np.float64,
+    )
+    scalar = collision_module._Counters()
+    scalar_overlap_count = 0
+    for lower, upper in zip(moving_lower, moving_upper):
+        candidates, pruned = prepared._bvh.potential_faces(
+            lower, upper, scalar
+        )
+        scalar.pair_coverage += pruned
+        scalar.strictly_separated_pairs += pruned
+        for face_index in candidates:
+            scalar.leaf_pair_evaluations += 1
+            scalar.pair_coverage += 1
+            separated = collision_module._strictly_separated(
+                lower,
+                upper,
+                prepared._bvh.face_lower_m[face_index],
+                prepared._bvh.face_upper_m[face_index],
+            )
+            if separated:
+                scalar.strictly_separated_pairs += 1
+            else:
+                scalar.potential_overlap_pairs += 1
+                scalar_overlap_count += 1
+
+    packet = collision_module._Counters()
+    packet_overlap_count = (
+        prepared._bvh.classify_moving_face_bounds_packet(
+            moving_lower,
+            moving_upper,
+            packet,
+        )
+    )
+
+    assert packet_overlap_count == scalar_overlap_count
+    assert packet.bvh_node_visits == scalar.bvh_node_visits
+    assert packet.bvh_leaf_visits == scalar.bvh_leaf_visits
+    assert packet.leaf_pair_evaluations == scalar.leaf_pair_evaluations
+    assert packet.pair_coverage == scalar.pair_coverage
+    assert packet.strictly_separated_pairs == scalar.strictly_separated_pairs
+    assert packet.potential_overlap_pairs == scalar.potential_overlap_pairs
 
 
 def test_core_contains_no_allowed_contact_or_metric_angle_gate() -> None:

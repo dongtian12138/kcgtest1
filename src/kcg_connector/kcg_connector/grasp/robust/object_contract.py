@@ -13,6 +13,13 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 import yaml
 
+from kcg_connector.grasp.robust.object_material_boundary import (
+    CURRENT_REPRESENTATION,
+    SINGLE_REPRESENTATION,
+    ObjectMaterialBoundaryError,
+    ObjectMaterialBoundaryEvidence,
+    load_object_material_boundary_evidence,
+)
 from kcg_connector.grasp.robust.object_model import ObjectGraspModel
 from kcg_connector.grasp.robust.surface_orientation import (
     SurfaceBoundaryRole,
@@ -501,6 +508,7 @@ class LoadedObjectContract:
     task_frame_source: str
     contact_material_uncertainty: ContactMaterialUncertainty
     orientation_certificate: SurfaceOrientationCertificate
+    material_boundary_evidence: ObjectMaterialBoundaryEvidence
     verified_source_sha256: Mapping[str, str]
     geometry_contract: Mapping[str, Any]
     physical_contract: Mapping[str, Any]
@@ -803,6 +811,55 @@ def load_object_contract(
             f"{object_id}.planning_geometry surface orientation audit failed: {error}"
         ) from error
 
+    material_evidence_contract = _mapping(
+        _required(
+            geometry,
+            "material_boundary_evidence",
+            f"{object_id}.planning_geometry",
+        ),
+        f"{object_id}.planning_geometry.material_boundary_evidence",
+    )
+    _exact_keys(
+        material_evidence_contract,
+        ("representation", "path", "sha256"),
+        f"{object_id}.planning_geometry.material_boundary_evidence",
+    )
+    expected_representation = (
+        CURRENT_REPRESENTATION
+        if geometry_format == "CARTS_GRASP_VISUAL_SUBTREE_NPZ_V1"
+        else SINGLE_REPRESENTATION
+    )
+    if material_evidence_contract["representation"] != expected_representation:
+        raise ObjectContractError(
+            f"{object_id}.planning_geometry material representation changed"
+        )
+    material_evidence_path = _verified_file(
+        root,
+        material_evidence_contract,
+        path_key="path",
+        sha_key="sha256",
+        label=f"{object_id}.planning_geometry.material_boundary_evidence",
+    )
+    try:
+        material_boundary_evidence = load_object_material_boundary_evidence(
+            material_evidence_path,
+            repository_root=root,
+            expected_object_id=object_id,
+            expected_source_asset_path=geometry_path,
+            expected_source_asset_sha256=geometry_sha256,
+            orientation_certificate=orientation_certificate,
+        )
+    except (ObjectMaterialBoundaryError, ValueError) as error:
+        raise ObjectContractError(
+            f"{object_id}.planning_geometry material boundary failed: {error}"
+        ) from error
+    verified_sources["material_boundary_evidence"] = _sha256(
+        material_evidence_path
+    )
+    verified_sources["material_boundary_role_authority"] = (
+        material_boundary_evidence.role_authority_sha256
+    )
+
     if "source_contract" in physical:
         source_contract_path = _verified_fragmented_reference(
             root,
@@ -846,6 +903,7 @@ def load_object_contract(
         task_frame_source=task_frame_source,
         contact_material_uncertainty=contact_material,
         orientation_certificate=orientation_certificate,
+        material_boundary_evidence=material_boundary_evidence,
         verified_source_sha256=MappingProxyType(dict(verified_sources)),
         geometry_contract=geometry,
         physical_contract=physical,

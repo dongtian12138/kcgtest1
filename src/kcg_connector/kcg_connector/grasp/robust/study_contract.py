@@ -58,13 +58,21 @@ from .post_generation_ranker import (
     SCENARIO_SOBOL_SEED as POST_GENERATION_SCENARIO_SOBOL_SEED,
     SELECTION_ORDER as POST_GENERATION_SELECTION_ORDER,
     TIE_BREAK_RULE as POST_GENERATION_TIE_BREAK_RULE,
-    POLICY_AWARE_RANKING_GUARD,
+    POLICY_AWARE_RANKING_STATUS,
 )
 from .ray_closure import (
     CLOSURE_PARAMETER_DOMAIN_ID,
     METHOD_ID as RAY_CLOSURE_METHOD_ID,
     PARAMETER_LAYOUT_PREFIX,
     RayClosureSurfaceModel,
+)
+from .interval_kinematics import INTERVAL_GEOMETRIC_JACOBIAN_METHOD_ID
+from .interval_policy_margin import (
+    CERTIFIED_MARGIN_SEARCH_RULE,
+    MAXIMUM_CERTIFICATION_ATTEMPTS,
+    MAXIMUM_CERTIFICATION_ATTEMPTS_ROLE,
+    METHOD_ID as INTERVAL_POLICY_MARGIN_METHOD_ID,
+    MIDPOINT_MARGIN_PROPOSAL_ROLE,
 )
 from .surface_anchored_closure import (
     FIXED_ANCHOR_METHOD_ID,
@@ -75,6 +83,7 @@ from .surface_anchored_closure import (
 from .task_wrench_evaluator import (
     CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS,
     CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS,
+    CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE,
     CONTACT_RANGE_POLICY_WRENCH_METHOD_ID,
     CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE,
     CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE,
@@ -119,18 +128,13 @@ _PACKAGE_XML_SHA256 = (
 _MISSING_COMPLETE_COLLISION_BINDING = (
     "MISSING_COMPLETE_HAND_ENVIRONMENT_CONTINUOUS_COLLISION_BINDING"
 )
-_MISSING_FORMAL_ROOT_INTERVAL_CANDIDATE_PROPAGATION = (
-    "MISSING_FORMAL_ROOT_INTERVAL_CANDIDATE_PROPAGATION"
-)
 _FORMAL_EMPTY_STATUS = (
-    "EMPTY_UNTIL_FORMAL_ROOT_INTERVAL_CANDIDATE_PROPAGATION_"
-    "COMPLETE_COLLISION_AND_CALIBRATED_FULL_UNCERTAINTY"
+    "EMPTY_UNTIL_COMPLETE_COLLISION_AND_CALIBRATED_FULL_UNCERTAINTY"
 )
 _NESTED_CONVERGENCE_ROLE = (
     "SAME_SEED_SCRAMBLED_SOBOL_PREFIX_EXTENSION_NOT_INDEPENDENT_VALIDATION"
 )
 _CURRENT_PREREGISTRATION_BLOCKERS = (
-    _MISSING_FORMAL_ROOT_INTERVAL_CANDIDATE_PROPAGATION,
     _MISSING_COMPLETE_COLLISION_BINDING,
     FORMAL_UNCERTAINTY_BLOCKER,
 )
@@ -380,6 +384,9 @@ _METHOD_SCHEMA = {
         "method_id": _LEAF,
         "root_domain_rule": _LEAF,
         "cartesian_product_rule": _LEAF,
+        "interval_geometric_jacobian_method_id": _LEAF,
+        "interval_policy_margin_method_id": _LEAF,
+        "joint_position_domain_rule": _LEAF,
         "policy_collision_binding_required": _LEAF,
         "qmc_role": _LEAF,
         "display_approximation_used_as_formal_evidence": _LEAF,
@@ -390,6 +397,12 @@ _METHOD_SCHEMA = {
         "contact_range_margin_computed": _LEAF,
         "interval_contact_jacobian_certificate_present": _LEAF,
         "parametric_wrench_lower_bound_certificate_present": _LEAF,
+        "midpoint_margin_proposal_role": _LEAF,
+        "midpoint_margin_proposal_used_as_formal_evidence": _LEAF,
+        "certified_margin_search_rule": _LEAF,
+        "maximum_certification_attempts": _LEAF,
+        "maximum_certification_attempts_role": _LEAF,
+        "returned_margin_requires_complete_interval_certificate": _LEAF,
         "mandatory_blockers": _LEAF,
         "claim_limitations": _LEAF,
         "formal_selection_allowed": _LEAF,
@@ -428,6 +441,8 @@ _METHOD_SCHEMA = {
             "failed_candidate_drop_allowed": _LEAF,
             "collision_invocations_per_unique_accepted_candidate": _LEAF,
             "wrench_invocations_per_unique_accepted_candidate": _LEAF,
+            "collision_invocations_per_unique_accepted_policy": _LEAF,
+            "wrench_invocations_after_valid_policy_collision_binding": _LEAF,
             "retry_allowed": _LEAF,
             "replacement_after_failure_allowed": _LEAF,
         },
@@ -435,10 +450,13 @@ _METHOD_SCHEMA = {
             "status": _LEAF,
             "allowed_with_current_bindings": _LEAF,
             "formal_ranked_keys_must_be_empty": _LEAF,
+            "formal_ranked_policy_keys_must_be_empty": _LEAF,
             "selected_candidate_must_be_none": _LEAF,
+            "selected_contact_range_policy_must_be_none": _LEAF,
             "contact_range_policy_handling": _LEAF,
-            "contact_range_policy_collision_invocations_before_support": _LEAF,
-            "contact_range_policy_wrench_invocations_before_support": _LEAF,
+            "contact_range_policy_ranking_status": _LEAF,
+            "contact_range_policy_collision_invocations_per_unique_policy": _LEAF,
+            "contact_range_policy_wrench_invocations_after_valid_collision_binding": _LEAF,
             "required_collision_claim_scope": _LEAF,
             "current_uncertainty_claim_scope": _LEAF,
             "required_additional_uncertainty_binding": _LEAF,
@@ -648,6 +666,11 @@ _OBJECT_SCHEMA = {
                 "format": _LEAF,
                 "path": _LEAF,
                 "sha256": _LEAF,
+                "material_boundary_evidence": {
+                    "representation": _LEAF,
+                    "path": _LEAF,
+                    "sha256": _LEAF,
+                },
                 "manifest": _LEAF,
                 "manifest_sha256": _LEAF,
                 "source_stage": _LEAF,
@@ -716,6 +739,11 @@ _OBJECT_SCHEMA = {
                 "format": _LEAF,
                 "path": _LEAF,
                 "sha256": _LEAF,
+                "material_boundary_evidence": {
+                    "representation": _LEAF,
+                    "path": _LEAF,
+                    "sha256": _LEAF,
+                },
                 "source_unit": _LEAF,
                 "watertight": _LEAF,
                 "winding_consistent": _LEAF,
@@ -1157,6 +1185,15 @@ def _validate_method(document: Mapping[str, Any]) -> None:
         "method_id": CONTACT_RANGE_POLICY_WRENCH_METHOD_ID,
         "root_domain_rule": CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE,
         "cartesian_product_rule": CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE,
+        "interval_geometric_jacobian_method_id": (
+            INTERVAL_GEOMETRIC_JACOBIAN_METHOD_ID
+        ),
+        "interval_policy_margin_method_id": (
+            INTERVAL_POLICY_MARGIN_METHOD_ID
+        ),
+        "joint_position_domain_rule": (
+            CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE
+        ),
         "policy_collision_binding_required": True,
         "qmc_role": "FRICTION_INTERVAL_ONLY_NOT_CONTACT_GEOMETRY_SAMPLING",
         "display_approximation_used_as_formal_evidence": False,
@@ -1165,8 +1202,16 @@ def _validate_method(document: Mapping[str, Any]) -> None:
         "exact_candidate_wrench_invocations": 0,
         "current_state": "NOT_CERTIFIABLE",
         "contact_range_margin_computed": False,
-        "interval_contact_jacobian_certificate_present": False,
+        "interval_contact_jacobian_certificate_present": True,
         "parametric_wrench_lower_bound_certificate_present": False,
+        "midpoint_margin_proposal_role": MIDPOINT_MARGIN_PROPOSAL_ROLE,
+        "midpoint_margin_proposal_used_as_formal_evidence": False,
+        "certified_margin_search_rule": CERTIFIED_MARGIN_SEARCH_RULE,
+        "maximum_certification_attempts": MAXIMUM_CERTIFICATION_ATTEMPTS,
+        "maximum_certification_attempts_role": (
+            MAXIMUM_CERTIFICATION_ATTEMPTS_ROLE
+        ),
+        "returned_margin_requires_complete_interval_certificate": True,
         "mandatory_blockers": list(
             CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS
         ),
@@ -1604,6 +1649,8 @@ def _validate_method(document: Mapping[str, Any]) -> None:
         "failed_candidate_drop_allowed": False,
         "collision_invocations_per_unique_accepted_candidate": 1,
         "wrench_invocations_per_unique_accepted_candidate": 1,
+        "collision_invocations_per_unique_accepted_policy": 1,
+        "wrench_invocations_after_valid_policy_collision_binding": 1,
         "retry_allowed": False,
         "replacement_after_failure_allowed": False,
     }.items():
@@ -1620,13 +1667,16 @@ def _validate_method(document: Mapping[str, Any]) -> None:
         "status": _FORMAL_EMPTY_STATUS,
         "allowed_with_current_bindings": False,
         "formal_ranked_keys_must_be_empty": True,
+        "formal_ranked_policy_keys_must_be_empty": True,
         "selected_candidate_must_be_none": True,
+        "selected_contact_range_policy_must_be_none": True,
         "contact_range_policy_handling": (
-            "FAIL_CLOSED_BEFORE_COLLISION_OR_WRENCH_UNTIL_"
-            "POLICY_AWARE_CONSUMERS_EXIST"
+            "EVALUATE_ONCE_WITH_POLICY_COLLISION_AND_WRENCH_WITHOUT_"
+            "DISPLAY_MIDPOINT"
         ),
-        "contact_range_policy_collision_invocations_before_support": 0,
-        "contact_range_policy_wrench_invocations_before_support": 0,
+        "contact_range_policy_ranking_status": POLICY_AWARE_RANKING_STATUS,
+        "contact_range_policy_collision_invocations_per_unique_policy": 1,
+        "contact_range_policy_wrench_invocations_after_valid_collision_binding": 1,
         "required_collision_claim_scope": COMPLETE_CLEARANCE_SCOPE,
         "current_uncertainty_claim_scope": (
             FRICTION_INTERVAL_ONLY_CERTIFIED_UNCERTAINTY_SCOPE
@@ -2055,6 +2105,11 @@ def _validate_object_document(document: Mapping[str, Any]) -> None:
 
     current_geometry = _mapping(current["planning_geometry"], "current planning geometry")
     _exact(current_geometry["format"], "CARTS_GRASP_VISUAL_SUBTREE_NPZ_V1", "current planning geometry format")
+    _exact(
+        current_geometry["material_boundary_evidence"]["representation"],
+        "POSITIVE_SOLID_COMPONENT_UNION",
+        "current material boundary representation",
+    )
     _exact(current_geometry["semantic_authority"], "SHARED_DIRECTIONAL_FIRST_HIT_WITH_TASK_FUNCTIONAL_MASK_PENDING", "current planning geometry semantic_authority")
     current_physical = _mapping(current["physical_properties"], "current physical properties")
     _exact(current_physical["source_class"], "FROZEN_EQUIVALENT_SIMULATION_ASSUMPTION", "current physical source_class")
@@ -2071,6 +2126,11 @@ def _validate_object_document(document: Mapping[str, Any]) -> None:
     _exact(transfer_frames["source_step_length_unit"], "mm", "transfer source_step_length_unit")
     transfer_geometry = _mapping(transfer_object["planning_geometry"], "transfer planning geometry")
     _exact(transfer_geometry["format"], "BINARY_STL_TESSELLATION_FROM_ORIGINAL_STEP", "transfer planning geometry format")
+    _exact(
+        transfer_geometry["material_boundary_evidence"]["representation"],
+        "SINGLE_EMBEDDED_MATERIAL_BOUNDARY",
+        "transfer material boundary representation",
+    )
     _exact(transfer_geometry["source_unit"], "mm", "transfer planning geometry source_unit")
     _exact(transfer_geometry["watertight"], True, "transfer planning geometry watertight")
     _exact(transfer_geometry["winding_consistent"], True, "transfer planning geometry winding_consistent")
@@ -2435,6 +2495,16 @@ def audit_study_contract(
     files[f"objects.{_DEVELOPMENT_OBJECT}.planning_geometry"] = _verified_digest(
         root, current_geometry["path"], current_geometry["sha256"], "current planning geometry"
     )
+    current_boundary = _mapping(
+        current_geometry["material_boundary_evidence"],
+        "current material boundary evidence",
+    )
+    files[f"objects.{_DEVELOPMENT_OBJECT}.material_boundary_evidence"] = _verified_digest(
+        root,
+        current_boundary["path"],
+        current_boundary["sha256"],
+        "current material boundary evidence",
+    )
     files[f"objects.{_DEVELOPMENT_OBJECT}.planning_geometry_manifest"] = _verified_digest(
         root, current_geometry["manifest"], current_geometry["manifest_sha256"], "current planning geometry manifest"
     )
@@ -2457,6 +2527,16 @@ def audit_study_contract(
     transfer_geometry = _mapping(transfer["planning_geometry"], "transfer planning geometry")
     files[f"objects.{_TRANSFER_OBJECT}.planning_geometry"] = _verified_digest(
         root, transfer_geometry["path"], transfer_geometry["sha256"], "transfer planning geometry"
+    )
+    transfer_boundary = _mapping(
+        transfer_geometry["material_boundary_evidence"],
+        "transfer material boundary evidence",
+    )
+    files[f"objects.{_TRANSFER_OBJECT}.material_boundary_evidence"] = _verified_digest(
+        root,
+        transfer_boundary["path"],
+        transfer_boundary["sha256"],
+        "transfer material boundary evidence",
     )
     original = _mapping(transfer["original_cad"], "transfer original CAD")
     files[f"objects.{_TRANSFER_OBJECT}.original_cad"] = _verified_digest(
@@ -2618,6 +2698,15 @@ def audit_study_contract(
             "contact_range_policy_wrench_cartesian_product_rule": (
                 CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE
             ),
+            "contact_range_policy_wrench_interval_geometric_jacobian_method_id": (
+                INTERVAL_GEOMETRIC_JACOBIAN_METHOD_ID
+            ),
+            "contact_range_policy_wrench_interval_policy_margin_method_id": (
+                INTERVAL_POLICY_MARGIN_METHOD_ID
+            ),
+            "contact_range_policy_wrench_joint_position_domain_rule": (
+                CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE
+            ),
             "contact_range_policy_wrench_collision_binding_required": True,
             "contact_range_policy_wrench_qmc_role": (
                 "FRICTION_INTERVAL_ONLY_NOT_CONTACT_GEOMETRY_SAMPLING"
@@ -2627,6 +2716,18 @@ def audit_study_contract(
             "contact_range_policy_wrench_exact_candidate_invocations": 0,
             "contact_range_policy_wrench_current_state": "NOT_CERTIFIABLE",
             "contact_range_policy_wrench_margin_computed": False,
+            "contact_range_policy_wrench_interval_contact_jacobian_certificate_present": True,
+            "contact_range_policy_wrench_midpoint_margin_proposal_role": (
+                MIDPOINT_MARGIN_PROPOSAL_ROLE
+            ),
+            "contact_range_policy_wrench_midpoint_margin_proposal_used_as_formal_evidence": False,
+            "contact_range_policy_wrench_certified_margin_search_rule": (
+                CERTIFIED_MARGIN_SEARCH_RULE
+            ),
+            "contact_range_policy_wrench_maximum_certification_attempts": (
+                MAXIMUM_CERTIFICATION_ATTEMPTS
+            ),
+            "contact_range_policy_wrench_returned_margin_requires_complete_interval_certificate": True,
             "contact_range_policy_wrench_mandatory_blockers": list(
                 CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS
             ),
@@ -2663,11 +2764,11 @@ def audit_study_contract(
             "post_generation_ranking_common_scenarios_required": True,
             "post_generation_ranking_failure_retention_required": True,
             "post_generation_ranking_failed_candidate_drop_allowed": False,
-            "post_generation_policy_aware_ranking_guard": (
-                POLICY_AWARE_RANKING_GUARD
+            "post_generation_policy_aware_ranking_status": (
+                POLICY_AWARE_RANKING_STATUS
             ),
-            "post_generation_policy_collision_invocations_before_support": 0,
-            "post_generation_policy_wrench_invocations_before_support": 0,
+            "post_generation_policy_collision_invocations_per_unique_policy": 1,
+            "post_generation_policy_wrench_invocations_after_valid_collision_binding": 1,
             "post_generation_ranking_formal_selection_status": (
                 _FORMAL_EMPTY_STATUS
             ),

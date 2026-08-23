@@ -1,0 +1,25 @@
+{
+  "schema_version": "carts_h93_packet_static_bvh_traversal_hypothesis_v1",
+  "recorded_at_utc": "2026-08-23T09:07:18.811Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H93-PACKET-STATIC-BVH-TRAVERSAL",
+  "status": "TARGETED_FIX_IN_PROGRESS",
+  "prerequisite_evidence": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H92_TOP4_FAIL_CLOSED_SHORT_CIRCUIT_RESULT_20260823T090718.811Z.json",
+  "diagnosis": "For every subdivision interval, the current link-object checker calls static_bvh.potential_faces separately for each of roughly one thousand moving triangles. Candidate 14 repeated root-to-leaf Python traversal for f1Link3 across 113 intervals and spent 49.08 seconds although batch interval kinematics was already active.",
+  "unique_structural_bundle": [
+    "Traverse each static-object BVH node once with a vectorized packet of all still-overlapping moving-triangle AABBs instead of restarting from the root per moving triangle.",
+    "At pruned internal nodes, account for the exact Cartesian product of separated moving faces and the node subtree face count; at leaves, evaluate all active moving-face/static-face AABB pairs as one NumPy batch.",
+    "Preserve the static BVH topology, strict axis-separation predicate, exact pair universe/coverage counts, free/unresolved state, interval order, and subdivision budget.",
+    "After scalar-versus-packet equivalence tests, run one shared Top4 flow. Do not run one candidate repeatedly."
+  ],
+  "expected_result": "Packet and scalar reference traversal produce identical candidate sets, overlap counts, pair coverage, strict-separation counts, and certificate states. Candidate 14 f1Link3 falls from 49.08 seconds to at most 10 seconds, and all four ranked candidates finish the shared exact/collision screen within 90 seconds or expose a causally different next child.",
+  "failure_criterion": "Any moving/static pair is omitted or double-counted, certificate state differs, a strict bound narrows, geometry/threshold/budget changes, candidate 14 f1Link3 remains above 10 seconds, or another long run is launched before the bundled static equivalence checks pass.",
+  "whole_top4_external_wall_limit_seconds": 90,
+  "candidate_14_f1link3_target_seconds": 10.0,
+  "candidate_result_written": false,
+  "generation_checkpoint_written": false,
+  "formal_selected_candidate": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

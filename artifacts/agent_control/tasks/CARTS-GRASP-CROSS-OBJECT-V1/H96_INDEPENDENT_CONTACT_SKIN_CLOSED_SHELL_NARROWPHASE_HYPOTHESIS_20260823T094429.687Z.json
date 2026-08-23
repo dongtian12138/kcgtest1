@@ -1,0 +1,43 @@
+{
+  "schema_version": "carts_h96_independent_contact_skin_closed_shell_narrowphase_hypothesis_v1",
+  "recorded_at_utc": "2026-08-23T09:44:29.687Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H96-INDEPENDENT-CONTACT-SKIN-AND-CLOSED-SHELL-NARROWPHASE",
+  "status": "TARGETED_FIX_IN_PROGRESS",
+  "prerequisite_evidence": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H95_SAME_SOURCE_TERMINAL_SURFACE_ROUTE_AUDIT_RESULT_20260823T094429.687Z.json",
+  "diagnosis": "The repository cannot provide one same-source closed terminal surface without inventing geometry. The existing semantic contract also says unmapped PAD faces are forbidden even though V9 is explicitly authorized to choose roots on the complete PAD. Separately, the continuous collision engine only uses interval AABB overlap, so a separated triangle pair can remain unresolved at adjacent binary64 phase endpoints.",
+  "bundled_structural_change": [
+    "Introduce an independent dual-surface terminal binding: the complete hash-bound 2479-face PAD remains the contact-root identity surface; the certified closed 1100-face collision shell remains the material-role source.",
+    "Keep the collision shell face roles fail-closed and unchanged: only the 16 exactly shared, same-winding shell triangles are allowed; all other 1084 shell triangles remain forbidden. A PAD root is not required to map to those 16 shell triangles.",
+    "After packet BVH AABB screening, run a vectorized conservative moving-triangle/static-triangle separating-axis narrowphase on potential pairs before subdividing the phase interval.",
+    "Require complete forbidden-shell separation and full PAD/hash lineage before any candidate can pass. An AABB overlap, incomplete pair accounting, missing surface, or unresolved narrowphase remains a blocker.",
+    "Bundle contract tests, narrowphase tests, and fail-closed policy tests before the first real candidate diagnostic; do not perform a sequence of small edits followed by long candidate runs."
+  ],
+  "single_structural_fix_budget": true,
+  "diagnostic_sequence_after_fix": [
+    "Run focused static tests.",
+    "Run candidate 155 once as the common f1Link3 performance and correctness discriminator under a 60-second wall limit.",
+    "If the structural hypothesis is supported, run all retained candidates 155, 174, 14, and 198; do not stop after the first success."
+  ],
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "final_selection_requires_all_retained_candidates_checked": true,
+  "expected_result": "The f1Link3 range checker either certifies true forbidden-shell separation substantially before binary64 endpoint exhaustion, or reports a smaller exact set of triangle pairs that cannot be separated. Candidate 155 collision time target is at most 10 seconds; no candidate is selected until all four retained candidates are checked.",
+  "failure_criteria": [
+    "Any nearest-distance or tolerance-based PAD permission mapping is introduced.",
+    "The authorized PAD is reduced to 16 faces or shell permission expands beyond the existing exact 16 faces.",
+    "AABB overlap is reported as physical collision without narrowphase evidence.",
+    "Any forbidden shell face is removed, geometry is changed, or a candidate passes without complete forbidden-shell separation.",
+    "The evaluation stops after candidate 155 succeeds without checking 174, 14, and 198."
+  ],
+  "geometry_change_allowed": false,
+  "connector_or_hand_shape_change_allowed": false,
+  "threshold_change_allowed": false,
+  "parameter_grid_search_allowed": false,
+  "formal_selected_candidate": null,
+  "formal_selected_contact_range_policy": null,
+  "candidate_result_written": false,
+  "generation_checkpoint_written": false,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

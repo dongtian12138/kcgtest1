@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import inspect
 import json
 import math
+from threading import local
 from dataclasses import replace
 from pathlib import Path
+from typing import Mapping
 
 import numpy as np
 import pytest
@@ -48,16 +51,29 @@ from kcg_connector.grasp.robust.ray_closure import (
     PreRegisteredTaskFrame,
     RayClosureError,
     RayClosureSurfaceModel,
+    WholePathPadSphereScreen,
     _Budget,
+    _DirectionalWitnessSegmentBounds,
     _FK_ERROR,
     _GeometryExecutionContext,
+    _IntervalGeometry,
     _PadCounters,
+    _ParentPairInheritance,
+    _PairIntervalClassification,
     _PadSearchState,
     _PointTriangleDistanceBvh,
+    _closest_points_on_triangle,
+    _closest_points_on_triangle_pairs,
+    _exact_dyadic_plane_key,
+    _exact_dyadic_plane_key_fraction_reference,
     _prepare_pad,
 )
 from kcg_connector.grasp.robust.interval_kinematics import (
+    BATCH_POINT_MOTION_METHOD_ID,
     DISPLAY_APPROXIMATION_ROLE,
+    IntervalBounds,
+    IntervalPointMotionBatch,
+    IntervalRootState,
 )
 
 
@@ -273,6 +289,46 @@ def test_distance_bvh_aabb_query_contains_bruteforce_face_set() -> None:
     assert bvh.face_indices_intersecting_aabb(
         (4.0, 4.0, 4.0), (5.0, 5.0, 5.0)
     ).size == 0
+
+
+def test_distance_bvh_packet_aabb_query_exactly_matches_scalar_queries() -> None:
+    bvh = _PointTriangleDistanceBvh(_box_model())
+    lower = np.asarray(
+        (
+            (-1.1, -0.1, -0.1),
+            (4.0, 4.0, 4.0),
+            (1.0, -0.75, -0.5),
+            (-2.0, -2.0, -2.0),
+            (0.0, 0.0, 0.0),
+        ),
+        dtype=np.float64,
+    )
+    upper = np.asarray(
+        (
+            (0.2, 0.2, 0.2),
+            (5.0, 5.0, 5.0),
+            (1.0, 0.75, 0.5),
+            (2.0, 2.0, 2.0),
+            (0.0, 0.0, 0.0),
+        ),
+        dtype=np.float64,
+    )
+    packet = bvh.face_indices_intersecting_aabbs(lower, upper)
+    scalar = tuple(
+        bvh.face_indices_intersecting_aabb(row_lower, row_upper)
+        for row_lower, row_upper in zip(lower, upper)
+    )
+
+    assert len(packet) == len(scalar)
+    for packet_row, scalar_row in zip(packet, scalar):
+        assert np.array_equal(packet_row, scalar_row)
+        assert not packet_row.flags.writeable
+
+    with pytest.raises(RayClosureError, match="non-empty"):
+        bvh.face_indices_intersecting_aabbs(
+            np.empty((0, 3), dtype=np.float64),
+            np.empty((0, 3), dtype=np.float64),
+        )
 
 
 def _append_quad(
@@ -506,7 +562,9 @@ def test_v9_private_search_preserves_complete_possible_earliest_set_without_rays
     assert counters.rays == 0
     assert counters.finite_chord_feature_candidates == 0
     assert counters.nonlinear_feature_roots_solved == 0
-    assert budget.used == 1
+    # The ordered eight-segment search checks the preceding free segment and
+    # both segments that share the exact contact boundary at phase 0.25.
+    assert budget.used == 3
 
     first, second = outcome.roots[:2]
     assert first.certificate.implicit_root.equation_sha256 != (
@@ -527,7 +585,7 @@ def test_v9_private_search_preserves_complete_possible_earliest_set_without_rays
         )
 
 
-def test_v9_earlier_triangle_boundary_blocks_later_certified_root() -> None:
+def test_v9_earlier_triangle_boundary_short_circuits_later_root() -> None:
     probe, _hand, _pads = _planner(_box_model())
     prepared = probe.prepared_pads[0]
     q_start = np.zeros(3)
@@ -596,7 +654,10 @@ def test_v9_earlier_triangle_boundary_blocks_later_certified_root() -> None:
         "TRIANGLE_BOUNDARY_NOT_STRICTLY_INTERIOR"
     )
     assert outcome.roots == ()
-    assert counters.certified_contact_roots >= 1
+    # The earlier unresolved boundary is already sufficient to reject the
+    # interval.  The later interior root must not be evaluated or allowed to
+    # influence that fail-closed result.
+    assert counters.certified_contact_roots == 0
     assert counters.competing_root_order_blocks >= 1
     assert counters.rays == 0
 
@@ -817,6 +878,8 @@ def test_object_face_winding_changes_do_not_change_v9_display_proposal(
         replace(object_model, mesh=flipped_mesh)
     )
     flipped = flipped_model.evaluate_unit_parameters(_PARAMETERS)
+    reference_screen = reference_model.screen_unit_parameters(_PARAMETERS)
+    flipped_screen = flipped_model.screen_unit_parameters(_PARAMETERS)
 
     flipped_candidate = _display_candidate(flipped)
     assert flipped_candidate == reference_candidate
@@ -829,6 +892,13 @@ def test_object_face_winding_changes_do_not_change_v9_display_proposal(
     )
     assert flipped.audit.model_contract_sha256 != (
         reference.audit.model_contract_sha256
+    )
+    assert tuple(
+        (row.certified_free, row.certified_no_valid_contact)
+        for row in flipped_screen
+    ) == tuple(
+        (row.certified_free, row.certified_no_valid_contact)
+        for row in reference_screen
     )
 
 
@@ -959,6 +1029,10 @@ def test_common_rigid_transform_preserves_joint_solution_and_transforms_contacts
         maximum_root_bisection_iterations=256,
     )
     transformed = transformed_model.evaluate_unit_parameters(_PARAMETERS)
+    reference_screen = reference_model.screen_unit_parameters(_PARAMETERS)
+    transformed_screen = transformed_model.screen_unit_parameters(
+        _PARAMETERS
+    )
 
     transformed_candidate = _display_candidate(transformed)
     assert transformed_candidate.independent_joint_positions_rad == pytest.approx(
@@ -1004,6 +1078,13 @@ def test_common_rigid_transform_preserves_joint_solution_and_transforms_contacts
     assert all(
         row.ordering_policy == POSSIBLE_EARLIEST_ORDERING_POLICY
         for row in transformed.possible_first_contact_sets
+    )
+    assert tuple(
+        (row.certified_free, row.certified_no_valid_contact)
+        for row in transformed_screen
+    ) == tuple(
+        (row.certified_free, row.certified_no_valid_contact)
+        for row in reference_screen
     )
 
 
@@ -1134,6 +1215,40 @@ def test_order_is_deterministic_and_public_interface_has_no_face_subset_input() 
         )
     with pytest.raises(RayClosureError, match="partial model evidence"):
         replace(first.audit, model_binding_complete=False)
+
+
+def test_contact_face_mask_is_cached_once_and_read_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_getter = ObjectGraspModel.contact_face_mask.fget
+    assert original_getter is not None
+    access_count = 0
+
+    def counted_getter(instance: ObjectGraspModel) -> np.ndarray:
+        nonlocal access_count
+        access_count += 1
+        return original_getter(instance)
+
+    monkeypatch.setattr(
+        ObjectGraspModel,
+        "contact_face_mask",
+        property(counted_getter),
+    )
+    object_model = _box_model()
+    model, hand, _pads = _planner(object_model)
+    construction_access_count = access_count
+
+    assert construction_access_count == 2
+    assert np.array_equal(
+        model._contact_face_mask,
+        original_getter(object_model),
+    )
+    assert model._contact_face_mask.flags.writeable is False
+    with pytest.raises(ValueError):
+        model._contact_face_mask[0] = not model._contact_face_mask[0]
+
+    model.evaluate_unit_parameters(_PARAMETERS, hand)
+    assert access_count == construction_access_count
 
 
 def test_model_contract_digest_binds_every_declared_model_input() -> None:
@@ -1420,7 +1535,9 @@ def test_parameter_domain_is_canonical_and_publicly_fails_closed(
     assert "canonical half-open" in seam.audit.failure_reason
 
     def degenerate_bounds(
-        _q_start: np.ndarray, _rotation: np.ndarray
+        _q_start: np.ndarray,
+        _rotation: np.ndarray,
+        **_kwargs: object,
     ) -> tuple[np.ndarray, np.ndarray]:
         point = np.zeros(3, dtype=np.float64)
         return point, point.copy()
@@ -1432,7 +1549,9 @@ def test_parameter_domain_is_canonical_and_publicly_fails_closed(
     assert "zero-width placement axes" in degenerate.audit.failure_reason
 
     def empty_bounds(
-        _q_start: np.ndarray, _rotation: np.ndarray
+        _q_start: np.ndarray,
+        _rotation: np.ndarray,
+        **_kwargs: object,
     ) -> tuple[np.ndarray, np.ndarray]:
         raise RayClosureError("synthetic empty intersection")
 
@@ -1553,6 +1672,89 @@ def test_forbidden_first_contact_and_compute_budget_exhaustion_fail_closed(
     assert ray_calls == 0
 
 
+def test_budget_exhaustion_never_repeats_broadphase_or_pair_classification(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model(), budget=1)
+    context = _GeometryExecutionContext()
+    scalar_face_query_count = 0
+    packet_face_query_count = 0
+    pair_classification_count = 0
+    original_scalar_face_query = (
+        model.distance_bvh.face_indices_intersecting_aabb
+    )
+    original_packet_face_query = (
+        model.distance_bvh._iter_face_pairs_intersecting_aabbs
+    )
+
+    def counted_scalar_face_query(
+        *args: object, **kwargs: object
+    ) -> np.ndarray:
+        nonlocal scalar_face_query_count
+        scalar_face_query_count += 1
+        return original_scalar_face_query(*args, **kwargs)
+
+    def counted_packet_face_query(
+        *args: object, **kwargs: object
+    ) -> object:
+        nonlocal packet_face_query_count
+        packet_face_query_count += 1
+        return original_packet_face_query(*args, **kwargs)
+
+    def forced_unresolved_batch(
+        **kwargs: object,
+    ) -> object:
+        nonlocal pair_classification_count
+        pair_classification_count += 1
+        counters = kwargs["counters"]
+        assert isinstance(counters, _PadCounters)
+        counters.unresolved_witness_face_pairs += 1
+        face_indices = np.asarray(
+            kwargs["object_face_indices"], dtype=np.int64
+        )
+        yield _PairIntervalClassification(
+                state=_PadSearchState.UNRESOLVED,
+                witness_flat_index=int(kwargs["witness_flat_index"]),
+                object_face_index=int(face_indices[0]),
+                possible_phase_lower=float(kwargs["lower"]),
+                root=None,
+                reason="FORCED_UNRESOLVED_PAIR_FOR_LAZY_TRAVERSAL_TEST",
+            )
+
+    monkeypatch.setattr(
+        model.distance_bvh,
+        "face_indices_intersecting_aabb",
+        counted_scalar_face_query,
+    )
+    monkeypatch.setattr(
+        model.distance_bvh,
+        "_iter_face_pairs_intersecting_aabbs",
+        counted_packet_face_query,
+    )
+    monkeypatch.setattr(
+        model,
+        "_iter_classify_witness_face_batch_v9",
+        forced_unresolved_batch,
+    )
+
+    evaluation = model._evaluate_unit_parameters_with_execution(
+        _PARAMETERS,
+        None,
+        execution=context,
+        _use_whole_path_sphere_screen=False,
+    )
+
+    assert evaluation.candidate is None
+    assert evaluation.audit.failure_reason == (
+        "MAXIMUM_SUBDIVISION_INTERVALS_EXHAUSTED"
+    )
+    assert evaluation.audit.subdivision_budget_exhausted
+    assert evaluation.audit.subdivision_intervals_used == 1
+    assert scalar_face_query_count == 0
+    assert packet_face_query_count <= 1
+    assert pair_classification_count <= 1
+
+
 def test_display_midpoint_proposal_is_rejected_by_formal_candidate_hooks() -> None:
     model, hand, _pads = _planner(_box_model())
     first = model.evaluate_unit_parameters(_PARAMETERS)
@@ -1598,6 +1800,60 @@ def test_display_midpoint_proposal_is_rejected_by_formal_candidate_hooks() -> No
     )
     with pytest.raises(RayClosureError, match="cannot be recertified"):
         model.trajectory_clearance_m(tampered_candidate, hand)
+
+
+def test_paired_triangle_closest_points_match_prior_scalar_kernel() -> None:
+    rng = np.random.default_rng(20260823)
+    points = rng.normal(size=(64, 3))
+    triangles = rng.normal(size=(64, 3, 3))
+    triangles[0, 2] = triangles[0, 1]
+    triangles[1] = np.asarray(
+        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0))
+    )
+    points[1] = np.asarray((0.25, 0.25, 0.5))
+
+    paired = _closest_points_on_triangle_pairs(points, triangles)
+    prior = np.vstack(
+        [
+            _closest_points_on_triangle(
+                points[index : index + 1], triangles[index]
+            )[0]
+            for index in range(len(points))
+        ]
+    )
+
+    # The paired kernel deliberately changes the floating-point reduction
+    # order.  Require geometric agreement to four binary64 ulps rather than
+    # bitwise identity with the scalar reference.
+    np.testing.assert_allclose(
+        paired,
+        prior,
+        rtol=0.0,
+        atol=4.0 * np.finfo(np.float64).eps,
+    )
+    with pytest.raises(RayClosureError, match="aligned finite"):
+        _closest_points_on_triangle_pairs(points, triangles[:2])
+
+    bvh = _PointTriangleDistanceBvh(_box_model())
+    product_points = rng.normal(size=(17, 3))
+    faces = np.arange(len(bvh.triangles), dtype=np.int64)
+    product = bvh._closest_points_on_face_product(
+        product_points, faces
+    )
+    product_reference = np.stack(
+        [
+            _closest_points_on_triangle(
+                product_points, bvh.triangles[int(face_index)]
+            )
+            for face_index in faces
+        ],
+        axis=1,
+    )
+    assert np.array_equal(product, product_reference)
+    with pytest.raises(RayClosureError, match="malformed"):
+        bvh._closest_points_on_face_product(
+            product_points, np.empty(0, dtype=np.int64)
+        )
 
 
 def test_batched_nearest_matches_scalar_distances_faces_ties_and_statistics() -> None:
@@ -1649,6 +1905,65 @@ def test_batched_nearest_matches_scalar_distances_faces_ties_and_statistics() ->
     assert not batched.positions_m.flags.writeable
     with pytest.raises(RayClosureError, match="shape"):
         model.distance_bvh.nearest_many(np.empty((0, 3)))
+
+
+def test_vertex_upper_bound_seed_preserves_exact_nearest_results() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    bvh = model.distance_bvh
+    rng = np.random.default_rng(20260822)
+    points = np.vstack(
+        (
+            bvh.vertices[:8] + bvh.centre_m,
+            np.mean(model.canonical_object_face_vertices_m, axis=1),
+            np.asarray(
+                (
+                    (0.0, 0.0, 0.0),
+                    (1.0, 0.75, 0.5),
+                    (-1.0, -0.75, -0.5),
+                    (4.0, -3.0, 2.0),
+                ),
+                dtype=np.float64,
+            ),
+            rng.uniform(
+                (-3.0, -2.5, -2.0),
+                (3.0, 2.5, 2.0),
+                size=(257, 3),
+            ),
+        )
+    )
+
+    seeded = bvh.nearest_many(points)
+    reference = bvh.nearest_many(
+        points, _use_vertex_upper_bound_seed=False
+    )
+    for field_name in (
+        "distances_m",
+        "positions_m",
+        "face_indices",
+        "outward_normals",
+    ):
+        assert np.array_equal(
+            getattr(seeded, field_name), getattr(reference, field_name)
+        )
+    assert np.all(seeded.node_visits <= reference.node_visits)
+    assert np.all(seeded.triangle_tests <= reference.triangle_tests)
+    assert np.all(seeded.triangle_tests > 0)
+
+    centered = points - bvh.centre_m
+    upper, vertex_indices = bvh._vertex_surface_distance_upper_bounds(
+        centered
+    )
+    actual_selected_vertex_distances = np.linalg.norm(
+        centered - bvh.vertices[vertex_indices], axis=1
+    )
+    assert np.all(upper >= actual_selected_vertex_distances)
+    assert not upper.flags.writeable
+    assert not vertex_indices.flags.writeable
+
+    with pytest.raises(RayClosureError, match="boolean"):
+        bvh.nearest_many(
+            points[:1], _use_vertex_upper_bound_seed=1  # type: ignore[arg-type]
+        )
 
 
 def _real_hand_structural_planner() -> tuple[
@@ -1870,6 +2185,2590 @@ def test_full_nearest_shadow_preserves_candidate_and_audit_field_by_field() -> N
     assert optimized.audit.as_dict() == reference.audit.as_dict()
     assert reference_context.stats.reference_shadow_witness_queries > 0
     assert optimized_context.stats.reference_shadow_witness_queries == 0
+    assert optimized_context.stats.interval_transform_cache_hits > 0
+    assert optimized_context.stats.interval_transform_cache_misses > 0
+    assert optimized_context.stats.interval_transform_cache_peak_entries > 0
+    assert optimized_context.stats.interval_point_cache_hits > 0
+    assert optimized_context.stats.interval_point_cache_misses > 0
+    assert optimized_context.stats.interval_point_cache_peak_entries > 0
+    assert reference_context.stats.interval_transform_cache_hits == 0
+    assert reference_context.stats.interval_transform_cache_misses == 0
+    assert reference_context.stats.interval_point_cache_hits == 0
+    assert reference_context.stats.interval_point_cache_misses == 0
+    assert reference_context.stats.interval_point_cache_peak_entries == 0
+
+
+def test_full_pad_sphere_contains_every_source_triangle_vertex() -> None:
+    model, _hand, _pads = _planner(_box_model())
+
+    for prepared in model.prepared_pads:
+        distances = np.linalg.norm(
+            prepared.verified.points_local_m
+            - prepared.full_pad_sphere_center_link_m,
+            axis=1,
+        )
+        assert np.all(
+            distances <= prepared.full_pad_sphere_radius_upper_m
+        )
+        assert prepared.full_pad_sphere_radius_upper_m > 0.0
+
+        root = prepared.surface_sphere_nodes[
+            prepared.surface_sphere_root
+        ]
+        assert np.array_equal(
+            np.sort(root.triangle_indices),
+            np.arange(prepared.verified.triangle_count),
+        )
+        for node in prepared.surface_sphere_nodes:
+            triangles = prepared.verified.points_local_m[
+                prepared.verified.faces[node.triangle_indices]
+            ]
+            node_distances = np.linalg.norm(
+                triangles.reshape((-1, 3)) - node.center_link_m,
+                axis=1,
+            )
+            assert np.all(node_distances <= node.radius_upper_m)
+            assert np.all(
+                np.abs(
+                    triangles.reshape((-1, 3)) - node.center_link_m
+                )
+                <= node.box_half_extents_upper_m
+            )
+            assert 0 <= node.depth <= 3
+            if node.leaf:
+                assert node.left == node.right == -1
+            else:
+                left = prepared.surface_sphere_nodes[node.left]
+                right = prepared.surface_sphere_nodes[node.right]
+                assert left.depth == right.depth == node.depth + 1
+                assert set(left.triangle_indices).isdisjoint(
+                    set(right.triangle_indices)
+                )
+                assert set(left.triangle_indices) | set(
+                    right.triangle_indices
+                ) == set(node.triangle_indices)
+
+
+def test_full_pad_aabb_tree_partitions_every_source_triangle_to_leaves() -> None:
+    model, _hand, _pads = _planner(_box_model())
+
+    for prepared in model.prepared_pads:
+        nodes = prepared.surface_aabb_nodes
+        root = nodes[prepared.surface_aabb_root]
+        triangle_count = prepared.verified.triangle_count
+        assert len(nodes) == 2 * triangle_count - 1
+        assert np.array_equal(
+            np.sort(root.triangle_indices),
+            np.arange(triangle_count),
+        )
+        leaf_indices: list[int] = []
+        for node in nodes:
+            triangles = prepared.verified.points_local_m[
+                prepared.verified.faces[node.triangle_indices]
+            ]
+            vertices = triangles.reshape((-1, 3))
+            assert np.all(
+                np.abs(vertices - node.center_link_m)
+                <= node.box_half_extents_upper_m
+            )
+            if node.leaf:
+                assert len(node.triangle_indices) == 1
+                leaf_indices.append(int(node.triangle_indices[0]))
+            else:
+                left = nodes[node.left]
+                right = nodes[node.right]
+                assert left.depth == right.depth == node.depth + 1
+                assert set(left.triangle_indices).isdisjoint(
+                    set(right.triangle_indices)
+                )
+                assert set(left.triangle_indices) | set(
+                    right.triangle_indices
+                ) == set(node.triangle_indices)
+        assert sorted(leaf_indices) == list(range(triangle_count))
+
+
+def test_whole_path_dual_bvh_avoids_restarted_object_tree_queries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model())
+    exact_calls: list[np.ndarray] = []
+    aabb_calls: list[np.ndarray] = []
+    boolean_calls: list[np.ndarray] = []
+    dual_pair_calls: list[np.ndarray] = []
+    original_nearest = model.distance_bvh.nearest_many
+    original_overlap = model.distance_bvh.face_indices_intersecting_aabbs
+    original_boolean = model.distance_bvh.aabbs_have_face_overlap
+    original_dual_pair = model._obb_aabb_strict_separation_mask
+
+    def counted_nearest(points: object, **kwargs: object) -> object:
+        exact_calls.append(np.asarray(points, dtype=np.float64))
+        return original_nearest(points, **kwargs)
+
+    def counted_overlap(
+        lower: object, upper: object, **kwargs: object
+    ) -> object:
+        aabb_calls.append(np.asarray(lower, dtype=np.float64))
+        return original_overlap(lower, upper, **kwargs)
+
+    def counted_boolean(
+        lower: object, upper: object, **kwargs: object
+    ) -> object:
+        boolean_calls.append(np.asarray(lower, dtype=np.float64))
+        return original_boolean(lower, upper, **kwargs)
+
+    def counted_dual_pair(**kwargs: object) -> np.ndarray:
+        dual_pair_calls.append(
+            np.asarray(kwargs["obb_centers_m"], dtype=np.float64)
+        )
+        return original_dual_pair(**kwargs)
+
+    monkeypatch.setattr(
+        model.distance_bvh, "nearest_many", counted_nearest
+    )
+    monkeypatch.setattr(
+        model.distance_bvh,
+        "face_indices_intersecting_aabbs",
+        counted_overlap,
+    )
+    monkeypatch.setattr(
+        model.distance_bvh,
+        "aabbs_have_face_overlap",
+        counted_boolean,
+    )
+    monkeypatch.setattr(
+        model, "_obb_aabb_strict_separation_mask", counted_dual_pair
+    )
+    second = np.array(_PARAMETERS, copy=True)
+    second[1] = 0.6
+    rows = model.screen_unit_parameter_batch(
+        np.vstack((_PARAMETERS, second))
+    )
+
+    assert aabb_calls == []
+    assert boolean_calls == []
+    assert exact_calls == []
+    assert dual_pair_calls
+    assert len(rows) == 2
+    assert all(len(candidate_rows) == 3 for candidate_rows in rows)
+    assert all(
+        screen.segment_count == 8
+        and screen.spatial_node_query_count >= 8
+        and screen.exact_distance_query_count == 0
+        and screen.nearest_surface_query_count == 0
+        and 0 <= screen.maximum_spatial_depth_reached <= 1
+        and math.isfinite(screen.minimum_clearance_lower_bound_m)
+        for candidate_rows in rows
+        for screen in candidate_rows
+    )
+    assert sum(len(call) for call in dual_pair_calls) == sum(
+        screen.spatial_node_query_count
+        for candidate_rows in rows
+        for screen in candidate_rows
+    )
+
+
+def test_vectorized_node_speeds_and_lazy_centers_equal_scalar_reference(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, hand_extent = transform_result
+    spatial_error = (
+        model.intersector.distance_error_bound_m
+        + model.distance_bvh.aabb_error_bound_m
+        + _FK_ERROR
+        * (model.intersector.characteristic_length_m + hand_extent)
+    )
+    original = model._local_radius_speed_bounds
+    call_count = 0
+
+    def counted(**kwargs: object) -> np.ndarray:
+        nonlocal call_count
+        call_count += 1
+        return original(**kwargs)
+
+    monkeypatch.setattr(model, "_local_radius_speed_bounds", counted)
+    coverages = model._whole_path_pad_sphere_hierarchy_coverages(
+        q_start=q_start,
+        object_from_hand=object_from_hand,
+        spatial_error_bound_m=spatial_error,
+    )
+
+    assert call_count == 3
+    for pad_index, (prepared, coverage) in enumerate(
+        zip(model.prepared_pads, coverages)
+    ):
+        direction = model.closing_directions_physical[pad_index]
+        maximum_parameter = model._maximum_path_parameter(
+            q_start, direction
+        )
+        half_width = 0.5 * maximum_parameter / 8.0
+        for node_index, node in enumerate(
+            prepared.surface_sphere_nodes
+        ):
+            scalar_speed = float(
+                original(
+                    prepared=prepared,
+                    local_radii_m=(node.maximum_vertex_radius_link_m,),
+                    q_start=q_start,
+                    direction=direction,
+                    maximum_parameter=maximum_parameter,
+                )[0]
+            )
+            expected_radius = float(
+                np.nextafter(
+                    node.radius_upper_m + scalar_speed * half_width,
+                    math.inf,
+                )
+            )
+            assert coverage.node_radius_upper_m[node_index] == (
+                expected_radius
+            )
+            expected_box_half_extents = np.nextafter(
+                node.box_half_extents_upper_m
+                + scalar_speed * half_width,
+                math.inf,
+            )
+            assert np.array_equal(
+                coverage.node_box_half_extents_upper_m[node_index],
+                expected_box_half_extents,
+            )
+            for segment_index in (0, 7):
+                midpoint = (segment_index + 0.5) * (
+                    maximum_parameter / 8.0
+                )
+                transform = model.hand_model.forward_kinematics(
+                    q_start + midpoint * direction,
+                    base_transform=object_from_hand,
+                )[prepared.verified.link_name]
+                eager_center = (
+                    transform[:3, :3] @ node.center_link_m
+                    + transform[:3, 3]
+                )
+                lazy_center = (
+                    coverage.rotations_object_from_link[segment_index]
+                    @ node.center_link_m
+                    + coverage.translations_object_m[segment_index]
+                )
+                assert np.array_equal(lazy_center, eager_center)
+                segment_start = segment_index * (
+                    maximum_parameter / 8.0
+                )
+                for fraction in np.linspace(0.0, 1.0, 5):
+                    phase = segment_start + float(fraction) * (
+                        maximum_parameter / 8.0
+                    )
+                    sampled_transform = (
+                        model.hand_model.forward_kinematics(
+                            q_start + phase * direction,
+                            base_transform=object_from_hand,
+                        )[prepared.verified.link_name]
+                    )
+                    triangles = prepared.verified.points_local_m[
+                        prepared.verified.faces[node.triangle_indices]
+                    ]
+                    sampled_vertices = (
+                        triangles.reshape((-1, 3))
+                        @ sampled_transform[:3, :3].T
+                        + sampled_transform[:3, 3]
+                    )
+                    coordinates = (
+                        sampled_vertices - lazy_center
+                    ) @ coverage.rotations_object_from_link[segment_index]
+                    assert np.all(
+                        np.abs(coordinates)
+                        <= coverage.node_box_half_extents_upper_m[
+                            node_index
+                        ]
+                        + 1.0e-12
+                    )
+
+
+def test_batch_aabb_overlap_boolean_matches_complete_face_query() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    lower = np.asarray(
+        (
+            (-2.0, -2.0, -2.0),
+            (-1.01, -0.1, -0.1),
+            (10.0, 10.0, 10.0),
+            (-0.2, -0.2, -0.2),
+            (0.99, 0.70, 0.49),
+        ),
+        dtype=np.float64,
+    )
+    upper = np.asarray(
+        (
+            (2.0, 2.0, 2.0),
+            (-0.99, 0.1, 0.1),
+            (10.1, 10.1, 10.1),
+            (0.2, 0.2, 0.2),
+            (1.01, 0.80, 0.51),
+        ),
+        dtype=np.float64,
+    )
+    expected = np.asarray(
+        [
+            len(
+                model.distance_bvh.face_indices_intersecting_aabb(
+                    lower_row, upper_row
+                )
+            )
+            > 0
+            for lower_row, upper_row in zip(lower, upper)
+        ],
+        dtype=bool,
+    )
+
+    actual = model.distance_bvh.aabbs_have_face_overlap(lower, upper)
+
+    assert np.array_equal(actual, expected)
+
+
+def test_triangle_obb_sat_matches_scalar_reference_and_keeps_touching() -> None:
+    yaw = 0.37
+    rotation = np.asarray(
+        (
+            (math.cos(yaw), -math.sin(yaw), 0.0),
+            (math.sin(yaw), math.cos(yaw), 0.0),
+            (0.0, 0.0, 1.0),
+        ),
+        dtype=np.float64,
+    )
+    center = np.asarray((0.4, -0.2, 0.3), dtype=np.float64)
+    half = np.asarray((1.0, 0.6, 0.3), dtype=np.float64)
+    local_triangles = np.asarray(
+        (
+            ((1.4, 0.0, 0.0), (1.4, 0.2, 0.0), (1.4, 0.0, 0.2)),
+            ((0.0, 0.0, 0.0), (0.2, 0.0, 0.0), (0.0, 0.2, 0.0)),
+            ((1.0, -0.2, -0.1), (1.0, 0.2, -0.1), (1.0, 0.0, 0.1)),
+            ((0.8, 0.8, 0.0), (1.2, 0.8, 0.0), (1.0, 1.1, 0.0)),
+        ),
+        dtype=np.float64,
+    )
+    triangles = local_triangles @ rotation.T + center
+
+    def scalar_separated(local_triangle: np.ndarray) -> bool:
+        edges = (
+            local_triangle[1] - local_triangle[0],
+            local_triangle[2] - local_triangle[1],
+            local_triangle[0] - local_triangle[2],
+        )
+        axes = [*np.eye(3)]
+        axes.append(np.cross(edges[0], -edges[2]))
+        axes.extend(
+            np.cross(edge, axis)
+            for edge in edges
+            for axis in np.eye(3)
+        )
+        for axis in axes:
+            if np.linalg.norm(axis) <= np.finfo(np.float64).tiny:
+                continue
+            projections = local_triangle @ axis
+            radius = float(np.abs(axis) @ half)
+            error = 1.0e-12 * max(
+                1.0,
+                abs(float(np.min(projections))),
+                abs(float(np.max(projections))),
+                radius,
+            )
+            if (
+                float(np.min(projections)) > radius + error
+                or float(np.max(projections)) < -radius - error
+            ):
+                return True
+        return False
+
+    expected = np.asarray(
+        [scalar_separated(row) for row in local_triangles],
+        dtype=bool,
+    )
+    actual = RayClosureSurfaceModel._triangle_obb_strict_separation_mask(
+        triangles_object_m=triangles,
+        box_center_object_m=center,
+        box_axes_object=rotation,
+        box_half_extents_m=half,
+    )
+
+    assert np.array_equal(actual, expected)
+    assert actual[0]
+    assert not actual[1]
+    assert not actual[2]
+
+
+def test_batched_triangle_obb_pairs_equal_repeated_single_box_sat() -> None:
+    yaw_rows = np.asarray((0.11, -0.29, 0.47, 0.0), dtype=np.float64)
+    rotations = np.asarray(
+        [
+            (
+                (math.cos(yaw), -math.sin(yaw), 0.0),
+                (math.sin(yaw), math.cos(yaw), 0.0),
+                (0.0, 0.0, 1.0),
+            )
+            for yaw in yaw_rows
+        ],
+        dtype=np.float64,
+    )
+    centers = np.asarray(
+        (
+            (0.4, -0.2, 0.3),
+            (-0.3, 0.1, 0.0),
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, -0.2),
+        ),
+        dtype=np.float64,
+    )
+    half_extents = np.asarray(
+        (
+            (1.0, 0.6, 0.3),
+            (0.3, 0.4, 0.5),
+            (0.8, 0.2, 0.4),
+            (0.5, 0.5, 0.5),
+        ),
+        dtype=np.float64,
+    )
+    local_triangles = np.asarray(
+        (
+            ((1.4, 0.0, 0.0), (1.4, 0.2, 0.0), (1.4, 0.0, 0.2)),
+            ((0.0, 0.0, 0.0), (0.2, 0.0, 0.0), (0.0, 0.2, 0.0)),
+            ((0.8, 0.2, 0.0), (1.1, 0.2, 0.0), (0.8, 0.5, 0.0)),
+            ((0.5, -0.2, -0.1), (0.5, 0.2, -0.1), (0.5, 0.0, 0.1)),
+        ),
+        dtype=np.float64,
+    )
+    triangles = np.einsum(
+        "nvj,nkj->nvk", local_triangles, rotations
+    ) + centers[:, None, :]
+    expected = np.asarray(
+        [
+            RayClosureSurfaceModel._triangle_obb_strict_separation_mask(
+                triangles_object_m=triangles[index : index + 1],
+                box_center_object_m=centers[index],
+                box_axes_object=rotations[index],
+                box_half_extents_m=half_extents[index],
+            )[0]
+            for index in range(len(triangles))
+        ],
+        dtype=bool,
+    )
+    actual = (
+        RayClosureSurfaceModel._triangle_obb_pair_strict_separation_mask(
+            triangles_object_m=triangles,
+            box_centers_object_m=centers,
+            box_axes_object=rotations,
+            box_half_extents_m=half_extents,
+        )
+    )
+
+    assert np.array_equal(actual, expected)
+    assert not actual[-1]
+
+
+def test_batched_obb_aabb_sat_matches_scalar_axes_and_keeps_touching() -> None:
+    angles = np.asarray((0.0, 0.31, -0.42, 0.73), dtype=np.float64)
+    rotations = np.asarray(
+        [
+            (
+                (math.cos(angle), -math.sin(angle), 0.0),
+                (math.sin(angle), math.cos(angle), 0.0),
+                (0.0, 0.0, 1.0),
+            )
+            for angle in angles
+        ],
+        dtype=np.float64,
+    )
+    centers = np.asarray(
+        (
+            (3.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (1.7, 1.6, 0.0),
+        ),
+        dtype=np.float64,
+    )
+    obb_half = np.asarray(
+        (
+            (0.5, 0.5, 0.5),
+            (0.6, 0.2, 0.4),
+            (0.5, 0.5, 0.5),
+            (0.7, 0.1, 0.2),
+        ),
+        dtype=np.float64,
+    )
+    lower = np.tile((-0.5, -0.5, -0.5), (4, 1)).astype(np.float64)
+    upper = np.tile((0.5, 0.5, 0.5), (4, 1)).astype(np.float64)
+
+    def scalar_separated(index: int) -> bool:
+        rotation = rotations[index]
+        obb_axes = tuple(rotation[:, axis] for axis in range(3))
+        world_axes = tuple(np.eye(3)[axis] for axis in range(3))
+        axes = [*obb_axes, *world_axes]
+        axes.extend(
+            np.cross(obb_axis, world_axis)
+            for obb_axis in obb_axes
+            for world_axis in world_axes
+        )
+        signs = np.asarray(
+            [
+                (x, y, z)
+                for x in (-1.0, 1.0)
+                for y in (-1.0, 1.0)
+                for z in (-1.0, 1.0)
+            ],
+            dtype=np.float64,
+        )
+        obb_corners = (
+            signs * obb_half[index]
+        ) @ rotation.T + centers[index]
+        aabb_corners = lower[index] + 0.5 * (signs + 1.0) * (
+            upper[index] - lower[index]
+        )
+        scale = max(
+            1.0,
+            float(np.max(np.abs(obb_corners))),
+            float(np.max(np.abs(aabb_corners))),
+        )
+        error = 64.0 * _FK_ERROR * scale
+        for axis in axes:
+            if np.linalg.norm(axis) <= np.finfo(np.float64).tiny:
+                continue
+            obb_projection = obb_corners @ axis
+            aabb_projection = aabb_corners @ axis
+            if (
+                float(np.max(obb_projection))
+                < float(np.min(aabb_projection)) - error
+                or float(np.max(aabb_projection))
+                < float(np.min(obb_projection)) - error
+            ):
+                return True
+        return False
+
+    expected = np.asarray(
+        [scalar_separated(index) for index in range(len(centers))],
+        dtype=bool,
+    )
+    actual = RayClosureSurfaceModel._obb_aabb_strict_separation_mask(
+        obb_centers_m=centers,
+        obb_axes=rotations,
+        obb_half_extents_m=obb_half,
+        aabb_lower_m=lower,
+        aabb_upper_m=upper,
+    )
+
+    assert np.array_equal(actual, expected)
+    assert actual[0]
+    assert not actual[1]
+    assert not actual[2]
+
+
+def test_moving_triangle_sat_uses_vertex_motion_bounds_and_keeps_touching() -> None:
+    fixed = np.asarray(
+        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)),
+        dtype=np.float64,
+    )
+    moving = np.asarray(
+        (
+            fixed + (0.0, 0.0, 2.0),
+            fixed,
+            fixed + (0.0, 0.0, 0.2),
+            fixed + (3.0, 0.0, 0.0),
+        ),
+        dtype=np.float64,
+    )
+    radii = np.asarray(
+        (
+            (0.1, 0.1, 0.1),
+            (0.0, 0.0, 0.0),
+            (0.25, 0.25, 0.25),
+            (0.2, 0.2, 0.2),
+        ),
+        dtype=np.float64,
+    )
+    actual = (
+        RayClosureSurfaceModel._moving_triangle_triangle_strict_separation_mask(
+            moving_triangles_midpoint_m=moving,
+            moving_vertex_motion_radius_upper_m=radii,
+            fixed_triangles_m=np.repeat(fixed[None, :, :], 4, axis=0),
+        )
+    )
+
+    assert actual.tolist() == [True, False, False, True]
+
+    midpoint = moving[0]
+    radius = radii[0]
+    edges = np.stack(
+        (
+            midpoint[1] - midpoint[0],
+            midpoint[2] - midpoint[1],
+            midpoint[0] - midpoint[2],
+        )
+    )
+    fixed_edges = np.stack(
+        (
+            fixed[1] - fixed[0],
+            fixed[2] - fixed[1],
+            fixed[0] - fixed[2],
+        )
+    )
+    axes = np.vstack(
+        (
+            np.cross(edges[0], -edges[2]),
+            np.cross(fixed_edges[0], -fixed_edges[2]),
+            np.cross(edges[:, None, :], fixed_edges[None, :, :]).reshape(
+                (-1, 3)
+            ),
+        )
+    )
+    axis_norm = np.linalg.norm(axes, axis=1)
+    midpoint_projection = midpoint @ axes.T
+    enclosure_lower = np.min(
+        midpoint_projection - radius[:, None] * axis_norm[None, :],
+        axis=0,
+    )
+    enclosure_upper = np.max(
+        midpoint_projection + radius[:, None] * axis_norm[None, :],
+        axis=0,
+    )
+    for phase in np.linspace(0.0, 1.0, 65):
+        displacement = np.asarray(
+            (
+                (0.0, 0.0, 0.1 * math.sin(math.pi * phase)),
+                (0.1 * math.sin(math.pi * phase), 0.0, 0.0),
+                (0.0, 0.1 * math.sin(math.pi * phase), 0.0),
+            )
+        )
+        sampled_projection = (midpoint + displacement) @ axes.T
+        assert np.all(sampled_projection >= enclosure_lower - 1.0e-14)
+        assert np.all(sampled_projection <= enclosure_upper + 1.0e-14)
+
+
+def test_dual_bvh_and_restarted_reference_match_candidate_rejections() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    parameter_rows = np.vstack(
+        (_PARAMETERS, np.asarray((0.0, 0.6, 0.5, 0.5)))
+    )
+    coverages = []
+    for parameter_row in parameter_rows:
+        q_start, target, rotation = model._decode(parameter_row)
+        transform_result = model._object_from_hand(q_start, target, rotation)
+        assert transform_result is not None
+        object_from_hand, hand_extent = transform_result
+        spatial_error = (
+            model.intersector.distance_error_bound_m
+            + model.distance_bvh.aabb_error_bound_m
+            + _FK_ERROR
+            * (model.intersector.characteristic_length_m + hand_extent)
+        )
+        coverages.extend(
+            model._whole_path_pad_aabb_hierarchy_coverages(
+                q_start=q_start,
+                object_from_hand=object_from_hand,
+                spatial_error_bound_m=spatial_error,
+            )
+        )
+
+    dual = model._classify_whole_path_pad_aabb_hierarchies(coverages)
+    reference = (
+        model._classify_whole_path_pad_aabb_hierarchies_restarted_reference(
+            coverages
+        )
+    )
+
+    assert tuple(row.pad_name for row in dual) == tuple(
+        row.pad_name for row in reference
+    )
+    assert all(
+        dual_row.certified_free
+        for dual_row, reference_row in zip(dual, reference)
+        if reference_row.certified_free
+    )
+    assert sum(row.certified_free for row in dual) >= sum(
+        row.certified_free for row in reference
+    )
+
+
+def test_full_pad_aabb_depth_first_frontier_stops_after_contact_leaf(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, hand_extent = transform_result
+    spatial_error = (
+        model.intersector.distance_error_bound_m
+        + model.distance_bvh.aabb_error_bound_m
+        + _FK_ERROR
+        * (model.intersector.characteristic_length_m + hand_extent)
+    )
+    coverages = model._whole_path_pad_aabb_hierarchy_coverages(
+        q_start=q_start,
+        object_from_hand=object_from_hand,
+        spatial_error_bound_m=spatial_error,
+    )
+
+    monkeypatch.setattr(
+        model,
+        "_obb_aabb_strict_separation_mask",
+        lambda **kwargs: np.zeros(
+            len(kwargs["obb_centers_m"]), dtype=bool
+        ),
+    )
+    monkeypatch.setattr(
+        model,
+        "_triangle_obb_pair_strict_separation_mask",
+        lambda **kwargs: np.zeros(
+            len(kwargs["triangles_object_m"]), dtype=bool
+        ),
+    )
+    monkeypatch.setattr(
+        model,
+        "_moving_triangle_triangle_strict_separation_mask",
+        lambda **kwargs: np.zeros(
+            len(kwargs["fixed_triangles_m"]), dtype=bool
+        ),
+    )
+    screens = model._classify_whole_path_pad_aabb_hierarchies(
+        coverages
+    )
+
+    for prepared, screen in zip(model.prepared_pads, screens):
+        full_cross_product_work = (
+            8
+            * len(prepared.surface_aabb_nodes)
+            * model.distance_bvh.node_count
+        )
+        assert not screen.certified_free
+        assert screen.spatial_node_query_count < full_cross_product_work
+        assert screen.obb_sat_triangle_test_count > 0
+        assert screen.temporal_refined_leaf_pair_count > 0
+        assert screen.temporal_refinement_transform_count > 0
+        assert screen.maximum_temporal_refinement_depth_reached == 2
+
+
+def test_bounded_narrowphase_exhaustion_remains_uncertain(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, hand_extent = transform_result
+    spatial_error = (
+        model.intersector.distance_error_bound_m
+        + model.distance_bvh.aabb_error_bound_m
+        + _FK_ERROR
+        * (model.intersector.characteristic_length_m + hand_extent)
+    )
+    coverages = model._whole_path_pad_aabb_hierarchy_coverages(
+        q_start=q_start,
+        object_from_hand=object_from_hand,
+        spatial_error_bound_m=spatial_error,
+    )
+
+    monkeypatch.setattr(
+        model,
+        "_obb_aabb_strict_separation_mask",
+        lambda **kwargs: np.zeros(
+            len(kwargs["obb_centers_m"]), dtype=bool
+        ),
+    )
+    monkeypatch.setattr(
+        model,
+        "_triangle_obb_pair_strict_separation_mask",
+        lambda **kwargs: np.zeros(
+            len(kwargs["triangles_object_m"]), dtype=bool
+        ),
+    )
+    monkeypatch.setattr(
+        model,
+        "_moving_triangle_triangle_strict_separation_mask",
+        lambda **kwargs: np.zeros(
+            len(kwargs["fixed_triangles_m"]), dtype=bool
+        ),
+    )
+    screens = model._classify_whole_path_pad_aabb_hierarchies(
+        coverages,
+        enable_moving_triangle_refinement=True,
+        maximum_moving_triangle_pair_tests_per_coverage=1,
+    )
+
+    assert all(not screen.certified_free for screen in screens)
+    assert all(
+        screen.narrowphase_work_budget_exhausted for screen in screens
+    )
+    assert all(
+        1 <= screen.moving_triangle_sat_pair_test_count <= 64
+        for screen in screens
+    )
+
+
+def test_batch_screen_reuses_one_full_closed_focus_per_candidate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model())
+    original = model._closure_focus_hand
+    call_count = 0
+
+    def counted(q_start: np.ndarray) -> tuple[np.ndarray, float] | None:
+        nonlocal call_count
+        call_count += 1
+        return original(q_start)
+
+    monkeypatch.setattr(model, "_closure_focus_hand", counted)
+    second = np.asarray((0.0, 0.6, 0.5, 0.5), dtype=np.float64)
+    screens = model.screen_unit_parameter_batch(
+        np.vstack((_PARAMETERS, second))
+    )
+
+    assert len(screens) == 2
+    assert call_count == 2
+
+
+def test_batch_screen_production_path_uses_only_one_cheap_stage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model())
+    calls: list[tuple[bool, bool]] = []
+    reject_in_cheap_stage = False
+
+    monkeypatch.setattr(
+        model,
+        "_pad_aabb_root_global_overlap_count",
+        lambda _coverage: 1,
+    )
+
+    def classified(
+        coverages: object,
+        *,
+        enable_moving_triangle_refinement: bool = True,
+        maximum_moving_triangle_pair_tests_per_coverage: int | None = None,
+        enable_directional_contact_feasibility: bool = False,
+    ) -> tuple[WholePathPadSphereScreen, ...]:
+        del maximum_moving_triangle_pair_tests_per_coverage
+        calls.append(
+            (
+                enable_moving_triangle_refinement,
+                enable_directional_contact_feasibility,
+            )
+        )
+        result = []
+        for coverage in coverages:
+            prepared = model.prepared_pads[coverage.prepared_pad_index]
+            result.append(
+                WholePathPadSphereScreen(
+                    pad_name=prepared.verified.name,
+                    finger_name=prepared.verified.finger_name,
+                    segment_count=8,
+                    nearest_surface_query_count=0,
+                    distance_bvh_node_visits=1,
+                    distance_triangle_tests=1,
+                    minimum_clearance_lower_bound_m=0.0,
+                    certified_free=reject_in_cheap_stage,
+                    narrowphase_refinement_used=(
+                        enable_moving_triangle_refinement
+                    ),
+                    directional_contact_feasibility_used=(
+                        enable_directional_contact_feasibility
+                    ),
+                    certified_no_valid_contact=(
+                        enable_directional_contact_feasibility
+                    ),
+                )
+            )
+        return tuple(result)
+
+    monkeypatch.setattr(
+        model,
+        "_classify_whole_path_pad_aabb_hierarchies",
+        classified,
+    )
+    cheap_only = model.screen_unit_parameter_batch(_PARAMETERS[None, :])
+    assert calls == [
+        (False, False),
+        (False, False),
+        (False, False),
+    ]
+    assert not any(
+        item.directional_contact_feasibility_used
+        or item.certified_no_valid_contact
+        for item in cheap_only[0]
+    )
+    assert not any(
+        item.narrowphase_refinement_used for item in cheap_only[0]
+    )
+    assert all(item.root_overlap_segment_count == 1 for item in cheap_only[0])
+
+    calls.clear()
+    reject_in_cheap_stage = True
+    cheap_rejected = model.screen_unit_parameter_batch(
+        _PARAMETERS[None, :]
+    )
+    assert calls == [(False, False)]
+    assert not any(
+        item.directional_contact_feasibility_used
+        for item in cheap_rejected[0]
+    )
+
+
+def test_interval_dot_upper_keeps_tangent_uncertainty() -> None:
+    fixed_positive_x = np.asarray(((1.0, 0.0, 0.0),))
+    fixed_negative_x = np.asarray(((-1.0, 0.0, 0.0),))
+    zero = np.zeros((1, 3), dtype=np.float64)
+    positive_velocity = np.asarray(((1.0, 0.0, 0.0),))
+
+    positive = RayClosureSurfaceModel._box_dot_product_upper(
+        first_lower=fixed_positive_x,
+        first_upper=fixed_positive_x,
+        second_lower=positive_velocity,
+        second_upper=positive_velocity,
+    )
+    negative = RayClosureSurfaceModel._box_dot_product_upper(
+        first_lower=fixed_negative_x,
+        first_upper=fixed_negative_x,
+        second_lower=positive_velocity,
+        second_upper=positive_velocity,
+    )
+    tangent = RayClosureSurfaceModel._box_dot_product_upper(
+        first_lower=fixed_positive_x,
+        first_upper=fixed_positive_x,
+        second_lower=zero,
+        second_upper=zero,
+    )
+
+    assert positive[0] > 0.0
+    assert negative[0] < 0.0
+    assert tangent[0] > 0.0
+
+
+def test_directional_impossibility_is_not_reported_collision_free(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, hand_extent = transform_result
+    spatial_error = (
+        model.intersector.distance_error_bound_m
+        + model.distance_bvh.aabb_error_bound_m
+        + _FK_ERROR
+        * (model.intersector.characteristic_length_m + hand_extent)
+    )
+    coverages = model._whole_path_pad_aabb_hierarchy_coverages(
+        q_start=q_start,
+        object_from_hand=object_from_hand,
+        spatial_error_bound_m=spatial_error,
+    )
+
+    monkeypatch.setattr(
+        model,
+        "_obb_aabb_strict_separation_mask",
+        lambda **kwargs: np.zeros(
+            len(kwargs["obb_centers_m"]), dtype=bool
+        ),
+    )
+
+    def no_pad_approach(
+        coverage: object,
+    ) -> _DirectionalWitnessSegmentBounds:
+        prepared = model.prepared_pads[coverage.prepared_pad_index]
+        witness_count = len(prepared.witness_points_link_m)
+        node_count = len(prepared.surface_aabb_nodes)
+        return _DirectionalWitnessSegmentBounds(
+            pad_approach_possible=np.zeros(
+                (8, witness_count), dtype=bool
+            ),
+            node_pad_approach_possible=np.zeros(
+                (8, node_count), dtype=bool
+            ),
+            interval_witness_motion_evaluation_count=16 * witness_count,
+        )
+
+    monkeypatch.setattr(
+        model,
+        "_directional_witness_segment_bounds",
+        no_pad_approach,
+    )
+    screens = model._classify_whole_path_pad_aabb_hierarchies(
+        coverages,
+        enable_moving_triangle_refinement=False,
+        enable_directional_contact_feasibility=True,
+    )
+
+    assert all(not screen.certified_free for screen in screens)
+    assert all(screen.certified_no_valid_contact for screen in screens)
+    assert all(
+        screen.directional_bvh_node_pair_rejected_count > 0
+        for screen in screens
+    )
+    assert all(
+        screen.moving_triangle_sat_pair_test_count == 0
+        for screen in screens
+    )
+
+
+def test_lazy_affine_node_speed_bound_dominates_independent_scalar_formula() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, _target, _rotation = model._decode(_PARAMETERS)
+    radii = np.asarray((0.0, 0.01, 0.2, 1.0), dtype=np.float64)
+
+    for pad_index, prepared in enumerate(model.prepared_pads):
+        direction = model.closing_directions_physical[pad_index]
+        maximum_parameter = model._maximum_path_parameter(
+            q_start, direction
+        )
+        actual = model._local_radius_speed_bounds(
+            prepared=prepared,
+            local_radii_m=radii,
+            q_start=q_start,
+            direction=direction,
+            maximum_parameter=maximum_parameter,
+        )
+        endpoint = q_start + maximum_parameter * direction
+        resolved_start = model.hand_model.resolve_joint_positions(q_start)
+        resolved_end = model.hand_model.resolve_joint_positions(endpoint)
+        resolved_velocity = model.hand_model.resolve_joint_velocities(
+            direction, enforce_limits=False
+        )
+        ancestor_names = model._ancestor_joint_names(
+            prepared.verified.link_name
+        )
+        reference: list[float] = []
+        for radius in radii:
+            speed = 0.0
+            for ancestor_index, name in enumerate(ancestor_names):
+                joint = model.hand_model.joints[name]
+                rate = abs(float(resolved_velocity[name]))
+                if joint.joint_type in ("revolute", "continuous"):
+                    reach = float(radius)
+                    for downstream_name in ancestor_names[
+                        ancestor_index + 1 :
+                    ]:
+                        downstream = model.hand_model.joints[
+                            downstream_name
+                        ]
+                        reach += float(
+                            np.linalg.norm(downstream.origin_xyz_m)
+                        )
+                        if downstream.joint_type == "prismatic":
+                            reach += max(
+                                abs(float(resolved_start[downstream_name])),
+                                abs(float(resolved_end[downstream_name])),
+                            )
+                    speed += rate * reach
+                elif joint.joint_type == "prismatic":
+                    speed += rate
+            reference.append(
+                float(
+                    np.nextafter(
+                        speed * (1.0 + _FK_ERROR), math.inf
+                    )
+                )
+            )
+        assert np.all(actual >= np.asarray(reference))
+
+
+def test_staged_pad_screen_uses_root_score_only_for_ordering(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model())
+    score_by_pad = {0: 2, 1: 0, 2: 1}
+    observed_order: list[int] = []
+
+    monkeypatch.setattr(
+        model,
+        "_pad_aabb_root_global_overlap_count",
+        lambda coverage: score_by_pad[coverage.prepared_pad_index],
+    )
+
+    def complete_classifier(
+        coverages: object,
+        **_kwargs: object,
+    ) -> tuple[WholePathPadSphereScreen, ...]:
+        rows = tuple(coverages)
+        result = []
+        for coverage in rows:
+            pad_index = coverage.prepared_pad_index
+            observed_order.append(pad_index)
+            prepared = model.prepared_pads[pad_index]
+            result.append(
+                WholePathPadSphereScreen(
+                    pad_name=prepared.verified.name,
+                    finger_name=prepared.verified.finger_name,
+                    segment_count=8,
+                    nearest_surface_query_count=0,
+                    distance_bvh_node_visits=1,
+                    distance_triangle_tests=0,
+                    minimum_clearance_lower_bound_m=0.0,
+                    certified_free=True,
+                    spatial_node_query_count=1,
+                    aabb_certified_free_node_count=1,
+                )
+            )
+        return tuple(result)
+
+    monkeypatch.setattr(
+        model,
+        "_classify_whole_path_pad_aabb_hierarchies",
+        complete_classifier,
+    )
+    screens = model.screen_unit_parameters(_PARAMETERS)
+
+    assert screens[1].certified_free
+    assert screens[1].segment_count == 8
+    assert screens[1].aabb_certified_free_node_count == 1
+    assert observed_order == [1]
+    assert screens[0].skipped_due_to_other_pad_free
+    assert screens[2].skipped_due_to_other_pad_free
+    assert screens[0].segment_count == screens[2].segment_count == 0
+
+
+def test_staged_pad_screen_checks_all_pads_in_deterministic_root_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model())
+    score_by_pad = {0: 3, 1: 1, 2: 2}
+    observed_order: list[int] = []
+
+    monkeypatch.setattr(
+        model,
+        "_pad_aabb_root_global_overlap_count",
+        lambda coverage: score_by_pad[coverage.prepared_pad_index],
+    )
+
+    def uncertain_classifier(
+        coverages: object,
+        **_kwargs: object,
+    ) -> tuple[WholePathPadSphereScreen, ...]:
+        rows = tuple(coverages)
+        result: list[WholePathPadSphereScreen] = []
+        for coverage in rows:
+            pad_index = coverage.prepared_pad_index
+            observed_order.append(pad_index)
+            prepared = model.prepared_pads[pad_index]
+            result.append(
+                WholePathPadSphereScreen(
+                    pad_name=prepared.verified.name,
+                    finger_name=prepared.verified.finger_name,
+                    segment_count=8,
+                    nearest_surface_query_count=0,
+                    distance_bvh_node_visits=0,
+                    distance_triangle_tests=0,
+                    minimum_clearance_lower_bound_m=0.0,
+                    certified_free=False,
+                )
+            )
+        return tuple(result)
+
+    monkeypatch.setattr(
+        model,
+        "_classify_whole_path_pad_aabb_hierarchies",
+        uncertain_classifier,
+    )
+    screens = model.screen_unit_parameters(_PARAMETERS)
+
+    assert observed_order == [1, 2, 0]
+    assert all(not screen.certified_free for screen in screens)
+    assert all(
+        not screen.skipped_due_to_other_pad_free for screen in screens
+    )
+
+
+def test_whole_path_sphere_uncertainty_preserves_exact_contact_result() -> None:
+    model, hand, _pads = _planner(_box_model())
+    optimized = model._evaluate_unit_parameters_with_execution(
+        _PARAMETERS,
+        hand,
+        execution=_GeometryExecutionContext(),
+    )
+    reference = model._evaluate_unit_parameters_with_execution(
+        _PARAMETERS,
+        hand,
+        execution=_GeometryExecutionContext(),
+        _use_whole_path_sphere_screen=False,
+    )
+
+    assert _display_candidate(optimized) == _display_candidate(reference)
+    assert optimized.possible_first_contact_sets == (
+        reference.possible_first_contact_sets
+    )
+    assert optimized.audit.failure_reason == reference.audit.failure_reason
+    assert all(
+        row.whole_path_sphere_screen_segment_count == 8
+        and row.whole_path_sphere_screen_query_count >= 8
+        and not row.whole_path_sphere_screen_certified_free
+        for row in optimized.audit.pad_audits
+    )
+    assert all(
+        row.whole_path_sphere_screen_segment_count == 0
+        and row.whole_path_sphere_screen_query_count == 0
+        for row in reference.audit.pad_audits
+    )
+    optimized_document = optimized.audit.as_dict()
+    reference_document = reference.audit.as_dict()
+    screen_fields = {
+        "whole_path_sphere_screen_segment_count",
+        "whole_path_sphere_screen_query_count",
+        "whole_path_sphere_screen_bvh_node_visits",
+        "whole_path_sphere_screen_triangle_tests",
+        "whole_path_sphere_screen_obb_sat_certified_free_node_count",
+        "whole_path_sphere_screen_obb_sat_triangle_test_count",
+        "whole_path_sphere_screen_moving_triangle_sat_certified_free_pair_count",
+        "whole_path_sphere_screen_moving_triangle_sat_pair_test_count",
+        "whole_path_sphere_screen_temporal_refined_leaf_pair_count",
+        "whole_path_sphere_screen_temporal_refinement_transform_count",
+        "whole_path_sphere_screen_maximum_temporal_refinement_depth_reached",
+        "whole_path_sphere_screen_narrowphase_refinement_used",
+        "whole_path_sphere_screen_narrowphase_work_budget_exhausted",
+        "whole_path_sphere_screen_directional_contact_feasibility_used",
+        "whole_path_sphere_screen_directional_bvh_node_pair_test_count",
+        "whole_path_sphere_screen_directional_bvh_node_pair_rejected_count",
+        "whole_path_sphere_screen_directional_leaf_face_pair_test_count",
+        "whole_path_sphere_screen_directional_leaf_face_pair_rejected_count",
+        "whole_path_sphere_screen_directional_interval_witness_motion_evaluation_count",
+        "whole_path_sphere_screen_certified_no_valid_contact",
+        "whole_path_sphere_screen_certified_free",
+        "whole_path_sphere_screen_clearance_lower_bound_m",
+    }
+    for document in (optimized_document, reference_document):
+        for pad_document in document["pad_audits"]:
+            for field_name in screen_fields:
+                pad_document.pop(field_name)
+    assert optimized_document == reference_document
+
+
+def test_failure_first_screen_skips_exact_earlier_fingers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model())
+    screens = tuple(
+        WholePathPadSphereScreen(
+            pad_name=prepared.verified.name,
+            finger_name=prepared.verified.finger_name,
+            segment_count=8,
+            nearest_surface_query_count=8,
+            distance_bvh_node_visits=17,
+            distance_triangle_tests=9,
+            minimum_clearance_lower_bound_m=(
+                0.025 if row_index == 1 else -0.001
+            ),
+            certified_free=row_index == 1,
+        )
+        for row_index, prepared in enumerate(model.prepared_pads)
+    )
+    monkeypatch.setattr(
+        model,
+        "_classify_whole_path_pad_aabb_hierarchies",
+        lambda _coverages, **_kwargs: screens,
+    )
+
+    def forbidden_exact_search(**_kwargs: object) -> object:
+        raise AssertionError("exact PAD search must be skipped")
+
+    monkeypatch.setattr(
+        model, "_search_pad_first_contact_v9", forbidden_exact_search
+    )
+    evaluation = model.evaluate_unit_parameters(_PARAMETERS)
+
+    assert evaluation.candidate is None
+    assert evaluation.audit.failure_reason == "NO_FIRST_CONTACT_FOR_PAD:pad_b"
+    assert evaluation.audit.subdivision_intervals_used == 0
+    assert len(evaluation.audit.pad_audits) == 1
+    row = evaluation.audit.pad_audits[0]
+    assert row.pad_name == "pad_b"
+    assert row.whole_path_sphere_screen_certified_free
+    assert row.whole_path_sphere_screen_clearance_lower_bound_m == pytest.approx(
+        0.025
+    )
+
+
+def test_batch_linear_cull_is_fail_closed_and_keeps_triangle_boundaries() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    for face_index, triangle in enumerate(
+        model.canonical_object_face_vertices_m
+    ):
+        reference = (
+            model.interval_kinematics.object_triangle_affine_form_bounds(
+                triangle
+            )
+        )
+        for row_index, row in enumerate(reference):
+            for coefficient_index, coefficient in enumerate(row):
+                assert (
+                    model._object_contact_affine_lower[
+                        face_index, row_index, coefficient_index
+                    ]
+                    <= coefficient.lower
+                )
+                assert (
+                    model._object_contact_affine_upper[
+                        face_index, row_index, coefficient_index
+                    ]
+                    >= coefficient.upper
+                )
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, _hand_extent = transform_result
+    prepared = model.prepared_pads[0]
+    direction = model.closing_directions_physical[0]
+    maximum_parameter = model._maximum_path_parameter(q_start, direction)
+    witness_index = 0
+    motion = model.interval_kinematics.point_motion(
+        link_name=prepared.verified.link_name,
+        q_start=q_start,
+        direction=direction,
+        phase_lower=0.0,
+        phase_upper=maximum_parameter,
+        base_transform=object_from_hand,
+        point_local_m=prepared.witness_points_link_m[witness_index],
+    )
+    start_positions = model._witness_positions_object(
+        prepared, q_start, object_from_hand
+    )
+    end_positions = model._witness_positions_object(
+        prepared,
+        q_start + maximum_parameter * direction,
+        object_from_hand,
+    )
+    tube_lower, tube_upper = (
+        model._certified_chord_tube_position_bounds_v9(
+            motion=motion,
+            start_position_object_m=start_positions[witness_index],
+            end_position_object_m=end_positions[witness_index],
+            phase_lower=0.0,
+            phase_upper=maximum_parameter,
+            endpoint_error_bound_m=1.0e-12,
+        )
+    )
+    for phase in np.linspace(0.0, maximum_parameter, 33):
+        sampled = model._witness_positions_object(
+            prepared,
+            q_start + phase * direction,
+            object_from_hand,
+        )[witness_index]
+        assert np.all(sampled >= tube_lower)
+        assert np.all(sampled <= tube_upper)
+    position_lower = np.asarray(
+        [row.lower for row in motion.position_object_m], dtype=np.float64
+    )
+    position_upper = np.asarray(
+        [row.upper for row in motion.position_object_m], dtype=np.float64
+    )
+    face_indices = np.arange(
+        len(model.canonical_object_face_vertices_m), dtype=np.int64
+    )
+    free_mask = model._certified_batch_free_face_mask_v9(
+        position_lower=position_lower,
+        position_upper=position_upper,
+        face_indices=face_indices,
+    )
+    assert np.any(free_mask)
+    chord_free_mask = model._certified_chord_batch_free_face_mask_v9(
+        start_position_object_m=start_positions[witness_index],
+        end_position_object_m=end_positions[witness_index],
+        tube_lower_object_m=tube_lower,
+        tube_upper_object_m=tube_upper,
+        face_indices=face_indices,
+    )
+    assert np.any(chord_free_mask)
+    assert np.all(chord_free_mask | ~free_mask)
+    triangle_index = int(prepared.triangle_indices[witness_index])
+    pad_face = np.asarray(
+        prepared.verified.faces[triangle_index], dtype=np.int64
+    )
+    pad_triangle = np.asarray(
+        prepared.verified.points_local_m[pad_face], dtype=np.float64
+    )
+    for face_index in face_indices[chord_free_mask]:
+        row = model.interval_kinematics.certify_transverse_contact_root(
+            link_name=prepared.verified.link_name,
+            q_start=q_start,
+            direction=direction,
+            phase_lower=0.0,
+            phase_upper=maximum_parameter,
+            base_transform=object_from_hand,
+            witness_point_local_m=(
+                prepared.witness_points_link_m[witness_index]
+            ),
+            pad_triangle_local_m=pad_triangle,
+            object_triangle_m=(
+                model.canonical_object_face_vertices_m[int(face_index)]
+            ),
+        )
+        assert row.state is IntervalRootState.CERTIFIED_FREE
+
+    face_index = 0
+    triangle = model.canonical_object_face_vertices_m[face_index]
+    centroid = np.mean(triangle, axis=0)
+    vertex = np.asarray(triangle[0], dtype=np.float64)
+    outside = 2.0 * triangle[0] - triangle[1]
+    singleton_face = np.asarray((face_index,), dtype=np.int64)
+    for boundary_point in (centroid, vertex):
+        boundary_mask = model._certified_batch_free_face_mask_v9(
+            position_lower=boundary_point,
+            position_upper=boundary_point,
+            face_indices=singleton_face,
+        )
+        assert not bool(boundary_mask[0])
+        chord_boundary_mask = (
+            model._certified_chord_batch_free_face_mask_v9(
+                start_position_object_m=boundary_point,
+                end_position_object_m=boundary_point,
+                tube_lower_object_m=boundary_point,
+                tube_upper_object_m=boundary_point,
+                face_indices=singleton_face,
+            )
+        )
+        assert not bool(chord_boundary_mask[0])
+    outside_mask = model._certified_batch_free_face_mask_v9(
+        position_lower=outside,
+        position_upper=outside,
+        face_indices=singleton_face,
+    )
+    assert bool(outside_mask[0])
+
+
+def test_chord_affine_bounds_preserve_coordinate_correlation() -> None:
+    coefficient_lower = np.zeros((1, 4, 4), dtype=np.float64)
+    coefficient_upper = np.zeros((1, 4, 4), dtype=np.float64)
+    correlated_outside = np.asarray((1.0, -1.0, 0.0, -1.0))
+    coefficient_lower[0, 1] = correlated_outside
+    coefficient_upper[0, 1] = correlated_outside
+    coefficient_lower[0, 2:, 3] = 1.0
+    coefficient_upper[0, 2:, 3] = 1.0
+    start = np.asarray((-1.0, -1.0, 0.0))
+    end = np.asarray((1.0, 1.0, 0.0))
+    box_lower = np.minimum(start, end)
+    box_upper = np.maximum(start, end)
+
+    broad_lower, broad_upper = (
+        RayClosureSurfaceModel._outward_affine_form_bounds(
+            position_lower=box_lower,
+            position_upper=box_upper,
+            coefficient_lower=coefficient_lower,
+            coefficient_upper=coefficient_upper,
+        )
+    )
+    chord_lower, chord_upper = (
+        RayClosureSurfaceModel._certified_chord_affine_form_bounds_v9(
+            start_position_object_m=start,
+            end_position_object_m=end,
+            tube_lower_object_m=box_lower,
+            tube_upper_object_m=box_upper,
+            coefficient_lower=coefficient_lower,
+            coefficient_upper=coefficient_upper,
+        )
+    )
+
+    assert broad_lower[0, 1] < 0.0 < broad_upper[0, 1]
+    assert chord_upper[0, 1] < 0.0
+
+
+def test_pairwise_chord_face_mask_exactly_matches_scalar_rows() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    faces = np.arange(
+        len(model.canonical_object_face_vertices_m), dtype=np.int64
+    )
+    centroids = np.mean(
+        model.canonical_object_face_vertices_m[faces], axis=1
+    )
+    start = np.array(centroids, copy=True)
+    start[1::2] += np.asarray((0.05, 0.04, 0.03))
+    end = start + np.linspace(0.0, 1.0e-4, len(faces))[:, None] * np.asarray(
+        (1.0, -0.5, 0.25)
+    )
+    radius = np.linspace(0.0, 2.0e-6, len(faces))[:, None]
+    tube_lower = np.nextafter(
+        np.minimum(start, end) - radius, -math.inf
+    )
+    tube_upper = np.nextafter(
+        np.maximum(start, end) + radius, math.inf
+    )
+
+    pairwise = model._certified_chord_pairwise_free_face_mask_v9(
+        start_positions_object_m=start,
+        end_positions_object_m=end,
+        tube_lower_object_m=tube_lower,
+        tube_upper_object_m=tube_upper,
+        face_indices=faces,
+    )
+    scalar = np.asarray(
+        [
+            bool(
+                model._certified_chord_batch_free_face_mask_v9(
+                    start_position_object_m=start[index],
+                    end_position_object_m=end[index],
+                    tube_lower_object_m=tube_lower[index],
+                    tube_upper_object_m=tube_upper[index],
+                    face_indices=faces[index : index + 1],
+                )[0]
+            )
+            for index in range(len(faces))
+        ],
+        dtype=bool,
+    )
+
+    assert np.array_equal(pairwise, scalar)
+    assert np.any(pairwise)
+    assert np.any(~pairwise)
+    assert not pairwise.flags.writeable
+
+
+def test_pairwise_exact_point_affine_bounds_match_general_boxes() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    faces = np.arange(
+        len(model.canonical_object_face_vertices_m), dtype=np.int64
+    )
+    points = np.mean(
+        model.canonical_object_face_vertices_m[faces], axis=1
+    ) + np.linspace(-1.0e-4, 1.0e-4, len(faces))[:, None]
+    coefficient_lower = model._object_contact_affine_lower[faces]
+    coefficient_upper = model._object_contact_affine_upper[faces]
+
+    general_lower, general_upper = (
+        model._outward_affine_form_bounds_pairwise(
+            position_lower=points,
+            position_upper=points,
+            coefficient_lower=coefficient_lower,
+            coefficient_upper=coefficient_upper,
+        )
+    )
+    point_lower, point_upper = (
+        model._outward_affine_form_bounds_at_points_pairwise(
+            positions=points,
+            coefficient_lower=coefficient_lower,
+            coefficient_upper=coefficient_upper,
+        )
+    )
+
+    assert np.array_equal(point_lower, general_lower)
+    assert np.array_equal(point_upper, general_upper)
+
+
+def test_packet_motion_bvh_and_pair_order_match_scalar_reference() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, _hand_extent = transform_result
+    prepared = model.prepared_pads[0]
+    direction = model.closing_directions_physical[0]
+    maximum_parameter = model._maximum_path_parameter(q_start, direction)
+    possible_indices = np.arange(
+        len(prepared.witness_points_link_m), dtype=np.int64
+    )
+    start_positions = model._witness_positions_object(
+        prepared, q_start, object_from_hand
+    )
+    end_positions = model._witness_positions_object(
+        prepared,
+        q_start + maximum_parameter * direction,
+        object_from_hand,
+    )
+    endpoint_error_bound_m = 1.0e-12
+
+    reference_pairs: list[tuple[int, int]] = []
+    reference_cache = model.interval_kinematics.new_link_transform_cache()
+    reference_swept_count = 0
+    for witness_index_value in possible_indices:
+        witness_index = int(witness_index_value)
+        motion = model.interval_kinematics.point_motion(
+            link_name=prepared.verified.link_name,
+            q_start=q_start,
+            direction=direction,
+            phase_lower=0.0,
+            phase_upper=maximum_parameter,
+            base_transform=object_from_hand,
+            point_local_m=prepared.witness_points_link_m[witness_index],
+            transform_cache=reference_cache,
+        )
+        broad_lower = np.asarray(
+            [row.lower for row in motion.position_object_m], dtype=np.float64
+        )
+        broad_upper = np.asarray(
+            [row.upper for row in motion.position_object_m], dtype=np.float64
+        )
+        face_indices = model.distance_bvh.face_indices_intersecting_aabb(
+            broad_lower, broad_upper
+        )
+        tube_lower, tube_upper = (
+            model._certified_chord_tube_position_bounds_v9(
+                motion=motion,
+                start_position_object_m=start_positions[witness_index],
+                end_position_object_m=end_positions[witness_index],
+                phase_lower=0.0,
+                phase_upper=maximum_parameter,
+                endpoint_error_bound_m=endpoint_error_bound_m,
+            )
+        )
+        query_lower = np.nextafter(
+            tube_lower - model.distance_bvh.centre_m, -math.inf
+        )
+        query_upper = np.nextafter(
+            tube_upper - model.distance_bvh.centre_m, math.inf
+        )
+        tube_overlap = np.all(
+            model.distance_bvh.face_upper_m[face_indices] >= query_lower,
+            axis=1,
+        ) & np.all(
+            model.distance_bvh.face_lower_m[face_indices] <= query_upper,
+            axis=1,
+        )
+        face_indices = face_indices[tube_overlap]
+        reference_swept_count += len(face_indices)
+        if len(face_indices) > 0:
+            free_mask = model._certified_chord_batch_free_face_mask_v9(
+                start_position_object_m=start_positions[witness_index],
+                end_position_object_m=end_positions[witness_index],
+                tube_lower_object_m=tube_lower,
+                tube_upper_object_m=tube_upper,
+                face_indices=face_indices,
+            )
+            face_indices = face_indices[~free_mask]
+        reference_pairs.extend(
+            (witness_index, int(face_index))
+            for face_index in face_indices
+        )
+
+    packet_counters = _PadCounters()
+    packet_pairs = tuple(
+        model._iter_complete_swept_face_pairs_v9(
+            prepared=prepared,
+            possible_witness_indices=possible_indices,
+            q_start=q_start,
+            direction=direction,
+            lower=0.0,
+            upper=maximum_parameter,
+            object_from_hand=object_from_hand,
+            counters=packet_counters,
+            transform_cache=(
+                model.interval_kinematics.new_link_transform_cache()
+            ),
+            apply_certified_batch_cull=True,
+            witness_start_positions_object_m=start_positions,
+            witness_end_positions_object_m=end_positions,
+            endpoint_error_bound_m=endpoint_error_bound_m,
+        )
+    )
+
+    assert packet_pairs == tuple(reference_pairs)
+    assert packet_counters.swept_face_candidates == reference_swept_count
+    assert packet_counters.interval_point_motion_evaluations == len(
+        possible_indices
+    )
+    assert packet_counters.swept_face_witness_stages > 1
+    assert packet_counters.swept_face_witnesses_materialized == len(
+        possible_indices
+    )
+
+
+def test_child_interval_parent_frontier_matches_complete_query() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, _hand_extent = transform_result
+    prepared = model.prepared_pads[0]
+    direction = model.closing_directions_physical[0]
+    maximum_parameter = model._maximum_path_parameter(q_start, direction)
+    midpoint = 0.5 * maximum_parameter
+    possible_indices = np.arange(
+        len(prepared.witness_points_link_m), dtype=np.int64
+    )
+
+    def batches(
+        lower: float,
+        upper: float,
+        parent: Mapping[int, np.ndarray] | None,
+        executor: ThreadPoolExecutor | None = None,
+    ) -> tuple[dict[int, np.ndarray], _PadCounters]:
+        start_positions = model._witness_positions_object(
+            prepared,
+            q_start + lower * direction,
+            object_from_hand,
+        )
+        end_positions = model._witness_positions_object(
+            prepared,
+            q_start + upper * direction,
+            object_from_hand,
+        )
+        counters = _PadCounters()
+        rows = dict(
+            model._iter_complete_swept_face_batches_v9(
+                prepared=prepared,
+                possible_witness_indices=possible_indices,
+                q_start=q_start,
+                direction=direction,
+                lower=lower,
+                upper=upper,
+                object_from_hand=object_from_hand,
+                counters=counters,
+                transform_cache=(
+                    model.interval_kinematics.new_link_transform_cache()
+                ),
+                apply_certified_batch_cull=True,
+                witness_start_positions_object_m=start_positions,
+                witness_end_positions_object_m=end_positions,
+                endpoint_error_bound_m=1.0e-12,
+                parent_face_frontier=parent,
+                pair_cull_executor=executor,
+            )
+        )
+        return rows, counters
+
+    parent_rows, _parent_counters = batches(
+        0.0, maximum_parameter, None
+    )
+    complete_child_rows, complete_child_counters = batches(
+        0.0, midpoint, None
+    )
+    reused_child_rows, reused_child_counters = batches(
+        0.0, midpoint, parent_rows
+    )
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        parallel_child_rows, parallel_child_counters = batches(
+            0.0, midpoint, parent_rows, executor
+        )
+
+    assert set(reused_child_rows) == set(complete_child_rows)
+    for witness_index, complete_faces in complete_child_rows.items():
+        assert np.array_equal(
+            reused_child_rows[witness_index], complete_faces
+        )
+        assert np.array_equal(
+            parallel_child_rows[witness_index], complete_faces
+        )
+    assert set(parallel_child_rows) == set(complete_child_rows)
+    assert reused_child_counters.swept_face_candidates <= (
+        complete_child_counters.swept_face_candidates
+    )
+    assert parallel_child_counters == reused_child_counters
+
+
+def test_staged_temporal_defer_rechecks_unmaterialized_later_witness(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, hand_extent = transform_result
+    prepared = model.prepared_pads[0]
+    direction = model.closing_directions_physical[0]
+    witness_count = len(prepared.witness_points_link_m)
+    later_witness = witness_count - 1
+    geometry_calls = 0
+    iterator_calls: list[tuple[tuple[int, ...], object]] = []
+
+    def controlled_geometry(**_kwargs: object) -> _IntervalGeometry:
+        nonlocal geometry_calls
+        geometry_calls += 1
+        possible = np.zeros(witness_count, dtype=bool)
+        if geometry_calls == 1:
+            possible[:] = True
+        elif geometry_calls == 2:
+            possible[later_witness] = True
+        possible.setflags(write=False)
+        nearest = np.zeros(witness_count, dtype=np.int64)
+        nearest.setflags(write=False)
+        return _IntervalGeometry(
+            possible=possible,
+            nearest_face_indices=nearest,
+            minimum_free_margin_m=(0.0 if np.any(possible) else 1.0),
+        )
+
+    def controlled_batches(**kwargs: object) -> object:
+        possible = np.asarray(
+            kwargs["possible_witness_indices"], dtype=np.int64
+        )
+        parent = kwargs["parent_face_frontier"]
+        iterator_calls.append((tuple(int(row) for row in possible), parent))
+        counters = kwargs["counters"]
+        assert isinstance(counters, _PadCounters)
+        counters.swept_face_witness_stages += 1
+        counters.swept_face_witnesses_materialized += 1
+        yield int(possible[0]), np.asarray((0,), dtype=np.int64)
+
+    original_groups = model._exact_plane_groups_v9
+    group_calls = 0
+
+    def controlled_groups(faces: np.ndarray) -> tuple[np.ndarray, ...]:
+        nonlocal group_calls
+        group_calls += 1
+        if group_calls == 1:
+            row = np.asarray((int(faces[0]),), dtype=np.int64)
+            row.setflags(write=False)
+            return tuple(row for _index in range(257))
+        return original_groups(faces)
+
+    def certified_free_rows(**kwargs: object) -> object:
+        for witness_index, faces in kwargs["swept_batches"]:
+            for face_index in faces:
+                yield _PairIntervalClassification(
+                    state=_PadSearchState.CERTIFIED_FREE,
+                    witness_flat_index=int(witness_index),
+                    object_face_index=int(face_index),
+                    possible_phase_lower=float(kwargs["lower"]),
+                    root=None,
+                    reason="CONTROLLED_CERTIFIED_FREE",
+                )
+
+    monkeypatch.setattr(model, "_interval_geometry", controlled_geometry)
+    monkeypatch.setattr(
+        model, "_iter_complete_swept_face_batches_v9", controlled_batches
+    )
+    monkeypatch.setattr(model, "_exact_plane_groups_v9", controlled_groups)
+    monkeypatch.setattr(
+        model,
+        "_iter_classify_witness_face_batches_parallel_v9",
+        certified_free_rows,
+    )
+    counters = _PadCounters()
+    maximum_parameter = model._maximum_path_parameter(q_start, direction)
+    spatial_error = (
+        model.intersector.distance_error_bound_m
+        + model.distance_bvh.aabb_error_bound_m
+        + _FK_ERROR
+        * (model.intersector.characteristic_length_m + hand_extent)
+    )
+
+    outcome = model._search_pad_first_contact_v9(
+        prepared=prepared,
+        q_start=q_start,
+        direction=direction,
+        maximum_parameter=maximum_parameter,
+        object_from_hand=object_from_hand,
+        spatial_error_bound_m=spatial_error,
+        budget=_Budget(32),
+        counters=counters,
+        execution=_GeometryExecutionContext(),
+    )
+
+    assert outcome.state is _PadSearchState.CERTIFIED_FREE
+    assert iterator_calls[0][0] == tuple(range(witness_count))
+    assert iterator_calls[0][1] is None
+    assert iterator_calls[1][0] == (later_witness,)
+    assert iterator_calls[1][1] is None
+    assert counters.staged_potential_root_temporal_deferrals == 1
+    assert counters.staged_unmaterialized_witnesses >= witness_count - 1
+
+
+def test_exact_plane_groups_merge_opposite_winding_without_cross_plane_merge() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    faces = np.arange(
+        len(model.canonical_object_face_vertices_m), dtype=np.int64
+    )
+
+    groups = model._exact_plane_groups_v9(faces)
+
+    assert [row.tolist() for row in groups] == [
+        [0, 1],
+        [2, 3],
+        [4, 5],
+        [6, 7],
+        [8, 9],
+        [10, 11],
+    ]
+    assert all(not row.flags.writeable for row in groups)
+    assert sorted(int(value) for row in groups for value in row) == list(
+        range(len(faces))
+    )
+    for row in groups:
+        exact_keys = {
+            model._exact_plane_key_for_face_v9(int(face_index))
+            for face_index in row
+        }
+        assert len(exact_keys) == 1
+    assert len(
+        {
+            model._exact_plane_key_for_face_v9(int(row[0]))
+            for row in groups
+        }
+    ) == len(groups)
+    fast_cache_size = len(model._fast_plane_bucket_key_cache)
+    exact_cache_size = len(model._exact_plane_key_cache)
+    repeated = model._exact_plane_groups_v9(faces)
+    assert [row.tolist() for row in repeated] == [
+        row.tolist() for row in groups
+    ]
+    assert len(model._fast_plane_bucket_key_cache) == fast_cache_size
+    assert len(model._exact_plane_key_cache) == exact_cache_size
+
+
+def test_fast_exact_dyadic_plane_key_equals_fraction_reference() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    triangles = list(model.canonical_object_face_vertices_m)
+    generator = np.random.default_rng(20260822)
+    triangles.extend(generator.normal(size=(96, 3, 3)))
+
+    checked = 0
+    for triangle in triangles:
+        try:
+            fast = _exact_dyadic_plane_key(triangle)
+            reference = _exact_dyadic_plane_key_fraction_reference(
+                triangle
+            )
+        except RayClosureError:
+            continue
+        assert fast == reference
+        checked += 1
+    assert checked == len(triangles)
+
+
+def test_shared_plane_batch_classification_matches_scalar_states_and_roots() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, _hand_extent = transform_result
+    prepared = model.prepared_pads[0]
+    direction = model.closing_directions_physical[0]
+    maximum_parameter = model._maximum_path_parameter(q_start, direction)
+    faces = np.asarray(
+        (11, 0, 10, 1, 3, 2, 5, 4, 7, 6, 9, 8),
+        dtype=np.int64,
+    )
+
+    scalar_rows = tuple(
+        model._classify_witness_face_pair_v9(
+            prepared=prepared,
+            witness_flat_index=0,
+            object_face_index=int(face_index),
+            q_start=q_start,
+            direction=direction,
+            lower=0.0,
+            upper=maximum_parameter,
+            object_from_hand=object_from_hand,
+            counters=_PadCounters(),
+            transform_cache=None,
+        )
+        for face_index in faces
+    )
+    batch_counters = _PadCounters()
+    batch_rows = tuple(
+        model._iter_classify_witness_face_batch_v9(
+            prepared=prepared,
+            witness_flat_index=0,
+            object_face_indices=faces,
+            q_start=q_start,
+            direction=direction,
+            lower=0.0,
+            upper=maximum_parameter,
+            object_from_hand=object_from_hand,
+            counters=batch_counters,
+            transform_cache=None,
+        )
+    )
+
+    assert tuple(row.object_face_index for row in batch_rows) == tuple(faces)
+    assert tuple(row.state for row in batch_rows) == tuple(
+        row.state for row in scalar_rows
+    )
+    improved_root_count = 0
+    for scalar, batch in zip(scalar_rows, batch_rows):
+        assert batch.witness_flat_index == scalar.witness_flat_index
+        assert batch.object_face_index == scalar.object_face_index
+        assert batch.possible_phase_lower == scalar.possible_phase_lower
+        assert (batch.root is None) == (scalar.root is None)
+        if scalar.root is not None:
+            assert batch.root is not None
+            assert batch.root.pad_name == scalar.root.pad_name
+            assert batch.root.witness_flat_index == scalar.root.witness_flat_index
+            assert batch.root.pad_triangle_index == scalar.root.pad_triangle_index
+            assert batch.root.witness_index == scalar.root.witness_index
+            assert batch.root.object_face_index == scalar.root.object_face_index
+            assert (
+                batch.root.semantic_classification
+                == scalar.root.semantic_classification
+            )
+            batch_certificate = batch.root.certificate
+            scalar_certificate = scalar.root.certificate
+
+            def assert_overlap(first, second) -> None:
+                assert max(first.lower, second.lower) <= min(
+                    first.upper, second.upper
+                )
+                assert first.strictly_positive == second.strictly_positive
+                assert first.strictly_negative == second.strictly_negative
+
+            batch_implicit = batch_certificate.implicit_root
+            scalar_implicit = scalar_certificate.implicit_root
+            for batch_bounds, scalar_bounds in (
+                (batch_implicit.value_at_lower, scalar_implicit.value_at_lower),
+                (batch_implicit.value_at_upper, scalar_implicit.value_at_upper),
+                (batch_implicit.derivative, scalar_implicit.derivative),
+                (batch_certificate.pad_approach, scalar_certificate.pad_approach),
+                (
+                    batch_certificate.path_local_free_side_approach,
+                    scalar_certificate.path_local_free_side_approach,
+                ),
+                *zip(
+                    batch_certificate.triangle_edge_halfspaces,
+                    scalar_certificate.triangle_edge_halfspaces,
+                ),
+                *zip(
+                    batch_certificate.position_object_m,
+                    scalar_certificate.position_object_m,
+                ),
+            ):
+                assert_overlap(batch_bounds, scalar_bounds)
+            normalized_implicit = replace(
+                batch_implicit,
+                value_at_lower=scalar_implicit.value_at_lower,
+                value_at_upper=scalar_implicit.value_at_upper,
+                derivative=scalar_implicit.derivative,
+            )
+            normalized_certificate = replace(
+                batch_certificate,
+                implicit_root=normalized_implicit,
+                triangle_edge_halfspaces=(
+                    scalar_certificate.triangle_edge_halfspaces
+                ),
+                pad_approach=scalar_certificate.pad_approach,
+                path_local_free_side_approach=(
+                    scalar_certificate.path_local_free_side_approach
+                ),
+                position_object_m=scalar_certificate.position_object_m,
+                bisection_iterations=(
+                    scalar_certificate.bisection_iterations
+                ),
+            )
+            assert normalized_certificate == scalar_certificate
+            if (
+                batch.root.certificate.bisection_iterations
+                < scalar.root.certificate.bisection_iterations
+            ):
+                improved_root_count += 1
+            assert batch.reason == scalar.reason
+    assert improved_root_count >= 1
+    assert batch_counters.interval_pair_evaluations == len(faces)
+    assert batch_counters.actual_plane_root_evaluations == 6
+    assert (
+        batch_counters.actual_plane_root_evaluations
+        < batch_counters.interval_pair_evaluations
+    )
+    assert batch_counters.batch_root_triangle_free_pairs == 1
+    assert batch_counters.batch_root_triangle_uncertain_pairs == 1
+    assert (
+        batch_counters.root_interpolation_iterations
+        + batch_counters.interval_newton_iterations
+        >= 1
+    )
+    assert batch_counters.root_bisection_iterations <= 8
+
+
+def test_parallel_shared_motion_plane_pipeline_preserves_order_and_states() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, _hand_extent = transform_result
+    prepared = model.prepared_pads[0]
+    direction = model.closing_directions_physical[0]
+    maximum_parameter = model._maximum_path_parameter(q_start, direction)
+    faces = np.asarray(
+        (11, 0, 10, 1, 3, 2, 5, 4, 7, 6, 9, 8),
+        dtype=np.int64,
+    )
+    reference_rows = tuple(
+        model._iter_classify_witness_face_batch_v9(
+            prepared=prepared,
+            witness_flat_index=0,
+            object_face_indices=faces,
+            q_start=q_start,
+            direction=direction,
+            lower=0.0,
+            upper=maximum_parameter,
+            object_from_hand=object_from_hand,
+            counters=_PadCounters(),
+            transform_cache=None,
+        )
+    )
+    counters = _PadCounters()
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        parallel_rows = tuple(
+            model._iter_classify_witness_face_batches_parallel_v9(
+                prepared=prepared,
+                swept_batches=((0, faces),),
+                q_start=q_start,
+                direction=direction,
+                lower=0.0,
+                upper=maximum_parameter,
+                object_from_hand=object_from_hand,
+                counters=counters,
+                transform_cache=(
+                    model.interval_kinematics.new_link_transform_cache()
+                ),
+                plane_root_executor=executor,
+                plane_root_worker_local=local(),
+                cache_enabled=True,
+            )
+        )
+
+    assert tuple(row.object_face_index for row in parallel_rows) == tuple(faces)
+    assert tuple(row.state for row in parallel_rows) == tuple(
+        row.state for row in reference_rows
+    )
+    assert tuple(row.root is None for row in parallel_rows) == tuple(
+        row.root is None for row in reference_rows
+    )
+    for reference, parallel in zip(reference_rows, parallel_rows):
+        assert parallel.witness_flat_index == reference.witness_flat_index
+        assert parallel.possible_phase_lower == reference.possible_phase_lower
+        if reference.root is None:
+            continue
+        assert parallel.root is not None
+        assert (
+            parallel.root.semantic_classification
+            == reference.root.semantic_classification
+        )
+        reference_phase = reference.root.certificate.phase
+        parallel_phase = parallel.root.certificate.phase
+        assert max(reference_phase.lower, parallel_phase.lower) <= min(
+            reference_phase.upper, parallel_phase.upper
+        )
+    assert counters.interval_pair_evaluations == len(faces)
+    assert 0 < counters.parallel_plane_root_tasks <= 6
+    assert counters.actual_plane_root_evaluations == (
+        counters.parallel_plane_root_tasks
+    )
+    assert counters.shared_plane_gate_roots >= 1
+    assert counters.pre_root_spatial_enclosure_groups >= 1
+    assert counters.pre_root_spatial_free_pairs >= 1
+
+
+def test_parent_pair_inheritance_is_fail_closed_at_child_boundary() -> None:
+    free = _PairIntervalClassification(
+        state=_PadSearchState.CERTIFIED_FREE,
+        witness_flat_index=3,
+        object_face_index=7,
+        possible_phase_lower=0.0,
+        root=None,
+        reason="PARENT_FREE",
+    )
+    unresolved = replace(
+        free,
+        state=_PadSearchState.UNRESOLVED,
+        reason="PARENT_UNRESOLVED",
+    )
+
+    class _Root:
+        class _Certificate:
+            phase = IntervalBounds(0.4, 0.6)
+
+        certificate = _Certificate()
+
+    root = replace(
+        free,
+        state=_PadSearchState.CERTIFIED_ROOT,
+        root=_Root(),
+        reason="PARENT_ROOT",
+    )
+    decide = RayClosureSurfaceModel._parent_pair_inheritance_for_child_v9
+
+    assert decide(
+        free, child_lower=0.2, child_upper=0.5
+    ) is _ParentPairInheritance.PRUNE_PARENT_CERTIFIED_FREE
+    assert decide(
+        unresolved, child_lower=0.2, child_upper=0.5
+    ) is _ParentPairInheritance.RECOMPUTE
+    assert decide(
+        root, child_lower=0.0, child_upper=0.3
+    ) is _ParentPairInheritance.PRUNE_PARENT_ROOT_DISJOINT
+    assert decide(
+        root, child_lower=0.3, child_upper=0.7
+    ) is _ParentPairInheritance.REUSE_PARENT_ROOT
+    assert decide(
+        root, child_lower=0.5, child_upper=0.8
+    ) is _ParentPairInheritance.RECOMPUTE
+
+
+def test_parallel_pipeline_reuses_exact_parent_root_without_reordering() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, _hand_extent = transform_result
+    prepared = model.prepared_pads[0]
+    direction = model.closing_directions_physical[0]
+    maximum_parameter = model._maximum_path_parameter(q_start, direction)
+    faces = np.arange(len(model.canonical_object_face_vertices_m), dtype=np.int64)
+    baseline_counters = _PadCounters()
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        baseline = tuple(
+            model._iter_classify_witness_face_batches_parallel_v9(
+                prepared=prepared,
+                swept_batches=((0, faces),),
+                q_start=q_start,
+                direction=direction,
+                lower=0.0,
+                upper=maximum_parameter,
+                object_from_hand=object_from_hand,
+                counters=baseline_counters,
+                transform_cache=(
+                    model.interval_kinematics.new_link_transform_cache()
+                ),
+                plane_root_executor=executor,
+                plane_root_worker_local=local(),
+                cache_enabled=True,
+            )
+        )
+    cached = {
+        (row.witness_flat_index, row.object_face_index): row
+        for row in baseline
+        if row.state is _PadSearchState.CERTIFIED_ROOT
+    }
+    assert cached
+
+    reused_counters = _PadCounters()
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        reused = tuple(
+            model._iter_classify_witness_face_batches_parallel_v9(
+                prepared=prepared,
+                swept_batches=((0, faces),),
+                q_start=q_start,
+                direction=direction,
+                lower=0.0,
+                upper=maximum_parameter,
+                object_from_hand=object_from_hand,
+                counters=reused_counters,
+                transform_cache=(
+                    model.interval_kinematics.new_link_transform_cache()
+                ),
+                plane_root_executor=executor,
+                plane_root_worker_local=local(),
+                cache_enabled=True,
+                preclassified_pairs=cached,
+            )
+        )
+
+    assert tuple(row.object_face_index for row in reused) == tuple(faces)
+    assert tuple(row.state for row in reused) == tuple(
+        row.state for row in baseline
+    )
+    assert tuple(row.root is None for row in reused) == tuple(
+        row.root is None for row in baseline
+    )
+    assert reused_counters.parent_certified_root_pair_reuses == len(cached)
+    assert reused_counters.actual_plane_root_evaluations < (
+        baseline_counters.actual_plane_root_evaluations
+    )
+
+
+def test_large_exact_batch_defers_before_any_root_submission() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, _hand_extent = transform_result
+    prepared = model.prepared_pads[0]
+    direction = model.closing_directions_physical[0]
+    maximum_parameter = model._maximum_path_parameter(q_start, direction)
+    faces = np.arange(len(model.canonical_object_face_vertices_m), dtype=np.int64)
+    repeated_batches = tuple((0, faces) for _index in range(128))
+    counters = _PadCounters()
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        rows = tuple(
+            model._iter_classify_witness_face_batches_parallel_v9(
+                prepared=prepared,
+                swept_batches=repeated_batches,
+                q_start=q_start,
+                direction=direction,
+                lower=0.0,
+                upper=maximum_parameter,
+                object_from_hand=object_from_hand,
+                counters=counters,
+                transform_cache=(
+                    model.interval_kinematics.new_link_transform_cache()
+                ),
+                plane_root_executor=executor,
+                plane_root_worker_local=local(),
+                cache_enabled=True,
+            )
+        )
+
+    assert len(rows) == 1
+    assert rows[0].state is _PadSearchState.UNRESOLVED
+    assert rows[0].reason.startswith(
+        "LARGE_EXACT_ROOT_BATCH_DEFERRED_TO_TEMPORAL_CHILD:"
+    )
+    assert counters.large_exact_batch_temporal_deferrals == 1
+    assert counters.large_exact_batch_deferred_root_groups > 256
+    assert counters.actual_plane_root_evaluations == 0
+    assert counters.parallel_plane_root_tasks == 0
+
+
+def test_pre_root_spatial_cull_skips_exact_root_for_outside_triangle() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, _hand_extent = transform_result
+    prepared = model.prepared_pads[0]
+    direction = model.closing_directions_physical[0]
+    maximum_parameter = model._maximum_path_parameter(q_start, direction)
+    coplanar_faces = np.asarray((10, 11), dtype=np.int64)
+    reference_rows = tuple(
+        model._iter_classify_witness_face_batch_v9(
+            prepared=prepared,
+            witness_flat_index=0,
+            object_face_indices=coplanar_faces,
+            q_start=q_start,
+            direction=direction,
+            lower=0.0,
+            upper=maximum_parameter,
+            object_from_hand=object_from_hand,
+            counters=_PadCounters(),
+            transform_cache=None,
+        )
+    )
+    outside_rows = tuple(
+        row
+        for row in reference_rows
+        if row.state is _PadSearchState.CERTIFIED_FREE and row.root is None
+    )
+    assert len(outside_rows) == 1
+    outside_face = outside_rows[0].object_face_index
+
+    counters = _PadCounters()
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        optimized_rows = tuple(
+            model._iter_classify_witness_face_batches_parallel_v9(
+                prepared=prepared,
+                swept_batches=(
+                    (0, np.asarray((outside_face,), dtype=np.int64)),
+                ),
+                q_start=q_start,
+                direction=direction,
+                lower=0.0,
+                upper=maximum_parameter,
+                object_from_hand=object_from_hand,
+                counters=counters,
+                transform_cache=(
+                    model.interval_kinematics.new_link_transform_cache()
+                ),
+                plane_root_executor=executor,
+                plane_root_worker_local=local(),
+                cache_enabled=True,
+            )
+        )
+
+    assert len(optimized_rows) == 1
+    assert optimized_rows[0].state is _PadSearchState.CERTIFIED_FREE
+    assert optimized_rows[0].root is None
+    assert counters.pre_root_spatial_enclosure_groups == 1
+    assert counters.pre_root_spatial_free_pairs == 1
+    assert counters.pre_root_spatial_fully_free_groups == 1
+    assert counters.parallel_plane_root_tasks == 0
+    assert counters.actual_plane_root_evaluations == 0
+
+
+@pytest.mark.parametrize("start_x,end_x", ((0.0, 1.0), (1.0, 0.0)))
+def test_pre_root_spatial_enclosure_contains_linear_root_and_point(
+    start_x: float,
+    end_x: float,
+) -> None:
+    epsilon = 1.0e-12
+    velocity_x = end_x - start_x
+
+    def motion(
+        phase_lower: float,
+        phase_upper: float,
+        position_x_lower: float,
+        position_x_upper: float,
+        whole: bool,
+    ) -> IntervalPointMotionBatch:
+        if whole:
+            position_lower = np.asarray(
+                ((min(start_x, end_x) - epsilon, -epsilon, -epsilon),)
+            )
+            position_upper = np.asarray(
+                ((max(start_x, end_x) + epsilon, epsilon, epsilon),)
+            )
+        else:
+            position_lower = np.asarray(
+                ((position_x_lower, -epsilon, -epsilon),)
+            )
+            position_upper = np.asarray(
+                ((position_x_upper, epsilon, epsilon),)
+            )
+        velocity_lower = np.asarray(
+            ((velocity_x - epsilon, -epsilon, -epsilon),)
+        )
+        velocity_upper = np.asarray(
+            ((velocity_x + epsilon, epsilon, epsilon),)
+        )
+        zeros = np.zeros((1, 3), dtype=np.float64)
+        return IntervalPointMotionBatch(
+            phase=IntervalBounds(phase_lower, phase_upper),
+            position_lower_object_m=position_lower,
+            position_upper_object_m=position_upper,
+            velocity_lower_object_m_per_unit=velocity_lower,
+            velocity_upper_object_m_per_unit=velocity_upper,
+            acceleration_lower_object_m_per_unit_squared=zeros,
+            acceleration_upper_object_m_per_unit_squared=zeros,
+            method_id=BATCH_POINT_MOTION_METHOD_ID,
+            decimal_precision=80,
+        )
+
+    whole_motion = motion(0.0, 1.0, 0.0, 0.0, True)
+    lower_motion = motion(
+        0.0,
+        0.0,
+        start_x - epsilon,
+        start_x + epsilon,
+        False,
+    )
+    upper_motion = motion(
+        1.0,
+        1.0,
+        end_x - epsilon,
+        end_x + epsilon,
+        False,
+    )
+    derivative = np.asarray((velocity_x,), dtype=np.float64)
+    lower_value = np.asarray((start_x - 0.5,), dtype=np.float64)
+    upper_value = np.asarray((end_x - 0.5,), dtype=np.float64)
+    enclosure = (
+        RayClosureSurfaceModel.
+        _certified_monotone_root_position_enclosures_v9(
+            phase_lower=0.0,
+            phase_upper=1.0,
+            derivative_lower=derivative - epsilon,
+            derivative_upper=derivative + epsilon,
+            lower_value_lower=lower_value - epsilon,
+            lower_value_upper=lower_value + epsilon,
+            upper_value_lower=upper_value - epsilon,
+            upper_value_upper=upper_value + epsilon,
+            whole_motion=whole_motion,
+            lower_motion=lower_motion,
+            upper_motion=upper_motion,
+            eligible=np.asarray((True,)),
+        )
+    )
+
+    assert enclosure.valid.tolist() == [True]
+    assert enclosure.phase_lower[0] <= 0.5 <= enclosure.phase_upper[0]
+    assert (
+        enclosure.position_lower_object_m[0, 0]
+        <= 0.5
+        <= enclosure.position_upper_object_m[0, 0]
+    )
+    assert np.all(enclosure.position_lower_object_m[0, 1:] <= 0.0)
+    assert np.all(enclosure.position_upper_object_m[0, 1:] >= 0.0)
+    assert enclosure.phase_upper[0] - enclosure.phase_lower[0] < 1.0e-8
+    assert not enclosure.valid.flags.writeable
+    assert not enclosure.position_lower_object_m.flags.writeable
+
+
+def test_direct_affine_root_bounds_contain_mixed_slope_samples() -> None:
+    slopes = np.asarray(
+        (
+            (1.0, -2.0, 0.125),
+            (-0.75, 3.0, -1.5),
+            (2.5, -0.25, 0.0),
+        ),
+        dtype=np.float64,
+    )
+    intercepts = np.asarray(
+        (
+            (-0.4, 0.8, -0.1),
+            (0.2, -1.1, 0.7),
+            (-0.9, 0.05, -0.3),
+        ),
+        dtype=np.float64,
+    )
+    root_lower = np.asarray((0.21, 0.47, 0.69), dtype=np.float64)
+    root_upper = np.asarray((0.29, 0.53, 0.76), dtype=np.float64)
+    epsilon = 1.0e-13
+    lower_values = intercepts
+    upper_values = intercepts + slopes
+    result_lower, result_upper = (
+        RayClosureSurfaceModel.
+        _certified_affine_values_at_root_from_endpoints_v9(
+            phase_lower=0.0,
+            phase_upper=1.0,
+            root_phase_lower=root_lower,
+            root_phase_upper=root_upper,
+            lower_value_lower=lower_values - epsilon,
+            lower_value_upper=lower_values + epsilon,
+            upper_value_lower=upper_values - epsilon,
+            upper_value_upper=upper_values + epsilon,
+            derivative_lower=slopes - epsilon,
+            derivative_upper=slopes + epsilon,
+        )
+    )
+
+    for row in range(len(slopes)):
+        for phase in np.linspace(root_lower[row], root_upper[row], 17):
+            actual = intercepts[row] + slopes[row] * phase
+            assert np.all(result_lower[row] <= actual)
+            assert np.all(actual <= result_upper[row])
+    assert not result_lower.flags.writeable
+    assert not result_upper.flags.writeable
+
+
+def test_second_order_affine_chord_bounds_contain_quadratic_samples() -> None:
+    quadratic = np.asarray(
+        (
+            (1.25, -0.8, 0.15),
+            (-1.75, 0.6, -0.3),
+            (0.4, 1.1, -0.7),
+        ),
+        dtype=np.float64,
+    )
+    linear = np.asarray(
+        (
+            (-0.5, 0.9, 0.2),
+            (1.2, -0.4, 0.75),
+            (-0.3, 0.1, 1.4),
+        ),
+        dtype=np.float64,
+    )
+    intercept = np.asarray(
+        (
+            (0.1, -0.2, 0.8),
+            (-0.6, 0.5, 0.05),
+            (0.7, -0.9, -0.1),
+        ),
+        dtype=np.float64,
+    )
+    root_lower = np.asarray((0.17, 0.41, 0.73), dtype=np.float64)
+    root_upper = np.asarray((0.26, 0.58, 0.91), dtype=np.float64)
+    epsilon = 1.0e-13
+    lower_values = intercept
+    upper_values = quadratic + linear + intercept
+    result_lower, result_upper = (
+        RayClosureSurfaceModel.
+        _certified_second_order_affine_chord_root_bounds_v9(
+            phase_lower=0.0,
+            phase_upper=1.0,
+            root_phase_lower=root_lower,
+            root_phase_upper=root_upper,
+            lower_value_lower=lower_values - epsilon,
+            lower_value_upper=lower_values + epsilon,
+            upper_value_lower=upper_values - epsilon,
+            upper_value_upper=upper_values + epsilon,
+            second_derivative_lower=2.0 * quadratic - epsilon,
+            second_derivative_upper=2.0 * quadratic + epsilon,
+        )
+    )
+
+    for row in range(len(quadratic)):
+        for phase in np.linspace(root_lower[row], root_upper[row], 33):
+            actual = (
+                quadratic[row] * phase * phase
+                + linear[row] * phase
+                + intercept[row]
+            )
+            assert np.all(result_lower[row] <= actual)
+            assert np.all(actual <= result_upper[row])
+    assert not result_lower.flags.writeable
+    assert not result_upper.flags.writeable
 
 
 def test_possible_frontier_coalesces_exact_leaf_queries_without_semantic_change() -> None:
@@ -1917,6 +4816,69 @@ def test_possible_frontier_coalesces_exact_leaf_queries_without_semantic_change(
     assert execution.stats.exact_nearest_witness_queries <= len(states)
     assert execution.stats.nearest_batch_cache_misses <= 2
     assert execution.stats.reference_shadow_witness_queries == len(states)
+
+
+def test_pre_nearest_aabb_prefilter_preserves_exact_possible_set() -> None:
+    model, _hand, _pads = _planner(_box_model())
+    q_start, target, rotation = model._decode(_PARAMETERS)
+    transform_result = model._object_from_hand(q_start, target, rotation)
+    assert transform_result is not None
+    object_from_hand, _hand_extent = transform_result
+    prepared = model.prepared_pads[0]
+    direction = model.closing_directions_physical[0]
+    states = model._witness_states(
+        prepared,
+        q_start,
+        direction,
+        object_from_hand,
+    )
+    controlled_positions = np.array(
+        states.positions_object_m, copy=True
+    )
+    controlled_positions[:] = np.asarray((10.0, 10.0, 10.0))
+    controlled_positions[0] = model.canonical_object_face_vertices_m[0, 0]
+    controlled_positions.setflags(write=False)
+    controlled_states = replace(
+        states,
+        positions_object_m=controlled_positions,
+    )
+    full = model.distance_bvh.nearest_many(controlled_positions)
+    full_possible = full.distances_m <= 0.0
+    assert np.count_nonzero(full_possible) == 1
+
+    counters = _PadCounters()
+    execution = _GeometryExecutionContext(
+        cache_enabled=True,
+        verify_full_nearest=True,
+    )
+    geometry = model._interval_geometry(
+        prepared=prepared,
+        states=controlled_states,
+        state_key=("H84_CONTROLLED_PARTIAL_OVERLAP",),
+        enclosure_radii_m=np.zeros(len(controlled_states)),
+        spatial_error_bound_m=0.0,
+        counters=counters,
+        execution=execution,
+    )
+
+    assert np.array_equal(geometry.possible, full_possible)
+    assert np.array_equal(
+        geometry.nearest_face_indices[geometry.possible],
+        full.face_indices[full_possible],
+    )
+    assert geometry.minimum_free_margin_m is None
+    assert counters.pre_nearest_aabb_witness_tests == len(controlled_states)
+    assert (
+        counters.pre_nearest_aabb_certified_free_witnesses
+        == len(controlled_states) - 1
+    )
+    assert counters.pre_nearest_aabb_exact_survivors == 1
+    assert counters.pre_nearest_aabb_fast_paths == 1
+    assert counters.pre_nearest_aabb_fallbacks == 0
+    assert execution.stats.exact_nearest_witness_queries == 1
+    assert execution.stats.reference_shadow_witness_queries == len(
+        controlled_states
+    )
 
 
 def test_exact_state_and_batch_nearest_caches_reuse_identical_geometry() -> None:
@@ -2084,11 +5046,27 @@ def test_real_full_pad_hierarchy_prunes_only_full_nearest_equivalent_witnesses()
         spatial_error_bound_m=spatial_error,
         counters=reference_counters,
         execution=reference_context,
+        _use_pre_nearest_aabb_prefilter=False,
     )
 
     assert np.array_equal(optimized.possible, reference.possible)
     assert optimized.minimum_free_margin_m == reference.minimum_free_margin_m
-    assert optimized_counters == reference_counters
+    assert replace(
+        optimized_counters,
+        pre_nearest_aabb_witness_tests=0,
+        pre_nearest_aabb_certified_free_witnesses=0,
+        pre_nearest_aabb_exact_survivors=0,
+        pre_nearest_aabb_fast_paths=0,
+        pre_nearest_aabb_fallbacks=0,
+    ) == reference_counters
+    assert optimized_counters.pre_nearest_aabb_witness_tests == len(states)
+    assert (
+        optimized_counters.pre_nearest_aabb_certified_free_witnesses
+        == len(states)
+    )
+    assert optimized_counters.pre_nearest_aabb_exact_survivors == 0
+    assert optimized_counters.pre_nearest_aabb_fast_paths == 0
+    assert optimized_counters.pre_nearest_aabb_fallbacks == 1
     assert optimized_context.stats.witness_hierarchy_witnesses_pruned > 0
     assert (
         optimized_context.stats.exact_nearest_witness_queries

@@ -1,0 +1,42 @@
+{
+  "schema_version": "carts_h102_root_leaf_pair_aggregation_large_packet_hypothesis_v1",
+  "recorded_at_utc": "2026-08-23T12:35:47.024Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H102-ROOT-LEAF-PAIR-AGGREGATION-LARGE-PACKET",
+  "status": "TARGETED_FIX_IN_PROGRESS",
+  "prerequisite_evidence": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H101_EAGER_PRECOMPUTED_AXIS_FAMILY_LARGE_PACKET_RESULT_20260823T123547.024Z.json",
+  "diagnosis": "The root BVH traversal calls the H101 three-family kernel inside every four-face leaf. Candidate 14 therefore issued 21,444 narrowphase packets for 8.43 million pairs, averaging only 393 pairs per packet. The 65,536 cap and projection reuse cannot amortize three kernel calls, validation, gathering, and temporary allocation at this granularity.",
+  "single_structural_bundle": [
+    "During the root BVH traversal, perform only node and leaf AABB classification and append exact encoded moving/static pair ids for every leaf AABB overlap.",
+    "After the complete root traversal, concatenate that interval's exact AABB-overlap ids once and run the unchanged H101 complete axis-family kernel in contiguous packets of at most 65,536 pairs.",
+    "Preserve root traversal order, exact Cartesian pair coverage, strict AABB predicates, immutable sorted unresolved frontier, eager child narrowphase, 4096 interval budget, and fail-closed terminal behavior.",
+    "Record root and child narrowphase packet counts separately and require their sum to equal the existing total packet count."
+  ],
+  "validation_sequence": [
+    "Compare aggregated root output with an independent full 17-axis reference over a multi-leaf synthetic surface; require identical pair ids, separated count, potential count, and complete pair accounting.",
+    "Require more than one root BVH leaf but one aggregated narrowphase packet when the total overlap count is below 65,536.",
+    "Run continuous-collision, full-hand-collision, and study-contract tests once.",
+    "Run one shared 90-second comparison of 155, 174, 14, and 198 without a separate candidate probe or first-result stop."
+  ],
+  "expected_result": "Root packet count falls from leaf-scale thousands to bounded large packets; candidate 14 f1Link3 completes in at most 10 seconds; all four retained candidates finish the shared comparison within 90 seconds or expose a causally different downstream blocker.",
+  "failure_criteria": [
+    "Any AABB-overlap pair is omitted, duplicated, reordered into a different final frontier, or receives a different strict-separation result.",
+    "Root plus child packet counts do not equal total packet count or pair coverage changes.",
+    "Geometry, thresholds, axis set, interval order, 4096 budget, candidate order, or fail-closed behavior changes.",
+    "Candidate 14 remains above 10 seconds, all four candidates do not finish in 90 seconds, or aggregation causes an infrastructure memory failure."
+  ],
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "narrowphase_pair_packet_size": 65536,
+  "candidate_14_theoretical_global_packet_lower_bound": 129,
+  "candidate_14_actual_packet_count_must_exceed_global_lower_bound_due_to_interval_boundaries": true,
+  "whole_top4_external_wall_limit_seconds": 90,
+  "candidate_14_f1Link3_target_seconds": 10,
+  "geometry_change_allowed": false,
+  "physical_threshold_change_allowed": false,
+  "parameter_grid_search_allowed": false,
+  "separate_real_candidate_probe_allowed": false,
+  "formal_selected_candidate": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

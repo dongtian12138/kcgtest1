@@ -1,0 +1,26 @@
+{
+  "schema_version": "carts_h94_f1link3_common_blocker_diagnostic_hypothesis_v1",
+  "recorded_at_utc": "2026-08-23T09:14:08.446Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H94-F1LINK3-COMMON-BLOCKER-DIAGNOSTIC",
+  "status": "INVESTIGATING",
+  "prerequisite_evidence": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H93_PACKET_STATIC_BVH_TRAVERSAL_RESULT_20260823T091408.446Z.json",
+  "diagnosis": "The computation-time bottleneck is closed, but candidates 155, 14, and 198 all converge to ADJACENT_BINARY64_PHASE_ENDPOINTS for the f1Link3 exact non-PAD forbidden surface. This means the strict AABB proof retains a possible overlap at one limiting phase; it does not distinguish actual forbidden-surface contact from a conservative allowed-pad boundary ambiguity or a V9-pad/terminal-surface mapping mismatch.",
+  "single_distinguishing_diagnostic": [
+    "Use candidate 155, the fastest reproducer, and retain its final unresolved phase interval and support/contact-root intervals.",
+    "At the limiting phase, bind the f1Link3 non-PAD forbidden faces, the 16 terminal PAD-allowed faces, and the V9 possible first-contact face identities to the same link-local geometry.",
+    "Classify the remaining forbidden/object AABB pairs into faces adjacent to the allowed PAD boundary versus faces disjoint from that boundary; do not call an AABB overlap a physical triangle intersection.",
+    "Only if an existing exact triangle/material predicate proves intersection may the result be called an actual forbidden collision. Otherwise record the precise evidence gap and choose the next conservative geometric proof."
+  ],
+  "expected_result": "Determine whether the common blocker is supported as actual non-PAD collision, allowed-PAD-boundary conservatism, V9-to-terminal surface identity mismatch, or remains unresolved with a sharply smaller evidence gap. No geometry or threshold is changed during this diagnostic.",
+  "failure_criterion": "AABB overlap is promoted to physical collision, display/midpoint values are used as formal contact, source face identity is lost, geometry/contact permissions change, or more than one real candidate diagnostic is run.",
+  "diagnostic_candidate_attempt_index": 155,
+  "real_candidate_diagnostic_limit": 1,
+  "external_wall_limit_seconds": 60,
+  "candidate_result_written": false,
+  "generation_checkpoint_written": false,
+  "formal_selected_candidate": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

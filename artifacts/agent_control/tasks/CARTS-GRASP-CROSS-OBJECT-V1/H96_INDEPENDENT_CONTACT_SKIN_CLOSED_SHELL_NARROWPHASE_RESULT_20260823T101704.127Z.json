@@ -1,0 +1,84 @@
+{
+  "schema_version": "carts_h96_independent_contact_skin_closed_shell_narrowphase_result_v1",
+  "recorded_at_utc": "2026-08-23T10:17:04.127Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H96-INDEPENDENT-CONTACT-SKIN-AND-CLOSED-SHELL-NARROWPHASE",
+  "status": "OFFLINE_PASS_155_TARGET_MET_TOP4_120S_NOT_COMPLETE_THREE_PAIR_UNRESOLVED",
+  "source_hypothesis": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H96_INDEPENDENT_CONTACT_SKIN_CLOSED_SHELL_NARROWPHASE_HYPOTHESIS_20260823T094429.687Z.json",
+  "implemented_bundle": [
+    "The complete hash-bound PAD is now the contact-root identity source; a root no longer has to duplicate one of the 16 exactly shared closed-shell faces.",
+    "The closed shell keeps its unchanged exact role partition: 16 allowed faces and every other shell face forbidden.",
+    "Potential BVH AABB pairs now receive conservative swept-triangle separating-axis narrowphase before interval subdivision.",
+    "The route contract, study contract, runtime audit names, and tests were updated together without changing geometry, thresholds, budgets, or candidate indices."
+  ],
+  "static_validation": {
+    "initial_related_test_count": 65,
+    "initial_related_test_seconds": 2.69,
+    "bundled_contract_and_collision_test_count": 186,
+    "bundled_contract_and_collision_test_seconds": 9.53,
+    "all_passed": true,
+    "coplanar_aabb_overlap_but_disjoint_triangles_certified_free": true,
+    "actual_triangle_overlap_remains_unresolved": true,
+    "old_16_face_root_mapping_rule_absent_from_execution_code": true,
+    "study_contract_sha256": "fd421d99b7aca4a03d20c1d5e51454c4f3b7072ad5d0bed3aca971e47aded467"
+  },
+  "preflight_interface_failure": {
+    "wall_seconds": 0.08709999383427203,
+    "candidate_model_built": false,
+    "candidate_evaluated": false,
+    "reason": "Study YAML still held the old claim-limitation list after the bundled code change; configuration and its expected digest were synchronized before the real diagnostic."
+  },
+  "candidate_155_diagnostic": {
+    "external_wall_limit_seconds": 60,
+    "process_exit_code": 0,
+    "natural_return": true,
+    "total_wall_seconds": 49.191848488058895,
+    "runtime_build_seconds": 14.467395759187639,
+    "exact_policy_seconds": 4.459743251092732,
+    "aggregate_input_build_seconds": 14.870896633947268,
+    "terminal_partition_build_seconds": 0.6293843879830092,
+    "prepared_object_build_seconds": 6.378246651031077,
+    "collision_prefix_seconds": 8.330610163975507,
+    "f1Link3_seconds": 7.569757080869749,
+    "f1Link3_target_seconds": 10.0,
+    "f1Link3_target_met": true,
+    "f1Link3_state": "UNRESOLVED",
+    "f1Link3_processed_intervals": 126,
+    "f1Link3_terminal_unresolved_pair_count": 3,
+    "f1Link3_narrowphase_pair_evaluations": 1180686,
+    "f1Link3_narrowphase_strictly_separated_pairs": 284453,
+    "formal_candidate_written": false
+  },
+  "required_top4_comparison": {
+    "external_wall_limit_seconds": 120,
+    "process_exit_code": 124,
+    "natural_return": false,
+    "all_four_exact_contact_evaluations_completed": true,
+    "all_four_collision_checks_completed": false,
+    "shared_collision_context_ready_seconds": 57.213765024906024,
+    "stop_after_first_success": false,
+    "exact_results": [
+      {"attempt_index": 155, "seconds": 4.53668640810065, "status": "STATIC_V9_POLICY_ACCEPTED"},
+      {"attempt_index": 174, "seconds": 5.47107436391525, "status": "V9_REJECTED_NO_FIRST_CONTACT_FOR_FINGER_3_PAD"},
+      {"attempt_index": 14, "seconds": 5.538325315807015, "status": "STATIC_V9_POLICY_ACCEPTED"},
+      {"attempt_index": 198, "seconds": 3.8461113839875907, "status": "STATIC_V9_POLICY_ACCEPTED"}
+    ],
+    "collision_results": [
+      {"attempt_index": 155, "seconds": 8.447171942098066, "f1Link3_seconds": 7.649737301049754, "terminal_unresolved_pair_count": 3, "narrowphase_pair_evaluations": 1180686, "state": "UNRESOLVED"},
+      {"attempt_index": 174, "collision_checked": false, "reason": "EXACT_CONTACT_REJECTED"},
+      {"attempt_index": 14, "seconds": 37.618065893882886, "f1Link3_seconds": 36.847393424017355, "terminal_unresolved_pair_count": 3, "narrowphase_pair_evaluations": 10863772, "state": "UNRESOLVED"},
+      {"attempt_index": 198, "collision_checked": "STARTED_NOT_COMPLETED", "f1Link3_started_at_total_seconds": 104.06548515497707, "observed_f1Link3_lower_bound_seconds": 15.93451484502293}
+    ]
+  },
+  "conclusion": "The independent PAD/shell semantics and triangle narrowphase are correctness-preserving and candidate 155 meets the local 10-second target, but the whole four-candidate comparison still cannot finish in 120 seconds. Candidate 14 repeats more than 10.86 million narrowphase pair evaluations across 165 subdivisions even though only three pairs remain unresolved at the terminal interval. Candidate 198 was reached but not completed. Therefore no best candidate is selected and the four-candidate requirement remains open.",
+  "next_hypothesis": "CARTS-H97-PERSISTENT-UNRESOLVED-PAIR-FRONTIER",
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "final_selection_requires_all_retained_candidates_checked": true,
+  "candidate_result_written": false,
+  "generation_checkpoint_written": false,
+  "formal_selected_candidate": null,
+  "formal_selected_contact_range_policy": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

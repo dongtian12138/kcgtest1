@@ -1,0 +1,23 @@
+{
+  "schema_version": "carts_h95_same_source_terminal_surface_route_audit_hypothesis_v1",
+  "recorded_at_utc": "2026-08-23T09:29:14.615Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H95-SAME-SOURCE-TERMINAL-SURFACE-ROUTE-AUDIT",
+  "status": "INVESTIGATING",
+  "prerequisite_evidence": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H94_F1LINK3_COMMON_BLOCKER_DIAGNOSTIC_RESULT_20260823T092914.615Z.json",
+  "diagnosis": "The contact evaluator and terminal collision evaluator use two different triangle surfaces. Only 16 of 2479 authorized PAD faces exist unchanged in the closed collision shell, and none of candidate 155's certified contact roots maps to any collision face.",
+  "single_distinguishing_audit": [
+    "Inventory existing authored terminal surfaces, collision generators, material-boundary certificates, and exact PAD lineage before changing code or assets.",
+    "Determine whether an existing same-source closed terminal boundary retains all authorized PAD triangles and a complete non-PAD boundary.",
+    "If no such source exists, identify the minimum deterministic derived-surface construction and the exact evidence it must preserve; do not use nearest-face or distance-tolerance permission mapping.",
+    "Do not shrink the authorized full PAD to the 16 coincident collision faces, enlarge contact permission, change connector or hand shape, run candidates, or start Isaac during this audit."
+  ],
+  "expected_result": "Select one fail-closed implementation route whose PAD contact roots and terminal forbidden surface share one exact triangle identity domain, or prove that the current frozen inputs cannot provide it without a separately authorized geometry derivation.",
+  "failure_criterion": "A nearest or tolerance mapping is introduced, the 16-face subset replaces the authorized full PAD, a display mesh is promoted without material-boundary evidence, geometry is edited before the route audit closes, or any candidate/Isaac run is started.",
+  "candidate_evaluation_limit": 0,
+  "geometry_change_allowed_during_audit": false,
+  "formal_selected_candidate": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

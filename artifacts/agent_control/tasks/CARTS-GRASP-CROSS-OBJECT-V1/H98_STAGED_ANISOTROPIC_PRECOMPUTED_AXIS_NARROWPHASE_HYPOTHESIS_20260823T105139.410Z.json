@@ -1,0 +1,40 @@
+{
+  "schema_version": "carts_h98_staged_anisotropic_precomputed_axis_narrowphase_hypothesis_v1",
+  "recorded_at_utc": "2026-08-23T10:51:39.410Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H98-STAGED-ANISOTROPIC-PRECOMPUTED-AXIS-NARROWPHASE",
+  "status": "TARGETED_FIX_IN_PROGRESS",
+  "prerequisite_evidence": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H97_PERSISTENT_UNRESOLVED_PAIR_FRONTIER_RESULT_20260823T105139.410Z.json",
+  "diagnosis": "H97 preserved correctness and reduced time, but candidate 14 still evaluated 8,448,199 full narrowphase pairs. Each evaluation reconstructs fixed-triangle edges and axes and expands every moving vertex by an isotropic ball, which is both computationally repetitive and looser than the already available Cartesian point interval box.",
+  "single_structural_bundle": [
+    "Replace isotropic vertex-ball projection expansion with componentwise interval-box projection on each tested axis, including outward rounding and the existing strict inequality. This is tighter without sampling or threshold relaxation.",
+    "Precompute every static-object triangle edge, normal, in-plane axis, and its own-axis projection bounds once inside the prepared static surface.",
+    "Evaluate separating axes in stages: static precomputed axes first, then moving-triangle axes, then edge-cross axes only for survivors. Do not construct later-stage arrays for pairs already proved separated.",
+    "Keep the H97 immutable monotone pair frontier and complete inherited-pair accounting; add per-stage input, rejection, and survivor counters.",
+    "Keep geometry, candidate order, left-first subdivision, 4096 interval budget, exact strict inequalities, dual-surface roles, and fail-closed terminal state unchanged."
+  ],
+  "validation_sequence": [
+    "Prove by tests that componentwise projected interval boxes enclose every enumerated box corner and never clear real overlap or tangency.",
+    "Compare staged and all-axis reference masks on zero-motion and bounded-motion synthetic cases, and verify exact pair accounting and monotone frontiers.",
+    "Run the related continuous/full-hand/study-contract tests once.",
+    "Run one shared comparison of 155, 174, 14, and 198; do not run a separate real-candidate probe and do not stop after the first success."
+  ],
+  "expected_result": "Candidate 14 f1Link3 completes in at most 10 seconds and the complete four-candidate shared comparison returns naturally within 90 seconds, while certificate state and terminal unresolved-pair count remain fail-closed and pair coverage remains exact.",
+  "failure_criteria": [
+    "Any projected interval excludes a Cartesian box corner, any tangency/overlap is certified free, or pair accounting is incomplete.",
+    "Static geometry is rebuilt per pair, later axis stages run for already separated pairs, or stage counters do not cover their inputs exactly.",
+    "Geometry, thresholds, budgets, candidate order, contact permissions, or formal selection fields change.",
+    "The shared run stops after one success or candidate 198 is not reached."
+  ],
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "whole_top4_external_wall_limit_seconds": 90,
+  "candidate_14_f1Link3_target_seconds": 10,
+  "geometry_change_allowed": false,
+  "threshold_change_allowed": false,
+  "parameter_grid_search_allowed": false,
+  "separate_real_candidate_probe_allowed": false,
+  "formal_selected_candidate": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

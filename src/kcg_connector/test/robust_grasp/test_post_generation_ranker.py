@@ -508,7 +508,7 @@ def test_common_design_exactly_once_and_hard_bound_first_diagnostic_rank(
         result.canonical_sha256 = "0" * 64
 
 
-def test_contact_range_policy_stops_before_collision_or_wrench_calls() -> None:
+def test_contact_range_policy_requires_explicit_collision_consumer() -> None:
     model = _object_model()
     generation, model_sha = _generation_result(model, values=(0.1,))
     unique = generation.unique_v9_evaluations[0]
@@ -557,7 +557,7 @@ def test_contact_range_policy_stops_before_collision_or_wrench_calls() -> None:
     )
     with pytest.raises(
         PostGenerationRankingError,
-        match="POLICY_AWARE_COLLISION_AND_WRENCH_REQUIRED",
+        match="POLICY_COLLISION_CERTIFIER_REQUIRED",
     ):
         pipeline.evaluate(policy_generation)
 

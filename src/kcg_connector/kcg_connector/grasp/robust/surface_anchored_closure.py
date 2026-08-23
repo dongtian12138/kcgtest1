@@ -619,7 +619,9 @@ class SurfaceAnchoredRayClosureModel:
 
         try:
             lower, upper = self.closure_model._placement_coordinate_bounds(
-                q_start, rotation
+                q_start,
+                rotation,
+                focus_result=focus_result,
             )
             target_coordinates = self.closure_model.task_basis_object.T @ (
                 target - self.object_model.assembly_axis_origin_m

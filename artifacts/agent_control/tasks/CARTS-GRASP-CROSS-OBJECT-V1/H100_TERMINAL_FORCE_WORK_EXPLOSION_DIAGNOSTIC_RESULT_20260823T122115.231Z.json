@@ -1,0 +1,35 @@
+{
+  "schema_version": "carts_h100_terminal_force_work_explosion_diagnostic_result_v1",
+  "recorded_at_utc": "2026-08-23T12:21:15.231Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H100-TERMINAL-FORCE-WORK-EXPLOSION-DIAGNOSTIC",
+  "status": "ROOTCAUSE_IDENTIFIED",
+  "source_hypothesis": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H100_TERMINAL_FORCE_WORK_EXPLOSION_DIAGNOSTIC_HYPOTHESIS_20260823T115024.137Z.json",
+  "diagnostic_scope": {
+    "real_candidate_runs": 0,
+    "isaac_runs": 0,
+    "synthetic_cases": 1,
+    "geometry": "One moving triangle and one coplanar AABB-overlapping but triangle-disjoint static triangle."
+  },
+  "observations": {
+    "root_unresolved_pair_count": 1,
+    "h99_child_deferred_pair_observation_count": 1,
+    "h99_child_unresolved_pair_count_after_deferral": 1,
+    "eager_child_narrowphase_pair_evaluation_count": 1,
+    "eager_child_unresolved_pair_count": 0,
+    "h99_terminal_force_invocation_count": 2,
+    "h99_terminal_narrowphase_pair_evaluation_count": 2,
+    "h99_left_terminal_unresolved_pair_count": 0,
+    "h99_right_terminal_unresolved_pair_count": 0,
+    "h99_duplicate_factor_vs_eager_child": 2.0
+  },
+  "root_cause": "A child whose AABB frontier has not halved can already be completely separable by triangle axes. H99 defers that proof, keeps the interval unresolved, and subdivides it. Both children then inherit the same pair and force separate terminal evaluations. The fixed example doubled narrowphase work from one evaluation to two and created subdivision work that eager evaluation avoided.",
+  "conclusion": "The H99 halving/terminal deferral rule is structurally unsuitable for this fail-closed traversal. Full narrowphase must run before an unresolved interval is subdivided; performance work must reduce the cost per eager evaluation or batch eager evaluations without preserving false uncertainty.",
+  "next_frontier": "DESIGN_H101_EAGER_NARROWPHASE_THROUGHPUT",
+  "geometry_change_allowed": false,
+  "physical_threshold_change_allowed": false,
+  "formal_selected_candidate": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

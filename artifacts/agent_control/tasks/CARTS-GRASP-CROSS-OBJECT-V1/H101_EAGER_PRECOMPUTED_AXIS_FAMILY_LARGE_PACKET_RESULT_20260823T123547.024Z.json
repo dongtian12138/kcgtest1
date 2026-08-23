@@ -1,0 +1,96 @@
+{
+  "schema_version": "carts_h101_eager_precomputed_axis_family_large_packet_result_v1",
+  "recorded_at_utc": "2026-08-23T12:35:47.024Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H101-EAGER-PRECOMPUTED-AXIS-FAMILY-LARGE-PACKET",
+  "status": "OFFLINE_PASS_CORRECTNESS_PERFORMANCE_TARGET_NOT_MET_TOP4_INCOMPLETE",
+  "source_hypothesis": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H101_EAGER_PRECOMPUTED_AXIS_FAMILY_LARGE_PACKET_HYPOTHESIS_20260823T122530.001Z.json",
+  "implemented_bundle": [
+    "Restored complete child narrowphase before every subdivision.",
+    "Precomputed moving and static self-axis projection bounds and axis norms at their natural reuse scopes.",
+    "Evaluated moving-self, static-self, and edge-cross axis families without survivor compaction or a concatenated 17-axis tensor.",
+    "Raised the pair packet cap from 16,384 to 65,536 and replaced H99 deferral counters with eager and packet counters."
+  ],
+  "static_validation": {
+    "focused_test_count": 7,
+    "focused_test_seconds": 0.14,
+    "related_continuous_full_hand_study_test_count": 192,
+    "related_test_seconds": 9.82,
+    "all_passed": true,
+    "h100_duplicate_branch_regression_passed": true,
+    "axis_family_matches_complete_17_axis_reference": true,
+    "real_overlap_remains_unresolved": true
+  },
+  "required_top4_comparison": {
+    "external_wall_limit_seconds": 90,
+    "process_exit_code": 124,
+    "natural_return": false,
+    "stop_after_first_success": false,
+    "all_four_exact_contact_evaluations_completed": true,
+    "all_four_collision_checks_completed": false,
+    "runtime_build_seconds": 14.529868226964027,
+    "all_four_exact_results_completed_at_total_seconds": 33.9116303359624,
+    "aggregate_input_build_seconds": 15.032833757111803,
+    "terminal_partition_build_seconds": 0.6566291369963437,
+    "prepared_object_build_seconds": 6.423570803832263,
+    "shared_collision_context_ready_at_total_seconds": 56.03338501206599,
+    "exact_results": [
+      {"attempt_index": 155, "seconds": 4.4767932700924575, "status": "STATIC_V9_POLICY_ACCEPTED"},
+      {"attempt_index": 174, "seconds": 5.424719729926437, "status": "V9_REJECTED_NO_FIRST_CONTACT_FOR_FINGER_3_PAD"},
+      {"attempt_index": 14, "seconds": 5.503917320864275, "status": "STATIC_V9_POLICY_ACCEPTED"},
+      {"attempt_index": 198, "seconds": 3.8309837388806045, "status": "STATIC_V9_POLICY_ACCEPTED"}
+    ],
+    "collision_results": [
+      {
+        "attempt_index": 155,
+        "collision_seconds": 5.614400781923905,
+        "f1Link3_seconds": 4.84091381309554,
+        "processed_intervals": 120,
+        "terminal_unresolved_pair_count": 3,
+        "narrowphase_pair_evaluation_count": 906894,
+        "narrowphase_pair_packet_count": 4421,
+        "state": "UNRESOLVED_ADJACENT_BINARY64_PHASE_ENDPOINTS"
+      },
+      {"attempt_index": 174, "collision_checked": false, "reason": "EXACT_CONTACT_REJECTED"},
+      {
+        "attempt_index": 14,
+        "collision_seconds": 25.390237980056554,
+        "f1Link3_seconds": 24.651567666092888,
+        "processed_intervals": 141,
+        "terminal_unresolved_pair_count": 3,
+        "narrowphase_pair_evaluation_count": 8432470,
+        "narrowphase_pair_packet_count": 21444,
+        "average_pairs_per_packet": 393.23,
+        "state": "UNRESOLVED_ADJACENT_BINARY64_PHASE_ENDPOINTS"
+      },
+      {
+        "attempt_index": 198,
+        "collision_checked": "STARTED_NOT_COMPLETED",
+        "f1Link3_started_at_total_seconds": 87.79495285614394,
+        "observed_f1Link3_lower_bound_seconds": 2.2050471438560635
+      }
+    ]
+  },
+  "performance_comparison": {
+    "candidate_155_h97_f1Link3_seconds": 4.392169429920614,
+    "candidate_155_h101_f1Link3_seconds": 4.84091381309554,
+    "candidate_155_slowdown_vs_h97_fraction": 0.1022,
+    "candidate_14_h97_f1Link3_seconds": 21.220486799022183,
+    "candidate_14_h101_f1Link3_seconds": 24.651567666092888,
+    "candidate_14_slowdown_vs_h97_fraction": 0.1617,
+    "candidate_14_target_seconds": 10.0,
+    "candidate_14_target_met": false,
+    "whole_top4_target_seconds": 90.0,
+    "whole_top4_target_met": false
+  },
+  "root_cause": "The 65,536-pair cap was not reached by most root calls. Root BVH leaves invoked narrowphase independently, producing 21,444 packets for candidate 14 despite only 8,432,470 narrowphase pair evaluations: an average of 393.23 pairs per packet. Three axis-family calls and validation/gather overhead were therefore repeated at leaf granularity, outweighing projection reuse. Child eager traversal itself remained correct.",
+  "next_hypothesis": "CARTS-H102-ROOT-LEAF-PAIR-AGGREGATION-LARGE-PACKET",
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "candidate_result_written": false,
+  "generation_checkpoint_written": false,
+  "formal_selected_candidate": null,
+  "formal_selected_contact_range_policy": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

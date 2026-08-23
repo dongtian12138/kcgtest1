@@ -34,6 +34,10 @@ objects:
       format: CARTS_GRASP_VISUAL_SUBTREE_NPZ_V1
       path: artifacts/carts_grasp/CARTS_GRASP_V1/object_models/current_d38999/full_loose_plug_visual_mesh.npz
       sha256: ff3dea949aa5c2f320bd4c2907d78fa86a5930cbbbdf3739f50d7f4a1848201e
+      material_boundary_evidence:
+        representation: POSITIVE_SOLID_COMPONENT_UNION
+        path: artifacts/carts_grasp/CARTS_GRASP_V1/object_models/current_d38999/material_boundary/CURRENT_D38999_POSITIVE_SOLID_UNION_V1.json
+        sha256: 4258e3879e2c9542eb420759de79234173bff92b7509ec2c512318ad937ac428
       manifest: artifacts/carts_grasp/CARTS_GRASP_V1/object_models/current_d38999/full_loose_plug_visual_mesh_manifest.json
       manifest_sha256: d928105e6e28760a8ec11fdaaf4969bc6e51d7a8962fa8e5892ad42c6643e9cc
       source_stage: artifacts/kcg_connector/isaac/d38999_multilayer_v1/D38999_VISUAL_COMPLETE_V1.usda
@@ -112,6 +116,10 @@ objects:
       format: BINARY_STL_TESSELLATION_FROM_ORIGINAL_STEP
       path: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_VISUAL.stl
       sha256: 89bbf4ba3b8b5fb388276a378a820bb7547e676e97f0b9e2635b7862a86aa617
+      material_boundary_evidence:
+        representation: SINGLE_EMBEDDED_MATERIAL_BOUNDARY
+        path: artifacts/carts_grasp/CARTS_GRASP_V1/object_models/te_deutsch_d38999_26fj35pn/material_boundary/TE_D38999_SINGLE_SOLID_BOUNDARY_V1.json
+        sha256: 6f6a807e3099a83989e32a77a6cb5319e8b0100674974930a563bc0509d70103
       source_unit: mm
       watertight: true
       winding_consistent: true

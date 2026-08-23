@@ -19,6 +19,7 @@ from typing import Sequence
 import numpy as np
 
 from kcg_connector.grasp.robust.interval_kinematics import (
+    BATCH_POINT_MOTION_METHOD_ID,
     DirectedIntervalKinematics,
     IntervalBounds,
     IntervalKinematicsError,
@@ -26,7 +27,13 @@ from kcg_connector.grasp.robust.interval_kinematics import (
 )
 
 
-METHOD_ID = "CARTS_MP_INTERVAL_MOVING_STATIC_SURFACE_STRICT_AABB_BVH_V1"
+METHOD_ID = (
+    "CARTS_MP_INTERVAL_MOVING_STATIC_SURFACE_AABB_BVH_"
+    "SWEPT_TRIANGLE_EAGER_PRECOMPUTED_AXIS_FAMILY_FRONTIER_V6"
+)
+PREPARED_STATIC_SURFACE_METHOD_ID = (
+    "CARTS_PREPARED_STATIC_TRIANGLE_SURFACE_BVH_V1"
+)
 MOVING_PAIR_METHOD_ID = (
     "CARTS_MP_INTERVAL_MOVING_SURFACE_PAIR_RELATIVE_AXIS_V1"
 )
@@ -40,8 +47,20 @@ CLAIM_LIMITATIONS = (
     "NOT_ENVIRONMENT_COLLISION",
     "NOT_MULTI_LINK_OR_FULL_HAND_PATH_CERTIFICATE",
     "POTENTIAL_CONTACT_TANGENCY_AND_COPLANARITY_ARE_UNRESOLVED",
-    "TRIANGLE_SWEPT_AABB_SEPARATION_SUFFICIENT_NOT_NECESSARY",
+    "AABB_AND_SWEPT_TRIANGLE_AXIS_SEPARATION_SUFFICIENT_NOT_NECESSARY",
 )
+
+
+def _gamma(operation_count: int) -> float:
+    epsilon = np.finfo(np.float64).eps
+    product = float(operation_count) * epsilon
+    if operation_count <= 0 or product >= 1.0:
+        raise ValueError("operation_count cannot produce a finite gamma_n")
+    return product / (1.0 - product)
+
+
+_SAT_DOT_ERROR = _gamma(128)
+_NARROWPHASE_PAIR_PACKET_SIZE = 65536
 MOVING_PAIR_CLAIM_LIMITATIONS = (
     "TWO_MOVING_LINK_SURFACES_ONLY",
     "NO_SEMANTIC_COLLISION_PAIR_EXEMPTIONS_APPLIED",
@@ -90,9 +109,19 @@ class ContinuousCollisionAudit:
     certified_free_leaf_interval_count: int
     subdivided_interval_count: int
     point_motion_evaluation_count: int
+    root_bvh_interval_count: int
+    inherited_strictly_separated_pair_count: int
+    frontier_pair_evaluation_count: int
     bvh_node_visit_count: int
     bvh_leaf_visit_count: int
     leaf_pair_evaluation_count: int
+    narrowphase_pair_evaluation_count: int
+    narrowphase_strictly_separated_pair_count: int
+    narrowphase_invocation_interval_count: int
+    narrowphase_eager_child_interval_count: int
+    narrowphase_pair_packet_count: int
+    narrowphase_root_pair_packet_count: int
+    narrowphase_child_pair_packet_count: int
     pair_universe_count: int
     pair_coverage_count: int
     strictly_separated_pair_count: int
@@ -136,9 +165,19 @@ class ContinuousCollisionAudit:
             self.certified_free_leaf_interval_count,
             self.subdivided_interval_count,
             self.point_motion_evaluation_count,
+            self.root_bvh_interval_count,
+            self.inherited_strictly_separated_pair_count,
+            self.frontier_pair_evaluation_count,
             self.bvh_node_visit_count,
             self.bvh_leaf_visit_count,
             self.leaf_pair_evaluation_count,
+            self.narrowphase_pair_evaluation_count,
+            self.narrowphase_strictly_separated_pair_count,
+            self.narrowphase_invocation_interval_count,
+            self.narrowphase_eager_child_interval_count,
+            self.narrowphase_pair_packet_count,
+            self.narrowphase_root_pair_packet_count,
+            self.narrowphase_child_pair_packet_count,
             self.pair_universe_count,
             self.pair_coverage_count,
             self.strictly_separated_pair_count,
@@ -163,12 +202,39 @@ class ContinuousCollisionAudit:
             or self.processed_interval_count
             > self.maximum_subdivision_intervals
             or self.pair_coverage_count > self.pair_universe_count
+            or self.root_bvh_interval_count > 1
+            or self.root_bvh_interval_count > self.processed_interval_count
+            or self.inherited_strictly_separated_pair_count
+            > self.strictly_separated_pair_count
+            or self.frontier_pair_evaluation_count
+            > self.leaf_pair_evaluation_count
+            or self.inherited_strictly_separated_pair_count
+            + self.leaf_pair_evaluation_count
+            > self.pair_coverage_count
             or self.pair_universe_count
             != self.processed_interval_count * self.pair_count_per_interval
             or self.strictly_separated_pair_count
             + self.potential_overlap_pair_observation_count
             != self.pair_coverage_count
             or self.leaf_pair_evaluation_count > self.pair_coverage_count
+            or self.narrowphase_pair_evaluation_count
+            > self.leaf_pair_evaluation_count
+            or self.narrowphase_strictly_separated_pair_count
+            > self.narrowphase_pair_evaluation_count
+            or self.narrowphase_pair_evaluation_count
+            - self.narrowphase_strictly_separated_pair_count
+            != self.potential_overlap_pair_observation_count
+            or self.narrowphase_invocation_interval_count
+            > self.processed_interval_count
+            or self.narrowphase_eager_child_interval_count
+            > self.narrowphase_invocation_interval_count
+            or self.narrowphase_pair_packet_count
+            < self.narrowphase_invocation_interval_count
+            or self.narrowphase_pair_packet_count
+            > self.narrowphase_pair_evaluation_count
+            or self.narrowphase_root_pair_packet_count
+            + self.narrowphase_child_pair_packet_count
+            != self.narrowphase_pair_packet_count
             or self.bvh_leaf_visit_count > self.bvh_node_visit_count
         ):
             raise ContinuousCollisionError(
@@ -179,6 +245,13 @@ class ContinuousCollisionAudit:
         ):
             raise ContinuousCollisionError(
                 "collision audit pair-accounting flag is inconsistent"
+            )
+        if (
+            self.all_processed_pairs_accounted_for
+            and self.root_bvh_interval_count != 1
+        ):
+            raise ContinuousCollisionError(
+                "collision audit root-BVH coverage is incomplete"
             )
         if (
             self.all_processed_pairs_accounted_for
@@ -691,13 +764,90 @@ class _Counters:
     free_leaf_intervals: int = 0
     subdivisions: int = 0
     point_motion_evaluations: int = 0
+    root_bvh_intervals: int = 0
+    inherited_strictly_separated_pairs: int = 0
+    frontier_pair_evaluations: int = 0
     bvh_node_visits: int = 0
     bvh_leaf_visits: int = 0
     leaf_pair_evaluations: int = 0
+    narrowphase_pair_evaluations: int = 0
+    narrowphase_strictly_separated_pairs: int = 0
+    narrowphase_invocation_intervals: int = 0
+    narrowphase_eager_child_intervals: int = 0
+    narrowphase_pair_packets: int = 0
+    narrowphase_root_pair_packets: int = 0
+    narrowphase_child_pair_packets: int = 0
     pair_universe: int = 0
     pair_coverage: int = 0
     strictly_separated_pairs: int = 0
     potential_overlap_pairs: int = 0
+
+
+_UNRESOLVED_PAIR_FRONTIER_TOKEN = object()
+
+
+@dataclass(frozen=True)
+class _UnresolvedTrianglePairFrontier:
+    """Immutable exact moving/static face-pair ids still unresolved."""
+
+    pair_ids: np.ndarray
+    moving_triangle_count: int
+    static_triangle_count: int
+    _construction_token: object
+
+    def __post_init__(self) -> None:
+        if (
+            self._construction_token is not _UNRESOLVED_PAIR_FRONTIER_TOKEN
+            or not isinstance(self.moving_triangle_count, int)
+            or isinstance(self.moving_triangle_count, bool)
+            or self.moving_triangle_count <= 0
+            or not isinstance(self.static_triangle_count, int)
+            or isinstance(self.static_triangle_count, bool)
+            or self.static_triangle_count <= 0
+            or self.moving_triangle_count
+            > np.iinfo(np.int64).max // self.static_triangle_count
+        ):
+            raise ContinuousCollisionError(
+                "unresolved triangle-pair frontier contract is invalid"
+            )
+        pair_ids = np.asarray(self.pair_ids, dtype=np.int64)
+        pair_limit = self.moving_triangle_count * self.static_triangle_count
+        if (
+            pair_ids.ndim != 1
+            or np.any(pair_ids < 0)
+            or np.any(pair_ids >= pair_limit)
+        ):
+            raise ContinuousCollisionError(
+                "unresolved triangle-pair frontier ids are invalid"
+            )
+        ordered = np.sort(pair_ids, kind="stable")
+        if len(ordered) > 1 and np.any(ordered[1:] == ordered[:-1]):
+            raise ContinuousCollisionError(
+                "unresolved triangle-pair frontier contains duplicates"
+            )
+        immutable = np.frombuffer(
+            np.asarray(ordered, dtype="<i8").tobytes(order="C"),
+            dtype="<i8",
+        )
+        object.__setattr__(self, "pair_ids", immutable)
+
+    @property
+    def pair_count(self) -> int:
+        return len(self.pair_ids)
+
+
+def _unresolved_triangle_pair_frontier(
+    pair_ids: Sequence[int] | np.ndarray,
+    *,
+    moving_triangle_count: int,
+    static_triangle_count: int,
+) -> _UnresolvedTrianglePairFrontier:
+    return _UnresolvedTrianglePairFrontier(
+        pair_ids=np.asarray(pair_ids, dtype=np.int64),
+        moving_triangle_count=moving_triangle_count,
+        static_triangle_count=static_triangle_count,
+        _construction_token=_UNRESOLVED_PAIR_FRONTIER_TOKEN,
+    )
 
 
 @dataclass
@@ -903,6 +1053,374 @@ def _strictly_separated(
     )
 
 
+def _moving_projection_interval_bounds(
+    *,
+    moving_triangles_midpoint_m: np.ndarray,
+    moving_vertex_motion_half_extent_upper_m: np.ndarray,
+    candidate_axes: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Project Cartesian vertex boxes onto axes with outward rounding."""
+
+    moving = np.asarray(moving_triangles_midpoint_m, dtype=np.float64)
+    half_extent = np.asarray(
+        moving_vertex_motion_half_extent_upper_m, dtype=np.float64
+    )
+    axes = np.asarray(candidate_axes, dtype=np.float64)
+    count = len(moving)
+    if (
+        moving.shape != (count, 3, 3)
+        or count == 0
+        or half_extent.shape != (count, 3, 3)
+        or axes.ndim != 3
+        or axes.shape[0] != count
+        or axes.shape[2] != 3
+        or axes.shape[1] == 0
+        or not np.all(np.isfinite(moving))
+        or not np.all(np.isfinite(half_extent))
+        or not np.all(np.isfinite(axes))
+        or np.any(half_extent < 0.0)
+    ):
+        raise ContinuousCollisionError(
+            "moving projection inputs need aligned finite midpoint boxes "
+            "and axes"
+        )
+    projection_center = np.einsum("nvc,nac->nva", moving, axes)
+    projection_expansion = np.einsum(
+        "nvc,nac->nva", half_extent, np.abs(axes)
+    )
+    minimum = np.nextafter(
+        np.min(projection_center - projection_expansion, axis=1),
+        -math.inf,
+    )
+    maximum = np.nextafter(
+        np.max(projection_center + projection_expansion, axis=1),
+        math.inf,
+    )
+    if not np.all(np.isfinite(minimum)) or not np.all(np.isfinite(maximum)):
+        raise ContinuousCollisionError(
+            "moving projection interval arithmetic overflowed"
+        )
+    return minimum, maximum
+
+
+def _axis_strict_separation_mask(
+    *,
+    moving_triangles_midpoint_m: np.ndarray,
+    moving_vertex_motion_half_extent_upper_m: np.ndarray,
+    fixed_triangles_m: np.ndarray,
+    candidate_axes: np.ndarray,
+    moving_projection_minimum: np.ndarray | None = None,
+    moving_projection_maximum: np.ndarray | None = None,
+    fixed_projection_minimum: np.ndarray | None = None,
+    fixed_projection_maximum: np.ndarray | None = None,
+    candidate_axis_norm: np.ndarray | None = None,
+    coordinate_scale_m: np.ndarray | None = None,
+) -> np.ndarray:
+    """Return pairs proved strictly separated by at least one given axis."""
+
+    moving = np.asarray(moving_triangles_midpoint_m, dtype=np.float64)
+    half_extent = np.asarray(
+        moving_vertex_motion_half_extent_upper_m, dtype=np.float64
+    )
+    fixed = np.asarray(fixed_triangles_m, dtype=np.float64)
+    axes = np.asarray(candidate_axes, dtype=np.float64)
+    count = len(moving)
+    if (
+        moving.shape != (count, 3, 3)
+        or count == 0
+        or half_extent.shape != (count, 3, 3)
+        or fixed.shape != (count, 3, 3)
+        or axes.ndim != 3
+        or axes.shape[0] != count
+        or axes.shape[2] != 3
+        or axes.shape[1] == 0
+        or not np.all(np.isfinite(fixed))
+    ):
+        raise ContinuousCollisionError(
+            "axis separation inputs need aligned finite triangle packets"
+        )
+    if (moving_projection_minimum is None) != (
+        moving_projection_maximum is None
+    ):
+        raise ContinuousCollisionError(
+            "moving projection bounds must be supplied together"
+        )
+    if moving_projection_minimum is None:
+        moving_minimum, moving_maximum = (
+            _moving_projection_interval_bounds(
+                moving_triangles_midpoint_m=moving,
+                moving_vertex_motion_half_extent_upper_m=half_extent,
+                candidate_axes=axes,
+            )
+        )
+    else:
+        moving_minimum = np.asarray(
+            moving_projection_minimum, dtype=np.float64
+        )
+        moving_maximum = np.asarray(
+            moving_projection_maximum, dtype=np.float64
+        )
+        expected_shape = (count, axes.shape[1])
+        if (
+            moving_minimum.shape != expected_shape
+            or moving_maximum.shape != expected_shape
+            or not np.all(np.isfinite(moving_minimum))
+            or not np.all(np.isfinite(moving_maximum))
+            or np.any(moving_minimum > moving_maximum)
+        ):
+            raise ContinuousCollisionError(
+                "precomputed moving projection bounds are invalid"
+            )
+    if (fixed_projection_minimum is None) != (
+        fixed_projection_maximum is None
+    ):
+        raise ContinuousCollisionError(
+            "fixed projection bounds must be supplied together"
+        )
+    if fixed_projection_minimum is None:
+        fixed_projection = np.einsum("nvc,nac->nva", fixed, axes)
+        fixed_minimum = np.min(fixed_projection, axis=1)
+        fixed_maximum = np.max(fixed_projection, axis=1)
+    else:
+        fixed_minimum = np.asarray(
+            fixed_projection_minimum, dtype=np.float64
+        )
+        fixed_maximum = np.asarray(
+            fixed_projection_maximum, dtype=np.float64
+        )
+        expected_shape = (count, axes.shape[1])
+        if (
+            fixed_minimum.shape != expected_shape
+            or fixed_maximum.shape != expected_shape
+            or not np.all(np.isfinite(fixed_minimum))
+            or not np.all(np.isfinite(fixed_maximum))
+            or np.any(fixed_minimum > fixed_maximum)
+        ):
+            raise ContinuousCollisionError(
+                "precomputed fixed projection bounds are invalid"
+            )
+    if candidate_axis_norm is None:
+        axis_norm = np.linalg.norm(axes, axis=2)
+    else:
+        axis_norm = np.asarray(candidate_axis_norm, dtype=np.float64)
+        if axis_norm.shape != (count, axes.shape[1]):
+            raise ContinuousCollisionError(
+                "precomputed candidate-axis norms are invalid"
+            )
+    if coordinate_scale_m is None:
+        coordinate_scale = (
+            np.max(np.abs(moving), axis=(1, 2))
+            + np.max(half_extent, axis=(1, 2))
+            + np.max(np.abs(fixed), axis=(1, 2))
+            + 1.0
+        )
+    else:
+        coordinate_scale = np.asarray(coordinate_scale_m, dtype=np.float64)
+        if coordinate_scale.shape != (count,):
+            raise ContinuousCollisionError(
+                "precomputed coordinate scales are invalid"
+            )
+    projection_error = np.nextafter(
+        _SAT_DOT_ERROR
+        * (
+            np.abs(moving_minimum)
+            + np.abs(moving_maximum)
+            + np.abs(fixed_minimum)
+            + np.abs(fixed_maximum)
+            + axis_norm * coordinate_scale[:, None]
+        ),
+        math.inf,
+    )
+    forward_gap = fixed_minimum - moving_maximum
+    reverse_gap = moving_minimum - fixed_maximum
+    valid_axis = (
+        np.isfinite(axis_norm)
+        & (axis_norm > np.finfo(np.float64).tiny)
+        & np.isfinite(projection_error)
+    )
+    result = np.any(
+        valid_axis
+        & (
+            (forward_gap > projection_error)
+            | (reverse_gap > projection_error)
+        ),
+        axis=1,
+    )
+    result.setflags(write=False)
+    return result
+
+
+def _moving_triangle_triangle_strict_separation_mask(
+    *,
+    moving_triangles_midpoint_m: np.ndarray,
+    moving_vertex_motion_half_extent_upper_m: np.ndarray,
+    fixed_triangles_m: np.ndarray,
+) -> np.ndarray:
+    """All-axis anisotropic reference for the staged implementation.
+
+    Each moving vertex is enclosed by its Cartesian interval box.  One strict
+    separating axis is sufficient; no separating axis remains unresolved.
+    """
+
+    moving = np.asarray(moving_triangles_midpoint_m, dtype=np.float64)
+    half_extent = np.asarray(
+        moving_vertex_motion_half_extent_upper_m, dtype=np.float64
+    )
+    fixed = np.asarray(fixed_triangles_m, dtype=np.float64)
+    count = len(moving)
+    if (
+        moving.shape != (count, 3, 3)
+        or count == 0
+        or half_extent.shape != (count, 3, 3)
+        or fixed.shape != (count, 3, 3)
+        or not np.all(np.isfinite(moving))
+        or not np.all(np.isfinite(half_extent))
+        or not np.all(np.isfinite(fixed))
+        or np.any(half_extent < 0.0)
+    ):
+        raise ContinuousCollisionError(
+            "moving triangle SAT inputs need aligned finite triangles and "
+            "nonnegative vertex motion half extents"
+        )
+    moving_edges = np.stack(
+        (
+            moving[:, 1] - moving[:, 0],
+            moving[:, 2] - moving[:, 1],
+            moving[:, 0] - moving[:, 2],
+        ),
+        axis=1,
+    )
+    fixed_edges = np.stack(
+        (
+            fixed[:, 1] - fixed[:, 0],
+            fixed[:, 2] - fixed[:, 1],
+            fixed[:, 0] - fixed[:, 2],
+        ),
+        axis=1,
+    )
+    moving_normals = np.cross(
+        moving_edges[:, 0], -moving_edges[:, 2]
+    )
+    fixed_normals = np.cross(fixed_edges[:, 0], -fixed_edges[:, 2])
+    edge_cross_axes = np.cross(
+        moving_edges[:, :, None, :], fixed_edges[:, None, :, :]
+    ).reshape((count, 9, 3))
+    moving_in_plane_axes = np.cross(
+        moving_edges, moving_normals[:, None, :]
+    )
+    fixed_in_plane_axes = np.cross(
+        fixed_edges, fixed_normals[:, None, :]
+    )
+    candidate_axes = np.concatenate(
+        (
+            moving_normals[:, None, :],
+            fixed_normals[:, None, :],
+            edge_cross_axes,
+            moving_in_plane_axes,
+            fixed_in_plane_axes,
+        ),
+        axis=1,
+    )
+    return _axis_strict_separation_mask(
+        moving_triangles_midpoint_m=moving,
+        moving_vertex_motion_half_extent_upper_m=half_extent,
+        fixed_triangles_m=fixed,
+        candidate_axes=candidate_axes,
+    )
+
+
+def _moving_triangle_packet_geometry(
+    point_lower_m: np.ndarray,
+    point_upper_m: np.ndarray,
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
+    lower = np.asarray(point_lower_m, dtype=np.float64)
+    upper = np.asarray(point_upper_m, dtype=np.float64)
+    if (
+        lower.ndim != 3
+        or lower.shape[1:] != (3, 3)
+        or upper.shape != lower.shape
+        or len(lower) == 0
+        or not np.all(np.isfinite(lower))
+        or not np.all(np.isfinite(upper))
+        or np.any(lower > upper)
+    ):
+        raise ContinuousCollisionError(
+            "moving triangle point bounds must be finite aligned (F,3,3)"
+        )
+    triangle_lower = np.min(lower, axis=1)
+    triangle_upper = np.max(upper, axis=1)
+    midpoint = 0.5 * lower + 0.5 * upper
+    if not np.all(np.isfinite(midpoint)):
+        raise ContinuousCollisionError(
+            "moving triangle midpoint arithmetic overflowed"
+        )
+    half_extent = np.maximum(
+        np.abs(midpoint - lower), np.abs(upper - midpoint)
+    )
+    half_extent = np.nextafter(half_extent, math.inf)
+    moving_edges = np.stack(
+        (
+            midpoint[:, 1] - midpoint[:, 0],
+            midpoint[:, 2] - midpoint[:, 1],
+            midpoint[:, 0] - midpoint[:, 2],
+        ),
+        axis=1,
+    )
+    moving_normals = np.cross(moving_edges[:, 0], -moving_edges[:, 2])
+    moving_in_plane_axes = np.cross(
+        moving_edges, moving_normals[:, None, :]
+    )
+    moving_stage_axes = np.concatenate(
+        (moving_normals[:, None, :], moving_in_plane_axes), axis=1
+    )
+    (
+        moving_stage_projection_minimum,
+        moving_stage_projection_maximum,
+    ) = _moving_projection_interval_bounds(
+        moving_triangles_midpoint_m=midpoint,
+        moving_vertex_motion_half_extent_upper_m=half_extent,
+        candidate_axes=moving_stage_axes,
+    )
+    moving_stage_axis_norm = np.linalg.norm(moving_stage_axes, axis=2)
+    moving_coordinate_scale = (
+        np.max(np.abs(midpoint), axis=(1, 2))
+        + np.max(half_extent, axis=(1, 2))
+    )
+    if (
+        not np.all(np.isfinite(half_extent))
+        or not np.all(np.isfinite(moving_edges))
+        or not np.all(np.isfinite(moving_stage_axes))
+        or not np.all(np.isfinite(moving_stage_axis_norm))
+        or not np.all(np.isfinite(moving_coordinate_scale))
+    ):
+        raise ContinuousCollisionError(
+            "moving triangle anisotropic geometry arithmetic overflowed"
+        )
+    return (
+        triangle_lower,
+        triangle_upper,
+        midpoint,
+        half_extent,
+        moving_edges,
+        moving_stage_axes,
+        moving_stage_projection_minimum,
+        moving_stage_projection_maximum,
+        moving_stage_axis_norm,
+        moving_coordinate_scale,
+    )
+
+
 class _StaticTriangleBVH:
     def __init__(self, triangles_m: np.ndarray) -> None:
         self.triangles_m = triangles_m
@@ -913,7 +1431,53 @@ class _StaticTriangleBVH:
             + triangles_m[:, 1] / 3.0
             + triangles_m[:, 2] / 3.0
         )
+        self.face_edges_m = np.stack(
+            (
+                triangles_m[:, 1] - triangles_m[:, 0],
+                triangles_m[:, 2] - triangles_m[:, 1],
+                triangles_m[:, 0] - triangles_m[:, 2],
+            ),
+            axis=1,
+        )
+        face_normals = np.cross(
+            self.face_edges_m[:, 0], -self.face_edges_m[:, 2]
+        )
+        face_in_plane_axes = np.cross(
+            self.face_edges_m, face_normals[:, None, :]
+        )
+        self.face_static_stage_axes = np.concatenate(
+            (face_normals[:, None, :], face_in_plane_axes), axis=1
+        )
+        face_static_projection = np.einsum(
+            "nvc,nac->nva",
+            triangles_m,
+            self.face_static_stage_axes,
+        )
+        self.face_static_projection_minimum = np.min(
+            face_static_projection, axis=1
+        )
+        self.face_static_projection_maximum = np.max(
+            face_static_projection, axis=1
+        )
+        self.face_static_axis_norm = np.linalg.norm(
+            self.face_static_stage_axes, axis=2
+        )
+        self.face_coordinate_scale_m = np.max(
+            np.abs(triangles_m), axis=(1, 2)
+        )
         self.root = self._build(tuple(range(len(triangles_m))))
+        for immutable in (
+            self.face_lower_m,
+            self.face_upper_m,
+            self.face_centroid_m,
+            self.face_edges_m,
+            self.face_static_stage_axes,
+            self.face_static_projection_minimum,
+            self.face_static_projection_maximum,
+            self.face_static_axis_norm,
+            self.face_coordinate_scale_m,
+        ):
+            immutable.setflags(write=False)
 
     def _build(self, indices: tuple[int, ...]) -> _BVHNode:
         index_array = np.asarray(indices, dtype=np.int64)
@@ -981,6 +1545,559 @@ class _StaticTriangleBVH:
             stack.append(node.right)
             stack.append(node.left)
         return tuple(candidates), pruned_face_count
+
+    def classify_moving_face_bounds_packet(
+        self,
+        lower_m: np.ndarray,
+        upper_m: np.ndarray,
+        counters: _Counters,
+    ) -> int:
+        """Classify all moving-face AABBs in one shared BVH traversal."""
+
+        lower = np.asarray(lower_m, dtype=np.float64)
+        upper = np.asarray(upper_m, dtype=np.float64)
+        if (
+            lower.ndim != 2
+            or lower.shape[1:] != (3,)
+            or upper.shape != lower.shape
+            or len(lower) == 0
+            or not np.all(np.isfinite(lower))
+            or not np.all(np.isfinite(upper))
+            or np.any(lower > upper)
+        ):
+            raise ContinuousCollisionError(
+                "moving-face bound packet must be finite aligned (F, 3)"
+            )
+        overlap_pair_count = 0
+        all_indices = np.arange(len(lower), dtype=np.int64)
+        stack: list[tuple[_BVHNode, np.ndarray]] = [
+            (self.root, all_indices)
+        ]
+        while stack:
+            node, moving_indices = stack.pop()
+            counters.bvh_node_visits += len(moving_indices)
+            moving_lower = lower[moving_indices]
+            moving_upper = upper[moving_indices]
+            separated_from_node = np.any(
+                (moving_upper < node.lower_m)
+                | (node.upper_m < moving_lower),
+                axis=1,
+            )
+            separated_moving_count = int(
+                np.count_nonzero(separated_from_node)
+            )
+            if separated_moving_count:
+                pruned_pairs = (
+                    separated_moving_count * node.subtree_face_count
+                )
+                counters.pair_coverage += pruned_pairs
+                counters.strictly_separated_pairs += pruned_pairs
+            active = moving_indices[~separated_from_node]
+            if len(active) == 0:
+                continue
+            if node.leaf:
+                counters.bvh_leaf_visits += len(active)
+                static_indices = np.asarray(
+                    node.face_indices, dtype=np.int64
+                )
+                active_lower = lower[active, None, :]
+                active_upper = upper[active, None, :]
+                face_lower = self.face_lower_m[None, static_indices, :]
+                face_upper = self.face_upper_m[None, static_indices, :]
+                separated_pairs = np.any(
+                    (active_upper < face_lower)
+                    | (face_upper < active_lower),
+                    axis=2,
+                )
+                pair_count = len(active) * len(static_indices)
+                strictly_separated = int(
+                    np.count_nonzero(separated_pairs)
+                )
+                overlaps = pair_count - strictly_separated
+                counters.leaf_pair_evaluations += pair_count
+                counters.pair_coverage += pair_count
+                counters.strictly_separated_pairs += strictly_separated
+                counters.potential_overlap_pairs += overlaps
+                overlap_pair_count += overlaps
+                continue
+            if node.right is None or node.left is None:
+                raise ContinuousCollisionError(
+                    "static BVH internal node is incomplete"
+                )
+            stack.append((node.right, active))
+            stack.append((node.left, active))
+        return overlap_pair_count
+
+    def _precomputed_axis_family_strict_separation_mask(
+        self,
+        *,
+        moving_faces: np.ndarray,
+        static_faces: np.ndarray,
+        midpoint_m: np.ndarray,
+        half_extent_upper_m: np.ndarray,
+        moving_edges_m: np.ndarray,
+        moving_stage_axes: np.ndarray,
+        moving_stage_projection_minimum: np.ndarray,
+        moving_stage_projection_maximum: np.ndarray,
+        moving_stage_axis_norm: np.ndarray,
+        moving_coordinate_scale_m: np.ndarray,
+    ) -> np.ndarray:
+        """Evaluate all axis families with reusable self-axis projections."""
+
+        moving_indices = np.asarray(moving_faces, dtype=np.int64)
+        static_indices = np.asarray(static_faces, dtype=np.int64)
+        pair_count = len(moving_indices)
+        if (
+            pair_count == 0
+            or static_indices.shape != (pair_count,)
+            or np.any(moving_indices < 0)
+            or np.any(moving_indices >= len(midpoint_m))
+            or np.any(static_indices < 0)
+            or np.any(static_indices >= len(self.triangles_m))
+        ):
+            raise ContinuousCollisionError(
+                "axis-family narrowphase needs non-empty aligned face pairs"
+            )
+        moving_midpoint = midpoint_m[moving_indices]
+        moving_half_extent = half_extent_upper_m[moving_indices]
+        fixed_triangles = self.triangles_m[static_indices]
+        moving_axes = moving_stage_axes[moving_indices]
+        static_axes = self.face_static_stage_axes[static_indices]
+        coordinate_scale = (
+            moving_coordinate_scale_m[moving_indices]
+            + self.face_coordinate_scale_m[static_indices]
+            + 1.0
+        )
+        moving_axis_separated = _axis_strict_separation_mask(
+            moving_triangles_midpoint_m=moving_midpoint,
+            moving_vertex_motion_half_extent_upper_m=moving_half_extent,
+            fixed_triangles_m=fixed_triangles,
+            candidate_axes=moving_axes,
+            moving_projection_minimum=(
+                moving_stage_projection_minimum[moving_indices]
+            ),
+            moving_projection_maximum=(
+                moving_stage_projection_maximum[moving_indices]
+            ),
+            candidate_axis_norm=moving_stage_axis_norm[moving_indices],
+            coordinate_scale_m=coordinate_scale,
+        )
+        static_axis_separated = _axis_strict_separation_mask(
+            moving_triangles_midpoint_m=moving_midpoint,
+            moving_vertex_motion_half_extent_upper_m=moving_half_extent,
+            fixed_triangles_m=fixed_triangles,
+            candidate_axes=static_axes,
+            fixed_projection_minimum=(
+                self.face_static_projection_minimum[static_indices]
+            ),
+            fixed_projection_maximum=(
+                self.face_static_projection_maximum[static_indices]
+            ),
+            candidate_axis_norm=self.face_static_axis_norm[static_indices],
+            coordinate_scale_m=coordinate_scale,
+        )
+        edge_cross_axes = np.cross(
+            moving_edges_m[moving_indices, :, None, :],
+            self.face_edges_m[static_indices, None, :, :],
+        ).reshape((pair_count, 9, 3))
+        edge_axis_separated = _axis_strict_separation_mask(
+            moving_triangles_midpoint_m=moving_midpoint,
+            moving_vertex_motion_half_extent_upper_m=moving_half_extent,
+            fixed_triangles_m=fixed_triangles,
+            candidate_axes=edge_cross_axes,
+            coordinate_scale_m=coordinate_scale,
+        )
+        result = (
+            moving_axis_separated
+            | static_axis_separated
+            | edge_axis_separated
+        )
+        result.setflags(write=False)
+        return result
+
+    def classify_moving_triangles_packet(
+        self,
+        point_lower_m: np.ndarray,
+        point_upper_m: np.ndarray,
+        counters: _Counters,
+    ) -> _UnresolvedTrianglePairFrontier:
+        """Classify packet pairs with BVH AABBs then swept-triangle SAT."""
+
+        lower = np.asarray(point_lower_m, dtype=np.float64)
+        (
+            triangle_lower,
+            triangle_upper,
+            midpoint,
+            half_extent,
+            moving_edges,
+            moving_stage_axes,
+            moving_stage_projection_minimum,
+            moving_stage_projection_maximum,
+            moving_stage_axis_norm,
+            moving_coordinate_scale,
+        ) = _moving_triangle_packet_geometry(point_lower_m, point_upper_m)
+
+        counters.root_bvh_intervals += 1
+        aabb_overlap_pair_ids: list[np.ndarray] = []
+        all_indices = np.arange(len(lower), dtype=np.int64)
+        stack: list[tuple[_BVHNode, np.ndarray]] = [
+            (self.root, all_indices)
+        ]
+        while stack:
+            node, moving_indices = stack.pop()
+            counters.bvh_node_visits += len(moving_indices)
+            moving_lower = triangle_lower[moving_indices]
+            moving_upper = triangle_upper[moving_indices]
+            separated_from_node = np.any(
+                (moving_upper < node.lower_m)
+                | (node.upper_m < moving_lower),
+                axis=1,
+            )
+            separated_moving_count = int(
+                np.count_nonzero(separated_from_node)
+            )
+            if separated_moving_count:
+                pruned_pairs = (
+                    separated_moving_count * node.subtree_face_count
+                )
+                counters.pair_coverage += pruned_pairs
+                counters.strictly_separated_pairs += pruned_pairs
+            active = moving_indices[~separated_from_node]
+            if len(active) == 0:
+                continue
+            if node.leaf:
+                counters.bvh_leaf_visits += len(active)
+                static_indices = np.asarray(
+                    node.face_indices, dtype=np.int64
+                )
+                active_lower = triangle_lower[active, None, :]
+                active_upper = triangle_upper[active, None, :]
+                face_lower = self.face_lower_m[None, static_indices, :]
+                face_upper = self.face_upper_m[None, static_indices, :]
+                aabb_separated = np.any(
+                    (active_upper < face_lower)
+                    | (face_upper < active_lower),
+                    axis=2,
+                )
+                pair_count = len(active) * len(static_indices)
+                aabb_separated_count = int(
+                    np.count_nonzero(aabb_separated)
+                )
+                overlap_offsets = np.nonzero(~aabb_separated)
+                overlap_count = len(overlap_offsets[0])
+                if overlap_count:
+                    moving_faces = active[
+                        overlap_offsets[0]
+                    ]
+                    static_faces = static_indices[
+                        overlap_offsets[1]
+                    ]
+                    aabb_overlap_pair_ids.append(
+                        moving_faces * len(self.triangles_m)
+                        + static_faces
+                    )
+                counters.leaf_pair_evaluations += pair_count
+                counters.pair_coverage += pair_count
+                counters.strictly_separated_pairs += aabb_separated_count
+                continue
+            if node.right is None or node.left is None:
+                raise ContinuousCollisionError(
+                    "static BVH internal node is incomplete"
+                )
+            stack.append((node.right, active))
+            stack.append((node.left, active))
+        aabb_overlap_ids = (
+            np.concatenate(aabb_overlap_pair_ids)
+            if aabb_overlap_pair_ids
+            else np.empty(0, dtype=np.int64)
+        )
+        aabb_overlap_count = len(aabb_overlap_ids)
+        sat_separated_count = 0
+        unresolved_pair_ids: list[np.ndarray] = []
+        if aabb_overlap_count:
+            counters.narrowphase_invocation_intervals += 1
+            for start_index in range(
+                0,
+                aabb_overlap_count,
+                _NARROWPHASE_PAIR_PACKET_SIZE,
+            ):
+                stop_index = min(
+                    aabb_overlap_count,
+                    start_index + _NARROWPHASE_PAIR_PACKET_SIZE,
+                )
+                overlap_pair_ids = aabb_overlap_ids[
+                    start_index:stop_index
+                ]
+                overlap_moving_faces = (
+                    overlap_pair_ids // len(self.triangles_m)
+                )
+                overlap_static_faces = (
+                    overlap_pair_ids % len(self.triangles_m)
+                )
+                separated_by_sat = self._precomputed_axis_family_strict_separation_mask(
+                    moving_faces=overlap_moving_faces,
+                    static_faces=overlap_static_faces,
+                    midpoint_m=midpoint,
+                    half_extent_upper_m=half_extent,
+                    moving_edges_m=moving_edges,
+                    moving_stage_axes=moving_stage_axes,
+                    moving_stage_projection_minimum=(
+                        moving_stage_projection_minimum
+                    ),
+                    moving_stage_projection_maximum=(
+                        moving_stage_projection_maximum
+                    ),
+                    moving_stage_axis_norm=moving_stage_axis_norm,
+                    moving_coordinate_scale_m=moving_coordinate_scale,
+                )
+                counters.narrowphase_pair_packets += 1
+                counters.narrowphase_root_pair_packets += 1
+                sat_separated_count += int(
+                    np.count_nonzero(separated_by_sat)
+                )
+                if np.any(~separated_by_sat):
+                    unresolved_pair_ids.append(
+                        overlap_pair_ids[~separated_by_sat]
+                    )
+        pair_ids = (
+            np.concatenate(unresolved_pair_ids)
+            if unresolved_pair_ids
+            else np.empty(0, dtype=np.int64)
+        )
+        counters.narrowphase_pair_evaluations += aabb_overlap_count
+        counters.narrowphase_strictly_separated_pairs += (
+            sat_separated_count
+        )
+        counters.strictly_separated_pairs += sat_separated_count
+        counters.potential_overlap_pairs += len(pair_ids)
+        return _unresolved_triangle_pair_frontier(
+            pair_ids,
+            moving_triangle_count=len(lower),
+            static_triangle_count=len(self.triangles_m),
+        )
+
+    def classify_parent_pair_frontier_packet(
+        self,
+        point_lower_m: np.ndarray,
+        point_upper_m: np.ndarray,
+        parent_frontier: _UnresolvedTrianglePairFrontier,
+        counters: _Counters,
+    ) -> _UnresolvedTrianglePairFrontier:
+        """AABB-filter a parent frontier and eagerly run full narrowphase."""
+
+        lower = np.asarray(point_lower_m, dtype=np.float64)
+        (
+            triangle_lower,
+            triangle_upper,
+            midpoint,
+            half_extent,
+            moving_edges,
+            moving_stage_axes,
+            moving_stage_projection_minimum,
+            moving_stage_projection_maximum,
+            moving_stage_axis_norm,
+            moving_coordinate_scale,
+        ) = _moving_triangle_packet_geometry(point_lower_m, point_upper_m)
+        if (
+            parent_frontier.moving_triangle_count != len(lower)
+            or parent_frontier.static_triangle_count
+            != len(self.triangles_m)
+        ):
+            raise ContinuousCollisionError(
+                "parent unresolved pair frontier geometry mismatch"
+            )
+        complete_pair_count = len(lower) * len(self.triangles_m)
+        inherited_count = complete_pair_count - parent_frontier.pair_count
+        counters.inherited_strictly_separated_pairs += inherited_count
+        counters.pair_coverage += inherited_count
+        counters.strictly_separated_pairs += inherited_count
+        counters.frontier_pair_evaluations += parent_frontier.pair_count
+        counters.leaf_pair_evaluations += parent_frontier.pair_count
+
+        aabb_overlap_pair_ids: list[np.ndarray] = []
+        aabb_separated_count = 0
+        for start_index in range(
+            0,
+            parent_frontier.pair_count,
+            _NARROWPHASE_PAIR_PACKET_SIZE,
+        ):
+            stop_index = min(
+                parent_frontier.pair_count,
+                start_index + _NARROWPHASE_PAIR_PACKET_SIZE,
+            )
+            pair_ids = parent_frontier.pair_ids[start_index:stop_index]
+            moving_faces = pair_ids // len(self.triangles_m)
+            static_faces = pair_ids % len(self.triangles_m)
+            separated_by_aabb = np.any(
+                (
+                    triangle_upper[moving_faces]
+                    < self.face_lower_m[static_faces]
+                )
+                | (
+                    self.face_upper_m[static_faces]
+                    < triangle_lower[moving_faces]
+                ),
+                axis=1,
+            )
+            aabb_separated_count += int(np.count_nonzero(separated_by_aabb))
+            overlap_pair_ids = pair_ids[~separated_by_aabb]
+            if len(overlap_pair_ids):
+                aabb_overlap_pair_ids.append(overlap_pair_ids)
+
+        aabb_overlap_ids = (
+            np.concatenate(aabb_overlap_pair_ids)
+            if aabb_overlap_pair_ids
+            else np.empty(0, dtype=np.int64)
+        )
+        aabb_overlap_count = len(aabb_overlap_ids)
+        sat_separated_count = 0
+        unresolved_pair_ids: list[np.ndarray] = []
+        if aabb_overlap_count:
+            counters.narrowphase_invocation_intervals += 1
+            counters.narrowphase_eager_child_intervals += 1
+            for start_index in range(
+                0,
+                aabb_overlap_count,
+                _NARROWPHASE_PAIR_PACKET_SIZE,
+            ):
+                stop_index = min(
+                    aabb_overlap_count,
+                    start_index + _NARROWPHASE_PAIR_PACKET_SIZE,
+                )
+                overlap_pair_ids = aabb_overlap_ids[
+                    start_index:stop_index
+                ]
+                overlap_moving_faces = (
+                    overlap_pair_ids // len(self.triangles_m)
+                )
+                overlap_static_faces = (
+                    overlap_pair_ids % len(self.triangles_m)
+                )
+                separated_by_sat = self._precomputed_axis_family_strict_separation_mask(
+                    moving_faces=overlap_moving_faces,
+                    static_faces=overlap_static_faces,
+                    midpoint_m=midpoint,
+                    half_extent_upper_m=half_extent,
+                    moving_edges_m=moving_edges,
+                    moving_stage_axes=moving_stage_axes,
+                    moving_stage_projection_minimum=(
+                        moving_stage_projection_minimum
+                    ),
+                    moving_stage_projection_maximum=(
+                        moving_stage_projection_maximum
+                    ),
+                    moving_stage_axis_norm=moving_stage_axis_norm,
+                    moving_coordinate_scale_m=moving_coordinate_scale,
+                )
+                counters.narrowphase_pair_packets += 1
+                counters.narrowphase_child_pair_packets += 1
+                sat_separated_count += int(
+                    np.count_nonzero(separated_by_sat)
+                )
+                if np.any(~separated_by_sat):
+                    unresolved_pair_ids.append(
+                        overlap_pair_ids[~separated_by_sat]
+                    )
+            pair_ids = (
+                np.concatenate(unresolved_pair_ids)
+                if unresolved_pair_ids
+                else np.empty(0, dtype=np.int64)
+            )
+            counters.narrowphase_pair_evaluations += aabb_overlap_count
+            counters.narrowphase_strictly_separated_pairs += (
+                sat_separated_count
+            )
+        else:
+            pair_ids = np.empty(0, dtype=np.int64)
+
+        unresolved_count = len(pair_ids)
+        counters.pair_coverage += parent_frontier.pair_count
+        counters.strictly_separated_pairs += (
+            aabb_separated_count + sat_separated_count
+        )
+        counters.potential_overlap_pairs += unresolved_count
+        return _unresolved_triangle_pair_frontier(
+            pair_ids,
+            moving_triangle_count=len(lower),
+            static_triangle_count=len(self.triangles_m),
+        )
+
+
+_PREPARED_STATIC_SURFACE_TOKEN = object()
+
+
+@dataclass(frozen=True)
+class PreparedStaticTriangleSurface:
+    """One immutable canonical surface and its reusable static BVH."""
+
+    method_id: str
+    geometry_sha256: str
+    triangle_count: int
+    triangles_object_m: np.ndarray
+    _bvh: _StaticTriangleBVH
+    _construction_token: object
+
+    def __post_init__(self) -> None:
+        triangles = np.asarray(self.triangles_object_m, dtype=np.float64)
+        if (
+            self._construction_token is not _PREPARED_STATIC_SURFACE_TOKEN
+            or self.method_id != PREPARED_STATIC_SURFACE_METHOD_ID
+            or len(self.geometry_sha256) != 64
+            or any(
+                character not in "0123456789abcdef"
+                for character in self.geometry_sha256
+            )
+            or not isinstance(self.triangle_count, int)
+            or isinstance(self.triangle_count, bool)
+            or self.triangle_count <= 0
+            or triangles.shape != (self.triangle_count, 3, 3)
+            or triangles.flags.writeable
+            or type(self._bvh) is not _StaticTriangleBVH
+            or self._bvh.triangles_m is not self.triangles_object_m
+        ):
+            raise ContinuousCollisionError(
+                "prepared static triangle surface is malformed"
+            )
+
+
+def prepare_static_triangle_surface(
+    triangles_object_m: (
+        Sequence[Sequence[Sequence[float]]] | np.ndarray
+    ),
+    *,
+    expected_geometry_sha256: str | None = None,
+) -> PreparedStaticTriangleSurface:
+    """Canonicalize and index one static surface for repeated queries."""
+
+    triangles, geometry_sha256 = _canonical_surface(
+        triangles_object_m,
+        label="prepared static object surface",
+    )
+    if expected_geometry_sha256 is not None and (
+        len(str(expected_geometry_sha256)) != 64
+        or any(
+            character not in "0123456789abcdef"
+            for character in str(expected_geometry_sha256)
+        )
+        or str(expected_geometry_sha256) != geometry_sha256
+    ):
+        raise ContinuousCollisionError(
+            "prepared static object surface geometry hash mismatch"
+        )
+    # bytes owns the storage, so callers cannot turn write access back on.
+    immutable = np.frombuffer(
+        np.asarray(triangles, dtype="<f8").tobytes(order="C"),
+        dtype="<f8",
+    ).reshape(triangles.shape)
+    bvh = _StaticTriangleBVH(immutable)
+    return PreparedStaticTriangleSurface(
+        method_id=PREPARED_STATIC_SURFACE_METHOD_ID,
+        geometry_sha256=geometry_sha256,
+        triangle_count=len(immutable),
+        triangles_object_m=immutable,
+        _bvh=bvh,
+        _construction_token=_PREPARED_STATIC_SURFACE_TOKEN,
+    )
 
 
 def _proper_se3(value: object) -> np.ndarray:
@@ -1058,9 +2175,33 @@ def _build_audit(
         point_motion_evaluation_count=(
             counters.point_motion_evaluations
         ),
+        root_bvh_interval_count=counters.root_bvh_intervals,
+        inherited_strictly_separated_pair_count=(
+            counters.inherited_strictly_separated_pairs
+        ),
+        frontier_pair_evaluation_count=counters.frontier_pair_evaluations,
         bvh_node_visit_count=counters.bvh_node_visits,
         bvh_leaf_visit_count=counters.bvh_leaf_visits,
         leaf_pair_evaluation_count=counters.leaf_pair_evaluations,
+        narrowphase_pair_evaluation_count=(
+            counters.narrowphase_pair_evaluations
+        ),
+        narrowphase_strictly_separated_pair_count=(
+            counters.narrowphase_strictly_separated_pairs
+        ),
+        narrowphase_invocation_interval_count=(
+            counters.narrowphase_invocation_intervals
+        ),
+        narrowphase_eager_child_interval_count=(
+            counters.narrowphase_eager_child_intervals
+        ),
+        narrowphase_pair_packet_count=counters.narrowphase_pair_packets,
+        narrowphase_root_pair_packet_count=(
+            counters.narrowphase_root_pair_packets
+        ),
+        narrowphase_child_pair_packet_count=(
+            counters.narrowphase_child_pair_packets
+        ),
         pair_universe_count=counters.pair_universe,
         pair_coverage_count=counters.pair_coverage,
         strictly_separated_pair_count=counters.strictly_separated_pairs,
@@ -1089,17 +2230,18 @@ def certify_moving_link_surface_separated_from_static_surface(
         Sequence[Sequence[Sequence[float]]] | np.ndarray
     ),
     static_triangles_object_m: (
-        Sequence[Sequence[Sequence[float]]] | np.ndarray
+        Sequence[Sequence[Sequence[float]]]
+        | np.ndarray
+        | PreparedStaticTriangleSurface
     ),
     maximum_subdivision_intervals: int,
 ) -> ContinuousCollisionCertificate:
     """Certify strict moving/static surface separation on ``phase``.
 
-    At each phase, a rigidly transformed triangle is the convex hull of its
-    three transformed vertices, so every Cartesian coordinate extremum occurs
-    at a transformed vertex.  Directed point-motion intervals therefore make
-    their union AABB an enclosure of the whole swept triangle.  Strict AABB
-    separation on one axis proves the corresponding triangle pair disjoint.
+    At each phase, directed point-motion intervals enclose all moving triangle
+    vertices.  Packet BVH AABBs reject broadphase pairs.  Full anisotropic
+    triangle-axis checks run at the root, after an amortized frontier halving,
+    and before a terminal return; deferred pairs remain unresolved.
     A free result is returned only when the left-first closed bisection leaves
     cover the entire requested phase and every moving/static pair is proven
     separated on every leaf.
@@ -1146,19 +2288,26 @@ def certify_moving_link_surface_separated_from_static_surface(
         moving_triangles_link_m,
         label="moving link surface",
     )
-    static, static_hash = _canonical_surface(
-        static_triangles_object_m,
-        label="static object surface",
-    )
-    static_bvh = _StaticTriangleBVH(static)
-    static_lower = static_bvh.face_lower_m
-    static_upper = static_bvh.face_upper_m
+    if type(static_triangles_object_m) is PreparedStaticTriangleSurface:
+        prepared_static = static_triangles_object_m
+        static = prepared_static.triangles_object_m
+        static_hash = prepared_static.geometry_sha256
+        static_bvh = prepared_static._bvh
+    else:
+        static, static_hash = _canonical_surface(
+            static_triangles_object_m,
+            label="static object surface",
+        )
+        static_bvh = _StaticTriangleBVH(static)
+    moving_points = moving.reshape((-1, 3))
     counters = _Counters()
     free_leaves: list[IntervalBounds] = []
-    pending: list[IntervalBounds] = [phase]
+    pending: list[
+        tuple[IntervalBounds, _UnresolvedTrianglePairFrontier | None]
+    ] = [(phase, None)]
 
     while pending:
-        interval = pending.pop()
+        interval, parent_frontier = pending.pop()
         if (
             counters.processed_intervals
             >= maximum_subdivision_intervals
@@ -1186,73 +2335,67 @@ def certify_moving_link_surface_separated_from_static_surface(
                 audit=audit,
             )
         counters.processed_intervals += 1
+        subdivision_midpoint = interval.lower + 0.5 * (
+            interval.upper - interval.lower
+        )
+        cannot_subdivide = not (
+            interval.lower < subdivision_midpoint < interval.upper
+        )
         interval_overlap_pairs = 0
+        interval_frontier: _UnresolvedTrianglePairFrontier | None = None
         backend_failure_reason: str | None = None
         interval_pair_universe = len(moving) * len(static)
         counters.pair_universe += interval_pair_universe
 
-        for moving_triangle in moving:
-            swept_lower = np.full(3, math.inf, dtype=np.float64)
-            swept_upper = np.full(3, -math.inf, dtype=np.float64)
-            for vertex in moving_triangle:
-                try:
-                    motion = backend.point_motion(
-                        link_name=str(link_name),
-                        q_start=start,
-                        direction=path_direction,
-                        phase_lower=interval.lower,
-                        phase_upper=interval.upper,
-                        base_transform=base,
-                        point_local_m=vertex,
-                    )
-                except IntervalKinematicsError as error:
-                    backend_failure_reason = (
-                        "INTERVAL_KINEMATICS_UNRESOLVED:"
-                        + type(error).__name__
-                    )
-                    break
-                counters.point_motion_evaluations += 1
-                if motion.method_id != INTERVAL_KINEMATICS_METHOD_ID:
-                    backend_failure_reason = (
-                        "INTERVAL_KINEMATICS_METHOD_MISMATCH"
-                    )
-                    break
-                swept_lower = np.minimum(
-                    swept_lower,
-                    np.asarray(
-                        [bound.lower for bound in motion.position_object_m],
-                        dtype=np.float64,
-                    ),
-                )
-                swept_upper = np.maximum(
-                    swept_upper,
-                    np.asarray(
-                        [bound.upper for bound in motion.position_object_m],
-                        dtype=np.float64,
-                    ),
-                )
-            if backend_failure_reason is not None:
-                break
-            candidates, pruned_count = static_bvh.potential_faces(
-                swept_lower,
-                swept_upper,
-                counters,
+        try:
+            motion = backend.point_motion_many(
+                link_name=str(link_name),
+                q_start=start,
+                direction=path_direction,
+                phase_lower=interval.lower,
+                phase_upper=interval.upper,
+                base_transform=base,
+                points_local_m=moving_points,
             )
-            counters.pair_coverage += pruned_count
-            counters.strictly_separated_pairs += pruned_count
-            for face_index in candidates:
-                counters.leaf_pair_evaluations += 1
-                counters.pair_coverage += 1
-                if _strictly_separated(
-                    swept_lower,
-                    swept_upper,
-                    static_lower[face_index],
-                    static_upper[face_index],
-                ):
-                    counters.strictly_separated_pairs += 1
-                else:
-                    counters.potential_overlap_pairs += 1
-                    interval_overlap_pairs += 1
+        except IntervalKinematicsError as error:
+            backend_failure_reason = (
+                "INTERVAL_KINEMATICS_UNRESOLVED:"
+                + type(error).__name__
+            )
+        else:
+            counters.point_motion_evaluations += len(moving_points)
+            if motion.method_id != BATCH_POINT_MOTION_METHOD_ID:
+                backend_failure_reason = (
+                    "INTERVAL_KINEMATICS_METHOD_MISMATCH"
+                )
+            else:
+                point_lower = np.asarray(
+                    motion.position_lower_object_m,
+                    dtype=np.float64,
+                ).reshape((len(moving), 3, 3))
+                point_upper = np.asarray(
+                    motion.position_upper_object_m,
+                    dtype=np.float64,
+                ).reshape((len(moving), 3, 3))
+        if backend_failure_reason is None:
+            if parent_frontier is None:
+                interval_frontier = (
+                    static_bvh.classify_moving_triangles_packet(
+                        point_lower,
+                        point_upper,
+                        counters,
+                    )
+                )
+            else:
+                interval_frontier = (
+                    static_bvh.classify_parent_pair_frontier_packet(
+                        point_lower,
+                        point_upper,
+                        parent_frontier,
+                        counters,
+                    )
+                )
+            interval_overlap_pairs = interval_frontier.pair_count
 
         if backend_failure_reason is not None:
             audit = _build_audit(
@@ -1304,10 +2447,7 @@ def certify_moving_link_surface_separated_from_static_surface(
                 unresolved_interval=interval,
                 audit=audit,
             )
-        midpoint = interval.lower + 0.5 * (
-            interval.upper - interval.lower
-        )
-        if not interval.lower < midpoint < interval.upper:
+        if cannot_subdivide:
             audit = _build_audit(
                 moving_hash=moving_hash,
                 static_hash=static_hash,
@@ -1329,9 +2469,23 @@ def certify_moving_link_surface_separated_from_static_surface(
                 audit=audit,
             )
         counters.subdivisions += 1
+        if interval_frontier is None:
+            raise ContinuousCollisionError(
+                "unresolved interval lost its exact pair frontier"
+            )
         # Stack is LIFO: pushing right then left makes traversal left-first.
-        pending.append(IntervalBounds(midpoint, interval.upper))
-        pending.append(IntervalBounds(interval.lower, midpoint))
+        pending.append(
+            (
+                IntervalBounds(subdivision_midpoint, interval.upper),
+                interval_frontier,
+            )
+        )
+        pending.append(
+            (
+                IntervalBounds(interval.lower, subdivision_midpoint),
+                interval_frontier,
+            )
+        )
 
     audit = _build_audit(
         moving_hash=moving_hash,
@@ -1426,39 +2580,36 @@ def _enclose_moving_surface_vertices(
     base_transform: np.ndarray,
     counters: _MovingPairCounters,
 ) -> tuple[np.ndarray, np.ndarray]:
-    lower = np.empty((len(triangles_link_m), 3, 3), dtype=np.float64)
-    upper = np.empty_like(lower)
-    for face_index, triangle in enumerate(triangles_link_m):
-        for vertex_index, vertex in enumerate(triangle):
-            try:
-                motion = backend.point_motion(
-                    link_name=link_name,
-                    q_start=q_start,
-                    direction=direction,
-                    phase_lower=interval.lower,
-                    phase_upper=interval.upper,
-                    base_transform=base_transform,
-                    point_local_m=vertex,
-                )
-            except IntervalKinematicsError as error:
-                raise _MovingPairBackendUnresolved(
-                    "INTERVAL_KINEMATICS_UNRESOLVED:"
-                    + type(error).__name__
-                ) from error
-            counters.point_motion_evaluations += 1
-            if motion.method_id != INTERVAL_KINEMATICS_METHOD_ID:
-                raise _MovingPairBackendUnresolved(
-                    "INTERVAL_KINEMATICS_METHOD_MISMATCH"
-                )
-            lower[face_index, vertex_index] = np.asarray(
-                [bound.lower for bound in motion.position_object_m],
-                dtype=np.float64,
-            )
-            upper[face_index, vertex_index] = np.asarray(
-                [bound.upper for bound in motion.position_object_m],
-                dtype=np.float64,
-            )
-    return lower, upper
+    points = triangles_link_m.reshape((-1, 3))
+    try:
+        motion = backend.point_motion_many(
+            link_name=link_name,
+            q_start=q_start,
+            direction=direction,
+            phase_lower=interval.lower,
+            phase_upper=interval.upper,
+            base_transform=base_transform,
+            points_local_m=points,
+        )
+    except IntervalKinematicsError as error:
+        raise _MovingPairBackendUnresolved(
+            "INTERVAL_KINEMATICS_UNRESOLVED:"
+            + type(error).__name__
+        ) from error
+    counters.point_motion_evaluations += len(points)
+    if motion.method_id != BATCH_POINT_MOTION_METHOD_ID:
+        raise _MovingPairBackendUnresolved(
+            "INTERVAL_KINEMATICS_METHOD_MISMATCH"
+        )
+    shape = (len(triangles_link_m), 3, 3)
+    return (
+        np.asarray(
+            motion.position_lower_object_m, dtype=np.float64
+        ).reshape(shape),
+        np.asarray(
+            motion.position_upper_object_m, dtype=np.float64
+        ).reshape(shape),
+    )
 
 
 def _relative_triangle_pair_strictly_separated(
@@ -2240,7 +3391,10 @@ __all__ = [
     "MOVING_PAIR_METHOD_ID",
     "MovingSurfacePairCollisionAudit",
     "MovingSurfacePairCollisionCertificate",
+    "PREPARED_STATIC_SURFACE_METHOD_ID",
+    "PreparedStaticTriangleSurface",
     "certify_independent_link_motion_surfaces_separated_from_each_other",
     "certify_moving_link_surfaces_separated_from_each_other",
     "certify_moving_link_surface_separated_from_static_surface",
+    "prepare_static_triangle_surface",
 ]

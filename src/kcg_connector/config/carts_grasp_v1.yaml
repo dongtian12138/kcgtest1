@@ -146,15 +146,19 @@ contact_range_policy_collision:
     - NOT_ARM_OR_ENVIRONMENT_APPROACH_CLOSURE_OR_LIFT_COLLISION
     - NO_SRDF_NEVER_OR_ADJACENT_EXEMPTIONS_APPLIED
     - DISPLAY_APPROXIMATION_IS_NOT_READ_AS_FORMAL_EVIDENCE
+    - FULL_HASH_BOUND_PAD_CONTACT_ROOTS_ARE_INDEPENDENT_FROM_CLOSED_SHELL_FACE_ROLE_PARTITION
     - POTENTIAL_CONTACT_TANGENCY_AND_COPLANARITY_REMAIN_UNRESOLVED
   formal_selection_allowed: false
   isaac_launch_allowed: false
 
 contact_range_policy_wrench:
   implementation_type_id: kcg_connector.grasp.robust.task_wrench_evaluator.ContactRangePolicyWrenchCertificate
-  method_id: CARTS_CONTACT_RANGE_POLICY_WRENCH_DOMAIN_AUDIT_V1
+  method_id: CARTS_CONTACT_RANGE_POLICY_WRENCH_CERTIFICATE_V2
   root_domain_rule: ALL_POSSIBLE_EARLIEST_ROOTS_PER_PAD
   cartesian_product_rule: COMPLETE_CARTESIAN_PRODUCT_OF_ALL_POSSIBLE_EARLIEST_ROOTS
+  interval_geometric_jacobian_method_id: MPMATH_DIRECTED_INTERVAL_JOINT_BOX_GEOMETRIC_JACOBIAN_V1
+  interval_policy_margin_method_id: CARTS_BOUNDED_DYADIC_INTERVAL_POLICY_MARGIN_SEARCH_V1
+  joint_position_domain_rule: INITIAL_STATE_PLUS_COMPLETE_PER_PAD_EARLIEST_ROOT_PHASE_ENVELOPES_ON_DISJOINT_SUPPORTS
   policy_collision_binding_required: true
   qmc_role: FRICTION_INTERVAL_ONLY_NOT_CONTACT_GEOMETRY_SAMPLING
   display_approximation_used_as_formal_evidence: false
@@ -163,19 +167,24 @@ contact_range_policy_wrench:
   exact_candidate_wrench_invocations: 0
   current_state: NOT_CERTIFIABLE
   contact_range_margin_computed: false
-  interval_contact_jacobian_certificate_present: false
+  interval_contact_jacobian_certificate_present: true
   parametric_wrench_lower_bound_certificate_present: false
+  midpoint_margin_proposal_role: COMPLETE_ROOT_PRODUCT_INTERVAL_MATRIX_MIDPOINT_LP_UPPER_PROPOSAL_ONLY
+  midpoint_margin_proposal_used_as_formal_evidence: false
+  certified_margin_search_rule: HALVE_UNTIL_FIRST_COMPLETE_CERTIFICATE_THEN_BISECT_KEEP_HIGHEST_CERTIFIED
+  maximum_certification_attempts: 12
+  maximum_certification_attempts_role: PRE_REGISTERED_COMPUTE_BUDGET_NOT_PHYSICAL_ACCEPTANCE_THRESHOLD
+  returned_margin_requires_complete_interval_certificate: true
   mandatory_blockers:
-    - INTERVAL_CONTACT_JACOBIAN_CERTIFICATE_UNAVAILABLE
     - PARAMETRIC_CONTACT_RANGE_WRENCH_LOWER_BOUND_UNAVAILABLE
     - CALIBRATED_NONFRICTION_UNCERTAINTY_BOUNDS_UNAVAILABLE
   claim_limitations:
-    - CONTACT_RANGE_POLICY_ROOT_DOMAIN_BINDING_ONLY
+    - CONTACT_RANGE_POLICY_ROOT_AND_INTERVAL_JACOBIAN_BINDING_ONLY
     - ALL_POSSIBLE_EARLIEST_ROOTS_AND_CARTESIAN_PRODUCT_COUNT_BOUND
+    - ALL_CONTACT_ROOTS_HAVE_DIRECTED_INTERVAL_GEOMETRIC_JACOBIANS
     - NO_DISPLAY_APPROXIMATION_AS_FORMAL_EVIDENCE
     - NO_FINITE_CONTACT_GEOMETRY_SAMPLING_AS_FORMAL_EVIDENCE
     - NO_EXACT_FINAL_JOINT_OR_CONTACT_SUBSTITUTION
-    - NO_INTERVAL_CONTACT_JACOBIAN_CERTIFICATE
     - NO_PARAMETRIC_CONTACT_RANGE_WRENCH_LOWER_BOUND
     - FRICTION_INTERVAL_ONLY_OTHER_UNCERTAINTIES_UNCALIBRATED
     - NORMAL_FORCE_CAPACITY_IS_UNCALIBRATED_OPTIMIZATION_BOUND
@@ -185,7 +194,7 @@ contact_range_policy_wrench:
 
 post_generation_ranking:
   implementation_type_id: kcg_connector.grasp.robust.post_generation_ranker.PostGenerationRankOnlyPipeline
-  method_id: CARTS_POST_GENERATION_COMMON_QMC_LEXICOGRAPHIC_RANKER_V1
+  method_id: CARTS_POST_GENERATION_COMMON_QMC_LEXICOGRAPHIC_RANKER_V2
   input_type_id: kcg_connector.grasp.robust.top_level_candidate_generator.TopLevelGenerationResult
   output_type_id: kcg_connector.grasp.robust.post_generation_ranker.PostGenerationRankResult
   execution_role: RANK_ONLY_WITHOUT_GENERATION_REFINEMENT_REPLACEMENT_OR_RETRY
@@ -220,16 +229,21 @@ post_generation_ranking:
     failed_candidate_drop_allowed: false
     collision_invocations_per_unique_accepted_candidate: 1
     wrench_invocations_per_unique_accepted_candidate: 1
+    collision_invocations_per_unique_accepted_policy: 1
+    wrench_invocations_after_valid_policy_collision_binding: 1
     retry_allowed: false
     replacement_after_failure_allowed: false
   formal_selection:
-    status: EMPTY_UNTIL_FORMAL_ROOT_INTERVAL_CANDIDATE_PROPAGATION_COMPLETE_COLLISION_AND_CALIBRATED_FULL_UNCERTAINTY
+    status: EMPTY_UNTIL_COMPLETE_COLLISION_AND_CALIBRATED_FULL_UNCERTAINTY
     allowed_with_current_bindings: false
     formal_ranked_keys_must_be_empty: true
+    formal_ranked_policy_keys_must_be_empty: true
     selected_candidate_must_be_none: true
-    contact_range_policy_handling: FAIL_CLOSED_BEFORE_COLLISION_OR_WRENCH_UNTIL_POLICY_AWARE_CONSUMERS_EXIST
-    contact_range_policy_collision_invocations_before_support: 0
-    contact_range_policy_wrench_invocations_before_support: 0
+    selected_contact_range_policy_must_be_none: true
+    contact_range_policy_handling: EVALUATE_ONCE_WITH_POLICY_COLLISION_AND_WRENCH_WITHOUT_DISPLAY_MIDPOINT
+    contact_range_policy_ranking_status: POLICY_AWARE_COLLISION_AND_WRENCH_CONSUMERS_ACTIVE
+    contact_range_policy_collision_invocations_per_unique_policy: 1
+    contact_range_policy_wrench_invocations_after_valid_collision_binding: 1
     required_collision_claim_scope: COMPLETE_HAND_OBJECT_ENVIRONMENT_APPROACH_CLOSURE_LIFT_CONTINUOUS_COLLISION_CERTIFIED_LOWER_BOUND
     current_uncertainty_claim_scope: CERTIFIED_SET_CONTAINS_ONLY_DECLARED_FRICTION_INTERVAL_ALL_OTHER_UNCERTAINTIES_REQUIRE_CALIBRATION
     required_additional_uncertainty_binding: MISSING_CALIBRATED_NONFRICTION_UNCERTAINTY_BOUNDS

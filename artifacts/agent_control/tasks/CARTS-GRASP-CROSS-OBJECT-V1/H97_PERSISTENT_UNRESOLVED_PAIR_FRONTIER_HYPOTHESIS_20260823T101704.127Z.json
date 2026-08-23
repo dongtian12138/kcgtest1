@@ -1,0 +1,38 @@
+{
+  "schema_version": "carts_h97_persistent_unresolved_pair_frontier_hypothesis_v1",
+  "recorded_at_utc": "2026-08-23T10:17:04.127Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H97-PERSISTENT-UNRESOLVED-PAIR-FRONTIER",
+  "status": "TARGETED_FIX_IN_PROGRESS",
+  "prerequisite_evidence": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H96_INDEPENDENT_CONTACT_SKIN_CLOSED_SHELL_NARROWPHASE_RESULT_20260823T101704.127Z.json",
+  "diagnosis": "Every child phase interval currently restarts with all forbidden moving faces and traverses the complete static-object BVH. Pairs already proved separated over a parent interval are therefore rechecked in every descendant. Candidate 14 accumulated 10,863,772 narrowphase evaluations over 165 intervals even though its final uncertainty contains only three face pairs.",
+  "single_structural_bundle": [
+    "Return the exact unresolved moving-face/static-face index frontier from the root packet BVH and narrowphase classification.",
+    "Carry that immutable frontier into both child phase intervals. A child checks only its parent frontier; every pair separated over the parent is inherited as separated and remains covered without recomputation.",
+    "Preserve full per-interval pair-universe accounting: inherited separated pairs plus newly checked frontier pairs must equal the complete moving/static Cartesian product exactly once for every processed interval.",
+    "Record root-BVH, inherited-pair, frontier-pair, narrowphase, and terminal unresolved counts separately so speed cannot hide missing coverage.",
+    "Keep the same left-first subdivision, 4096 budget, geometry, dual-surface roles, strict separation inequalities, and fail-closed state."
+  ],
+  "validation_sequence": [
+    "Run scalar/reference and parent-to-child frontier equivalence tests, including a case where a pair separated on the parent must never reappear in either child.",
+    "Run the related collision and study-contract tests once.",
+    "Run one shared comparison of 155, 174, 14, and 198. Do not stop after the first success and do not run a separate long single-candidate probe first."
+  ],
+  "expected_result": "Certificate state, terminal unresolved pair count, and complete pair accounting remain identical. Candidate 14 f1Link3 falls from 36.85 seconds to at most 10 seconds, and all four retained candidates finish the shared exact/collision comparison within 90 seconds or reveal a different downstream domain.",
+  "failure_criteria": [
+    "Any pair is omitted, double-counted, or reintroduced after parent separation.",
+    "A child frontier is larger than its parent, the certificate becomes less fail-closed, or terminal uncertainty changes without exact geometric evidence.",
+    "Geometry, thresholds, budgets, candidate order, or the 16/1084 shell role partition changes.",
+    "The shared comparison stops after one success or candidate 198 is not reached."
+  ],
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "whole_top4_external_wall_limit_seconds": 90,
+  "candidate_14_f1Link3_target_seconds": 10.0,
+  "geometry_change_allowed": false,
+  "threshold_change_allowed": false,
+  "parameter_grid_search_allowed": false,
+  "formal_selected_candidate": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

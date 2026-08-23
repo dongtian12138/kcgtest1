@@ -1,0 +1,31 @@
+schema_version: carts_shared_object_placement_v1
+placement_id: CARTS_SHARED_GEOMETRY_DERIVED_SETTLED_OBJECT_PLACEMENT_V1
+claim_scope: STATIC_SETTLED_OBJECT_WORLD_POSE_BINDING_ONLY
+
+registered_object_ids:
+  - current_d38999_26kj61sn_public_spec
+  - te_deutsch_d38999_26fj35pn_step
+
+source_bindings:
+  tabletop_scene:
+    path: src/kcg_connector/config/d38999_multilayer_tabletop_scene_grasp_v1.yaml
+    sha256: 5600da0ff12c8ca00afa0a4e46f40d2edfde684b231bf580b2bb26678e4e0457
+    schema_version: kcg_d38999_multilayer_tabletop_scene_grasp_v1
+
+world_binding:
+  root_frame: world
+  shared_environment_id: CARTS_SHARED_TABLE_FIXTURE_WORLD_V1
+  table_obstacle_name: table
+
+placement_rule:
+  station_xy_source_fragment: loose_endpoint.initial_origin_m
+  station_xy_component_indices: [0, 1]
+  orientation_source_fragment: asset_profile.loose_endpoint_rotation_degrees_xyz
+  orientation_unit: deg
+  settled_origin_z_method: TABLE_TOP_MINUS_MINIMUM_ROTATED_VERIFIED_OBJECT_VERTEX_Z
+  table_contact_gap_m: 0.0
+  airborne_initial_clearance_used: false
+  historical_settled_pose_used_as_input: false
+  legacy_grasp_candidate_used: false
+  simulator_truth_used: false
+  post_start_object_pose_write_allowed: false

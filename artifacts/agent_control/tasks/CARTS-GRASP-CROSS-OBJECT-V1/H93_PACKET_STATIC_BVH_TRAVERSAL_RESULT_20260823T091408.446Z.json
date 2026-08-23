@@ -1,0 +1,120 @@
+{
+  "schema_version": "carts_h93_packet_static_bvh_traversal_result_v1",
+  "recorded_at_utc": "2026-08-23T09:14:08.446Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H93-PACKET-STATIC-BVH-TRAVERSAL",
+  "status": "OFFLINE_PASS_WHOLE_TOP4_NATURAL_RETURN",
+  "source_hypothesis": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H93_PACKET_STATIC_BVH_TRAVERSAL_HYPOTHESIS_20260823T090718.811Z.json",
+  "static_validation": {
+    "focused_test_count": 4,
+    "focused_elapsed_seconds": 0.10,
+    "related_test_count": 62,
+    "related_elapsed_seconds": 2.60,
+    "scalar_packet_accounting_identical": true,
+    "status": "STATIC_PASS"
+  },
+  "real_top4_run": {
+    "external_wall_limit_seconds": 90,
+    "process_exit_code": 0,
+    "natural_return": true,
+    "total_wall_seconds": 65.08855333086103,
+    "runtime_build_seconds": 14.584796872921288,
+    "all_four_exact_results_completed_at_total_seconds": 33.72106568003073,
+    "aggregate_input_build_seconds": 14.702564097940922,
+    "terminal_partition_build_seconds": 0.631431853864342,
+    "prepared_object_build_seconds": 6.387205727165565,
+    "shared_collision_context_ready_at_total_seconds": 55.45099013787694,
+    "stop_after_first_exact_acceptance": false,
+    "all_four_processed": true,
+    "exact_results": [
+      {
+        "attempt_index": 155,
+        "elapsed_seconds": 4.387719037942588,
+        "status": "STATIC_V9_POLICY_ACCEPTED",
+        "policy_present": true
+      },
+      {
+        "attempt_index": 174,
+        "elapsed_seconds": 5.344108565943316,
+        "status": "V9_REJECTED",
+        "policy_present": false,
+        "failure_reason": "NO_FIRST_CONTACT_FOR_PAD:finger_3_pad"
+      },
+      {
+        "attempt_index": 14,
+        "elapsed_seconds": 5.441838889848441,
+        "status": "STATIC_V9_POLICY_ACCEPTED",
+        "policy_present": true
+      },
+      {
+        "attempt_index": 198,
+        "elapsed_seconds": 3.8190222799312323,
+        "status": "STATIC_V9_POLICY_ACCEPTED",
+        "policy_present": true
+      }
+    ],
+    "collision_results": [
+      {
+        "attempt_index": 155,
+        "collision_seconds": 2.6769228619523346,
+        "f1Link3_seconds": 1.9105411740019917,
+        "f1Link3_processed_intervals": 105,
+        "f1Link3_bvh_node_visits": 1035628,
+        "f1Link3_leaf_pair_evaluations": 1011339,
+        "first_unresolved_domain": "POLICY_LINK_OBJECT_RANGE_UNRESOLVED:f1Link3:ADJACENT_BINARY64_PHASE_ENDPOINTS",
+        "short_circuit_recorded": true
+      },
+      {
+        "attempt_index": 174,
+        "collision_checked": false,
+        "reason": "EXACT_POLICY_REJECTED"
+      },
+      {
+        "attempt_index": 14,
+        "collision_seconds": 3.5809393918607384,
+        "f1Link3_seconds": 2.8431668530683964,
+        "f1Link3_processed_intervals": 113,
+        "f1Link3_bvh_node_visits": 6261018,
+        "f1Link3_leaf_pair_evaluations": 8650000,
+        "first_unresolved_domain": "POLICY_LINK_OBJECT_RANGE_UNRESOLVED:f1Link3:ADJACENT_BINARY64_PHASE_ENDPOINTS",
+        "short_circuit_recorded": true
+      },
+      {
+        "attempt_index": 198,
+        "collision_seconds": 3.358630316099152,
+        "f1Link3_seconds": 2.614377807127312,
+        "f1Link3_processed_intervals": 107,
+        "f1Link3_bvh_node_visits": 7592240,
+        "f1Link3_leaf_pair_evaluations": 10993691,
+        "first_unresolved_domain": "POLICY_LINK_OBJECT_RANGE_UNRESOLVED:f1Link3:ADJACENT_BINARY64_PHASE_ENDPOINTS",
+        "short_circuit_recorded": true
+      }
+    ]
+  },
+  "performance_comparison": {
+    "candidate_14_previous_f1Link3_seconds": 49.08112284913659,
+    "candidate_14_current_f1Link3_seconds": 2.8431668530683964,
+    "candidate_14_f1Link3_speedup": 17.263,
+    "candidate_14_target_seconds": 10.0,
+    "candidate_14_target_met": true,
+    "previous_top4_external_cap_seconds": 120,
+    "previous_top4_natural_return": false,
+    "current_top4_natural_return": true,
+    "current_top4_total_seconds": 65.08855333086103
+  },
+  "important_scope_boundary": "This 65.09-second flow starts from the retained ranked indices and includes one runtime build, exact evaluation of all four, one aggregate input build, one prepared object index, and collision screening. It does not include regeneration of the 256-candidate proxy rank, contact-range wrench, iiwa route, Isaac, or hardware.",
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "candidate_174_removed_by_exact_contact_gate": true,
+  "candidate_155_removed_by_collision_certification_gate": true,
+  "candidate_14_removed_by_collision_certification_gate": true,
+  "candidate_198_removed_by_collision_certification_gate": true,
+  "successful_collision_candidate_count": 0,
+  "next_bottleneck": "COMMON_F1LINK3_FORBIDDEN_SURFACE_ADJACENT_FLOAT_UNRESOLVED",
+  "candidate_result_written": false,
+  "generation_checkpoint_written": false,
+  "formal_selected_candidate": null,
+  "formal_selected_contact_range_policy": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

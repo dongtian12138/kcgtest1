@@ -430,11 +430,33 @@ def test_fixed_anchor_mapper_is_selector_free_v9_free_and_immutable_for_all_pads
             proposal.v9_parameters_unit
         )
     assert delegated_calls == []
-
     with pytest.raises(FrozenInstanceError):
         setattr(proposals[0], "v9_parameters_unit", None)
     with pytest.raises(FrozenInstanceError):
         setattr(proposals[0].audit, "failure_reason", "MUTATED")
+
+
+def test_fixed_anchor_mapper_reuses_full_closed_focus_for_placement_bounds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model, hand = _model()
+    original = model.closure_model._closure_focus_hand
+    call_count = 0
+
+    def counted(q_start: np.ndarray) -> tuple[np.ndarray, float] | None:
+        nonlocal call_count
+        call_count += 1
+        return original(q_start)
+
+    monkeypatch.setattr(
+        model.closure_model, "_closure_focus_hand", counted
+    )
+    proposal = model.propose_fixed_anchor(
+        _fixed_parameters(model, face_index=10), "pad_a", hand
+    )
+
+    assert proposal.v9_parameters_unit is not None
+    assert call_count == 1
 
 
 def test_selector_adapter_calls_delegated_v9_exactly_once(

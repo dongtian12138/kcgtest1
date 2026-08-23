@@ -1,0 +1,78 @@
+{
+  "schema_version": "carts_h99_amortized_halving_narrowphase_defer_result_v1",
+  "recorded_at_utc": "2026-08-23T11:50:24.137Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H99-AMORTIZED-HALVING-NARROWPHASE-DEFER",
+  "status": "OFFLINE_PASS_CORRECTNESS_PERFORMANCE_REGRESSION_TOP4_INCOMPLETE",
+  "source_hypothesis": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H99_AMORTIZED_HALVING_NARROWPHASE_DEFER_HYPOTHESIS_20260823T111559.059Z.json",
+  "implemented_bundle": [
+    "Applied child AABB filtering before any repeated triangle-axis narrowphase.",
+    "Deferred full narrowphase until the AABB survivor count halved relative to the last full evaluation, except for mandatory root and terminal evaluations.",
+    "Kept every deferred pair unresolved and carried it into both children.",
+    "Replaced the H98 three-stage compaction with one complete vectorized axis pass and recorded invocation, deferral, halving, and terminal-force counts."
+  ],
+  "static_validation": {
+    "focused_test_count": 6,
+    "focused_test_seconds": 0.07,
+    "related_continuous_full_hand_study_test_count": 192,
+    "related_test_seconds": 9.41,
+    "all_passed": true,
+    "deferred_pair_accounting_passed": true,
+    "terminal_force_passed": true,
+    "single_pass_matches_complete_axis_reference": true
+  },
+  "required_top4_comparison": {
+    "external_wall_limit_seconds": 90,
+    "process_exit_code": 124,
+    "natural_return": false,
+    "stop_after_first_success": false,
+    "all_four_exact_contact_evaluations_completed": true,
+    "all_four_collision_checks_completed": false,
+    "runtime_build_seconds": 14.413784716976807,
+    "all_four_exact_results_completed_at_total_seconds": 33.69120252900757,
+    "aggregate_input_build_seconds": 15.017657542834058,
+    "terminal_partition_build_seconds": 0.6480613129679114,
+    "prepared_object_build_seconds": 6.376897790003568,
+    "shared_collision_context_ready_at_total_seconds": 55.74239163706079,
+    "exact_results": [
+      {"attempt_index": 155, "seconds": 4.4633411560207605, "status": "STATIC_V9_POLICY_ACCEPTED"},
+      {"attempt_index": 174, "seconds": 5.381403504870832, "status": "V9_REJECTED_NO_FIRST_CONTACT_FOR_FINGER_3_PAD"},
+      {"attempt_index": 14, "seconds": 5.48096345202066, "status": "STATIC_V9_POLICY_ACCEPTED"},
+      {"attempt_index": 198, "seconds": 3.807109947083518, "status": "STATIC_V9_POLICY_ACCEPTED"}
+    ],
+    "collision_results": [
+      {
+        "attempt_index": 155,
+        "collision_checked": "STARTED_NOT_COMPLETED",
+        "f1Link1_seconds": 0.01995497802272439,
+        "f1Link2_seconds": 0.044689084868878126,
+        "f1Link3_started_at_total_seconds": 56.50563455908559,
+        "observed_f1Link3_lower_bound_seconds": 33.49436544091441
+      },
+      {"attempt_index": 174, "collision_checked": false, "reason": "EXACT_CONTACT_REJECTED"},
+      {"attempt_index": 14, "collision_checked": false, "reason": "TOP4_WALL_LIMIT_REACHED_DURING_CANDIDATE_155"},
+      {"attempt_index": 198, "collision_checked": false, "reason": "TOP4_WALL_LIMIT_REACHED_DURING_CANDIDATE_155"}
+    ]
+  },
+  "performance_comparison": {
+    "candidate_155_h98_f1Link3_seconds": 5.179244724102318,
+    "candidate_155_h99_observed_lower_bound_seconds": 33.49436544091441,
+    "candidate_155_minimum_time_ratio": 6.467,
+    "candidate_155_minimum_slowdown_fraction": 5.467,
+    "candidate_14_target_seconds": 10.0,
+    "candidate_14_target_met": false,
+    "whole_top4_target_seconds": 90.0,
+    "whole_top4_target_met": false
+  },
+  "root_cause": "Deferring complete triangle-axis evaluation until halving or a terminal interval kept broad AABB survivor frontiers alive across both branches. Many terminal leaves then forced complete narrowphase over those broad frontiers, so postponed work was duplicated at the leaves instead of amortized. Candidate 155 f1Link3 alone exceeded 33.49 seconds, at least 6.47 times the H98 duration.",
+  "next_hypothesis": "CARTS-H100-TERMINAL-FORCE-WORK-EXPLOSION-DIAGNOSTIC",
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "final_selection_requires_all_retained_candidates_checked": true,
+  "candidate_result_written": false,
+  "generation_checkpoint_written": false,
+  "formal_selected_candidate": null,
+  "formal_selected_contact_range_policy": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

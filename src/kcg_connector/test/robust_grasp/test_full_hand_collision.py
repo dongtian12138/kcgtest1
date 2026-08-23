@@ -10,6 +10,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import kcg_connector.grasp.robust.full_hand_collision as full_collision_module
+
 from kcg_connector.grasp.robust.collision_contract import (
     CoverageMode,
     DisabledCollisionAssertion,
@@ -20,7 +22,9 @@ from kcg_connector.grasp.robust.full_hand_collision import (
     CLAIM_LIMITATIONS,
     CONTACT_RANGE_POLICY_CLAIM_LIMITATIONS,
     CONTACT_RANGE_POLICY_METHOD_ID,
+    FIXED_ARM_POLICY_EMBEDDING_METHOD_ID,
     PAD_SURFACE_BLOCKER_PREFIX,
+    TERMINAL_DUAL_SURFACE_COLLISION_DOMAIN,
     ContactRangePolicyCollisionCertificate,
     FullHandClosureCollisionState,
     FullHandCollisionError,
@@ -28,13 +32,19 @@ from kcg_connector.grasp.robust.full_hand_collision import (
     HashBoundObjectSurface,
     SequentialClosureSegment,
     TerminalForbiddenSurface,
+    build_fixed_arm_policy_embedding,
     certify_full_hand_contact_range_policy_closure,
     certify_full_hand_sequential_closure,
     triangle_surface_geometry_sha256,
 )
+from kcg_connector.grasp.robust.continuous_collision import (
+    ContinuousCollisionState,
+    prepare_static_triangle_surface,
+)
 from kcg_connector.grasp.robust.grasp_optimizer import (
     GraspCandidate,
     PlannedPadContact,
+    deterministic_sobol,
 )
 from kcg_connector.grasp.robust.hand_contract import (
     OBJECT_CONTACT_NORMAL_POLICY,
@@ -57,11 +67,25 @@ from kcg_connector.grasp.robust.interval_kinematics import (
     IntervalTransverseRootCertificate,
     METHOD_ID as INTERVAL_KINEMATICS_METHOD_ID,
 )
+from kcg_connector.grasp.robust.interval_policy_margin import (
+    IntervalPolicyMarginState,
+)
 from kcg_connector.grasp.robust.object_model import (
     AssetProvenance,
     ObjectGraspModel,
     TriangleMesh,
     file_sha256,
+)
+from kcg_connector.grasp.robust.post_generation_ranker import (
+    COMPLETE_CLEARANCE_SCOPE,
+    COMPLETE_POLICY_CLEARANCE_METHOD_ID,
+    CandidateEvaluationState,
+    CompleteContactRangeTrajectoryCollisionCertificate,
+    PostGenerationRankOnlyPipeline,
+    SCENARIO_COUNT,
+    SCENARIO_DESIGN_SHA256,
+    SCENARIO_DIMENSION,
+    SCENARIO_SOBOL_SEED,
 )
 from kcg_connector.grasp.robust.ray_closure import (
     CLAIM_LIMITATIONS as RAY_CLOSURE_CLAIM_LIMITATIONS,
@@ -88,9 +112,14 @@ from kcg_connector.grasp.robust.ray_closure import (
     REPRESENTATIVE_PROPOSAL_FAILURE_REASON,
     TRAJECTORY_CLEARANCE_ROLE,
     WITNESS_RULE,
+    WHOLE_PATH_SPHERE_SCREEN_RULE,
     PadClosureAudit,
     RayClosureAudit,
     RayClosureEvaluation,
+    _PAD_AABB_MAXIMUM_MOVING_TRIANGLE_PAIR_TESTS_PER_COVERAGE,
+    _PAD_AABB_MAXIMUM_TEMPORAL_REFINEMENT_DEPTH,
+    _PAD_SURFACE_SPHERE_HIERARCHY_MAXIMUM_DEPTH,
+    _WHOLE_PATH_SPHERE_SEGMENT_COUNT,
     _canonical_json,
     _float64_array_hex,
     _hand_model_manifest,
@@ -101,20 +130,48 @@ from kcg_connector.grasp.robust.robust_wrench import (
 from kcg_connector.grasp.robust.task_wrench_evaluator import (
     CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS,
     CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS,
+    CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE,
     CONTACT_RANGE_POLICY_WRENCH_METHOD_ID,
+    CONTACT_RANGE_POLICY_WRENCH_PARAMETRIC_CLAIM_LIMITATIONS,
     CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE,
+    CONTACT_RANGE_POLICY_WRENCH_REMAINING_BLOCKERS,
     CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE,
     FRICTION_INTERVAL_ONLY_CERTIFIED_UNCERTAINTY_SCOPE,
+    ContactRangePadWrenchDomain,
+    ContactRangePolicyWrenchCertificate,
     ContactRangePolicyWrenchState,
     TaskWrenchEvaluationError,
     TaskWrenchEvaluator,
 )
+from kcg_connector.grasp.robust.top_level_candidate_generator import (
+    AttemptStatus,
+    CandidateAttemptAudit,
+    CandidateLane,
+    CandidateLineage,
+    StaticV9AcceptedPolicy,
+    TopLevelGenerationResult,
+    UniqueV9Evaluation,
+    V9InvocationAuditBinding,
+    METHOD_ID as TOP_LEVEL_GENERATOR_METHOD_ID,
+    canonicalize_v9_parameters,
+)
 
 
-def _backend() -> DirectedIntervalKinematics:
+def _backend(*, include_preshape: bool = False) -> DirectedIntervalKinematics:
     joints = {}
     pads = {}
     finger_joints = {}
+    if include_preshape:
+        joints["joint_preshape_a"] = JointSpec(
+            name="joint_preshape_a",
+            joint_type="prismatic",
+            parent_link="hand_base",
+            child_link="link_preshape_a",
+            origin_xyz_m=(0.0, 0.0, 0.0),
+            origin_rpy_rad=(0.0, 0.0, 0.0),
+            axis=(0.0, 0.0, 1.0),
+            limit=JointLimit(0.0, 1.0, effort=100.0),
+        )
     for index, name in enumerate(("a", "b", "c")):
         joint_name = f"joint_{name}"
         link_name = f"link_{name}"
@@ -123,7 +180,11 @@ def _backend() -> DirectedIntervalKinematics:
         joints[joint_name] = JointSpec(
             name=joint_name,
             joint_type="prismatic",
-            parent_link="hand_base",
+            parent_link=(
+                "link_preshape_a"
+                if include_preshape and name == "a"
+                else "hand_base"
+            ),
             child_link=link_name,
             origin_xyz_m=(0.0, 10.0 * index, 0.0),
             origin_rpy_rad=(0.0, 0.0, 0.0),
@@ -139,7 +200,11 @@ def _backend() -> DirectedIntervalKinematics:
             geometry=GeometrySpec("box", (1.0, 1.0, 1.0)),
             normal_force_capacity_n=1.0,
         )
-        finger_joints[finger_name] = (joint_name,)
+        finger_joints[finger_name] = (
+            ("joint_preshape_a", joint_name)
+            if include_preshape and name == "a"
+            else (joint_name,)
+        )
     hand = ThreeFingerHandModel(
         base_link="hand_base",
         joints=joints,
@@ -387,9 +452,16 @@ def _v9_evaluation(
         )
         for index, (pad_name, phase) in enumerate(zip(pad_names, phases))
     )
+    final_joint_positions = np.asarray(
+        segments[-1].q_start,
+        dtype=np.float64,
+    ) + segments[-1].phase.upper * np.asarray(
+        segments[-1].direction,
+        dtype=np.float64,
+    )
     candidate = GraspCandidate.from_matrix(
         object_from_hand=np.eye(4),
-        independent_joint_positions_rad=phases,
+        independent_joint_positions_rad=final_joint_positions,
         planned_pad_contacts=contacts,
         internal_normal_forces_n=(0.0, 0.0, 0.0),
     )
@@ -411,6 +483,34 @@ def _v9_evaluation(
         for segment in segments
     )
     physical_directions = tuple(segment.direction for segment in segments)
+    support_names = {name for row in supports for name in row}
+    lower_limits, upper_limits = backend.hand_model.joint_limit_vectors()
+    preshape_joint_names = tuple(
+        name
+        for index, name in enumerate(
+            backend.hand_model.independent_joint_names
+        )
+        if name not in support_names
+        and upper_limits[index] > lower_limits[index]
+    )
+    parameter_layout = PARAMETER_LAYOUT_PREFIX + tuple(
+        f"preshape_joint_unit:{name}" for name in preshape_joint_names
+    )
+    closure_open_joint_positions = tuple(
+        float(
+            lower_limits[index]
+            if direction[index] > 0.0
+            else upper_limits[index]
+        )
+        for direction in physical_directions
+        for index in [
+            next(
+                joint_index
+                for joint_index, value in enumerate(direction)
+                if value != 0.0
+            )
+        ]
+    )
     pad_geometry_hashes: list[str] = []
     pad_runtime_hashes: list[str] = []
     pad_links: list[str] = []
@@ -487,7 +587,7 @@ def _v9_evaluation(
             "independent_actuation_supports": [
                 list(row) for row in supports
             ],
-            "parameter_layout": list(PARAMETER_LAYOUT_PREFIX),
+            "parameter_layout": list(parameter_layout),
         },
         "ray_closure": {
             "method_id": RAY_CLOSURE_METHOD_ID,
@@ -507,6 +607,21 @@ def _v9_evaluation(
             "ray_evaluation_policy": RAY_EVALUATION_POLICY,
             "witness_rule": WITNESS_RULE,
             "interval_rule": INTERVAL_RULE,
+            "whole_path_sphere_screen_rule": (
+                WHOLE_PATH_SPHERE_SCREEN_RULE
+            ),
+            "whole_path_sphere_segment_count": (
+                _WHOLE_PATH_SPHERE_SEGMENT_COUNT
+            ),
+            "pad_surface_sphere_hierarchy_maximum_depth": (
+                _PAD_SURFACE_SPHERE_HIERARCHY_MAXIMUM_DEPTH
+            ),
+            "pad_surface_aabb_maximum_temporal_refinement_depth": (
+                _PAD_AABB_MAXIMUM_TEMPORAL_REFINEMENT_DEPTH
+            ),
+            "pad_surface_aabb_maximum_moving_triangle_pair_tests_per_coverage": (
+                _PAD_AABB_MAXIMUM_MOVING_TRIANGLE_PAIR_TESTS_PER_COVERAGE
+            ),
             "object_contact_normal_policy": (
                 OBJECT_CONTACT_NORMAL_POLICY
             ),
@@ -535,7 +650,7 @@ def _v9_evaluation(
         feature_root_policy=FEATURE_ROOT_POLICY,
         object_contact_normal_policy=OBJECT_CONTACT_NORMAL_POLICY,
         pad_surface_normal_policy=PAD_SURFACE_NORMAL_POLICY,
-        parameter_layout=PARAMETER_LAYOUT_PREFIX,
+        parameter_layout=parameter_layout,
         pad_order=pad_names,
         full_verified_pad_mesh_used=True,
         pad_face_subset_input_allowed=False,
@@ -544,8 +659,8 @@ def _v9_evaluation(
         closure_suffix_dominance_argument=(
             CLOSURE_SUFFIX_DOMINANCE_ARGUMENT
         ),
-        preshape_joint_names=(),
-        closure_open_joint_positions_rad=(0.0, 0.0, 0.0),
+        preshape_joint_names=preshape_joint_names,
+        closure_open_joint_positions_rad=closure_open_joint_positions,
         maximum_subdivision_intervals=100,
         interval_arithmetic_method_id=INTERVAL_KINEMATICS_METHOD_ID,
         interval_decimal_precision=backend.options.decimal_precision,
@@ -596,14 +711,34 @@ def _replace_bound_model_document(
 
 def _segments(
     maximum_subdivision_intervals: int = 6,
+    *,
+    include_preshape: bool = False,
 ) -> tuple[SequentialClosureSegment, ...]:
+    if include_preshape:
+        q0 = (0.5, 0.0, 0.0, 0.0)
+        q1 = (0.5, 0.1, 0.0, 0.0)
+        q2 = (0.5, 0.1, 0.2, 0.0)
+        directions = (
+            (0.0, 1.0, 0.0, 0.0),
+            (0.0, 0.0, 1.0, 0.0),
+            (0.0, 0.0, 0.0, 1.0),
+        )
+    else:
+        q0 = (0.0, 0.0, 0.0)
+        q1 = (0.1, 0.0, 0.0)
+        q2 = (0.1, 0.2, 0.0)
+        directions = (
+            (1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0),
+            (0.0, 0.0, 1.0),
+        )
     return (
         SequentialClosureSegment(
             segment_index=0,
             pad_name="pad_a",
             active_link_name="link_a",
-            q_start=(0.0, 0.0, 0.0),
-            direction=(1.0, 0.0, 0.0),
+            q_start=q0,
+            direction=directions[0],
             phase=IntervalBounds(0.0, 0.1),
             maximum_subdivision_intervals=(
                 maximum_subdivision_intervals
@@ -613,8 +748,8 @@ def _segments(
             segment_index=1,
             pad_name="pad_b",
             active_link_name="link_b",
-            q_start=(0.1, 0.0, 0.0),
-            direction=(0.0, 1.0, 0.0),
+            q_start=q1,
+            direction=directions[1],
             phase=IntervalBounds(0.0, 0.2),
             maximum_subdivision_intervals=(
                 maximum_subdivision_intervals
@@ -624,8 +759,8 @@ def _segments(
             segment_index=2,
             pad_name="pad_c",
             active_link_name="link_c",
-            q_start=(0.1, 0.2, 0.0),
-            direction=(0.0, 0.0, 1.0),
+            q_start=q2,
+            direction=directions[2],
             phase=IntervalBounds(0.0, 0.3),
             maximum_subdivision_intervals=(
                 maximum_subdivision_intervals
@@ -634,8 +769,13 @@ def _segments(
     )
 
 
-def _fixture(tmp_path: Path, *, budget: int = 6):
-    backend = _backend()
+def _fixture(
+    tmp_path: Path,
+    *,
+    budget: int = 6,
+    include_preshape: bool = False,
+):
+    backend = _backend(include_preshape=include_preshape)
     terminal_rows = tuple(
         _terminal_input(tmp_path, link_name=f"link_{name}")
         for name in ("a", "b", "c")
@@ -661,7 +801,10 @@ def _fixture(tmp_path: Path, *, budget: int = 6):
             DisabledCollisionAssertion("link_b", "link_c", "Never"),
         ),
     )
-    segments = _segments(budget)
+    segments = _segments(
+        budget,
+        include_preshape=include_preshape,
+    )
     evaluation = _v9_evaluation(
         backend=backend,
         terminals=terminals,
@@ -703,6 +846,7 @@ def _possible_contact_set(
         display_approximation=phase,
         display_approximation_role=DISPLAY_APPROXIMATION_ROLE,
     )
+    center_y = 0.2 + 0.2 * float(ordinal)
     certificate = IntervalTransverseRootCertificate(
         implicit_root=implicit,
         triangle_edge_halfspaces=(
@@ -714,9 +858,9 @@ def _possible_contact_set(
         path_local_free_side_approach=IntervalBounds(0.5, 1.0),
         object_source_winding_free_side_sign=1,
         position_object_m=(
-            IntervalBounds(float(ordinal), float(ordinal) + 0.01),
-            IntervalBounds(-0.01, 0.01),
-            IntervalBounds(-0.01, 0.01),
+            IntervalBounds(100.0, 100.0),
+            IntervalBounds(center_y - 0.01, center_y + 0.01),
+            IntervalBounds(0.19, 0.21),
         ),
         bisection_iterations=8,
         method_id=INTERVAL_KINEMATICS_METHOD_ID,
@@ -727,7 +871,7 @@ def _possible_contact_set(
         witness_flat_index=ordinal,
         pad_triangle_index=0,
         witness_index=ordinal,
-        object_face_index=ordinal,
+        object_face_index=0,
         semantic_classification=(
             "ALLOWED_PATH_LOCAL_FREE_SIDE_TRANSVERSE_CONTACT"
         ),
@@ -736,8 +880,8 @@ def _possible_contact_set(
     return PossibleFirstContactSet.from_certified_roots((root,))
 
 
-def _policy_fixture(tmp_path: Path):
-    fixture = _fixture(tmp_path)
+def _policy_fixture(tmp_path: Path, *, include_preshape: bool = False):
+    fixture = _fixture(tmp_path, include_preshape=include_preshape)
     backend = fixture[0]
     evaluation = fixture[5]
     segments = fixture[6]
@@ -751,7 +895,9 @@ def _policy_fixture(tmp_path: Path):
     )
     policy = CertifiedSequentialClosurePolicy(
         object_from_hand=tuple(float(value) for value in np.eye(4).ravel()),
-        initial_independent_joint_positions_rad=(0.0, 0.0, 0.0),
+        initial_independent_joint_positions_rad=tuple(
+            float(value) for value in segments[0].q_start
+        ),
         independent_joint_names=tuple(
             backend.hand_model.independent_joint_names
         ),
@@ -789,6 +935,10 @@ def _policy_fixture(tmp_path: Path):
     return fixture, policy, policy_audit
 
 
+def _ranking_policy_fixture(tmp_path: Path):
+    return _policy_fixture(tmp_path, include_preshape=True)
+
+
 def _certify_policy(
     policy_fixture,
     *,
@@ -804,6 +954,216 @@ def _certify_policy(
         sequential_closure_policy=policy,
         v9_audit=policy_audit,
         maximum_subdivision_intervals=maximum_subdivision_intervals,
+    )
+
+
+def _aggregate_backend_for_fixed_arm_embedding(
+    source_backend: DirectedIntervalKinematics,
+    *,
+    altered_hand_limit: bool = False,
+) -> DirectedIntervalKinematics:
+    source = source_backend.hand_model
+    arm_joint = JointSpec(
+        name="arm_joint",
+        joint_type="prismatic",
+        parent_link="world",
+        child_link=source.base_link,
+        origin_xyz_m=(0.0, 0.0, 0.5),
+        origin_rpy_rad=(0.0, 0.0, 0.0),
+        axis=(0.0, 0.0, 1.0),
+        limit=JointLimit(-1.0, 1.0, effort=100.0),
+    )
+    joints = {"arm_joint": arm_joint, **dict(source.joints)}
+    if altered_hand_limit:
+        original = joints["joint_a"]
+        joints["joint_a"] = replace(
+            original,
+            limit=JointLimit(0.0, 0.9, effort=100.0),
+        )
+    aggregate = ThreeFingerHandModel(
+        base_link="world",
+        joints=joints,
+        joint_order=("arm_joint", *source.joint_order),
+        finger_joint_names={
+            name: chain.joint_names
+            for name, chain in source.fingers.items()
+        },
+        pads=dict(source.pads),
+    )
+    return DirectedIntervalKinematics(aggregate, source_backend.options)
+
+
+def test_fixed_arm_embedding_preserves_hand_policy_and_reaches_collision_gate(
+    tmp_path: Path,
+) -> None:
+    fixture, policy, policy_audit = _policy_fixture(tmp_path)
+    source_backend = fixture[0]
+    aggregate_backend = _aggregate_backend_for_fixed_arm_embedding(
+        source_backend
+    )
+    embedding = build_fixed_arm_policy_embedding(
+        source_backend=source_backend,
+        aggregate_backend=aggregate_backend,
+        sequential_closure_policy=policy,
+        fixed_aggregate_only_joint_positions_rad=(("arm_joint", 0.25),),
+    )
+
+    assert embedding.source_to_aggregate_indices == (1, 2, 3)
+    assert all(
+        row[0] == 0.0
+        for row in embedding.embedded_closing_directions_physical
+    )
+    certificate = certify_full_hand_contact_range_policy_closure(
+        backend=aggregate_backend,
+        link_surfaces=fixture[1],
+        terminal_forbidden_surfaces=fixture[2],
+        object_surface=fixture[3],
+        self_pair_inventory=fixture[4],
+        sequential_closure_policy=policy,
+        v9_audit=policy_audit,
+        maximum_subdivision_intervals=6,
+        fixed_arm_policy_embedding=embedding,
+    )
+
+    assert certificate.state is FullHandClosureCollisionState.NOT_CERTIFIABLE
+    assert certificate.audit.policy_kinematic_binding_method_id == (
+        FIXED_ARM_POLICY_EMBEDDING_METHOD_ID
+    )
+    assert certificate.audit.policy_kinematic_binding_sha256 == (
+        embedding.certificate_sha256
+    )
+    assert certificate.audit.fixed_aggregate_joint_bindings == (
+        ("arm_joint", 0.25),
+    )
+
+
+def test_fixed_arm_embedding_rejects_hand_submodel_or_fixed_joint_drift(
+    tmp_path: Path,
+) -> None:
+    fixture, policy, _policy_audit = _policy_fixture(tmp_path)
+    source_backend = fixture[0]
+    changed_backend = _aggregate_backend_for_fixed_arm_embedding(
+        source_backend,
+        altered_hand_limit=True,
+    )
+    with pytest.raises(FullHandCollisionError, match="differ from source"):
+        build_fixed_arm_policy_embedding(
+            source_backend=source_backend,
+            aggregate_backend=changed_backend,
+            sequential_closure_policy=policy,
+            fixed_aggregate_only_joint_positions_rad=(("arm_joint", 0.25),),
+        )
+    aggregate_backend = _aggregate_backend_for_fixed_arm_embedding(
+        source_backend
+    )
+    with pytest.raises(FullHandCollisionError, match="absent, reordered"):
+        build_fixed_arm_policy_embedding(
+            source_backend=source_backend,
+            aggregate_backend=aggregate_backend,
+            sequential_closure_policy=policy,
+            fixed_aggregate_only_joint_positions_rad=(("wrong_joint", 0.25),),
+        )
+
+
+_POLICY_RANK_GENERATION_SHA256 = "e" * 64
+
+
+def _policy_generation_result(
+    policy: CertifiedSequentialClosurePolicy,
+    audit: RayClosureAudit,
+) -> TopLevelGenerationResult:
+    parameters = (0.1, 0.2, 0.3, 0.4, 0.5)
+    canonical = canonicalize_v9_parameters(
+        parameters,
+        parameter_layout=audit.parameter_layout,
+    )
+    accepted_lineage = CandidateLineage(
+        attempt_index=0,
+        lane=CandidateLane.DIRECT_V9,
+        lane_point_index=0,
+        sobol_seed=20260820,
+        sobol_parameters_unit=parameters,
+        anchor_pad_name=None,
+        proposal_audit=None,
+        proposal_failure_reason=None,
+    )
+    binding = V9InvocationAuditBinding(
+        method_id=RAY_CLOSURE_METHOD_ID,
+        parameter_domain_id=CLOSURE_PARAMETER_DOMAIN_ID,
+        parameter_layout=tuple(audit.parameter_layout),
+        requested_parameters_unit=parameters,
+        requested_parameter_key_hex=canonical.exact_key_hex,
+        raw_v9_audit=audit,
+    )
+    accepted_attempt = CandidateAttemptAudit(
+        lineage=accepted_lineage,
+        status=AttemptStatus.STATIC_V9_POLICY_ACCEPTED,
+        v9_parameters_unit=parameters,
+        v9_parameter_key_hex=canonical.exact_key_hex,
+        duplicate_of_attempt_index=None,
+        v9_audit=audit,
+        invocation_binding=binding,
+        v9_failure_reason=REPRESENTATIVE_PROPOSAL_FAILURE_REASON,
+        failure_reason=None,
+    )
+    unique = UniqueV9Evaluation(
+        v9_parameters_unit=parameters,
+        v9_parameter_key_hex=canonical.exact_key_hex,
+        first_attempt_index=0,
+        lineage=(accepted_lineage,),
+        candidate=None,
+        sequential_closure_policy=policy,
+        v9_audit=audit,
+        invocation_binding=binding,
+        status=AttemptStatus.STATIC_V9_POLICY_ACCEPTED,
+        v9_failure_reason=REPRESENTATIVE_PROPOSAL_FAILURE_REASON,
+    )
+    accepted_policy = StaticV9AcceptedPolicy(
+        v9_parameters_unit=parameters,
+        v9_parameter_key_hex=canonical.exact_key_hex,
+        sequential_closure_policy=policy,
+        v9_audit=audit,
+        invocation_binding=binding,
+        lineage=(accepted_lineage,),
+    )
+    attempts = [accepted_attempt]
+    for index in range(1, 128):
+        lineage = CandidateLineage(
+            attempt_index=index,
+            lane=CandidateLane.SURFACE_PAD_A,
+            lane_point_index=index // 4,
+            sobol_seed=20260821,
+            sobol_parameters_unit=(0.0,) * 6,
+            anchor_pad_name=policy.pad_order[0],
+            proposal_audit=None,
+            proposal_failure_reason="FIXTURE_NO_PROPOSAL",
+        )
+        attempts.append(
+            CandidateAttemptAudit(
+                lineage=lineage,
+                status=AttemptStatus.PROPOSAL_REJECTED,
+                v9_parameters_unit=None,
+                v9_parameter_key_hex=None,
+                duplicate_of_attempt_index=None,
+                v9_audit=None,
+                invocation_binding=None,
+                v9_failure_reason=None,
+                failure_reason="FIXTURE_NO_PROPOSAL",
+            )
+        )
+    return TopLevelGenerationResult(
+        method_id=TOP_LEVEL_GENERATOR_METHOD_ID,
+        contract_hash_sha256=_POLICY_RANK_GENERATION_SHA256,
+        total_attempt_budget=128,
+        attempts_per_lane=32,
+        local_refinement_evaluation_budget=0,
+        attempts=tuple(attempts),
+        unique_v9_evaluations=(unique,),
+        accepted_candidates=(),
+        accepted_policies=(accepted_policy,),
+        v9_evaluation_count=1,
+        duplicate_attempt_count=0,
+        proposal_failure_count=127,
     )
 
 
@@ -1315,6 +1675,10 @@ def test_contact_range_policy_consumes_every_bound_but_stays_blocked(
         row.motion_relation == "INDEPENDENT_SUPPORT_PHASE_PRODUCT"
         for row in certificate.self_pair_certificates
     )
+    assert all(
+        row.collision_domain == TERMINAL_DUAL_SURFACE_COLLISION_DOMAIN
+        for row in certificate.link_object_certificates
+    )
     assert (
         "V9_REPRESENTATIVE_PHASE_IS_ROOT_BRACKET_MIDPOINT_"
         "NOT_EXACT_CONTACT_ENDPOINT"
@@ -1415,6 +1779,112 @@ def test_contact_range_policy_shared_budget_cannot_claim_full_coverage(
     )
 
 
+def test_contact_range_screening_stops_after_first_unresolved_without_pass(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fixture, policy, policy_audit = _policy_fixture(tmp_path)
+    original = (
+        full_collision_module
+        .certify_moving_link_surface_separated_from_static_surface
+    )
+    called_links: list[str] = []
+
+    def first_child_unresolved(**kwargs):
+        child = original(**kwargs)
+        called_links.append(str(kwargs["link_name"]))
+        if len(called_links) != 1:
+            return child
+        changed_audit = replace(
+            child.audit,
+            certified_free_leaf_interval_count=0,
+            entire_phase_covered=False,
+            unresolved_reason="TEST_FORCED_UNRESOLVED",
+        )
+        return replace(
+            child,
+            state=ContinuousCollisionState.UNRESOLVED,
+            certified_free_leaf_intervals=(),
+            unresolved_interval=child.searched_phase,
+            audit=changed_audit,
+        )
+
+    monkeypatch.setattr(
+        full_collision_module,
+        "certify_moving_link_surface_separated_from_static_surface",
+        first_child_unresolved,
+    )
+    certificate = certify_full_hand_contact_range_policy_closure(
+        backend=fixture[0],
+        link_surfaces=fixture[1],
+        terminal_forbidden_surfaces=fixture[2],
+        object_surface=fixture[3],
+        self_pair_inventory=fixture[4],
+        sequential_closure_policy=policy,
+        v9_audit=policy_audit,
+        maximum_subdivision_intervals=6,
+        stop_after_first_unresolved_domain=True,
+    )
+
+    assert called_links == ["link_a"]
+    assert certificate.state is FullHandClosureCollisionState.NOT_CERTIFIABLE
+    assert certificate.audit.evaluated_link_object_domain_count == 1
+    assert certificate.audit.evaluated_self_pair_domain_count == 0
+    assert certificate.audit.subdivision_intervals_remaining == 5
+    assert not certificate.audit.all_link_object_domains_covered
+    assert not certificate.audit.all_self_pair_domains_covered
+    assert not certificate.audit.checkable_collision_gates_passed
+    assert (
+        "POLICY_SCREENING_SHORT_CIRCUIT_AFTER_LINK_OBJECT:link_a"
+        in certificate.audit.blockers
+    )
+    assert any(
+        row.startswith(
+            "POLICY_SCREENING_SHORT_CIRCUIT_UNVISITED_SELF_PAIR:"
+        )
+        for row in certificate.audit.blockers
+    )
+
+
+def test_contact_range_reuses_only_matching_prepared_object_surface(
+    tmp_path: Path,
+) -> None:
+    fixture, policy, policy_audit = _policy_fixture(tmp_path)
+    prepared = prepare_static_triangle_surface(
+        fixture[3].triangles_object_m,
+        expected_geometry_sha256=fixture[3].geometry_sha256,
+    )
+    reference = _certify_policy((fixture, policy, policy_audit))
+    reused = certify_full_hand_contact_range_policy_closure(
+        backend=fixture[0],
+        link_surfaces=fixture[1],
+        terminal_forbidden_surfaces=fixture[2],
+        object_surface=fixture[3],
+        self_pair_inventory=fixture[4],
+        sequential_closure_policy=policy,
+        v9_audit=policy_audit,
+        maximum_subdivision_intervals=6,
+        prepared_static_object_surface=prepared,
+    )
+
+    assert reused == reference
+    different = prepare_static_triangle_surface(
+        fixture[3].triangles_object_m + np.asarray((1.0, 0.0, 0.0))
+    )
+    with pytest.raises(FullHandCollisionError, match="differs from bound"):
+        certify_full_hand_contact_range_policy_closure(
+            backend=fixture[0],
+            link_surfaces=fixture[1],
+            terminal_forbidden_surfaces=fixture[2],
+            object_surface=fixture[3],
+            self_pair_inventory=fixture[4],
+            sequential_closure_policy=policy,
+            v9_audit=policy_audit,
+            maximum_subdivision_intervals=6,
+            prepared_static_object_surface=different,
+        )
+
+
 def test_contact_range_policy_wrench_consumes_every_root_but_stays_blocked(
     tmp_path: Path,
 ) -> None:
@@ -1449,9 +1919,45 @@ def test_contact_range_policy_wrench_consumes_every_root_but_stays_blocked(
     )
     assert certificate.audit.exact_candidate_wrench_invocation_count == 0
     assert not certificate.audit.contact_range_margin_computed
-    assert not certificate.audit.interval_contact_jacobian_certificate_present
+    assert certificate.audit.interval_contact_jacobian_certificate_present
+    assert certificate.audit.joint_position_domain_rule == (
+        CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE
+    )
+    assert certificate.audit.independent_joint_names == (
+        "joint_a",
+        "joint_b",
+        "joint_c",
+    )
+    assert len(certificate.audit.final_joint_position_intervals) == 3
+    for pad_domain in certificate.audit.pad_domains:
+        for root_domain in pad_domain.roots:
+            assert root_domain.object_face_index == 0
+            assert root_domain.path_local_free_side_normal_object == (
+                1.0,
+                0.0,
+                0.0,
+            )
+            interval_jacobian = root_domain.interval_geometric_jacobian
+            assert interval_jacobian.point_object_m == (
+                root_domain.position_object_m
+            )
+            assert interval_jacobian.joint_position_intervals == (
+                certificate.audit.final_joint_position_intervals
+            )
+            assert len(interval_jacobian.elements) == 6
+            assert all(
+                len(row) == 3 for row in interval_jacobian.elements
+            )
     assert not (
         certificate.audit.parametric_wrench_lower_bound_certificate_present
+    )
+    assert certificate.audit.parametric_wrench_lower_bound is None
+    assert certificate.audit.margin_search_invocation_count == 1
+    assert certificate.audit.interval_policy_margin_certificate.state is (
+        IntervalPolicyMarginState.NOT_CERTIFIABLE
+    )
+    assert certificate.audit.interval_policy_margin_certificate.reason == (
+        "MIDPOINT_MARGIN_PROPOSAL_INFEASIBLE"
     )
     assert not certificate.audit.formal_selection_allowed
     assert certificate.task_margins is None
@@ -1460,6 +1966,365 @@ def test_contact_range_policy_wrench_consumes_every_root_but_stays_blocked(
     assert certificate.joint_torque_utilization is None
     assert len(certificate.audit.policy_collision_binding_sha256) == 64
     assert collision_certificate.audit.checkable_collision_gates_passed
+
+
+def test_contact_range_policy_wrench_rejects_missing_object_face(
+    tmp_path: Path,
+) -> None:
+    fixture, policy, _ = _policy_fixture(tmp_path)
+    root = policy.possible_first_contact_sets[0].possible_earliest_roots[0]
+    invalid_root = replace(root, object_face_index=1)
+
+    with pytest.raises(
+        TaskWrenchEvaluationError,
+        match="object face index is outside object mesh",
+    ):
+        _policy_wrench_evaluator()._root_wrench_domain(
+            invalid_root,
+            hand_model=fixture[0].hand_model,
+            interval_backend=fixture[0],
+            final_joint_position_intervals=(
+                IntervalBounds(0.1, 0.1),
+                IntervalBounds(0.2, 0.2),
+                IntervalBounds(0.3, 0.3),
+            ),
+            object_from_hand=np.eye(4),
+        )
+
+
+def _balanced_policy_wrench_success(
+    policy_fixture,
+    scenario_parameters_unit: np.ndarray,
+):
+    fixture, policy, policy_audit = policy_fixture
+    evaluator = TaskWrenchEvaluator(
+        object_model=_task_object_model(),
+        characteristic_radius_m=0.05,
+        friction_coefficient_interval=(0.8, 0.8),
+        uncertainty_claim_scope=(
+            FRICTION_INTERVAL_ONLY_CERTIFIED_UNCERTAINTY_SCOPE
+        ),
+        gravity_direction_object=(0.0, 0.0, -1.0),
+        task_frame_rotation_object=np.eye(3),
+        gravity_acceleration_m_s2=0.01,
+        lift_acceleration_m_s2=0.0,
+        maximum_inner_approximation_relative_error=0.1,
+        cone_edge_multiplier=1,
+        solver_options=_POLICY_WRENCH_LP_OPTIONS,
+    )
+    collision_certificate = _certify_policy(policy_fixture)
+    base_certificate = evaluator.evaluate_contact_range_policy(
+        policy,
+        scenario_parameters_unit,
+        v9_audit=policy_audit,
+        hand_model=fixture[0].hand_model,
+        policy_collision_certificate=collision_certificate,
+    )
+    assert base_certificate.state is ContactRangePolicyWrenchState.NOT_CERTIFIABLE
+    center = np.asarray((100.0, 0.25, 0.25), dtype=np.float64)
+    radius = 0.05
+    radial = np.asarray(
+        (
+            (1.0, 0.0, 0.0),
+            (-0.5, np.sqrt(3.0) / 2.0, 0.0),
+            (-0.5, -np.sqrt(3.0) / 2.0, 0.0),
+        )
+    )
+    balanced_domains = []
+    for contact_index, (domain, direction) in enumerate(
+        zip(base_certificate.audit.pad_domains, radial)
+    ):
+        source_root = domain.roots[0]
+        point = center + radius * direction
+        position = tuple(
+            IntervalBounds(float(value - 1.0e-6), float(value + 1.0e-6))
+            for value in point
+        )
+        balanced_root = replace(
+            source_root,
+            formal_root_sha256=hashlib.sha256(
+                f"balanced-main-domain:{contact_index}".encode("utf-8")
+            ).hexdigest(),
+            position_object_m=position,
+            path_local_free_side_normal_object=tuple(
+                float(value) for value in direction
+            ),
+            interval_geometric_jacobian=replace(
+                source_root.interval_geometric_jacobian,
+                point_object_m=position,
+            ),
+        )
+        balanced_domains.append(
+            ContactRangePadWrenchDomain(
+                pad_name=domain.pad_name,
+                roots=(balanced_root,),
+            )
+        )
+    binding = base_certificate.audit.task_wrench_contract_sha256
+
+    margin_certificate = evaluator._certify_contact_range_policy_margin(
+        pad_domains=tuple(balanced_domains),
+        hand_model=fixture[0].hand_model,
+        task_wrench_contract_sha256=binding,
+    )
+
+    assert margin_certificate.state is (
+        IntervalPolicyMarginState.CERTIFIED_POSITIVE_LOWER_BOUND
+    )
+    assert margin_certificate.certified_margin_lower_bound is not None
+    assert margin_certificate.certified_margin_lower_bound > 0.0
+    assert margin_certificate.evaluation_binding_sha256 == binding
+    assert margin_certificate.final_policy_wrench_certificate is not None
+    margin = margin_certificate.certified_margin_lower_bound
+    final = margin_certificate.final_policy_wrench_certificate
+    assert margin is not None and final is not None
+    peak_force = max(
+        bounds.upper
+        for record in final.load_certificates
+        for bounds in (
+            record.balance_certificate.pad_normal_force_intervals or ()
+        )
+    )
+    assert final.maximum_joint_torque_utilization_upper is not None
+    success_audit = replace(
+        base_certificate.audit,
+        pad_domains=tuple(balanced_domains),
+        contact_range_margin_computed=True,
+        parametric_wrench_lower_bound_certificate_present=True,
+        parametric_wrench_lower_bound=margin,
+        interval_policy_margin_certificate=margin_certificate,
+        blockers=CONTACT_RANGE_POLICY_WRENCH_REMAINING_BLOCKERS,
+        claim_limitations=(
+            CONTACT_RANGE_POLICY_WRENCH_PARAMETRIC_CLAIM_LIMITATIONS
+        ),
+    )
+    success_certificate = ContactRangePolicyWrenchCertificate(
+        state=(
+            ContactRangePolicyWrenchState.PARAMETRIC_WRENCH_CERTIFIED_NONFRICTION_UNCALIBRATED
+        ),
+        audit=success_audit,
+        task_margins=tuple(
+            margin for _index in range(success_audit.scenario_count)
+        ),
+        hard_bound_minimum_task_margin=margin,
+        peak_normal_force_n=peak_force,
+        joint_torque_utilization=(
+            final.maximum_joint_torque_utilization_upper
+        ),
+    )
+
+    assert success_certificate.hard_bound_minimum_task_margin == margin
+    assert success_certificate.audit.blockers == (
+        CONTACT_RANGE_POLICY_WRENCH_REMAINING_BLOCKERS
+    )
+    assert not success_certificate.audit.formal_selection_allowed
+    return evaluator, collision_certificate, success_certificate
+
+
+def test_main_evaluator_margin_path_certifies_independent_balanced_domains(
+    tmp_path: Path,
+) -> None:
+    _evaluator, _collision, success = _balanced_policy_wrench_success(
+        _policy_fixture(tmp_path),
+        np.asarray(((0.0,), (0.5,), (1.0,)), dtype=np.float64),
+    )
+    assert success.hard_bound_minimum_task_margin is not None
+    assert success.hard_bound_minimum_task_margin > 0.0
+
+
+def test_policy_ranker_calls_range_collision_and_wrench_once_and_rejects_old_fixture(
+    tmp_path: Path,
+) -> None:
+    policy_fixture = _ranking_policy_fixture(tmp_path)
+    fixture, policy, policy_audit = policy_fixture
+    generation = _policy_generation_result(policy, policy_audit)
+    collision_certificate = _certify_policy(policy_fixture)
+    evaluator = _policy_wrench_evaluator()
+    collision_calls: list[str] = []
+
+    def exact_collision_must_not_run(_accepted):
+        raise AssertionError("exact candidate collision path must not run")
+
+    def policy_collision(accepted):
+        collision_calls.append(accepted.v9_parameter_key_hex)
+        return collision_certificate
+
+    result = PostGenerationRankOnlyPipeline(
+        expected_generation_contract_sha256=(
+            _POLICY_RANK_GENERATION_SHA256
+        ),
+        expected_model_contract_sha256=policy_audit.model_contract_sha256,
+        wrench_evaluator=evaluator,
+        hand_model=fixture[0].hand_model,
+        collision_certifier=exact_collision_must_not_run,
+        policy_collision_certifier=policy_collision,
+    ).evaluate(generation)
+
+    assert collision_calls == [
+        generation.accepted_policies[0].v9_parameter_key_hex
+    ]
+    assert not result.candidate_records
+    assert len(result.contact_range_policy_records) == 1
+    record = result.contact_range_policy_records[0]
+    assert record.sequential_closure_policy is policy
+    assert record.policy_sha256 == policy.policy_sha256
+    assert record.collision_invocation_count == 1
+    assert record.wrench_invocation_count == 1
+    assert record.collision_state == "NOT_CERTIFIABLE"
+    assert record.wrench_state == "NOT_CERTIFIABLE"
+    assert record.state is CandidateEvaluationState.UNRESOLVED_WRENCH
+    assert record.diagnostic_metrics is None
+    assert not result.diagnostic_ranked_policy_keys
+    assert result.selected_contact_range_policy is None
+    assert result.selected_candidate is None
+
+
+def test_policy_ranker_orders_balanced_range_proof_but_cannot_select_formally(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    policy_fixture = _ranking_policy_fixture(tmp_path)
+    fixture, policy, policy_audit = policy_fixture
+    scenarios = deterministic_sobol(
+        dimension=SCENARIO_DIMENSION,
+        count=SCENARIO_COUNT,
+        seed=SCENARIO_SOBOL_SEED,
+    )
+    evaluator, source_collision, success_wrench = (
+        _balanced_policy_wrench_success(policy_fixture, scenarios)
+    )
+    assert success_wrench.audit.scenario_design_sha256 == (
+        SCENARIO_DESIGN_SHA256
+    )
+    generation = _policy_generation_result(policy, policy_audit)
+    complete_collision = CompleteContactRangeTrajectoryCollisionCertificate(
+        method_id=COMPLETE_POLICY_CLEARANCE_METHOD_ID,
+        claim_scope=COMPLETE_CLEARANCE_SCOPE,
+        source_policy_collision_certificate=source_collision,
+        policy_sha256=policy.policy_sha256,
+        v9_policy_evidence_sha256=(
+            source_collision.audit.v9_audit_and_policy_sha256
+        ),
+        model_contract_sha256=policy_audit.model_contract_sha256,
+        trajectory_clearance_lower_bound_m=0.001,
+    )
+    collision_calls: list[str] = []
+    wrench_calls: list[str] = []
+
+    def exact_collision_must_not_run(_accepted):
+        raise AssertionError("exact candidate collision path must not run")
+
+    def policy_collision(accepted):
+        collision_calls.append(accepted.v9_parameter_key_hex)
+        return complete_collision
+
+    def policy_wrench(
+        accepted_policy,
+        scenario_parameters_unit,
+        *,
+        v9_audit,
+        hand_model,
+        policy_collision_certificate,
+    ):
+        assert accepted_policy is policy
+        assert v9_audit is policy_audit
+        assert hand_model is fixture[0].hand_model
+        assert policy_collision_certificate is source_collision
+        digest = hashlib.sha256(
+            np.asarray(
+                scenario_parameters_unit,
+                dtype=">f8",
+            ).tobytes(order="C")
+        ).hexdigest()
+        assert digest == SCENARIO_DESIGN_SHA256
+        assert not scenario_parameters_unit.flags.writeable
+        wrench_calls.append(policy.policy_sha256)
+        return success_wrench
+
+    monkeypatch.setattr(
+        evaluator,
+        "evaluate_contact_range_policy",
+        policy_wrench,
+    )
+    result = PostGenerationRankOnlyPipeline(
+        expected_generation_contract_sha256=(
+            _POLICY_RANK_GENERATION_SHA256
+        ),
+        expected_model_contract_sha256=policy_audit.model_contract_sha256,
+        wrench_evaluator=evaluator,
+        hand_model=fixture[0].hand_model,
+        collision_certifier=exact_collision_must_not_run,
+        policy_collision_certifier=policy_collision,
+    ).evaluate(generation)
+
+    key = generation.accepted_policies[0].v9_parameter_key_hex
+    assert collision_calls == [key]
+    assert wrench_calls == [policy.policy_sha256]
+    assert len(result.contact_range_policy_records) == 1
+    record = result.contact_range_policy_records[0]
+    assert record.state is CandidateEvaluationState.UNCERTAINTY_SCOPE_INCOMPLETE
+    assert record.diagnostic_rank == 1
+    assert record.diagnostic_metrics is not None
+    assert record.trajectory_clearance_lower_bound_m == 0.001
+    assert result.diagnostic_ranked_policy_keys == (key,)
+    assert not result.formal_ranked_policy_keys
+    assert result.selected_contact_range_policy is None
+    assert result.selected_candidate is None
+    assert "MISSING_CALIBRATED_NONFRICTION_UNCERTAINTY_BOUNDS" in (
+        result.selection_blockers
+    )
+
+
+def test_contact_range_policy_wrench_rejects_margin_task_binding_drift(
+    tmp_path: Path,
+) -> None:
+    certificate = _evaluate_policy_wrench(_policy_fixture(tmp_path))[2]
+    drifted_margin = replace(
+        certificate.audit.interval_policy_margin_certificate,
+        evaluation_binding_sha256="f" * 64,
+    )
+
+    with pytest.raises(
+        TaskWrenchEvaluationError,
+        match="audit binding is malformed",
+    ):
+        replace(
+            certificate.audit,
+            interval_policy_margin_certificate=drifted_margin,
+        )
+
+
+def test_contact_range_policy_wrench_applies_free_side_sign(
+    tmp_path: Path,
+) -> None:
+    fixture, policy, _ = _policy_fixture(tmp_path)
+    root = policy.possible_first_contact_sets[0].possible_earliest_roots[0]
+    reversed_root = replace(
+        root,
+        certificate=replace(
+            root.certificate,
+            implicit_root=replace(
+                root.certificate.implicit_root,
+                value_at_lower=IntervalBounds(-0.2, -0.1),
+                value_at_upper=IntervalBounds(0.1, 0.2),
+                derivative=IntervalBounds(1.0, 2.0),
+            ),
+            object_source_winding_free_side_sign=-1,
+        ),
+    )
+    domain = _policy_wrench_evaluator()._root_wrench_domain(
+        reversed_root,
+        hand_model=fixture[0].hand_model,
+        interval_backend=fixture[0],
+        final_joint_position_intervals=(
+            IntervalBounds(0.1, 0.1),
+            IntervalBounds(0.2, 0.2),
+            IntervalBounds(0.3, 0.3),
+        ),
+        object_from_hand=np.eye(4),
+    )
+
+    assert domain.path_local_free_side_normal_object == (-1.0, -0.0, -0.0)
 
 
 def test_contact_range_policy_wrench_ignores_display_only_value(

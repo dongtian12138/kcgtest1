@@ -1,0 +1,70 @@
+{
+  "schema_version": "carts_h95_same_source_terminal_surface_route_audit_result_v1",
+  "recorded_at_utc": "2026-08-23T09:44:29.687Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H95-SAME-SOURCE-TERMINAL-SURFACE-ROUTE-AUDIT",
+  "status": "ROOTCAUSE_IDENTIFIED_NO_EXISTING_SAME_SOURCE_CLOSED_BOUNDARY",
+  "source_hypothesis": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H95_SAME_SOURCE_TERMINAL_SURFACE_ROUTE_AUDIT_HYPOTHESIS_20260823T092914.615Z.json",
+  "candidate_evaluations_run": 0,
+  "geometry_changes_made": 0,
+  "isaac_processes_started": 0,
+  "inventory": {
+    "authored_terminal_visual_stl": [
+      "src/iiwa_description/meshes/hand/f1Link3.STL",
+      "src/iiwa_description/meshes/hand/f2Link2.STL",
+      "src/iiwa_description/meshes/hand/f3Link3.STL"
+    ],
+    "closed_terminal_collision_stl": [
+      "src/iiwa_description/meshes/hand/collision/f1Link3_convex.stl",
+      "src/iiwa_description/meshes/hand/collision/f2Link2_convex.stl",
+      "src/iiwa_description/meshes/hand/collision/f3Link3_convex.stl"
+    ],
+    "terminal_step_or_other_solid_cad_found": false,
+    "deterministic_visual_to_collision_generator_found": false,
+    "shared_source_triangle_identity_domain_found": false
+  },
+  "topology_audit": {
+    "wall_seconds_rounded": 2.05,
+    "visual_source_face_count_per_terminal": 14192,
+    "visual_source_unique_edge_count": {
+      "f1Link3": 21157,
+      "f2Link2": 21155,
+      "f3Link3": 21155
+    },
+    "visual_source_edge_incidence_histogram": {
+      "f1Link3": {"1": 64, "2": 20930, "4": 163},
+      "f2Link2": {"1": 60, "2": 20932, "4": 163},
+      "f3Link3": {"1": 60, "2": 20932, "4": 163}
+    },
+    "visual_source_closed_two_manifold": false,
+    "visual_source_manifold_edge_component_count": 158,
+    "authorized_pad_face_count_per_terminal": 2479,
+    "authorized_pad_boundary_edge_count_per_terminal": 19,
+    "pad_boundary_edges_with_full_source_incidence_four_per_terminal": 19,
+    "nonpad_faces_incident_at_each_pad_boundary_edge": 3,
+    "distinct_nonpad_manifold_components_touched_by_pad_boundary_per_terminal": 29,
+    "unique_one_face_pad_boundary_continuation_exists": false
+  },
+  "prior_derived_surface_routes": {
+    "exact_pad_sdf": "REJECTED_FOR_RUNTIME: PhysX hole filling attempted and simulation time remained zero through a 1500-second startup",
+    "segmented_convex_surface_patches": "REJECTED_FOR_GEOMETRY_ERROR: PAD 0.869 mm, TIP 1.933 mm, SIDE 6.560 mm maximum deviations",
+    "curvature_bounded_prisms": "REJECTED_FOR_GEOMETRY_AND_COMPLEXITY: TIP 0.677 mm, SIDE 1.208 mm, 2652 pieces above the 384-piece limit",
+    "conservative_capsules": "DIAGNOSTIC_OR_RETIRED_ROUTE_ONLY; not a full authorized-PAD formal source"
+  },
+  "result": "The frozen repository has a complete authorized 2479-face PAD contact skin and a separate certified closed 1100-face collision shell, but no existing terminal surface that is both closed and contains every PAD triangle in one exact source-indexed identity domain. The authored visual terminal is not a closed two-manifold. At each PAD boundary edge three non-PAD faces meet the PAD face, so deterministic automatic closure would need an unprovided semantic choice and would constitute a geometry derivation.",
+  "rejected_routes": [
+    "Do not shrink the authorized PAD to the 16 triangles exactly shared with the collision shell.",
+    "Do not map PAD permission by nearest distance or tolerance.",
+    "Do not declare the nonmanifold visual STL a closed material boundary.",
+    "Do not synthesize a new terminal solid during this no-geometry-change audit."
+  ],
+  "not_external_blocker_reason": "A causally different fail-closed route remains available: keep the full PAD as the contact-identity surface, keep the complete closed shell as the material/collision role source, preserve its exact 16 allowed plus 1084 forbidden face partition, and require a real triangle narrowphase for every forbidden-shell/object overlap.",
+  "next_hypothesis": "CARTS-H96-INDEPENDENT-CONTACT-SKIN-AND-CLOSED-SHELL-NARROWPHASE",
+  "formal_selected_candidate": null,
+  "formal_selected_contact_range_policy": null,
+  "candidate_result_written": false,
+  "generation_checkpoint_written": false,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

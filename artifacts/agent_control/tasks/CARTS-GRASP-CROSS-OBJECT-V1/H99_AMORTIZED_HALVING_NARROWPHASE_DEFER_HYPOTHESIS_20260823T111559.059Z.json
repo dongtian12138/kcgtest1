@@ -1,0 +1,41 @@
+{
+  "schema_version": "carts_h99_amortized_halving_narrowphase_defer_hypothesis_v1",
+  "recorded_at_utc": "2026-08-23T11:15:59.059Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H99-AMORTIZED-HALVING-NARROWPHASE-DEFER",
+  "status": "TARGETED_FIX_IN_PROGRESS",
+  "prerequisite_evidence": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H98_STAGED_ANISOTROPIC_PRECOMPUTED_AXIS_NARROWPHASE_RESULT_20260823T111559.059Z.json",
+  "diagnosis": "Full triangle-axis separation is being repeated on nearly the same unresolved parent frontier after every binary phase subdivision. H98 showed that 93.63 percent of those pairs survive all axis stages, so repeated narrowphase has poor expected value; cheap child AABB filtering is the main mechanism that actually shrinks the frontier.",
+  "single_structural_bundle": [
+    "Keep the exact immutable parent pair frontier, but let every child apply only componentwise AABB filtering first.",
+    "Run full anisotropic triangle-axis narrowphase at the root, then again only after the AABB survivor count is at most half the count recorded at the previous narrowphase. This factor-of-two schedule is an amortized work bound, not a physical tuning threshold.",
+    "Force one full narrowphase before returning at an adjacent-binary64 endpoint or exhausted interval budget so deferral cannot create a false terminal pair.",
+    "When narrowphase is invoked, evaluate the complete axis set in one vectorized pass using precomputed static edges and axes; remove the three survivor-compaction passes from the production path.",
+    "Count invoked intervals, deferred intervals and pairs, halving triggers, forced terminal runs, pair coverage, and final unresolved pairs separately. Every deferred pair remains unresolved and is carried to both children.",
+    "Keep geometry, candidate order, left-first subdivision, 4096 interval budget, strict inequalities, dual-surface roles, and fail-closed state unchanged."
+  ],
+  "validation_sequence": [
+    "Compare eager and amortized certificates on synthetic free, overlap, tangency, and parent-child cases; require identical fail-closed state and exact terminal classification where a terminal is reached.",
+    "Verify that deferred plus evaluated narrowphase survivors exactly equal every post-AABB potential-overlap observation and that a frontier never grows.",
+    "Run the related continuous/full-hand/study-contract tests once.",
+    "Run one shared comparison of 155, 174, 14, and 198; do not run a separate real-candidate probe and do not stop after the first success."
+  ],
+  "expected_result": "Candidate 14 f1Link3 completes in at most 10 seconds and all four retained candidates finish within 90 seconds, while terminal unresolved pairs stay fail-closed and complete pair accounting remains exact.",
+  "failure_criteria": [
+    "Any deferred pair is counted as separated, omitted from both children, or changes a terminal unresolved result relative to eager full narrowphase.",
+    "Narrowphase runs before the factor-of-two condition without a root or terminal force, or the three-stage production compaction remains active.",
+    "Geometry, physical thresholds, budgets, candidate order, or formal selection fields change.",
+    "The shared comparison stops after one success or candidate 198 is not reached."
+  ],
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "whole_top4_external_wall_limit_seconds": 90,
+  "candidate_14_f1Link3_target_seconds": 10,
+  "geometry_change_allowed": false,
+  "physical_threshold_change_allowed": false,
+  "parameter_grid_search_allowed": false,
+  "separate_real_candidate_probe_allowed": false,
+  "formal_selected_candidate": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

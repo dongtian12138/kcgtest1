@@ -22,6 +22,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import hashlib
+from itertools import product
 import json
 import math
 from types import MappingProxyType
@@ -43,8 +44,19 @@ from kcg_connector.grasp.robust.hand_model import (
     ThreeFingerHandModel,
 )
 from kcg_connector.grasp.robust.interval_kinematics import (
+    INTERVAL_GEOMETRIC_JACOBIAN_METHOD_ID,
     METHOD_ID as INTERVAL_KINEMATICS_METHOD_ID,
+    DirectedIntervalKinematics,
+    IntervalArithmeticOptions,
     IntervalBounds,
+    IntervalGeometricJacobian,
+    IntervalKinematicsError,
+)
+from kcg_connector.grasp.robust.interval_policy_margin import (
+    METHOD_ID as INTERVAL_POLICY_MARGIN_METHOD_ID,
+    IntervalPolicyMarginCertificate,
+    IntervalPolicyMarginState,
+    certify_interval_policy_wrench_margin_lower_bound,
 )
 from kcg_connector.grasp.robust.object_model import ObjectGraspModel
 from kcg_connector.grasp.robust.ray_closure import (
@@ -77,7 +89,7 @@ COMPLETE_CONTINUOUS_TRAJECTORY_CLEARANCE_SCOPE = (
     "CONTINUOUS_COLLISION_CERTIFIED_LOWER_BOUND"
 )
 CONTACT_RANGE_POLICY_WRENCH_METHOD_ID = (
-    "CARTS_CONTACT_RANGE_POLICY_WRENCH_DOMAIN_AUDIT_V1"
+    "CARTS_CONTACT_RANGE_POLICY_WRENCH_CERTIFICATE_V2"
 )
 CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE = (
     "ALL_POSSIBLE_EARLIEST_ROOTS_PER_PAD"
@@ -85,19 +97,37 @@ CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE = (
 CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE = (
     "COMPLETE_CARTESIAN_PRODUCT_OF_ALL_POSSIBLE_EARLIEST_ROOTS"
 )
+CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE = (
+    "INITIAL_STATE_PLUS_COMPLETE_PER_PAD_EARLIEST_ROOT_PHASE_ENVELOPES_"
+    "ON_DISJOINT_SUPPORTS"
+)
 CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS = (
-    "INTERVAL_CONTACT_JACOBIAN_CERTIFICATE_UNAVAILABLE",
     "PARAMETRIC_CONTACT_RANGE_WRENCH_LOWER_BOUND_UNAVAILABLE",
     "CALIBRATED_NONFRICTION_UNCERTAINTY_BOUNDS_UNAVAILABLE",
 )
+CONTACT_RANGE_POLICY_WRENCH_REMAINING_BLOCKERS = (
+    "CALIBRATED_NONFRICTION_UNCERTAINTY_BOUNDS_UNAVAILABLE",
+)
 CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS = (
-    "CONTACT_RANGE_POLICY_ROOT_DOMAIN_BINDING_ONLY",
+    "CONTACT_RANGE_POLICY_ROOT_AND_INTERVAL_JACOBIAN_BINDING_ONLY",
     "ALL_POSSIBLE_EARLIEST_ROOTS_AND_CARTESIAN_PRODUCT_COUNT_BOUND",
+    "ALL_CONTACT_ROOTS_HAVE_DIRECTED_INTERVAL_GEOMETRIC_JACOBIANS",
     "NO_DISPLAY_APPROXIMATION_AS_FORMAL_EVIDENCE",
     "NO_FINITE_CONTACT_GEOMETRY_SAMPLING_AS_FORMAL_EVIDENCE",
     "NO_EXACT_FINAL_JOINT_OR_CONTACT_SUBSTITUTION",
-    "NO_INTERVAL_CONTACT_JACOBIAN_CERTIFICATE",
     "NO_PARAMETRIC_CONTACT_RANGE_WRENCH_LOWER_BOUND",
+    "FRICTION_INTERVAL_ONLY_OTHER_UNCERTAINTIES_UNCALIBRATED",
+    "NORMAL_FORCE_CAPACITY_IS_UNCALIBRATED_OPTIMIZATION_BOUND",
+    "NOT_COLLISION_OR_DYNAMIC_EVIDENCE",
+)
+CONTACT_RANGE_POLICY_WRENCH_PARAMETRIC_CLAIM_LIMITATIONS = (
+    "CONTACT_RANGE_POLICY_PARAMETRIC_WRENCH_LOWER_BOUND_CERTIFIED",
+    "ALL_POSSIBLE_EARLIEST_ROOTS_AND_CARTESIAN_PRODUCT_PROVEN",
+    "ALL_TWELVE_TASK_DISTURBANCE_DIRECTIONS_PROVEN",
+    "LOWER_FRICTION_INNER_CONE_VALID_FOR_DECLARED_FRICTION_INTERVAL",
+    "NO_DISPLAY_APPROXIMATION_AS_FORMAL_EVIDENCE",
+    "NO_FINITE_CONTACT_GEOMETRY_SAMPLING_AS_FORMAL_EVIDENCE",
+    "NO_EXACT_FINAL_JOINT_OR_CONTACT_SUBSTITUTION",
     "FRICTION_INTERVAL_ONLY_OTHER_UNCERTAINTIES_UNCALIBRATED",
     "NORMAL_FORCE_CAPACITY_IS_UNCALIBRATED_OPTIMIZATION_BOUND",
     "NOT_COLLISION_OR_DYNAMIC_EVIDENCE",
@@ -112,9 +142,12 @@ class TaskWrenchEvaluationError(RuntimeError):
 
 
 class ContactRangePolicyWrenchState(str, Enum):
-    """The V1 range consumer cannot yet certify a wrench margin."""
+    """Parametric range-wrench result before full uncertainty calibration."""
 
     NOT_CERTIFIABLE = "NOT_CERTIFIABLE"
+    PARAMETRIC_WRENCH_CERTIFIED_NONFRICTION_UNCALIBRATED = (
+        "PARAMETRIC_WRENCH_CERTIFIED_NONFRICTION_UNCALIBRATED"
+    )
 
 
 def _readonly(value: np.ndarray) -> np.ndarray:
@@ -313,9 +346,18 @@ class ContactRangeRootWrenchDomain:
     phase: IntervalBounds
     position_object_m: tuple[IntervalBounds, IntervalBounds, IntervalBounds]
     object_source_winding_free_side_sign: int
+    path_local_free_side_normal_object: tuple[float, float, float]
+    pad_link_name: str
+    interval_geometric_jacobian: IntervalGeometricJacobian
 
     def __post_init__(self) -> None:
         positions = tuple(self.position_object_m)
+        free_side_normal = tuple(
+            float(value) for value in self.path_local_free_side_normal_object
+        )
+        free_side_normal_norm = math.sqrt(
+            sum(value * value for value in free_side_normal)
+        )
         if (
             not self.pad_name
             or len(self.formal_root_sha256) != 64
@@ -335,11 +377,32 @@ class ContactRangeRootWrenchDomain:
             or len(positions) != 3
             or not all(isinstance(row, IntervalBounds) for row in positions)
             or self.object_source_winding_free_side_sign not in (-1, 1)
+            or len(free_side_normal) != 3
+            or not all(math.isfinite(value) for value in free_side_normal)
+            or not math.isclose(
+                free_side_normal_norm,
+                1.0,
+                rel_tol=0.0,
+                abs_tol=64.0 * np.finfo(np.float64).eps,
+            )
+            or not self.pad_link_name
+            or not isinstance(
+                self.interval_geometric_jacobian,
+                IntervalGeometricJacobian,
+            )
+            or self.interval_geometric_jacobian.link_name
+            != self.pad_link_name
+            or self.interval_geometric_jacobian.point_object_m != positions
         ):
             raise TaskWrenchEvaluationError(
                 "contact-range root wrench domain is malformed"
             )
         object.__setattr__(self, "position_object_m", positions)
+        object.__setattr__(
+            self,
+            "path_local_free_side_normal_object",
+            free_side_normal,
+        )
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -354,6 +417,14 @@ class ContactRangeRootWrenchDomain:
             ],
             "object_source_winding_free_side_sign": (
                 self.object_source_winding_free_side_sign
+            ),
+            "path_local_free_side_normal_object_binary64_hex": [
+                float(value).hex()
+                for value in self.path_local_free_side_normal_object
+            ],
+            "pad_link_name": self.pad_link_name,
+            "interval_geometric_jacobian": (
+                self.interval_geometric_jacobian.as_dict()
             ),
         }
 
@@ -400,11 +471,13 @@ class ContactRangePadWrenchDomain:
 
 @dataclass(frozen=True)
 class ContactRangePolicyWrenchAudit:
-    """Immutable proof of domain consumption, not of wrench capability."""
+    """Immutable domain and optional parametric wrench-proof binding."""
 
     method_id: str
     ray_closure_method_id: str
     interval_kinematics_method_id: str
+    interval_geometric_jacobian_method_id: str
+    interval_policy_margin_method_id: str
     policy_sha256: str
     v9_model_and_policy_sha256: str
     policy_collision_binding_sha256: str
@@ -420,6 +493,9 @@ class ContactRangePolicyWrenchAudit:
     root_domain_rule: str
     cartesian_product_count: int
     cartesian_product_rule: str
+    joint_position_domain_rule: str
+    independent_joint_names: tuple[str, ...]
+    final_joint_position_intervals: tuple[IntervalBounds, ...]
     scenario_count: int
     scenario_dimension: int
     hard_bound_friction_coefficient: float
@@ -432,6 +508,9 @@ class ContactRangePolicyWrenchAudit:
     contact_range_margin_computed: bool
     interval_contact_jacobian_certificate_present: bool
     parametric_wrench_lower_bound_certificate_present: bool
+    parametric_wrench_lower_bound: float | None
+    margin_search_invocation_count: int
+    interval_policy_margin_certificate: IntervalPolicyMarginCertificate
     formal_selection_allowed: bool
     blockers: tuple[str, ...]
     claim_limitations: tuple[str, ...]
@@ -450,11 +529,18 @@ class ContactRangePolicyWrenchAudit:
         domains = tuple(self.pad_domains)
         pad_order = tuple(self.pad_order)
         counts = tuple(self.possible_root_counts)
+        joint_names = tuple(self.independent_joint_names)
+        joint_intervals = tuple(self.final_joint_position_intervals)
+        roots = tuple(root for domain in domains for root in domain.roots)
         if (
             self.method_id != CONTACT_RANGE_POLICY_WRENCH_METHOD_ID
             or self.ray_closure_method_id != RAY_CLOSURE_METHOD_ID
             or self.interval_kinematics_method_id
             != INTERVAL_KINEMATICS_METHOD_ID
+            or self.interval_geometric_jacobian_method_id
+            != INTERVAL_GEOMETRIC_JACOBIAN_METHOD_ID
+            or self.interval_policy_margin_method_id
+            != INTERVAL_POLICY_MARGIN_METHOD_ID
             or any(
                 len(value) != 64
                 or any(character not in "0123456789abcdef" for character in value)
@@ -471,36 +557,122 @@ class ContactRangePolicyWrenchAudit:
             or self.cartesian_product_count != math.prod(counts)
             or self.cartesian_product_rule
             != CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE
+            or self.joint_position_domain_rule
+            != CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE
+            or not joint_names
+            or len(set(joint_names)) != len(joint_names)
+            or len(joint_intervals) != len(joint_names)
+            or not all(
+                isinstance(bounds, IntervalBounds) for bounds in joint_intervals
+            )
+            or not roots
+            or any(
+                root.interval_geometric_jacobian.independent_joint_names
+                != joint_names
+                or root.interval_geometric_jacobian.joint_position_intervals
+                != joint_intervals
+                or root.interval_geometric_jacobian.method_id
+                != INTERVAL_GEOMETRIC_JACOBIAN_METHOD_ID
+                for root in roots
+            )
             or self.scenario_count <= 0
             or self.scenario_dimension != 1
             or not math.isfinite(self.hard_bound_friction_coefficient)
             or self.hard_bound_friction_coefficient < 0.0
             or self.uncertainty_claim_scope
             != FRICTION_INTERVAL_ONLY_CERTIFIED_UNCERTAINTY_SCOPE
+            or self.margin_search_invocation_count != 1
+            or not isinstance(
+                self.interval_policy_margin_certificate,
+                IntervalPolicyMarginCertificate,
+            )
+            or self.interval_policy_margin_certificate.evaluation_binding_sha256
+            != self.task_wrench_contract_sha256
+            or self.interval_policy_margin_certificate.possible_root_counts
+            != counts
+            or self.interval_policy_margin_certificate.cartesian_product_count
+            != self.cartesian_product_count
         ):
             raise TaskWrenchEvaluationError(
                 "contact-range policy wrench audit binding is malformed"
             )
+        margin_certificate = self.interval_policy_margin_certificate
+        margin_proven = margin_certificate.state is (
+            IntervalPolicyMarginState.CERTIFIED_POSITIVE_LOWER_BOUND
+        )
         if (
             self.policy_contact_root_domains_consumed is not True
             or self.complete_cartesian_product_bound is not True
             or self.display_approximation_used_as_formal_evidence
             or self.finite_contact_geometry_sampling_used_as_formal_evidence
             or self.exact_candidate_wrench_invocation_count != 0
-            or self.contact_range_margin_computed
-            or self.interval_contact_jacobian_certificate_present
-            or self.parametric_wrench_lower_bound_certificate_present
+            or self.interval_contact_jacobian_certificate_present is not True
             or self.formal_selection_allowed
+        ):
+            raise TaskWrenchEvaluationError(
+                "contact-range policy wrench audit overclaims its evidence"
+            )
+        if margin_proven:
+            final = margin_certificate.final_policy_wrench_certificate
+            root_ids = tuple(
+                tuple(root.formal_root_sha256 for root in domain.roots)
+                for domain in domains
+            )
+            expected_records = tuple(
+                (combination_index, combination, vertex_index)
+                for combination_index, combination in enumerate(
+                    product(*root_ids)
+                )
+                for vertex_index in range(12)
+            )
+            actual_records = (
+                ()
+                if final is None
+                else tuple(
+                    (
+                        row.root_combination_index,
+                        row.formal_root_sha256,
+                        row.disturbance_vertex_index,
+                    )
+                    for row in final.load_certificates
+                )
+            )
+            if (
+                not self.contact_range_margin_computed
+                or not self.parametric_wrench_lower_bound_certificate_present
+                or self.parametric_wrench_lower_bound is None
+                or self.parametric_wrench_lower_bound
+                != margin_certificate.certified_margin_lower_bound
+                or final is None
+                or final.pad_order != pad_order
+                or final.possible_root_counts != counts
+                or actual_records != expected_records
+                or self.blockers
+                != CONTACT_RANGE_POLICY_WRENCH_REMAINING_BLOCKERS
+                or self.claim_limitations
+                != CONTACT_RANGE_POLICY_WRENCH_PARAMETRIC_CLAIM_LIMITATIONS
+            ):
+                raise TaskWrenchEvaluationError(
+                    "parametric contact-range wrench proof is not bound to every root and load"
+                )
+        elif (
+            self.contact_range_margin_computed
+            or self.parametric_wrench_lower_bound_certificate_present
+            or self.parametric_wrench_lower_bound is not None
             or self.blockers != CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS
             or self.claim_limitations
             != CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS
         ):
             raise TaskWrenchEvaluationError(
-                "contact-range policy wrench audit overclaims its evidence"
+                "uncertified contact-range wrench audit removed a blocker"
             )
         object.__setattr__(self, "pad_order", pad_order)
         object.__setattr__(self, "pad_domains", domains)
         object.__setattr__(self, "possible_root_counts", counts)
+        object.__setattr__(self, "independent_joint_names", joint_names)
+        object.__setattr__(
+            self, "final_joint_position_intervals", joint_intervals
+        )
 
     @property
     def audit_sha256(self) -> str:
@@ -514,6 +686,12 @@ class ContactRangePolicyWrenchAudit:
             "ray_closure_method_id": self.ray_closure_method_id,
             "interval_kinematics_method_id": (
                 self.interval_kinematics_method_id
+            ),
+            "interval_geometric_jacobian_method_id": (
+                self.interval_geometric_jacobian_method_id
+            ),
+            "interval_policy_margin_method_id": (
+                self.interval_policy_margin_method_id
             ),
             "policy_sha256": self.policy_sha256,
             "v9_model_and_policy_sha256": self.v9_model_and_policy_sha256,
@@ -532,6 +710,15 @@ class ContactRangePolicyWrenchAudit:
             "root_domain_rule": self.root_domain_rule,
             "cartesian_product_count": self.cartesian_product_count,
             "cartesian_product_rule": self.cartesian_product_rule,
+            "joint_position_domain_rule": self.joint_position_domain_rule,
+            "independent_joint_names": list(self.independent_joint_names),
+            "final_joint_position_intervals": {
+                name: bounds.as_dict()
+                for name, bounds in zip(
+                    self.independent_joint_names,
+                    self.final_joint_position_intervals,
+                )
+            },
             "scenario_count": self.scenario_count,
             "scenario_dimension": self.scenario_dimension,
             "hard_bound_friction_coefficient_binary64_hex": float(
@@ -560,6 +747,17 @@ class ContactRangePolicyWrenchAudit:
             "parametric_wrench_lower_bound_certificate_present": (
                 self.parametric_wrench_lower_bound_certificate_present
             ),
+            "parametric_wrench_lower_bound_binary64_hex": (
+                None
+                if self.parametric_wrench_lower_bound is None
+                else float(self.parametric_wrench_lower_bound).hex()
+            ),
+            "margin_search_invocation_count": (
+                self.margin_search_invocation_count
+            ),
+            "interval_policy_margin_certificate": (
+                self.interval_policy_margin_certificate.as_dict()
+            ),
             "formal_selection_allowed": self.formal_selection_allowed,
             "blockers": list(self.blockers),
             "claim_limitations": list(self.claim_limitations),
@@ -573,36 +771,86 @@ class ContactRangePolicyWrenchAudit:
 
 @dataclass(frozen=True)
 class ContactRangePolicyWrenchCertificate:
-    """Fail-closed result until a certified range-wrench lower bound exists."""
+    """Range-wrench result that never erases uncalibrated uncertainty."""
 
     state: ContactRangePolicyWrenchState
     audit: ContactRangePolicyWrenchAudit
-    task_margins: None = None
-    hard_bound_minimum_task_margin: None = None
-    peak_normal_force_n: None = None
-    joint_torque_utilization: None = None
+    task_margins: tuple[float, ...] | None = None
+    hard_bound_minimum_task_margin: float | None = None
+    peak_normal_force_n: float | None = None
+    joint_torque_utilization: float | None = None
 
     def __post_init__(self) -> None:
+        if not isinstance(self.audit, ContactRangePolicyWrenchAudit):
+            raise TaskWrenchEvaluationError(
+                "contact-range policy wrench certificate lacks its audit"
+            )
+        if self.state is ContactRangePolicyWrenchState.NOT_CERTIFIABLE:
+            if (
+                self.audit.parametric_wrench_lower_bound_certificate_present
+                or self.task_margins is not None
+                or self.hard_bound_minimum_task_margin is not None
+                or self.peak_normal_force_n is not None
+                or self.joint_torque_utilization is not None
+            ):
+                raise TaskWrenchEvaluationError(
+                    "uncertified contact-range policy wrench carries a result"
+                )
+            return
+        margins = None if self.task_margins is None else tuple(
+            float(value) for value in self.task_margins
+        )
+        scalars = (
+            self.hard_bound_minimum_task_margin,
+            self.peak_normal_force_n,
+            self.joint_torque_utilization,
+        )
         if (
-            self.state is not ContactRangePolicyWrenchState.NOT_CERTIFIABLE
-            or not isinstance(self.audit, ContactRangePolicyWrenchAudit)
-            or self.task_margins is not None
-            or self.hard_bound_minimum_task_margin is not None
-            or self.peak_normal_force_n is not None
-            or self.joint_torque_utilization is not None
+            self.state is not ContactRangePolicyWrenchState.PARAMETRIC_WRENCH_CERTIFIED_NONFRICTION_UNCALIBRATED
+            or not self.audit.parametric_wrench_lower_bound_certificate_present
+            or margins is None
+            or len(margins) != self.audit.scenario_count
+            or not all(math.isfinite(value) and value > 0.0 for value in margins)
+            or any(value is None or not math.isfinite(value) for value in scalars)
+            or self.hard_bound_minimum_task_margin
+            != self.audit.parametric_wrench_lower_bound
+            or any(
+                value != self.hard_bound_minimum_task_margin for value in margins
+            )
+            or self.peak_normal_force_n is None
+            or self.peak_normal_force_n < 0.0
+            or self.joint_torque_utilization is None
+            or not 0.0 <= self.joint_torque_utilization <= 1.0
         ):
             raise TaskWrenchEvaluationError(
                 "contact-range policy wrench certificate overclaims a result"
             )
+        object.__setattr__(self, "task_margins", margins)
 
     def as_dict(self) -> dict[str, object]:
         return {
             "state": self.state.value,
             "audit": self.audit.as_dict(),
-            "task_margins": None,
-            "hard_bound_minimum_task_margin": None,
-            "peak_normal_force_n": None,
-            "joint_torque_utilization": None,
+            "task_margins": (
+                None
+                if self.task_margins is None
+                else [float(value).hex() for value in self.task_margins]
+            ),
+            "hard_bound_minimum_task_margin_binary64_hex": (
+                None
+                if self.hard_bound_minimum_task_margin is None
+                else float(self.hard_bound_minimum_task_margin).hex()
+            ),
+            "peak_normal_force_n_binary64_hex": (
+                None
+                if self.peak_normal_force_n is None
+                else float(self.peak_normal_force_n).hex()
+            ),
+            "joint_torque_utilization_binary64_hex": (
+                None
+                if self.joint_torque_utilization is None
+                else float(self.joint_torque_utilization).hex()
+            ),
         }
 
 
@@ -782,6 +1030,14 @@ class TaskWrenchEvaluator:
                     self.maximum_inner_approximation_relative_error
                 ).hex(),
                 "cone_edge_multiplier": self.cone_edge_multiplier,
+            },
+            "contact_range_interval_transmission": {
+                "interval_geometric_jacobian_method_id": (
+                    INTERVAL_GEOMETRIC_JACOBIAN_METHOD_ID
+                ),
+                "joint_position_domain_rule": (
+                    CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE
+                ),
             },
             "linear_program": {
                 "solver": options.solver,
@@ -996,10 +1252,46 @@ class TaskWrenchEvaluator:
                     "contact-range wrench root domain is not a valid earliest set"
                 )
 
-    @staticmethod
     def _root_wrench_domain(
+        self,
         root: CertifiedContactFeatureRoot,
+        *,
+        hand_model: ThreeFingerHandModel,
+        interval_backend: DirectedIntervalKinematics,
+        final_joint_position_intervals: tuple[IntervalBounds, ...],
+        object_from_hand: np.ndarray,
     ) -> ContactRangeRootWrenchDomain:
+        face_index = root.object_face_index
+        object_mesh = self.object_model.mesh
+        if face_index < 0 or face_index >= len(object_mesh.faces):
+            raise TaskWrenchEvaluationError(
+                "contact-range root object face index is outside object mesh"
+            )
+        face_semantic = object_mesh.face_semantics[face_index]
+        if face_semantic not in self.object_model.allowed_contact_semantics:
+            raise TaskWrenchEvaluationError(
+                "contact-range root object face is not an allowed contact surface"
+            )
+        source_winding_normal = np.asarray(
+            object_mesh.face_normals[face_index],
+            dtype=np.float64,
+        )
+        path_local_free_side_normal = (
+            root.certificate.object_source_winding_free_side_sign
+            * source_winding_normal
+        )
+        try:
+            pad_link_name = hand_model.pads[root.pad_name].link_name
+            interval_jacobian = interval_backend.geometric_jacobian_bounds(
+                link_name=pad_link_name,
+                independent_joint_intervals=final_joint_position_intervals,
+                point_object_m=root.certificate.position_object_m,
+                base_transform=object_from_hand,
+            )
+        except (KeyError, IntervalKinematicsError) as error:
+            raise TaskWrenchEvaluationError(
+                "contact-range root interval transmission cannot be certified"
+            ) from error
         return ContactRangeRootWrenchDomain(
             pad_name=root.pad_name,
             formal_root_sha256=(
@@ -1013,7 +1305,65 @@ class TaskWrenchEvaluator:
             object_source_winding_free_side_sign=(
                 root.certificate.object_source_winding_free_side_sign
             ),
+            path_local_free_side_normal_object=tuple(
+                float(value) for value in path_local_free_side_normal
+            ),
+            pad_link_name=pad_link_name,
+            interval_geometric_jacobian=interval_jacobian,
         )
+
+    def _certify_contact_range_policy_margin(
+        self,
+        *,
+        pad_domains: tuple[ContactRangePadWrenchDomain, ...],
+        hand_model: ThreeFingerHandModel,
+        task_wrench_contract_sha256: str,
+    ) -> IntervalPolicyMarginCertificate:
+        normal_force_caps: list[float] = []
+        for pad_name in tuple(domain.pad_name for domain in pad_domains):
+            capacity = hand_model.pads[pad_name].normal_force_capacity_n
+            if capacity is None:
+                raise TaskWrenchEvaluationError(
+                    f"PAD {pad_name} lacks a normal-force capacity"
+                )
+            normal_force_caps.append(float(capacity))
+        joint_effort_limits: list[float] = []
+        for joint_name in hand_model.independent_joint_names:
+            effort = hand_model.independent_joint_limits[joint_name].effort
+            if effort is None:
+                raise TaskWrenchEvaluationError(
+                    f"independent joint {joint_name} lacks an effort limit"
+                )
+            joint_effort_limits.append(float(effort))
+        try:
+            return certify_interval_policy_wrench_margin_lower_bound(
+                pad_root_domains=tuple(domain.roots for domain in pad_domains),
+                pad_order=tuple(domain.pad_name for domain in pad_domains),
+                normal_force_caps_n=tuple(normal_force_caps),
+                joint_effort_limits=tuple(joint_effort_limits),
+                wrench_origin_object_m=(
+                    self.task_wrench_definition.wrench_origin_object_m
+                ),
+                task_frame_rotation_object=self.task_frame_rotation_object,
+                hard_bound_friction_coefficient=(
+                    self.friction_coefficient_interval[0]
+                ),
+                maximum_inner_approximation_relative_error=(
+                    self.maximum_inner_approximation_relative_error
+                ),
+                cone_edge_multiplier=self.cone_edge_multiplier,
+                nominal_external_wrench=(
+                    self.task_wrench_definition.nominal_external_wrench
+                ),
+                disturbance_vertices=(
+                    self.task_wrench_definition.disturbance_vertices
+                ),
+                evaluation_binding_sha256=task_wrench_contract_sha256,
+            )
+        except ValueError as error:
+            raise TaskWrenchEvaluationError(
+                "contact-range parametric wrench proof input is inconsistent"
+            ) from error
 
     def evaluate_contact_range_policy(
         self,
@@ -1040,13 +1390,67 @@ class TaskWrenchEvaluator:
         )
         scenarios = np.asarray(scenario_parameters_unit, dtype=np.float64)
         friction_values = self.friction_coefficients_from_unit(scenarios)
+        root_precisions = {
+            root.certificate.decimal_precision
+            for contact_set in policy.possible_first_contact_sets
+            for root in contact_set.possible_earliest_roots
+        }
+        if len(root_precisions) != 1:
+            raise TaskWrenchEvaluationError(
+                "contact-range roots do not share one interval precision"
+            )
+        interval_backend = DirectedIntervalKinematics(
+            hand_model,
+            IntervalArithmeticOptions(
+                decimal_precision=root_precisions.pop(),
+                maximum_root_bisection_iterations=1,
+            ),
+        )
+        phase_envelopes = tuple(
+            IntervalBounds(
+                min(
+                    root.certificate.phase.lower
+                    for root in contact_set.possible_earliest_roots
+                ),
+                max(
+                    root.certificate.phase.upper
+                    for root in contact_set.possible_earliest_roots
+                ),
+            )
+            for contact_set in policy.possible_first_contact_sets
+        )
+        try:
+            final_joint_position_intervals = (
+                interval_backend.independent_joint_box_from_paths(
+                    initial_independent_joint_positions=(
+                        policy.initial_independent_joint_positions_rad
+                    ),
+                    directions=policy.closing_directions_physical,
+                    phase_intervals=phase_envelopes,
+                )
+            )
+        except IntervalKinematicsError as error:
+            raise TaskWrenchEvaluationError(
+                "contact-range final joint box cannot be certified"
+            ) from error
+        object_from_hand = np.asarray(
+            policy.object_from_hand, dtype=np.float64
+        ).reshape(4, 4)
         pad_domains = tuple(
             ContactRangePadWrenchDomain(
                 pad_name=contact_set.pad_name,
                 roots=tuple(
                     sorted(
                         (
-                            self._root_wrench_domain(root)
+                            self._root_wrench_domain(
+                                root,
+                                hand_model=hand_model,
+                                interval_backend=interval_backend,
+                                final_joint_position_intervals=(
+                                    final_joint_position_intervals
+                                ),
+                                object_from_hand=object_from_hand,
+                            )
                             for root in contact_set.possible_earliest_roots
                         ),
                         key=lambda row: row.formal_root_sha256,
@@ -1071,10 +1475,54 @@ class TaskWrenchEvaluator:
             hand_model=hand_model,
             model_contract_sha256=v9_audit.model_contract_sha256,
         )
+        margin_certificate = self._certify_contact_range_policy_margin(
+            pad_domains=pad_domains,
+            hand_model=hand_model,
+            task_wrench_contract_sha256=task_contract_sha256,
+        )
+        margin_proven = margin_certificate.state is (
+            IntervalPolicyMarginState.CERTIFIED_POSITIVE_LOWER_BOUND
+        )
+        parametric_margin: float | None = None
+        peak_normal_force: float | None = None
+        joint_torque_utilization: float | None = None
+        task_margins: tuple[float, ...] | None = None
+        if margin_proven:
+            parametric_margin = margin_certificate.certified_margin_lower_bound
+            final = margin_certificate.final_policy_wrench_certificate
+            assert parametric_margin is not None and final is not None
+            pad_force_uppers = tuple(
+                bounds.upper
+                for record in final.load_certificates
+                for bounds in (
+                    record.balance_certificate.pad_normal_force_intervals or ()
+                )
+            )
+            if not pad_force_uppers:
+                raise TaskWrenchEvaluationError(
+                    "complete interval margin omitted PAD force bounds"
+                )
+            peak_normal_force = max(pad_force_uppers)
+            joint_torque_utilization = (
+                final.maximum_joint_torque_utilization_upper
+            )
+            if joint_torque_utilization is None:
+                raise TaskWrenchEvaluationError(
+                    "complete interval margin omitted joint utilization"
+                )
+            task_margins = tuple(
+                parametric_margin for _value in friction_values
+            )
         audit = ContactRangePolicyWrenchAudit(
             method_id=CONTACT_RANGE_POLICY_WRENCH_METHOD_ID,
             ray_closure_method_id=RAY_CLOSURE_METHOD_ID,
             interval_kinematics_method_id=INTERVAL_KINEMATICS_METHOD_ID,
+            interval_geometric_jacobian_method_id=(
+                INTERVAL_GEOMETRIC_JACOBIAN_METHOD_ID
+            ),
+            interval_policy_margin_method_id=(
+                INTERVAL_POLICY_MARGIN_METHOD_ID
+            ),
             policy_sha256=policy.policy_sha256,
             v9_model_and_policy_sha256=policy_and_model_sha256,
             policy_collision_binding_sha256=(
@@ -1094,6 +1542,15 @@ class TaskWrenchEvaluator:
             root_domain_rule=CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE,
             cartesian_product_count=math.prod(counts),
             cartesian_product_rule=CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE,
+            joint_position_domain_rule=(
+                CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE
+            ),
+            independent_joint_names=tuple(
+                hand_model.independent_joint_names
+            ),
+            final_joint_position_intervals=(
+                final_joint_position_intervals
+            ),
             scenario_count=int(scenarios.shape[0]),
             scenario_dimension=int(scenarios.shape[1]),
             hard_bound_friction_coefficient=(
@@ -1105,16 +1562,35 @@ class TaskWrenchEvaluator:
             display_approximation_used_as_formal_evidence=False,
             finite_contact_geometry_sampling_used_as_formal_evidence=False,
             exact_candidate_wrench_invocation_count=0,
-            contact_range_margin_computed=False,
-            interval_contact_jacobian_certificate_present=False,
-            parametric_wrench_lower_bound_certificate_present=False,
+            contact_range_margin_computed=margin_proven,
+            interval_contact_jacobian_certificate_present=True,
+            parametric_wrench_lower_bound_certificate_present=margin_proven,
+            parametric_wrench_lower_bound=parametric_margin,
+            margin_search_invocation_count=1,
+            interval_policy_margin_certificate=margin_certificate,
             formal_selection_allowed=False,
-            blockers=CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS,
-            claim_limitations=CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS,
+            blockers=(
+                CONTACT_RANGE_POLICY_WRENCH_REMAINING_BLOCKERS
+                if margin_proven
+                else CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS
+            ),
+            claim_limitations=(
+                CONTACT_RANGE_POLICY_WRENCH_PARAMETRIC_CLAIM_LIMITATIONS
+                if margin_proven
+                else CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS
+            ),
         )
         return ContactRangePolicyWrenchCertificate(
-            state=ContactRangePolicyWrenchState.NOT_CERTIFIABLE,
+            state=(
+                ContactRangePolicyWrenchState.PARAMETRIC_WRENCH_CERTIFIED_NONFRICTION_UNCALIBRATED
+                if margin_proven
+                else ContactRangePolicyWrenchState.NOT_CERTIFIABLE
+            ),
             audit=audit,
+            task_margins=task_margins,
+            hard_bound_minimum_task_margin=parametric_margin,
+            peak_normal_force_n=peak_normal_force,
+            joint_torque_utilization=joint_torque_utilization,
         )
 
     def _build_task_wrench_definition(self) -> TaskWrenchDefinition:
@@ -1720,6 +2196,9 @@ __all__ = [
     "CONTACT_RANGE_POLICY_WRENCH_CLAIM_LIMITATIONS",
     "CONTACT_RANGE_POLICY_WRENCH_MANDATORY_BLOCKERS",
     "CONTACT_RANGE_POLICY_WRENCH_METHOD_ID",
+    "CONTACT_RANGE_POLICY_WRENCH_PARAMETRIC_CLAIM_LIMITATIONS",
+    "CONTACT_RANGE_POLICY_WRENCH_REMAINING_BLOCKERS",
+    "CONTACT_RANGE_POLICY_WRENCH_JOINT_DOMAIN_RULE",
     "CONTACT_RANGE_POLICY_WRENCH_PRODUCT_RULE",
     "CONTACT_RANGE_POLICY_WRENCH_ROOT_DOMAIN_RULE",
     "ContactActuationModel",

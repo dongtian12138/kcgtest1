@@ -1,0 +1,110 @@
+{
+  "schema_version": "carts_h97_persistent_unresolved_pair_frontier_result_v1",
+  "recorded_at_utc": "2026-08-23T10:51:39.410Z",
+  "task_id": "CARTS-GRASP-CROSS-OBJECT-V1",
+  "hypothesis_id": "CARTS-H97-PERSISTENT-UNRESOLVED-PAIR-FRONTIER",
+  "status": "OFFLINE_PASS_EQUIVALENCE_PERFORMANCE_TARGET_NOT_MET_TOP4_INCOMPLETE",
+  "source_hypothesis": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/H97_PERSISTENT_UNRESOLVED_PAIR_FRONTIER_HYPOTHESIS_20260823T101704.127Z.json",
+  "implemented_method_id": "CARTS_MP_INTERVAL_MOVING_STATIC_SURFACE_AABB_BVH_SWEPT_TRIANGLE_SAT_PERSISTENT_PAIR_FRONTIER_V3",
+  "implemented_bundle": [
+    "The root interval returns an immutable exact moving-face/static-face unresolved pair frontier.",
+    "Each child interval rechecks only its parent frontier and inherits every parent-separated pair as strictly separated.",
+    "Per-interval complete Cartesian-product accounting is preserved and root-BVH, inherited, frontier, narrowphase, and terminal counts are separate."
+  ],
+  "static_validation": {
+    "focused_frontier_equivalence_test_count": 2,
+    "focused_frontier_equivalence_seconds": 0.11,
+    "focused_frontier_equivalence_passed": true,
+    "continuous_and_full_hand_tests_observed_passed_before_next_test": 66,
+    "combined_command_exit_code": 2,
+    "combined_command_not_green": true,
+    "combined_command_interrupted_after_67_passed_seconds": 101.0,
+    "interrupted_test": "test_candidate_route_collision.py::test_real_route_fails_closed_at_a_named_collision_scope",
+    "interrupted_test_calls_h97_continuous_collision_path": false,
+    "study_contract_test_count": 121,
+    "study_contract_test_seconds": 7.13,
+    "study_contract_passed": true
+  },
+  "required_top4_comparison": {
+    "external_wall_limit_seconds": 90,
+    "process_exit_code": 124,
+    "natural_return": false,
+    "stop_after_first_success": false,
+    "all_four_exact_contact_evaluations_completed": true,
+    "all_four_collision_checks_completed": false,
+    "runtime_build_seconds": 14.502658777870238,
+    "all_four_exact_results_completed_at_total_seconds": 33.764717038022354,
+    "aggregate_input_build_seconds": 14.943178090034053,
+    "terminal_partition_build_seconds": 0.6315661661792547,
+    "prepared_object_build_seconds": 6.422537098173052,
+    "shared_collision_context_ready_at_total_seconds": 55.77066065999679,
+    "exact_results": [
+      {"attempt_index": 155, "seconds": 4.490538279991597, "status": "STATIC_V9_POLICY_ACCEPTED"},
+      {"attempt_index": 174, "seconds": 5.341942572966218, "status": "V9_REJECTED_NO_FIRST_CONTACT_FOR_FINGER_3_PAD"},
+      {"attempt_index": 14, "seconds": 5.455692420015112, "status": "STATIC_V9_POLICY_ACCEPTED"},
+      {"attempt_index": 198, "seconds": 3.829849515808746, "status": "STATIC_V9_POLICY_ACCEPTED"}
+    ],
+    "collision_results": [
+      {
+        "attempt_index": 155,
+        "collision_seconds": 5.162197015946731,
+        "f1Link3_seconds": 4.392169429920614,
+        "processed_intervals": 126,
+        "terminal_unresolved_pair_count": 3,
+        "root_bvh_interval_count": 1,
+        "bvh_node_visit_count": 572302,
+        "inherited_strictly_separated_pair_count": 19725381906,
+        "frontier_pair_evaluation_count": 1792094,
+        "leaf_pair_evaluation_count": 2534234,
+        "narrowphase_pair_evaluation_count": 910210,
+        "narrowphase_strictly_separated_pair_count": 13977,
+        "state": "UNRESOLVED_ADJACENT_BINARY64_PHASE_ENDPOINTS"
+      },
+      {"attempt_index": 174, "collision_checked": false, "reason": "EXACT_CONTACT_REJECTED"},
+      {
+        "attempt_index": 14,
+        "collision_seconds": 21.966162593802437,
+        "f1Link3_seconds": 21.220486799022183,
+        "processed_intervals": 165,
+        "terminal_unresolved_pair_count": 3,
+        "root_bvh_interval_count": 1,
+        "bvh_node_visit_count": 4692830,
+        "inherited_strictly_separated_pair_count": 25865403987,
+        "frontier_pair_evaluation_count": 16648301,
+        "leaf_pair_evaluation_count": 23571563,
+        "narrowphase_pair_evaluation_count": 8448199,
+        "narrowphase_strictly_separated_pair_count": 123538,
+        "state": "UNRESOLVED_ADJACENT_BINARY64_PHASE_ENDPOINTS"
+      },
+      {
+        "attempt_index": 198,
+        "collision_checked": "STARTED_NOT_COMPLETED",
+        "f1Link3_started_at_total_seconds": 83.65572147793137,
+        "observed_f1Link3_lower_bound_seconds": 6.34427852206863
+      }
+    ]
+  },
+  "performance_comparison": {
+    "candidate_155_previous_f1Link3_seconds": 7.649737301049754,
+    "candidate_155_current_f1Link3_seconds": 4.392169429920614,
+    "candidate_155_speedup": 1.74166,
+    "candidate_14_previous_f1Link3_seconds": 36.847393424017355,
+    "candidate_14_current_f1Link3_seconds": 21.220486799022183,
+    "candidate_14_speedup": 1.73641,
+    "candidate_14_target_seconds": 10.0,
+    "candidate_14_target_met": false,
+    "whole_top4_target_seconds": 90.0,
+    "whole_top4_target_met": false
+  },
+  "root_cause": "The exact parent frontier remains large through many child intervals. Flat direct frontier evaluation gives up static-BVH group pruning, and 8,448,199 candidate-14 pairs still rebuild and evaluate the complete swept-triangle axis set. The frontier is correct and monotone, but its per-pair narrowphase remains too expensive.",
+  "next_hypothesis": "CARTS-H98-STAGED-ANISOTROPIC-PRECOMPUTED-AXIS-NARROWPHASE",
+  "retained_ranked_candidates": [155, 174, 14, 198],
+  "final_selection_requires_all_retained_candidates_checked": true,
+  "candidate_result_written": false,
+  "generation_checkpoint_written": false,
+  "formal_selected_candidate": null,
+  "formal_selected_contact_range_policy": null,
+  "dynamic_launch_allowed": false,
+  "hardware_authorized": false,
+  "isaac_launched": false
+}

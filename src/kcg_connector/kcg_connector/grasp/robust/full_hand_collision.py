@@ -36,9 +36,11 @@ from kcg_connector.grasp.robust.continuous_collision import (
     ContinuousCollisionState,
     IndependentMovingSurfacePairCollisionCertificate,
     MovingSurfacePairCollisionCertificate,
+    PreparedStaticTriangleSurface,
     certify_independent_link_motion_surfaces_separated_from_each_other,
     certify_moving_link_surfaces_separated_from_each_other,
     certify_moving_link_surface_separated_from_static_surface,
+    prepare_static_triangle_surface,
 )
 from kcg_connector.grasp.robust.hand_contract import (
     OBJECT_CONTACT_NORMAL_POLICY,
@@ -74,6 +76,16 @@ METHOD_ID = "CARTS_FULL_HAND_SEQUENTIAL_CLOSURE_COLLISION_AGGREGATOR_V1"
 CONTACT_RANGE_POLICY_METHOD_ID = (
     "CARTS_FULL_HAND_CONTACT_RANGE_POLICY_COLLISION_AGGREGATOR_V1"
 )
+TERMINAL_DUAL_SURFACE_COLLISION_DOMAIN = (
+    "TERMINAL_CLOSED_SHELL_EXACT_FORBIDDEN_SUBSET_WITH_"
+    "INDEPENDENT_FULL_PAD_CONTACT_ROOTS"
+)
+DIRECT_POLICY_KINEMATIC_BINDING_METHOD_ID = (
+    "CARTS_DIRECT_POLICY_KINEMATIC_BINDING_V1"
+)
+FIXED_ARM_POLICY_EMBEDDING_METHOD_ID = (
+    "CARTS_FIXED_ARM_HAND_POLICY_EMBEDDING_V1"
+)
 SURFACE_HASH_METHOD_ID = (
     "CARTS_UNORIENTED_UNORDERED_TRIANGLE_SURFACE_V1"
 )
@@ -105,6 +117,8 @@ CONTACT_RANGE_POLICY_CLAIM_LIMITATIONS = (
     "NOT_ARM_OR_ENVIRONMENT_APPROACH_CLOSURE_OR_LIFT_COLLISION",
     "NO_SRDF_NEVER_OR_ADJACENT_EXEMPTIONS_APPLIED",
     "DISPLAY_APPROXIMATION_IS_NOT_READ_AS_FORMAL_EVIDENCE",
+    "FULL_HASH_BOUND_PAD_CONTACT_ROOTS_ARE_INDEPENDENT_FROM_CLOSED_SHELL_"
+    "FACE_ROLE_PARTITION",
     "POTENTIAL_CONTACT_TANGENCY_AND_COPLANARITY_REMAIN_UNRESOLVED",
 )
 CONTACT_RANGE_POLICY_MANDATORY_BLOCKERS = (
@@ -483,7 +497,7 @@ class HashBoundObjectSurface:
 
 @dataclass(frozen=True)
 class TerminalForbiddenSurface:
-    """Exact non-PAD subset supplied for one terminal link."""
+    """Forbidden closed-shell subset plus an independent full-PAD source."""
 
     link_name: str
     partition: TerminalTrianglePartition
@@ -509,6 +523,426 @@ class TerminalForbiddenSurface:
                 "terminal forbidden surface link binding disagrees"
             )
         object.__setattr__(self, "link_name", str(self.link_name))
+
+
+def _model_manifest_sha256(model: object) -> str:
+    return hashlib.sha256(
+        _canonical_json(_hand_model_manifest(model)).encode("utf-8")
+    ).hexdigest()
+
+
+def _fixed_arm_embedding_document(
+    *,
+    policy_sha256: str,
+    source_model_manifest_sha256: str,
+    aggregate_model_manifest_sha256: str,
+    source_base_link: str,
+    source_joint_names: tuple[str, ...],
+    aggregate_joint_names: tuple[str, ...],
+    source_to_aggregate_indices: tuple[int, ...],
+    fixed_aggregate_only_joint_positions_rad: tuple[
+        tuple[str, float], ...
+    ],
+    embedded_initial_joint_positions_rad: tuple[float, ...],
+    embedded_closing_directions_physical: tuple[
+        tuple[float, ...], ...
+    ],
+    object_from_aggregate_base: np.ndarray,
+) -> dict[str, object]:
+    return {
+        "method_id": FIXED_ARM_POLICY_EMBEDDING_METHOD_ID,
+        "policy_sha256": policy_sha256,
+        "source_model_manifest_sha256": source_model_manifest_sha256,
+        "aggregate_model_manifest_sha256": aggregate_model_manifest_sha256,
+        "source_base_link": source_base_link,
+        "source_joint_names": list(source_joint_names),
+        "aggregate_joint_names": list(aggregate_joint_names),
+        "source_to_aggregate_indices": list(source_to_aggregate_indices),
+        "fixed_aggregate_only_joint_positions_rad": [
+            [name, _float64_hex(value)]
+            for name, value in fixed_aggregate_only_joint_positions_rad
+        ],
+        "embedded_initial_joint_positions_rad": _float64_array_hex(
+            embedded_initial_joint_positions_rad
+        ),
+        "embedded_closing_directions_physical": _float64_array_hex(
+            embedded_closing_directions_physical
+        ),
+        "object_from_aggregate_base": _float64_array_hex(
+            object_from_aggregate_base
+        ),
+    }
+
+
+def _fixed_arm_embedding_sha256(**values: object) -> str:
+    return hashlib.sha256(
+        _canonical_json(
+            _fixed_arm_embedding_document(**values)  # type: ignore[arg-type]
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+@dataclass(frozen=True)
+class FixedArmPolicyEmbedding:
+    """Verified lift of one hand-only policy into a fixed-arm model."""
+
+    method_id: str
+    source_backend: DirectedIntervalKinematics
+    policy_sha256: str
+    source_model_manifest_sha256: str
+    aggregate_model_manifest_sha256: str
+    source_base_link: str
+    source_joint_names: tuple[str, ...]
+    aggregate_joint_names: tuple[str, ...]
+    source_to_aggregate_indices: tuple[int, ...]
+    fixed_aggregate_only_joint_positions_rad: tuple[tuple[str, float], ...]
+    embedded_initial_joint_positions_rad: tuple[float, ...]
+    embedded_closing_directions_physical: tuple[tuple[float, ...], ...]
+    object_from_aggregate_base: np.ndarray
+    certificate_sha256: str
+
+    def __post_init__(self) -> None:
+        if (
+            self.method_id != FIXED_ARM_POLICY_EMBEDDING_METHOD_ID
+            or not isinstance(self.source_backend, DirectedIntervalKinematics)
+            or not _valid_sha256(self.policy_sha256)
+            or not _valid_sha256(self.source_model_manifest_sha256)
+            or not _valid_sha256(self.aggregate_model_manifest_sha256)
+            or not _valid_sha256(self.certificate_sha256)
+            or not self.source_base_link
+            or self.source_joint_names
+            != tuple(self.source_backend.hand_model.independent_joint_names)
+            or self.source_model_manifest_sha256
+            != _model_manifest_sha256(self.source_backend.hand_model)
+            or len(self.source_joint_names)
+            != len(self.source_to_aggregate_indices)
+            or tuple(sorted(self.source_to_aggregate_indices))
+            != self.source_to_aggregate_indices
+            or len(set(self.aggregate_joint_names))
+            != len(self.aggregate_joint_names)
+            or any(
+                index < 0 or index >= len(self.aggregate_joint_names)
+                for index in self.source_to_aggregate_indices
+            )
+            or tuple(
+                self.aggregate_joint_names[index]
+                for index in self.source_to_aggregate_indices
+            )
+            != self.source_joint_names
+        ):
+            raise FullHandCollisionError(
+                "fixed-arm policy embedding identity is malformed"
+            )
+        fixed_names = tuple(
+            name for name, _value in self.fixed_aggregate_only_joint_positions_rad
+        )
+        source_indices = set(self.source_to_aggregate_indices)
+        expected_fixed_names = tuple(
+            name
+            for index, name in enumerate(self.aggregate_joint_names)
+            if index not in source_indices
+        )
+        initial = np.asarray(
+            self.embedded_initial_joint_positions_rad, dtype=np.float64
+        )
+        directions = np.asarray(
+            self.embedded_closing_directions_physical, dtype=np.float64
+        )
+        transform = np.asarray(
+            self.object_from_aggregate_base, dtype=np.float64
+        )
+        if (
+            fixed_names != expected_fixed_names
+            or len(set(fixed_names)) != len(fixed_names)
+            or any(
+                not math.isfinite(value)
+                for _name, value in self.fixed_aggregate_only_joint_positions_rad
+            )
+            or initial.shape != (len(self.aggregate_joint_names),)
+            or directions.shape != (3, len(self.aggregate_joint_names))
+            or not np.all(np.isfinite(initial))
+            or not np.all(np.isfinite(directions))
+            or transform.shape != (4, 4)
+            or not np.all(np.isfinite(transform))
+            or not np.array_equal(
+                transform[3], np.asarray((0.0, 0.0, 0.0, 1.0))
+            )
+            or any(
+                directions[:, index].any()
+                for index, name in enumerate(self.aggregate_joint_names)
+                if name in fixed_names
+            )
+        ):
+            raise FullHandCollisionError(
+                "fixed-arm policy embedding motion is malformed"
+            )
+        values = {
+            name: getattr(self, name)
+            for name in (
+                "policy_sha256",
+                "source_model_manifest_sha256",
+                "aggregate_model_manifest_sha256",
+                "source_base_link",
+                "source_joint_names",
+                "aggregate_joint_names",
+                "source_to_aggregate_indices",
+                "fixed_aggregate_only_joint_positions_rad",
+                "embedded_initial_joint_positions_rad",
+                "embedded_closing_directions_physical",
+                "object_from_aggregate_base",
+            )
+        }
+        if self.certificate_sha256 != _fixed_arm_embedding_sha256(**values):
+            raise FullHandCollisionError(
+                "fixed-arm policy embedding digest changed"
+            )
+        frozen_transform = np.array(transform, copy=True)
+        frozen_transform.setflags(write=False)
+        object.__setattr__(self, "object_from_aggregate_base", frozen_transform)
+
+    @property
+    def audit(self) -> Mapping[str, object]:
+        return {
+            "method_id": self.method_id,
+            "policy_sha256": self.policy_sha256,
+            "source_base_link": self.source_base_link,
+            "source_joint_names": self.source_joint_names,
+            "aggregate_joint_names": self.aggregate_joint_names,
+            "fixed_aggregate_only_joint_positions_rad": (
+                self.fixed_aggregate_only_joint_positions_rad
+            ),
+            "aggregate_only_joint_motion_zero": True,
+            "certificate_sha256": self.certificate_sha256,
+        }
+
+
+def _proper_rigid_transform(value: object, *, label: str) -> np.ndarray:
+    matrix = np.asarray(value, dtype=np.float64)
+    if (
+        matrix.shape != (4, 4)
+        or not np.all(np.isfinite(matrix))
+        or not np.array_equal(
+            matrix[3], np.asarray((0.0, 0.0, 0.0, 1.0))
+        )
+    ):
+        raise FullHandCollisionError(f"{label} is not a finite SE(3) matrix")
+    rotation = matrix[:3, :3]
+    tolerance = (
+        256.0
+        * np.finfo(np.float64).eps
+        * max(1.0, float(np.linalg.norm(rotation, ord=np.inf)))
+    )
+    if not np.allclose(
+        rotation.T @ rotation,
+        np.eye(3),
+        rtol=0.0,
+        atol=tolerance,
+    ) or not np.isclose(
+        np.linalg.det(rotation), 1.0, rtol=0.0, atol=tolerance
+    ):
+        raise FullHandCollisionError(f"{label} rotation is not proper")
+    return np.array(matrix, copy=True)
+
+
+def _rigid_inverse(transform: np.ndarray) -> np.ndarray:
+    result = np.eye(4, dtype=np.float64)
+    result[:3, :3] = transform[:3, :3].T
+    result[:3, 3] = -transform[:3, :3].T @ transform[:3, 3]
+    return result
+
+
+def build_fixed_arm_policy_embedding(
+    *,
+    source_backend: DirectedIntervalKinematics,
+    aggregate_backend: DirectedIntervalKinematics,
+    sequential_closure_policy: CertifiedSequentialClosurePolicy,
+    fixed_aggregate_only_joint_positions_rad: Sequence[
+        tuple[str, float]
+    ],
+) -> FixedArmPolicyEmbedding:
+    """Build one fail-closed fixed-arm extension of a hand-only policy."""
+
+    if not isinstance(source_backend, DirectedIntervalKinematics) or not isinstance(
+        aggregate_backend, DirectedIntervalKinematics
+    ):
+        raise FullHandCollisionError(
+            "fixed-arm embedding needs source and aggregate interval backends"
+        )
+    if not isinstance(
+        sequential_closure_policy, CertifiedSequentialClosurePolicy
+    ):
+        raise FullHandCollisionError(
+            "fixed-arm embedding needs a certified sequential policy"
+        )
+    source = source_backend.hand_model
+    aggregate = aggregate_backend.hand_model
+    if (
+        source_backend.options.decimal_precision
+        != aggregate_backend.options.decimal_precision
+        or source_backend.options.maximum_root_bisection_iterations
+        != aggregate_backend.options.maximum_root_bisection_iterations
+        or sequential_closure_policy.independent_joint_names
+        != tuple(source.independent_joint_names)
+        or source.base_link == aggregate.base_link
+        or source.base_link
+        not in {joint.child_link for joint in aggregate.joints.values()}
+    ):
+        raise FullHandCollisionError(
+            "source policy backend is not a fixed-base submodel of aggregate"
+        )
+    source_joint_order = tuple(source.joint_order)
+    if (
+        set(
+            name for name in aggregate.joint_order if name in source.joints
+        )
+        != set(source_joint_order)
+        or len(
+            tuple(
+                name
+                for name in aggregate.joint_order
+                if name in source.joints
+            )
+        )
+        != len(source_joint_order)
+        or any(
+            aggregate.joints.get(name) != source.joints[name]
+            for name in source_joint_order
+        )
+        or _hand_pad_model_manifest(aggregate)
+        != _hand_pad_model_manifest(source)
+        or tuple(
+            (
+                name,
+                aggregate.fingers[name].joint_names,
+                aggregate.fingers[name].terminal_link,
+                aggregate.fingers[name].pad_name,
+            )
+            for name in sorted(aggregate.fingers)
+        )
+        != tuple(
+            (
+                name,
+                source.fingers[name].joint_names,
+                source.fingers[name].terminal_link,
+                source.fingers[name].pad_name,
+            )
+            for name in sorted(source.fingers)
+        )
+    ):
+        raise FullHandCollisionError(
+            "aggregate hand joints, mimic relations, or PADs differ from source"
+        )
+    source_names = tuple(source.independent_joint_names)
+    aggregate_names = tuple(aggregate.independent_joint_names)
+    index_by_name = {name: index for index, name in enumerate(aggregate_names)}
+    if any(name not in index_by_name for name in source_names):
+        raise FullHandCollisionError(
+            "aggregate independent coordinates omit a source hand joint"
+        )
+    source_indices = tuple(index_by_name[name] for name in source_names)
+    fixed_rows = tuple(
+        (str(name), float(value))
+        for name, value in fixed_aggregate_only_joint_positions_rad
+    )
+    expected_fixed_names = tuple(
+        name for name in aggregate_names if name not in set(source_names)
+    )
+    if (
+        tuple(name for name, _value in fixed_rows) != expected_fixed_names
+        or any(not math.isfinite(value) for _name, value in fixed_rows)
+    ):
+        raise FullHandCollisionError(
+            "fixed aggregate-only joint rows are absent, reordered, or nonfinite"
+        )
+    initial = np.empty(len(aggregate_names), dtype=np.float64)
+    fixed_by_name = dict(fixed_rows)
+    source_initial = tuple(
+        sequential_closure_policy.initial_independent_joint_positions_rad
+    )
+    source_initial_by_name = dict(zip(source_names, source_initial))
+    for index, name in enumerate(aggregate_names):
+        initial[index] = (
+            source_initial_by_name[name]
+            if name in source_initial_by_name
+            else fixed_by_name[name]
+        )
+    try:
+        source.resolve_joint_positions(source_initial)
+        aggregate.resolve_joint_positions(initial)
+    except ValueError as error:
+        raise FullHandCollisionError(
+            "fixed-arm embedded policy violates a registered joint limit"
+        ) from error
+    source_directions = np.asarray(
+        sequential_closure_policy.closing_directions_physical,
+        dtype=np.float64,
+    )
+    if source_directions.shape != (3, len(source_names)):
+        raise FullHandCollisionError(
+            "source policy directions do not match source hand coordinates"
+        )
+    embedded_directions = np.zeros(
+        (3, len(aggregate_names)), dtype=np.float64
+    )
+    for source_index, aggregate_index in enumerate(source_indices):
+        embedded_directions[:, aggregate_index] = source_directions[
+            :, source_index
+        ]
+
+    aggregate_transforms = aggregate.forward_kinematics(initial)
+    source_transforms = source.forward_kinematics(source_initial)
+    aggregate_from_source_base = _proper_rigid_transform(
+        aggregate_transforms[source.base_link],
+        label="aggregate_from_source_base",
+    )
+    object_from_source_base = _proper_rigid_transform(
+        np.asarray(
+            sequential_closure_policy.object_from_hand,
+            dtype=np.float64,
+        ).reshape(4, 4),
+        label="policy object_from_hand",
+    )
+    object_from_aggregate_base = _proper_rigid_transform(
+        object_from_source_base @ _rigid_inverse(aggregate_from_source_base),
+        label="object_from_aggregate_base",
+    )
+    comparison_tolerance = 1024.0 * np.finfo(np.float64).eps
+    for joint_name in source_joint_order:
+        link_name = source.joints[joint_name].child_link
+        if not np.allclose(
+            object_from_aggregate_base @ aggregate_transforms[link_name],
+            object_from_source_base @ source_transforms[link_name],
+            rtol=0.0,
+            atol=comparison_tolerance,
+        ):
+            raise FullHandCollisionError(
+                "embedded aggregate hand pose differs from the source policy"
+            )
+
+    values = {
+        "policy_sha256": sequential_closure_policy.policy_sha256,
+        "source_model_manifest_sha256": _model_manifest_sha256(source),
+        "aggregate_model_manifest_sha256": _model_manifest_sha256(aggregate),
+        "source_base_link": source.base_link,
+        "source_joint_names": source_names,
+        "aggregate_joint_names": aggregate_names,
+        "source_to_aggregate_indices": source_indices,
+        "fixed_aggregate_only_joint_positions_rad": fixed_rows,
+        "embedded_initial_joint_positions_rad": tuple(
+            float(value) for value in initial
+        ),
+        "embedded_closing_directions_physical": tuple(
+            tuple(float(value) for value in row)
+            for row in embedded_directions
+        ),
+        "object_from_aggregate_base": object_from_aggregate_base,
+    }
+    return FixedArmPolicyEmbedding(
+        method_id=FIXED_ARM_POLICY_EMBEDDING_METHOD_ID,
+        source_backend=source_backend,
+        **values,
+        certificate_sha256=_fixed_arm_embedding_sha256(**values),
+    )
 
 
 @dataclass(frozen=True)
@@ -826,7 +1260,7 @@ class FullHandClosureCollisionCertificate:
                 else link_hashes[row.link_name]
             )
             expected_domain = (
-                "TERMINAL_EXACT_NONPAD_FORBIDDEN_SURFACE"
+                TERMINAL_DUAL_SURFACE_COLLISION_DOMAIN
                 if expected_terminal
                 else "FULL_LINK_SURFACE"
             )
@@ -948,6 +1382,9 @@ class ContactRangePolicyCollisionAudit:
     object_surface_geometry_sha256: str
     ray_closure_object_geometry_sha256: str
     ray_model_contract_sha256: str
+    policy_kinematic_binding_method_id: str
+    policy_kinematic_binding_sha256: str
+    fixed_aggregate_joint_bindings: tuple[tuple[str, float], ...]
     link_surface_bindings: tuple[tuple[str, str, str], ...]
     terminal_partition_bindings: tuple[tuple[str, str, str], ...]
     self_pair_inventory_sha256: str
@@ -992,6 +1429,7 @@ class ContactRangePolicyCollisionAudit:
             self.object_surface_geometry_sha256,
             self.ray_closure_object_geometry_sha256,
             self.ray_model_contract_sha256,
+            self.policy_kinematic_binding_sha256,
             self.self_pair_inventory_sha256,
             *(row[1] for row in self.link_surface_bindings),
             *(row[2] for row in self.link_surface_bindings),
@@ -1010,8 +1448,31 @@ class ContactRangePolicyCollisionAudit:
         support_indices = tuple(
             row[1] for row in self.link_support_bindings
         )
+        fixed_names = tuple(
+            name for name, _value in self.fixed_aggregate_joint_bindings
+        )
         if (
             not self.object_id
+            or self.policy_kinematic_binding_method_id
+            not in {
+                DIRECT_POLICY_KINEMATIC_BINDING_METHOD_ID,
+                FIXED_ARM_POLICY_EMBEDDING_METHOD_ID,
+            }
+            or (
+                self.policy_kinematic_binding_method_id
+                == DIRECT_POLICY_KINEMATIC_BINDING_METHOD_ID
+                and self.fixed_aggregate_joint_bindings
+            )
+            or (
+                self.policy_kinematic_binding_method_id
+                == FIXED_ARM_POLICY_EMBEDDING_METHOD_ID
+                and not self.fixed_aggregate_joint_bindings
+            )
+            or len(set(fixed_names)) != len(fixed_names)
+            or any(
+                not name or not math.isfinite(value)
+                for name, value in self.fixed_aggregate_joint_bindings
+            )
             or link_names != tuple(sorted(link_names))
             or len(set(link_names)) != len(link_names)
             or terminal_names != tuple(sorted(terminal_names))
@@ -1177,7 +1638,7 @@ class ContactRangePolicyCollisionCertificate:
                 )
                 or row.collision_domain
                 != (
-                    "TERMINAL_EXACT_NONPAD_FORBIDDEN_SURFACE"
+                    TERMINAL_DUAL_SURFACE_COLLISION_DOMAIN
                     if expected_terminal
                     else "FULL_LINK_SURFACE"
                 )
@@ -1875,9 +2336,22 @@ def _validate_terminal_bindings(
                 f"partition: {terminal.link_name}"
             )
         collision_domains[terminal.link_name] = forbidden_surface
-        if not partition.formal_collision_eligible:
+        independent_pad_and_shell_roles_complete = (
+            partition.exact_cover_verified
+            and partition.ambiguous_source_face_count == 0
+            and partition.winding_mismatch_face_count == 0
+            and len(partition.pad_allowed) > 0
+            and len(partition.nonpad_forbidden) > 0
+            and partition.same_winding_match_count
+            == len(partition.pad_allowed)
+            and partition.orphan_pad_face_count
+            + partition.same_winding_match_count
+            == partition.pad_face_count
+        )
+        if not independent_pad_and_shell_roles_complete:
             blockers.append(
-                "TERMINAL_PARTITION_NOT_FORMAL_COLLISION_ELIGIBLE:"
+                "TERMINAL_INDEPENDENT_PAD_AND_CLOSED_SHELL_ROLE_BINDING_"
+                "INCOMPLETE:"
                 f"{terminal.link_name}"
             )
     return collision_domains, blockers
@@ -2116,6 +2590,11 @@ def certify_full_hand_contact_range_policy_closure(
     sequential_closure_policy: CertifiedSequentialClosurePolicy,
     v9_audit: RayClosureAudit,
     maximum_subdivision_intervals: int,
+    fixed_arm_policy_embedding: FixedArmPolicyEmbedding | None = None,
+    prepared_static_object_surface: (
+        PreparedStaticTriangleSurface | None
+    ) = None,
+    stop_after_first_unresolved_domain: bool = False,
 ) -> ContactRangePolicyCollisionCertificate:
     """Check every reachable contact-stop closure state conservatively.
 
@@ -2144,6 +2623,21 @@ def certify_full_hand_contact_range_policy_closure(
         raise FullHandCollisionError(
             "contact-range collision budget must be positive"
         )
+    if not isinstance(stop_after_first_unresolved_domain, bool):
+        raise FullHandCollisionError(
+            "contact-range screening stop flag must be boolean"
+        )
+    if prepared_static_object_surface is not None and (
+        type(prepared_static_object_surface)
+        is not PreparedStaticTriangleSurface
+        or prepared_static_object_surface.geometry_sha256
+        != object_surface.geometry_sha256
+        or prepared_static_object_surface.triangle_count
+        != len(object_surface.triangles_object_m)
+    ):
+        raise FullHandCollisionError(
+            "prepared static object surface differs from bound object"
+        )
     link_rows = tuple(link_surfaces)
     terminal_rows = tuple(terminal_forbidden_surfaces)
     if not link_rows or not all(
@@ -2164,13 +2658,87 @@ def certify_full_hand_contact_range_policy_closure(
         raise FullHandCollisionError(
             "contact-range collision surfaces do not match the inventory"
         )
-    segments, support_phases = _validate_contact_range_policy_binding(
-        backend=backend,
-        policy=sequential_closure_policy,
-        audit=v9_audit,
-        object_surface=object_surface,
-        terminal_surfaces=terminal_rows,
-    )
+    if fixed_arm_policy_embedding is None:
+        segments, support_phases = _validate_contact_range_policy_binding(
+            backend=backend,
+            policy=sequential_closure_policy,
+            audit=v9_audit,
+            object_surface=object_surface,
+            terminal_surfaces=terminal_rows,
+        )
+        initial = np.asarray(
+            sequential_closure_policy.initial_independent_joint_positions_rad,
+            dtype=np.float64,
+        )
+        directions = tuple(
+            np.asarray(row, dtype=np.float64)
+            for row in sequential_closure_policy.closing_directions_physical
+        )
+        object_from_hand = np.asarray(
+            sequential_closure_policy.object_from_hand,
+            dtype=np.float64,
+        ).reshape(4, 4)
+        direct_document = {
+            "method_id": DIRECT_POLICY_KINEMATIC_BINDING_METHOD_ID,
+            "policy_sha256": sequential_closure_policy.policy_sha256,
+            "model_manifest_sha256": _model_manifest_sha256(
+                backend.hand_model
+            ),
+        }
+        policy_kinematic_binding_method_id = (
+            DIRECT_POLICY_KINEMATIC_BINDING_METHOD_ID
+        )
+        policy_kinematic_binding_sha256 = hashlib.sha256(
+            _canonical_json(direct_document).encode("utf-8")
+        ).hexdigest()
+        fixed_aggregate_joint_bindings: tuple[tuple[str, float], ...] = ()
+    else:
+        if not isinstance(fixed_arm_policy_embedding, FixedArmPolicyEmbedding):
+            raise FullHandCollisionError(
+                "fixed-arm policy embedding has an invalid type"
+            )
+        rebuilt_embedding = build_fixed_arm_policy_embedding(
+            source_backend=fixed_arm_policy_embedding.source_backend,
+            aggregate_backend=backend,
+            sequential_closure_policy=sequential_closure_policy,
+            fixed_aggregate_only_joint_positions_rad=(
+                fixed_arm_policy_embedding.fixed_aggregate_only_joint_positions_rad
+            ),
+        )
+        if rebuilt_embedding.certificate_sha256 != (
+            fixed_arm_policy_embedding.certificate_sha256
+        ):
+            raise FullHandCollisionError(
+                "fixed-arm policy embedding no longer matches current models"
+            )
+        segments, support_phases = _validate_contact_range_policy_binding(
+            backend=rebuilt_embedding.source_backend,
+            policy=sequential_closure_policy,
+            audit=v9_audit,
+            object_surface=object_surface,
+            terminal_surfaces=terminal_rows,
+        )
+        initial = np.asarray(
+            rebuilt_embedding.embedded_initial_joint_positions_rad,
+            dtype=np.float64,
+        )
+        directions = tuple(
+            np.asarray(row, dtype=np.float64)
+            for row in rebuilt_embedding.embedded_closing_directions_physical
+        )
+        object_from_hand = np.asarray(
+            rebuilt_embedding.object_from_aggregate_base,
+            dtype=np.float64,
+        )
+        policy_kinematic_binding_method_id = (
+            FIXED_ARM_POLICY_EMBEDDING_METHOD_ID
+        )
+        policy_kinematic_binding_sha256 = (
+            rebuilt_embedding.certificate_sha256
+        )
+        fixed_aggregate_joint_bindings = (
+            rebuilt_embedding.fixed_aggregate_only_joint_positions_rad
+        )
     if set(row.active_link_name for row in segments) != set(terminal_by_name):
         raise FullHandCollisionError(
             "contact-range policy PAD links differ from terminal partitions"
@@ -2188,25 +2756,28 @@ def certify_full_hand_contact_range_policy_closure(
         )
         for name in self_pair_inventory.link_names
     }
-    initial = np.asarray(
-        sequential_closure_policy.initial_independent_joint_positions_rad,
-        dtype=np.float64,
-    )
-    directions = tuple(
-        np.asarray(row, dtype=np.float64)
-        for row in sequential_closure_policy.closing_directions_physical
-    )
     zero_direction = np.zeros_like(initial)
     zero_phase = IntervalBounds(0.0, 0.0)
-    object_from_hand = np.asarray(
-        sequential_closure_policy.object_from_hand,
-        dtype=np.float64,
-    ).reshape(4, 4)
     remaining_budget = maximum_subdivision_intervals
     link_object_children: list[PolicyLinkObjectPathCertificate] = []
     self_pair_children: list[PolicySelfPairPathCertificate] = []
+    prepared_object_surface = (
+        prepare_static_triangle_surface(
+            object_surface.triangles_object_m,
+            expected_geometry_sha256=object_surface.geometry_sha256,
+        )
+        if prepared_static_object_surface is None
+        else prepared_static_object_surface
+    )
+    screening_stopped = False
 
     for link_name in self_pair_inventory.link_names:
+        if screening_stopped:
+            blockers.append(
+                "POLICY_SCREENING_SHORT_CIRCUIT_UNVISITED_LINK_OBJECT:"
+                f"{link_name}"
+            )
+            continue
         if remaining_budget == 0:
             blockers.append(
                 "POLICY_SHARED_BUDGET_EXHAUSTED_BEFORE_LINK_OBJECT:"
@@ -2233,7 +2804,7 @@ def certify_full_hand_contact_range_policy_closure(
             phase=phase,
             object_from_hand_base=object_from_hand,
             moving_triangles_link_m=surface.triangles_link_m,
-            static_triangles_object_m=object_surface.triangles_object_m,
+            static_triangles_object_m=prepared_object_surface,
             maximum_subdivision_intervals=remaining_budget,
         )
         remaining_budget -= child.audit.processed_interval_count
@@ -2242,7 +2813,7 @@ def certify_full_hand_contact_range_policy_closure(
                 link_name=link_name,
                 closure_support_index=support_index,
                 collision_domain=(
-                    "TERMINAL_EXACT_NONPAD_FORBIDDEN_SURFACE"
+                    TERMINAL_DUAL_SURFACE_COLLISION_DOMAIN
                     if link_name in terminal_by_name
                     else "FULL_LINK_SURFACE"
                 ),
@@ -2254,8 +2825,20 @@ def certify_full_hand_contact_range_policy_closure(
                 "POLICY_LINK_OBJECT_RANGE_UNRESOLVED:"
                 f"{link_name}:{child.audit.unresolved_reason}"
             )
+            if stop_after_first_unresolved_domain:
+                blockers.append(
+                    "POLICY_SCREENING_SHORT_CIRCUIT_AFTER_LINK_OBJECT:"
+                    f"{link_name}"
+                )
+                screening_stopped = True
 
     for first_link, second_link in self_pair_inventory.all_pairs:
+        if screening_stopped:
+            blockers.append(
+                "POLICY_SCREENING_SHORT_CIRCUIT_UNVISITED_SELF_PAIR:"
+                f"{first_link}:{second_link}"
+            )
+            continue
         if remaining_budget == 0:
             blockers.append(
                 "POLICY_SHARED_BUDGET_EXHAUSTED_BEFORE_SELF_PAIR:"
@@ -2340,6 +2923,12 @@ def certify_full_hand_contact_range_policy_closure(
                 f"{first_link}:{second_link}:"
                 f"{child_pair.audit.unresolved_reason}"
             )
+            if stop_after_first_unresolved_domain:
+                blockers.append(
+                    "POLICY_SCREENING_SHORT_CIRCUIT_AFTER_SELF_PAIR:"
+                    f"{first_link}:{second_link}"
+                )
+                screening_stopped = True
 
     for segment in segments:
         blockers.append(
@@ -2389,6 +2978,11 @@ def certify_full_hand_contact_range_policy_closure(
             object_surface.ray_closure_object_geometry_sha256
         ),
         ray_model_contract_sha256=v9_audit.model_contract_sha256,
+        policy_kinematic_binding_method_id=(
+            policy_kinematic_binding_method_id
+        ),
+        policy_kinematic_binding_sha256=policy_kinematic_binding_sha256,
+        fixed_aggregate_joint_bindings=fixed_aggregate_joint_bindings,
         link_surface_bindings=ordered_link_bindings,
         terminal_partition_bindings=ordered_terminal_bindings,
         self_pair_inventory_sha256=self_pair_inventory.inventory_sha256,
@@ -2532,6 +3126,10 @@ def certify_full_hand_sequential_closure(
     link_object_certificates: list[LinkObjectPathCertificate] = []
     self_pair_certificates: list[SelfPairPathCertificate] = []
     segment_budget_usage: list[tuple[int, int, int]] = []
+    prepared_object_surface = prepare_static_triangle_surface(
+        object_surface.triangles_object_m,
+        expected_geometry_sha256=object_surface.geometry_sha256,
+    )
 
     for segment in segment_rows:
         remaining_budget = segment.maximum_subdivision_intervals
@@ -2551,7 +3149,7 @@ def certify_full_hand_sequential_closure(
                 phase=segment.phase,
                 object_from_hand_base=object_from_hand,
                 moving_triangles_link_m=surface.triangles_link_m,
-                static_triangles_object_m=object_surface.triangles_object_m,
+                static_triangles_object_m=prepared_object_surface,
                 maximum_subdivision_intervals=remaining_budget,
             )
             remaining_budget -= child.audit.processed_interval_count
@@ -2565,7 +3163,7 @@ def certify_full_hand_sequential_closure(
                     "moving/static child certificate changed a bound surface"
                 )
             collision_domain = (
-                "TERMINAL_EXACT_NONPAD_FORBIDDEN_SURFACE"
+                TERMINAL_DUAL_SURFACE_COLLISION_DOMAIN
                 if link_name in terminal_by_name
                 else "FULL_LINK_SURFACE"
             )
@@ -2743,8 +3341,11 @@ __all__ = [
     "CONTACT_RANGE_POLICY_CLAIM_LIMITATIONS",
     "CONTACT_RANGE_POLICY_MANDATORY_BLOCKERS",
     "CONTACT_RANGE_POLICY_METHOD_ID",
+    "DIRECT_POLICY_KINEMATIC_BINDING_METHOD_ID",
+    "FIXED_ARM_POLICY_EMBEDDING_METHOD_ID",
     "ContactRangePolicyCollisionAudit",
     "ContactRangePolicyCollisionCertificate",
+    "FixedArmPolicyEmbedding",
     "FullHandClosureCollisionAudit",
     "FullHandClosureCollisionCertificate",
     "FullHandClosureCollisionState",
@@ -2757,9 +3358,11 @@ __all__ = [
     "PolicyLinkObjectPathCertificate",
     "PolicySelfPairPathCertificate",
     "SURFACE_HASH_METHOD_ID",
+    "TERMINAL_DUAL_SURFACE_COLLISION_DOMAIN",
     "SelfPairPathCertificate",
     "SequentialClosureSegment",
     "TerminalForbiddenSurface",
+    "build_fixed_arm_policy_embedding",
     "certify_full_hand_contact_range_policy_closure",
     "certify_full_hand_sequential_closure",
     "triangle_surface_geometry_sha256",
