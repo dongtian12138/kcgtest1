@@ -43,6 +43,7 @@ from kcg_connector.grasp.robust.ray_closure import (
     POSSIBLE_EARLIEST_ORDERING_POLICY,
     POSSIBLE_FIRST_CONTACT_SET_METHOD_ID,
     RayClosureAudit,
+    WHOLE_PATH_SPHERE_SCREEN_RULE,
 )
 from kcg_connector.grasp.robust.robust_wrench import (
     LinearProgramSolverOptions,
@@ -226,6 +227,11 @@ def _bound_audit(
                 CANDIDATE_REPRESENTATIVE_ROLE
             ),
             "display_approximation_role": DISPLAY_APPROXIMATION_ROLE,
+            "whole_path_sphere_screen_rule": WHOLE_PATH_SPHERE_SCREEN_RULE,
+            "whole_path_sphere_segment_count": 8,
+            "pad_surface_sphere_hierarchy_maximum_depth": 3,
+            "pad_surface_aabb_maximum_temporal_refinement_depth": 2,
+            "pad_surface_aabb_maximum_moving_triangle_pair_tests_per_coverage": 4096,
         },
         "interval_backend": {
             "method_id": interval_method,

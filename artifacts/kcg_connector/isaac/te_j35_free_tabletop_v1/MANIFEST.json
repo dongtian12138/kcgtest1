@@ -1,0 +1,67 @@
+{
+  "asset": "artifacts/kcg_connector/isaac/te_j35_free_tabletop_v1/TE_J35_FREE_PLUG_V1.usdc",
+  "asset_sha256": "231d589b17ffbef9224344ec304826e5110abf0ed2d5b18a0f96e888d88d7f99",
+  "collision": {
+    "hull_count": 64,
+    "maximum_hulls": 64,
+    "method": "COACD_FROM_COMPLETE_SUPPLIER_STEP_TESSELLATION",
+    "primitive_proxy_used": false,
+    "seed": 20260823,
+    "threshold": 0.05,
+    "triangle_count": 10384,
+    "vertex_count": 5320
+  },
+  "hardware_authorized": false,
+  "mass_properties": {
+    "center_of_mass_m": [
+      3.365474753784657e-06,
+      1.4076390705697609e-06,
+      -0.018135482728838782
+    ],
+    "inertia_kg_m2": [
+      [
+        5.698805727194725e-05,
+        1.185306845363542e-08,
+        -9.595396905519128e-09
+      ],
+      [
+        1.185306845363542e-08,
+        5.6940768135692836e-05,
+        -2.4688461517648374e-08
+      ],
+      [
+        -9.595396905519128e-09,
+        -2.4688461517648374e-08,
+        8.219210715431107e-05
+      ]
+    ],
+    "mass_kg": 0.31,
+    "method": "UNIFORM_DENSITY_EQUIVALENT_FROM_WATERTIGHT_STEP_TESSELLATION",
+    "source": "INITIAL_SIMULATION_VALUE_NOT_VENDOR_MEASUREMENT"
+  },
+  "product_id": "D38999/26FJ35PN",
+  "schema_version": "kcg_te_j35_free_tabletop_asset_v1",
+  "source_mesh": {
+    "bounds_m": [
+      [
+        -0.02345891761779785,
+        -0.02345891761779785,
+        -0.031013399124145507
+      ],
+      [
+        0.02345891761779785,
+        0.02345891761779785,
+        0.0
+      ]
+    ],
+    "triangle_count": 687036,
+    "vertex_count": 343520,
+    "watertight": true,
+    "winding_consistent": true
+  },
+  "source_step_class": "OFFICIAL_TE_CUSTOMER_VIEW_MODEL_STEP",
+  "source_stl": "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_VISUAL.stl",
+  "source_stl_sha256": "89bbf4ba3b8b5fb388276a378a820bb7547e676e97f0b9e2635b7862a86aa617",
+  "visual_usd": "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_VISUAL.usdc",
+  "visual_usd_sha256": "db4fd462fba59a347e0760e61499557452806ee4231d9cb5c8079218e557777b"
+}

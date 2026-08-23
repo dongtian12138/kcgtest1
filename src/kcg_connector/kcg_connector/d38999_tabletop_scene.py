@@ -1075,6 +1075,166 @@ def verify_d38999_tabletop_asset(
     return path
 
 
+def _author_static_cube(stage, path, center, size, color, *, Gf, UsdGeom, UsdPhysics):
+    cube = UsdGeom.Cube.Define(stage, path)
+    cube.CreateSizeAttr(1.0)
+    cube.CreateDisplayColorAttr([Gf.Vec3f(*color)])
+    transform = UsdGeom.Xformable(cube)
+    transform.AddTranslateOp().Set(Gf.Vec3d(*center))
+    transform.AddScaleOp().Set(Gf.Vec3f(*size))
+    UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
+    return cube.GetPrim()
+
+
+def _author_unscaled_rigid_box_mesh(
+    stage, path, center, size, color, *, Gf, UsdGeom, UsdPhysics
+):
+    half_x, half_y, half_z = (0.5 * float(value) for value in size)
+    points = [
+        Gf.Vec3f(-half_x, -half_y, -half_z),
+        Gf.Vec3f(half_x, -half_y, -half_z),
+        Gf.Vec3f(half_x, half_y, -half_z),
+        Gf.Vec3f(-half_x, half_y, -half_z),
+        Gf.Vec3f(-half_x, -half_y, half_z),
+        Gf.Vec3f(half_x, -half_y, half_z),
+        Gf.Vec3f(half_x, half_y, half_z),
+        Gf.Vec3f(-half_x, half_y, half_z),
+    ]
+    mesh = UsdGeom.Mesh.Define(stage, path)
+    mesh.CreatePointsAttr(points)
+    mesh.CreateFaceVertexCountsAttr([4, 4, 4, 4, 4, 4])
+    mesh.CreateFaceVertexIndicesAttr(
+        [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 1, 2, 6, 5,
+         2, 3, 7, 6, 3, 0, 4, 7]
+    )
+    mesh.CreateExtentAttr(
+        [Gf.Vec3f(-half_x, -half_y, -half_z), Gf.Vec3f(half_x, half_y, half_z)]
+    )
+    mesh.CreateSubdivisionSchemeAttr(UsdGeom.Tokens.none)
+    mesh.CreateDisplayColorAttr([Gf.Vec3f(*color)])
+    UsdGeom.Xformable(mesh).AddTranslateOp().Set(Gf.Vec3d(*center))
+    prim = mesh.GetPrim()
+    UsdPhysics.CollisionAPI.Apply(prim)
+    UsdPhysics.MeshCollisionAPI.Apply(prim).CreateApproximationAttr().Set("convexHull")
+    return prim
+
+
+def _bind_fixture_physics(
+    stage, config, fixture_prim, *, Gf, Sdf, UsdPhysics, UsdShade, physics_utils
+):
+    material_path = config.world.root_prim_path + "/FixtureAndReceptacleMaterial"
+    if config.asset_profile.profile_id not in _PHYSICAL_PROFILE_IDS:
+        physics_utils.add_physics_material_to_prim(
+            stage, fixture_prim, Sdf.Path(config.world.physics_material_prim_path)
+        )
+        if fixture_prim.HasAPI(UsdPhysics.RigidBodyAPI):
+            raise RuntimeError("legacy static fixture became dynamic")
+        return config.world.physics_material_prim_path
+    material = UsdShade.Material.Define(stage, material_path)
+    api = UsdPhysics.MaterialAPI.Apply(material.GetPrim())
+    api.CreateStaticFrictionAttr(0.35)
+    api.CreateDynamicFrictionAttr(0.25)
+    api.CreateRestitutionAttr(0.0)
+    physics_utils.add_physics_material_to_prim(
+        stage, fixture_prim, Sdf.Path(material_path)
+    )
+    if config.asset_profile.profile_id in _FIXTURE_JOINT_PROFILE_IDS:
+        rigid = UsdPhysics.RigidBodyAPI.Apply(fixture_prim)
+        rigid.CreateRigidBodyEnabledAttr(True)
+        rigid.CreateKinematicEnabledAttr(False)
+        mass = UsdPhysics.MassAPI.Apply(fixture_prim)
+        mass.CreateMassAttr(5.0)
+        mass.CreateCenterOfMassAttr(Gf.Vec3f(0.0, 0.0, 0.0))
+        mass.CreateDiagonalInertiaAttr(
+            Gf.Vec3f(0.0088333333333, 0.0088333333333, 0.0163333333333)
+        )
+        mass.CreatePrincipalAxesAttr(Gf.Quatf(1.0))
+    return material_path
+
+
+def _author_finite_table(
+    stage, config, *, Gf, Sdf, UsdGeom, UsdPhysics, UsdShade, physics_utils
+):
+    material = UsdShade.Material.Define(stage, config.world.physics_material_prim_path)
+    material_api = UsdPhysics.MaterialAPI.Apply(material.GetPrim())
+    material_api.CreateStaticFrictionAttr(config.table.static_friction)
+    material_api.CreateDynamicFrictionAttr(config.table.dynamic_friction)
+    material_api.CreateRestitutionAttr(config.table.restitution)
+    table_prim = _author_static_cube(
+        stage, config.table.prim_path, config.table.center_m, config.table.size_m,
+        config.table.color_rgb, Gf=Gf, UsdGeom=UsdGeom, UsdPhysics=UsdPhysics
+    )
+    physics_utils.add_physics_material_to_prim(
+        stage, table_prim, Sdf.Path(config.world.physics_material_prim_path)
+    )
+    if table_prim.HasAPI(UsdPhysics.RigidBodyAPI):
+        raise RuntimeError("static tabletop collider became dynamic")
+
+
+def _fix_fixture_to_world(stage, config, *, Gf, Sdf, UsdGeom, UsdPhysics):
+    if config.asset_profile.profile_id not in _FIXTURE_JOINT_PROFILE_IDS:
+        return None
+    joints_root = config.world.root_prim_path + "/Joints"
+    UsdGeom.Scope.Define(stage, joints_root)
+    path = joints_root + "/FixtureToWorld"
+    joint = UsdPhysics.FixedJoint.Define(stage, path)
+    joint.CreateBody0Rel().SetTargets([])
+    joint.CreateBody1Rel().SetTargets([Sdf.Path(config.fixed_endpoint.fixture_prim_path)])
+    joint.CreateLocalPos0Attr(Gf.Vec3f(*config.fixed_endpoint.fixture_center_m))
+    joint.CreateLocalRot0Attr(Gf.Quatf(1.0))
+    joint.CreateLocalPos1Attr(Gf.Vec3f(0.0, 0.0, 0.0))
+    joint.CreateLocalRot1Attr(Gf.Quatf(1.0))
+    joint.CreateJointEnabledAttr(True)
+    joint.CreateExcludeFromArticulationAttr(False)
+    joint.CreateCollisionEnabledAttr(False)
+    return path
+
+
+def author_d38999_tabletop_environment(
+    stage: Any,
+    config: D38999TabletopScene,
+    *,
+    Gf: Any,
+    Sdf: Any,
+    UsdGeom: Any,
+    UsdPhysics: Any,
+    UsdShade: Any,
+    physics_utils: Any,
+) -> dict[str, Any]:
+    """Author the shared finite table and fixed fixture before physics starts."""
+    if stage.GetPrimAtPath(config.world.root_prim_path).IsValid():
+        raise RuntimeError("D38999 tabletop root already exists")
+    UsdGeom.Xform.Define(stage, config.world.root_prim_path)
+    _author_finite_table(
+        stage, config, Gf=Gf, Sdf=Sdf, UsdGeom=UsdGeom, UsdPhysics=UsdPhysics,
+        UsdShade=UsdShade, physics_utils=physics_utils,
+    )
+    fixture_author = (
+        _author_unscaled_rigid_box_mesh
+        if config.asset_profile.profile_id in _FIXTURE_JOINT_PROFILE_IDS
+        else _author_static_cube
+    )
+    fixture_prim = fixture_author(
+        stage, config.fixed_endpoint.fixture_prim_path,
+        config.fixed_endpoint.fixture_center_m, config.fixed_endpoint.fixture_size_m,
+        config.fixed_endpoint.fixture_color_rgb,
+        Gf=Gf, UsdGeom=UsdGeom, UsdPhysics=UsdPhysics,
+    )
+    fixture_material_path = _bind_fixture_physics(
+        stage, config, fixture_prim, Gf=Gf, Sdf=Sdf, UsdPhysics=UsdPhysics,
+        UsdShade=UsdShade, physics_utils=physics_utils,
+    )
+    fixture_world_path = _fix_fixture_to_world(
+        stage, config, Gf=Gf, Sdf=Sdf, UsdGeom=UsdGeom, UsdPhysics=UsdPhysics
+    )
+    return {
+        "table_prim_path": config.table.prim_path,
+        "fixture_prim_path": config.fixed_endpoint.fixture_prim_path,
+        "fixture_material_prim_path": fixture_material_path,
+        "fixture_to_world_joint_path": fixture_world_path,
+    }
+
+
 def author_d38999_tabletop_scene(
     stage: Any,
     config: D38999TabletopScene,
@@ -1101,147 +1261,18 @@ def author_d38999_tabletop_scene(
         or not asset.is_file()
     ):
         raise ValueError("unexpected D38999 tabletop asset")
-    if stage.GetPrimAtPath(config.world.root_prim_path).IsValid():
-        raise RuntimeError("D38999 tabletop root already exists")
-    UsdGeom.Xform.Define(stage, config.world.root_prim_path)
-
-    def static_cube(path, center, size, color):
-        cube = UsdGeom.Cube.Define(stage, path)
-        cube.CreateSizeAttr(1.0)
-        cube.CreateDisplayColorAttr([Gf.Vec3f(*color)])
-        transform = UsdGeom.Xformable(cube)
-        transform.AddTranslateOp().Set(Gf.Vec3d(*center))
-        transform.AddScaleOp().Set(Gf.Vec3f(*size))
-        UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
-        return cube.GetPrim()
-
-    def unscaled_rigid_box_mesh(path, center, size, color):
-        """Author an actual-size box whose rigid frame has no scale op.
-
-        Joint anchors are expressed in a rigid body's local frame.  Placing a
-        non-uniform scale on that same prim changes the interpretation of the
-        anchor coordinates and can make PhysX repair a disjoint fixed joint on
-        the first step.  The physical-r7 fixture therefore carries its metric
-        dimensions in mesh points and has translation as its only xform op.
-        """
-
-        half_x, half_y, half_z = (0.5 * float(value) for value in size)
-        points = [
-            Gf.Vec3f(-half_x, -half_y, -half_z),
-            Gf.Vec3f(half_x, -half_y, -half_z),
-            Gf.Vec3f(half_x, half_y, -half_z),
-            Gf.Vec3f(-half_x, half_y, -half_z),
-            Gf.Vec3f(-half_x, -half_y, half_z),
-            Gf.Vec3f(half_x, -half_y, half_z),
-            Gf.Vec3f(half_x, half_y, half_z),
-            Gf.Vec3f(-half_x, half_y, half_z),
-        ]
-        mesh = UsdGeom.Mesh.Define(stage, path)
-        mesh.CreatePointsAttr(points)
-        mesh.CreateFaceVertexCountsAttr([4, 4, 4, 4, 4, 4])
-        mesh.CreateFaceVertexIndicesAttr(
-            [
-                0, 3, 2, 1,
-                4, 5, 6, 7,
-                0, 1, 5, 4,
-                1, 2, 6, 5,
-                2, 3, 7, 6,
-                3, 0, 4, 7,
-            ]
-        )
-        mesh.CreateExtentAttr(
-            [
-                Gf.Vec3f(-half_x, -half_y, -half_z),
-                Gf.Vec3f(half_x, half_y, half_z),
-            ]
-        )
-        mesh.CreateSubdivisionSchemeAttr(UsdGeom.Tokens.none)
-        mesh.CreateDisplayColorAttr([Gf.Vec3f(*color)])
-        UsdGeom.Xformable(mesh).AddTranslateOp().Set(Gf.Vec3d(*center))
-        prim = mesh.GetPrim()
-        UsdPhysics.CollisionAPI.Apply(prim)
-        mesh_collision = UsdPhysics.MeshCollisionAPI.Apply(prim)
-        mesh_collision.CreateApproximationAttr().Set("convexHull")
-        return prim
-
-    table_material = UsdShade.Material.Define(
-        stage, config.world.physics_material_prim_path
-    )
-    table_material_api = UsdPhysics.MaterialAPI.Apply(
-        table_material.GetPrim()
-    )
-    table_material_api.CreateStaticFrictionAttr(config.table.static_friction)
-    table_material_api.CreateDynamicFrictionAttr(config.table.dynamic_friction)
-    table_material_api.CreateRestitutionAttr(config.table.restitution)
-    table_prim = static_cube(
-        config.table.prim_path,
-        config.table.center_m,
-        config.table.size_m,
-        config.table.color_rgb,
-    )
-    if config.asset_profile.profile_id in _FIXTURE_JOINT_PROFILE_IDS:
-        fixture_prim = unscaled_rigid_box_mesh(
-            config.fixed_endpoint.fixture_prim_path,
-            config.fixed_endpoint.fixture_center_m,
-            config.fixed_endpoint.fixture_size_m,
-            config.fixed_endpoint.fixture_color_rgb,
-        )
-    else:
-        fixture_prim = static_cube(
-            config.fixed_endpoint.fixture_prim_path,
-            config.fixed_endpoint.fixture_center_m,
-            config.fixed_endpoint.fixture_size_m,
-            config.fixed_endpoint.fixture_color_rgb,
-        )
-    physics_utils.add_physics_material_to_prim(
+    environment = author_d38999_tabletop_environment(
         stage,
-        table_prim,
-        Sdf.Path(config.world.physics_material_prim_path),
+        config,
+        Gf=Gf,
+        Sdf=Sdf,
+        UsdGeom=UsdGeom,
+        UsdPhysics=UsdPhysics,
+        UsdShade=UsdShade,
+        physics_utils=physics_utils,
     )
-    if table_prim.HasAPI(UsdPhysics.RigidBodyAPI):
-        raise RuntimeError("static tabletop collider became dynamic")
-
-    fixture_material_path = (
-        config.world.root_prim_path + "/FixtureAndReceptacleMaterial"
-    )
-    if config.asset_profile.profile_id in _PHYSICAL_PROFILE_IDS:
-        fixture_material = UsdShade.Material.Define(
-            stage, fixture_material_path
-        )
-        fixture_material_api = UsdPhysics.MaterialAPI.Apply(
-            fixture_material.GetPrim()
-        )
-        fixture_material_api.CreateStaticFrictionAttr(0.35)
-        fixture_material_api.CreateDynamicFrictionAttr(0.25)
-        fixture_material_api.CreateRestitutionAttr(0.0)
-        physics_utils.add_physics_material_to_prim(
-            stage,
-            fixture_prim,
-            Sdf.Path(fixture_material_path),
-        )
-        if config.asset_profile.profile_id in _FIXTURE_JOINT_PROFILE_IDS:
-            fixture_rigid = UsdPhysics.RigidBodyAPI.Apply(fixture_prim)
-            fixture_rigid.CreateRigidBodyEnabledAttr(True)
-            fixture_rigid.CreateKinematicEnabledAttr(False)
-            fixture_mass = UsdPhysics.MassAPI.Apply(fixture_prim)
-            fixture_mass.CreateMassAttr(5.0)
-            fixture_mass.CreateCenterOfMassAttr(Gf.Vec3f(0.0, 0.0, 0.0))
-            fixture_mass.CreateDiagonalInertiaAttr(
-                Gf.Vec3f(
-                    0.0088333333333,
-                    0.0088333333333,
-                    0.0163333333333,
-                )
-            )
-            fixture_mass.CreatePrincipalAxesAttr(Gf.Quatf(1.0))
-    else:
-        physics_utils.add_physics_material_to_prim(
-            stage,
-            fixture_prim,
-            Sdf.Path(config.world.physics_material_prim_path),
-        )
-        if fixture_prim.HasAPI(UsdPhysics.RigidBodyAPI):
-            raise RuntimeError("legacy static fixture became dynamic")
+    fixture_material_path = environment["fixture_material_prim_path"]
+    fixture_world_path = environment["fixture_to_world_joint_path"]
 
     add_reference_to_stage(str(asset), config.asset.reference_prim_path)
     if config.asset_profile.profile_id in _PHYSICAL_PROFILE_IDS:
@@ -1330,26 +1361,7 @@ def author_d38999_tabletop_scene(
 
     if config.asset_profile.profile_id in _FIXTURE_JOINT_PROFILE_IDS:
         joints_root = config.world.root_prim_path + "/Joints"
-        UsdGeom.Scope.Define(stage, joints_root)
-        fixture_world_path = joints_root + "/FixtureToWorld"
         receptacle_fixture_path = joints_root + "/ReceptacleToFixture"
-
-        fixture_world = UsdPhysics.FixedJoint.Define(
-            stage, fixture_world_path
-        )
-        fixture_world.CreateBody0Rel().SetTargets([])
-        fixture_world.CreateBody1Rel().SetTargets(
-            [Sdf.Path(config.fixed_endpoint.fixture_prim_path)]
-        )
-        fixture_world.CreateLocalPos0Attr(
-            Gf.Vec3f(*config.fixed_endpoint.fixture_center_m)
-        )
-        fixture_world.CreateLocalRot0Attr(Gf.Quatf(1.0))
-        fixture_world.CreateLocalPos1Attr(Gf.Vec3f(0.0, 0.0, 0.0))
-        fixture_world.CreateLocalRot1Attr(Gf.Quatf(1.0))
-        fixture_world.CreateJointEnabledAttr(True)
-        fixture_world.CreateExcludeFromArticulationAttr(False)
-        fixture_world.CreateCollisionEnabledAttr(False)
 
         receptacle_fixture = UsdPhysics.FixedJoint.Define(
             stage, receptacle_fixture_path
@@ -1417,6 +1429,7 @@ __all__ = [
     "D38999_TABLETOP_SCHEMA_VERSION_MULTILAYER_GRASP",
     "D38999TabletopAssetProfile",
     "D38999TabletopScene",
+    "author_d38999_tabletop_environment",
     "author_d38999_tabletop_scene",
     "load_d38999_tabletop_scene",
     "verify_d38999_tabletop_asset",

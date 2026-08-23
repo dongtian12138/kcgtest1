@@ -12,22 +12,19 @@ import numpy as np
 import scipy
 
 from kcg_connector.grasp.carts_v2.pipeline import OfflinePipelineResult
+from kcg_connector.grasp.robust.object_model import file_sha256
 from kcg_connector.grasp.carts_v2.task_quality import (
     minimum_jerk_peak_acceleration,
 )
 
 
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
 def _array_sha256(value: np.ndarray) -> str:
     data = np.ascontiguousarray(value, dtype=np.float64)
     return hashlib.sha256(data.tobytes()).hexdigest()
+
+
+def _plain_metric(value: object) -> str:
+    return "不可用" if value is None else f"{float(value):.3f}"
 
 
 def _quality_map(result: OfflinePipelineResult):
@@ -47,6 +44,7 @@ def _candidate_rows(result: OfflinePipelineResult):
         fast_filter = filters[candidate_id]
         yield {
             "candidate_id": candidate_id,
+            "source_sample_index": prediction.seed.source_sample_index,
             "anchor_face_index": prediction.seed.anchor_face_index,
             "anchor_position_object_m": " ".join(
                 f"{value:.9g}" for value in prediction.seed.anchor_position_object_m
@@ -61,6 +59,15 @@ def _candidate_rows(result: OfflinePipelineResult):
             ),
             "fast_filter": fast_filter.status,
             "fast_reasons": " | ".join(fast_filter.reasons),
+            "sampled_hand_table_clearance_m": (
+                fast_filter.sampled_hand_table_clearance_m
+            ),
+            "sampled_hand_table_clearance_link": (
+                fast_filter.sampled_hand_table_clearance_link
+            ),
+            "sampled_hand_table_clearance_stage": (
+                fast_filter.sampled_hand_table_clearance_stage
+            ),
             "unresolved_checks": " | ".join(fast_filter.unresolved_checks),
             "task_status": "NOT_EVALUATED" if metric is None else metric.status,
             "worst_task_margin": "" if metric is None else metric.worst_task_margin,
@@ -124,6 +131,15 @@ def _selected_json(result: OfflinePipelineResult) -> list[dict[str, object]]:
                 "wrist_load_utilization": quality.wrist_load_utilization,
                 "wrist_load_utilization_source": "UNKNOWN",
                 "path_minimum_clearance_m": selected.path_minimum_clearance_m,
+                "path_minimum_clearance_interpretation": (
+                    "SAMPLED_HAND_LINK_TO_FINITE_TABLE_NOT_CONTINUOUS_OR_ARM_COMPLETE"
+                ),
+                "minimum_clearance_link": (
+                    selected.fast_filter.sampled_hand_table_clearance_link
+                ),
+                "minimum_clearance_stage": (
+                    selected.fast_filter.sampled_hand_table_clearance_stage
+                ),
                 "exact_validation_status": exact.status,
                 "exact_validation_reason": exact.reason,
                 "exact_backend_invoked": exact.backend_invoked,
@@ -217,18 +233,7 @@ def _write_preview(result: OfflinePipelineResult, path: Path) -> None:
     plt.close(figure)
 
 
-def write_offline_report(
-    result: OfflinePipelineResult, output_directory: Path | str
-) -> dict[str, Path]:
-    output = Path(output_directory)
-    output.mkdir(parents=True, exist_ok=True)
-    csv_path = output / "candidates.csv"
-    rows = list(_candidate_rows(result))
-    with csv_path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=tuple(rows[0]))
-        writer.writeheader()
-        writer.writerows(rows)
-
+def _result_document(result: OfflinePipelineResult) -> dict[str, object]:
     filters = result.fast_filter_results
     task_settings = result.inputs.config.section("task_quality")
     dynamic_settings = result.inputs.config.section("dynamic")
@@ -237,27 +242,42 @@ def write_offline_report(
     gravity = float(task_settings["gravity_acceleration_m_s2"])
     lift_acceleration = minimum_jerk_peak_acceleration(
         float(dynamic_settings["lift_distance_m"]),
-        float(task_settings["lift_duration_s"]),
+        float(dynamic_settings["lift_duration_s"]),
     )
     force_scale = mass * gravity
     moment_scale = force_scale * float(
         result.inputs.object_contract.characteristic_radius_m
     )
-    document = {
+    return {
         "schema_version": "carts_grasp_v2_offline_result_v1",
         "object_id": result.inputs.object_contract.object_id,
         "config_path": str(result.inputs.config.path),
-        "config_sha256": _sha256(result.inputs.config.path),
+        "config_sha256": file_sha256(result.inputs.config.path),
         "hardware_authorized": False,
         "formal_dynamic_pass": False,
         "research_dynamic_pass": False,
         "face_role_method": result.inputs.face_roles.method,
         "allowed_face_count": int(np.sum(result.inputs.face_roles.face_is_allowed)),
         "candidate_count": len(result.candidates),
+        "candidate_selection_method": (
+            "TABLE_NORMAL_HIGHEST_PER_TASK_AXIS_ANGULAR_BIN_THEN_FPS_FILL"
+        ),
         "closure_survive_count": sum(
             row.status == "CLOSURE_SURVIVE" for row in result.closure_predictions
         ),
         "fast_survive_count": sum(row.status == "FAST_SURVIVE" for row in filters),
+        "fast_filter_table_clearance": {
+            "state_rule": result.inputs.config.section("fast_filter")[
+                "hand_table_state_rule"
+            ],
+            "penetration_tolerance_m": result.inputs.config.section("fast_filter")[
+                "table_penetration_tolerance_m"
+            ],
+            "tolerance_source": result.inputs.config.section("fast_filter")[
+                "table_penetration_tolerance_source"
+            ],
+            "claim_limit": "SAMPLED_FAST_REJECT_NOT_CONTINUOUS_COLLISION_PROOF",
+        },
         "task_survive_count": sum(
             row.status == "TASK_SURVIVE" for row in result.task_quality_results
         ),
@@ -297,14 +317,15 @@ def write_offline_report(
         "timings_s": result.timings_s,
         "top_candidates": _selected_json(result),
     }
-    json_path = output / "result.json"
-    json_path.write_text(
-        json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
 
+
+def _write_summary(
+    result: OfflinePipelineResult,
+    document: dict[str, object],
+    summary_path: Path,
+) -> None:
     top = document["top_candidates"]
     best = top[0] if top else None
-    summary_path = output / "SUMMARY_CN.md"
     summary_path.write_text(
         "# CARTS-Grasp V2 离线摘要\n\n"
         f"一句话结论：生成 {len(result.candidates)} 个真实表面候选，快筛保留 "
@@ -317,8 +338,8 @@ def write_offline_report(
         + (
             "机器人/连接器实际发生：本阶段只运行离线几何与力学，尚未执行抓取。\n\n"
             f"当前最优：{best['candidate_id']}，最差载荷余量 "
-            f"{best['worst_task_margin']:.3f}，较差场景平均余量 "
-            f"{best['lower_tail_mean_margin']:.3f}。\n\n"
+            f"{_plain_metric(best['worst_task_margin'])}，较差场景平均余量 "
+            f"{_plain_metric(best['lower_tail_mean_margin'])}。\n\n"
             if best is not None
             else "当前没有可排序候选。\n\n"
         )
@@ -326,6 +347,29 @@ def write_offline_report(
         "仍不确定：机械臂逆解、非指腹全路径碰撞和腕部负载尚未闭合。\n",
         encoding="utf-8",
     )
+
+
+def write_offline_report(
+    result: OfflinePipelineResult, output_directory: Path | str
+) -> dict[str, Path]:
+    output = Path(output_directory)
+    output.mkdir(parents=True, exist_ok=True)
+    csv_path = output / "candidates.csv"
+    rows = list(_candidate_rows(result))
+    with csv_path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(
+            stream, fieldnames=tuple(rows[0]), lineterminator="\n"
+        )
+        writer.writeheader()
+        writer.writerows(rows)
+
+    document = _result_document(result)
+    json_path = output / "result.json"
+    json_path.write_text(
+        json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    summary_path = output / "SUMMARY_CN.md"
+    _write_summary(result, document, summary_path)
     preview_path = output / "candidate_preview.png"
     _write_preview(result, preview_path)
     return {

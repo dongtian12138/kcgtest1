@@ -11,16 +11,24 @@ from typing import Any, Mapping
 import numpy as np
 import yaml
 
+from kcg_connector.d38999_tabletop_scene import load_d38999_tabletop_scene
 from kcg_connector.grasp.robust.grasp_optimizer import GraspCandidate
 from kcg_connector.grasp.robust.hand_contract import (
     CARTSHandContract,
     load_carts_hand_contract,
 )
-from kcg_connector.grasp.robust.hand_model import ThreeFingerHandModel
+from kcg_connector.grasp.robust.collision_roster import (
+    EXPECTED_INDEPENDENT_JOINTS,
+    AuthoritativeCollisionLinkRoster,
+    build_verified_aggregate_robot_xml,
+    load_authoritative_collision_link_roster,
+)
+from kcg_connector.grasp.robust.hand_model import ThreeFingerHandModel, rpy_rotation
 from kcg_connector.grasp.robust.object_contract import (
     LoadedObjectContract,
     load_object_contract,
 )
+from kcg_connector.grasp.robust.object_model import load_stl_mesh
 
 
 _SCHEMA = "carts_grasp_v2"
@@ -108,12 +116,18 @@ class FaceRoleMap:
 
 @dataclass(frozen=True)
 class V2Inputs:
+    repository_root: Path
     config: CARTSV2Config
     object_contract: LoadedObjectContract
     hand_contract: CARTSHandContract
     hand_model: ThreeFingerHandModel
+    robot_model: ThreeFingerHandModel
     closing_directions: np.ndarray
     face_roles: FaceRoleMap
+    hand_collision_triangles_by_link: Mapping[str, np.ndarray]
+    frozen_world_from_object: np.ndarray
+    table_xy_bounds_m: np.ndarray
+    table_top_z_m: float
 
 
 @dataclass(frozen=True)
@@ -161,6 +175,9 @@ class FastFilterResult:
     status: str
     reasons: tuple[str, ...]
     unresolved_checks: tuple[str, ...]
+    sampled_hand_table_clearance_m: float | None = None
+    sampled_hand_table_clearance_link: str = ""
+    sampled_hand_table_clearance_stage: str = ""
 
 
 @dataclass(frozen=True)
@@ -250,6 +267,14 @@ def load_v2_config(path: Path | str) -> CARTSV2Config:
         or dynamic.get("object_pose_write_after_start_allowed") is not False
     ):
         raise ValueError("V2 dynamic safety and 50 mm / 2 s boundaries changed")
+    fast_filter = value.get("fast_filter", {})
+    if (
+        int(fast_filter.get("approach_path_sample_count", 0)) < 2
+        or float(fast_filter.get("table_penetration_tolerance_m", -1.0)) < 0.0
+        or fast_filter.get("table_penetration_tolerance_source")
+        != "NUMERICAL_TOLERANCE"
+    ):
+        raise ValueError("V2 sampled table-clearance boundary changed")
     return CARTSV2Config(config_path, MappingProxyType(dict(value)))
 
 
@@ -321,6 +346,70 @@ def build_face_role_map(
     )
 
 
+def _load_hand_collision_triangles(
+    roster: AuthoritativeCollisionLinkRoster, hand: ThreeFingerHandModel
+) -> Mapping[str, np.ndarray]:
+    reachable = {hand.base_link}
+    reachable.update(joint.child_link for joint in hand.joints.values())
+    expected = reachable - set(roster.excluded_noncollision_links)
+    result: dict[str, np.ndarray] = {}
+    for link in roster.links:
+        if link.link_name not in expected:
+            continue
+        mesh, provenance = load_stl_mesh(
+            link.absolute_path, unit=link.unit, orient_outward=False
+        )
+        if provenance.source_sha256 != link.sha256:
+            raise ValueError(f"collision mesh hash changed for {link.link_name}")
+        triangles = np.asarray(mesh.face_vertices_m) * np.asarray(link.scale)
+        triangles = (
+            triangles @ rpy_rotation(link.origin_rpy_rad).T
+            + np.asarray(link.origin_xyz_m)
+        )
+        result[link.link_name] = _readonly(triangles, np.float64, ndim=3)
+    if set(result) != expected:
+        raise ValueError("authoritative hand collision-link coverage changed")
+    return MappingProxyType(result)
+
+
+def _build_verified_robot_model(
+    hand_contract: CARTSHandContract,
+    roster: AuthoritativeCollisionLinkRoster,
+) -> ThreeFingerHandModel:
+    model = ThreeFingerHandModel.from_urdf(
+        build_verified_aggregate_robot_xml(roster),
+        pad_geometry_contract=hand_contract.to_hand_model_pad_contract(),
+        base_link="world",
+    )
+    if tuple(model.independent_joint_names) != EXPECTED_INDEPENDENT_JOINTS:
+        raise ValueError("verified aggregate robot independent joints changed")
+    return model
+
+
+def _load_frozen_scene_geometry(
+    root: Path, config: CARTSV2Config, object_id: str
+) -> tuple[np.ndarray, np.ndarray, float]:
+    object_scenes = config.section("dynamic")["object_scenes"]
+    scene = object_scenes[object_id]
+    path_keys = [
+        key for key in ("scene_config", "environment_scene_config") if key in scene
+    ]
+    if len(path_keys) != 1:
+        raise ValueError("object scene must bind exactly one tabletop contract")
+    tabletop = load_d38999_tabletop_scene(root / scene[path_keys[0]])
+    center = np.asarray(tabletop.table.center_m, dtype=np.float64)
+    size = np.asarray(tabletop.table.size_m, dtype=np.float64)
+    bounds = np.column_stack((center[:2] - 0.5 * size[:2], center[:2] + 0.5 * size[:2]))
+    world_from_object = _readonly(
+        scene["frozen_settled_world_from_object_row_major"], np.float64
+    ).reshape(4, 4)
+    if not np.allclose(world_from_object[3], (0.0, 0.0, 0.0, 1.0)):
+        raise ValueError("frozen object transform is not homogeneous")
+    return world_from_object, _readonly(bounds, np.float64, ndim=2), float(
+        center[2] + 0.5 * size[2]
+    )
+
+
 def load_v2_inputs(
     repository_root: Path | str,
     *,
@@ -341,14 +430,28 @@ def load_v2_inputs(
     if hand_contract.hardware_authorized or not hand_contract.truth_firewall_all_false:
         raise ValueError("hand safety/truth firewall contract changed")
     hand_model = hand_contract.build_hand_model()
+    roster = load_authoritative_collision_link_roster(
+        inputs["collision_roster"], repository_root=root
+    )
+    robot_model = _build_verified_robot_model(hand_contract, roster)
     closing = hand_contract.closing_actuation_directions_unit(hand_model)
     closing = _readonly(closing, np.float64, ndim=2)
     face_roles = build_face_role_map(object_contract, config)
+    collision_triangles = _load_hand_collision_triangles(roster, hand_model)
+    world_from_object, table_bounds, table_top = _load_frozen_scene_geometry(
+        root, config, object_id
+    )
     return V2Inputs(
+        repository_root=root,
         config=config,
         object_contract=object_contract,
         hand_contract=hand_contract,
         hand_model=hand_model,
+        robot_model=robot_model,
         closing_directions=closing,
         face_roles=face_roles,
+        hand_collision_triangles_by_link=collision_triangles,
+        frozen_world_from_object=world_from_object,
+        table_xy_bounds_m=table_bounds,
+        table_top_z_m=table_top,
     )

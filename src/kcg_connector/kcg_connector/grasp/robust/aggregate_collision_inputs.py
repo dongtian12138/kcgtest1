@@ -22,7 +22,6 @@ import json
 import math
 from types import MappingProxyType
 from typing import Mapping
-import xml.etree.ElementTree as ET
 
 import numpy as np
 
@@ -35,6 +34,10 @@ from kcg_connector.grasp.robust.collision_geometry_binding import (
 )
 from kcg_connector.grasp.robust.collision_roster import (
     AuthoritativeCollisionLinkRoster,
+    EXPECTED_AGGREGATE_SOURCE,
+    EXPECTED_INCLUDE_SOURCES,
+    EXPECTED_INDEPENDENT_JOINTS,
+    build_verified_aggregate_robot_xml,
 )
 from kcg_connector.grasp.robust.full_hand_collision import (
     HashBoundLinkSurface,
@@ -66,24 +69,6 @@ from kcg_connector.grasp.robust.terminal_collision_boundary import (
 METHOD_ID = "CARTS_AGGREGATE_KINEMATICS_OBJECT_AND_WORLD_COLLISION_INPUTS_V2"
 KINEMATIC_ASSEMBLY_POLICY = (
     "HASH_VERIFIED_AGGREGATE_XACRO_INCLUDE_ORDER_X_LINK_AND_JOINT_ELEMENTS_ONLY"
-)
-EXPECTED_AGGREGATE_SOURCE = "src/iiwa_description/urdf/handarm.urdf.xacro"
-EXPECTED_INCLUDE_SOURCES = (
-    "src/iiwa_description/urdf/iiwa14.xacro",
-    "src/iiwa_description/urdf/hand.xacro",
-)
-EXPECTED_INDEPENDENT_JOINTS = (
-    "iiwa_joint_1",
-    "iiwa_joint_2",
-    "iiwa_joint_3",
-    "iiwa_joint_4",
-    "iiwa_joint_5",
-    "iiwa_joint_6",
-    "iiwa_joint_7",
-    "f1j1",
-    "f1j2",
-    "f2j1",
-    "f3j2",
 )
 REMAINING_BLOCKERS = (
     "CANDIDATE_SPECIFIC_LOOSE_OBJECT_WORLD_POSE_AND_HOME_PREGRASP_CLOSURE_LIFT_TRAJECTORY_UNAVAILABLE",
@@ -579,52 +564,12 @@ def _certificate_digest(
     return _canonical_sha256(document)
 
 
-def _combined_verified_robot_xml(
-    roster: AuthoritativeCollisionLinkRoster,
-) -> bytes:
-    if roster.aggregate_source.repository_path != EXPECTED_AGGREGATE_SOURCE:
-        raise AggregateCollisionInputError(
-            "AGGREGATE_SOURCE_CHANGED",
-            roster.aggregate_source.repository_path,
-        )
-    include_paths = tuple(row.repository_path for row in roster.include_sources)
-    if include_paths != EXPECTED_INCLUDE_SOURCES:
-        raise AggregateCollisionInputError(
-            "AGGREGATE_INCLUDE_ORDER_CHANGED",
-            repr(include_paths),
-        )
-    combined = ET.Element("robot", {"name": "carts_verified_handarm"})
-    seen_links: set[str] = set()
-    seen_joints: set[str] = set()
-    for source in roster.include_sources:
-        try:
-            source_root = ET.fromstring(source.content_bytes)
-        except ET.ParseError as error:
-            raise AggregateCollisionInputError(
-                "VERIFIED_INCLUDE_XML_INVALID",
-                source.repository_path,
-            ) from error
-        for child in source_root:
-            if child.tag not in {"link", "joint"}:
-                continue
-            name = child.attrib.get("name", "")
-            names = seen_links if child.tag == "link" else seen_joints
-            if not name or name in names:
-                raise AggregateCollisionInputError(
-                    "DUPLICATE_OR_UNNAMED_AGGREGATE_ELEMENT",
-                    f"{child.tag}:{name}",
-                )
-            names.add(name)
-            combined.append(ET.fromstring(ET.tostring(child, encoding="utf-8")))
-    return ET.tostring(combined, encoding="utf-8")
-
-
 def _build_aggregate_kinematic_binding(
     hand_contract: CARTSHandContract,
     roster: AuthoritativeCollisionLinkRoster,
     interval_options: IntervalArithmeticOptions,
 ) -> AggregateRobotKinematicBinding:
-    combined_xml = _combined_verified_robot_xml(roster)
+    combined_xml = build_verified_aggregate_robot_xml(roster)
     try:
         model = ThreeFingerHandModel.from_urdf(
             combined_xml,

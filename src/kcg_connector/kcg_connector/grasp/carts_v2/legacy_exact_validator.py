@@ -25,7 +25,7 @@ def validate_top_candidates(
 ) -> tuple[ExactValidationResult, ...]:
     """Fail closed before invoking a backend with incompatible motion scope."""
 
-    requested = float(inputs.config.section("exact_validation")["lift_distance_m"])
+    requested = float(inputs.config.section("dynamic")["lift_distance_m"])
     mismatch = not math.isclose(
         requested, BACKEND_LIFT_DISTANCE_M, rel_tol=0.0, abs_tol=0.0
     )

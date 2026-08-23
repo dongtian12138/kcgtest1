@@ -2,15 +2,22 @@
   "schema_version": "carts_grasp_v2_offline_result_v1",
   "object_id": "current_d38999_26kj61sn_public_spec",
   "config_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/config/carts_grasp_v2.yaml",
-  "config_sha256": "d72c281b3ea1e1d7023076440f322a13a8de7e123d8d0aaae4b70080802f52ef",
+  "config_sha256": "c41e10936effd08d4c8044dfe79861e479ac751f32453ef5d12ee5b785a948f7",
   "hardware_authorized": false,
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
   "face_role_method": "TASK_AXIS_OUTER_ENVELOPE_V1",
   "allowed_face_count": 10390,
   "candidate_count": 48,
-  "closure_survive_count": 5,
-  "fast_survive_count": 5,
+  "candidate_selection_method": "TABLE_NORMAL_HIGHEST_PER_TASK_AXIS_ANGULAR_BIN_THEN_FPS_FILL",
+  "closure_survive_count": 6,
+  "fast_survive_count": 3,
+  "fast_filter_table_clearance": {
+    "state_rule": "WORLD_Z_APPROACH_AND_SEQUENTIAL_CONTACT_STOPS",
+    "penetration_tolerance_m": 1e-05,
+    "tolerance_source": "NUMERICAL_TOLERANCE",
+    "claim_limit": "SAMPLED_FAST_REJECT_NOT_CONTINUOUS_COLLISION_PROOF"
+  },
   "task_survive_count": 0,
   "exact_validation": {
     "top_k_count": 3,
@@ -493,22 +500,22 @@
     "scipy_version": "1.10.1"
   },
   "timings_s": {
-    "load_inputs": 2.912281926954165,
-    "candidate_generation": 0.06008821609430015,
-    "closure_prediction": 1.8006780541036278,
-    "fast_filter": 0.052069783909246325,
-    "task_quality": 1.291130434954539,
-    "selection": 6.388616748154163e-05,
-    "exact_validation": 1.7029931768774986e-05,
-    "total": 6.116329332115129
+    "load_inputs": 3.0481320879999885,
+    "candidate_generation": 0.050818344000049365,
+    "closure_prediction": 1.7615499510000063,
+    "fast_filter": 0.14045053899997129,
+    "task_quality": 0.6114342329999545,
+    "selection": 3.78409999939322e-05,
+    "exact_validation": 1.250299999355775e-05,
+    "total": 5.612435498999957
   },
   "top_candidates": [
     {
       "rank": 1,
-      "candidate_id": "candidate_07",
+      "candidate_id": "candidate_11",
       "three_effective_pad_contacts": true,
-      "worst_task_margin": 0.6902788208999142,
-      "lower_tail_mean_margin": 0.875156446895137,
+      "worst_task_margin": 0.0,
+      "lower_tail_mean_margin": 0.08907553028585984,
       "required_peak_normal_force_n": null,
       "required_peak_normal_force_interpretation": "UNAVAILABLE_TASK_SCALE_INFEASIBLE_OR_UNRESOLVED",
       "maximum_joint_load_utilization": null,
@@ -516,18 +523,22 @@
       "maximum_generalized_joint_torque_nm": null,
       "wrist_load_utilization": null,
       "wrist_load_utilization_source": "UNKNOWN",
-      "path_minimum_clearance_m": null,
+      "path_minimum_clearance_m": 0.0007049611569468484,
+      "path_minimum_clearance_interpretation": "SAMPLED_HAND_LINK_TO_FINITE_TABLE_NOT_CONTINUOUS_OR_ARM_COMPLETE",
+      "minimum_clearance_link": "f2Link2",
+      "minimum_clearance_stage": "PREGRASP",
       "exact_validation_status": "UNRESOLVED_INTERFACE_MISMATCH",
       "exact_validation_reason": "V2 requests 0.050 m lift but frozen backend build_candidate_route_collision_certificate covers 0.040 m",
       "exact_backend_invoked": false,
-      "sensitivity": 0.9461593556592511,
-      "failure_reason": "PRESCRIBED_TASK_SCALE_INFEASIBLE_UNDER_OPERATION_CAP",
-      "nominal_balance_infeasible_count": 0,
+      "sensitivity": 0.9780453970337689,
+      "failure_reason": "NOMINAL_LOAD_INFEASIBLE_ZERO_IS_RANKING_LOWER_BOUND_NOT_FEASIBILITY",
+      "nominal_balance_infeasible_count": 1,
       "fast_filter": "FAST_SURVIVE",
       "unresolved_checks": [
         "UNRESOLVED_UNTIL_PUBLIC_LEGACY_FORWARDER",
         "UNRESOLVED_UNTIL_TOP3_LEGACY_EXACT",
-        "TABLE_AND_ARM_PATH_REQUIRE_CANDIDATE_WORLD_ROUTE"
+        "HAND_TABLE_SAMPLED_NOT_CONTINUOUS",
+        "ARM_LINK_AND_JOINT_INTERPOLATED_PATH_NOT_FAST_CHECKED"
       ],
       "offline_task_gate_passed": false,
       "research_dynamic_gate_passed": false,
@@ -535,18 +546,18 @@
       "control_plan": {
         "transform_semantics": "OBJECT_FROM_HAND_BASE",
         "object_from_hand_row_major": [
-          -0.9714137743150902,
-          -0.23739266852813892,
+          0.42818541224793255,
+          0.9036909055302416,
           0.0,
-          -0.010075742367667926,
-          0.23739266852813892,
-          -0.9714137743150902,
+          -0.0013980088418983584,
+          -0.9036909055302416,
+          0.42818541224793255,
           0.0,
-          0.009985072808760745,
+          -0.01411622593095781,
           0.0,
           0.0,
           1.0,
-          -0.3809998305919951,
+          -0.4043344777085179,
           0.0,
           0.0,
           0.0,
@@ -578,39 +589,39 @@
           {
             "pad_name": "finger_1_pad",
             "position_m": [
-              0.01899447128027208,
-              0.012229022396916577,
-              0.02559970454706375
+              -0.022408176154077367,
+              0.008559845992803513,
+              0.014430693949635122
             ],
-            "face_index": 99777
+            "face_index": 100180
           },
           {
             "pad_name": "finger_2_pad",
             "position_m": [
-              -0.012788810030615199,
-              0.020294098013003296,
-              0.026892072163623583
+              0.0005567042416194461,
+              -0.023981776515315065,
+              0.0010076894192325224
             ],
-            "face_index": 100061
+            "face_index": 99388
           },
           {
             "pad_name": "finger_3_pad",
             "position_m": [
-              -0.007585673152672987,
-              -0.0227654169998457,
-              0.02198206882955233
+              0.0224446400886316,
+              0.008462963424612956,
+              -0.0013525782869704545
             ],
-            "face_index": 100481
+            "face_index": 98584
           }
         ]
       }
     },
     {
       "rank": 2,
-      "candidate_id": "candidate_17",
+      "candidate_id": "candidate_34",
       "three_effective_pad_contacts": true,
-      "worst_task_margin": null,
-      "lower_tail_mean_margin": null,
+      "worst_task_margin": 0.0,
+      "lower_tail_mean_margin": 0.07543666483451099,
       "required_peak_normal_force_n": null,
       "required_peak_normal_force_interpretation": "UNAVAILABLE_TASK_SCALE_INFEASIBLE_OR_UNRESOLVED",
       "maximum_joint_load_utilization": null,
@@ -618,18 +629,22 @@
       "maximum_generalized_joint_torque_nm": null,
       "wrist_load_utilization": null,
       "wrist_load_utilization_source": "UNKNOWN",
-      "path_minimum_clearance_m": null,
+      "path_minimum_clearance_m": 0.0011039499936578157,
+      "path_minimum_clearance_interpretation": "SAMPLED_HAND_LINK_TO_FINITE_TABLE_NOT_CONTINUOUS_OR_ARM_COMPLETE",
+      "minimum_clearance_link": "f2Link2",
+      "minimum_clearance_stage": "PREGRASP",
       "exact_validation_status": "UNRESOLVED_INTERFACE_MISMATCH",
       "exact_validation_reason": "V2 requests 0.050 m lift but frozen backend build_candidate_route_collision_certificate covers 0.040 m",
       "exact_backend_invoked": false,
-      "sensitivity": null,
-      "failure_reason": "ONE_OR_MORE_SCENARIOS_CANNOT_BALANCE_NOMINAL_LOAD",
-      "nominal_balance_infeasible_count": 1,
+      "sensitivity": 1.0277810766338962,
+      "failure_reason": "NOMINAL_LOAD_INFEASIBLE_ZERO_IS_RANKING_LOWER_BOUND_NOT_FEASIBILITY",
+      "nominal_balance_infeasible_count": 2,
       "fast_filter": "FAST_SURVIVE",
       "unresolved_checks": [
         "UNRESOLVED_UNTIL_PUBLIC_LEGACY_FORWARDER",
         "UNRESOLVED_UNTIL_TOP3_LEGACY_EXACT",
-        "TABLE_AND_ARM_PATH_REQUIRE_CANDIDATE_WORLD_ROUTE"
+        "HAND_TABLE_SAMPLED_NOT_CONTINUOUS",
+        "ARM_LINK_AND_JOINT_INTERPOLATED_PATH_NOT_FAST_CHECKED"
       ],
       "offline_task_gate_passed": false,
       "research_dynamic_gate_passed": false,
@@ -637,18 +652,18 @@
       "control_plan": {
         "transform_semantics": "OBJECT_FROM_HAND_BASE",
         "object_from_hand_row_major": [
-          0.2694701734741474,
-          0.9630087359976611,
+          -0.5613705793660474,
+          -0.8275645428739854,
           0.0,
-          -0.0037611629523756043,
-          -0.9630087359976611,
-          0.2694701734741474,
+          -0.0007775803685758191,
+          0.8275645428739854,
+          -0.5613705793660474,
           0.0,
-          -0.013677569831718972,
+          0.014163955380693531,
           0.0,
           0.0,
           1.0,
-          -0.40333629483819866,
+          -0.40473346654522885,
           0.0,
           0.0,
           0.0,
@@ -680,39 +695,39 @@
           {
             "pad_name": "finger_1_pad",
             "position_m": [
-              -0.020646317919504227,
-              0.012222394899438969,
-              0.015428876819954342
+              0.023457295473790607,
+              -0.005031928623935219,
+              0.014031705112924155
             ],
-            "face_index": 100144
+            "face_index": 100780
           },
           {
             "pad_name": "finger_2_pad",
             "position_m": [
-              -0.003500004957310932,
-              -0.02373402466373313,
-              0.0020058722895517416
+              -0.004218849832977399,
+              0.02361534251135986,
+              0.0006087005825215555
             ],
-            "face_index": 99352
+            "face_index": 98836
           },
           {
             "pad_name": "finger_3_pad",
             "position_m": [
-              0.023559841418032256,
-              0.004555013912703194,
-              -0.00035439541665123453
+              -0.02089125437800069,
+              -0.011800486137224616,
+              -0.0017515671236814218
             ],
-            "face_index": 98548
+            "face_index": 99184
           }
         ]
       }
     },
     {
       "rank": 3,
-      "candidate_id": "candidate_33",
+      "candidate_id": "candidate_07",
       "three_effective_pad_contacts": true,
-      "worst_task_margin": null,
-      "lower_tail_mean_margin": null,
+      "worst_task_margin": 0.0,
+      "lower_tail_mean_margin": 0.0,
       "required_peak_normal_force_n": null,
       "required_peak_normal_force_interpretation": "UNAVAILABLE_TASK_SCALE_INFEASIBLE_OR_UNRESOLVED",
       "maximum_joint_load_utilization": null,
@@ -720,18 +735,22 @@
       "maximum_generalized_joint_torque_nm": null,
       "wrist_load_utilization": null,
       "wrist_load_utilization_source": "UNKNOWN",
-      "path_minimum_clearance_m": null,
+      "path_minimum_clearance_m": 0.0018466702781133604,
+      "path_minimum_clearance_interpretation": "SAMPLED_HAND_LINK_TO_FINITE_TABLE_NOT_CONTINUOUS_OR_ARM_COMPLETE",
+      "minimum_clearance_link": "f2Link2",
+      "minimum_clearance_stage": "PREGRASP",
       "exact_validation_status": "UNRESOLVED_INTERFACE_MISMATCH",
       "exact_validation_reason": "V2 requests 0.050 m lift but frozen backend build_candidate_route_collision_certificate covers 0.040 m",
       "exact_backend_invoked": false,
-      "sensitivity": null,
-      "failure_reason": "ONE_OR_MORE_SCENARIOS_CANNOT_BALANCE_NOMINAL_LOAD",
-      "nominal_balance_infeasible_count": 8,
+      "sensitivity": 0.1329988213640692,
+      "failure_reason": "NOMINAL_LOAD_INFEASIBLE_ZERO_IS_RANKING_LOWER_BOUND_NOT_FEASIBILITY",
+      "nominal_balance_infeasible_count": 11,
       "fast_filter": "FAST_SURVIVE",
       "unresolved_checks": [
         "UNRESOLVED_UNTIL_PUBLIC_LEGACY_FORWARDER",
         "UNRESOLVED_UNTIL_TOP3_LEGACY_EXACT",
-        "TABLE_AND_ARM_PATH_REQUIRE_CANDIDATE_WORLD_ROUTE"
+        "HAND_TABLE_SAMPLED_NOT_CONTINUOUS",
+        "ARM_LINK_AND_JOINT_INTERPOLATED_PATH_NOT_FAST_CHECKED"
       ],
       "offline_task_gate_passed": false,
       "research_dynamic_gate_passed": false,
@@ -739,18 +758,18 @@
       "control_plan": {
         "transform_semantics": "OBJECT_FROM_HAND_BASE",
         "object_from_hand_row_major": [
-          0.8591205675688955,
-          -0.5117732411723953,
+          -0.08485973350713574,
+          0.9963929072555153,
           0.0,
-          0.014185172670410187,
-          0.5117732411723953,
-          0.8591205675688955,
+          -0.00831310319281712,
+          -0.9963929072555153,
+          -0.08485973350713574,
           0.0,
-          -5.6031834876043955e-05,
+          -0.011494110603324012,
           0.0,
           0.0,
           1.0,
-          -0.40044048557118767,
+          -0.40547618682968434,
           0.0,
           0.0,
           0.0,
@@ -782,29 +801,29 @@
           {
             "pad_name": "finger_1_pad",
             "position_m": [
-              -0.006402414949378682,
-              -0.02312435567533167,
-              0.018324686086965337
+              -0.015054720502550946,
+              0.018675733734413478,
+              0.013288984828468665
             ],
-            "face_index": 100480
+            "face_index": 100084
           },
           {
             "pad_name": "finger_2_pad",
             "position_m": [
-              0.02382504573432243,
-              0.002824306776930966,
-              0.0049016815565627375
+              -0.011590212304949119,
+              -0.021003648037008844,
+              -0.00013401970193393348
             ],
-            "face_index": 98536
+            "face_index": 99292
           },
           {
             "pad_name": "finger_3_pad",
             "position_m": [
-              -0.008836882593181335,
-              0.020355481595843133,
-              0.017605219713103422
+              0.02361422426548848,
+              -0.004225622926473782,
+              0.015334609266261203
             ],
-            "face_index": 4787
+            "face_index": 100792
           }
         ]
       }

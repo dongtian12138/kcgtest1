@@ -10,6 +10,7 @@ from kcg_connector.grasp.carts_v2.models import (
     ClosurePrediction,
     FastFilterResult,
     V2Inputs,
+    joint_positions_for_phases,
     rotation_distance,
 )
 
@@ -76,6 +77,73 @@ def _same_realized_grasp(
     return math.sqrt(float(np.mean(squared))) <= float(thresholds["contact_rms_m"])
 
 
+def _sampled_hand_states(
+    inputs: V2Inputs, prediction: ClosurePrediction
+) -> tuple[tuple[str, np.ndarray, np.ndarray], ...]:
+    settings = inputs.config.section("fast_filter")
+    dynamic = inputs.config.section("dynamic")
+    base = inputs.frozen_world_from_object @ prediction.seed.object_from_hand_matrix()
+    pregrasp = np.asarray(prediction.seed.pregrasp_joint_positions_rad)
+    height = float(dynamic["approach_clearance_height_m"])
+    sample_count = int(settings["approach_path_sample_count"])
+    states: list[tuple[str, np.ndarray, np.ndarray]] = []
+    for index, fraction in enumerate(np.linspace(1.0, 0.0, sample_count)):
+        shifted = np.array(base, copy=True)
+        shifted[2, 3] += height * float(fraction)
+        stage = "PREGRASP" if index == sample_count - 1 else f"APPROACH_{index:02d}"
+        states.append((stage, shifted, pregrasp))
+    phases = list(prediction.seed.pregrasp_closure_phases)
+    phase_by_pad = {
+        pad.name: index for index, pad in enumerate(inputs.hand_contract.pads)
+    }
+    for stop_index, pad_name in enumerate(
+        inputs.config.section("closure_prediction")["closing_order"], start=1
+    ):
+        phase_index = phase_by_pad[str(pad_name)]
+        phases[phase_index] = prediction.final_closure_phases[phase_index]
+        joints = joint_positions_for_phases(inputs, tuple(phases))
+        states.append((f"CONTACT_STOP_{stop_index}", base, joints))
+    return tuple(states)
+
+
+def _state_table_clearance(
+    inputs: V2Inputs, base: np.ndarray, joints: np.ndarray
+) -> tuple[float | None, str]:
+    transforms = inputs.hand_model.forward_kinematics(
+        joints, base_transform=base
+    )
+    bounds = inputs.table_xy_bounds_m
+    minimum: tuple[float, str] | None = None
+    for link_name, triangles in inputs.hand_collision_triangles_by_link.items():
+        transform = transforms[link_name]
+        world = triangles @ transform[:3, :3].T + transform[:3, 3]
+        triangle_min = np.min(world[:, :, :2], axis=1)
+        triangle_max = np.max(world[:, :, :2], axis=1)
+        overlaps = (
+            (triangle_max[:, 0] >= bounds[0, 0])
+            & (triangle_min[:, 0] <= bounds[0, 1])
+            & (triangle_max[:, 1] >= bounds[1, 0])
+            & (triangle_min[:, 1] <= bounds[1, 1])
+        )
+        if not np.any(overlaps):
+            continue
+        gap = float(np.min(world[overlaps, :, 2]) - inputs.table_top_z_m)
+        if minimum is None or gap < minimum[0]:
+            minimum = (gap, link_name)
+    return (None, "") if minimum is None else minimum
+
+
+def _sampled_hand_table_clearance(
+    inputs: V2Inputs, prediction: ClosurePrediction
+) -> tuple[float | None, str, str]:
+    minimum: tuple[float, str, str] | None = None
+    for stage, base, joints in _sampled_hand_states(inputs, prediction):
+        gap, link_name = _state_table_clearance(inputs, base, joints)
+        if gap is not None and (minimum is None or gap < minimum[0]):
+            minimum = (gap, link_name, stage)
+    return (None, "", "") if minimum is None else minimum
+
+
 def fast_filter_predictions(
     inputs: V2Inputs, predictions: tuple[ClosurePrediction, ...]
 ) -> tuple[FastFilterResult, ...]:
@@ -86,12 +154,23 @@ def fast_filter_predictions(
     unresolved = (
         str(settings["arm_ik_policy"]),
         str(settings["nonpad_collision_policy"]),
-        "TABLE_AND_ARM_PATH_REQUIRE_CANDIDATE_WORLD_ROUTE",
+        "HAND_TABLE_SAMPLED_NOT_CONTINUOUS",
+        "ARM_LINK_AND_JOINT_INTERPOLATED_PATH_NOT_FAST_CHECKED",
     )
     accepted: list[ClosurePrediction] = []
     results: list[FastFilterResult] = []
     for prediction in predictions:
         reasons = _hard_reasons(inputs, prediction)
+        clearance: float | None = None
+        clearance_link = ""
+        clearance_stage = ""
+        if not reasons:
+            clearance, clearance_link, clearance_stage = (
+                _sampled_hand_table_clearance(inputs, prediction)
+            )
+            tolerance = float(settings["table_penetration_tolerance_m"])
+            if clearance is not None and clearance < -tolerance:
+                reasons.append("HAND_TABLE_PENETRATION")
         if not reasons:
             duplicate = next(
                 (
@@ -114,6 +193,9 @@ def fast_filter_predictions(
                 status=status,
                 reasons=tuple(reasons),
                 unresolved_checks=() if reasons else unresolved,
+                sampled_hand_table_clearance_m=clearance,
+                sampled_hand_table_clearance_link=clearance_link,
+                sampled_hand_table_clearance_stage=clearance_stage,
             )
         )
     return tuple(results)

@@ -41,6 +41,24 @@ SOLID_BOUNDARY_REASON = (
 _SCHEMA_VERSION = "carts_collision_roster_v1"
 _XACRO_NAMESPACE = "{http://www.ros.org/wiki/xacro}"
 _HEX = frozenset("0123456789abcdef")
+EXPECTED_AGGREGATE_SOURCE = "src/iiwa_description/urdf/handarm.urdf.xacro"
+EXPECTED_INCLUDE_SOURCES = (
+    "src/iiwa_description/urdf/iiwa14.xacro",
+    "src/iiwa_description/urdf/hand.xacro",
+)
+EXPECTED_INDEPENDENT_JOINTS = (
+    "iiwa_joint_1",
+    "iiwa_joint_2",
+    "iiwa_joint_3",
+    "iiwa_joint_4",
+    "iiwa_joint_5",
+    "iiwa_joint_6",
+    "iiwa_joint_7",
+    "f1j1",
+    "f1j2",
+    "f2j1",
+    "f3j2",
+)
 
 
 class CollisionRosterError(ValueError):
@@ -311,6 +329,38 @@ class AuthoritativeCollisionLinkRoster:
                 "roster_sha256": self.roster_sha256,
             }
         )
+
+
+def build_verified_aggregate_robot_xml(
+    roster: AuthoritativeCollisionLinkRoster,
+) -> bytes:
+    """Assemble the hash-verified iiwa and hand XML without xacro execution."""
+
+    if roster.aggregate_source.repository_path != EXPECTED_AGGREGATE_SOURCE:
+        raise CollisionRosterError("aggregate robot source changed")
+    include_paths = tuple(row.repository_path for row in roster.include_sources)
+    if include_paths != EXPECTED_INCLUDE_SOURCES:
+        raise CollisionRosterError("aggregate robot include order changed")
+    combined = ET.Element("robot", {"name": "carts_verified_handarm"})
+    seen: dict[str, set[str]] = {"link": set(), "joint": set()}
+    for source in roster.include_sources:
+        try:
+            source_root = ET.fromstring(source.content_bytes)
+        except ET.ParseError as error:
+            raise CollisionRosterError(
+                f"verified include XML is invalid: {source.repository_path}"
+            ) from error
+        for child in source_root:
+            if child.tag not in seen:
+                continue
+            name = child.attrib.get("name", "")
+            if not name or name in seen[child.tag]:
+                raise CollisionRosterError(
+                    f"duplicate or unnamed aggregate element: {child.tag}:{name}"
+                )
+            seen[child.tag].add(name)
+            combined.append(ET.fromstring(ET.tostring(child, encoding="utf-8")))
+    return ET.tostring(combined, encoding="utf-8")
 
 
 def _resolved_package_roots(
@@ -857,8 +907,12 @@ __all__ = [
     "AuthoritativeCollisionLinkRoster",
     "CollisionLinkBinding",
     "CollisionRosterError",
+    "EXPECTED_AGGREGATE_SOURCE",
+    "EXPECTED_INCLUDE_SOURCES",
+    "EXPECTED_INDEPENDENT_JOINTS",
     "INCLUDE_POLICY",
     "METHOD_ID",
     "VerifiedRosterFile",
+    "build_verified_aggregate_robot_xml",
     "load_authoritative_collision_link_roster",
 ]

@@ -25,6 +25,17 @@ def test_dynamic_truth_and_motion_boundaries_remain_frozen() -> None:
     assert dynamic["object_pose_write_after_start_allowed"] is False
 
 
+def test_transfer_scene_reuses_the_finite_table_author() -> None:
+    config = load_v2_config(CONFIG)
+    scene = config.section("dynamic")["object_scenes"][OBJECT_B]
+    assert scene["scene_kind"] == "FREE_SINGLE_RIGID_ON_SHARED_FINITE_TABLE"
+    runner = (
+        ROOT / "src/kcg_connector/isaac/carts_v2/run_grasp_lift.py"
+    ).read_text(encoding="utf-8")
+    assert "author_d38999_tabletop_environment" in runner
+    assert "add_default_ground_plane" not in runner
+
+
 def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> None:
     summaries = {}
     for object_id in (OBJECT_A, OBJECT_B):
@@ -58,14 +69,29 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
                 result.inputs.face_roles.face_is_allowed[contact.object_face_index]
                 for contact in prediction.contacts
             )
+        fast_survivors = [
+            row for row in result.fast_filter_results if row.status == "FAST_SURVIVE"
+        ]
+        assert len(fast_survivors) >= 3
+        assert all(
+            row.sampled_hand_table_clearance_m is not None
+            and row.sampled_hand_table_clearance_m >= -1.0e-5
+            for row in fast_survivors
+        )
+        assert any(
+            "HAND_TABLE_PENETRATION" in row.reasons
+            for row in result.fast_filter_results
+        )
+        assert all(not row.offline_task_gate_passed for row in result.selected_top)
         summaries[object_id] = result.selected_top[0]
 
     best_a = summaries[OBJECT_A]
-    assert best_a.task_quality.worst_task_margin < 1.0
+    assert best_a.task_quality.worst_task_margin == 0.0
+    assert "ZERO_IS_RANKING_LOWER_BOUND" in best_a.task_quality.failure_reason
     assert not best_a.offline_task_gate_passed
     best_b = summaries[OBJECT_B]
-    assert best_b.task_quality.worst_task_margin >= 1.0
-    assert best_b.task_quality.required_peak_normal_force_n <= 8.0
+    assert 0.0 < best_b.task_quality.worst_task_margin < 1.0
+    assert best_b.task_quality.required_peak_normal_force_n is None
     assert best_b.task_quality.maximum_joint_load_utilization is None
-    assert best_b.task_quality.maximum_generalized_joint_torque_nm > 0.0
-    assert best_b.offline_task_gate_passed
+    assert best_b.task_quality.maximum_generalized_joint_torque_nm is None
+    assert not best_b.offline_task_gate_passed

@@ -21,14 +21,21 @@ from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
 import numpy as np
-from scipy.optimize import least_squares
-from scipy.spatial.transform import Rotation
-from scipy.stats import qmc
 import yaml
 
 from kcg_connector.grasp.robust.aggregate_collision_inputs import (
     EXPECTED_INDEPENDENT_JOINTS,
     AggregateCollisionRuntimeInputCertificate,
+)
+from kcg_connector.grasp.robust.bounded_hand_base_ik import (
+    EXPECTED_FEASIBLE_CHOICE_RULE,
+    EXPECTED_SEED_RULE,
+    EXPECTED_SOLVER_METHOD,
+    CandidateJointRouteError,
+    bounded_ik_settings,
+    pregrasp_seeds,
+    solve_bounded_target,
+    solve_bounded_hand_base_ik,
 )
 from kcg_connector.grasp.robust.candidate_route import (
     EXPECTED_ARM_JOINT_NAMES,
@@ -48,11 +55,6 @@ EXPECTED_JOINT_ROUTE_CONTRACT_ID = (
     "CARTS_PER_ACCEPTED_POLICY_KINEMATIC_11_JOINT_ROUTE_V1"
 )
 EXPECTED_CLAIM_SCOPE = "STATIC_KINEMATIC_JOINT_ROUTE_BINDING_ONLY"
-EXPECTED_SOLVER_METHOD = "SCIPY_TRF_BOUNDED_POSE_LEAST_SQUARES_V1"
-EXPECTED_SEED_RULE = (
-    "HOME_THEN_UNSCRAMBLED_SOBOL_INTERIOR_JOINT_LIMITS"
-)
-EXPECTED_FEASIBLE_CHOICE_RULE = "FIRST_FEASIBLE_IN_FIXED_SEED_ORDER"
 EXPECTED_APPROACH_RULE = (
     "MINIMUM_JERK_JOINT_INTERPOLATION_HOME_TO_PREGRASP"
 )
@@ -74,17 +76,6 @@ CLAIM_LIMITATIONS = (
     "NO_CONTINUOUS_COLLISION_OR_ALLOWED_PAD_CONTACT_CERTIFICATE_YET",
     "NO_CONTROLLER_ISAAC_HARDWARE_OR_FORMAL_SELECTION_AUTHORIZATION",
 )
-
-
-class CandidateJointRouteError(ValueError):
-    """Raised when IK inputs, convergence, or route continuity fail closed."""
-
-    def __init__(self, code: str, detail: str) -> None:
-        if not code or not detail:
-            raise ValueError("candidate joint-route error fields cannot be empty")
-        self.code = str(code)
-        self.detail = str(detail)
-        super().__init__(f"{self.code}: {self.detail}")
 
 
 class _UniqueKeySafeLoader(yaml.SafeLoader):
@@ -269,55 +260,7 @@ def _validated_config(path: Path) -> _JointRouteSettings:
             "route-state or aggregate robot identity changed",
         )
 
-    solver = _mapping(config["solver"], "solver")
-    _exact_keys(
-        solver,
-        (
-            "method",
-            "pregrasp_seed_rule",
-            "pregrasp_sobol_point_count",
-            "sobol_interior_lower_fraction",
-            "sobol_interior_upper_fraction",
-            "feasible_choice_rule",
-            "orientation_residual_length_scale_m_per_rad",
-            "position_tolerance_m",
-            "orientation_tolerance_rad",
-            "function_tolerance",
-            "step_tolerance",
-            "gradient_tolerance",
-            "maximum_function_evaluations",
-        ),
-        "solver",
-    )
-    sobol_count = int(solver["pregrasp_sobol_point_count"])
-    lower_fraction = float(solver["sobol_interior_lower_fraction"])
-    upper_fraction = float(solver["sobol_interior_upper_fraction"])
-    numerical_values = tuple(
-        float(solver[name])
-        for name in (
-            "orientation_residual_length_scale_m_per_rad",
-            "position_tolerance_m",
-            "orientation_tolerance_rad",
-            "function_tolerance",
-            "step_tolerance",
-            "gradient_tolerance",
-        )
-    )
-    maximum_evaluations = int(solver["maximum_function_evaluations"])
-    if (
-        solver["method"] != EXPECTED_SOLVER_METHOD
-        or solver["pregrasp_seed_rule"] != EXPECTED_SEED_RULE
-        or solver["feasible_choice_rule"] != EXPECTED_FEASIBLE_CHOICE_RULE
-        or sobol_count <= 0
-        or sobol_count & (sobol_count - 1)
-        or not (0.0 < lower_fraction < upper_fraction < 1.0)
-        or any(not math.isfinite(value) or value <= 0.0 for value in numerical_values)
-        or maximum_evaluations <= 0
-    ):
-        raise CandidateJointRouteError(
-            "SOLVER_CONFIGURATION_INVALID",
-            "bounded deterministic IK settings are incomplete",
-        )
+    bounded = bounded_ik_settings(config["solver"])
 
     route = _mapping(config["route_sampling"], "route_sampling")
     _exact_keys(
@@ -385,16 +328,18 @@ def _validated_config(path: Path) -> _JointRouteSettings:
 
     return _JointRouteSettings(
         config_sha256=_file_sha256(path),
-        sobol_point_count=sobol_count,
-        sobol_interior_lower_fraction=lower_fraction,
-        sobol_interior_upper_fraction=upper_fraction,
-        orientation_residual_length_scale_m_per_rad=numerical_values[0],
-        position_tolerance_m=numerical_values[1],
-        orientation_tolerance_rad=numerical_values[2],
-        function_tolerance=numerical_values[3],
-        step_tolerance=numerical_values[4],
-        gradient_tolerance=numerical_values[5],
-        maximum_function_evaluations=maximum_evaluations,
+        sobol_point_count=bounded.sobol_point_count,
+        sobol_interior_lower_fraction=bounded.sobol_interior_lower_fraction,
+        sobol_interior_upper_fraction=bounded.sobol_interior_upper_fraction,
+        orientation_residual_length_scale_m_per_rad=(
+            bounded.orientation_residual_length_scale_m_per_rad
+        ),
+        position_tolerance_m=bounded.position_tolerance_m,
+        orientation_tolerance_rad=bounded.orientation_tolerance_rad,
+        function_tolerance=bounded.function_tolerance,
+        step_tolerance=bounded.step_tolerance,
+        gradient_tolerance=bounded.gradient_tolerance,
+        maximum_function_evaluations=bounded.maximum_function_evaluations,
         approach_maximum_arm_joint_step_rad=approach_step,
         lift_cartesian_step_m=lift_step,
         lift_waypoint_count=lift_count,
@@ -837,119 +782,6 @@ class CandidateJointRouteContract:
         )
 
 
-def _pose_error(
-    model: object,
-    arm_positions: Sequence[float],
-    hand_positions: Sequence[float],
-    target: np.ndarray,
-) -> tuple[np.ndarray, np.ndarray]:
-    complete = tuple(float(value) for value in (*arm_positions, *hand_positions))
-    actual = model.forward_kinematics(complete)[EXPECTED_HAND_BASE_LINK]
-    position = actual[:3, 3] - target[:3, 3]
-    orientation = Rotation.from_matrix(
-        target[:3, :3].T @ actual[:3, :3]
-    ).as_rotvec()
-    return position, orientation
-
-
-def _solve_target(
-    *,
-    model: object,
-    hand_positions: Sequence[float],
-    target: np.ndarray,
-    seeds: Sequence[np.ndarray],
-    lower: np.ndarray,
-    upper: np.ndarray,
-    settings: _JointRouteSettings,
-    label: str,
-) -> tuple[tuple[float, ...], float, float, int]:
-    best_failure: tuple[float, float] | None = None
-    for seed_index, seed in enumerate(seeds):
-        initial = np.asarray(seed, dtype=np.float64)
-        if initial.shape != (7,) or not np.all(np.isfinite(initial)):
-            raise CandidateJointRouteError(
-                "IK_SEED_INVALID", f"{label}:{seed_index}"
-            )
-        initial = np.clip(initial, lower, upper)
-
-        def residual(arm_positions: np.ndarray) -> np.ndarray:
-            position, orientation = _pose_error(
-                model, arm_positions, hand_positions, target
-            )
-            return np.concatenate(
-                (
-                    position,
-                    settings.orientation_residual_length_scale_m_per_rad
-                    * orientation,
-                )
-            )
-
-        try:
-            result = least_squares(
-                residual,
-                initial,
-                bounds=(lower, upper),
-                method="trf",
-                ftol=settings.function_tolerance,
-                xtol=settings.step_tolerance,
-                gtol=settings.gradient_tolerance,
-                max_nfev=settings.maximum_function_evaluations,
-                x_scale="jac",
-            )
-        except (FloatingPointError, ValueError) as error:
-            best_failure = best_failure or (math.inf, math.inf)
-            continue
-        position, orientation = _pose_error(
-            model, result.x, hand_positions, target
-        )
-        position_error = float(np.linalg.norm(position))
-        orientation_error = float(np.linalg.norm(orientation))
-        score = (position_error, orientation_error)
-        if best_failure is None or score < best_failure:
-            best_failure = score
-        complete = tuple(
-            float(value) for value in (*result.x, *hand_positions)
-        )
-        if (
-            result.success
-            and position_error <= settings.position_tolerance_m
-            and orientation_error <= settings.orientation_tolerance_rad
-            and model.within_joint_limits(complete)
-        ):
-            return (
-                tuple(float(value) for value in result.x),
-                position_error,
-                orientation_error,
-                seed_index,
-            )
-    raise CandidateJointRouteError(
-        "IK_TARGET_UNREACHABLE",
-        f"{label}:best_position_orientation_error={best_failure}",
-    )
-
-
-def _pregrasp_seeds(
-    *,
-    home_arm: np.ndarray,
-    lower: np.ndarray,
-    upper: np.ndarray,
-    settings: _JointRouteSettings,
-) -> tuple[np.ndarray, ...]:
-    exponent = int(math.log2(settings.sobol_point_count))
-    unit = qmc.Sobol(d=7, scramble=False).random_base2(m=exponent)
-    span = (
-        settings.sobol_interior_lower_fraction
-        + (
-            settings.sobol_interior_upper_fraction
-            - settings.sobol_interior_lower_fraction
-        )
-        * unit
-    )
-    rows = [np.array(home_arm, dtype=np.float64, copy=True)]
-    rows.extend(lower + row * (upper - lower) for row in span)
-    return tuple(rows)
-
-
 def _minimum_jerk_approach(
     home: Sequence[float],
     pregrasp: Sequence[float],
@@ -1076,14 +908,14 @@ def build_candidate_joint_route_contract(
     home = tuple(route_state.home_independent_joint_positions_rad)
     home_arm = np.asarray(home[:7], dtype=np.float64)
     hand_open = tuple(route_state.pregrasp_hand_joint_positions_rad)
-    seeds = _pregrasp_seeds(
+    seeds = pregrasp_seeds(
         home_arm=home_arm,
         lower=arm_lower,
         upper=arm_upper,
         settings=settings,
     )
     pregrasp_arm, pregrasp_position_error, pregrasp_orientation_error, seed_index = (
-        _solve_target(
+        solve_bounded_target(
             model=model,
             hand_positions=hand_open,
             target=route_state.world_from_hand_pregrasp_target,
@@ -1126,7 +958,7 @@ def build_candidate_joint_route_contract(
         lift_targets.append(target)
     previous = np.asarray(pregrasp_arm, dtype=np.float64)
     for index, target in enumerate(lift_targets[1:], start=1):
-        arm, position_error, orientation_error, _seed_index = _solve_target(
+        arm, position_error, orientation_error, _seed_index = solve_bounded_target(
             model=model,
             hand_positions=hand_open,
             target=target,
@@ -1239,4 +1071,5 @@ __all__ = [
     "CandidateJointRouteContract",
     "CandidateJointRouteError",
     "build_candidate_joint_route_contract",
+    "solve_bounded_hand_base_ik",
 ]

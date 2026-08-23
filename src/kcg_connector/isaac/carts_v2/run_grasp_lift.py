@@ -1,0 +1,430 @@
+#!/usr/bin/env python3
+
+"""Run a bounded, truth-isolated CARTS-Grasp V2 preflight or grasp-lift."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import traceback
+
+import numpy as np
+
+if __package__:
+    from . import controller as control
+    from .evaluate_run import TruthAuditRecorder, evaluate_trace
+else:
+    import controller as control
+    from evaluate_run import TruthAuditRecorder, evaluate_trace
+from kcg_connector.grasp.carts_v2.models import load_v2_inputs
+from kcg_connector.grasp.robust.object_model import file_sha256
+
+
+ROBOT_ROOT = "/World/HandArm"
+ARTICULATION_PATH = ROBOT_ROOT + "/Geometry/world"
+HAND_BASE_PATH = ARTICULATION_PATH + (
+    "/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/"
+    "iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link"
+)
+EXPECTED_DOF_NAMES = control.ARM_JOINT_NAMES + (
+    "f1j1", "f1j2", "f1j3", "f2j1", "f2j2", "f3j1", "f3j2", "f3j3",
+)
+
+
+def _json_sha256(value: object) -> str:
+    payload = json.dumps(
+        value, ensure_ascii=True, allow_nan=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _arguments(repository: Path) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--mode", choices=("preflight", "grasp-lift"), required=True)
+    parser.add_argument("--object-id", default="current_d38999_26kj61sn_public_spec")
+    parser.add_argument(
+        "--config", default=str(repository / "src/kcg_connector/config/carts_grasp_v2.yaml")
+    )
+    parser.add_argument(
+        "--offline-result",
+        default=str(
+            repository
+            / "artifacts/carts_v2/offline/current_d38999_26kj61sn_public_spec/result.json"
+        ),
+    )
+    parser.add_argument("--preflight-evaluation")
+    parser.add_argument("--output-directory", required=True)
+    parser.add_argument("--gui", action="store_true")
+    arguments = parser.parse_args()
+    if arguments.mode == "grasp-lift" and not arguments.preflight_evaluation:
+        parser.error("grasp-lift requires --preflight-evaluation")
+    return arguments
+
+
+def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
+    config_path = Path(arguments.config).resolve()
+    report_path = Path(arguments.offline_result).resolve()
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    if report["object_id"] != arguments.object_id:
+        raise ValueError("offline result object does not match requested object")
+    if report.get("hardware_authorized") is not False:
+        raise ValueError("offline report changed hardware authorization")
+    if report["config_sha256"] != file_sha256(config_path):
+        raise ValueError("offline result is stale relative to V2 config")
+    if not report["top_candidates"]:
+        raise ValueError("offline report contains no Top candidate")
+    selected = report["top_candidates"][0]
+    if selected["rank"] != 1 or not selected["three_effective_pad_contacts"]:
+        raise ValueError("dynamic candidate must be the official three-contact Top-1")
+    inputs = load_v2_inputs(
+        repository, config_path=config_path, object_id=arguments.object_id
+    )
+    dynamic = inputs.config.section("dynamic")
+    scene_entry = dynamic["object_scenes"].get(arguments.object_id)
+    if not isinstance(scene_entry, dict):
+        raise ValueError("object has no registered free tabletop dynamic scene")
+    if arguments.mode == "grasp-lift":
+        preflight = json.loads(
+            Path(arguments.preflight_evaluation).read_text(encoding="utf-8")
+        )
+        expected = (arguments.object_id, selected["candidate_id"])
+        observed = (preflight.get("object_id"), preflight.get("candidate_id"))
+        if observed != expected or not preflight.get("preflight_pass"):
+            raise ValueError("matching independent preflight did not pass")
+    world_from_object = np.asarray(
+        scene_entry["frozen_settled_world_from_object_row_major"], dtype=np.float64
+    ).reshape(4, 4)
+    motion_plan = control.build_joint_motion_plan(
+        repository, inputs, selected["control_plan"], world_from_object
+    )
+    return inputs, report, selected, scene_entry, motion_plan
+
+
+def _prepare_dynamic_scene(
+    repository: Path, stage, entry, add_reference_to_stage
+) -> dict[str, object]:
+    from omni.physx.scripts import physicsUtils
+    from pxr import Gf, Sdf, UsdGeom, UsdPhysics, UsdShade
+
+    from kcg_connector.d38999_tabletop_scene import (
+        author_d38999_tabletop_environment,
+        author_d38999_tabletop_scene,
+        load_d38999_tabletop_scene,
+        verify_d38999_tabletop_asset,
+    )
+
+    kind = str(entry["scene_kind"])
+    if kind == "D38999_PAIR_TABLETOP":
+        scene_path = (repository / entry["scene_config"]).resolve()
+        scene = load_d38999_tabletop_scene(scene_path)
+        asset = verify_d38999_tabletop_asset(scene, repository)
+        author_d38999_tabletop_scene(
+            stage, scene, asset, add_reference_to_stage=add_reference_to_stage,
+            Gf=Gf, Sdf=Sdf, UsdGeom=UsdGeom, UsdPhysics=UsdPhysics,
+            UsdShade=UsdShade, physics_utils=physicsUtils,
+        )
+        return {
+            "object_asset": asset,
+            "part_prim_paths": (scene.asset.body_prim_path, scene.asset.nut_prim_path),
+            "part_bottom_offsets_m": (
+                scene.loose_endpoint.body_bottom_offset_m,
+                scene.loose_endpoint.nut_bottom_offset_m,
+            ),
+            "roots": {
+                "object": scene.asset.loose_plug_prim_path,
+                "table": scene.table.prim_path,
+                "fixture": scene.fixed_endpoint.fixture_prim_path,
+            },
+            "table_top_z_m": scene.table.top_z_m,
+            "gravity_m_s2": scene.physics.gravity_m_s2,
+            "evidence_paths": (scene_path,),
+            "environment_scope": "FULL_TABLE_FIXTURE_AND_FIXED_RECEPTACLE",
+        }
+    if kind != "FREE_SINGLE_RIGID_ON_SHARED_FINITE_TABLE":
+        raise ValueError(f"unsupported dynamic scene kind: {kind}")
+
+    environment_path = (repository / entry["environment_scene_config"]).resolve()
+    environment = load_d38999_tabletop_scene(environment_path)
+    manifest_path = (repository / entry["manifest"]).resolve()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    asset = (repository / entry["asset"]).resolve()
+    if (
+        manifest.get("hardware_authorized") is not False
+        or manifest.get("product_id") != "D38999/26FJ35PN"
+        or manifest.get("asset_sha256") != file_sha256(asset)
+    ):
+        raise ValueError("free rigid asset differs from its registered manifest")
+    root = str(entry["reference_prim_path"])
+    author_d38999_tabletop_environment(
+        stage, environment, Gf=Gf, Sdf=Sdf, UsdGeom=UsdGeom,
+        UsdPhysics=UsdPhysics, UsdShade=UsdShade, physics_utils=physicsUtils,
+    )
+    add_reference_to_stage(str(asset), root)
+    object_prim = stage.GetPrimAtPath(root)
+    if not object_prim.IsValid() or not object_prim.HasAPI(UsdPhysics.RigidBodyAPI):
+        raise RuntimeError("free object rigid body is missing")
+    matrix = np.asarray(
+        entry["frozen_settled_world_from_object_row_major"], dtype=np.float64
+    ).reshape(4, 4)
+    xformable = UsdGeom.Xformable(object_prim)
+    if xformable.GetOrderedXformOps():
+        raise RuntimeError("free object root already has a transform stack")
+    xformable.AddTransformOp().Set(Gf.Matrix4d(*matrix.T.ravel().tolist()))
+    return {
+        "object_asset": asset,
+        "part_prim_paths": (root,),
+        "part_bottom_offsets_m": tuple(entry["component_bottom_offsets_m"]),
+        "roots": {
+            "object": root,
+            "table": environment.table.prim_path,
+            "fixture": environment.fixed_endpoint.fixture_prim_path,
+        },
+        "table_top_z_m": environment.table.top_z_m,
+        "gravity_m_s2": environment.physics.gravity_m_s2,
+        "evidence_paths": (environment_path, manifest_path),
+        "environment_scope": "SHARED_FINITE_TABLE_AND_FIXTURE_WITHOUT_FIXED_RECEPTACLE",
+    }
+
+
+def _initial_trace(arguments, report, selected, motion_plan, dynamic):
+    criteria = {
+        key: dynamic[key]
+        for key in (
+            "lift_distance_m", "lift_tolerance_m", "hold_duration_s",
+            "table_release_clearance_m", "maximum_table_penetration_m",
+            "lift_acceleration_difference_window_samples",
+            "lift_acceleration_tolerance_m_s2",
+        )
+    }
+    criteria["sustained_three_contact_samples"] = int(
+        dynamic["contact_consecutive_samples"]
+    )
+    criteria["registered_lift_peak_acceleration_m_s2"] = float(
+        report["lambda_one_task_load"]["lift_peak_acceleration_m_s2"]
+    )
+    return {
+        "schema_version": "carts_grasp_v2_dynamic_trace_v1",
+        "object_id": arguments.object_id,
+        "candidate_id": selected["candidate_id"],
+        "mode": arguments.mode,
+        "config_sha256": report["config_sha256"],
+        "offline_worst_task_margin": selected["worst_task_margin"],
+        "offline_task_gate_passed": selected["offline_task_gate_passed"],
+        "hardware_authorized": False,
+        "formal_dynamic_pass": False,
+        "physics_dt_s": float(dynamic["physics_dt_s"]),
+        "object_pose_writes_after_start": 0,
+        "controller_online_signals": list(motion_plan["online_signals"]),
+        "online_object_or_contact_truth_used": False,
+        "truth_audit_data_returned_to_controller": False,
+        "pad_surface_identity_verified": False,
+        "disturbance_executed": bool(dynamic["disturbance_executed"]),
+        "motion_plan": motion_plan,
+        "criteria": criteria,
+        "controller_outcome": {"completed": False, "failure_reason": None},
+        "samples": [],
+    }
+
+
+def _evidence_binding(repository, arguments, report, selected, scene, robot_asset):
+    object_asset = scene["object_asset"]
+    evidence_paths = tuple(scene["evidence_paths"])
+    return {
+        "config_sha256": report["config_sha256"],
+        "offline_result_sha256": file_sha256(Path(arguments.offline_result).resolve()),
+        "control_plan_sha256": _json_sha256(selected["control_plan"]),
+        "scene_evidence_sha256": {
+            str(path.relative_to(repository)): file_sha256(path) for path in evidence_paths
+        },
+        "environment_scope": scene["environment_scope"],
+        "object_asset_sha256": file_sha256(object_asset),
+        "robot_asset_sha256": file_sha256(robot_asset),
+        "controller_source_sha256": file_sha256(Path(__file__).with_name("controller.py")),
+        "runner_source_sha256": file_sha256(Path(__file__)),
+        "evaluator_source_sha256": file_sha256(Path(__file__).with_name("evaluate_run.py")),
+    }
+
+
+def _create_runtime(repository, arguments, inputs, report, selected, scene_entry, trace):
+    from isaacsim.core.api import World
+    from isaacsim.core.prims import SingleRigidPrim
+    from isaacsim.core.utils.stage import add_reference_to_stage, get_current_stage
+    from omni.physx import get_physx_simulation_interface
+    from pxr import Gf, PhysxSchema, PhysicsSchemaTools, Usd, UsdGeom, UsdPhysics
+
+    dynamic = inputs.config.section("dynamic")
+    robot_asset = (repository / dynamic["robot_asset"]).resolve()
+    if not robot_asset.is_file():
+        raise ValueError("registered robot asset is missing")
+    World.clear_instance()
+    world = World(
+        stage_units_in_meters=1.0,
+        physics_dt=float(dynamic["physics_dt_s"]),
+        rendering_dt=1.0 / 60.0,
+        backend="numpy",
+        device="cpu",
+    )
+    stage = get_current_stage()
+    scene = _prepare_dynamic_scene(repository, stage, scene_entry, add_reference_to_stage)
+    trace["evidence_binding"] = _evidence_binding(
+        repository, arguments, report, selected, scene, robot_asset
+    )
+    if arguments.mode == "grasp-lift":
+        preflight = json.loads(
+            Path(arguments.preflight_evaluation).read_text(encoding="utf-8")
+        )
+        if preflight.get("evidence_binding") != trace["evidence_binding"]:
+            raise ValueError("preflight evidence binding does not match this run")
+    add_reference_to_stage(str(robot_asset), ROBOT_ROOT)
+    for prim in stage.Traverse():
+        if prim.HasAPI(UsdPhysics.RigidBodyAPI):
+            PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr().Set(0.0)
+    hand_base_prim = stage.GetPrimAtPath(HAND_BASE_PATH)
+    if not hand_base_prim.IsValid():
+        raise RuntimeError("hand base prim is missing")
+    object_parts = tuple(
+        world.scene.add(
+            SingleRigidPrim(prim_path=path, name=f"carts_v2_object_part_{index}")
+        )
+        for index, path in enumerate(scene["part_prim_paths"])
+    )
+    world.get_physics_context().set_gravity(float(scene["gravity_m_s2"]))
+    world.reset()
+    robot_data = control.create_native_gravity_compensated_robot(
+        ARTICULATION_PATH, EXPECTED_DOF_NAMES, dynamic
+    )
+    auditor = TruthAuditRecorder(
+        object_parts=object_parts,
+        hand_base_prim=hand_base_prim,
+        stage_modules=(Gf, Usd, UsdGeom),
+        contact_interface=get_physx_simulation_interface(),
+        path_decoder=PhysicsSchemaTools.intToSdfPath,
+        roots={"robot": ROBOT_ROOT, **scene["roots"]},
+        expected_total_mass_kg=inputs.object_contract.model.mass_kg,
+        part_bottom_offsets_m=scene["part_bottom_offsets_m"],
+        table_top_z_m=scene["table_top_z_m"],
+        physics_dt_s=float(dynamic["physics_dt_s"]),
+    )
+    return {
+        "world": world, "scene": scene, "robot_asset": robot_asset,
+        "auditor": auditor, "robot_data": robot_data,
+    }
+
+
+def _run_controller(runtime, arguments, motion_plan, dynamic):
+    robot, active_indices, arm_indices, lower, upper, drive_audit = runtime["robot_data"]
+    stepper = control.JointSignalStepper(
+        robot=robot, world=runtime["world"], auditor=runtime["auditor"],
+        active_indices=active_indices, arm_indices=arm_indices,
+        arm_lower_limits=lower, arm_upper_limits=upper,
+        settings=dynamic, render=arguments.gui,
+    )
+    pregrasp = control.run_pregrasp_sequence(stepper, motion_plan, dynamic)
+    grasp = (
+        control.run_grasp_lift_sequence(stepper, motion_plan, dynamic, pregrasp)
+        if arguments.mode == "grasp-lift"
+        else {"contact_controller": None, "failure_reason": stepper.abort_reason}
+    )
+    outcome = control.controller_outcome(
+        stepper, mode=arguments.mode, native_drive_audit=drive_audit,
+        pregrasp=pregrasp, grasp=grasp,
+    )
+    return stepper, outcome
+
+
+def _runtime_record(repository, inputs, runtime):
+    scene = runtime["scene"]
+    robot_asset = runtime["robot_asset"]
+    object_asset = scene["object_asset"]
+    return {
+        "git_commit": subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=repository, text=True,
+            check=True, capture_output=True,
+        ).stdout.strip(),
+        "config_path": str(inputs.config.path),
+        "scene_evidence_paths": [str(path) for path in scene["evidence_paths"]],
+        "robot_asset_sha256": file_sha256(robot_asset),
+        "object_asset_sha256": file_sha256(object_asset),
+        "source_sha256": {
+            name: file_sha256(Path(__file__).with_name(name))
+            for name in ("controller.py", "run_grasp_lift.py", "evaluate_run.py")
+        },
+    }
+
+
+def _finish_run(repository, arguments, output, inputs, runtime, trace, outcome):
+    trace["controller_outcome"] = outcome
+    trace["samples"] = runtime["auditor"].samples
+    trace["runtime"] = _runtime_record(repository, inputs, runtime)
+    evaluation = evaluate_trace(trace)
+    (output / "trace.json").write_text(
+        json.dumps(trace, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    (output / "evaluation.json").write_text(
+        json.dumps(evaluation, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(json.dumps(evaluation, ensure_ascii=False, indent=2))
+    key = "preflight_pass" if arguments.mode == "preflight" else "research_dynamic_pass"
+    return 0 if evaluation[key] else 2
+
+
+def _execute(repository, arguments, output, inputs, report, selected, scene_entry, motion_plan, trace):
+    runtime = _create_runtime(
+        repository, arguments, inputs, report, selected, scene_entry, trace
+    )
+    dynamic = inputs.config.section("dynamic")
+    stepper, outcome = _run_controller(runtime, arguments, motion_plan, dynamic)
+    return _finish_run(repository, arguments, output, inputs, runtime, trace, outcome)
+
+
+def _write_failure(output: Path, error: Exception) -> None:
+    (output / "failure.json").write_text(
+        json.dumps(
+            {
+                "error_type": type(error).__name__,
+                "error": str(error),
+                "traceback": traceback.format_exc(),
+                "hardware_authorized": False,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def main() -> int:
+    repository = Path(__file__).resolve().parents[4]
+    arguments = _arguments(repository)
+    output = Path(arguments.output_directory).resolve()
+    output.mkdir(parents=True, exist_ok=False)
+    inputs, report, selected, scene_entry, motion_plan = _load_plan_inputs(
+        repository, arguments
+    )
+    dynamic = inputs.config.section("dynamic")
+    from isaacsim import SimulationApp
+
+    simulation_app = SimulationApp(
+        {"headless": not arguments.gui, "multi_gpu": False,
+         "active_gpu": 0, "physics_gpu": 0}
+    )
+    trace = _initial_trace(arguments, report, selected, motion_plan, dynamic)
+    try:
+        return _execute(
+            repository, arguments, output, inputs, report, selected,
+            scene_entry, motion_plan, trace,
+        )
+    except Exception as error:
+        _write_failure(output, error)
+        traceback.print_exc()
+        return 1
+    finally:
+        simulation_app.close()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

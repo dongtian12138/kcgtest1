@@ -82,7 +82,13 @@ def run_offline_pipeline(
     started = time.perf_counter()
     top_k = int(inputs.config.section("exact_validation")["top_k"])
     selected = select_top_candidates(
-        predictions, filters, qualities, top_k=top_k
+        predictions,
+        filters,
+        qualities,
+        top_k=top_k,
+        path_clearance_by_id={
+            row.candidate_id: row.sampled_hand_table_clearance_m for row in filters
+        },
     )
     timings["selection"] = time.perf_counter() - started
 

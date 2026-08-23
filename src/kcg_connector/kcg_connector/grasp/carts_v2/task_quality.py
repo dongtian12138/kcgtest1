@@ -151,7 +151,7 @@ def _evaluator(
     )
     dynamic = inputs.config.section("dynamic")
     lift_acceleration = minimum_jerk_peak_acceleration(
-        float(dynamic["lift_distance_m"]), float(settings["lift_duration_s"])
+        float(dynamic["lift_distance_m"]), float(dynamic["lift_duration_s"])
     )
     return TaskWrenchEvaluator(
         object_model=model,
@@ -238,6 +238,37 @@ def _rejected_quality(
     )
 
 
+def _nominal_infeasible_quality(
+    candidate_id: str,
+    margins: tuple[float | None, ...],
+    lower_tail_fraction: float,
+    nominal_failure_count: int,
+) -> TaskQualityResult:
+    """Rank proven nominal-load failures at a conservative zero lower bound."""
+
+    ordering_margins = tuple(
+        0.0 if value is None else float(value) for value in margins
+    )
+    return TaskQualityResult(
+        candidate_id=candidate_id,
+        status="TASK_REJECT",
+        scenario_margins=margins,
+        worst_task_margin=0.0,
+        lower_tail_mean_margin=qmc_lower_tail_mean(
+            ordering_margins, lower_tail_fraction
+        ),
+        required_peak_normal_force_n=None,
+        maximum_joint_load_utilization=None,
+        maximum_generalized_joint_torque_nm=None,
+        wrist_load_utilization=None,
+        sensitivity=max(ordering_margins) - min(ordering_margins),
+        failure_reason=(
+            "NOMINAL_LOAD_INFEASIBLE_ZERO_IS_RANKING_LOWER_BOUND_NOT_FEASIBILITY"
+        ),
+        nominal_balance_infeasible_count=nominal_failure_count,
+    )
+
+
 def evaluate_task_quality(
     inputs: V2Inputs,
     prediction: ClosurePrediction,
@@ -289,10 +320,10 @@ def evaluate_task_quality(
             forces.append(float(force))
             joint_loads.append(float(joint_load))
     if nominal_balance_failure_count:
-        return _rejected_quality(
+        return _nominal_infeasible_quality(
             prediction.seed.candidate_id,
             tuple(margins),
-            "ONE_OR_MORE_SCENARIOS_CANNOT_BALANCE_NOMINAL_LOAD",
+            float(settings["lower_tail_fraction"]),
             nominal_balance_failure_count,
         )
     finite_margins = [float(value) for value in margins if value is not None]

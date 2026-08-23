@@ -59,6 +59,33 @@ def _is_duplicate(
     return False
 
 
+def _table_height_conditioned_angular_order(
+    inputs: V2Inputs,
+    task_positions: np.ndarray,
+    sample_positions_object: np.ndarray,
+    fallback_order: np.ndarray,
+    bin_count: int,
+) -> np.ndarray:
+    world_positions = (
+        sample_positions_object @ inputs.frozen_world_from_object[:3, :3].T
+        + inputs.frozen_world_from_object[:3, 3]
+    )
+    physical_heights = world_positions[:, 2] - inputs.table_top_z_m
+    angles = np.mod(np.arctan2(task_positions[:, 1], task_positions[:, 0]), 2.0 * np.pi)
+    bins = np.minimum(
+        (angles / (2.0 * np.pi) * bin_count).astype(np.int64), bin_count - 1
+    )
+    primary: list[int] = []
+    for bin_index in range(bin_count):
+        members = np.flatnonzero(bins == bin_index)
+        if len(members):
+            ranked = np.lexsort((members, -physical_heights[members]))
+            primary.append(int(members[ranked[0]]))
+    used = set(primary)
+    primary.extend(int(index) for index in fallback_order if int(index) not in used)
+    return np.asarray(primary, dtype=np.int64)
+
+
 def generate_candidates(inputs: V2Inputs) -> tuple[CandidateSeed, ...]:
     """Generate 32--64 seeds from the object's V2-allowed real mesh faces."""
 
@@ -82,7 +109,15 @@ def generate_candidates(inputs: V2Inputs) -> tuple[CandidateSeed, ...]:
     task_normals = samples.normals @ task_frame.basis_object
     scale = max(loaded.characteristic_radius_m, np.finfo(np.float64).eps)
     features = np.column_stack((task_positions / scale, task_normals))
-    order = farthest_point_indices(features)
+    fps_order = farthest_point_indices(features)
+    requested = int(settings["candidate_count"])
+    order = _table_height_conditioned_angular_order(
+        inputs,
+        task_positions,
+        samples.positions_m,
+        fps_order,
+        requested,
+    )
 
     reference_phase = float(settings["reference_closure_phase"])
     reference = _native_contact_reference(inputs, reference_phase)
@@ -95,7 +130,6 @@ def generate_candidates(inputs: V2Inputs) -> tuple[CandidateSeed, ...]:
     }
 
     accepted: list[CandidateSeed] = []
-    requested = int(settings["candidate_count"])
     for sample_index in order:
         task_point = task_positions[sample_index]
         anchor_angle = math.atan2(float(task_point[1]), float(task_point[0]))
