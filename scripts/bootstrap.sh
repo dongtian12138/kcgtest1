@@ -41,7 +41,7 @@ else
   if [ "${HAS_ROS}" = "0" ]; then
     fail "ROS 2 Humble 未安装。先按官方文档安装 ros-humble-desktop：
 https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html
-（不想装 ROS 可用 --skip-apt 跳过本阶段，但 verify_all.sh 无法运行）"
+（只做纯 Python 静态检查时可用 --skip-apt 跳过本阶段）"
   fi
   log "安装 ROS2/MoveIt/Gazebo 相关 apt 包 ..."
   sudo apt-get update
@@ -68,24 +68,17 @@ else
   log "构建完成"
 fi
 
-# ---------- 阶段 3: 项目 .venv（自包含，不依赖 HaMeR） ----------
+# ---------- 阶段 3: 项目 .venv（当前静态源码依赖） ----------
 if [ "${SKIP_VENV}" = "1" ]; then
   log "跳过 .venv 阶段（--skip-venv）"
 elif [ -x "${WS}/.venv/bin/python" ]; then
   log ".venv 已存在，跳过"
 else
   cd "${WS}"
-  if [ "${HAS_GPU}" = "1" ]; then
-    TORCH_INDEX="https://download.pytorch.org/whl/cu128"
-  else
-    TORCH_INDEX="https://download.pytorch.org/whl/cpu"
-    log "无 GPU：安装 CPU 版 torch（ROS 门不受影响；GPU 训练请在 GPU 机器上重建 .venv）"
-  fi
   python3 -m venv .venv
   .venv/bin/pip install --upgrade pip
-  .venv/bin/pip install --index-url "${TORCH_INDEX}" torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0
-  .venv/bin/pip install -r src/kcg_rl/requirements-training.txt
-  log ".venv 完成（torch 2.7.0 / gymnasium 1.2.3 / SB3 2.7.1）"
+  .venv/bin/pip install -e src/kcg_connector pytest
+  log ".venv 完成（kcg_connector 静态依赖与 pytest）"
 fi
 
 # ---------- 阶段 4: Isaac Sim 环境（GPU 机器才需要） ----------
@@ -124,6 +117,6 @@ INNER
   log "Isaac 环境前缀: ${ISAAC_PREFIX}（可用 ISAAC_ENV_PREFIX 覆盖，或 source scripts/isaac_env.sh）"
 fi
 
-log "BOOTSTRAP 全部完成。下一步："
-log "  bash scripts/verify_all.sh      # CPU/ROS 验收门（无 GPU 可跑）"
-log "  bash scripts/verify_isaac.sh    # GPU/Isaac 验收门（需要 NVIDIA GPU）"
+log "BOOTSTRAP 全部完成。下一步先读 CURRENT_CONTEXT_CN.md。"
+log "纯 CPU 基础检查：PYTHONPATH=src/kcg_connector python3 -m pytest -q src/kcg_connector/test/test_geometry.py"
+log "不要从 bootstrap 直接启动 Isaac；动态动作必须通过当前控制面授权。"

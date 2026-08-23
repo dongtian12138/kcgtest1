@@ -27,9 +27,7 @@ D38999 类电连接器的识别、抓取、对准、插入、锁紧和回到 Hom
 | `src/iiwa_description/` | KUKA iiwa 与三指手描述 | 主线依赖 |
 | `src/kcg_moveit1/` | ROS 2 / MoveIt 配置 | 主线依赖 |
 | `src/kcg_grasping/` | 圆柱抓取回归 | 支撑回归，不是最终任务 |
-| `src/kcg_moveit_collision_audit/` | 规划场景碰撞审计 | 支撑工具 |
-| `src/kcg_rl/` | 早期 residual RL 实验 | 非当前动态主线 |
-| `tools/agent_control/` | 受控验证与证据工具 | 运维工具 |
+| `tools/deepseek_consult.py` | 授权时使用的外部模型协作入口 | 运维工具 |
 | `artifacts/` | 模型、运行日志、报告与冻结证据 | 数据区，不是源码区 |
 | `legacy_archive/` | 旧源码、文档、实验脚本和 ROS 1 工程 | 统一历史归档，不参加当前运行 |
 
@@ -65,5 +63,7 @@ python3 -m pytest -q \
   `current-carts-j599-checkpoint-20260821`。
 - 第二轮依赖清理完成后的本地基线为 `post-deep-cleanup-20260821`；该标签只表示
   源码和证据可恢复，不表示动态装配通过。
+- 第三轮退役路线清理前的已提交基线为 `pre-active-route-prune-20260823`；旧
+  B-V2/H1-H25、R12 multilayer 控制栈和 residual RL 均可从该标签按路径恢复。
 - 当前有效分支以 `git branch --show-current` 的实时结果为准；未经明确要求不推送标签或提交。
 - 禁止用 `git reset --hard`、强制推送或批量删除来“变干净”。

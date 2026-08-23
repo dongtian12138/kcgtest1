@@ -2,13 +2,6 @@ from pathlib import Path
 
 import yaml
 
-from kcg_connector.residual_rl import (
-    RESIDUAL_ACTION_NAMES,
-    RESIDUAL_ACTION_SIZE,
-    RESIDUAL_OBSERVATION_NAMES,
-    RESIDUAL_OBSERVATION_SIZE,
-)
-
 
 CONTRACT_PATH = (
     Path(__file__).parents[1] / "config" / "wrist_ft_v1_contract.yaml"
@@ -20,7 +13,7 @@ def contract():
         return yaml.safe_load(stream)
 
 
-def test_wrist_ft_design_is_disabled_and_does_not_mutate_v0():
+def test_wrist_ft_design_is_disabled_and_preserves_historical_v0_shape():
     document = contract()
     compatibility = document["compatibility"]
     assert document["status"] == "design_only"
@@ -33,8 +26,8 @@ def test_wrist_ft_design_is_disabled_and_does_not_mutate_v0():
         "modifies_robot_asset": False,
         "modifies_tcp": False,
     }
-    assert RESIDUAL_ACTION_SIZE == 4
-    assert RESIDUAL_OBSERVATION_SIZE == 24
+    assert compatibility["active_action_size"] == 4
+    assert compatibility["active_observation_size"] == 24
 
 
 def test_virtual_boundary_reuses_zero_transform_hand2arm_joint():
@@ -149,20 +142,16 @@ def test_joint_torque_estimator_declares_rank_and_contact_limits():
     assert len(set(estimator["source_joint_names"])) == 7
 
 
-def test_v1_only_appends_compensated_task_frame_wrench():
+def test_retired_residual_v1_contract_shape_remains_auditable():
     residual_v1 = contract()["residual_v1"]
     appended = tuple(residual_v1["appended_observation_names"])
-    assert tuple(residual_v1["action_names"]) == RESIDUAL_ACTION_NAMES
-    assert residual_v1["action_size"] == RESIDUAL_ACTION_SIZE
+    assert residual_v1["action_size"] == 4
     assert residual_v1["base_interface_version"] == (
         "kcg_connector_twist_residual_v0"
     )
-    assert residual_v1["observation_size"] == (
-        RESIDUAL_OBSERVATION_SIZE + len(appended)
-    )
+    assert residual_v1["observation_size"] == 24 + len(appended)
     assert residual_v1["observation_size"] == 30
     assert len(appended) == len(set(appended)) == 6
-    assert not set(appended).intersection(RESIDUAL_OBSERVATION_NAMES)
     assert residual_v1["observation_source"] == (
         "compensated_connector_task_frame_wrench"
     )

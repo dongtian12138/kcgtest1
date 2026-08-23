@@ -68,3 +68,35 @@ git archive --format=tar pre-contract-cleanup-20260821 legacy_archive/ \
 ```
 
 恢复只用于历史审计；不得据此重新授权旧动态运行器。
+
+## 第三轮活动路线收敛（2026-08-23）
+
+- 清理前建立本地标签 `pre-active-route-prune-20260823`，指向 `e17e235`。该标签
+  完整保留本轮删除的已提交文件；当时未提交的 CARTS/H99 工作树不在标签内，也未被
+  清理提交暂存。
+- 依赖闭包确认 B-V2/H1-H25 非 robust 抓取栈、R12 multilayer 控制栈、早期
+  residual RL、旧离散 MoveIt 碰撞审计和 postgrasp 回放路线均不在当前 CARTS 导入
+  闭包内。它们各自依靠旧 runner、配置和测试形成自循环，现已退出活动树。
+- 本轮删除304个已跟踪文件：246个 Python、43份 YAML、3份 Markdown、2份 shell、
+  3份 C++ 和7份包/构建元数据，共143102行、5622497 bytes。活动普通源码区 Python
+  为249个，活动 Markdown 为18份。
+- `d38999_multilayer_tabletop_scene_grasp_v1.yaml` 在回扫中发现仍被当前共享桌面和物体
+  放置合同引用，因此从清理前标签原样恢复；冻结模型生成器、V2/R12模型合同、接受
+  合同和现有证据也全部保留。
+- 删除上游后继续按固定点回扫，包根目录最终没有0入向 Python 模块。仅由测试调用的
+  通用插入、姿态、轨迹、注册表和关节力矩估计 API 保留，不按调用次数强删。
+- 仓库级非 CARTS 静态套件实测 `861 passed in 30.61s`，退出码0；Markdown 为18份、
+  相对链接断链0项，`bootstrap.sh` 语法检查和 `git diff --check` 通过。
+- Python/pytest缓存逐项校验为普通目录且无活动 pytest/Isaac 进程后删除，最终缓存
+  目录0个；没有删除 `.venv`、日志、轨迹、报告、USD、冻结资产或J599证据归档。
+- 为避免并行的 CARTS/H99 工作树混入结果，全量回归从 Git 暂存区导出独立快照。
+  主隔离运行为 `1282 passed, 34 failed in 444.25s`；34项全部由隔离方式造成，
+  其中29项是只读挂载后内核拒绝子进程，5项是冻结证据清单要求原仓库绝对根路径。
+  29项在普通的暂存快照中 `29 passed in 1.86s`；5项在“同一绝对根路径 +
+  证据只读”的暂存快照中 `5 passed in 11.61s`。因此组合覆盖的1316项无真实回归失败；
+  这仍是静态/离线测试，不是 Isaac 动态验收。
+- 当前 CARTS/H99 源码和测试在本轮期间仍由并行工作修改，因此本轮不沿用旧的535项
+  结果，也不把清理时点的未暂存 H99 工作树称为当前完整 CARTS 验收通过。
+  清理提交只暂存本轮明确
+  路径；`selected_candidate=null`、`dynamic_launch_allowed=false` 和
+  `hardware_authorized=false` 不因本轮静态清理改变。

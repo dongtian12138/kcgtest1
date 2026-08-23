@@ -15,25 +15,25 @@ Isaac Sim 运行入口、独立评估器和纯 CPU 测试。
 - 当前配置：[`config/carts_grasp_v1.yaml`](config/carts_grasp_v1.yaml)
 - 当前定向回归：[`test/robust_grasp/`](test/robust_grasp/)
 
-旧 `d38999_tabletop_pick_smoke.py`、B-V3/H1-H25 和固定候选路线只作历史证据或
-baseline。动态运行是否获准、允许的 run_id、冻结摘要和下一动作都以控制面为准；
-README 不作为运行授权。
+旧 `d38999_tabletop_pick_smoke.py`、B-V3/H1-H25、R12 multilayer 控制栈和 residual
+RL 已从活动源码退役，由 `pre-active-route-prune-20260823` 与原始证据保留。动态运行
+是否获准、允许的 run_id、冻结摘要和下一动作都以控制面为准；README 不作为运行授权。
 
 ## 包内结构
 
 | 路径 | 内容 |
 | --- | --- |
 | `kcg_connector/` | 与模拟器解耦的模型、控制器、评估和安全逻辑 |
-| `kcg_connector/grasp/` | 当前与历史三指抓取、支撑转移控制 |
-| `isaac/` | Isaac 场景、探针和动态验证入口 |
-| `config/` | 模型、场景、抓取和安全配置 |
+| `kcg_connector/grasp/` | 当前 robust 抓取与仍复用的传感器安全监视器 |
+| `isaac/` | 当前 CARTS 接口、模型生成器和通用诊断探针 |
+| `config/` | 当前配置及仍需复核的冻结模型合同 |
 | `test/` | 纯 CPU 契约、回归和防火墙测试 |
 | `assets/public_specs/` | 可公开追溯的规格来源，不是制造 CAD |
 | `docs/` | 包级设计说明 |
 
-`isaac/` 中仍有被历史 V2 生成链引用的探针，`config/` 中也有冻结旧版本。文件名带有
-`v1/v2/r7/r12` 并不自动表示当前有效；默认测试已移除只校验旧源码文本/哈希的合同，
-但准备删除运行文件时仍应从当前任务和证据引用反查。
+冻结模型生成器仍会记录旧任务来源字段，这些字段属于谱系，不是活动运行入口。文件名
+带有 `v1/v2/r7/r12` 并不自动表示当前有效；准备删除模型相关文件时仍应从当前任务、
+冻结合同和证据引用反查。
 
 ## 开发检查
 
