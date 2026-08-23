@@ -1,13 +1,13 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-23T14:54:40Z",
+  "updated_at_utc": "2026-08-23T14:56:17Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "ISAAC_CONNECTOR_SCENE_SMOKE_AND_MODEL_ADAPTER",
+  "current_milestone": "V2_MODEL_AND_CANDIDATE_GENERATION",
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
@@ -42,13 +42,23 @@
       "exit_code": 0,
       "log": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260823_145317.log"
     },
-    "current_scene_load_attempted": false,
+    "current_scene_load_attempted": true,
+    "current_scene_smoke": {
+      "scene": "kcg_d38999_tabletop_robot_smoke_v1",
+      "asset_role": "EXISTING_SHELL25J_PROXY_SCENE_NOT_V2_REAL_CAD_GRASP",
+      "settle_steps": 480,
+      "vertical_drop_m": 0.015000015497207642,
+      "final_surface_error_m": -1.1920928966180355e-08,
+      "minimum_robot_table_clearance_m": 0.027999916161923294,
+      "object_pose_writes_after_start": 0,
+      "exit_code": 0,
+      "log": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260823_145554.log"
+    },
     "latest_run": null
   },
   "evidence_level": "ISAAC_ENVIRONMENT_PHYSICS_SMOKE",
   "blockers": [
     "V2_OFFLINE_PIPELINE_NOT_IMPLEMENTED",
-    "V2_RESEARCH_CONTROLLER_NOT_IMPLEMENTED",
-    "ISAAC_CURRENT_ROBOT_SCENE_NOT_LOADED"
+    "V2_RESEARCH_CONTROLLER_NOT_IMPLEMENTED"
   ]
 }
