@@ -1,24 +1,36 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-23T16:08:45Z",
+  "updated_at_utc": "2026-08-23T21:42:11Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
+  "config_sha256": "c41e10936effd08d4c8044dfe79861e479ac751f32453ef5d12ee5b785a948f7",
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "IMPLEMENTING",
-  "current_milestone": "V2_RESEARCH_DYNAMIC_CONTROLLER_AND_FIRST_RUN",
+  "status": "PARKED",
+  "current_milestone": "V2_EVIDENCE_CLOSEOUT_COMPLETE_DYNAMIC_PARKED",
+  "git_delivery": {
+    "workspace_git_directory_writable": false,
+    "workspace_head": "698a2bb",
+    "workspace_git_error": "CANNOT_CREATE_GIT_INDEX_LOCK_READ_ONLY_FILE_SYSTEM",
+    "integration_clone": "/tmp/kcgtest1-carts-v2-integration-20260823",
+    "code_commit": "4d90a52",
+    "documentation_commit": "PENDING",
+    "remote_push_status": "PENDING"
+  },
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": false,
-    "reason": "Top-3 IK, full-path collision, initial-penetration checks and bounded controller are not jointly closed"
+    "scope": "OBJECT_RUNS_PARKED_PENDING_GPU_HAND_DRIVE_DIFFERENTIATION",
+    "reason": "A native-gravity preflight stopped at 4.4916 rad/s f2j1 speed; startup separately reported CPU fallback, and an isolated same-trajectory hand-drive comparison must pass before another object run"
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
   "objects": {
     "development": "current_d38999_26kj61sn_public_spec",
-    "holdout": "te_deutsch_d38999_26fj35pn_step"
+    "transfer": "te_deutsch_d38999_26fj35pn_step",
+    "prospective_blind": false
   },
   "same_main_parameters_frozen": true,
   "scenario_design_sha256": "6aea2d6e5bc384445e1accf7636435142356eaf96a425481d17299a5cdcd93c1",
@@ -33,19 +45,21 @@
   "candidate_results": {
     "current_d38999_26kj61sn_public_spec": {
       "candidate_count": 48,
-      "fast_survive_count": 5,
-      "top_candidate": "candidate_07",
-      "worst_task_margin": 0.6902788208999142,
+      "fast_survive_count": 3,
+      "top_candidate": "candidate_11",
+      "worst_task_margin": 0.0,
+      "lower_tail_mean_margin": 0.08907553028585984,
+      "sampled_hand_table_clearance_m": 0.0007049611569468484,
       "offline_task_gate_passed": false
     },
     "te_deutsch_d38999_26fj35pn_step": {
       "candidate_count": 48,
-      "fast_survive_count": 9,
-      "top_candidate": "candidate_46",
-      "worst_task_margin": 1.0332243177980778,
-      "required_peak_normal_force_n": 7.828609711906763,
-      "maximum_generalized_joint_torque_nm": 0.9865279327188741,
-      "offline_task_gate_passed": true
+      "fast_survive_count": 5,
+      "top_candidate": "candidate_33",
+      "worst_task_margin": 0.08233212531669659,
+      "lower_tail_mean_margin": 0.14937672928957824,
+      "sampled_hand_table_clearance_m": 0.0054579593101973245,
+      "offline_task_gate_passed": false
     }
   },
   "isaac": {
@@ -80,13 +94,58 @@
       "exit_code": 0,
       "log": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260823_145554.log"
     },
-    "latest_run": null
+    "latest_run": {
+      "object_id": "current_d38999_26kj61sn_public_spec",
+      "candidate_id": "candidate_11",
+      "mode": "preflight",
+      "output": "artifacts/carts_v2/dynamic/A_candidate11_native_gravity_preflight_run05",
+      "evaluation_sha256": "cc084944a6359789e9f52a4ce23dacf21fa804495be40808a8130c74016470e3",
+      "evaluation_size_bytes": 2538,
+      "raw_trace_sha256": "dca29144db224de3c7c46bba2fbcfa7bb8dc8b13578ea64f7360fae220d0b860",
+      "raw_trace_size_bytes": 1583885,
+      "raw_trace_committed": false,
+      "raw_trace_retention": "LOCAL_WORKSPACE_ONLY_SMALL_EVALUATION_COMMITTED",
+      "physics_time_advanced_s": 2.5666666666666664,
+      "preflight_pass": false,
+      "failure_reason": "JOINT_SPEED_ABORT",
+      "maximum_joint_speed_rad_s": 4.491623878479004,
+      "speed_abort_joint": "f2j1",
+      "maximum_arm_tracking_error_rad": 0.007349913667922842,
+      "maximum_gravity_compensation_nm": 1.5274484157562256,
+      "maximum_gravity_target_bias_rad": 0.0006109793903306127,
+      "maximum_predicted_total_arm_effort_nm": 12.255363861588844,
+      "robot_table_contact_records": 0,
+      "robot_fixture_contact_records": 0,
+      "robot_object_unauthorized_contact_records": 0,
+      "observed_failure_class": "HAND_PRESHAPE_SPEED_ABORT",
+      "physics_backend_context": "NVIDIA_DRIVER_UNAVAILABLE_PHYSX_CPU_FALLBACK_NOT_BOUND_IN_TRACE",
+      "root_cause": "UNRESOLVED_HAND_DRIVE_MODEL_OR_BACKEND"
+    }
   },
-  "evidence_level": "OFFLINE_ALGORITHM_WITH_ISAAC_ENVIRONMENT_SMOKE",
+  "evidence_level": "OFFLINE_ALGORITHM_WITH_RESEARCH_ISAAC_PREFLIGHT_FAILURE",
+  "validation": {
+    "targeted_regression_passed": 83,
+    "targeted_regression_duration_s": 221.91,
+    "initial_full_regression": {
+      "passed": 1502,
+      "failed": 4,
+      "duration_s": 970.92,
+      "failure_class": "LEGACY_POST_GENERATION_TEST_FIXTURE_SCHEMA_DRIFT"
+    },
+    "fixture_recheck_passed": 4,
+    "fixture_recheck_duration_s": 0.23,
+    "final_full_regression_passed": 1506,
+    "final_full_regression_failed": 0,
+    "final_full_regression_duration_s": 982.86
+  },
   "blockers": [
-    "TOP3_IK_AND_FULL_PATH_COLLISION_UNRESOLVED",
-    "V2_RESEARCH_CONTROLLER_NOT_IMPLEMENTED",
-    "OBJECT_A_ROBUST_MARGIN_BELOW_ONE",
-    "OBJECT_B_FREE_TABLETOP_PHYSX_MODEL_NOT_BUILT"
+    "TOP3_FORMAL_50MM_FULL_PATH_COLLISION_UNRESOLVED",
+    "BOTH_OBJECTS_ROBUST_TASK_MARGIN_BELOW_ONE",
+    "HAND_PRESHAPE_SPEED_ABORT",
+    "CPU_FALLBACK_CONTEXT_NOT_BOUND_IN_TRACE",
+    "NVIDIA_DRIVER_UNAVAILABLE",
+    "NATIVE_GRAVITY_BIASED_DRIVE_NOT_CAUSALLY_VERIFIED",
+    "DYNAMIC_PAD_SURFACE_IDENTITY_NOT_VERIFIED",
+    "PREREGISTERED_DISTURBANCE_NOT_EXECUTED"
   ]
 }
