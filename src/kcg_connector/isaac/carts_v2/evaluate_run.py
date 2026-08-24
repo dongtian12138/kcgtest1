@@ -12,6 +12,11 @@ from typing import Mapping, Sequence
 
 import numpy as np
 
+if __package__:
+    from .engine_health import pending_engine_fields
+else:
+    from engine_health import pending_engine_fields
+
 
 TERMINAL_LINK_NAMES = ("f1Link3", "f2Link2", "f3Link3")
 
@@ -547,7 +552,7 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
         safety["collision_pass"],
         safety["penetration_pass"],
     )
-    preflight_pass = bool(
+    controller_preflight_pass = bool(
         document["mode"] == "preflight"
         and all(shared_passes)
         and not contacts["any_terminal"]
@@ -568,7 +573,7 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
         and pad_identity
     )
     return {
-        "schema_version": "carts_grasp_v2_dynamic_evaluation_v1",
+        "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
         "object_id": document["object_id"],
         "candidate_id": document["candidate_id"],
         "mode": document["mode"],
@@ -600,7 +605,11 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
         "finite_throughout": safety["finite"],
         "controller_completed": control_complete,
         "controller_failure_reason": document["controller_outcome"]["failure_reason"],
-        "preflight_pass": preflight_pass,
+        "preflight_pass": False,
+        **pending_engine_fields(
+            controller_preflight_pass,
+            bool(document.get("identity_hash_check_pass", False)),
+        ),
         "nominal_diagnostic_pass": nominal_physical_pass,
         "research_dynamic_pass": research_pass,
         "formal_dynamic_pass": False,

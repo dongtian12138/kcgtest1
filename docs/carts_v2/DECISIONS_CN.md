@@ -137,3 +137,11 @@
 - 北极星、两个对象身份、50 mm、2 s、真实指腹接触、3 rad/s 安全限速、在线真值隔离和禁止未授权穿透全部保持。
 - `hardware_authorized=false`、`legacy_formal_dynamic_launch_allowed=false`、`formal_dynamic_pass=false` 保持失败关闭。
 - 研究门先只开放 `ISOLATED_HAND_DIAGNOSTIC`：无对象、无桌面、同模型/初值/轨迹/dt/drive 的手部区分实验；在 `f2j1` 根因关闭前禁止对象 A/B 运行和候选算法修改。
+
+## 2026-08-24T08:13:09Z — LOCAL_CORRECTION + EXECUTION_CONTINUATION
+
+- 用户明确纠正：GPU found/lost aggregate-pair 与 total aggregate-pair 容量属于 Isaac/PhysX 运行资源，不是抓取算法、物理参数、控制增益或成功标准；`V2_RECOVERY_1` 因此属于过度保守停止。
+- 开启补足窗口 `V2_RECOVERY_2`，有效预算 4 小时 15 分钟，硬截止 `2026-08-24T12:28:09Z`，不自动延长，也不重开 12 小时计划。
+- 先修复预检查失败关闭漏洞，再审计场景结构与两类容量峰值；没有重复碰撞体或错误过滤时，容量按 `next_power_of_two(ceil(2 * observed_peak))` 分别确定。
+- `candidate_11`、`candidate_33`、算法排序、物性、摩擦、增益、力量、3 rad/s、50 mm、2 s、指腹标准、真值防火墙及旧 H102 全部冻结。
+- `hardware_authorized=false`、旧正式动态门、`formal_dynamic_pass=false` 和 `research_dynamic_pass=false` 保持；只有新评价的 `accepted_preflight_pass=true` 才能启动对象 A 抓取。

@@ -15,6 +15,7 @@ import numpy as np
 
 if __package__:
     from . import controller as control
+    from .engine_health import preflight_is_accepted
     from .evaluate_run import (
         IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
         audit_mimic_schema, compare_reference_targets,
@@ -22,6 +23,7 @@ if __package__:
     )
 else:
     import controller as control
+    from engine_health import preflight_is_accepted
     from evaluate_run import (
         IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
         audit_mimic_schema, compare_reference_targets,
@@ -104,7 +106,7 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         )
         expected = (arguments.object_id, selected["candidate_id"])
         observed = (preflight.get("object_id"), preflight.get("candidate_id"))
-        if observed != expected or not preflight.get("preflight_pass"):
+        if observed != expected or not preflight_is_accepted(preflight):
             raise ValueError("matching independent preflight did not pass")
     if arguments.mode == "isolated-hand":
         arguments.reference_document = json.loads(
@@ -577,7 +579,7 @@ def _finish_run(repository, arguments, output, inputs, runtime, trace, outcome):
         json.dumps(evaluation, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     print(json.dumps(evaluation, ensure_ascii=False, indent=2))
-    key = "preflight_pass" if arguments.mode == "preflight" else "research_dynamic_pass"
+    key = "accepted_preflight_pass" if arguments.mode == "preflight" else "research_dynamic_pass"
     return 0 if evaluation[key] else 2
 
 
