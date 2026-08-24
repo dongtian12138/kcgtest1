@@ -1,12 +1,12 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T22:17:40Z",
+  "updated_at_utc": "2026-08-24T22:47:00Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "method_name": "GraspGenX-CARTS",
   "active_route_config": "src/kcg_connector/config/carts_graspgenx_route1.yaml",
-  "active_route_config_sha256": "09c1a51b010d25e247d8e4f45d0256ca1e140dc97b0c7e85e2d43e5511abc5e5",
+  "active_route_config_sha256": "a78a6c07f8c886ebfe39a887dacd3974f859061716637d18dd91ef7f3106503e",
   "official_sources": {
     "repository": "https://github.com/NVlabs/GraspGenX.git",
     "paper": "https://arxiv.org/abs/2606.00998",
@@ -79,7 +79,20 @@
     "moe_obb_mode": "advanced",
     "moe_skip_obb_rule": "auto",
     "moe_obb_density": "dense-topandside",
-    "moe_obb_position_spacing_cm": 1.0
+    "moe_obb_position_spacing_cm": 1.0,
+    "scene_collision_filter": {
+      "enabled": true,
+      "official_function": "graspgenx.utils.collision_filter.filter_colliding_grasps",
+      "official_source_sha256": "de66b483639c6c18bca6b58ab251328678609ca1fc145a15bafb693e32fe692b",
+      "collision_threshold_m": 0.02,
+      "gripper_surface_sample_count": 2000,
+      "maximum_table_point_count": 8192,
+      "actual_table_point_count": 8160,
+      "registered_hand_link_count": 9,
+      "scene_components": ["FINITE_TABLE_TOP"],
+      "target_object_points_included": false,
+      "claim_scope": "EARLY_PROXIMITY_REJECT_NOT_MESH_OR_PATH_SAFETY_PROOF"
+    }
   },
   "legacy_mixed_parameter_proposals": {
     "status": "PRESERVED_AS_DIAGNOSTIC_NOT_CURRENT_METHOD_OUTPUT",
@@ -104,7 +117,11 @@
       "descriptor_counts": {"kcg_3f_preshape_02": 128},
       "coverage_pass": false,
       "coverage_path": "artifacts/carts_v2/graspgenx/offline_official_object_defaults_v1_A/candidate_coverage.json",
-      "coverage_sha256": "f9c549f255034d08c371b5ad7af756342fe29f5e6f7c6ecc167d02649f20d247"
+      "coverage_sha256": "f9c549f255034d08c371b5ad7af756342fe29f5e6f7c6ecc167d02649f20d247",
+      "scene_pc_filter_retained_count": 29,
+      "scene_pc_filter_rejected_count": 99,
+      "scene_pc_filter_audit_path": "artifacts/carts_v2/graspgenx/offline_official_scene_filter_v1_A/scene_pc_filter_audit.json",
+      "scene_pc_filter_audit_sha256": "cb264495c2d8612c99b5dd111949ca8820acd6b5b22950138c9a98dda5c96636"
     },
     "object_b": {
       "raw_after_score_threshold_count": 589,
@@ -113,9 +130,14 @@
       "descriptor_counts": {"kcg_3f_preshape_02": 128},
       "coverage_pass": false,
       "coverage_path": "artifacts/carts_v2/graspgenx/offline_official_object_defaults_v1_B/candidate_coverage.json",
-      "coverage_sha256": "e475a9595d93274ae9dd4a5334f00d9f7549b8036ae0de191bc6f24cf0475370"
+      "coverage_sha256": "e475a9595d93274ae9dd4a5334f00d9f7549b8036ae0de191bc6f24cf0475370",
+      "scene_pc_filter_retained_count": 23,
+      "scene_pc_filter_rejected_count": 105,
+      "scene_pc_filter_audit_path": "artifacts/carts_v2/graspgenx/offline_official_scene_filter_v1_B/scene_pc_filter_audit.json",
+      "scene_pc_filter_audit_sha256": "94feb0b6978ce1141639d24a067a6f95ca05e2181e67874fda37ed075ff0c483"
     },
-    "claim_limit": "COVERAGE_DIAGNOSTIC_ONLY_NO_CLOSURE_COLLISION_TASK_IK_OR_ISAAC_EVALUATION"
+    "scene_pc_filter_scope": "OFFICIAL_COARSE_OPEN_HAND_SCENE_PC_REJECT_ONLY_TARGET_OBJECT_EXCLUDED",
+    "claim_limit": "COVERAGE_FAILED; SCENE_PC_COUNTS_ARE_EARLY_REJECTION_ONLY; NO_CLOSURE_MESH_PATH_TASK_IK_OR_ISAAC_EVALUATION"
   },
   "objects": [
     "current_d38999_26kj61sn_public_spec",

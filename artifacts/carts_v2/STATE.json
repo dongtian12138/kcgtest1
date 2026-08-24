@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T22:17:40Z",
+  "updated_at_utc": "2026-08-24T22:47:00Z",
   "started_at_utc": "2026-08-24T14:46:08Z",
   "hard_deadline_utc": "2026-08-25T02:46:08Z",
   "branch": "carts-grasp-graspgenx-route1-20260824",
-  "config_sha256": "09c1a51b010d25e247d8e4f45d0256ca1e140dc97b0c7e85e2d43e5511abc5e5",
+  "config_sha256": "a78a6c07f8c886ebfe39a887dacd3974f859061716637d18dd91ef7f3106503e",
   "start_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "GRASPGENX_ROUTE1_OFFICIAL_SCENE_COLLISION_FILTER_BINDING",
+  "current_milestone": "GRASPGENX_ROUTE1_SINGLE_DESCRIPTOR_VISIBILITY_ROOT_CAUSE_REVIEW",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -69,7 +69,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "official object-PC defaults leave only one KCG descriptor for both objects, so the preregistered multi-descriptor coverage gate fails before closure; legacy mixed parameters remain diagnostic only"
+    "reason": "official object-PC defaults leave only one KCG descriptor for both objects; official coarse scene-PC filtering retains A 29 and B 23 proposals but cannot repair the preregistered multi-descriptor coverage failure, so closure and Isaac remain closed"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -167,20 +167,29 @@
       "isaac_launched": false
     },
     "active_official_object_pc_default_replay": {
-      "route_config_sha256": "09c1a51b010d25e247d8e4f45d0256ca1e140dc97b0c7e85e2d43e5511abc5e5",
+      "route_config_sha256": "a78a6c07f8c886ebfe39a887dacd3974f859061716637d18dd91ef7f3106503e",
       "parameter_scope": "OFFICIAL_DEMO_OBJECT_PC_DEFAULTS_EXCEPT_USER_FIXED_NUM_GRASPS_256",
       "object_a": {
         "proposal_count": 128,
         "descriptor_counts": {"kcg_3f_preshape_02": 128},
         "coverage_pass": false,
+        "scene_pc_filter_input_count": 128,
+        "scene_pc_filter_retained_count": 29,
+        "scene_pc_filter_rejected_count": 99,
+        "scene_pc_filter_audit_sha256": "cb264495c2d8612c99b5dd111949ca8820acd6b5b22950138c9a98dda5c96636",
         "closure_status": "NOT_RUN_COVERAGE_FAILED"
       },
       "object_b": {
         "proposal_count": 128,
         "descriptor_counts": {"kcg_3f_preshape_02": 128},
         "coverage_pass": false,
+        "scene_pc_filter_input_count": 128,
+        "scene_pc_filter_retained_count": 23,
+        "scene_pc_filter_rejected_count": 105,
+        "scene_pc_filter_audit_sha256": "94feb0b6978ce1141639d24a067a6f95ca05e2181e67874fda37ed075ff0c483",
         "closure_status": "NOT_RUN_COVERAGE_FAILED"
       },
+      "scene_pc_filter_scope": "OFFICIAL_COARSE_OPEN_HAND_SCENE_PC_REJECT_ONLY_TARGET_OBJECT_EXCLUDED_NOT_PATH_SAFETY_PROOF",
       "task_ik_isaac_status": "NOT_REACHED"
     },
     "object_a_all_visible_raw_pool_existence_check": "COMPLETED_NO_TABLE_SAFE_THREE_PAD_CONTACT",
@@ -939,7 +948,7 @@
       "uncommitted_gpu_object_route_reverted": true
     }
   },
-  "evidence_level": "GRASPGENX_OFFICIAL_INFERENCE_AND_TWO_OBJECT_SAME_SOURCE_OFFLINE_GEOMETRY_REJECTION_TASK_IK_DYNAMIC_NOT_REACHED",
+  "evidence_level": "GRASPGENX_OFFICIAL_DEFAULT_SINGLE_DESCRIPTOR_COVERAGE_REJECT_WITH_COARSE_SCENE_FILTER_A29_B23_COMPLETE_PATH_TASK_IK_DYNAMIC_NOT_RUN",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -975,11 +984,17 @@
     "graspgenx_route1_academic_supervisor": "APPROVE",
     "graspgenx_route1_complexity_supervisor": "APPROVE",
     "graspgenx_route1_reference_runtime_reproducibility_passed": true,
-    "graspgenx_route1_reproducibility_check_sha256": "ffa98d17b5f6690bd9caf9745fcfdf643d1f3a7bc0b8f9e96f9799a700bb2073"
+    "graspgenx_route1_reproducibility_check_sha256": "ffa98d17b5f6690bd9caf9745fcfdf643d1f3a7bc0b8f9e96f9799a700bb2073",
+    "scene_pc_filter_targeted_tests_passed": 19,
+    "scene_pc_filter_two_object_audit_pass": true,
+    "scene_pc_filter_academic_supervisor": "APPROVE_AFTER_EVIDENCE_IDENTITY_CORRECTION",
+    "scene_pc_filter_complexity_supervisor": "APPROVE_2194_ADDED_76_DELETED_2118_NET_NLOC"
   },
   "blockers": [
-    "OBJECT_A_ROI_256_HAS_THREE_THREE_PAD_CLOSURE_PREDICTIONS_BUT_ZERO_TABLE_SAFE_PATHS",
-    "OBJECT_B_ROI_256_HAS_ZERO_THREE_PAD_CLOSURE_PREDICTION_SURVIVORS",
+    "ACTIVE_OFFICIAL_DEFAULT_A_B_PROPOSALS_RETAIN_ONLY_ONE_DESCRIPTOR_COVERAGE_FAILED_AFTER_COARSE_SCENE_FILTER_A29_B23",
+    "ACTIVE_FOUR_KCG_DESCRIPTORS_HAVE_RAW_PROPOSALS_BUT_ZERO_OPEN_OR_HALF_VISIBILITY_ROOT_CAUSE_UNRESOLVED",
+    "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_A_ROI_256_THREE_CLOSURE_PREDICTIONS_ZERO_TABLE_SAFE_PATHS",
+    "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_B_ROI_256_ZERO_THREE_PAD_CLOSURE_PREDICTION_SURVIVORS",
     "KCG_CONDITIONING_BOX_EXTENT_OUTSIDE_AUDITED_OFFICIAL_CONFIG_RANGES_CAUSAL_UNPROVEN",
     "FUTURE_DYNAMIC_2MM_TABLE_PENETRATION_ACCEPTANCE_BOUND_HAS_NO_VALIDATED_PROVENANCE",
     "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND",

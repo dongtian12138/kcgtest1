@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 from pathlib import Path
@@ -16,15 +15,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import trimesh
 
-from kcg_connector.grasp.carts_v2.gripper_descriptor_builder import (
-    build_kcg_graspgenx_descriptors,
-    shared_preshape_grid,
-)
-from kcg_connector.grasp.robust.collision_roster import (
-    load_authoritative_collision_link_roster,
-)
+from kcg_connector.grasp.carts_v2.gripper_descriptor_builder import build_kcg_graspgenx_descriptors, shared_preshape_grid
+from kcg_connector.grasp.robust.collision_roster import load_authoritative_collision_link_roster
 from kcg_connector.grasp.robust.hand_contract import load_carts_hand_contract
-from kcg_connector.grasp.robust.object_model import load_stl_mesh
+from kcg_connector.grasp.robust.object_model import file_sha256, load_stl_mesh
 
 
 _CLOSURE_SEARCH_UPPER_PHASE = 0.75
@@ -34,26 +28,12 @@ _MAXIMUM_JOINT_INCREMENT_RAD = 0.0015
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repository-root", type=Path, default=Path.cwd())
-    parser.add_argument(
-        "--hand-contract",
-        type=Path,
-        default=Path("src/kcg_connector/config/carts_hand_contact_v1.yaml"),
-    )
-    parser.add_argument(
-        "--collision-roster",
-        type=Path,
-        default=Path("src/kcg_connector/config/carts_collision_roster_v1.yaml"),
-    )
+    parser.add_argument("--hand-contract", type=Path,
+                        default=Path("src/kcg_connector/config/carts_hand_contact_v1.yaml"))
+    parser.add_argument("--collision-roster", type=Path,
+                        default=Path("src/kcg_connector/config/carts_collision_roster_v1.yaml"))
     parser.add_argument("--output-dir", required=True, type=Path)
     return parser.parse_args()
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def _registered_hand_meshes(root: Path, roster, hand) -> dict[str, trimesh.Trimesh]:
@@ -233,7 +213,7 @@ def main() -> int:
                 ),
                 "graspgenx_config": descriptor.to_official_config(),
                 "render": image_name,
-                "render_sha256": _sha256(image_path),
+                "render_sha256": file_sha256(image_path),
                 "aabb_claim": "MODEL_CONDITIONING_ONLY_NOT_COLLISION_PROOF",
             }
         )
@@ -241,9 +221,9 @@ def main() -> int:
         "schema_version": "kcg_graspgenx_descriptors_v1",
         "object_independent": True,
         "hand_contract": str(contract_path.relative_to(root)),
-        "hand_contract_sha256": _sha256(contract_path),
+        "hand_contract_sha256": file_sha256(contract_path),
         "collision_roster": str(roster_path.relative_to(root)),
-        "collision_roster_sha256": _sha256(roster_path),
+        "collision_roster_sha256": file_sha256(roster_path),
         "f1j1_grid_rule": "URDF_LIMIT_10_TO_90_PERCENT_9_UNIFORM",
         "maximum_closure_phase_rule": (
             "PER_PRESHAPE_LAST_SAMPLED_SELF_COLLISION_FREE_STATE"

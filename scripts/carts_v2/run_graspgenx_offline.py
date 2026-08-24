@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -30,6 +31,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--proposal", type=Path, required=True)
     parser.add_argument("--object-id", required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--skip-coverage-render", action="store_true")
     return parser.parse_args()
 
 
@@ -62,6 +64,65 @@ def _object_mesh_path(manifest: dict, object_id: str) -> Path:
     if len(rows) != 1:
         raise ValueError("object manifest must contain the requested object exactly once")
     return Path(rows[0]["standardized_mesh_npz"]).resolve()
+
+
+def _filter_open_hand_from_table(inputs, candidates):
+    """Official coarse scene-PC rejection; target object is deliberately absent."""
+    import graspgenx.utils.collision_filter as official
+    import trimesh
+
+    cfg = inputs.config.section("candidate_generation")["graspgenx"]["scene_collision_filter"]
+    if cfg.get("enabled") is not True or not candidates:
+        raise ValueError("official scene-PC filter must be enabled with candidates")
+    threshold, sample_count = float(cfg["collision_threshold_m"]), int(cfg["gripper_surface_sample_count"])
+    maximum = int(cfg["maximum_table_point_count"])
+    bounds = inputs.table_xy_bounds_m
+    width, height = bounds[:, 1] - bounds[:, 0]
+    nx = max(2, int(np.sqrt(maximum * width / height)))
+    ny = max(2, maximum // nx)
+    xx, yy = np.meshgrid(np.linspace(*bounds[0], nx), np.linspace(*bounds[1], ny))
+    table = np.column_stack((xx.ravel(), yy.ravel(), np.full(xx.size, inputs.table_top_z_m)))
+    kept_ids, per_descriptor, rejected = set(), [], []
+    for descriptor_id in sorted({row.seed.descriptor_id for row in candidates}):
+        rows = [row for row in candidates if row.seed.descriptor_id == descriptor_id]
+        first = rows[0]
+        transforms = inputs.hand_model.forward_kinematics(first.seed.pregrasp_joint_positions_rad)
+        generator_from_hand = np.asarray(first.evidence["graspgenx_from_handbase_row_major"]).reshape(4, 4)
+        triangles = []
+        for link_name, local in inputs.hand_collision_triangles_by_link.items():
+            link = transforms[link_name]
+            hand = local @ link[:3, :3].T + link[:3, 3]
+            triangles.append(hand @ generator_from_hand[:3, :3].T + generator_from_hand[:3, 3])
+        triangles = np.concatenate(triangles)
+        mesh = trimesh.Trimesh(vertices=triangles.reshape(-1, 3), faces=np.arange(triangles.size // 3).reshape(-1, 3), process=False)
+        surface, _ = trimesh.sample.sample_surface(mesh, sample_count, seed=int(inputs.config.section("candidate_generation")["random_seed"]))
+        poses = np.asarray([
+            inputs.frozen_world_from_object @ np.asarray(row.evidence["object_from_graspgenx_row_major"]).reshape(4, 4)
+            for row in rows
+        ])
+        mask = official.filter_colliding_grasps(table, poses, collision_threshold=threshold, num_collision_samples=sample_count, gripper_surface_points=surface)
+        kept_ids.update(row.seed.candidate_id for row, keep in zip(rows, mask) if keep)
+        rejected.extend({"candidate_id": row.seed.candidate_id, "descriptor_id": descriptor_id, "raw_index": row.seed.source_sample_index} for row, keep in zip(rows, mask) if not keep)
+        per_descriptor.append({"descriptor_id": descriptor_id, "input_count": len(rows), "retained_count": int(mask.sum()), "rejected_count": int(len(rows) - mask.sum()), "canonical_surface_sha256": hashlib.sha256(np.asarray(surface, dtype="<f4").tobytes()).hexdigest()})
+    filtered = tuple(row for row in candidates if row.seed.candidate_id in kept_ids)
+    evidence = candidates[0].evidence
+    audit = {
+        "schema_version": "graspgenx_carts_scene_pc_filter_v1", "object_id": inputs.object_contract.object_id,
+        "method": "OFFICIAL_COARSE_OPEN_HAND_SCENE_PC_REJECT_ONLY",
+        "official_function": "graspgenx.utils.collision_filter.filter_colliding_grasps",
+        "official_source_sha256": file_sha256(Path(official.__file__)), "generator_commit": evidence["generator_commit"],
+        "input_proposal_sha256": evidence["proposal_file_sha256"], "descriptor_manifest_sha256": evidence["descriptor_manifest_sha256"],
+        "collision_roster_sha256": file_sha256(inputs.repository_root / inputs.config.section("inputs")["collision_roster"]),
+        "collision_threshold_m": threshold, "gripper_surface_sample_count": sample_count,
+        "registered_hand_link_count": len(inputs.hand_collision_triangles_by_link),
+        "scene_components": ["FINITE_TABLE_TOP"], "target_object_points_included": False,
+        "table_xy_bounds_m": bounds.tolist(), "table_top_z_m": inputs.table_top_z_m,
+        "table_point_count": len(table), "table_point_cloud_sha256": hashlib.sha256(np.asarray(table, dtype="<f4").tobytes()).hexdigest(),
+        "input_count": len(candidates), "retained_count": len(filtered), "rejected_count": len(candidates) - len(filtered),
+        "per_descriptor": per_descriptor, "rejected": rejected,
+        "claim_scope": "EARLY_PROXIMITY_REJECT_NOT_MESH_OR_PATH_SAFETY_PROOF",
+    }
+    return filtered, audit
 
 
 def _render_coverage(inputs, adapted, baseline, destination: Path) -> None:
@@ -145,13 +206,19 @@ def main() -> int:
         json.dumps(coverage, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
     )
-    baseline_inputs = load_v2_inputs(
-        root, config_path=args.baseline_config, object_id=args.object_id
+    physics_candidates, scene_audit = _filter_open_hand_from_table(inputs, adapted)
+    (args.output_dir / "scene_pc_filter_audit.json").write_text(
+        json.dumps(scene_audit, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
     )
-    _render_coverage(
-        inputs, adapted, generate_raw_candidates(baseline_inputs),
-        args.output_dir / "old_vs_graspgenx_coverage.png",
-    )
+    if not args.skip_coverage_render:
+        baseline_inputs = load_v2_inputs(
+            root, config_path=args.baseline_config, object_id=args.object_id
+        )
+        _render_coverage(
+            inputs, adapted, generate_raw_candidates(baseline_inputs),
+            args.output_dir / "old_vs_graspgenx_coverage.png",
+        )
     evidence = [dict(row.evidence) for row in adapted]
     (args.output_dir / "generator_binding.json").write_text(
         json.dumps(evidence, indent=2, sort_keys=True, allow_nan=False) + "\n",
@@ -160,13 +227,16 @@ def main() -> int:
     if coverage["coverage_pass"] is not True:
         print("six-dimensional coverage diagnostic failed closed")
         return 2
+    if not physics_candidates:
+        print("official open-hand scene-PC filter rejected every proposal")
+        return 3
     result = run_offline_pipeline(
         root, config_path=args.config, object_id=args.object_id,
-        candidate_seeds=tuple(row.seed for row in adapted),
+        candidate_seeds=tuple(row.seed for row in physics_candidates),
     )
     write_offline_report(result, args.output_dir)
     print(
-        f"{args.object_id}: {len(adapted)} 6D candidates, "
+        f"{args.object_id}: {len(physics_candidates)} scene-filtered 6D candidates, "
         f"{len(result.research_task_candidates)} nominal-task eligible, "
         "0 executable before arm IK/path"
     )

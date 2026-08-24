@@ -53,6 +53,11 @@ candidate_generation:
     moe_skip_obb_rule: auto
     moe_obb_density: dense-topandside
     moe_obb_position_spacing_cm: 1.0
+    scene_collision_filter:
+      enabled: true
+      collision_threshold_m: 0.02
+      gripper_surface_sample_count: 2000
+      maximum_table_point_count: 8192
   deduplication:
     palm_position_m: 0.002
     palm_orientation_rad: 0.1308996938995747
