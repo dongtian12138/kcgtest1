@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T09:41:21Z",
+  "updated_at_utc": "2026-08-24T10:24:54Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
   "config_sha256": "c41e10936effd08d4c8044dfe79861e479ac751f32453ef5d12ee5b785a948f7",
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "PARKED",
-  "current_milestone": "V2_RECOVERY_2_CLOSEOUT_OBJECT_A_FAILED",
+  "status": "IMPLEMENTING",
+  "current_milestone": "V2_CONTACT_TRANSITION_BUMPLESS_IMPLEMENTATION",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -22,9 +22,14 @@
     "hard_deadline_utc": "2026-08-24T12:28:09Z",
     "maximum_duration_s": 15300,
     "automatic_extension_allowed": false,
-    "stopped_at_utc": "2026-08-24T09:36:16Z",
-    "active_execution_elapsed_s": 4987,
-    "stop_reason": "OBJECT_A_F1J3_SPEED_ABORT_AFTER_TWO_EVIDENCED_FIX_ATTEMPTS"
+    "prior_pause_at_utc": "2026-08-24T09:36:16Z",
+    "prior_pause_reason": "OBJECT_A_F1J3_SPEED_ABORT_AFTER_TWO_EVIDENCED_FIX_ATTEMPTS",
+    "prior_pause_reclassified_as": "ROOT_CAUSE_REVIEW",
+    "active_execution_elapsed_s": 5467,
+    "remaining_active_budget_s": 9833,
+    "resumed_at_utc": "2026-08-24T10:16:54Z",
+    "resume_wall_deadline_utc": "2026-08-24T13:08:47Z",
+    "stop_reason": null
   },
   "git_delivery": {
     "workspace_git_directory_writable": true,
@@ -60,8 +65,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": false,
-    "scope": "NONE",
-    "reason": "Run17 reproduced the same f1j3 speed abort after the second evidenced fix; the two-attempt stop rule is exhausted and object B remains closed"
+    "scope": "BOUNDED_CONTACT_TRANSITION_IMPLEMENTATION_AND_TEST_ONLY",
+    "reason": "Existing traces identify a contact-confirmation target discontinuity; no Isaac run is allowed until every controller transition is regression-tested against the existing per-cycle increment bound"
   },
   "preflight_acceptance_gate": {
     "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
@@ -204,7 +209,8 @@
     "dynamic_evaluation_sha256": "1ecb802b141e65ee5cd76ac893b67c72df5c3288cbe5d225e36ebbbe2979f1f2",
     "dynamic_trace_sha256": "fe5dc6f225796e98e3e4a3192072c105369c0c857f0dad941d17f7501fdd40d4",
     "dynamic_engine_log_sha256": "504e7437d7fb4e25df82304f6ba58130be59d29352f0a4a3c71078eab4788296",
-    "same_root_final_fix_allowed": false
+    "same_root_final_fix_allowed": true,
+    "causally_relevant_contact_transition_attempt_count": 1
   },
   "object_a_continuous_compliant_hold_fix": {
     "commit": "03594b8",
@@ -248,9 +254,43 @@
     "dynamic_evaluation_sha256": "4e6546649d11ff1231247a7b31133b1394ec1af37968bebbf72f7cf62e6cb943",
     "dynamic_trace_sha256": "9cd7723966e8124e3f4661f4b8fe1d386287dba875bcac29b44e04186306453a",
     "dynamic_engine_log_sha256": "424800bc7efb8a2b45de93250a85892e4dcdd0e6a673f43e1570ea05454af51b",
-    "same_root_fix_attempts_exhausted": true,
+    "same_root_fix_attempts_exhausted": false,
+    "post_contact_follow_fix_counts_as_contact_confirmation_step_fix": false,
+    "contact_confirmation_step_bumpless_fix_attempted": false,
     "object_b_attempted": false,
     "object_b_not_run_reason": "OBJECT_A_DID_NOT_ACHIEVE_THREE_PAD_CONTACT_LIFT_50MM_AND_HOLD_2S"
+  },
+  "contact_transition_root_cause_review": {
+    "completed_at_utc": "2026-08-24T10:24:54Z",
+    "run15_trace_sha256": "fe5dc6f225796e98e3e4a3192072c105369c0c857f0dad941d17f7501fdd40d4",
+    "run17_trace_sha256": "9cd7723966e8124e3f4661f4b8fe1d386287dba875bcac29b44e04186306453a",
+    "physics_dt_s": 0.008333333333333333,
+    "maximum_increment_rad": 0.0015,
+    "contact_confirmation_step": 1089,
+    "previous_output_target_rad": 0.39983400000000013,
+    "normal_incremented_internal_target_rad": 0.40133400000000014,
+    "final_output_target_rad": 0.3728076219558716,
+    "final_output_delta_rad": -0.027026378044128527,
+    "final_output_delta_to_bound_ratio": 18.01758536275235,
+    "speed_abort_step": 1092,
+    "speed_abort_delay_after_transition_steps": 3,
+    "speed_abort_delay_after_transition_s": 0.025,
+    "run15_f1j3_peak_speed_rad_s": 4.88761568069458,
+    "run17_f1j3_peak_speed_rad_s": 4.904851913452148,
+    "f1j2_minimum_lower_limit_margin_rad": 0.3728076219558716,
+    "f1j2_minimum_upper_limit_margin_rad": 1.021045873409315,
+    "f1j3_per_cycle_position_velocity_effort_recorded": false,
+    "mimic_position_error_observable": false,
+    "run15_speed_mimic_residual_lower_bound_rad_s": 4.170424938201904,
+    "run17_speed_mimic_residual_lower_bound_rad_s": 4.190006256103516,
+    "recorded_terminal_link_object_contacts_steps_1088_1092": 0,
+    "recorded_contact_actor_collider_paths": [],
+    "pad_surface_identity_verified": false,
+    "contact_proxy_classification": "FALSE_CONTACT_PROXY",
+    "classification_evidence_boundary": "NO_ALLOWED_PAD_CONTACT_RECORDED_BY_CURRENT_POSTRUN_EVALUATOR_BUT_CONTACT_REPORTER_COMPLETENESS_IS_UNPROVEN",
+    "f1j2_joint_limit_impact_supported": false,
+    "causal_conclusion": "TARGET_DISCONTINUITY_IS_REAL_AND_PRECEDES_THE_SPIKE_BUT_CAUSATION_IS_NOT_YET_PROVEN",
+    "next_gate": "BUMPLESS_BOUNDED_TRANSITION_TESTS_BEFORE_ANY_ISAAC_RUN"
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
@@ -467,7 +507,9 @@
     "final_full_regression_duration_s": 982.86
   },
   "blockers": [
-    "OBJECT_A_F1J3_FOLLOWER_SPEED_ABORT_AFTER_TWO_EVIDENCED_FIXES",
+    "UNRESOLVED_OBJECT_SCENE_DEPENDENT_F1J3_FOLLOWER_INSTABILITY",
+    "CONTACT_CONFIRMATION_TARGET_DISCONTINUITY_NOT_YET_FIXED",
+    "FALSE_CONTACT_PROXY_WITH_INCOMPLETE_CONTACT_REPORTER_EVIDENCE",
     "DYNAMIC_THREE_PAD_CONTACT_NOT_ACHIEVED",
     "OBJECT_A_LIFT_50MM_AND_HOLD_2S_NOT_REACHED",
     "OBJECT_B_NOT_RUN_BECAUSE_OBJECT_A_GATE_FAILED",
