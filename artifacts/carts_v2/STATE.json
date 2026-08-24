@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T09:08:06Z",
+  "updated_at_utc": "2026-08-24T09:10:31Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,7 +8,7 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_RECOVERY_2_OBJECT_A_ACCEPTED_PREFLIGHT",
+  "current_milestone": "V2_RECOVERY_2_OBJECT_A_NOMINAL_GRASP_LIFT",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -55,8 +55,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": true,
-    "scope": "OBJECT_A_PREFLIGHT_ONLY",
-    "reason": "Bounded scene audit found no duplicate inflation or erroneous collision filtering; one A preflight is allowed with measured 2x power-of-two capacities, while grasp-lift remains closed"
+    "scope": "OBJECT_A_GRASP_LIFT_ONLY",
+    "reason": "Strict run11 preflight passed controller, synchronized engine log, capacity, identity and unauthorized-contact gates; only the bound object A nominal grasp-lift is allowed"
   },
   "preflight_acceptance_gate": {
     "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
@@ -80,7 +80,7 @@
     "prior_total_peak": 5855,
     "configured_found_lost_capacity": 8192,
     "configured_total_capacity": 16384,
-    "runtime_measurement_pending": true,
+    "runtime_measurement_pending": false,
     "run09": {
       "run_id": "A_candidate11_gpu_capacity_accepted_preflight_run09",
       "accepted_preflight_pass": false,
@@ -108,6 +108,27 @@
       "evaluation_sha256": "8774605ffdc0f85d41313a14d8e365ad9d3f63ba56d2dc4847a58df16d3c29dc",
       "trace_sha256": "7295bed36574f20a06018d1110770b7c921ece8a636c0b307bfcead9bf8aa687",
       "replacement_with_strict_gate_required": true
+    },
+    "run11": {
+      "run_id": "A_candidate11_gpu_capacity_strict_preflight_run11",
+      "accepted_preflight_pass": true,
+      "physics_time_advanced_s": 7.75,
+      "controller_completed": true,
+      "finite_throughout": true,
+      "maximum_joint_speed_rad_s": 1.425191044807434,
+      "maximum_absolute_hand_effort_nm": 0.13165542483329773,
+      "maximum_post_settle_table_penetration_m": 2.555847168073111e-7,
+      "unauthorized_contact_records": 0,
+      "physx_capacity_warning_count": 0,
+      "physx_error_count": 0,
+      "observed_found_lost_peak": 1,
+      "observed_total_peak": 7644,
+      "configured_found_lost_capacity": 8192,
+      "configured_total_capacity": 16384,
+      "engine_log_sha256": "02cb5d929921e54b52655a3c2fb9f27d63ceeffac68c11cd63447b5852639033",
+      "evaluation_sha256": "61503cd7087b81473d3546a0b2b987a80d1673e2f38fce6c05b936bb1ce99dc0",
+      "trace_sha256": "89193d0a04f2394ceca8b1f7a3b88f5e3cf3b41fd02611430d6beaae0c54574a",
+      "grasp_lift_binding_allowed": true
     }
   },
   "formal_dynamic_pass": false,
