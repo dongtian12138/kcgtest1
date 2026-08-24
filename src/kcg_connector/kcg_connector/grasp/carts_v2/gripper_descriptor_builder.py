@@ -216,8 +216,16 @@ def build_descriptor_frame(
     y_axis = np.cross(z_axis, x_axis)
     y_axis /= np.linalg.norm(y_axis)
     x_axis = np.cross(y_axis, z_axis)
+    link_transforms = hand.forward_kinematics(open_joint_positions_rad)
+    proximal_origins = []
+    for finger in hand.fingers.values():
+        joint = hand.joints[finger.joint_names[0]]
+        joint_frame = link_transforms[joint.parent_link] @ joint.origin_transform()
+        proximal_origins.append(joint_frame[:3, 3])
+    proximal_plane_depth = float(np.mean(np.asarray(proximal_origins) @ z_axis))
     forward = np.eye(4)
     forward[:3, :3] = np.column_stack((x_axis, y_axis, z_axis))
+    forward[:3, 3] = proximal_plane_depth * z_axis
     return DescriptorFrame(forward, np.linalg.inv(forward))
 
 

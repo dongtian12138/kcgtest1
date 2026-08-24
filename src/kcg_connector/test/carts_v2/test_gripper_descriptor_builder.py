@@ -55,6 +55,30 @@ def test_descriptor_frame_is_inverse_orthonormal_and_right_handed() -> None:
         assert np.isclose(np.linalg.det(forward[:3, :3]), 1.0, atol=1e-12)
 
 
+def test_descriptor_origin_is_registered_proximal_joint_plane() -> None:
+    contract, hand = _hand_inputs()
+    descriptors = build_kcg_graspgenx_descriptors(
+        contract,
+        hand,
+        maximum_closure_phase=0.50,
+        legal_samples_rad=shared_preshape_grid(hand),
+    )
+    for descriptor in descriptors:
+        forward = descriptor.frame.handbase_from_graspgenx
+        links = hand.forward_kinematics(descriptor.open_joint_positions_rad)
+        origins = []
+        for finger in hand.fingers.values():
+            joint = hand.joints[finger.joint_names[0]]
+            origins.append(
+                (links[joint.parent_link] @ joint.origin_transform())[:3, 3]
+            )
+        z_axis = forward[:3, 2]
+        expected = z_axis * float(np.mean(np.asarray(origins) @ z_axis))
+        assert np.allclose(forward[:3, 3], expected, atol=1e-12)
+        assert np.allclose(descriptor.fingertip_graspgenx_m[:2], 0.0, atol=1e-12)
+        assert 0.07 < descriptor.fingertip_graspgenx_m[2] < 0.13
+
+
 def test_mimic_midpoint_and_conditioning_aabbs_bind_real_pad_points() -> None:
     contract, hand = _hand_inputs()
     descriptor = build_kcg_graspgenx_descriptors(

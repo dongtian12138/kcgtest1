@@ -245,6 +245,9 @@ def main() -> int:
         },
         "sweep_volume_method": "OFFICIAL_WIZARD_INNER_FINGERTIP_SPACE_AABB",
         "canonical_closing_axis": "+X",
+        "canonical_origin_rule": (
+            "APPROACH_AXIS_AT_MEAN_PROXIMAL_FINGER_JOINT_PLANE"
+        ),
         "self_collision_audits": audits,
         "descriptors": rows,
     }

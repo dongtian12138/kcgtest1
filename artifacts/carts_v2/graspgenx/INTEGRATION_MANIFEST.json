@@ -1,6 +1,6 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T16:39:00Z",
+  "updated_at_utc": "2026-08-24T17:09:51Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
@@ -81,13 +81,18 @@
   "descriptor_count": 5,
   "descriptors": {
     "manifest": "artifacts/carts_v2/graspgenx/descriptors/descriptor_manifest.json",
-    "sha256": "f60d89a29ff1a728d6126c1e28ab7babe09e58585391ea26cca0ab476bfe564e",
+    "sha256": "224bf42346d1faf62bb59f49516a89381e4af86e18dd05e973f86ce7cebb3457",
     "preshape_f1j1_rad": [0.628, 1.413, 0.15700000000000003, 0.9420000000000001, 0.31400000000000006],
     "maximum_closure_phase": 0.5,
     "maximum_joint_increment_rad": 0.0015,
     "self_collision_checked_state_count": 4203,
     "self_collision_pass": true,
     "sweep_volume_method": "OFFICIAL_WIZARD_INNER_FINGERTIP_SPACE_AABB",
+    "canonical_origin_rule": "APPROACH_AXIS_AT_MEAN_PROXIMAL_FINGER_JOINT_PLANE",
+    "fingertip_depth_range_m": [
+      0.09723491375035985,
+      0.10152684424896292
+    ],
     "claim_scope": "MODEL_CONDITIONING_ONLY_NOT_COLLISION_PROOF"
   },
   "object_inputs": {
