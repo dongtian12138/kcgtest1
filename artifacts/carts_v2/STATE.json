@@ -1,14 +1,22 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T06:42:18Z",
+  "updated_at_utc": "2026-08-24T07:05:10Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
   "config_sha256": "c41e10936effd08d4c8044dfe79861e479ac751f32453ef5d12ee5b785a948f7",
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "PARKED",
-  "current_milestone": "V2_12H_DEADLINE_CLOSEOUT_DYNAMIC_NOT_ACHIEVED",
+  "status": "IMPLEMENTING",
+  "current_milestone": "V2_RECOVERY_HAND_DRIVE_TO_NOMINAL_LIFT",
+  "execution_window": {
+    "id": "V2_RECOVERY_1",
+    "classification": "MILESTONE_REORDER_PLUS_EXECUTION_WINDOW_REOPEN",
+    "started_at_utc": "2026-08-24T07:05:10Z",
+    "hard_deadline_utc": "2026-08-24T12:05:10Z",
+    "maximum_duration_s": 18000,
+    "automatic_extension_allowed": false
+  },
   "git_delivery": {
     "workspace_git_directory_writable": true,
     "workspace_head_at_delivery_sync": "57efc16bfa354cc7b99a5ce4c07c59185b04fa28",
@@ -37,9 +45,9 @@
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
-    "allowed": false,
-    "scope": "OBJECT_RUNS_PARKED_AT_12H_DEADLINE",
-    "reason": "A native-gravity preflight stopped at 4.4916 rad/s f2j1 speed; the required isolated hand-drive comparison was not executed before the hard deadline"
+    "allowed": true,
+    "scope": "ISOLATED_HAND_DIAGNOSTIC",
+    "reason": "User reopened V2_RECOVERY_1 only to isolate the f2j1 hand-drive speed abort before any object run"
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,

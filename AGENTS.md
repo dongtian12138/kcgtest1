@@ -25,7 +25,7 @@
 ## 当前任务与硬边界
 
 - 当前主线以 `CURRENT_CONTEXT_CN.md` 指向的任务为准；截至本规则更新时为 `CARTS-GRASP-CROSS-OBJECT-V1`，状态 `IMPLEMENTING`，正式候选为空。
-- 未同时具备正式根区间候选、完整手—环境连续防碰撞证书和经校准的非摩擦误差边界时，禁止选择正式候选或启动 Isaac。
+- 未同时具备正式根区间候选、完整手—环境连续防碰撞证书和经校准的非摩擦误差边界时，禁止选择正式候选或启动旧正式动态。CARTS-Grasp V2 的独立 `research_dynamic_gate` 可在有限速度、有限力量、初始无明显穿透和在线真值隔离全部满足时启动研究型 Isaac；该研究运行不得改写旧正式门或正式结论。
 - `dynamic_launch_allowed=false` 和 `hardware_authorized=false` 必须保持失败关闭；静态测试通过不改变这两个字段。
 - 冻结模型、连接器身份、质量/质心/材料、8 N、0.30 N·m、50 µm、5 µm门限，以及 `D38999_VISUAL_COMPLETE_V1`、`D38999_LOCAL_CONTACT_REFERENCE_V1`、`MODEL_MAPPING.json` 均不得因清理、重构或测试而修改。
 - 禁止磁吸、隐藏固定、运行后写物体位姿、在线真值控制、无限增力、批量盲扫参数和伪造动态证据。

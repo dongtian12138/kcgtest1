@@ -130,3 +130,10 @@
 - 截止时只达到双对象离线排序和真实 Isaac 预飞失败证据；三指闭合、离桌、抬升 50 mm、保持 2 s 和扰动均未完成，不能写 `RESEARCH_DYNAMIC_PASS`。
 - 截止后唯一执行的是交付修复：只读确认原工作区内容与临时集成 tip 完全一致，保留 `698a2bb` 恢复分支，再无历史改写快进至 `57efc16`。
 - `57efc16` 已用普通 push 同步远端 `carts-grasp-v2-rebuild-20260823`；没有 force push，没有启动仿真，没有改变对象、参数、成功门或 `hardware_authorized=false`。
+
+## 2026-08-24T07:05:10Z — MILESTONE_REORDER + EXECUTION_WINDOW_REOPEN
+
+- 用户明确重开补足窗口 `V2_RECOVERY_1`，最长 5 小时，硬截止为 `2026-08-24T12:05:10Z`；这不是新的 12 小时窗口，也不是 `NORTH_STAR_CHANGE`。
+- 北极星、两个对象身份、50 mm、2 s、真实指腹接触、3 rad/s 安全限速、在线真值隔离和禁止未授权穿透全部保持。
+- `hardware_authorized=false`、`legacy_formal_dynamic_launch_allowed=false`、`formal_dynamic_pass=false` 保持失败关闭。
+- 研究门先只开放 `ISOLATED_HAND_DIAGNOSTIC`：无对象、无桌面、同模型/初值/轨迹/dt/drive 的手部区分实验；在 `f2j1` 根因关闭前禁止对象 A/B 运行和候选算法修改。
