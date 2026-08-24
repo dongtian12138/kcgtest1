@@ -1,20 +1,20 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-24T09:10:31Z
+> 快照时间：2026-08-24T09:15:32Z
 > 当前分支：`carts-grasp-v2-rebuild-20260823`
 > 本文件只做恢复路由；物理结论以 V2 原始运行产物为准。
 
 ## 一句话状态
 
-对象 A 的严格 run11 预检查已被接受：物理推进 7.75 s、未授权接触与容量警告均为 0；当前只开放绑定该证据的一次 `candidate_11` 名义抓取。
+对象 A run12 到达预抓后在第二指刚开始闭合时因被动末节 `f1j3=48.013 rad/s` 安全急停；没有三指接触、离桌或抬升，当前只开放一次同参数诊断区分。
 
 ## 六行恢复摘要
 
 - 总目标：真实允许表面候选 → 任务载荷鲁棒 Top-3 → Isaac 三指接触、离桌、抬升 50 mm、保持至少 2 s；两个对象同算法同主要参数。
-- 当前里程碑：`V2_RECOVERY_2_OBJECT_A_NOMINAL_GRASP_LIFT`；研究门只允许对象 A 绑定 run11 的一次名义抓取。
-- 已经完成：手部从动 drive 异常已关闭；run11 推进 7.75 s、控制器完成、最大速度 1.4252 rad/s、未授权接触 0、容量警告 0，total 峰值 7644 小于 16384。
-- 当前物理/算法阻塞：尚未观察三指实际接触、连接器离桌、50 mm 抬升和 2 s 保持。
-- 下一步最简单动作：不改源码和配置，直接用 run11 evaluation 绑定对象 A `candidate_11` 名义抓取并事后评价。
+- 当前里程碑：`V2_RECOVERY_2_OBJECT_A_F1J3_DIFFERENTIATION`；对象 B 关闭，只允许一次 A 同参数区分。
+- 已经完成：严格 run11 预检查通过；run12 推进 9.2 s，在第二指阶段由 `f1j3=48.013 rad/s` 触发 3 rad/s 急停，未授权接触和容量警告仍为 0。
+- 当前物理/算法阻塞：原 trace 只保存主动关节，尚不能区分被动 `f1j3` 的速度尖峰来自目标跳变、mimic 约束冲突还是碰撞冲击。
+- 下一步最简单动作：只记录 `f1j2/f1j3` 每周期位置、速度、目标、等效受力和同周期接触，原样重现一次；不调参数。
 - 绝对禁止跑偏方向：续修 H102、对象专用坐标/阈值、磁吸/隐藏固定、在线读取对象/接触/PhysX 真值、写物体位姿、把退出 0 冒充物理成功。
 
 ## 当前权威字段
@@ -22,12 +22,12 @@
 - 状态：`IMPLEMENTING`
 - 当前里程碑：`V2_RECOVERY_2_OBJECT_A_ACCEPTED_PREFLIGHT`
 - V2 正式候选：空
-- V2 研究动态门：`allowed=true`，scope=`OBJECT_A_GRASP_LIFT_ONLY`；只允许对象 A 绑定 run11 的一次名义抓取
+- V2 研究动态门：`allowed=true`，scope=`OBJECT_A_F1J3_DIAGNOSTIC_ONLY`；只允许对象 A 一次同参数区分，对象 B 关闭
 - 旧正式动态门：`dynamic_launch_allowed=false`（保持，不由 V2 研究线改写）
 - 正式动态：`FORMAL_DYNAMIC_PASS=false`
 - 研究型动态：`RESEARCH_DYNAMIC_PASS=false`
 - 真实硬件：`hardware_authorized=false`
-- Isaac：6.0.1.0；孤立手 GPU 诊断有效通过；严格 run11 已 accepted，total 峰值 7644/16384、最大速度 1.4252 rad/s、未授权接触 0；尚未进入闭指、抬升或保持
+- Isaac：6.0.1.0；严格 run11 已 accepted；run12 在第二指阶段因被动 `f1j3` 速度 48.013 rad/s 急停，只完成 1 个关节侧停止目标，未形成三指接触、离桌、抬升或保持
 - 最终 CPU 回归：1506 项通过、0 失败、982.86 s；测试通过不改变动态失败状态
 - run05 小型 `evaluation.json` 纳入交付；1.58 MiB 逐步 trace 只留本地，SHA-256 与字节数登记在 `STATE.json`
 - V2 恢复提交 `0848abe`、mimic 修复提交 `7633f3a` 和失败收口 `c127bea` 已普通推送到远端同名分支

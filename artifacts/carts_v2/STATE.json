@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T09:10:31Z",
+  "updated_at_utc": "2026-08-24T09:15:32Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,7 +8,7 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_RECOVERY_2_OBJECT_A_NOMINAL_GRASP_LIFT",
+  "current_milestone": "V2_RECOVERY_2_OBJECT_A_F1J3_DIFFERENTIATION",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -55,8 +55,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": true,
-    "scope": "OBJECT_A_GRASP_LIFT_ONLY",
-    "reason": "Strict run11 preflight passed controller, synchronized engine log, capacity, identity and unauthorized-contact gates; only the bound object A nominal grasp-lift is allowed"
+    "scope": "OBJECT_A_F1J3_DIAGNOSTIC_ONLY",
+    "reason": "Run12 aborted at 48.013 rad/s on passive f1j3 before three-finger contact; one same-parameter instrumented differentiation is allowed, while object B remains closed"
   },
   "preflight_acceptance_gate": {
     "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
@@ -128,8 +128,30 @@
       "engine_log_sha256": "02cb5d929921e54b52655a3c2fb9f27d63ceeffac68c11cd63447b5852639033",
       "evaluation_sha256": "61503cd7087b81473d3546a0b2b987a80d1673e2f38fce6c05b936bb1ce99dc0",
       "trace_sha256": "89193d0a04f2394ceca8b1f7a3b88f5e3cf3b41fd02611430d6beaae0c54574a",
-      "grasp_lift_binding_allowed": true
+      "grasp_lift_binding_allowed": false,
+      "consumed_by_run": "A_candidate11_nominal_grasp_lift_run12"
     }
+  },
+  "object_a_nominal_dynamic": {
+    "run_id": "A_candidate11_nominal_grasp_lift_run12",
+    "controller_completed": false,
+    "failure_reason": "JOINT_SPEED_ABORT",
+    "physics_time_advanced_s": 9.2,
+    "maximum_joint_speed_joint": "f1j3",
+    "maximum_joint_speed_rad_s": 48.01327896118164,
+    "maximum_absolute_hand_effort_nm": 0.5815584659576416,
+    "completed_contact_target_count": 1,
+    "three_effective_contacts": false,
+    "unauthorized_contact_records": 0,
+    "maximum_lift_m": 0.0,
+    "hold_duration_s": 0.0,
+    "physx_capacity_warning_count": 0,
+    "observed_total_peak": 7644,
+    "evaluation_sha256": "f38a9e8f6f64a14e3304c1f881a4f753c47f72766dbd444f90257666c3774699",
+    "trace_sha256": "e2c30c01edcd2e846adea2232cb5cea4c60d1bf4e2a7e71bbe5ad28e8fdb4f7f",
+    "engine_log_sha256": "c55fdfc06b5b54fb66b1e03bff7e5c9933d16a39b9cdfd58d21e19fb3f8546d3",
+    "nominal_research_dynamic_pass": false,
+    "single_differentiation_allowed": true
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
