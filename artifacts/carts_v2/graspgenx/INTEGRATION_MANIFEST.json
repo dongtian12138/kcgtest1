@@ -1,6 +1,6 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T21:32:32Z",
+  "updated_at_utc": "2026-08-24T21:49:19Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
@@ -140,18 +140,32 @@
     "exact_repeat_scope": "ROI_PROPOSAL_FILES_HASH_BOUND_BUT_NOT_REGENERATED_TWICE",
     "proposal_files_committed": true
   },
-  "pretrained_descriptor_domain_audit": {
-    "status": "OUTSIDE_AUDITED_OFFICIAL_DESCRIPTOR_ROSTER_CAUSAL_UNPROVEN",
-    "kcg_open_sweep_y_range_m": [0.1175, 0.3055],
-    "audited_official_descriptor_roster_open_y_max_m": 0.0673,
-    "kcg_open_lateral_offset_nonzero": true,
-    "audited_official_descriptor_roster_open_lateral_offset_zero": true,
+  "descriptor_conditioning_config_audit": {
+    "status": "CONFIG_SCALE_DIFFERENCE_OBSERVED_CAUSALITY_NOT_PROVEN",
+    "comparison_semantics": "SWEEP_VOLUME_CONFIG_BOX_EXTENTS_NOT_POINTS_JSON_OR_REACHABLE_WORKSPACE",
+    "kcg_open_conditioning_box_y_extent_range_m": [
+      0.11752590623840252,
+      0.3054987061027652
+    ],
+    "checkpoint_declared_train_gripper_split": "proc_v1_train_32",
+    "audited_procedural_config_count": 32,
+    "audited_procedural_open_or_mid_box_y_extent_max_m": 0.06730544048417514,
+    "audited_procedural_max_source": "third_party/GraspGenX/assets/proc_grippers/revolute_3f_v1_1004/config.json",
+    "audited_procedural_max_source_sha256": "1590c95094d753b24a52811fd5b0cbc868f8ca8f5d31370d4144d2cd18278105",
+    "audited_released_runtime_descriptor_config_count": 26,
+    "audited_released_runtime_open_box_y_extent_max_m": 0.06,
+    "kcg_open_conditioning_box_offset_x_range_m": [
+      -0.03801513276746991,
+      -0.022665982442558602
+    ],
+    "audited_procedural_open_box_offset_x_max_abs_m": 0.0,
+    "offset_comparison_claim": "RECORDED_BUT_CAUSAL_SIGNIFICANCE_NOT_ESTABLISHED",
     "learned_diffusion_visible_count_object_a": 44,
     "learned_diffusion_visible_count_object_b": 41,
     "learned_diffusion_retained_count_object_a": 26,
     "learned_diffusion_retained_count_object_b": 26,
-    "causal_status": "SUPPORTED_NOT_PROVEN",
-    "claim_limit": "AUDITED_SCALE_AND_LATERAL_OFFSET_DIFFER_BUT_TRAINING_DISTRIBUTION_AND_UNIQUE_FAILURE_CAUSE_ARE_NOT_PROVEN"
+    "causal_status": "CONFIG_SCALE_DIFFERENCE_OBSERVED_CAUSALITY_NOT_PROVEN",
+    "claim_limit": "AUDITED_CONFIG_ASSET_SCALE_DIFFERS_BUT_COMPLETE_TRAINING_DISTRIBUTION_AND_UNIQUE_FAILURE_CAUSE_ARE_NOT_PROVEN"
   },
   "official_positive_control": {
     "status": "OFFICIAL_HEADLESS_POSITIVE_CONTROL_PASS",
@@ -232,6 +246,13 @@
     "reference_runtime_result_without_timings_byte_match": true,
     "alternate_runtime_numerical_drift_observed": true,
     "evidence_scope": "OFFLINE_REPRODUCIBILITY_ONLY_NOT_PHYSICAL_SUCCESS"
+  },
+  "future_dynamic_evaluation_boundary": {
+    "configured_maximum_table_penetration_m": 0.002,
+    "status": "LEGACY_UNVALIDATED_FUTURE_DYNAMIC_ACCEPTANCE_BOUND",
+    "not_exercised_in_route1": true,
+    "not_evidence_of_no_penetration": true,
+    "required_before_future_dynamic_launch": "PHASE_SPECIFIC_TOLERANCE_AND_PROVENANCE_REVIEW"
   },
   "evidence_boundaries": {
     "hardware_authorized": false,

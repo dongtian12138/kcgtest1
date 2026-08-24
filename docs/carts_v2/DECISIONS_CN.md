@@ -308,3 +308,17 @@
 - 完整对象网格用于后续 V2 顺序闭合与控制步 FCL，因此原 `collision_geometry_scope` 改写为 `downstream_collision_geometry_scope`，不得冒充 GraspGenX 内部碰撞范围。
 - 旧 proposal v1 文件不改写；适配器只把其旧字段失败关闭地归一为“下游范围”，新生成文件使用不含歧义的新字段。
 - 同时把所有尚无机械臂 IK/路径证据的 task-eligible 候选固定为 `offline_task_gate_passed=false`，防止未来误接动态入口。
+
+## 2026-08-24T21:49:19Z — 描述器配置箱统计与训练分布分开命名
+
+- `0.06730544 m` 来自当前官方仓库 32 个程序化配置中的 `revolute_3f_v1_1004`，是 open/half-open `sweep_volume.extents[1]` 的全尺寸最大值；不是 `points.json` 整手点云跨度。
+- 26 个运行时 `x_grippers` 配置的 open 同分量最大为 `0.060 m`；KCG 五个描述器为 `0.117526–0.305499 m`。
+- checkpoint 声明 `train_gripper_split=proc_v1_train_32`，官方 README 说明 released model 使用 32 个程序化手训练，但本地没有完整训练数据分布；因此只写“已审计配置资产尺度差异”，不写完整训练分布上界或唯一因果。
+- 该澄清不改变描述器、候选、碰撞门或离线结果；域外推仍只是受支持但未证实的解释。
+- 本条取代 `2026-08-24T20:08:58Z` 和 `2026-08-24T20:43:00Z` 中“官方描述器范围/训练域可信度提高”的旧措辞；旧记录保留但不得再作为当前结论引用。
+
+## 2026-08-24T21:49:19Z — 旧动态 2 mm 接受阈值不得证明无穿透
+
+- `maximum_table_penetration_m=0.002` 只由运行后评价器检查非 settle 阶段对象最低登记点，并非控制器或 PhysX 参数；当前 GraspGenX 路线从未执行该门。
+- 该值没有登记来源，且远大于离线手—桌 `1e-5 m` 数值容差；未来动态启动前必须完成分阶段容差和来源审查。
+- 本轮不在没有动态候选时改动冻结配置或重算离线证据，只把它登记为 `LEGACY_UNVALIDATED_FUTURE_DYNAMIC_ACCEPTANCE_BOUND`；它不能支持“无未授权穿透”。

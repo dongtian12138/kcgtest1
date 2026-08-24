@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T21:32:32Z",
+  "updated_at_utc": "2026-08-24T21:49:19Z",
   "started_at_utc": "2026-08-24T14:46:08Z",
   "hard_deadline_utc": "2026-08-25T02:46:08Z",
   "branch": "carts-grasp-graspgenx-route1-20260824",
@@ -8,7 +8,7 @@
   "start_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "GRASPGENX_ROUTE1_REFERENCE_RUNTIME_REPRODUCIBILITY_CONFIRMED",
+  "current_milestone": "GRASPGENX_ROUTE1_DESCRIPTOR_AND_DYNAMIC_BOUNDARY_AUDIT",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -70,6 +70,13 @@
     "allowed": false,
     "scope": "NONE",
     "reason": "A has 0 complete table-safe paths and B has 0 three-pad closure predictions under the frozen ROI experiment"
+  },
+  "future_dynamic_evaluation_boundary": {
+    "configured_maximum_table_penetration_m": 0.002,
+    "status": "LEGACY_UNVALIDATED_FUTURE_DYNAMIC_ACCEPTANCE_BOUND",
+    "not_exercised_in_route1": true,
+    "not_evidence_of_no_penetration": true,
+    "required_before_future_dynamic_launch": "PHASE_SPECIFIC_TOLERANCE_AND_PROVENANCE_REVIEW"
   },
   "graspgenx_route1": {
     "method_name": "GraspGenX-CARTS",
@@ -163,10 +170,10 @@
     "allowed_surface_roi_experiment_frozen": true,
     "object_a_roi_result_sha256": "123ed2c3fa27aa1ba4bfcb9b76c1449229d937492d16a97d65c22e167f8b8023",
     "object_b_roi_result_sha256": "012c33f7110863b60dee7a86fe0610ec3ae32d5aac004cf91ab7ec13d46af433",
-    "roi_failure_interpretation": "OUTSIDE_AUDITED_OFFICIAL_DESCRIPTOR_ROSTER_IS_A_SUPPORTED_NOT_PROVEN_CAUSAL_HYPOTHESIS_AND_NOT_PROOF_THAT_THE_HAND_CANNOT_GRASP",
+    "roi_failure_interpretation": "KCG_CONDITIONING_BOX_EXTENT_EXCEEDS_AUDITED_OFFICIAL_PROCEDURAL_AND_RELEASED_CONFIG_ROSTERS_BUT_COMPLETE_TRAINING_DISTRIBUTION_AND_CAUSALITY_ARE_UNPROVEN",
     "discrete_full_hand_fcl_gate_implemented": true,
-    "descriptor_scale_outside_audited_official_roster": true,
-    "pretrained_descriptor_extrapolation_causal_status": "SUPPORTED_NOT_PROVEN",
+    "descriptor_conditioning_box_scale_exceeds_audited_official_config_ranges": true,
+    "descriptor_conditioning_extrapolation_causal_status": "CONFIG_SCALE_DIFFERENCE_SUPPORTED_CAUSALITY_NOT_PROVEN",
     "nominal_research_dynamic_pass": false,
     "formal_dynamic_pass": false
   },
@@ -956,7 +963,8 @@
   "blockers": [
     "OBJECT_A_ROI_256_HAS_THREE_THREE_PAD_CLOSURE_PREDICTIONS_BUT_ZERO_TABLE_SAFE_PATHS",
     "OBJECT_B_ROI_256_HAS_ZERO_THREE_PAD_CLOSURE_PREDICTION_SURVIVORS",
-    "KCG_LONG_FINGER_DESCRIPTOR_OUTSIDE_AUDITED_OFFICIAL_ROSTER_CAUSAL_UNPROVEN",
+    "KCG_CONDITIONING_BOX_EXTENT_OUTSIDE_AUDITED_OFFICIAL_CONFIG_RANGES_CAUSAL_UNPROVEN",
+    "FUTURE_DYNAMIC_2MM_TABLE_PENETRATION_ACCEPTANCE_BOUND_HAS_NO_VALIDATED_PROVENANCE",
     "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND",
     "NO_GRASPGENX_ISAAC_RUN_BECAUSE_RESEARCH_GATE_IS_CLOSED"
   ]
