@@ -258,7 +258,7 @@ def _initial_isolated_trace(arguments, report, selected, motion_plan, dynamic):
     reference = arguments.reference_document
     observed = (reference.get("object_id"), reference.get("candidate_id"))
     if (observed != (arguments.object_id, selected["candidate_id"])
-            or reference.get("mode") not in ("preflight", "grasp-lift")
+            or reference.get("mode") not in ("preflight", "first-finger-diagnostic", "grasp-lift")
             or reference.get("config_sha256") != report["config_sha256"]):
         raise ValueError("isolated diagnostic reference differs from the failed run")
     if (
@@ -385,7 +385,7 @@ def _execute_isolated(repository, arguments, output, inputs, scene_entry, motion
         arm_indices=arm_indices, arm_lower_limits=lower, arm_upper_limits=upper,
         settings=dynamic, render=arguments.gui)
     pregrasp = control.run_pregrasp_sequence(stepper, motion_plan, dynamic)
-    if arguments.reference_document.get("mode") == "grasp-lift":
+    if arguments.reference_document.get("mode") in ("first-finger-diagnostic", "grasp-lift"):
         for row in arguments.reference_document["samples"][stepper.step_index:]:
             target = np.asarray(row["active_targets_rad"], dtype=np.float64)
             stepper.advance(f"replay_{row['phase']}", target[:7], target[7:])

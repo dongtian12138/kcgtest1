@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T11:08:52Z",
+  "updated_at_utc": "2026-08-24T11:17:00Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,7 +8,7 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_ISOLATED_REPLAY_FIRST_FINGER_SETTLE",
+  "current_milestone": "V2_CONTACT_WITNESS_UNCLASSIFIED_PATHS",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -25,8 +25,8 @@
     "prior_pause_at_utc": "2026-08-24T09:36:16Z",
     "prior_pause_reason": "OBJECT_A_F1J3_SPEED_ABORT_AFTER_TWO_EVIDENCED_FIX_ATTEMPTS",
     "prior_pause_reclassified_as": "ROOT_CAUSE_REVIEW",
-    "active_execution_elapsed_s": 8105,
-    "remaining_active_budget_s": 7195,
+    "active_execution_elapsed_s": 8593,
+    "remaining_active_budget_s": 6707,
     "resumed_at_utc": "2026-08-24T10:16:54Z",
     "resume_wall_deadline_utc": "2026-08-24T13:08:47Z",
     "stop_reason": null
@@ -64,9 +64,9 @@
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
-    "allowed": true,
-    "scope": "ISOLATED_HAND_REPLAY_OF_FAILED_FIRST_FINGER_TARGETS_ONLY",
-    "reason": "First-finger target continuity passed but CONTACT_SETTLE still caused f1j3 speed abort; replay the exact targets without object or table to separate hand-internal dynamics from scene coupling"
+    "allowed": false,
+    "scope": "CONTACT_WITNESS_INSTRUMENTATION_ONLY",
+    "reason": "Exact-target isolated replay was stable; complete scene interaction is necessary, so unclassified robot contacts must be made visible before another source-bound preflight"
   },
   "first_finger_diagnostic_instrumentation": {
     "mode": "first-finger-diagnostic",
@@ -147,6 +147,31 @@
     "trace_committed": false,
     "first_finger_diagnostic_pass": false,
     "next_bounded_experiment": "ISOLATED_HAND_EXACT_TARGET_REPLAY"
+  },
+  "isolated_first_finger_exact_target_replay": {
+    "run_id": "A_candidate11_bumpless_first_finger_isolated_replay",
+    "object_loaded": false,
+    "table_loaded": false,
+    "reference_trace_sha256": "88e3057e26d9de92249cc7353c4b9412bfc07afc98b7bddf55d10dfa7afcbe2a",
+    "target_sample_count": 1103,
+    "reference_target_maximum_difference_rad": 0.0,
+    "physics_time_advanced_s": 9.191666666666666,
+    "diagnostic_pass": true,
+    "failure_reason": null,
+    "maximum_hand_joint_speed_joint": "f3j1",
+    "maximum_hand_joint_speed_rad_s": 0.43521848320961,
+    "f1j3_maximum_speed_rad_s": 0.1587361991405487,
+    "maximum_joint_speed_limit_rad_s": 3.0,
+    "summary_artifact": "artifacts/carts_v2/dynamic/A_candidate11_bumpless_first_finger_isolated_replay/summary.json",
+    "summary_sha256": "955ec01a3019116d69ce64a0f036466615170cbc351873e925e9dd0306202aa5",
+    "summary_size_bytes": 1093,
+    "trace_sha256": "c764a1d073af5ff8a71a77433c70fdfd9a2f28e4123bc5a76d6a3232c1fab965",
+    "trace_size_bytes": 3766579,
+    "trace_committed": false,
+    "inference": "COMPLETE_SCENE_INTERACTION_IS_NECESSARY_BUT_OBJECT_TABLE_FIXTURE_OR_UNCLASSIFIED_CONTACT_NOT_YET_SEPARATED",
+    "research_dynamic_pass": false,
+    "formal_dynamic_pass": false,
+    "hardware_authorized": false
   },
   "contact_transition_review": {
     "confirmation_target_jump_removed": true,

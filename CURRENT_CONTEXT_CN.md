@@ -1,33 +1,33 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-24T11:08:52Z
+> 快照时间：2026-08-24T11:17:00Z
 > 当前分支：`carts-grasp-v2-rebuild-20260823`
 > 本文件只做恢复路由；物理结论以 V2 原始运行产物为准。
 
 ## 一句话状态
 
-第一指目标已连续，但关节侧代理在没有已记录末端接触时误报；随后 `f1j3=4.124 rad/s` 急停。下一步只做无对象、无桌面的原目标回放。
+无对象、无桌面的 1103 步同目标回放稳定完成，证明目标序列和孤立手 mimic 不足以产生急停；下一步只补齐完整场景中被静默丢弃的机器人接触类别。
 
 ## 六行恢复摘要
 
 - 总目标：真实允许表面候选 → 任务载荷鲁棒 Top-3 → Isaac 三指接触、离桌、抬升 50 mm、保持至少 2 s；两个对象同算法同主要参数。
-- 当前里程碑：`V2_ISOLATED_REPLAY_FIRST_FINGER_SETTLE`；第一指对象实验已完成并诚实失败关闭。
-- 已经完成：目标全程每周期不超过 0.0015 rad；旧急停 step 1092 已降为 1.231 rad/s，新急停延后至 step 1102 的 CONTACT_SETTLE，`f1j3=4.124 rad/s`。
-- 当前物理/算法阻塞：关节侧代理在没有已记录末端接触时误报，SETTLE 阶段 f1j2/f1j3 振荡；接触报告采集完整性与手内 mimic/完整场景归因仍未分开。
-- 下一步最简单动作：无对象、无桌面原样回放 steps 990--1102 的目标、dt、drive、mimic 和 3 rad/s 门，区分手内动力学与场景耦合。
+- 当前里程碑：`V2_CONTACT_WITNESS_UNCLASSIFIED_PATHS`；无对象精确回放已完成，完整场景交互成为必要条件。
+- 已经完成：1103 个目标逐项差为 0；同机器人、dt、drive、mimic 和 GPU 后端下，f1j3 峰值 0.1587 rad/s、全手峰值 0.4352 rad/s，无急停。
+- 当前物理/算法阻塞：完整场景中机器人—固定插座或手内自接触可能被现有分类静默丢弃；尚不能把 4.124 rad/s 归因于允许 PAD、禁止表面或全局求解耦合。
+- 下一步最简单动作：只给事后接触统计增加 `robot_unclassified` 兜底路径；定向测试后重做预检查，再重复一次第一指诊断。
 - 绝对禁止跑偏方向：续修 H102、对象专用坐标/阈值、磁吸/隐藏固定、在线读取对象/接触/PhysX 真值、写物体位姿、把退出 0 冒充物理成功。
 
 ## 当前权威字段
 
 - 状态：`IMPLEMENTING`
-- 当前里程碑：`V2_ISOLATED_REPLAY_FIRST_FINGER_SETTLE`
+- 当前里程碑：`V2_CONTACT_WITNESS_UNCLASSIFIED_PATHS`
 - V2 正式候选：空
-- V2 研究动态门：`allowed=true`，scope=`ISOLATED_HAND_REPLAY_OF_FAILED_FIRST_FINGER_TARGETS_ONLY`；禁止对象场景闭指、第二指、预紧、抬升和对象 B
+- V2 研究动态门：`allowed=false`，scope=`CONTACT_WITNESS_INSTRUMENTATION_ONLY`；新源码绑定预检查前禁止再次闭指
 - 旧正式动态门：`dynamic_launch_allowed=false`（保持，不由 V2 研究线改写）
 - 正式动态：`FORMAL_DYNAMIC_PASS=false`
 - 研究型动态：`RESEARCH_DYNAMIC_PASS=false`
 - 真实硬件：`hardware_authorized=false`
-- Isaac：6.0.1.0；第一指对象实验推进 9.1917 s，在 CONTACT_SETTLE 由 `f1j3=4.1243 rad/s` 急停；最大手部投影关节力矩 0.4533 N·m，目标最大单周期变化 0.0015 rad
+- Isaac：6.0.1.0；对象场景第一指 `f1j3=4.1243 rad/s` 急停；同 1103 个目标的无对象回放中 f1j3 仅 0.1587 rad/s、全手最高 0.4352 rad/s
 - 引擎：run16 预检被严格接受；run17 GPU 配对峰值 1/7644 低于 8192/16384，容量警告和 PhysX Error 均为 0，因此本次失败不是 GPU 容量不足
 - 最终 CPU 回归：1506 项通过、0 失败、982.86 s；测试通过不改变动态失败状态
 - run16/run17 小型 `evaluation.json` 纳入本次收口；4.72/5.54 MB 逐步 trace 只留本地，SHA-256 与字节数登记在 `STATE.json`
@@ -36,7 +36,7 @@
 - 本轮开始：`2026-08-23T14:41:38Z`
 - 硬截止：`2026-08-24T02:41:38Z`
 - 补足窗口：`V2_RECOVERY_1`，开始 `2026-08-24T07:05:10Z`，原截止 `12:05:10Z`；因 GPU 碰撞容量恢复失败于 `07:49:45Z` 提前停止，不得自动重开
-- 当前补足窗口：`V2_RECOVERY_2`，截至本快照累计已用约 8105 s、余约 7195 s；连续执行截止仍为 `13:08:47Z`
+- 当前补足窗口：`V2_RECOVERY_2`，截至本快照累计已用约 8593 s、余约 6707 s；连续执行截止仍为 `13:08:47Z`
 
 ## 冻结事实与复用边界
 
