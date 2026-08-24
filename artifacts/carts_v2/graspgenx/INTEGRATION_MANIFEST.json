@@ -1,6 +1,6 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T21:06:00Z",
+  "updated_at_utc": "2026-08-24T21:21:22Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
@@ -141,16 +141,17 @@
     "proposal_files_committed": true
   },
   "pretrained_descriptor_domain_audit": {
-    "status": "PRETRAINED_DESCRIPTOR_EXTRAPOLATION",
+    "status": "OUTSIDE_AUDITED_OFFICIAL_DESCRIPTOR_ROSTER_CAUSAL_UNPROVEN",
     "kcg_open_sweep_y_range_m": [0.1175, 0.3055],
-    "official_training_descriptor_open_y_max_m": 0.0673,
+    "audited_official_descriptor_roster_open_y_max_m": 0.0673,
     "kcg_open_lateral_offset_nonzero": true,
-    "official_training_open_lateral_offset_zero": true,
+    "audited_official_descriptor_roster_open_lateral_offset_zero": true,
     "learned_diffusion_visible_count_object_a": 44,
     "learned_diffusion_visible_count_object_b": 41,
     "learned_diffusion_retained_count_object_a": 26,
     "learned_diffusion_retained_count_object_b": 26,
-    "claim_limit": "OFFICIAL_GRASPMOE_RUNS_BUT_MOST_RETAINED_KCG_PROPOSALS_ARE_OFFICIAL_OBB_NOT_LEARNED_DIFFUSION"
+    "causal_status": "SUPPORTED_NOT_PROVEN",
+    "claim_limit": "AUDITED_SCALE_AND_LATERAL_OFFSET_DIFFER_BUT_TRAINING_DISTRIBUTION_AND_UNIQUE_FAILURE_CAUSE_ARE_NOT_PROVEN"
   },
   "official_positive_control": {
     "status": "OFFICIAL_HEADLESS_POSITIVE_CONTROL_PASS",
@@ -220,7 +221,7 @@
       "executable_candidate_count": 0,
       "isaac_launched": false
     },
-    "task_gate_interpretation": "NOT_REACHED_NOT_EVALUATED_FAILURE",
+    "task_gate_interpretation": "NOT_REACHED_NOT_A_TASK_FAILURE",
     "dynamic_gate_interpretation": "CLOSED_BECAUSE_NO_RESEARCH_EXECUTABLE_CANDIDATE"
   },
   "evidence_boundaries": {

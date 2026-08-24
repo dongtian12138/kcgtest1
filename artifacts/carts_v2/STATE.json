@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T21:06:00Z",
+  "updated_at_utc": "2026-08-24T21:21:22Z",
   "started_at_utc": "2026-08-24T14:46:08Z",
   "hard_deadline_utc": "2026-08-25T02:46:08Z",
   "branch": "carts-grasp-graspgenx-route1-20260824",
@@ -8,7 +8,7 @@
   "start_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "GRASPGENX_ROUTE1_BOUND_OFFLINE_EVIDENCE_COMPLETE_DYNAMIC_GATE_CLOSED",
+  "current_milestone": "GRASPGENX_ROUTE1_FINAL_REPORT_REVIEW_APPROVED",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -163,7 +163,7 @@
     "allowed_surface_roi_experiment_frozen": true,
     "object_a_roi_result_sha256": "123ed2c3fa27aa1ba4bfcb9b76c1449229d937492d16a97d65c22e167f8b8023",
     "object_b_roi_result_sha256": "012c33f7110863b60dee7a86fe0610ec3ae32d5aac004cf91ab7ec13d46af433",
-    "roi_failure_interpretation": "PRETRAINED_DESCRIPTOR_EXTRAPOLATION_NOT_PROOF_THAT_THE_HAND_CANNOT_GRASP",
+    "roi_failure_interpretation": "OUTSIDE_AUDITED_OFFICIAL_DESCRIPTOR_ROSTER_IS_A_SUPPORTED_NOT_PROVEN_CAUSAL_HYPOTHESIS_AND_NOT_PROOF_THAT_THE_HAND_CANNOT_GRASP",
     "discrete_full_hand_fcl_gate_implemented": true,
     "descriptor_scale_outside_audited_official_roster": true,
     "pretrained_descriptor_extrapolation_causal_status": "SUPPORTED_NOT_PROVEN",
@@ -915,7 +915,7 @@
       "uncommitted_gpu_object_route_reverted": true
     }
   },
-  "evidence_level": "GRASPGENX_OFFICIAL_INFERENCE_AND_OBJECT_A_OFFLINE_CLOSURE_REJECTION_NO_DYNAMIC_RUN",
+  "evidence_level": "GRASPGENX_OFFICIAL_INFERENCE_AND_TWO_OBJECT_SAME_SOURCE_OFFLINE_GEOMETRY_REJECTION_TASK_IK_DYNAMIC_NOT_REACHED",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -943,12 +943,18 @@
     "graspgenx_route1_legacy_offline_pipeline_passed": 4,
     "graspgenx_route1_legacy_offline_pipeline_duration_s": 282.84,
     "graspgenx_route1_actual_proposal_scope_normalization_passed": true,
-    "graspgenx_route1_python_compile_passed": true
+    "graspgenx_route1_python_compile_passed": true,
+    "graspgenx_route1_closeout_system_python_passed": 26,
+    "graspgenx_route1_closeout_system_python_failed": 1,
+    "graspgenx_route1_closeout_system_python_failure_reason": "PYTHON_FCL_NOT_INSTALLED_IN_SYSTEM_INTERPRETER",
+    "graspgenx_route1_closeout_bound_fcl_environment_passed": 27,
+    "graspgenx_route1_academic_supervisor": "APPROVE",
+    "graspgenx_route1_complexity_supervisor": "APPROVE"
   },
   "blockers": [
-    "OBJECT_A_ROI_256_HAS_THREE_THREE_PAD_CLOSURES_BUT_ZERO_TABLE_SAFE_PATHS",
-    "OBJECT_B_ROI_256_HAS_ZERO_THREE_PAD_CLOSURE_SURVIVORS",
-    "KCG_LONG_FINGER_DESCRIPTOR_PRETRAINED_DOMAIN_EXTRAPOLATION",
+    "OBJECT_A_ROI_256_HAS_THREE_THREE_PAD_CLOSURE_PREDICTIONS_BUT_ZERO_TABLE_SAFE_PATHS",
+    "OBJECT_B_ROI_256_HAS_ZERO_THREE_PAD_CLOSURE_PREDICTION_SURVIVORS",
+    "KCG_LONG_FINGER_DESCRIPTOR_OUTSIDE_AUDITED_OFFICIAL_ROSTER_CAUSAL_UNPROVEN",
     "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND",
     "NO_GRASPGENX_ISAAC_RUN_BECAUSE_RESEARCH_GATE_IS_CLOSED"
   ]
