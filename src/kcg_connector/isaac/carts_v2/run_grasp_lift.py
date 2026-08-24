@@ -18,7 +18,7 @@ if __package__:
     from .engine_health import (
         PhysxStatsMonitor, current_engine_log_path, finalize_engine_evaluation,
         gpu_backend_record, gpu_world_parameters, identity_hashes_match,
-        load_runtime_resources, preflight_is_accepted,
+        load_runtime_resources, preflight_is_accepted, synchronize_engine_log,
     )
     from .evaluate_run import (
         IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
@@ -30,7 +30,7 @@ else:
     from engine_health import (
         PhysxStatsMonitor, current_engine_log_path, finalize_engine_evaluation,
         gpu_backend_record, gpu_world_parameters, identity_hashes_match,
-        load_runtime_resources, preflight_is_accepted,
+        load_runtime_resources, preflight_is_accepted, synchronize_engine_log,
     )
     from evaluate_run import (
         IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
@@ -610,7 +610,7 @@ def main() -> int:
 
     simulation_app = SimulationApp({
         "headless": not arguments.gui, "multi_gpu": False,
-        "active_gpu": 0, "physics_gpu": 0, "fast_shutdown": False,
+        "active_gpu": 0, "physics_gpu": 0, "fast_shutdown": True,
     })
     engine_log_path = current_engine_log_path()
     trace = (_initial_isolated_trace(arguments, report, selected, motion_plan, dynamic)
@@ -622,13 +622,14 @@ def main() -> int:
     except Exception as error:
         _write_failure(output, error)
         traceback.print_exc()
-        simulation_app.close()
+        simulation_app.close(exit_code=1)
         return 1
+    if isinstance(result, int):
+        simulation_app.close(exit_code=result)
+        return result
     try:
-        simulation_app.close()
-        if isinstance(result, int):
-            return result
         trace, evaluation, engine_runtime = result
+        engine_runtime["engine_log_sync"] = synchronize_engine_log(engine_log_path)
         evaluation = finalize_engine_evaluation(evaluation, engine_runtime, engine_log_path)
         (output / "trace.json").write_text(
             json.dumps(trace, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -637,11 +638,13 @@ def main() -> int:
         print(json.dumps(evaluation, ensure_ascii=False, indent=2))
         key = ("accepted_preflight_pass" if arguments.mode == "preflight"
                else "nominal_research_dynamic_pass")
-        return 0 if evaluation[key] else 2
+        exit_code = 0 if evaluation[key] else 2
     except Exception as error:
         _write_failure(output, error)
         traceback.print_exc()
-        return 1
+        exit_code = 1
+    simulation_app.close(exit_code=exit_code)
+    return exit_code
 
 
 if __name__ == "__main__":

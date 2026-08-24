@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T08:40:43Z",
+  "updated_at_utc": "2026-08-24T08:59:45Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -78,7 +78,18 @@
     "prior_total_peak": 5855,
     "configured_found_lost_capacity": 8192,
     "configured_total_capacity": 16384,
-    "runtime_measurement_pending": true
+    "runtime_measurement_pending": true,
+    "run09": {
+      "run_id": "A_candidate11_gpu_capacity_accepted_preflight_run09",
+      "accepted_preflight_pass": false,
+      "physics_time_advanced_s": 0.0,
+      "failure_class": "PHYSICS_TIME_ZERO_API_INTERFACE_FAILURE",
+      "failure_reason": "PHYSX_STATISTICS_SCENE_PATH_EXPECTED_UINT64_NOT_TUPLE",
+      "failure_sha256": "1a4e04492e5f792cc74ccf20853f512564e94a86f7fc9e4f4c0075a16f60c646",
+      "engine_log_sha256": "514bb39b0254e9539eb2eb432affcde3514526d62e2b98b331ce189a6a98f679",
+      "engine_log_path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260824_085531.log",
+      "replacement_preflight_run10_authorized": true
+    }
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,

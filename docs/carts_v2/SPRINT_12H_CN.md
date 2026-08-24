@@ -221,4 +221,11 @@
 - 没有相同 Prim 路径或相同来源与世界变换的重复碰撞形状；机器人自碰关闭，连接器 406 种 family 配对已有 387 种被过滤，未发现明显错误过滤。
 - 历史日志的两类最高需求分别为 found/lost 2115、total 5855；因此按预先冻结的 `next_power_of_two(ceil(2 * peak))` 分别配置 8192 与 16384，不进行试值扫描。
 - 这只是 Isaac 运行资源审计，不改变候选、物性、控制增益、3 rad/s、50 mm、2 s 或论文主要参数；当前只开放一次对象 A 预检查，抓取仍关闭。
-- Complexity Supervisor：三份生产文件均不超过 600 NLOC，唯一 helper 为 299 NLOC；Recovery 2 生产 Python 净增约 300 NLOC，超过 250 行目标的部分只用于 GPU 实际峰值、完整 PhysX 日志失败关闭和可重算身份绑定。无新 manager/contract/ledger 或重复物理算法；为压行继续重构会增加 Isaac 接线风险，批准该书面例外。
+- Complexity Supervisor：三份生产文件均不超过 600 NLOC，唯一 helper 当前为 351 NLOC；Recovery 2 生产 Python 净增超过 250 行目标的部分只用于 GPU 实际峰值、完整 PhysX 日志失败关闭、日志截止边界和可重算身份绑定。无新 manager/contract/ledger 或重复物理算法；为压行继续重构会增加 Isaac 接线风险，批准该书面例外。
+
+## 2026-08-24T08:59:45Z — A run09：物理前统计 API 接线失败
+
+- run09 在控制器和物理循环开始前失败，物理推进 0 s；`encodeSdfPath` 返回 `(low, high)`，而本机 Isaac 6 的 `get_physx_scene_statistics` 绑定要求单个 uint64，失败类别为 `PHYSICS_TIME_ZERO_API_INTERFACE_FAILURE`。
+- 唯一 API 修正是使用同版本接口普遍采用的 `sdfPathToInt`；容量、碰撞关系、候选、增益、速度和物理标准均不改。
+- `fast_shutdown=false` 在完整扩展卸载后的 Python GC 触发 Isaac 段错误；替代方案是在最后统计和 trace 构造后向本次精确日志写唯一 marker，短超时确认落盘，再审计“进程启动至 marker”并在快速关闭前写证据。
+- Academic Supervisor 只批准一次 run10 替代预检查；marker 缺失、日志读取失败、任一 PhysX Error 或容量警告均失败关闭，抓取门仍未开放。

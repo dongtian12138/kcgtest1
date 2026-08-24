@@ -8,6 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import time
 from typing import Mapping
 
 
@@ -100,7 +101,7 @@ class PhysxStatsMonitor:
         self._stats_type = PhysicsSceneStats
         self._interface = get_physx_statistics_interface()
         self._stage_id = omni.usd.get_context().get_stage_id()
-        self._scene_path = PhysicsSchemaTools.encodeSdfPath(Sdf.Path(
+        self._scene_path = PhysicsSchemaTools.sdfPathToInt(Sdf.Path(
             physics_context.prim_path))
         self.configured = {
             "found": int(physics_context.get_gpu_found_lost_aggregate_pairs_capacity()),
@@ -148,11 +149,26 @@ class PhysxStatsMonitor:
         }
 
 
-def audit_physx_log(path: Path) -> dict[str, object]:
+def audit_physx_log(
+    path: Path, *, cutoff_bytes: int | None = None,
+    required_marker: str | None = None,
+) -> dict[str, object]:
     try:
         payload = path.read_bytes()
     except OSError:
         return {"scan_complete": False, "capacity_warning_count": None, "sha256": None}
+    if cutoff_bytes is not None:
+        if (isinstance(cutoff_bytes, bool) or not isinstance(cutoff_bytes, int)
+                or not 0 < cutoff_bytes <= len(payload)):
+            return {"scan_complete": False, "capacity_warning_count": None,
+                    "sha256": None, "audit_byte_count": None}
+        payload = payload[:cutoff_bytes]
+    marker_seen = bool(
+        required_marker is None or (
+            isinstance(required_marker, str)
+            and required_marker.encode("ascii") in payload
+        )
+    )
     lines = payload.decode("utf-8", errors="replace").splitlines()
     capacity_warnings, physx_warnings, physx_errors = [], [], []
     requested = {"found": 0, "total": 0}
@@ -174,7 +190,10 @@ def audit_physx_log(path: Path) -> dict[str, object]:
             key = "found" if match.group(1).lower().startswith("found") else "total"
             requested[key] = max(requested[key], int(match.group(2)))
     return {
-        "scan_complete": True, "capacity_warning_count": len(capacity_warnings),
+        "scan_complete": marker_seen,
+        "cutoff_marker_seen": marker_seen,
+        "audit_byte_count": len(payload),
+        "capacity_warning_count": len(capacity_warnings),
         "capacity_warning_lines": capacity_warnings,
         "all_physx_warning_lines": physx_warnings,
         "physx_error_lines": physx_errors,
@@ -182,6 +201,30 @@ def audit_physx_log(path: Path) -> dict[str, object]:
         "requested_total_peak": requested["total"],
         "sha256": hashlib.sha256(payload).hexdigest(), "path": str(path),
     }
+
+
+def synchronize_engine_log(path: Path) -> dict[str, object]:
+    import carb
+
+    marker = f"CARTS_V2_ENGINE_LOG_SYNC_{time.time_ns()}"
+    carb.log_info(marker)
+    deadline = time.monotonic() + 2.0
+    while time.monotonic() < deadline:
+        try:
+            payload = path.read_bytes()
+            marker_start = payload.find(marker.encode("ascii"))
+            if marker_start >= 0:
+                line_end = payload.find(b"\n", marker_start)
+                cutoff = line_end + 1 if line_end >= 0 else marker_start + len(marker)
+                return {
+                    "marker": marker, "marker_seen": True,
+                    "audit_byte_count": cutoff,
+                    "audit_boundary": "PROCESS_START_THROUGH_SYNC_MARKER",
+                }
+        except OSError:
+            pass
+        time.sleep(0.01)
+    raise RuntimeError("exact Kit log did not synchronize before evidence audit")
 
 
 def identity_hashes_match(trace: Mapping[str, object]) -> bool:
@@ -209,7 +252,15 @@ def identity_hashes_match(trace: Mapping[str, object]) -> bool:
 
 
 def finalize_engine_evaluation(evaluation, engine_runtime, log_path: Path):
-    log = audit_physx_log(log_path)
+    sync = engine_runtime.get("engine_log_sync", {})
+    marker = sync.get("marker") if isinstance(sync, Mapping) else None
+    cutoff = sync.get("audit_byte_count") if isinstance(sync, Mapping) else None
+    log = audit_physx_log(log_path, cutoff_bytes=cutoff, required_marker=marker)
+    marker_seen = bool(
+        isinstance(marker, str) and marker.startswith("CARTS_V2_ENGINE_LOG_SYNC_")
+        and sync.get("marker_seen") is True
+        and sync.get("audit_boundary") == "PROCESS_START_THROUGH_SYNC_MARKER"
+        and log.get("cutoff_marker_seen") is True)
     found_peak = max(int(engine_runtime[
         "observed_gpu_found_lost_aggregate_pairs_peak"]),
         int(log.get("requested_found_lost_peak", 0)))
@@ -220,6 +271,7 @@ def finalize_engine_evaluation(evaluation, engine_runtime, log_path: Path):
     total_capacity = int(engine_runtime["configured_gpu_total_aggregate_pairs_capacity"])
     engine_pass = bool(
         engine_runtime.get("gpu_backend_pass") is True
+        and marker_seen
         and engine_runtime.get("physx_statistics_sample_count", 0) > 0
         and engine_runtime.get("physx_statistics_read_failures") == 0
         and log.get("scan_complete") is True
@@ -250,6 +302,9 @@ def finalize_engine_evaluation(evaluation, engine_runtime, log_path: Path):
         "observed_gpu_found_lost_aggregate_pairs_peak": found_peak,
         "observed_gpu_total_aggregate_pairs_peak": total_peak,
         "engine_log_sha256": log.get("sha256"), "engine_log_path": log.get("path"),
+        "engine_log_sync_marker": marker, "engine_log_marker_seen": marker_seen,
+        "engine_log_audit_byte_count": log.get("audit_byte_count"),
+        "engine_log_audit_boundary": "PROCESS_START_THROUGH_SYNC_MARKER",
         "physx_capacity_warning_lines": log.get("capacity_warning_lines", []),
         "all_physx_warning_lines": log.get("all_physx_warning_lines", []),
         "physx_error_lines": log.get("physx_error_lines", []),
@@ -332,5 +387,5 @@ __all__ = [
     "ENGINE_EVIDENCE_FIELDS", "PhysxStatsMonitor", "audit_physx_log",
     "current_engine_log_path", "finalize_engine_evaluation", "gpu_backend_record",
     "gpu_world_parameters", "identity_hashes_match", "load_runtime_resources",
-    "pending_engine_fields", "preflight_is_accepted",
+    "pending_engine_fields", "preflight_is_accepted", "synchronize_engine_log",
 ]

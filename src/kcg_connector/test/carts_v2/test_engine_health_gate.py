@@ -114,8 +114,11 @@ def test_trace_evaluation_cannot_pass_before_engine_audit() -> None:
 
 def test_runner_no_longer_accepts_legacy_preflight_pass() -> None:
     source = (ISAAC_V2 / "run_grasp_lift.py").read_text(encoding="utf-8")
+    engine_source = (ISAAC_V2 / "engine_health.py").read_text(encoding="utf-8")
     assert "preflight_is_accepted(preflight)" in source
     assert 'preflight.get("preflight_pass")' not in source
+    assert '"fast_shutdown": True' in source
+    assert "sdfPathToInt" in engine_source and "encodeSdfPath" not in engine_source
 
 
 def test_runtime_capacity_uses_frozen_measured_rule() -> None:
@@ -143,10 +146,17 @@ def test_real_capacity_warning_syntax_is_detected(tmp_path: Path) -> None:
 
 def test_post_shutdown_clean_log_accepts_preflight(tmp_path: Path) -> None:
     log = tmp_path / "kit.log"
-    log.write_text("[Info] [omni.physx.plugin] clean shutdown\n", encoding="utf-8")
+    marker = "CARTS_V2_ENGINE_LOG_SYNC_1"
+    payload = f"[Info] [omni.physx.plugin] clean\n[Info] {marker}\n".encode()
+    log.write_bytes(payload + b"[Error] [omni.physx.plugin] post-marker teardown\n")
     engine = {
         "gpu_backend_pass": True, "physx_statistics_sample_count": 10,
         "physx_statistics_read_failures": 0,
+        "engine_log_sync": {
+            "marker": marker, "marker_seen": True,
+            "audit_byte_count": len(payload),
+            "audit_boundary": "PROCESS_START_THROUGH_SYNC_MARKER",
+        },
         "configured_gpu_found_lost_aggregate_pairs_capacity": 8192,
         "configured_gpu_total_aggregate_pairs_capacity": 16384,
         "observed_gpu_found_lost_aggregate_pairs_peak": 2115,
@@ -155,16 +165,26 @@ def test_post_shutdown_clean_log_accepts_preflight(tmp_path: Path) -> None:
     evaluation = _accepted_document() | {"mode": "preflight"}
     accepted = finalize_engine_evaluation(evaluation, engine, log)
     assert accepted["accepted_preflight_pass"] is True
+    assert accepted["engine_log_marker_seen"] is True
+    assert accepted["engine_log_audit_byte_count"] == len(payload)
+    assert accepted["engine_log_sha256"] == hashlib.sha256(payload).hexdigest()
     assert preflight_is_accepted(accepted)
 
 
 def test_post_shutdown_physx_error_overrides_controller_pass(tmp_path: Path) -> None:
     log = tmp_path / "kit.log"
-    log.write_text("[Error] [omni.physx.plugin] invalid collision data\n",
-                   encoding="utf-8")
+    marker = "CARTS_V2_ENGINE_LOG_SYNC_2"
+    payload = ("[Error] [omni.physx.plugin] invalid collision data\n"
+               f"[Info] {marker}\n").encode()
+    log.write_bytes(payload)
     engine = {
         "gpu_backend_pass": True, "physx_statistics_sample_count": 1,
         "physx_statistics_read_failures": 0,
+        "engine_log_sync": {
+            "marker": marker, "marker_seen": True,
+            "audit_byte_count": len(payload),
+            "audit_boundary": "PROCESS_START_THROUGH_SYNC_MARKER",
+        },
         "configured_gpu_found_lost_aggregate_pairs_capacity": 8192,
         "configured_gpu_total_aggregate_pairs_capacity": 16384,
         "observed_gpu_found_lost_aggregate_pairs_peak": 1,
