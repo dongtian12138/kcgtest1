@@ -79,8 +79,12 @@ def _sampled_hand_states(
         start_phases = tuple(phases)
         phases[phase_index] = prediction.final_closure_phases[phase_index]
         stop_phases = tuple(phases)
-        start_joints = joint_positions_for_phases(inputs, start_phases)
-        stop_joints = joint_positions_for_phases(inputs, stop_phases)
+        start_joints = joint_positions_for_phases(
+            inputs, start_phases, reference_joint_positions_rad=pregrasp
+        )
+        stop_joints = joint_positions_for_phases(
+            inputs, stop_phases, reference_joint_positions_rad=pregrasp
+        )
         largest_change = float(np.max(np.abs(stop_joints - start_joints)))
         step_count = max(
             1,
@@ -97,7 +101,9 @@ def _sampled_hand_states(
                 if step_index == step_count
                 else f"FINGER_{stop_index}_CLOSURE_{step_index:04d}"
             )
-            joints = joint_positions_for_phases(inputs, tuple(sample_phases))
+            joints = joint_positions_for_phases(
+                inputs, tuple(sample_phases), reference_joint_positions_rad=pregrasp
+            )
             states.append((stage, base, joints))
     return tuple(states)
 

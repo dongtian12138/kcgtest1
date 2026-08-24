@@ -1,6 +1,6 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T14:50:59Z",
+  "updated_at_utc": "2026-08-24T16:00:00Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
@@ -51,7 +51,24 @@
     "current_d38999_26kj61sn_public_spec",
     "te_deutsch_d38999_26fj35pn_step"
   ],
-  "descriptor_count": 0,
+  "descriptor_count": 5,
+  "descriptors": {
+    "manifest": "artifacts/carts_v2/graspgenx/descriptors/descriptor_manifest.json",
+    "sha256": "f60d89a29ff1a728d6126c1e28ab7babe09e58585391ea26cca0ab476bfe564e",
+    "preshape_f1j1_rad": [0.628, 1.413, 0.15700000000000003, 0.9420000000000001, 0.31400000000000006],
+    "maximum_closure_phase": 0.5,
+    "maximum_joint_increment_rad": 0.0015,
+    "self_collision_checked_state_count": 4203,
+    "self_collision_pass": true,
+    "sweep_volume_method": "OFFICIAL_WIZARD_INNER_FINGERTIP_SPACE_AABB",
+    "claim_scope": "MODEL_CONDITIONING_ONLY_NOT_COLLISION_PROOF"
+  },
+  "object_inputs": {
+    "manifest": "artifacts/carts_v2/graspgenx/objects/object_manifest.json",
+    "sha256": "7af34586412cc270453da0393dc2c895bebd47109c0f8b5acdda5363b2eea597",
+    "sample_point_count": 8192,
+    "standardized_meshes_committed": false
+  },
   "official_positive_control": {
     "status": "PENDING",
     "gripper": null,

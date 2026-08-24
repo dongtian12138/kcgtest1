@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import math
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 import yaml
@@ -229,7 +229,10 @@ class ExactValidationResult:
 
 
 def joint_positions_for_phases(
-    inputs: V2Inputs, phases: tuple[float, float, float]
+    inputs: V2Inputs,
+    phases: tuple[float, float, float],
+    *,
+    reference_joint_positions_rad: Sequence[float] | np.ndarray | None = None,
 ) -> np.ndarray:
     """Map three normalized finger phases through the registered actuation rows."""
 
@@ -239,12 +242,22 @@ def joint_positions_for_phases(
     names = tuple(hand.independent_joint_names)
     lower = np.asarray([hand.joints[name].limit.lower for name in names])
     upper = np.asarray([hand.joints[name].limit.upper for name in names])
-    positions = lower.copy()
-    preshape = inputs.config.section("candidate_generation")[
-        "preshape_joint_positions_rad"
-    ]
-    for name, value in preshape.items():
-        positions[names.index(str(name))] = float(value)
+    if reference_joint_positions_rad is None:
+        positions = lower.copy()
+        preshape = inputs.config.section("candidate_generation")[
+            "preshape_joint_positions_rad"
+        ]
+        for name, value in preshape.items():
+            positions[names.index(str(name))] = float(value)
+    else:
+        positions = np.array(
+            reference_joint_positions_rad, dtype=np.float64, copy=True
+        )
+        if positions.shape != (len(names),) or not np.all(np.isfinite(positions)):
+            raise ValueError(
+                "reference joint positions must be one finite independent vector"
+            )
+        hand.resolve_joint_positions(positions, enforce_limits=True)
     for phase, row in zip(phases, inputs.closing_directions):
         for joint_index in np.flatnonzero(row):
             span = upper[joint_index] - lower[joint_index]

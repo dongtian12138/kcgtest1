@@ -1,0 +1,193 @@
+schema_version: carts_grasp_v2
+method: GraspGenX-CARTS
+claim_scope: SIMULATION_ONLY_TWO_OBJECT_ZERO_TUNE_CASE_STUDY
+hardware_authorized: false
+
+inputs:
+  object_contract: src/kcg_connector/config/carts_grasp_objects_v1.yaml
+  hand_contract: src/kcg_connector/config/carts_hand_contact_v1.yaml
+  collision_roster: src/kcg_connector/config/carts_collision_roster_v1.yaml
+  development_object: current_d38999_26kj61sn_public_spec
+  transfer_object: te_deutsch_d38999_26fj35pn_step
+
+surface_roles:
+  method: TASK_AXIS_OUTER_ENVELOPE_V1
+  angular_bin_count: 72
+  axial_bin_count: 24
+  outer_envelope_depth_m: 0.0015
+  minimum_radial_normal_component: 0.60
+  maximum_axial_normal_component: 0.65
+  radial_numerical_epsilon_m: 1.0e-9
+
+candidate_generation:
+  backend: GRASPGENX
+  candidate_count: 64
+  surface_pool_count: 384
+  random_seed: 20260824
+  reference_closure_phase: 0.45
+  pregrasp_closure_phase: 0.0
+  maximum_closure_phase: 0.50
+  preshape_joint_positions_rad:
+    f1j1: 0.70
+  graspgenx:
+    planner: graspmoe
+    raw_target_per_descriptor_object: 256
+    keep_per_descriptor_object: 128
+    merged_max_per_object: 256
+    fast_filter_max_per_object: 64
+    expensive_validation_max_per_object: 3
+    descriptor_count_maximum: 5
+    model_score_role: PHYSICS_FEASIBILITY_POSTERIOR_TIE_BREAK_ONLY
+  deduplication:
+    palm_position_m: 0.002
+    palm_orientation_rad: 0.1308996938995747
+    anchor_position_m: 0.002
+    contact_rms_m: 0.002
+
+closure_prediction:
+  closing_order: [finger_1_pad, finger_2_pad, finger_3_pad]
+  phase_sample_count: 25
+  pad_surface_sample_count: 96
+  nearest_face_candidate_count: 16
+  contact_distance_m: 0.00075
+  initial_clearance_m: 0.0010
+  minimum_inward_motion_m_per_phase: 1.0e-5
+  motion_derivative_phase_step: 1.0e-4
+
+fast_filter:
+  minimum_three_contact_triangle_area_m2: 1.0e-8
+  hand_table_state_rule: WORLD_Z_APPROACH_AND_COMPLETE_SEQUENTIAL_CLOSURE_CONTROL_STEPS
+  approach_path_sample_count: 5
+  table_penetration_tolerance_m: 1.0e-5
+  table_penetration_tolerance_source: NUMERICAL_TOLERANCE
+  arm_ik_policy: UNRESOLVED_UNTIL_PUBLIC_LEGACY_FORWARDER
+  nonpad_collision_policy: UNRESOLVED_UNTIL_TOP3_LEGACY_EXACT
+
+task_quality:
+  scenario_count: 16
+  random_seed: 20260824
+  lower_tail_fraction: 0.20
+  friction_cone_edges: 8
+  gravity_acceleration_m_s2: 9.80665
+  normal_force_operation_cap_n: 12.0
+  task_force_scale: OBJECT_MASS_TIMES_GRAVITY
+  task_moment_scale: FORCE_SCALE_TIMES_CHARACTERISTIC_RADIUS
+  mass_relative_error: 0.05
+  center_of_mass_error_m: 0.001
+  gravity_direction_error_rad: 0.03490658503988659
+  common_contact_position_error_m: 0.0005
+  contact_position_error_m: 0.0005
+  contact_normal_error_rad: 0.08726646259971647
+  linear_program:
+    solver: SCIPY_HIGHS
+    constraint_scaling: ROW_AND_COLUMN_INF_NORM
+    maximum_iterations: 10000
+    primal_feasibility_tolerance: 1.0e-9
+    dual_feasibility_tolerance: 1.0e-9
+    ipm_optimality_tolerance: 1.0e-10
+    physical_acceptance_gate: false
+
+exact_validation:
+  top_k: 3
+  per_candidate_time_budget_s: 900
+  interface_mismatch_policy: UNRESOLVED_FAILS_FORMAL_MAY_ENTER_RESEARCH
+
+ik:
+  interval_decimal_precision: 80
+  interval_maximum_root_bisection_iterations: 256
+  lift_waypoint_count: 11
+  solver:
+    method: SCIPY_TRF_BOUNDED_POSE_LEAST_SQUARES_V1
+    pregrasp_seed_rule: HOME_THEN_UNSCRAMBLED_SOBOL_INTERIOR_JOINT_LIMITS
+    pregrasp_sobol_point_count: 8
+    sobol_interior_lower_fraction: 0.10
+    sobol_interior_upper_fraction: 0.90
+    feasible_choice_rule: FIRST_FEASIBLE_IN_FIXED_SEED_ORDER
+    orientation_residual_length_scale_m_per_rad: 0.20
+    position_tolerance_m: 1.0e-7
+    orientation_tolerance_rad: 1.0e-6
+    function_tolerance: 1.0e-13
+    step_tolerance: 1.0e-13
+    gradient_tolerance: 1.0e-13
+    maximum_function_evaluations: 2000
+
+dynamic:
+  physics_dt_s: 0.008333333333333333
+  settle_duration_s: 2.0
+  approach_clearance_height_m: 0.10
+  approach_above_duration_s: 3.0
+  approach_above_settle_error_rad: 0.020
+  approach_above_settle_consecutive_samples: 30
+  approach_above_settle_timeout_s: 1.0
+  approach_descent_duration_s: 2.0
+  pregrasp_hold_duration_s: 0.5
+  effort_tare_duration_s: 0.5
+  finger_maximum_speed_rad_s: 0.18
+  contact_effort_rise_nm: 0.020
+  contact_position_error_rad: 0.004
+  contact_consecutive_samples: 6
+  contact_endpoint_timeout_s: 0.5
+  preload_increment_rad: 0.015
+  preload_duration_s: 0.5
+  arm_stiffness: 2500.0
+  arm_damping: 40.0
+  arm_control_law: NATIVE_FORCE_DRIVE_GRAVITY_EQUIVALENT_POSITION_BIAS_V1
+  hand_stiffness: 12.0
+  hand_damping: 2.0
+  arm_drive_maximum_effort_nm: 100.0
+  hand_drive_maximum_effort_nm: 1.0
+  measured_effort_abort_nm: 0.90
+  maximum_joint_speed_rad_s: 3.0
+  maximum_arm_tracking_error_rad: 0.20
+  lift_distance_m: 0.050
+  lift_duration_s: 1.5
+  hold_duration_s: 2.0
+  lift_tolerance_m: 0.001
+  lift_acceleration_difference_window_samples: 4
+  lift_acceleration_tolerance_m_s2: 0.020
+  table_release_clearance_m: 0.001
+  maximum_table_penetration_m: 0.002
+  disturbance_executed: false
+  online_object_truth_allowed: false
+  online_contact_truth_allowed: false
+  object_pose_write_after_start_allowed: false
+  robot_asset: artifacts/kcg_connector/isaac/robot/handarm/handarm.usda
+  object_scenes:
+    current_d38999_26kj61sn_public_spec:
+      scene_kind: D38999_PAIR_TABLETOP
+      scene_config: artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/scene.yaml
+      frozen_settled_world_from_object_row_major:
+        [1.0, 0.0, 0.0, 0.52,
+         0.0, -1.0, 0.0, -0.21,
+         0.0, 0.0, -1.0, 0.2305,
+         0.0, 0.0, 0.0, 1.0]
+      pose_source: REGISTERED_SCENE_INITIAL_RX180_MINUS_15MM_SETTLE
+    te_deutsch_d38999_26fj35pn_step:
+      scene_kind: FREE_SINGLE_RIGID_ON_SHARED_FINITE_TABLE
+      environment_scene_config: artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/scene.yaml
+      asset: artifacts/kcg_connector/isaac/te_j35_free_tabletop_v1/TE_J35_FREE_PLUG_V1.usdc
+      manifest: artifacts/kcg_connector/isaac/te_j35_free_tabletop_v1/MANIFEST.json
+      reference_prim_path: /World/TE_J35FreePlug
+      component_bottom_offsets_m: [0.0]
+      frozen_settled_world_from_object_row_major:
+        [1.0, 0.0, 0.0, 0.52,
+         0.0, -1.0, 0.0, -0.21,
+         0.0, 0.0, -1.0, 0.20,
+         0.0, 0.0, 0.0, 1.0]
+      pose_source: CARTS_HASH_BOUND_GEOMETRY_DERIVED_TABLETOP_POSE_V1
+
+parameter_sources:
+  object_geometry_mass_com_inertia: HARDWARE_FACT_OR_REGISTERED_SIMULATION_MODEL
+  urdf_position_limits_and_pad_identity: HARDWARE_FACT
+  urdf_effort_limits: UNKNOWN_UNCALIBRATED_MODEL_VALUE
+  normal_force_operation_cap_n: SIM_OPERATION_CAP
+  friction_mass_com_gravity_contact_ranges: STUDY_RANGE
+  surface_and_candidate_thresholds: STUDY_RANGE
+  descriptor_closure_phase: OBJECT_INDEPENDENT_HAND_SELF_COLLISION_AUDIT
+  dynamic_motion_and_drive_limits: SIM_OPERATION_CAP
+  dynamic_gravity_compensation: SIM_OPERATION_CAP
+  dynamic_approach_settle_gate: SIM_OPERATION_CAP
+  dynamic_contact_detection_thresholds: STUDY_RANGE
+  floating_point_tolerances: NUMERICAL_TOLERANCE
+  single_finger_capacity_at_least_15_n: HARDWARE_FACT_USER_REPORTED_NOT_CALIBRATED
+  wrist_load_limit: UNKNOWN

@@ -146,9 +146,13 @@ class SequentialClosurePredictor:
         }
 
     def _world_pad_points(
-        self, pad_name: str, phases: tuple[float, float, float], base: np.ndarray
+        self, pad_name: str, phases: tuple[float, float, float], base: np.ndarray,
+        reference_joint_positions_rad: tuple[float, ...],
     ) -> np.ndarray:
-        joints = joint_positions_for_phases(self.inputs, phases)
+        joints = joint_positions_for_phases(
+            self.inputs, phases,
+            reference_joint_positions_rad=reference_joint_positions_rad,
+        )
         transform = self.inputs.hand_model.pad_transforms(
             joints, base_transform=base
         )[pad_name]
@@ -160,8 +164,11 @@ class SequentialClosurePredictor:
         pad_name: str,
         phases: tuple[float, float, float],
         base: np.ndarray,
+        reference_joint_positions_rad: tuple[float, ...],
     ) -> tuple[int, _NearestSurface, np.ndarray, np.ndarray]:
-        points = self._world_pad_points(pad_name, phases, base)
+        points = self._world_pad_points(
+            pad_name, phases, base, reference_joint_positions_rad
+        )
         nearest = self._proximity.query(points)
         phase_index = self._pad_to_phase[pad_name]
         delta = min(
@@ -174,7 +181,9 @@ class SequentialClosurePredictor:
         )
         moved_phases = list(phases)
         moved_phases[phase_index] += delta
-        moved = self._world_pad_points(pad_name, tuple(moved_phases), base)
+        moved = self._world_pad_points(
+            pad_name, tuple(moved_phases), base, reference_joint_positions_rad
+        )
         motion = (moved - points) / delta
         origin = self.inputs.object_contract.model.assembly_axis_origin_m
         axis = self.inputs.object_contract.model.assembly_axis
@@ -195,10 +204,15 @@ class SequentialClosurePredictor:
         selected = int(np.argmin(eligible_distance))
         return selected, nearest, normals, inward
 
-    def _initial_clearance(self, seed_base: np.ndarray, phases: tuple[float, ...]) -> float:
+    def _initial_clearance(
+        self,
+        seed_base: np.ndarray,
+        phases: tuple[float, ...],
+        reference: tuple[float, ...],
+    ) -> float:
         clearances = []
         for pad in self.inputs.hand_contract.pads:
-            points = self._world_pad_points(pad.name, phases, seed_base)
+            points = self._world_pad_points(pad.name, phases, seed_base, reference)
             clearances.append(float(np.min(self._proximity.query(points).distance_m)))
         return min(clearances)
 
@@ -206,8 +220,9 @@ class SequentialClosurePredictor:
         settings = self.inputs.config.section("closure_prediction")
         generation = self.inputs.config.section("candidate_generation")
         base = seed.object_from_hand_matrix()
+        reference = seed.pregrasp_joint_positions_rad
         phases = list(seed.pregrasp_closure_phases)
-        initial_clearance = self._initial_clearance(base, tuple(phases))
+        initial_clearance = self._initial_clearance(base, tuple(phases), reference)
         if initial_clearance <= float(settings["initial_clearance_m"]):
             return self._failure(seed, phases, initial_clearance, "INITIAL_PAD_TOO_CLOSE")
 
@@ -223,7 +238,7 @@ class SequentialClosurePredictor:
             for phase in np.linspace(start, maximum, sample_count)[1:]:
                 phases[phase_index] = float(phase)
                 selected, nearest, normals, inward = self._contact_at_phase(
-                    str(pad_name), tuple(phases), base
+                    str(pad_name), tuple(phases), base, reference
                 )
                 distance = float(nearest.distance_m[selected])
                 if distance <= contact_distance:
@@ -262,7 +277,9 @@ class SequentialClosurePredictor:
                 )
             contacts.append(contact)
 
-        joints = joint_positions_for_phases(self.inputs, tuple(phases))
+        joints = joint_positions_for_phases(
+            self.inputs, tuple(phases), reference_joint_positions_rad=reference
+        )
         planned = tuple(
             PlannedPadContact(
                 pad_name=contact.pad_name,
@@ -298,7 +315,10 @@ class SequentialClosurePredictor:
         reason: str,
         contacts=(),
     ) -> ClosurePrediction:
-        joints = joint_positions_for_phases(self.inputs, tuple(phases))
+        joints = joint_positions_for_phases(
+            self.inputs, tuple(phases),
+            reference_joint_positions_rad=seed.pregrasp_joint_positions_rad,
+        )
         return ClosurePrediction(
             seed=seed,
             status="CLOSURE_REJECT",
