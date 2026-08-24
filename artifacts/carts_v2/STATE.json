@@ -1,31 +1,35 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T07:38:08Z",
+  "updated_at_utc": "2026-08-24T07:49:45Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
   "config_sha256": "c41e10936effd08d4c8044dfe79861e479ac751f32453ef5d12ee5b785a948f7",
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "IMPLEMENTING",
-  "current_milestone": "V2_RECOVERY_HAND_DRIVE_TO_NOMINAL_LIFT",
+  "status": "PARKED",
+  "current_milestone": "V2_RECOVERY_CLOSEOUT_GPU_CAPACITY_BLOCKED",
   "execution_window": {
     "id": "V2_RECOVERY_1",
     "classification": "MILESTONE_REORDER_PLUS_EXECUTION_WINDOW_REOPEN",
     "started_at_utc": "2026-08-24T07:05:10Z",
     "hard_deadline_utc": "2026-08-24T12:05:10Z",
     "maximum_duration_s": 18000,
-    "automatic_extension_allowed": false
+    "automatic_extension_allowed": false,
+    "stopped_at_utc": "2026-08-24T07:49:45Z",
+    "stop_reason": "OBJECT_GPU_AGGREGATE_PAIR_CAPACITY_RECOVERY_FAILED"
   },
   "git_delivery": {
     "workspace_git_directory_writable": true,
-    "workspace_head_at_delivery_sync": "57efc16bfa354cc7b99a5ce4c07c59185b04fa28",
+    "workspace_head_at_delivery_sync": "7633f3a621c4112057a2aff475c5cce1b7f64828",
     "workspace_git_error": null,
     "integration_clone": "/tmp/kcgtest1-carts-v2-integration-20260823",
     "code_commit": "4d90a52",
     "documentation_commit": "58c9503",
     "handoff_commit": "57efc16",
-    "remote_push_status": "SUCCESS_THROUGH_57EFC16",
+    "isolated_diagnostic_commit": "0848abe",
+    "mimic_follower_fix_commit": "7633f3a",
+    "remote_push_status": "SUCCESS_THROUGH_7633F3A_FINAL_CLOSEOUT_PENDING",
     "push_failure": null,
     "recovery_branch": "carts-v2-pre-integration-698a2bb",
     "recovery_bundle": "artifacts/carts_v2/CARTS_V2_INTEGRATION_57efc16_INCREMENTAL.bundle",
@@ -45,9 +49,9 @@
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
-    "allowed": true,
-    "scope": "OBJECT_A_NOMINAL_RESEARCH_DYNAMIC",
-    "reason": "GPU isolated hand run02 completed the identical trajectory below the unchanged 3 rad/s limit; only candidate_11 preflight and nominal research run are now allowed"
+    "allowed": false,
+    "scope": "PARKED",
+    "reason": "Object A GPU preflights reported missed interactions at default 1024 and after the single allowed 4096 capacity recovery; no object run is valid for launch"
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
@@ -194,6 +198,50 @@
       "summary_sha256": "1aa5e84cb8d5fcb276fb757272150a3783c9e835e239d23ada95b4b85a85eefb",
       "trace_sha256": "c0b20dd89f47d58152996292391ba04e15793e8c258d2223f73147a45f43b5d7",
       "raw_trace_committed": false
+    },
+    "object_a_gpu_preflight_recovery": {
+      "accepted_preflight_pass": false,
+      "grasp_lift_launched": false,
+      "stop_rule_triggered": true,
+      "process_exit_code_not_used_as_physical_success": true,
+      "run06": {
+        "run_id": "A_candidate11_gpu_mimic_passive_preflight_run06",
+        "physics_time_advanced_s": 0.0,
+        "failure_reason": "CUDA_TENSOR_TO_NUMPY_INTERFACE_ERROR",
+        "failure_sha256": "17a2de7a66e1ce4198c36502a8b23ee0e9693b2945cee1b74c21f0fa398530f3"
+      },
+      "run07": {
+        "run_id": "A_candidate11_gpu_mimic_passive_preflight_run07",
+        "physics_time_advanced_s": 7.75,
+        "controller_completed": true,
+        "reported_preflight_pass": true,
+        "accepted_preflight_pass": false,
+        "invalidation_reason": "PHYSX_GPU_AGGREGATE_PAIR_CAPACITY_EXHAUSTED_MISSED_INTERACTIONS",
+        "configured_capacity": 1024,
+        "maximum_requested_capacity": 2115,
+        "maximum_joint_speed_rad_s": 1.425191044807434,
+        "evaluation_sha256": "761d301658cfe9747c5ef88303630fbc03400083eebf359033d84800ca68cc9e",
+        "trace_sha256": "34b4af12c871bdc4b379be21be447d1aa1cb838b7e8643ec198ce2ba4e4730b5",
+        "log_path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260824_074434.log",
+        "log_sha256": "49acae67bc85dd2e66594ba56585c1686adabd31e3e2820af78a7c4f05a259e6"
+      },
+      "run08": {
+        "run_id": "A_candidate11_gpu_capacity_preflight_run08",
+        "physics_time_advanced_s": 7.75,
+        "controller_completed": true,
+        "reported_preflight_pass": true,
+        "accepted_preflight_pass": false,
+        "invalidation_reason": "PHYSX_GPU_AGGREGATE_PAIR_CAPACITY_EXHAUSTED_MISSED_INTERACTIONS",
+        "configured_capacity": 4096,
+        "maximum_requested_capacity": 5855,
+        "maximum_joint_speed_rad_s": 1.425191044807434,
+        "evaluation_sha256": "d3dcd6cc8d08b1d3d66c9b134ee76889aeddd9ce2b1475f285db2663fd36ec08",
+        "trace_sha256": "de6ef71c0a6511779c7e5a63426244beab53dec1a77f8bdb2162b9bc9ac246a8",
+        "log_path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260824_074702.log",
+        "log_sha256": "399b84d9944d79271a83ce5e53babf8db269858ab18027a620d560c1c9bc5e3a"
+      },
+      "next_capacity_attempt_authorized": false,
+      "uncommitted_gpu_object_route_reverted": true
     }
   },
   "evidence_level": "OFFLINE_ALGORITHM_WITH_ISOLATED_HAND_DIAGNOSTIC_PASS",
@@ -216,7 +264,7 @@
     "TOP3_FORMAL_50MM_FULL_PATH_COLLISION_UNRESOLVED",
     "BOTH_OBJECTS_ROBUST_TASK_MARGIN_BELOW_ONE",
     "CPU_FALLBACK_CONTEXT_NOT_BOUND_IN_TRACE",
-    "OBJECT_A_NOMINAL_DYNAMIC_NOT_EXECUTED_AFTER_HAND_FIX",
+    "OBJECT_A_GPU_AGGREGATE_PAIR_CAPACITY_EXHAUSTED",
     "NATIVE_GRAVITY_BIASED_DRIVE_NOT_CAUSALLY_VERIFIED",
     "DYNAMIC_PAD_SURFACE_IDENTITY_NOT_VERIFIED",
     "PREREGISTERED_DISTURBANCE_NOT_EXECUTED"
