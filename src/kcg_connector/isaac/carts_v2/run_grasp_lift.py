@@ -18,7 +18,8 @@ if __package__:
     from .engine_health import (
         PhysxStatsMonitor, current_engine_log_path, finalize_engine_evaluation,
         gpu_backend_record, gpu_world_parameters, identity_hashes_match,
-        load_runtime_resources, preflight_is_accepted, synchronize_engine_log,
+        load_runtime_resources, preflight_is_accepted,
+        select_executable_offline_candidate, synchronize_engine_log,
     )
     from .evaluate_run import (
         IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
@@ -30,7 +31,8 @@ else:
     from engine_health import (
         PhysxStatsMonitor, current_engine_log_path, finalize_engine_evaluation,
         gpu_backend_record, gpu_world_parameters, identity_hashes_match,
-        load_runtime_resources, preflight_is_accepted, synchronize_engine_log,
+        load_runtime_resources, preflight_is_accepted,
+        select_executable_offline_candidate, synchronize_engine_log,
     )
     from evaluate_run import (
         IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
@@ -93,11 +95,7 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         raise ValueError("offline report changed hardware authorization")
     if report["config_sha256"] != file_sha256(config_path):
         raise ValueError("offline result is stale relative to V2 config")
-    if not report["top_candidates"]:
-        raise ValueError("offline report contains no Top candidate")
-    selected = report["top_candidates"][0]
-    if selected["rank"] != 1 or not selected["three_effective_pad_contacts"]:
-        raise ValueError("dynamic candidate must be the official three-contact Top-1")
+    selected = select_executable_offline_candidate(report)
     inputs = load_v2_inputs(repository, config_path=config_path,
                             object_id=arguments.object_id)
     dynamic = inputs.config.section("dynamic")

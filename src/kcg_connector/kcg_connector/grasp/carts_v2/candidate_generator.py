@@ -8,6 +8,8 @@ import numpy as np
 
 from kcg_connector.grasp.carts_v2.models import (
     CandidateSeed,
+    ClosurePrediction,
+    FastFilterResult,
     V2Inputs,
     farthest_point_indices,
     joint_positions_for_phases,
@@ -38,25 +40,31 @@ def _native_contact_reference(inputs: V2Inputs, phase: float) -> np.ndarray:
     return np.mean(np.asarray(inward_points), axis=0)
 
 
-def _is_duplicate(
-    candidate: CandidateSeed,
-    accepted: list[CandidateSeed],
-    settings: dict[str, float],
+def _same_realized_grasp(
+    left: ClosurePrediction,
+    right: ClosurePrediction,
+    thresholds,
 ) -> bool:
-    matrix = candidate.object_from_hand_matrix()
-    anchor = np.asarray(candidate.anchor_position_object_m)
-    for previous in accepted:
-        other = previous.object_from_hand_matrix()
-        if (
-            np.linalg.norm(matrix[:3, 3] - other[:3, 3])
-            <= settings["palm_position_m"]
-            and rotation_distance(matrix[:3, :3], other[:3, :3])
-            <= settings["palm_orientation_rad"]
-            and np.linalg.norm(anchor - np.asarray(previous.anchor_position_object_m))
-            <= settings["anchor_position_m"]
-        ):
-            return True
-    return False
+    left_pose = left.seed.object_from_hand_matrix()
+    right_pose = right.seed.object_from_hand_matrix()
+    if (
+        np.linalg.norm(left_pose[:3, 3] - right_pose[:3, 3])
+        > float(thresholds["palm_position_m"])
+        or rotation_distance(left_pose[:3, :3], right_pose[:3, :3])
+        > float(thresholds["palm_orientation_rad"])
+    ):
+        return False
+    left_contacts = {row.pad_name: np.asarray(row.object_position_m) for row in left.contacts}
+    right_contacts = {
+        row.pad_name: np.asarray(row.object_position_m) for row in right.contacts
+    }
+    if set(left_contacts) != set(right_contacts):
+        return False
+    squared = [
+        float(np.sum((left_contacts[name] - right_contacts[name]) ** 2))
+        for name in sorted(left_contacts)
+    ]
+    return math.sqrt(float(np.mean(squared))) <= float(thresholds["contact_rms_m"])
 
 
 def _table_height_conditioned_angular_order(
@@ -86,8 +94,8 @@ def _table_height_conditioned_angular_order(
     return np.asarray(primary, dtype=np.int64)
 
 
-def generate_candidates(inputs: V2Inputs) -> tuple[CandidateSeed, ...]:
-    """Generate 32--64 seeds from the object's V2-allowed real mesh faces."""
+def generate_raw_candidates(inputs: V2Inputs) -> tuple[CandidateSeed, ...]:
+    """Generate the fixed raw surface pool before closure or path filtering."""
 
     settings = inputs.config.section("candidate_generation")
     loaded = inputs.object_contract
@@ -125,11 +133,7 @@ def generate_candidates(inputs: V2Inputs) -> tuple[CandidateSeed, ...]:
     pregrasp_phase = float(settings["pregrasp_closure_phase"])
     pregrasp_phases = (pregrasp_phase, pregrasp_phase, pregrasp_phase)
     pregrasp_joints = joint_positions_for_phases(inputs, pregrasp_phases)
-    duplicate_settings = {
-        key: float(value) for key, value in settings["deduplication"].items()
-    }
-
-    accepted: list[CandidateSeed] = []
+    candidates: list[CandidateSeed] = []
     for sample_index in order:
         task_point = task_positions[sample_index]
         anchor_angle = math.atan2(float(task_point[1]), float(task_point[0]))
@@ -144,7 +148,7 @@ def generate_candidates(inputs: V2Inputs) -> tuple[CandidateSeed, ...]:
         transform[:3, :3] = hand_rotation
         transform[:3, 3] = target_axis_point - hand_rotation @ reference
         seed = CandidateSeed(
-            candidate_id=f"candidate_{len(accepted):02d}",
+            candidate_id=f"raw_seed_{int(sample_index):03d}",
             object_id=loaded.object_id,
             anchor_face_index=int(samples.face_indices[sample_index]),
             anchor_position_object_m=tuple(
@@ -155,15 +159,50 @@ def generate_candidates(inputs: V2Inputs) -> tuple[CandidateSeed, ...]:
             pregrasp_closure_phases=pregrasp_phases,
             source_sample_index=int(sample_index),
         )
-        if not _is_duplicate(seed, accepted, duplicate_settings):
-            accepted.append(seed)
-        if len(accepted) == requested:
-            break
-    if len(accepted) < requested:
-        raise RuntimeError(
-            f"only {len(accepted)} distinct candidates remain after V2 deduplication"
+        candidates.append(seed)
+    if len(candidates) != int(settings["surface_pool_count"]):
+        raise RuntimeError("raw surface seed pool is incomplete")
+    return tuple(candidates)
+
+
+def select_diverse_predictions(
+    inputs: V2Inputs,
+    predictions: tuple[ClosurePrediction, ...],
+    filters: tuple[FastFilterResult, ...],
+) -> tuple[tuple[ClosurePrediction, ...], dict[str, str]]:
+    """Keep at most the formal budget after closure and full-sweep rejection."""
+
+    filter_by_id = {row.candidate_id: row for row in filters}
+    thresholds = inputs.config.section("candidate_generation")["deduplication"]
+    limit = int(inputs.config.section("candidate_generation")["candidate_count"])
+    accepted: list[ClosurePrediction] = []
+    rejected: dict[str, str] = {}
+    for prediction in predictions:
+        result = filter_by_id[prediction.seed.candidate_id]
+        if (
+            prediction.status != "CLOSURE_SURVIVE"
+            or result.status != "FAST_SURVIVE"
+            or not result.sequential_closure_sweep_pass
+        ):
+            continue
+        duplicate = next(
+            (
+                row
+                for row in accepted
+                if _same_realized_grasp(prediction, row, thresholds)
+            ),
+            None,
         )
-    return tuple(accepted)
+        if duplicate is not None:
+            rejected[prediction.seed.candidate_id] = (
+                f"NEAR_DUPLICATE_OF_{duplicate.seed.candidate_id}"
+            )
+            continue
+        if len(accepted) == limit:
+            rejected[prediction.seed.candidate_id] = "FORMAL_CANDIDATE_BUDGET_EXCEEDED"
+            continue
+        accepted.append(prediction)
+    return tuple(accepted), rejected
 
 
-__all__ = ["generate_candidates"]
+__all__ = ["generate_raw_candidates", "select_diverse_predictions"]

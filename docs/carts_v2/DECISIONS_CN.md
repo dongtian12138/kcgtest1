@@ -191,3 +191,10 @@
 - “第一名”只来自同时满足闭合、完整扫掠、快筛和 `TASK_SURVIVE` 的 `executable_candidates`；失败但有诊断价值的候选只能写 `DIAGNOSTIC_ONLY_NOT_EXECUTABLE`。
 - 本阶段最多 4 小时，从第一条实际检查命令 `2026-08-24T12:11:41Z` 起计；不是 `V2_RECOVERY_3`，也不改变两个对象、物性、8 N 基线、3 rad/s、50 mm、2 s、真值隔离、正式门或 `hardware_authorized=false`。
 - 用户提供硬件事实：实体单指能力至少 15 N。若 8 N 基线在完整 384 种子池后仍无任务合格候选，只允许一次独立只读 12 N 敏感性计算；它不得升级为 Isaac 参数或硬件上限。
+
+## 2026-08-24T12:55:10Z — 可执行候选术语的证据边界
+
+- 按用户固定定义保留 `executable_candidates`：闭合、完整顺序扫掠、`FAST_SURVIVE` 和 `TASK_SURVIVE` 必须同时成立；任务失败候选只进入 `DIAGNOSTIC_ONLY_NOT_EXECUTABLE`。
+- `executable` 在本阶段只表示“离线满足进入绑定预检查的资格”，不是已获动态启动授权，更不是研究动态、正式动态或硬件通过；报告固定写 `OFFLINE_ELIGIBLE_FOR_BOUND_PREFLIGHT_NOT_DYNAMIC_PASS`。
+- Isaac 入口还会失败关闭检查新 schema、任务门、快筛、完整扫掠、三指接触预测和 rank；缺字段、空列表或诊断候选均拒绝。
+- A/B 当前运行只作实现烟雾；A 产物早于最终报告接口，必须以最终同源码同配置重跑后才能形成配对证据。

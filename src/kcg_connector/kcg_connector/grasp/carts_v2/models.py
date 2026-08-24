@@ -213,6 +213,7 @@ class SelectedCandidate:
     task_quality: TaskQualityResult
     path_minimum_clearance_m: float | None
     offline_task_gate_passed: bool
+    selection_status: str
 
 
 @dataclass(frozen=True)

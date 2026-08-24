@@ -12,6 +12,7 @@ sys.path.insert(0, str(ISAAC_V2))
 from engine_health import (  # noqa: E402
     ENGINE_EVIDENCE_FIELDS, audit_physx_log, finalize_engine_evaluation,
     load_runtime_resources, pending_engine_fields, preflight_is_accepted,
+    select_executable_offline_candidate,
 )
 from evaluate_run import evaluate_trace  # noqa: E402
 
@@ -45,6 +46,35 @@ def _accepted_document() -> dict[str, object]:
             "evaluator_source_sha256": sha, "engine_health_source_sha256": sha,
         },
     }
+
+
+def test_offline_executable_candidate_gate_fails_closed() -> None:
+    candidate = {
+        "selection_status": "EXECUTABLE_CANDIDATE", "rank": 1,
+        "selection_scope": "OFFLINE_ELIGIBLE_FOR_BOUND_PREFLIGHT_NOT_DYNAMIC_PASS",
+        "task_status": "TASK_SURVIVE",
+        "three_effective_pad_contacts": True, "offline_task_gate_passed": True,
+        "fast_filter": "FAST_SURVIVE", "sequential_closure_sweep_pass": True,
+    }
+    report = {
+        "schema_version": "carts_grasp_v2_offline_result_v2",
+        "executable_candidates": [candidate],
+    }
+    assert select_executable_offline_candidate(report) is candidate
+    for invalid in ({}, {"schema_version": "old", "executable_candidates": []}):
+        try:
+            select_executable_offline_candidate(invalid)
+        except ValueError:
+            continue
+        raise AssertionError("malformed offline report did not fail closed")
+    for key in tuple(candidate):
+        invalid = deepcopy(report)
+        del invalid["executable_candidates"][0][key]
+        try:
+            select_executable_offline_candidate(invalid)
+        except ValueError:
+            continue
+        raise AssertionError(f"missing {key} did not fail closed")
 
 
 def _preflight_trace() -> dict[str, object]:

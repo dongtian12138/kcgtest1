@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from kcg_connector.grasp.carts_v2.candidate_generator import generate_candidates
+from kcg_connector.grasp.carts_v2.candidate_generator import generate_raw_candidates
 from kcg_connector.grasp.carts_v2.closure_predictor import SequentialClosurePredictor
 from kcg_connector.grasp.carts_v2.fast_filter import fast_filter_predictions
 from kcg_connector.grasp.carts_v2.models import load_v2_config, load_v2_inputs
@@ -43,8 +43,8 @@ def test_candidate_11_endpoint_method_misses_intermediate_sweep() -> None:
     inputs = load_v2_inputs(ROOT, config_path=CONFIG, object_id=OBJECT_A)
     seed = next(
         candidate
-        for candidate in generate_candidates(inputs)
-        if candidate.candidate_id == "candidate_11"
+        for candidate in generate_raw_candidates(inputs)
+        if candidate.source_sample_index == 50
     )
     prediction = SequentialClosurePredictor(inputs).predict(seed)
     assert prediction.status == "CLOSURE_SURVIVE"
@@ -63,19 +63,22 @@ def test_candidate_11_endpoint_method_misses_intermediate_sweep() -> None:
 
 
 def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> None:
-    summaries = {}
     for object_id in (OBJECT_A, OBJECT_B):
         result = run_offline_pipeline(
             ROOT, config_path=CONFIG, object_id=object_id
         )
-        assert len(result.candidates) == 48
+        assert len(result.raw_candidates) == 384
+        assert 0 < len(result.candidates) <= 48
+        assert len(result.candidates) == len(result.closure_predictions)
+        assert len(result.candidates) == len(result.fast_filter_results)
         assert result.scenario_design.shape == (16, 26)
         assert all(
             np.unique(result.scenario_design[:, index]).size == 16
             for index in range(26)
         )
-        assert len(result.selected_top) == 3
-        assert len(result.exact_validation_results) == 3
+        assert len(result.exact_validation_results) == len(
+            result.executable_candidates
+        )
         assert all(
             row.status == "UNRESOLVED_INTERFACE_MISMATCH"
             and not row.backend_invoked
@@ -85,7 +88,7 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
         )
         survivors = [
             row
-            for row in result.closure_predictions
+            for row in result.raw_closure_predictions
             if row.status == "CLOSURE_SURVIVE"
         ]
         assert survivors
@@ -96,7 +99,9 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
                 for contact in prediction.contacts
             )
         fast_survivors = [
-            row for row in result.fast_filter_results if row.status == "FAST_SURVIVE"
+            row
+            for row in result.raw_fast_filter_results
+            if row.status == "FAST_SURVIVE"
         ]
         assert len(fast_survivors) >= 3
         assert all(
@@ -107,18 +112,21 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
         )
         assert any(
             "INTERMEDIATE_SEQUENTIAL_CLOSURE_HAND_TABLE_SWEEP" in row.reasons
-            for row in result.fast_filter_results
+            for row in result.raw_fast_filter_results
         )
-        assert all(not row.offline_task_gate_passed for row in result.selected_top)
-        summaries[object_id] = result.selected_top[0]
-
-    best_a = summaries[OBJECT_A]
-    assert best_a.task_quality.worst_task_margin == 0.0
-    assert "ZERO_IS_RANKING_LOWER_BOUND" in best_a.task_quality.failure_reason
-    assert not best_a.offline_task_gate_passed
-    best_b = summaries[OBJECT_B]
-    assert 0.0 < best_b.task_quality.worst_task_margin < 1.0
-    assert best_b.task_quality.required_peak_normal_force_n is None
-    assert best_b.task_quality.maximum_joint_load_utilization is None
-    assert best_b.task_quality.maximum_generalized_joint_torque_nm is None
-    assert not best_b.offline_task_gate_passed
+        assert all(
+            row.offline_task_gate_passed
+            and row.selection_status == "EXECUTABLE_CANDIDATE"
+            and row.task_quality.status == "TASK_SURVIVE"
+            for row in result.executable_candidates
+        )
+        assert all(
+            not row.offline_task_gate_passed
+            and row.selection_status == "DIAGNOSTIC_ONLY_NOT_EXECUTABLE"
+            and row.task_quality.status != "TASK_SURVIVE"
+            for row in result.diagnostic_candidates
+        )
+        if not any(
+            row.status == "TASK_SURVIVE" for row in result.task_quality_results
+        ):
+            assert result.executable_candidates == ()

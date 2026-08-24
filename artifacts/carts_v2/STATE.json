@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T12:30:53Z",
+  "updated_at_utc": "2026-08-24T12:56:36Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -74,6 +74,32 @@
     "old_top3_reuse_allowed": false,
     "candidate_33_must_be_recomputed": true,
     "selected_executable_candidate": null,
+    "pipeline_order_implemented": "RAW_384_THEN_CLOSURE_THEN_COMPLETE_SWEEP_THEN_DIVERSITY_MAX_48_THEN_TASK_QUALITY",
+    "selector_lists": [
+      "executable_candidates",
+      "diagnostic_candidates"
+    ],
+    "executable_semantics": "OFFLINE_ELIGIBLE_FOR_BOUND_PREFLIGHT_NOT_DYNAMIC_PASS",
+    "final_same_source_two_object_rerun_pending": true,
+    "provisional_smoke": {
+      "object_a": {
+        "raw_seed_count": 384,
+        "closure_survive_count": 69,
+        "sequential_sweep_survive_count": 0,
+        "pregrasp_or_endpoint_table_reject_count": 66,
+        "intermediate_table_sweep_reject_count": 3,
+        "executable_candidate_count": 0
+      },
+      "object_b": {
+        "raw_seed_count": 384,
+        "closure_survive_count": 109,
+        "sequential_sweep_survive_count": 6,
+        "task_survive_count_at_8n": 0,
+        "executable_candidate_count": 0,
+        "diagnostic_top3": ["raw_seed_164", "raw_seed_324", "raw_seed_251"]
+      },
+      "evidence_status": "IMPLEMENTATION_SMOKE_AWAITING_FINAL_SAME_SOURCE_RERUN"
+    },
     "candidate_11_regression": {
       "old_endpoint_only_minimum_clearance_m": 0.0007049611569468484,
       "new_full_sweep_minimum_clearance_m": -0.0018384500334763798,
