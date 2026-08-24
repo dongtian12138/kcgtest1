@@ -6,23 +6,23 @@
 
 ## 一句话状态
 
-接触确认的 0.027026 rad 目标阶跃已从控制器删除，run17 数值回归证明确认周期输出不变且后续每周期不超过 0.0015 rad；真实接触和 `f1j3` 动态因果仍待 Isaac 验证。
+接触切换及第一指 0.5 s 诊断入口已通过静态测试；下一步只运行对象 A 新源码绑定预检查，接受后才允许第一指真实物理区分实验。
 
 ## 六行恢复摘要
 
 - 总目标：真实允许表面候选 → 任务载荷鲁棒 Top-3 → Isaac 三指接触、离桌、抬升 50 mm、保持至少 2 s；两个对象同算法同主要参数。
-- 当前里程碑：`V2_FIRST_FINGER_DIAGNOSTIC_INSTRUMENTATION`；四状态无冲击切换已完成静态回归，尚未获得新动态证据。
-- 已经完成：确认周期保持上一命令；CONTACT_SETTLE/HOLD 用现有 0.020 N·m 关节力代理和 12 N·m/rad 刚度作有界修正；三项定向测试通过。
+- 当前里程碑：`V2_OBJECT_A_SOURCE_BOUND_PREFLIGHT`；四状态切换、被动末节逐周期记录和末端接触路径保存均已实现，尚未获得新动态证据。
+- 已经完成：确认周期不跳变；CONTACT_SETTLE/HOLD 有界；f1j2/f1j3 的位置、速度、等效力矩、mimic 误差和限位余量进入 trace；14 项定向测试通过。
 - 当前物理/算法阻塞：尚未证明阶跃修复能消除对象场景 `f1j3` 超速；运行时整末端凸包也不能单独证明允许 PAD patch 接触。
-- 下一步最简单动作：在现有 trace 补记 f1j2/f1j3 逐周期信号和末端碰撞路径，重做源码绑定预检查，再执行第一指 CONTACT_SETTLE/HOLD 0.5 s。
+- 下一步最简单动作：用对象 A、candidate_11 和冻结配置重做一次 preflight；仅在引擎、身份和控制门均接受后执行第一指 CONTACT_SETTLE/HOLD 0.5 s。
 - 绝对禁止跑偏方向：续修 H102、对象专用坐标/阈值、磁吸/隐藏固定、在线读取对象/接触/PhysX 真值、写物体位姿、把退出 0 冒充物理成功。
 
 ## 当前权威字段
 
 - 状态：`IMPLEMENTING`
-- 当前里程碑：`V2_FIRST_FINGER_DIAGNOSTIC_INSTRUMENTATION`
+- 当前里程碑：`V2_OBJECT_A_SOURCE_BOUND_PREFLIGHT`
 - V2 正式候选：空
-- V2 研究动态门：`allowed=false`，scope=`SOURCE_BOUND_PREFLIGHT_REQUIRED_BEFORE_FIRST_FINGER_DIAGNOSTIC`；新源码绑定预检查前禁止对象动态
+- V2 研究动态门：`allowed=true`，scope=`OBJECT_A_SOURCE_BOUND_PREFLIGHT_ONLY`；预检查接受前禁止第一指闭合
 - 旧正式动态门：`dynamic_launch_allowed=false`（保持，不由 V2 研究线改写）
 - 正式动态：`FORMAL_DYNAMIC_PASS=false`
 - 研究型动态：`RESEARCH_DYNAMIC_PASS=false`

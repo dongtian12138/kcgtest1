@@ -1,6 +1,7 @@
 """Regressions for the PhysX-backed preflight acceptance boundary."""
 
 import hashlib
+from copy import deepcopy
 from pathlib import Path
 import sys
 
@@ -64,16 +65,26 @@ def _preflight_trace() -> dict[str, object]:
             "lift_acceleration_difference_window_samples": 2,
             "registered_lift_peak_acceleration_m_s2": 1.0,
             "lift_acceleration_tolerance_m_s2": 0.1,
+            "first_finger_diagnostic_duration_s": 0.5,
+            "maximum_finger_target_increment_rad": 0.0015,
         },
         "samples": [{
             "phase": "settle", "active_positions_rad": [0.0],
             "active_velocities_rad_s": [0.0], "active_efforts_nm": [0.0],
+            "active_targets_rad": [0.0] * 11,
+            "arm_control": {"f1_mimic_diagnostic": {
+                "f1j2": {"position_rad": 0.0, "velocity_rad_s": 0.0,
+                          "equivalent_effort_nm": 0.0, "limit_margin_rad": 1.0},
+                "f1j3": {"position_rad": 0.0, "velocity_rad_s": 0.0,
+                          "equivalent_effort_nm": 0.0, "limit_margin_rad": None},
+                "position_error_rad": 0.0, "velocity_error_rad_s": 0.0}},
             "object_center_m": [0.0, 0.0, 0.1],
             "object_bottom_clearance_m": 0.0,
             "object_center_in_hand_base_m": [0.0, 0.0, 0.1],
             "reference_part_orientation_wxyz": [1.0, 0.0, 0.0, 0.0],
             "contacts": contacts,
         }],
+        "motion_plan": {"pregrasp_hand_positions_rad": [0.0] * 4},
     }
 
 
@@ -124,8 +135,34 @@ def test_runner_no_longer_accepts_legacy_preflight_pass() -> None:
     engine_source = (ISAAC_V2 / "engine_health.py").read_text(encoding="utf-8")
     assert "preflight_is_accepted(preflight)" in source
     assert 'preflight.get("preflight_pass")' not in source
+    assert '"first-finger-diagnostic", "grasp-lift"' in source
+    assert 'first_finger_only=arguments.mode == "first-finger-diagnostic"' in source
     assert '"fast_shutdown": True' in source
     assert "sdfPathToInt" in engine_source and "encodeSdfPath" not in engine_source
+
+
+def test_first_finger_proxy_fails_closed_without_pad_contact() -> None:
+    document = _preflight_trace()
+    document["mode"] = "first-finger-diagnostic"
+    document["controller_outcome"].update({
+        "contact_targets_rad": [0.37], "maximum_finger_target_delta_rad": 0.0015,
+        "first_finger_hold_duration_s": 0.5})
+    hold = deepcopy(document["samples"][0])
+    hold["phase"] = "finger_1_hold"
+    document["samples"].extend(deepcopy(hold) for _ in range(60))
+    false_proxy = evaluate_trace(document)
+    assert false_proxy["first_finger_contact_classification"] == "FALSE_CONTACT_PROXY"
+    assert false_proxy["first_finger_diagnostic_pass"] is False
+    for row in document["samples"][1:]:
+        row["contacts"]["terminal_link_object"] = [1, 0, 0]
+        row["contacts"]["terminal_link_object_examples"] = [["f1Link3", "object"], None, None]
+    unresolved = evaluate_trace(document)
+    assert unresolved["first_finger_contact_classification"] == "UNRESOLVED_TERMINAL_LINK_CONTACT_PATCH"
+    assert unresolved["first_terminal_link_object_paths"][0] == ["f1Link3", "object"]
+    assert unresolved["only_first_finger_commanded"] is True
+    missing_signal = deepcopy(document)
+    del missing_signal["samples"][-1]["arm_control"]["f1_mimic_diagnostic"]["f1j3"]["equivalent_effort_nm"]
+    assert evaluate_trace(missing_signal)["finite_throughout"] is False
 
 
 def test_runtime_capacity_uses_frozen_measured_rule() -> None:
@@ -176,6 +213,12 @@ def test_post_shutdown_clean_log_accepts_preflight(tmp_path: Path) -> None:
     assert accepted["engine_log_audit_byte_count"] == len(payload)
     assert accepted["engine_log_sha256"] == hashlib.sha256(payload).hexdigest()
     assert preflight_is_accepted(accepted)
+    tampered = _accepted_document() | {
+        "mode": "first-finger-diagnostic", "controller_first_finger_diagnostic_pass": True,
+        "accepted_preflight_bound": True, "truth_isolation_pass": True,
+        "first_finger_contact_classification": "ALLOWED_PAD_CONTACT",
+        "pad_surface_identity_verified": False}
+    assert finalize_engine_evaluation(tampered, engine, log)["first_finger_diagnostic_pass"] is False
 
 
 def test_post_shutdown_physx_error_overrides_controller_pass(tmp_path: Path) -> None:

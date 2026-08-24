@@ -303,7 +303,6 @@ class SequentialEffortContactController:
         self.active_finger = self._evidence_count = self._endpoint_count = 0
         self.state, self._state_samples = "APPROACH", 0
         self._contact_targets: list[float] = []
-        self._contact_efforts: list[float] = []
         self.last_output_state, self.last_output_finger = self.state, 1
         self.maximum_target_delta_rad = 0.0
         self.failure_reason: str | None = None
@@ -319,10 +318,6 @@ class SequentialEffortContactController:
     @property
     def contact_targets_rad(self) -> tuple[float, ...]:
         return tuple(self._contact_targets)
-
-    @property
-    def contact_efforts_nm(self) -> tuple[float, ...]:
-        return tuple(self._contact_efforts)
 
     def _effort_adjust(self, index, measured_effort, maximum_increment):
         direction = float(np.sign(self.goal[index] - self.start[index]))
@@ -358,7 +353,6 @@ class SequentialEffortContactController:
             self._evidence_count = self._evidence_count + 1 if loaded and error >= self.position_error_rad else 0
             if self._evidence_count >= self.consecutive_samples:
                 self._contact_targets.append(float(measured_position[index]))
-                self._contact_efforts.append(float(measured_effort_delta[index]))
                 self.state, output_state = "CONTACT_CONFIRMED", "CONTACT_CONFIRMED"
                 self._state_samples = self._endpoint_count = 0
             else:
@@ -419,6 +413,9 @@ class JointSignalStepper:
         self.minimum_drive_target_limit_margin = float("inf")
         self.abort_reason: str | None = None
         self.latest: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
+        self._f1_indices = tuple(robot.dof_names.index(name) for name in ("f1j2", "f1j3"))
+        limits = robot.get_dof_limits(indices=0)
+        self._all_lower, self._all_upper = limits[0].numpy()[0], limits[1].numpy()[0]
 
     def advance(
         self, phase: str, arm_target: np.ndarray, hand_target: np.ndarray
@@ -444,15 +441,23 @@ class JointSignalStepper:
             dof_indices=self.active_indices,
         )
         self.world.step(render=self.render)
-        positions = self.robot.get_dof_positions(
-            indices=0, dof_indices=self.active_indices
-        ).numpy()[0]
-        velocities = self.robot.get_dof_velocities(
-            indices=0, dof_indices=self.active_indices).numpy()[0]
+        all_positions = self.robot.get_dof_positions(indices=0).numpy()[0]
         all_velocities = self.robot.get_dof_velocities(indices=0).numpy()[0]
-        efforts = self.robot.get_dof_projected_joint_forces(
-            indices=0, dof_indices=self.active_indices).numpy()[0]
+        all_efforts = self.robot.get_dof_projected_joint_forces(indices=0).numpy()[0]
+        positions, velocities = all_positions[self.active_indices], all_velocities[self.active_indices]
+        efforts = all_efforts[self.active_indices]
         arm_control["projected_joint_force_nm"] = efforts[:7].tolist()
+        first, follower = self._f1_indices
+        margins = np.minimum(all_positions - self._all_lower, self._all_upper - all_positions)
+        arm_control["f1_mimic_diagnostic"] = {
+            name: {"position_rad": float(all_positions[index]),
+                   "velocity_rad_s": float(all_velocities[index]), "equivalent_effort_nm": float(all_efforts[index]),
+                   "limit_margin_rad": float(margins[index]) if math.isfinite(margins[index]) else None}
+            for name, index in (("f1j2", first), ("f1j3", follower))
+        }
+        arm_control["f1_mimic_diagnostic"].update({
+            "position_error_rad": float(all_positions[follower] - all_positions[first]),
+            "velocity_error_rad_s": float(all_velocities[follower] - all_velocities[first])})
         self._update_metrics(positions, all_velocities, efforts, arm_target, arm_control)
         self.auditor.capture(
             step=self.step_index,
@@ -465,7 +470,8 @@ class JointSignalStepper:
         )
         self.step_index += 1
         self.latest = (positions, velocities, efforts)
-        self._apply_signal_aborts(arm_target, all_velocities)
+        self._apply_signal_aborts(
+            arm_target, all_positions, all_velocities, all_efforts)
         return self.latest
 
     def _update_metrics(self, positions, all_velocities, efforts, arm_target, arm_control):
@@ -497,10 +503,10 @@ class JointSignalStepper:
             float(arm_control["minimum_drive_target_limit_margin_rad"]),
         )
 
-    def _apply_signal_aborts(self, arm_target, all_velocities) -> None:
+    def _apply_signal_aborts(self, arm_target, all_positions, all_velocities, all_efforts) -> None:
         assert self.latest is not None
         positions, _, efforts = self.latest
-        if not all(np.all(np.isfinite(row)) for row in (positions, all_velocities, efforts)):
+        if not all(np.all(np.isfinite(row)) for row in (all_positions, all_velocities, all_efforts)):
             self.abort_reason = "NONFINITE_JOINT_SIGNAL_ABORT"
         elif float(np.max(np.abs(all_velocities))) > float(
             self.settings["maximum_joint_speed_rad_s"]
@@ -572,7 +578,7 @@ def run_pregrasp_sequence(
     }
 
 
-def _tare_and_close(stepper, motion_plan, settings, pregrasp):
+def _tare_and_close(stepper, motion_plan, settings, pregrasp, first_finger_only=False):
     dt = float(settings["physics_dt_s"])
     tare_rows = []
     tare_steps = round(float(settings["effort_tare_duration_s"]) / dt)
@@ -601,12 +607,22 @@ def _tare_and_close(stepper, motion_plan, settings, pregrasp):
     for _ in stepper.active_steps(closure_steps):
         measured_hand = stepper.latest[0][7:]
         effort_delta = stepper.latest[2][7:] - tare
-        hand_target = contact.step(measured_hand, effort_delta, maximum_increment)
+        hand_target = contact.step(measured_hand, effort_delta, maximum_increment,
+                                   advance_after_hold=not first_finger_only)
         phase = f"finger_{contact.last_output_finger}_{contact.last_output_state.lower()}"
         stepper.advance(phase, pregrasp["arm"], hand_target)
-        if stepper.abort_reason or contact.complete or contact.failed:
+        if (stepper.abort_reason or contact.complete or contact.failed or
+                first_finger_only and contact.state == "HOLD"):
             break
-    return contact, tare, final_hand
+    held_steps = 0
+    hold_steps = round(float(settings["preload_duration_s"]) / dt) if first_finger_only and contact.state == "HOLD" else 0
+    for _ in stepper.active_steps(hold_steps):
+        measured_hand, effort = stepper.latest[0][7:], stepper.latest[2][7:] - tare
+        hand_target = contact.step(
+            measured_hand, effort, maximum_increment, advance_after_hold=False)
+        stepper.advance("finger_1_hold", pregrasp["arm"], hand_target)
+        held_steps += 1
+    return contact, tare, final_hand, held_steps * dt
 
 
 def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, tare, final_hand):
@@ -644,18 +660,19 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
     return stepper.abort_reason
 
 
-def run_grasp_lift_sequence(stepper, motion_plan, settings, pregrasp):
+def run_grasp_lift_sequence(stepper, motion_plan, settings, pregrasp, first_finger_only=False):
     if stepper.abort_reason is not None:
         return {"contact_controller": None, "failure_reason": stepper.abort_reason}
-    contact, tare, final_hand = _tare_and_close(
-        stepper, motion_plan, settings, pregrasp
+    contact, tare, final_hand, first_hold = _tare_and_close(
+        stepper, motion_plan, settings, pregrasp, first_finger_only
     )
     failure = contact.failure_reason or stepper.abort_reason
-    if contact.complete and failure is None:
+    if contact.complete and failure is None and not first_finger_only:
         failure = _run_preload_lift_hold(
             stepper, motion_plan, settings, pregrasp, contact, tare, final_hand
         )
-    return {"contact_controller": contact, "failure_reason": failure}
+    return {"contact_controller": contact, "failure_reason": failure,
+            "first_finger_hold_duration_s": first_hold}
 
 
 def controller_outcome(
@@ -676,7 +693,10 @@ def controller_outcome(
     completed = bool(
         limits_ok
         and failure is None
-        and (mode == "preflight" or contact.complete)
+        and (mode == "preflight" or contact is not None and (contact.complete or (
+            mode == "first-finger-diagnostic"
+            and grasp.get("first_finger_hold_duration_s", 0.0)
+            >= float(stepper.settings["preload_duration_s"]))))
     )
     if not limits_ok and failure is None:
         failure = "JOINT_SPEED_OR_ARM_TRACKING_LIMIT"
@@ -695,6 +715,7 @@ def controller_outcome(
         "approach_above_settled": pregrasp["above_settled"],
         "approach_above_final_tracking_error_rad": pregrasp["above_final_error_rad"],
         "contact_targets_rad": [] if contact is None else list(contact.contact_targets_rad),
+        "maximum_finger_target_delta_rad": 0.0 if contact is None else contact.maximum_target_delta_rad,
     }
 
 

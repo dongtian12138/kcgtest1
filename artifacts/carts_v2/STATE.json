@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T10:36:33Z",
+  "updated_at_utc": "2026-08-24T10:49:20Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,7 +8,7 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_FIRST_FINGER_DIAGNOSTIC_INSTRUMENTATION",
+  "current_milestone": "V2_OBJECT_A_SOURCE_BOUND_PREFLIGHT",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -25,8 +25,8 @@
     "prior_pause_at_utc": "2026-08-24T09:36:16Z",
     "prior_pause_reason": "OBJECT_A_F1J3_SPEED_ABORT_AFTER_TWO_EVIDENCED_FIX_ATTEMPTS",
     "prior_pause_reclassified_as": "ROOT_CAUSE_REVIEW",
-    "active_execution_elapsed_s": 6166,
-    "remaining_active_budget_s": 9134,
+    "active_execution_elapsed_s": 6933,
+    "remaining_active_budget_s": 8367,
     "resumed_at_utc": "2026-08-24T10:16:54Z",
     "resume_wall_deadline_utc": "2026-08-24T13:08:47Z",
     "stop_reason": null
@@ -64,9 +64,21 @@
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
-    "allowed": false,
-    "scope": "SOURCE_BOUND_PREFLIGHT_REQUIRED_BEFORE_FIRST_FINGER_DIAGNOSTIC",
-    "reason": "Bumpless transition tests pass; per-cycle follower diagnostics and a new-source accepted preflight are still required before the one bounded first-finger run"
+    "allowed": true,
+    "scope": "OBJECT_A_SOURCE_BOUND_PREFLIGHT_ONLY",
+    "reason": "Bumpless transition and diagnostic trace tests pass; a new-source accepted preflight is required before first-finger closure"
+  },
+  "first_finger_diagnostic_instrumentation": {
+    "mode": "first-finger-diagnostic",
+    "hold_duration_s": 0.5,
+    "second_finger_launch_allowed": false,
+    "preload_lift_hold_allowed": false,
+    "recorded_joints": ["f1j2", "f1j3"],
+    "mimic_position_and_velocity_error_recorded": true,
+    "terminal_actor_collider_paths_recorded_post_run_only": true,
+    "whole_terminal_link_does_not_verify_pad_patch": true,
+    "targeted_test_functions_passed": 14,
+    "production_net_new_lines_since_root_cause_review": 119
   },
   "contact_transition_review": {
     "confirmation_target_jump_removed": true,
@@ -514,6 +526,7 @@
     "recovery2_targeted_test_functions_passed": 11,
     "recovery2_test_execution": "DIRECT_FUNCTION_INVOCATION_WITH_ISAAC_PYTHON_BECAUSE_PYTEST_PACKAGE_WAS_UNAVAILABLE",
     "contact_transition_targeted_tests_passed": 3,
+    "contact_recovery_targeted_test_functions_passed": 14,
     "final_full_regression_passed": 1506,
     "final_full_regression_failed": 0,
     "final_full_regression_duration_s": 982.86

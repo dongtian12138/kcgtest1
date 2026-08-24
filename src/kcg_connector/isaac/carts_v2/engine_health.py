@@ -295,6 +295,12 @@ def finalize_engine_evaluation(evaluation, engine_runtime, log_path: Path):
                    and evaluation.get("accepted_preflight_bound") is True
                    and evaluation.get("truth_isolation_pass") is True
                    and engine_pass and identity)
+    first_finger = bool(evaluation.get("mode") == "first-finger-diagnostic"
+                        and evaluation.get("hardware_authorized") is False and evaluation.get("formal_dynamic_pass") is False
+                        and evaluation.get("pad_surface_identity_verified") is True and evaluation.get("first_finger_contact_classification") == "ALLOWED_PAD_CONTACT"
+                        and evaluation.get("controller_first_finger_diagnostic_pass") and evaluation.get("accepted_preflight_bound") is True
+                        and evaluation.get("truth_isolation_pass") is True
+                        and engine_pass and identity)
     evaluation.update({
         "preflight_pass": accepted, "engine_health_pass": engine_pass,
         "accepted_preflight_pass": accepted,
@@ -312,6 +318,7 @@ def finalize_engine_evaluation(evaluation, engine_runtime, log_path: Path):
         "physx_error_lines": log.get("physx_error_lines", []),
         "controller_nominal_physical_pass": physical,
         "nominal_research_dynamic_pass": nominal,
+        "first_finger_diagnostic_pass": first_finger,
         "research_dynamic_pass": bool(evaluation.get("research_dynamic_pass")
                                       and nominal),
         "engine_runtime": engine_runtime,

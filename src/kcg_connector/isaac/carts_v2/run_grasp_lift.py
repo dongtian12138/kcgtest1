@@ -59,7 +59,7 @@ def _json_sha256(value: object) -> str:
 
 def _arguments(repository: Path) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("isolated-hand", "preflight", "grasp-lift"),
+    parser.add_argument("--mode", choices=("isolated-hand", "preflight", "first-finger-diagnostic", "grasp-lift"),
                         required=True)
     parser.add_argument("--object-id", default="current_d38999_26kj61sn_public_spec")
     parser.add_argument("--config", default=str(
@@ -73,8 +73,8 @@ def _arguments(repository: Path) -> argparse.Namespace:
     parser.add_argument("--output-directory", required=True)
     parser.add_argument("--gui", action="store_true")
     arguments = parser.parse_args()
-    if arguments.mode == "grasp-lift" and not arguments.preflight_evaluation:
-        parser.error("grasp-lift requires --preflight-evaluation")
+    if arguments.mode in ("first-finger-diagnostic", "grasp-lift") and not arguments.preflight_evaluation:
+        parser.error("object contact execution requires --preflight-evaluation")
     if arguments.mode == "isolated-hand" and not arguments.reference_trace:
         parser.error("isolated-hand requires --reference-trace")
     return arguments
@@ -104,7 +104,7 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
     scene_entry = dynamic["object_scenes"].get(arguments.object_id)
     if not isinstance(scene_entry, dict):
         raise ValueError("object has no registered free tabletop dynamic scene")
-    if arguments.mode == "grasp-lift":
+    if arguments.mode in ("first-finger-diagnostic", "grasp-lift"):
         arguments.preflight_evaluation_path = Path(
             arguments.preflight_evaluation).resolve()
         preflight = json.loads(arguments.preflight_evaluation_path.read_text(
@@ -225,6 +225,9 @@ def _initial_trace(arguments, report, selected, motion_plan, dynamic):
     criteria["registered_lift_peak_acceleration_m_s2"] = float(
         report["lambda_one_task_load"]["lift_peak_acceleration_m_s2"]
     )
+    criteria["first_finger_diagnostic_duration_s"] = float(dynamic["preload_duration_s"])
+    criteria["maximum_finger_target_increment_rad"] = float(dynamic[
+        "finger_maximum_speed_rad_s"]) * float(dynamic["physics_dt_s"])
     return {
         "schema_version": "carts_grasp_v2_dynamic_trace_v1",
         "object_id": arguments.object_id, "candidate_id": selected["candidate_id"],
@@ -463,7 +466,7 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
     scene = _prepare_dynamic_scene(repository, stage, scene_entry, add_reference_to_stage)
     trace["evidence_binding"] = _evidence_binding(
         repository, arguments, report, selected, scene, robot_asset)
-    if arguments.mode == "grasp-lift":
+    if arguments.mode in ("first-finger-diagnostic", "grasp-lift"):
         preflight = arguments.preflight_document
         if preflight.get("evidence_binding") != trace["evidence_binding"]:
             raise ValueError("preflight evidence binding does not match this run")
@@ -527,8 +530,10 @@ def _run_controller(runtime, arguments, motion_plan, dynamic):
     )
     pregrasp = control.run_pregrasp_sequence(stepper, motion_plan, dynamic)
     grasp = (
-        control.run_grasp_lift_sequence(stepper, motion_plan, dynamic, pregrasp)
-        if arguments.mode == "grasp-lift"
+        control.run_grasp_lift_sequence(
+            stepper, motion_plan, dynamic, pregrasp,
+            first_finger_only=arguments.mode == "first-finger-diagnostic")
+        if arguments.mode in ("first-finger-diagnostic", "grasp-lift")
         else {"contact_controller": None, "failure_reason": stepper.abort_reason}
     )
     outcome = control.controller_outcome(
@@ -636,7 +641,8 @@ def main() -> int:
         (output / "evaluation.json").write_text(
             json.dumps(evaluation, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(evaluation, ensure_ascii=False, indent=2))
-        key = ("accepted_preflight_pass" if arguments.mode == "preflight"
+        key = ("accepted_preflight_pass" if arguments.mode == "preflight" else
+               "first_finger_diagnostic_pass" if arguments.mode == "first-finger-diagnostic"
                else "nominal_research_dynamic_pass")
         exit_code = 0 if evaluation[key] else 2
     except Exception as error:

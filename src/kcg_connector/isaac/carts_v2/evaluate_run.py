@@ -287,6 +287,7 @@ class TruthAuditRecorder:
     def _contact_counts(self) -> dict[str, object]:
         result: dict[str, object] = {
             "terminal_link_object": [0, 0, 0],
+            "terminal_link_object_examples": [None, None, None],
             "robot_object_unauthorized": 0,
             "robot_table": 0,
             "robot_fixture": 0,
@@ -327,6 +328,8 @@ class TruthAuditRecorder:
                 for index, hit in enumerate(terminal_hits):
                     if hit:
                         result["terminal_link_object"][index] += records
+                        if result["terminal_link_object_examples"][index] is None:
+                            result["terminal_link_object_examples"][index] = list(paths)
             else:
                 result["robot_object_unauthorized"] += records
                 result["examples"].setdefault(
@@ -464,6 +467,8 @@ def _contact_metrics(samples, grasped) -> dict[str, object]:
     for row in samples:
         for key, value in row["contacts"].get("examples", {}).items():
             examples.setdefault(key, value)
+    terminal_examples = [next((row["contacts"].get("terminal_link_object_examples", [None] * 3)[index]
+                               for row in samples if row["contacts"].get("terminal_link_object_examples", [None] * 3)[index]), None) for index in range(3)]
     return {
         "terminal_records": terminal_records,
         "maximum_sustained": maximum_sustained,
@@ -472,6 +477,7 @@ def _contact_metrics(samples, grasped) -> dict[str, object]:
             for index in range(3)
         ),
         "examples": examples,
+        "terminal_examples": terminal_examples,
     }
 
 
@@ -501,6 +507,10 @@ def _safety_metrics(samples, criteria) -> dict[str, object]:
             "object_center_m",
         )
     )
+    diagnostics = [row.get("arm_control", {}).get("f1_mimic_diagnostic", {}) for row in samples]
+    diagnostic_values = [item.get(key) for item in diagnostics for key in ("position_error_rad", "velocity_error_rad_s")] + [item.get(name, {}).get(key) for item in diagnostics for name in ("f1j2", "f1j3") for key in ("position_rad", "velocity_rad_s", "equivalent_effort_nm")]
+    limit_values = [item.get(name, {}).get("limit_margin_rad") for item in diagnostics for name in ("f1j2", "f1j3")]
+    finite = finite and all({"f1j2", "f1j3", "position_error_rad", "velocity_error_rad_s"} <= item.keys() and all({"position_rad", "velocity_rad_s", "equivalent_effort_nm", "limit_margin_rad"} <= item[name].keys() for name in ("f1j2", "f1j3")) for item in diagnostics) and all(value is not None and math.isfinite(float(value)) for value in diagnostic_values) and all(value is None or math.isfinite(float(value)) for value in limit_values)
     return {
         "unauthorized": unauthorized,
         "overall_penetration_m": overall_penetration,
@@ -574,6 +584,20 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
         and acceleration["passed"]
     )
     pad_identity = bool(document.get("pad_surface_identity_verified", False))
+    first_hold = [row for row in samples if row["phase"] == "finger_1_hold"]
+    proxy, terminal = (bool(document["controller_outcome"].get("contact_targets_rad")),
+                       any(row["contacts"]["terminal_link_object"][0] > 0 for row in first_hold))
+    contact_class = ("NO_CONTACT_PROXY" if not proxy else "FALSE_CONTACT_PROXY" if not terminal
+                     else "UNRESOLVED_TERMINAL_LINK_CONTACT_PATCH" if not pad_identity else "ALLOWED_PAD_CONTACT")
+    pregrasp_hand = document.get("motion_plan", {}).get("pregrasp_hand_positions_rad")
+    only_first = bool(len(document["controller_outcome"].get("contact_targets_rad", ())) == 1 and pregrasp_hand is not None and all(np.allclose(row["active_targets_rad"][9:], pregrasp_hand[2:], atol=1.0e-12, rtol=0.0) for row in first_hold))
+    first_controller_pass = bool(
+        document["mode"] == "first-finger-diagnostic" and all(shared_passes)
+        and len(first_hold) * physics_dt_s >= float(criteria["first_finger_diagnostic_duration_s"])
+        and document["controller_outcome"]["maximum_finger_target_delta_rad"]
+        <= float(criteria["maximum_finger_target_increment_rad"]) + 1.0e-12
+        and only_first
+        and contact_class == "ALLOWED_PAD_CONTACT")
     research_pass = bool(
         nominal_physical_pass
         and document["offline_task_gate_passed"]
@@ -606,6 +630,12 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
         "maximum_post_settle_table_penetration_m": safety["post_settle_penetration_m"],
         "unauthorized_contact_records": safety["unauthorized"],
         "first_unauthorized_contact_paths": contacts["examples"],
+        "first_terminal_link_object_paths": contacts["terminal_examples"],
+        "first_finger_contact_classification": contact_class,
+        "first_finger_hold_duration_s": len(first_hold) * physics_dt_s,
+        "first_finger_maximum_target_delta_rad": document["controller_outcome"].get("maximum_finger_target_delta_rad"), "only_first_finger_commanded": only_first,
+        "controller_first_finger_diagnostic_pass": first_controller_pass,
+        "first_finger_diagnostic_pass": False,
         "finite_throughout": safety["finite"],
         "controller_completed": control_complete,
         "controller_failure_reason": document["controller_outcome"]["failure_reason"],
