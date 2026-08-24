@@ -21,7 +21,7 @@
   },
   "git_delivery": {
     "workspace_git_directory_writable": true,
-    "workspace_head_at_delivery_sync": "7633f3a621c4112057a2aff475c5cce1b7f64828",
+    "workspace_head_at_delivery_sync": "c127bea4cd8eac0cb11430147e3390b84f661d7a",
     "workspace_git_error": null,
     "integration_clone": "/tmp/kcgtest1-carts-v2-integration-20260823",
     "code_commit": "4d90a52",
@@ -29,7 +29,8 @@
     "handoff_commit": "57efc16",
     "isolated_diagnostic_commit": "0848abe",
     "mimic_follower_fix_commit": "7633f3a",
-    "remote_push_status": "SUCCESS_THROUGH_7633F3A_FINAL_CLOSEOUT_PENDING",
+    "final_recovery_closeout_commit": "c127bea",
+    "remote_push_status": "FINAL_RECOVERY_CLOSEOUT_C127BEA_PUSHED",
     "push_failure": null,
     "recovery_branch": "carts-v2-pre-integration-698a2bb",
     "recovery_bundle": "artifacts/carts_v2/CARTS_V2_INTEGRATION_57efc16_INCREMENTAL.bundle",
