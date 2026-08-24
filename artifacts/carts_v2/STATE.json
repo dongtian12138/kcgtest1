@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T09:26:20Z",
+  "updated_at_utc": "2026-08-24T09:29:31Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,7 +8,7 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_RECOVERY_2_OBJECT_A_CONTACT_STOP_FIX",
+  "current_milestone": "V2_RECOVERY_2_OBJECT_A_CONTACT_STOP_DYNAMIC_VALIDATION",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -55,8 +55,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": true,
-    "scope": "OBJECT_A_CONTACT_STOP_FIX_VALIDATION_ONLY",
-    "reason": "Run13 replayed all 1104 run12 targets without object/table and did not reproduce the spike; one measured-position contact-stop fix, bound preflight and A validation are allowed, while object B remains closed"
+    "scope": "OBJECT_A_CONTACT_STOP_GRASP_LIFT_ONLY",
+    "reason": "Run14 accepted the measured-position contact-stop source with controller, engine, capacity and identity gates; only one bound object A grasp-lift validation is allowed, while object B remains closed"
   },
   "preflight_acceptance_gate": {
     "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
@@ -170,6 +170,22 @@
     "research_dynamic_pass": false,
     "formal_dynamic_pass": false,
     "hardware_authorized": false
+  },
+  "object_a_contact_stop_fix": {
+    "commit": "f2ee26f",
+    "preflight_run_id": "A_candidate11_contact_stop_preflight_run14",
+    "accepted_preflight_pass": true,
+    "physics_time_advanced_s": 7.75,
+    "maximum_joint_speed_rad_s": 1.425191044807434,
+    "maximum_absolute_hand_effort_nm": 0.13165542483329773,
+    "unauthorized_contact_records": 0,
+    "physx_capacity_warning_count": 0,
+    "physx_error_count": 0,
+    "observed_total_peak": 7644,
+    "evaluation_sha256": "23f9bd6f5769871f75d62109057d5f10b472dee7ebc51bac26b96fee80512de8",
+    "trace_sha256": "e1adc139bcf0ecdde8eb3b5dfeb34e94c9c964c9537dc1d4c0f45bdf62ff0eac",
+    "engine_log_sha256": "56b7a0285e4b31e745c1fbafb831fcf27631b9e4512a8b2c8623986acb32a640",
+    "grasp_lift_binding_allowed": true
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
