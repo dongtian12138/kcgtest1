@@ -38,13 +38,15 @@ def _filter_map(result: OfflinePipelineResult):
 def _candidate_rows(result: OfflinePipelineResult):
     quality = _quality_map(result)
     filters = _filter_map(result)
-    formal_ids = {row.candidate_id for row in result.candidates}
+    diversity_ids = {row.candidate_id for row in result.candidates}
     for prediction in result.raw_closure_predictions:
         candidate_id = prediction.seed.candidate_id
         metric = quality.get(candidate_id)
         fast_filter = filters[candidate_id]
         yield {
             "candidate_id": candidate_id,
+            "descriptor_id": prediction.seed.descriptor_id,
+            "graspgenx_score": prediction.seed.generator_score,
             "source_sample_index": prediction.seed.source_sample_index,
             "anchor_face_index": prediction.seed.anchor_face_index,
             "anchor_position_object_m": " ".join(
@@ -60,10 +62,10 @@ def _candidate_rows(result: OfflinePipelineResult):
             ),
             "fast_filter": fast_filter.status,
             "fast_reasons": " | ".join(fast_filter.reasons),
-            "formal_candidate_selected": candidate_id in formal_ids,
-            "formal_selection_status": (
+            "diversity_selected_after_fast_filter": candidate_id in diversity_ids,
+            "diversity_selection_status": (
                 "SELECTED_AFTER_SWEEP_DIVERSITY"
-                if candidate_id in formal_ids
+                if candidate_id in diversity_ids
                 else (
                     "REJECTED_BEFORE_DIVERSITY"
                     if fast_filter.status == "FAST_REJECT"
@@ -134,15 +136,28 @@ def _selected_json(result: OfflinePipelineResult, selected_rows) -> list[dict[st
         quality = selected.task_quality
         prediction = selected.prediction
         exact = exact_by_id.get(prediction.seed.candidate_id)
-        if selected.selection_status == "EXECUTABLE_CANDIDATE" and exact is None:
-            raise ValueError("executable candidate lacks exact-validation result")
+        if selected.selection_status.startswith("FORMAL_TASK_") and exact is None:
+            raise ValueError("formal task candidate lacks exact-validation result")
+        scope = (
+            "DIAGNOSTIC_ONLY_NOT_EXECUTABLE"
+            if selected.selection_status == "DIAGNOSTIC_ONLY_NOT_EXECUTABLE"
+            else "OFFLINE_TASK_ELIGIBLE_ARM_IK_AND_PATH_UNRESOLVED"
+        )
         rows.append(
             {
                 "rank": selected.rank,
                 "candidate_id": prediction.seed.candidate_id,
+                "descriptor_id": prediction.seed.descriptor_id,
+                "graspgenx_score": prediction.seed.generator_score,
                 "selection_status": selected.selection_status,
-                "selection_scope": "OFFLINE_ELIGIBLE_FOR_BOUND_PREFLIGHT_NOT_DYNAMIC_PASS",
+                "selection_scope": scope,
                 "task_status": quality.status,
+                "nominal_gravity_lift_balance_pass": (
+                    quality.nominal_gravity_lift_balance_pass
+                ),
+                "nominal_parameter_task_margin": quality.nominal_parameter_task_margin,
+                "nominal_operation_force_cap_n": quality.nominal_operation_force_cap_n,
+                "nominal_balance_failure_reason": quality.nominal_balance_failure_reason,
                 "three_effective_pad_contacts": len(prediction.contacts) == 3,
                 "worst_task_margin": quality.worst_task_margin,
                 "lower_tail_mean_margin": quality.lower_tail_mean_margin,
@@ -195,6 +210,11 @@ def _selected_json(result: OfflinePipelineResult, selected_rows) -> list[dict[st
                     "transform_semantics": "OBJECT_FROM_HAND_BASE",
                     "object_from_hand_row_major": list(
                         prediction.seed.object_from_hand
+                    ),
+                    "approach_direction_object": (
+                        None
+                        if prediction.seed.approach_direction_object is None
+                        else list(prediction.seed.approach_direction_object)
                     ),
                     "pregrasp_joint_positions_rad": list(
                         prediction.seed.pregrasp_joint_positions_rad
@@ -251,8 +271,12 @@ def _write_preview(result: OfflinePipelineResult, path: Path) -> None:
             label=f"{len(result.candidates)} candidate anchors",
         )
     colors = ("#d32f2f", "#7b1fa2", "#388e3c")
-    preview_rows = result.executable_candidates or result.diagnostic_candidates
-    preview_label = "Executable" if result.executable_candidates else "Diagnostic-only"
+    preview_rows = (
+        result.formal_task_candidates
+        or result.research_task_candidates
+        or result.diagnostic_candidates
+    )
+    preview_label = "Task-eligible" if result.research_task_candidates else "Diagnostic-only"
     for color, selected in zip(colors, preview_rows):
         contacts = np.asarray(
             [row.object_position_m for row in selected.prediction.contacts]
@@ -278,6 +302,30 @@ def _write_preview(result: OfflinePipelineResult, path: Path) -> None:
 
 def _result_document(result: OfflinePipelineResult) -> dict[str, object]:
     filters = result.raw_fast_filter_results
+    closure_survive_count = sum(
+        row.status == "CLOSURE_SURVIVE"
+        for row in result.raw_closure_predictions
+    )
+    table_reject_count = sum(
+        any(reason in {
+            "INTERMEDIATE_SEQUENTIAL_CLOSURE_HAND_TABLE_SWEEP",
+            "HAND_TABLE_PENETRATION",
+        } for reason in row.reasons)
+        for row in filters
+    )
+    fcl_reject_count = sum(
+        any(
+            reason.startswith((
+                "NONADJACENT_HAND_SELF_COLLISION:",
+                "NONPAD_HAND_OBJECT_COLLISION:",
+                "FCL_MESH_COLLISION_BACKEND_UNAVAILABLE",
+            ))
+            for reason in row.reasons
+        )
+        for row in filters
+    )
+    fast_survive_count = sum(row.status == "FAST_SURVIVE" for row in filters)
+    task_evaluated_count = len(result.task_quality_results)
     task_settings = result.inputs.config.section("task_quality")
     dynamic_settings = result.inputs.config.section("dynamic")
     mass = float(result.inputs.object_contract.model.mass_kg)
@@ -291,6 +339,8 @@ def _result_document(result: OfflinePipelineResult) -> dict[str, object]:
     moment_scale = force_scale * float(
         result.inputs.object_contract.characteristic_radius_m
     )
+    generation = result.inputs.config.section("candidate_generation")
+    backend = str(generation.get("backend", "LEGACY_SURFACE_AXISYMMETRIC"))
     return {
         "schema_version": "carts_grasp_v2_offline_result_v2",
         "object_id": result.inputs.object_contract.object_id,
@@ -301,15 +351,20 @@ def _result_document(result: OfflinePipelineResult) -> dict[str, object]:
         "research_dynamic_pass": False,
         "face_role_method": result.inputs.face_roles.method,
         "allowed_face_count": int(np.sum(result.inputs.face_roles.face_is_allowed)),
-        "raw_surface_seed_count": len(result.raw_candidates),
+        "candidate_generation_backend": backend,
+        "raw_candidate_count": len(result.raw_candidates),
+        "raw_surface_seed_count": (
+            len(result.raw_candidates) if backend != "GRASPGENX" else None
+        ),
         "candidate_count": len(result.candidates),
         "candidate_selection_method": (
-            "FIXED_384_SURFACE_POOL_THEN_CLOSURE_SWEEP_THEN_DIVERSITY_MAX_48"
+            "GRASPGENX_DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL_"
+            "THEN_CONTROL_STATE_FAST_FILTER_THEN_DIVERSITY_MAX_64"
+            if backend == "GRASPGENX"
+            else "FIXED_384_SURFACE_POOL_THEN_CLOSURE_SWEEP_THEN_DIVERSITY_MAX_48"
         ),
-        "closure_survive_count": sum(
-            row.status == "CLOSURE_SURVIVE"
-            for row in result.raw_closure_predictions
-        ),
+        "closure_reject_count": len(result.raw_candidates) - closure_survive_count,
+        "closure_survive_count": closure_survive_count,
         "sequential_closure_sweep_survive_count": sum(
             row.sequential_closure_sweep_pass for row in filters
         ),
@@ -320,7 +375,17 @@ def _result_document(result: OfflinePipelineResult) -> dict[str, object]:
         "pregrasp_or_endpoint_table_reject_count": sum(
             "HAND_TABLE_PENETRATION" in row.reasons for row in filters
         ),
-        "fast_survive_count": sum(row.status == "FAST_SURVIVE" for row in filters),
+        "table_clearance_gate_pass_count": closure_survive_count - table_reject_count,
+        "full_hand_fcl_checked_count": fast_survive_count + fcl_reject_count,
+        "full_hand_fcl_reject_count": fcl_reject_count,
+        "full_hand_fcl_not_reached_count": max(
+            0,
+            closure_survive_count
+            - table_reject_count
+            - fast_survive_count
+            - fcl_reject_count,
+        ),
+        "fast_survive_count": fast_survive_count,
         "fast_filter_table_clearance": {
             "state_rule": result.inputs.config.section("fast_filter")[
                 "hand_table_state_rule"
@@ -333,21 +398,28 @@ def _result_document(result: OfflinePipelineResult) -> dict[str, object]:
             ],
             "claim_limit": "SAMPLED_FAST_REJECT_NOT_CONTINUOUS_COLLISION_PROOF",
         },
+        "task_evaluated_count": task_evaluated_count,
+        "task_not_evaluated_count": len(result.raw_candidates) - task_evaluated_count,
         "task_survive_count": sum(
             row.status == "TASK_SURVIVE" for row in result.task_quality_results
         ),
-        "executable_top_k_count": len(result.executable_candidates),
+        "research_task_eligible_count": sum(
+            row.nominal_gravity_lift_balance_pass
+            for row in result.task_quality_results
+        ),
+        "formal_task_eligible_count": sum(
+            row.status == "TASK_SURVIVE" and row.nominal_gravity_lift_balance_pass
+            for row in result.task_quality_results
+        ),
+        "executable_top_k_count": 0,
         "diagnostic_candidate_count": sum(
-            row.status != "TASK_SURVIVE" for row in result.task_quality_results
+            not row.nominal_gravity_lift_balance_pass
+            for row in result.task_quality_results
         ),
-        "selected_executable_candidate": (
-            None
-            if not result.executable_candidates
-            else result.executable_candidates[0].prediction.seed.candidate_id
-        ),
+        "selected_executable_candidate": None,
         "offline_selection_status": (
-            "EXECUTABLE_CANDIDATE_AVAILABLE"
-            if result.executable_candidates
+            "TASK_ELIGIBLE_CANDIDATE_ARM_IK_AND_PATH_UNRESOLVED"
+            if result.research_task_candidates
             else "NO_FEASIBLE_CANDIDATE_ANALYSIS"
         ),
         "exact_validation": {
@@ -385,9 +457,11 @@ def _result_document(result: OfflinePipelineResult) -> dict[str, object]:
             "scipy_version": scipy.__version__,
         },
         "timings_s": result.timings_s,
-        "executable_candidates": _selected_json(
-            result, result.executable_candidates
+        "research_task_candidates": _selected_json(
+            result, result.research_task_candidates
         ),
+        "formal_task_candidates": _selected_json(result, result.formal_task_candidates),
+        "executable_candidates": [],
         "diagnostic_candidates": _selected_json(
             result, result.diagnostic_candidates
         ),
@@ -399,14 +473,15 @@ def _write_summary(
     document: dict[str, object],
     summary_path: Path,
 ) -> None:
-    executable = document["executable_candidates"]
+    research_task = document["research_task_candidates"]
     diagnostic = document["diagnostic_candidates"]
-    if executable:
-        best = executable[0]
+    if research_task:
+        best = research_task[0]
         selection_text = (
-            f"可执行第一名：{best['candidate_id']}，最差载荷余量 "
+            f"名义任务合格第一项：{best['candidate_id']}，最差载荷余量 "
             f"{_plain_metric(best['worst_task_margin'])}，较差场景平均余量 "
-            f"{_plain_metric(best['lower_tail_mean_margin'])}。\n\n"
+            f"{_plain_metric(best['lower_tail_mean_margin'])}；机械臂逆解与完整路径"
+            "仍未闭合，不能称可执行候选。\n\n"
         )
     else:
         diagnostic_id = "无" if not diagnostic else diagnostic[0]["candidate_id"]
@@ -414,15 +489,29 @@ def _write_summary(
             "当前没有同时通过闭合路径与任务载荷门的可执行候选；"
             f"诊断列表第一项为 {diagnostic_id}，不得执行完整抬升。\n\n"
         )
+    generation_text = (
+        "GraspGenX 六维候选"
+        if document["candidate_generation_backend"] == "GRASPGENX"
+        else "固定轴对称表面种子"
+    )
+    if document["task_evaluated_count"]:
+        task_text = (
+            f"进入任务载荷评价 {document['task_evaluated_count']} 个，其中通过 "
+            f"{document['task_survive_count']} 个。"
+        )
+    else:
+        task_text = "没有候选通过前置几何门，因此没有候选进入任务载荷评价。"
     summary_path.write_text(
         "# CARTS-Grasp V2 离线摘要\n\n"
-        f"一句话结论：384 个固定原始种子中，完整顺序闭合扫掠保留 "
-        f"{document['sequential_closure_sweep_survive_count']} 个，"
-        f"任务载荷门通过 {document['task_survive_count']} 个。\n\n"
+        f"一句话结论：{document['raw_candidate_count']} 个{generation_text}中，"
+        f"三指闭合预测通过 {document['closure_survive_count']} 个，"
+        f"完整逐指闭合扫掠后不碰桌 {document['table_clearance_gate_pass_count']} 个，"
+        f"整手快速几何检查通过 {document['fast_survive_count']} 个；"
+        f"{task_text}\n\n"
         "机器人/连接器实际发生：本阶段只运行离线几何与力学，尚未执行抓取。\n\n"
         + selection_text
         + "证据等级：离线算法；不是动态仿真或正式动态验收。\n\n"
-        "仍不确定：机械臂逆解、非指腹全路径碰撞和腕部负载尚未闭合。\n",
+        "仍不确定：机械臂逆解、离散状态之间的连续碰撞和 Isaac 动态接触尚未闭合。\n",
         encoding="utf-8",
     )
 

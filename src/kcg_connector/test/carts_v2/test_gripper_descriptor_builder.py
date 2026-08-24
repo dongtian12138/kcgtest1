@@ -21,6 +21,10 @@ def _hand_inputs():
     return contract, contract.build_hand_model()
 
 
+def _uniform_caps(hand, value=0.50):
+    return {preshape: value for preshape in shared_preshape_grid(hand)}
+
+
 def test_fixed_grid_filters_then_selects_at_most_five_deterministically() -> None:
     _contract, hand = _hand_inputs()
     grid = shared_preshape_grid(hand)
@@ -43,7 +47,7 @@ def test_descriptor_frame_is_inverse_orthonormal_and_right_handed() -> None:
     descriptors = build_kcg_graspgenx_descriptors(
         contract,
         hand,
-        maximum_closure_phase=0.50,
+        closure_phase_by_preshape=_uniform_caps(hand),
         legal_samples_rad=shared_preshape_grid(hand),
     )
     assert len(descriptors) == 5
@@ -60,7 +64,7 @@ def test_descriptor_origin_is_registered_proximal_joint_plane() -> None:
     descriptors = build_kcg_graspgenx_descriptors(
         contract,
         hand,
-        maximum_closure_phase=0.50,
+        closure_phase_by_preshape=_uniform_caps(hand),
         legal_samples_rad=shared_preshape_grid(hand),
     )
     for descriptor in descriptors:
@@ -77,6 +81,22 @@ def test_descriptor_origin_is_registered_proximal_joint_plane() -> None:
         assert np.allclose(forward[:3, 3], expected, atol=1e-12)
         assert np.allclose(descriptor.fingertip_graspgenx_m[:2], 0.0, atol=1e-12)
         assert 0.07 < descriptor.fingertip_graspgenx_m[2] < 0.13
+        pad_depths = []
+        transforms = hand.pad_transforms(descriptor.open_joint_positions_rad)
+        for pad in contract.pads:
+            points_handbase = (
+                pad.points_local_m @ transforms[pad.name][:3, :3].T
+                + transforms[pad.name][:3, 3]
+            )
+            points_generator = (
+                points_handbase
+                @ descriptor.frame.graspgenx_from_handbase[:3, :3].T
+                + descriptor.frame.graspgenx_from_handbase[:3, 3]
+            )
+            pad_depths.append(float(np.max(points_generator[:, 2])))
+        assert np.isclose(
+            descriptor.fingertip_graspgenx_m[2], np.mean(pad_depths), atol=1e-12
+        )
 
 
 def test_mimic_midpoint_and_conditioning_aabbs_bind_real_pad_points() -> None:
@@ -84,7 +104,7 @@ def test_mimic_midpoint_and_conditioning_aabbs_bind_real_pad_points() -> None:
     descriptor = build_kcg_graspgenx_descriptors(
         contract,
         hand,
-        maximum_closure_phase=0.50,
+        closure_phase_by_preshape=_uniform_caps(hand),
         legal_samples_rad=shared_preshape_grid(hand),
     )[0]
     for state in (

@@ -46,12 +46,12 @@ closure_prediction:
 
 fast_filter:
   minimum_three_contact_triangle_area_m2: 1.0e-8
-  hand_table_state_rule: WORLD_Z_APPROACH_AND_COMPLETE_SEQUENTIAL_CLOSURE_CONTROL_STEPS
+  hand_table_state_rule: CANDIDATE_DIRECTION_OR_LEGACY_WORLD_Z_APPROACH_AND_COMPLETE_SEQUENTIAL_CLOSURE_CONTROL_STEPS
   approach_path_sample_count: 5
   table_penetration_tolerance_m: 1.0e-5
   table_penetration_tolerance_source: NUMERICAL_TOLERANCE
   arm_ik_policy: UNRESOLVED_UNTIL_PUBLIC_LEGACY_FORWARDER
-  nonpad_collision_policy: UNRESOLVED_UNTIL_TOP3_LEGACY_EXACT
+  nonpad_collision_policy: FCL_EXACT_NONPAD_AND_SELF_CONTROL_STATES_SAMPLED
 
 task_quality:
   scenario_count: 16

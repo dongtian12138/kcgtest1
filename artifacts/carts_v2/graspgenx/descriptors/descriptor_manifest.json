@@ -8,13 +8,13 @@
       "aabb_claim": "MODEL_CONDITIONING_ONLY_NOT_COLLISION_PROOF",
       "close_joint_positions_rad": {
         "f1j1": 0.628,
-        "f1j2": 0.69815,
-        "f1j3": 0.69815,
-        "f2j1": 0.69815,
-        "f2j2": 0.69815,
+        "f1j2": 0.7281135193133047,
+        "f1j3": 0.7281135193133047,
+        "f2j1": 0.7281135193133047,
+        "f2j2": 0.7281135193133047,
         "f3j1": 0.628,
-        "f3j2": 0.69815,
-        "f3j3": 0.69815
+        "f3j2": 0.7281135193133047,
+        "f3j3": 0.7281135193133047
       },
       "descriptor_id": "kcg_3f_preshape_00",
       "graspgenx_config": {
@@ -46,18 +46,18 @@
         ],
         "close": {
           "f1j1": 0.628,
-          "f1j2": 0.69815,
-          "f1j3": 0.69815,
-          "f2j1": 0.69815,
-          "f2j2": 0.69815,
+          "f1j2": 0.7281135193133047,
+          "f1j3": 0.7281135193133047,
+          "f2j1": 0.7281135193133047,
+          "f2j2": 0.7281135193133047,
           "f3j1": 0.628,
-          "f3j2": 0.69815,
-          "f3j3": 0.69815
+          "f3j2": 0.7281135193133047,
+          "f3j3": 0.7281135193133047
         },
         "fingertip": [
-          -2.7755575615628914e-17,
-          -4.625929269271485e-18,
-          0.09940474338444344
+          0.0,
+          0.0,
+          0.1143104563767874
         ],
         "open": {
           "f1j1": 0.628,
@@ -76,9 +76,9 @@
             0.0455422445172885
           ],
           "extents2": [
-            0.0989129130806039,
-            0.145460072101524,
-            0.058641009046703996
+            0.09402647814260601,
+            0.14200031262597607,
+            0.05887076641982014
           ],
           "offset": [
             -0.03578980726690781,
@@ -86,9 +86,9 @@
             0.09423237022853298
           ],
           "offset2": [
-            -0.032508255826017185,
-            2.1916514922441788e-05,
-            0.11178438365282856
+            -0.03226198080384837,
+            2.0942563340189957e-05,
+            0.11196075459231519
           ]
         },
         "symmetric": false,
@@ -114,13 +114,13 @@
       ],
       "half_joint_positions_rad": {
         "f1j1": 0.628,
-        "f1j2": 0.349075,
-        "f1j3": 0.349075,
-        "f2j1": 0.349075,
-        "f2j2": 0.349075,
+        "f1j2": 0.36405675965665235,
+        "f1j3": 0.36405675965665235,
+        "f2j1": 0.36405675965665235,
+        "f2j2": 0.36405675965665235,
         "f3j1": 0.628,
-        "f3j2": 0.349075,
-        "f3j3": 0.349075
+        "f3j2": 0.36405675965665235,
+        "f3j3": 0.36405675965665235
       },
       "handbase_from_graspgenx_row_major": [
         -0.8630467898191853,
@@ -140,6 +140,7 @@
         0.0,
         1.0
       ],
+      "maximum_closure_phase": 0.5214592274678111,
       "open_joint_positions_rad": {
         "f1j1": 0.628,
         "f1j2": 0.0,
@@ -152,19 +153,19 @@
       },
       "preshape_f1j1_rad": 0.628,
       "render": "kcg_3f_preshape_00_open_half_close.png",
-      "render_sha256": "76bea21a0ca777298a1bd5c41bf3bcfad6b2c01aa4f73ba3dcbfe59c0d35d37a"
+      "render_sha256": "6a809a9cb68881eb1994bda23022f9eaf577e12ba3880585928214168c37bc20"
     },
     {
       "aabb_claim": "MODEL_CONDITIONING_ONLY_NOT_COLLISION_PROOF",
       "close_joint_positions_rad": {
         "f1j1": 1.413,
-        "f1j2": 0.69815,
-        "f1j3": 0.69815,
-        "f2j1": 0.69815,
-        "f2j2": 0.69815,
+        "f1j2": 0.7341062231759656,
+        "f1j3": 0.7341062231759656,
+        "f2j1": 0.7341062231759656,
+        "f2j2": 0.7341062231759656,
         "f3j1": 1.413,
-        "f3j2": 0.69815,
-        "f3j3": 0.69815
+        "f3j2": 0.7341062231759656,
+        "f3j3": 0.7341062231759656
       },
       "descriptor_id": "kcg_3f_preshape_01",
       "graspgenx_config": {
@@ -196,18 +197,18 @@
         ],
         "close": {
           "f1j1": 1.413,
-          "f1j2": 0.69815,
-          "f1j3": 0.69815,
-          "f2j1": 0.69815,
-          "f2j2": 0.69815,
+          "f1j2": 0.7341062231759656,
+          "f1j3": 0.7341062231759656,
+          "f2j1": 0.7341062231759656,
+          "f2j2": 0.7341062231759656,
           "f3j1": 1.413,
-          "f3j2": 0.69815,
-          "f3j3": 0.69815
+          "f3j2": 0.7341062231759656,
+          "f3j3": 0.7341062231759656
         },
         "fingertip": [
-          -7.170190367370803e-17,
-          9.25185853854297e-18,
-          0.09723491375035985
+          0.0,
+          0.0,
+          0.11194911155293075
         ],
         "open": {
           "f1j1": 1.413,
@@ -226,9 +227,9 @@
             0.050132300202374025
           ],
           "extents2": [
-            0.06345068232167336,
-            0.18220946484428363,
-            0.05392873118212288
+            0.05994132709594624,
+            0.17521505048613295,
+            0.05358624767514297
           ],
           "offset": [
             -0.022665982442558602,
@@ -236,9 +237,9 @@
             0.09722408483737294
           ],
           "offset2": [
-            -0.0027585837998877934,
-            1.6287734239880947e-06,
-            0.11227723704683376
+            -0.0013013390922594539,
+            1.4089923177917907e-06,
+            0.11231655176308736
           ]
         },
         "symmetric": false,
@@ -264,13 +265,13 @@
       ],
       "half_joint_positions_rad": {
         "f1j1": 1.413,
-        "f1j2": 0.349075,
-        "f1j3": 0.349075,
-        "f2j1": 0.349075,
-        "f2j2": 0.349075,
+        "f1j2": 0.3670531115879828,
+        "f1j3": 0.3670531115879828,
+        "f2j1": 0.3670531115879828,
+        "f2j2": 0.3670531115879828,
         "f3j1": 1.413,
-        "f3j2": 0.349075,
-        "f3j3": 0.349075
+        "f3j2": 0.3670531115879828,
+        "f3j3": 0.3670531115879828
       },
       "handbase_from_graspgenx_row_major": [
         -0.8653403017324486,
@@ -290,6 +291,7 @@
         0.0,
         1.0
       ],
+      "maximum_closure_phase": 0.5257510729613734,
       "open_joint_positions_rad": {
         "f1j1": 1.413,
         "f1j2": 0.0,
@@ -302,19 +304,19 @@
       },
       "preshape_f1j1_rad": 1.413,
       "render": "kcg_3f_preshape_01_open_half_close.png",
-      "render_sha256": "a1ad0965682ecb7113e101549becead32857cb4dab580ee931aa148e265df8b2"
+      "render_sha256": "3be2cc760e05ab6c3c812d4d5d12fb7e2a9d1e77df9edbbb8156fa2cc87889bc"
     },
     {
       "aabb_claim": "MODEL_CONDITIONING_ONLY_NOT_COLLISION_PROOF",
       "close_joint_positions_rad": {
         "f1j1": 0.15700000000000003,
-        "f1j2": 0.69815,
-        "f1j3": 0.69815,
-        "f2j1": 0.69815,
-        "f2j2": 0.69815,
+        "f1j2": 0.9648253218884121,
+        "f1j3": 0.9648253218884121,
+        "f2j1": 0.9648253218884121,
+        "f2j2": 0.9648253218884121,
         "f3j1": 0.15700000000000003,
-        "f3j2": 0.69815,
-        "f3j3": 0.69815
+        "f3j2": 0.9648253218884121,
+        "f3j3": 0.9648253218884121
       },
       "descriptor_id": "kcg_3f_preshape_02",
       "graspgenx_config": {
@@ -346,18 +348,18 @@
         ],
         "close": {
           "f1j1": 0.15700000000000003,
-          "f1j2": 0.69815,
-          "f1j3": 0.69815,
-          "f2j1": 0.69815,
-          "f2j2": 0.69815,
+          "f1j2": 0.9648253218884121,
+          "f1j3": 0.9648253218884121,
+          "f2j1": 0.9648253218884121,
+          "f2j2": 0.9648253218884121,
           "f3j1": 0.15700000000000003,
-          "f3j2": 0.69815,
-          "f3j3": 0.69815
+          "f3j2": 0.9648253218884121,
+          "f3j3": 0.9648253218884121
         },
         "fingertip": [
-          2.312964634635743e-17,
-          -1.3877787807814457e-17,
-          0.10152684424896292
+          0.0,
+          0.0,
+          0.11647381616906509
         ],
         "open": {
           "f1j1": 0.15700000000000003,
@@ -376,9 +378,9 @@
             0.05373503037141769
           ],
           "extents2": [
-            0.11085202610695513,
-            0.09795612140907059,
-            0.06329893111071166
+            0.0635334595750762,
+            0.0905066504132597,
+            0.06215231192797516
           ],
           "offset": [
             -0.03801513276746991,
@@ -386,9 +388,9 @@
             0.09531587293286875
           ],
           "offset2": [
-            -0.03925768036669362,
-            2.8029872041198528e-05,
-            0.1121758746329661
+            -0.0392435161963267,
+            1.8701399852126543e-05,
+            0.11149514795676477
           ]
         },
         "symmetric": false,
@@ -414,13 +416,13 @@
       ],
       "half_joint_positions_rad": {
         "f1j1": 0.15700000000000003,
-        "f1j2": 0.349075,
-        "f1j3": 0.349075,
-        "f2j1": 0.349075,
-        "f2j2": 0.349075,
+        "f1j2": 0.48241266094420604,
+        "f1j3": 0.48241266094420604,
+        "f2j1": 0.48241266094420604,
+        "f2j2": 0.48241266094420604,
         "f3j1": 0.15700000000000003,
-        "f3j2": 0.349075,
-        "f3j3": 0.349075
+        "f3j2": 0.48241266094420604,
+        "f3j3": 0.48241266094420604
       },
       "handbase_from_graspgenx_row_major": [
         -0.8604843572439074,
@@ -440,6 +442,7 @@
         0.0,
         1.0
       ],
+      "maximum_closure_phase": 0.6909871244635193,
       "open_joint_positions_rad": {
         "f1j1": 0.15700000000000003,
         "f1j2": 0.0,
@@ -452,19 +455,19 @@
       },
       "preshape_f1j1_rad": 0.15700000000000003,
       "render": "kcg_3f_preshape_02_open_half_close.png",
-      "render_sha256": "748efad6ae81f247677efa0353c6e9006636429d162e035fa171e43a51b456d9"
+      "render_sha256": "ef3d9cafece2b8e0bc55879e721e461b67766f2281e9b4a0e7c569976415b54f"
     },
     {
       "aabb_claim": "MODEL_CONDITIONING_ONLY_NOT_COLLISION_PROOF",
       "close_joint_positions_rad": {
         "f1j1": 0.9420000000000001,
-        "f1j2": 0.69815,
-        "f1j3": 0.69815,
-        "f2j1": 0.69815,
-        "f2j2": 0.69815,
+        "f1j2": 0.7341062231759656,
+        "f1j3": 0.7341062231759656,
+        "f2j1": 0.7341062231759656,
+        "f2j2": 0.7341062231759656,
         "f3j1": 0.9420000000000001,
-        "f3j2": 0.69815,
-        "f3j3": 0.69815
+        "f3j2": 0.7341062231759656,
+        "f3j3": 0.7341062231759656
       },
       "descriptor_id": "kcg_3f_preshape_03",
       "graspgenx_config": {
@@ -496,18 +499,18 @@
         ],
         "close": {
           "f1j1": 0.9420000000000001,
-          "f1j2": 0.69815,
-          "f1j3": 0.69815,
-          "f2j1": 0.69815,
-          "f2j2": 0.69815,
+          "f1j2": 0.7341062231759656,
+          "f1j3": 0.7341062231759656,
+          "f2j1": 0.7341062231759656,
+          "f2j2": 0.7341062231759656,
           "f3j1": 0.9420000000000001,
-          "f3j2": 0.69815,
-          "f3j3": 0.69815
+          "f3j2": 0.7341062231759656,
+          "f3j3": 0.7341062231759656
         },
         "fingertip": [
-          1.3877787807814457e-17,
-          7.864079757761526e-17,
-          0.09768048142008946
+          0.0,
+          0.0,
+          0.11236080722770408
         ],
         "open": {
           "f1j1": 0.9420000000000001,
@@ -526,9 +529,9 @@
             0.03848679657502574
           ],
           "extents2": [
-            0.08669510290898691,
-            0.16789968425627116,
-            0.053336071053914025
+            0.08155345095233282,
+            0.1621832892097419,
+            0.05382119635451588
           ],
           "offset": [
             -0.031745968742682124,
@@ -536,9 +539,9 @@
             0.09435964435110761
           ],
           "offset2": [
-            -0.02265717043124164,
-            1.4577633929376e-05,
-            0.1114150683537094
+            -0.022004905157103644,
+            1.374009889647948e-05,
+            0.11165832748756044
           ]
         },
         "symmetric": false,
@@ -564,13 +567,13 @@
       ],
       "half_joint_positions_rad": {
         "f1j1": 0.9420000000000001,
-        "f1j2": 0.349075,
-        "f1j3": 0.349075,
-        "f2j1": 0.349075,
-        "f2j2": 0.349075,
+        "f1j2": 0.3670531115879828,
+        "f1j3": 0.3670531115879828,
+        "f2j1": 0.3670531115879828,
+        "f2j2": 0.3670531115879828,
         "f3j1": 0.9420000000000001,
-        "f3j2": 0.349075,
-        "f3j3": 0.349075
+        "f3j2": 0.3670531115879828,
+        "f3j3": 0.3670531115879828
       },
       "handbase_from_graspgenx_row_major": [
         -0.8650803344267577,
@@ -590,6 +593,7 @@
         0.0,
         1.0
       ],
+      "maximum_closure_phase": 0.5257510729613734,
       "open_joint_positions_rad": {
         "f1j1": 0.9420000000000001,
         "f1j2": 0.0,
@@ -602,19 +606,19 @@
       },
       "preshape_f1j1_rad": 0.9420000000000001,
       "render": "kcg_3f_preshape_03_open_half_close.png",
-      "render_sha256": "dc4e89c8840511ec4cd98fba10ffc01c4c045d0c93b97392baacb3013fc9ff65"
+      "render_sha256": "882cab3d98f2e96dbae7a948ca4874af99a17ccf907e68e4f3486fcaca16b26b"
     },
     {
       "aabb_claim": "MODEL_CONDITIONING_ONLY_NOT_COLLISION_PROOF",
       "close_joint_positions_rad": {
         "f1j1": 0.31400000000000006,
-        "f1j2": 0.69815,
-        "f1j3": 0.69815,
-        "f2j1": 0.69815,
-        "f2j2": 0.69815,
+        "f1j2": 0.7850442060085836,
+        "f1j3": 0.7850442060085836,
+        "f2j1": 0.7850442060085836,
+        "f2j2": 0.7850442060085836,
         "f3j1": 0.31400000000000006,
-        "f3j2": 0.69815,
-        "f3j3": 0.69815
+        "f3j2": 0.7850442060085836,
+        "f3j3": 0.7850442060085836
       },
       "descriptor_id": "kcg_3f_preshape_04",
       "graspgenx_config": {
@@ -646,18 +650,18 @@
         ],
         "close": {
           "f1j1": 0.31400000000000006,
-          "f1j2": 0.69815,
-          "f1j3": 0.69815,
-          "f2j1": 0.69815,
-          "f2j2": 0.69815,
+          "f1j2": 0.7850442060085836,
+          "f1j3": 0.7850442060085836,
+          "f2j1": 0.7850442060085836,
+          "f2j2": 0.7850442060085836,
           "f3j1": 0.31400000000000006,
-          "f3j2": 0.69815,
-          "f3j3": 0.69815
+          "f3j2": 0.7850442060085836,
+          "f3j3": 0.7850442060085836
         },
         "fingertip": [
-          -4.625929269271485e-18,
-          6.938893903907228e-18,
-          0.1010392020492528
+          0.0,
+          0.0,
+          0.11602506355914012
         ],
         "open": {
           "f1j1": 0.31400000000000006,
@@ -676,9 +680,9 @@
             0.05204081446830289
           ],
           "extents2": [
-            0.10784462589032469,
-            0.11520749731431379,
-            0.062359335658998094
+            0.09256410206519032,
+            0.10993440448598413,
+            0.062479920001482836
           ],
           "offset": [
             -0.037817655154998284,
@@ -686,9 +690,9 @@
             0.09509038629145561
           ],
           "offset2": [
-            -0.03816874449127821,
-            2.6746990478668936e-05,
-            0.11211201690007283
+            -0.03803888095587991,
+            2.340286097778088e-05,
+            0.11238197428934626
           ]
         },
         "symmetric": false,
@@ -714,13 +718,13 @@
       ],
       "half_joint_positions_rad": {
         "f1j1": 0.31400000000000006,
-        "f1j2": 0.349075,
-        "f1j3": 0.349075,
-        "f2j1": 0.349075,
-        "f2j2": 0.349075,
+        "f1j2": 0.3925221030042918,
+        "f1j3": 0.3925221030042918,
+        "f2j1": 0.3925221030042918,
+        "f2j2": 0.3925221030042918,
         "f3j1": 0.31400000000000006,
-        "f3j2": 0.349075,
-        "f3j3": 0.349075
+        "f3j2": 0.3925221030042918,
+        "f3j3": 0.3925221030042918
       },
       "handbase_from_graspgenx_row_major": [
         -0.8610756242049323,
@@ -740,6 +744,7 @@
         0.0,
         1.0
       ],
+      "maximum_closure_phase": 0.5622317596566523,
       "open_joint_positions_rad": {
         "f1j1": 0.31400000000000006,
         "f1j2": 0.0,
@@ -752,7 +757,7 @@
       },
       "preshape_f1j1_rad": 0.31400000000000006,
       "render": "kcg_3f_preshape_04_open_half_close.png",
-      "render_sha256": "0ec1bacc7b421419a53c266dc3167869221260cacfc8680d05c62eb10e0813df"
+      "render_sha256": "ec5972a25d9ce86d376c4aafbebcec4c30f0929de43cae55455fdd1a3a0de8ce"
     }
   ],
   "f1j1_grid_rule": "URDF_LIMIT_10_TO_90_PERCENT_9_UNIFORM",
@@ -774,6 +779,7 @@
             ]
           ]
         },
+        "last_verified_self_collision_free_phase": 0.6909871244635193,
         "maximum_observed_joint_increment_rad": 0.0014981759656652362,
         "pass": false,
         "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
@@ -796,6 +802,7 @@
             ]
           ]
         },
+        "last_verified_self_collision_free_phase": 0.5622317596566523,
         "maximum_observed_joint_increment_rad": 0.0014981759656652362,
         "pass": false,
         "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
@@ -818,6 +825,7 @@
             ]
           ]
         },
+        "last_verified_self_collision_free_phase": 0.526824034334764,
         "maximum_observed_joint_increment_rad": 0.0014981759656652362,
         "pass": false,
         "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
@@ -840,6 +848,7 @@
             ]
           ]
         },
+        "last_verified_self_collision_free_phase": 0.5214592274678111,
         "maximum_observed_joint_increment_rad": 0.0014981759656652362,
         "pass": false,
         "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
@@ -862,6 +871,7 @@
             ]
           ]
         },
+        "last_verified_self_collision_free_phase": 0.5225321888412017,
         "maximum_observed_joint_increment_rad": 0.0014981759656652362,
         "pass": false,
         "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
@@ -884,6 +894,7 @@
             ]
           ]
         },
+        "last_verified_self_collision_free_phase": 0.5257510729613734,
         "maximum_observed_joint_increment_rad": 0.0014981759656652362,
         "pass": false,
         "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
@@ -906,6 +917,7 @@
             ]
           ]
         },
+        "last_verified_self_collision_free_phase": 0.528969957081545,
         "maximum_observed_joint_increment_rad": 0.0014981759656652362,
         "pass": false,
         "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
@@ -928,6 +940,7 @@
             ]
           ]
         },
+        "last_verified_self_collision_free_phase": 0.5278969957081545,
         "maximum_observed_joint_increment_rad": 0.0014981759656652362,
         "pass": false,
         "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
@@ -950,6 +963,7 @@
             ]
           ]
         },
+        "last_verified_self_collision_free_phase": 0.5257510729613734,
         "maximum_observed_joint_increment_rad": 0.0014981759656652362,
         "pass": false,
         "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
@@ -958,89 +972,123 @@
     ],
     "maximum_closure_phase": 0.75
   },
-  "maximum_closure_phase": 0.5,
+  "maximum_closure_phase_range": [
+    0.5214592274678111,
+    0.6909871244635193
+  ],
+  "maximum_closure_phase_rule": "PER_PRESHAPE_LAST_SAMPLED_SELF_COLLISION_FREE_STATE",
   "maximum_joint_increment_rad": 0.0015,
   "object_independent": true,
   "schema_version": "kcg_graspgenx_descriptors_v1",
   "self_collision_audits": [
     {
-      "checked_state_count": 467,
+      "checked_state_count": 646,
       "direct_parent_child_pairs_excluded": true,
-      "first_forbidden_collision": null,
+      "first_forbidden_collision": {
+        "closure_phase": 0.6920600858369099,
+        "closure_position_rad": 0.9663234978540773,
+        "pairs": [
+          [
+            "f1Link3",
+            "f2Link1"
+          ]
+        ]
+      },
+      "last_verified_self_collision_free_phase": 0.6909871244635193,
       "maximum_observed_joint_increment_rad": 0.0014981759656652362,
-      "pass": true,
+      "pass": false,
       "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
       "preshape_f1j1_rad": 0.15700000000000003
     },
     {
-      "checked_state_count": 467,
+      "checked_state_count": 526,
       "direct_parent_child_pairs_excluded": true,
-      "first_forbidden_collision": null,
+      "first_forbidden_collision": {
+        "closure_phase": 0.5633047210300429,
+        "closure_position_rad": 0.786542381974249,
+        "pairs": [
+          [
+            "f1Link3",
+            "f2Link2"
+          ],
+          [
+            "f2Link2",
+            "f3Link3"
+          ]
+        ]
+      },
+      "last_verified_self_collision_free_phase": 0.5622317596566523,
       "maximum_observed_joint_increment_rad": 0.0014981759656652362,
-      "pass": true,
+      "pass": false,
       "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
       "preshape_f1j1_rad": 0.31400000000000006
     },
     {
-      "checked_state_count": 467,
+      "checked_state_count": 488,
       "direct_parent_child_pairs_excluded": true,
-      "first_forbidden_collision": null,
+      "first_forbidden_collision": {
+        "closure_phase": 0.5225321888412017,
+        "closure_position_rad": 0.72961169527897,
+        "pairs": [
+          [
+            "f1Link3",
+            "f2Link2"
+          ],
+          [
+            "f2Link2",
+            "f3Link3"
+          ]
+        ]
+      },
+      "last_verified_self_collision_free_phase": 0.5214592274678111,
       "maximum_observed_joint_increment_rad": 0.0014981759656652362,
-      "pass": true,
-      "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
-      "preshape_f1j1_rad": 0.47100000000000003
-    },
-    {
-      "checked_state_count": 467,
-      "direct_parent_child_pairs_excluded": true,
-      "first_forbidden_collision": null,
-      "maximum_observed_joint_increment_rad": 0.0014981759656652362,
-      "pass": true,
+      "pass": false,
       "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
       "preshape_f1j1_rad": 0.628
     },
     {
-      "checked_state_count": 467,
+      "checked_state_count": 492,
       "direct_parent_child_pairs_excluded": true,
-      "first_forbidden_collision": null,
+      "first_forbidden_collision": {
+        "closure_phase": 0.526824034334764,
+        "closure_position_rad": 0.735604399141631,
+        "pairs": [
+          [
+            "f1Link3",
+            "f2Link2"
+          ],
+          [
+            "f2Link2",
+            "f3Link3"
+          ]
+        ]
+      },
+      "last_verified_self_collision_free_phase": 0.5257510729613734,
       "maximum_observed_joint_increment_rad": 0.0014981759656652362,
-      "pass": true,
-      "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
-      "preshape_f1j1_rad": 0.785
-    },
-    {
-      "checked_state_count": 467,
-      "direct_parent_child_pairs_excluded": true,
-      "first_forbidden_collision": null,
-      "maximum_observed_joint_increment_rad": 0.0014981759656652362,
-      "pass": true,
+      "pass": false,
       "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
       "preshape_f1j1_rad": 0.9420000000000001
     },
     {
-      "checked_state_count": 467,
+      "checked_state_count": 492,
       "direct_parent_child_pairs_excluded": true,
-      "first_forbidden_collision": null,
+      "first_forbidden_collision": {
+        "closure_phase": 0.526824034334764,
+        "closure_position_rad": 0.735604399141631,
+        "pairs": [
+          [
+            "f1Link3",
+            "f2Link2"
+          ],
+          [
+            "f2Link2",
+            "f3Link3"
+          ]
+        ]
+      },
+      "last_verified_self_collision_free_phase": 0.5257510729613734,
       "maximum_observed_joint_increment_rad": 0.0014981759656652362,
-      "pass": true,
-      "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
-      "preshape_f1j1_rad": 1.099
-    },
-    {
-      "checked_state_count": 467,
-      "direct_parent_child_pairs_excluded": true,
-      "first_forbidden_collision": null,
-      "maximum_observed_joint_increment_rad": 0.0014981759656652362,
-      "pass": true,
-      "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
-      "preshape_f1j1_rad": 1.256
-    },
-    {
-      "checked_state_count": 467,
-      "direct_parent_child_pairs_excluded": true,
-      "first_forbidden_collision": null,
-      "maximum_observed_joint_increment_rad": 0.0014981759656652362,
-      "pass": true,
+      "pass": false,
       "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
       "preshape_f1j1_rad": 1.413
     }

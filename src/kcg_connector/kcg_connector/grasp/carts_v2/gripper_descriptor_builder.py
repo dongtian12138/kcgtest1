@@ -46,6 +46,7 @@ class DescriptorFrame:
 class KCGGraspGenXDescriptor:
     descriptor_id: str
     preshape_f1j1_rad: float
+    maximum_closure_phase: float
     open_joint_positions_rad: Mapping[str, float]
     half_joint_positions_rad: Mapping[str, float]
     close_joint_positions_rad: Mapping[str, float]
@@ -269,7 +270,7 @@ def build_kcg_graspgenx_descriptors(
     contract: CARTSHandContract,
     hand: ThreeFingerHandModel,
     *,
-    maximum_closure_phase: float,
+    closure_phase_by_preshape: Mapping[float, float],
     self_collision_free: Callable[[float], bool] | None = None,
     legal_samples_rad: Sequence[float] | None = None,
 ) -> tuple[KCGGraspGenXDescriptor, ...]:
@@ -282,6 +283,14 @@ def build_kcg_graspgenx_descriptors(
     )
     descriptors = []
     for index, preshape in enumerate(preshapes):
+        matches = [
+            float(phase)
+            for value, phase in closure_phase_by_preshape.items()
+            if np.isclose(float(value), preshape, atol=1.0e-12)
+        ]
+        if len(matches) != 1 or not 0.0 < matches[0] <= 1.0:
+            raise ValueError("each selected preshape needs one safe closure phase")
+        maximum_closure_phase = matches[0]
         open_map, half_map, close_map = descriptor_joint_states(
             contract, hand, preshape, maximum_closure_phase
         )
@@ -292,21 +301,17 @@ def build_kcg_graspgenx_descriptors(
         half_extents, half_offset = inner_work_aabb(
             contract, hand, half_map, frame
         )
-        pad_centers = []
-        pad_transforms = hand.pad_transforms(open_map)
-        for pad in contract.pads:
-            center = np.mean(pad.points_local_m, axis=0)
-            base_center = (
-                pad_transforms[pad.name][:3, :3] @ center
-                + pad_transforms[pad.name][:3, 3]
-            )
-            pad_centers.append(
-                frame.graspgenx_from_handbase[:3, :3] @ base_center
-                + frame.graspgenx_from_handbase[:3, 3]
-            )
-        fingertip = tuple(float(x) for x in np.mean(pad_centers, axis=0))
+        pad_points = _pad_point_sets_in_graspgenx(
+            contract, hand, open_map, frame
+        )
+        fingertip = (
+            0.0,
+            0.0,
+            float(np.mean([np.max(points[:, 2]) for points in pad_points])),
+        )
         descriptors.append(KCGGraspGenXDescriptor(
             descriptor_id=f"kcg_3f_preshape_{index:02d}", preshape_f1j1_rad=preshape,
+            maximum_closure_phase=maximum_closure_phase,
             open_joint_positions_rad=open_map, half_joint_positions_rad=half_map,
             close_joint_positions_rad=close_map, frame=frame,
             fingertip_graspgenx_m=fingertip, open_aabb_extents_m=open_extents,

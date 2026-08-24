@@ -45,7 +45,8 @@ class OfflinePipelineResult:
     closure_predictions: tuple[ClosurePrediction, ...]
     fast_filter_results: tuple[FastFilterResult, ...]
     task_quality_results: tuple[TaskQualityResult, ...]
-    executable_candidates: tuple[SelectedCandidate, ...]
+    research_task_candidates: tuple[SelectedCandidate, ...]
+    formal_task_candidates: tuple[SelectedCandidate, ...]
     diagnostic_candidates: tuple[SelectedCandidate, ...]
     exact_validation_results: tuple[ExactValidationResult, ...]
     scenario_design: np.ndarray
@@ -57,6 +58,7 @@ def run_offline_pipeline(
     *,
     config_path: Path | str,
     object_id: str,
+    candidate_seeds: tuple[CandidateSeed, ...] | None = None,
 ) -> OfflinePipelineResult:
     timings: dict[str, float] = {}
     started = time.perf_counter()
@@ -66,7 +68,21 @@ def run_offline_pipeline(
     timings["load_inputs"] = time.perf_counter() - started
 
     started = time.perf_counter()
-    raw_candidates = generate_raw_candidates(inputs)
+    if candidate_seeds is None:
+        raw_candidates = generate_raw_candidates(inputs)
+    else:
+        raw_candidates = tuple(candidate_seeds)
+        identifiers = [row.candidate_id for row in raw_candidates]
+        generation = inputs.config.section("candidate_generation")
+        limit = int(generation.get("graspgenx", {}).get("merged_max_per_object", 256))
+        if (
+            generation.get("backend") != "GRASPGENX"
+            or not raw_candidates
+            or len(raw_candidates) > limit
+            or len(set(identifiers)) != len(identifiers)
+            or any(row.object_id != object_id for row in raw_candidates)
+        ):
+            raise ValueError("external candidate set violates GraspGenX route identity")
     timings["candidate_generation"] = time.perf_counter() - started
 
     started = time.perf_counter()
@@ -98,7 +114,7 @@ def run_offline_pipeline(
 
     started = time.perf_counter()
     top_k = int(inputs.config.section("exact_validation")["top_k"])
-    executable, diagnostic = select_candidate_rankings(
+    research_task, formal_task, diagnostic = select_candidate_rankings(
         predictions,
         filters,
         qualities,
@@ -110,7 +126,7 @@ def run_offline_pipeline(
     timings["selection"] = time.perf_counter() - started
 
     started = time.perf_counter()
-    exact_results = validate_top_candidates(inputs, executable)
+    exact_results = validate_top_candidates(inputs, formal_task)
     timings["exact_validation"] = time.perf_counter() - started
     timings["total"] = sum(
         value for key, value in timings.items() if key != "total"
@@ -125,7 +141,8 @@ def run_offline_pipeline(
         closure_predictions=predictions,
         fast_filter_results=filters,
         task_quality_results=qualities,
-        executable_candidates=executable,
+        research_task_candidates=research_task,
+        formal_task_candidates=formal_task,
         diagnostic_candidates=diagnostic,
         exact_validation_results=exact_results,
         scenario_design=design,

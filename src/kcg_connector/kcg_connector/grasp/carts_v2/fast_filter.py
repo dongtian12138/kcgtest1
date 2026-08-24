@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
+import itertools
+import json
 import math
 
 import numpy as np
+
+try:
+    import fcl
+except ImportError:  # The fast gate must reject, never silently skip.
+    fcl = None
 
 from kcg_connector.grasp.carts_v2.models import (
     ClosurePrediction,
@@ -12,6 +19,120 @@ from kcg_connector.grasp.carts_v2.models import (
     V2Inputs,
     joint_positions_for_phases,
 )
+from kcg_connector.grasp.robust.object_model import load_stl_mesh
+
+_NONPAD_POLICY = "FCL_EXACT_NONPAD_AND_SELF_CONTROL_STATES_SAMPLED"
+
+
+def _exact_nonpad_surfaces(inputs: V2Inputs) -> dict[str, np.ndarray]:
+    manifest_path = inputs.hand_contract.source_manifest.absolute_path
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    rows = manifest.get("links", ())
+    pads = {pad.link_name: pad for pad in inputs.hand_contract.pads}
+    by_link = {str(row.get("link_name", "")): row for row in rows}
+    if (
+        manifest.get("schema") != "CARTS_EXACT_SOURCE_TERMINAL_PAD_V1"
+        or manifest.get("coordinate_tolerance_used") is not False
+        or len(rows) != 3
+        or set(by_link) != set(pads)
+    ):
+        raise ValueError("terminal PAD exact-source manifest changed")
+    result = dict(inputs.hand_collision_triangles_by_link)
+    for link_name, pad in pads.items():
+        row = by_link[link_name]
+        source = (inputs.repository_root / str(row["source_mesh"])).resolve()
+        if inputs.repository_root not in source.parents:
+            raise ValueError("terminal source mesh resolves outside repository")
+        mesh, provenance = load_stl_mesh(source, unit="m", orient_outward=False)
+        arrays = (manifest_path.parent / str(row["pad_source_arrays"])).resolve()
+        diagnostics = row.get("diagnostics", {})
+        if (
+            provenance.source_sha256 != row.get("source_mesh_sha256")
+            or len(mesh.faces) != int(diagnostics.get("source_face_count", -1))
+            or diagnostics.get("exact_source_face_ordinal_lineage_complete") is not True
+            or arrays != pad.mesh.absolute_path
+            or row.get("pad_source_arrays_sha256") != pad.mesh.sha256
+        ):
+            raise ValueError(f"terminal PAD lineage changed for {link_name}")
+        with np.load(arrays, allow_pickle=False) as archive:
+            indices = np.asarray(archive["source_face_indices"])
+        if (
+            indices.ndim != 1
+            or not np.issubdtype(indices.dtype, np.integer)
+            or len(indices) != pad.triangle_count
+            or len(np.unique(indices)) != len(indices)
+            or np.any(indices < 0)
+            or np.any(indices >= len(mesh.faces))
+        ):
+            raise ValueError(f"terminal PAD source ordinals invalid for {link_name}")
+        indices = indices.astype(np.int64, copy=False)
+        if not np.array_equal(mesh.face_vertices_m[indices], pad.points_local_m[pad.faces]):
+            raise ValueError(f"terminal PAD source triangles changed for {link_name}")
+        keep = np.ones(len(mesh.faces), dtype=np.bool_)
+        keep[indices] = False
+        result[link_name] = np.asarray(mesh.face_vertices_m[keep], dtype=np.float64)
+    return result
+
+
+def _fcl_model(vertices: np.ndarray, faces: np.ndarray | None = None):
+    if faces is None:
+        vertices = np.asarray(vertices).reshape(-1, 3)
+        faces = np.arange(len(vertices), dtype=np.int32).reshape(-1, 3)
+    model = fcl.BVHModel()
+    model.beginModel(len(vertices), len(faces))
+    model.addSubModel(np.ascontiguousarray(vertices, dtype=np.float64),
+                      np.ascontiguousarray(faces, dtype=np.int32))
+    model.endModel()
+    return model
+
+
+def _prepare_fcl_scene(inputs: V2Inputs):
+    if fcl is None:
+        return None
+    registered = inputs.hand_collision_triangles_by_link
+    nonpad = _exact_nonpad_surfaces(inputs)
+    self_objects = {name: fcl.CollisionObject(_fcl_model(triangles))
+                    for name, triangles in registered.items()}
+    nonpad_objects = {name: fcl.CollisionObject(_fcl_model(triangles))
+                      for name, triangles in nonpad.items()}
+    links = tuple(sorted(self_objects))
+    adjacent = {
+        tuple(sorted((joint.parent_link, joint.child_link)))
+        for joint in inputs.hand_model.joints.values()
+        if joint.parent_link in self_objects and joint.child_link in self_objects
+    }
+    pairs = tuple(pair for pair in itertools.combinations(links, 2)
+                  if pair not in adjacent)
+    if len(links) != 9 or len(adjacent) != 8 or len(pairs) != 28:
+        raise ValueError("registered hand self-collision pair coverage changed")
+    mesh = inputs.object_contract.model.mesh
+    world_from_object = inputs.frozen_world_from_object
+    object_collision = fcl.CollisionObject(_fcl_model(mesh.vertices_m, mesh.faces),
+        fcl.Transform(world_from_object[:3, :3], world_from_object[:3, 3]))
+    return self_objects, nonpad_objects, object_collision, pairs
+
+
+def _first_state_collision(inputs: V2Inputs, states, scene) -> str:
+    if scene is None:
+        return "FCL_MESH_COLLISION_BACKEND_UNAVAILABLE"
+    self_objects, nonpad_objects, object_collision, pairs = scene
+    request = fcl.CollisionRequest(num_max_contacts=1, enable_contact=False)
+    for stage, base, joints in states:
+        transforms = inputs.hand_model.forward_kinematics(joints, base_transform=base)
+        for link_name in self_objects:
+            transform = transforms[link_name]
+            fcl_transform = fcl.Transform(transform[:3, :3], transform[:3, 3])
+            self_objects[link_name].setTransform(fcl_transform)
+            nonpad_objects[link_name].setTransform(fcl_transform)
+        for first, second in pairs:
+            if fcl.collide(self_objects[first], self_objects[second], request,
+                           fcl.CollisionResult()):
+                return f"NONADJACENT_HAND_SELF_COLLISION:{stage}:{first}:{second}"
+        for link_name in sorted(nonpad_objects):
+            if fcl.collide(nonpad_objects[link_name], object_collision, request,
+                           fcl.CollisionResult()):
+                return f"NONPAD_HAND_OBJECT_COLLISION:{stage}:{link_name}"
+    return ""
 
 
 def _hard_reasons(inputs: V2Inputs, prediction: ClosurePrediction) -> list[str]:
@@ -58,10 +179,27 @@ def _sampled_hand_states(
     pregrasp = np.asarray(prediction.seed.pregrasp_joint_positions_rad)
     height = float(dynamic["approach_clearance_height_m"])
     sample_count = int(settings["approach_path_sample_count"])
+    direction_object = prediction.seed.approach_direction_object
+    if direction_object is None:
+        direction_world = np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
+    else:
+        direction_object_array = np.asarray(direction_object, dtype=np.float64)
+        if direction_object_array.shape != (3,):
+            raise ValueError("approach direction must be one finite unit vector")
+        direction_world = (
+            inputs.frozen_world_from_object[:3, :3] @ direction_object_array
+        )
+    direction_norm = float(np.linalg.norm(direction_world))
+    if (
+        direction_world.shape != (3,)
+        or not np.isfinite(direction_norm)
+        or abs(direction_norm - 1.0) > 1.0e-6
+    ):
+        raise ValueError("approach direction must be one finite unit vector")
     states: list[tuple[str, np.ndarray, np.ndarray]] = []
     for index, fraction in enumerate(np.linspace(1.0, 0.0, sample_count)):
         shifted = np.array(base, copy=True)
-        shifted[2, 3] += height * float(fraction)
+        shifted[:3, 3] -= direction_world * height * float(fraction)
         stage = "PREGRASP" if index == sample_count - 1 else f"APPROACH_{index:02d}"
         states.append((stage, shifted, pregrasp))
     phases = list(prediction.seed.pregrasp_closure_phases)
@@ -183,12 +321,15 @@ def fast_filter_predictions(
     """Return FAST_REJECT or FAST_SURVIVE without promoting unresolved checks."""
 
     settings = inputs.config.section("fast_filter")
+    if settings["nonpad_collision_policy"] != _NONPAD_POLICY:
+        raise ValueError("fast-filter non-PAD collision policy changed")
     unresolved = (
         str(settings["arm_ik_policy"]),
-        str(settings["nonpad_collision_policy"]),
+        "HAND_SELF_AND_NONPAD_OBJECT_CONTROL_STATES_SAMPLED_NOT_CONTINUOUS",
         "HAND_TABLE_SAMPLED_NOT_CONTINUOUS",
         "ARM_LINK_AND_JOINT_INTERPOLATED_PATH_NOT_FAST_CHECKED",
     )
+    collision_scene = _prepare_fcl_scene(inputs)
     results: list[FastFilterResult] = []
     for prediction in predictions:
         reasons = _hard_reasons(inputs, prediction)
@@ -224,6 +365,10 @@ def fast_filter_predictions(
                     and first_violation[2].startswith("FINGER_")
                     else "HAND_TABLE_PENETRATION"
                 )
+            if not reasons:
+                collision_reason = _first_state_collision(inputs, states, collision_scene)
+                if collision_reason:
+                    reasons.append(collision_reason)
         status = "FAST_REJECT" if reasons else "FAST_SURVIVE"
         results.append(
             FastFilterResult(

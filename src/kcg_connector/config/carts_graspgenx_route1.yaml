@@ -26,18 +26,22 @@ candidate_generation:
   random_seed: 20260824
   reference_closure_phase: 0.45
   pregrasp_closure_phase: 0.0
-  maximum_closure_phase: 0.50
+  maximum_closure_phase: 0.75
+  maximum_closure_phase_rule: PER_PRESHAPE_LAST_SAMPLED_SELF_COLLISION_FREE_STATE
   preshape_joint_positions_rad:
     f1j1: 0.70
   graspgenx:
     planner: graspmoe
     object_sample_point_count: 8192
+    object_surface_sample_method: TRIMESH_ALLOWED_FACE_SAMPLE_EXPLICIT_SEED
+    proposal_conditioning_mode: REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD
+    downstream_collision_geometry_scope: FULL_REGISTERED_OBJECT_MESH
     raw_target_per_descriptor_object: 256
     keep_per_descriptor_object: 128
+    proposal_keep_method: FIXED_SIX_APPROACH_STRATA_THEN_SCORE_FILL
+    proposal_visibility_method: OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_VISIBILITY
+    merged_keep_method: DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL
     merged_max_per_object: 256
-    fast_filter_max_per_object: 64
-    expensive_validation_max_per_object: 3
-    descriptor_count_maximum: 5
     model_score_role: PHYSICS_FEASIBILITY_POSTERIOR_TIE_BREAK_ONLY
     grasp_threshold: -1.0
     topk_num_grasps: -1
@@ -47,7 +51,7 @@ candidate_generation:
     moe_outlier_k: 20
     moe_obb_mode: advanced
     moe_skip_obb_rule: auto
-    moe_obb_density: sparse
+    moe_obb_density: dense-topandside
     moe_obb_position_spacing_cm: 1.0
   deduplication:
     palm_position_m: 0.002
@@ -67,12 +71,12 @@ closure_prediction:
 
 fast_filter:
   minimum_three_contact_triangle_area_m2: 1.0e-8
-  hand_table_state_rule: WORLD_Z_APPROACH_AND_COMPLETE_SEQUENTIAL_CLOSURE_CONTROL_STEPS
+  hand_table_state_rule: CANDIDATE_DIRECTION_OR_LEGACY_WORLD_Z_APPROACH_AND_COMPLETE_SEQUENTIAL_CLOSURE_CONTROL_STEPS
   approach_path_sample_count: 5
   table_penetration_tolerance_m: 1.0e-5
   table_penetration_tolerance_source: NUMERICAL_TOLERANCE
   arm_ik_policy: UNRESOLVED_UNTIL_PUBLIC_LEGACY_FORWARDER
-  nonpad_collision_policy: UNRESOLVED_UNTIL_TOP3_LEGACY_EXACT
+  nonpad_collision_policy: FCL_EXACT_NONPAD_AND_SELF_CONTROL_STATES_SAMPLED
 
 task_quality:
   scenario_count: 16

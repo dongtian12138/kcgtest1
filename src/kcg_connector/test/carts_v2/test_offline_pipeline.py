@@ -69,8 +69,8 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
             "diagnostic_top_k": 0,
         },
         OBJECT_B: {
-            "closure": 109, "path_safe": 6, "task_evaluated": 6,
-            "diagnostic_top_k": 3,
+            "closure": 110, "table_safe": 6, "path_safe": 0,
+            "task_evaluated": 0, "diagnostic_top_k": 0,
         },
     }
     for object_id in (OBJECT_A, OBJECT_B):
@@ -88,7 +88,7 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
             for index in range(26)
         )
         assert len(result.exact_validation_results) == len(
-            result.executable_candidates
+            result.formal_task_candidates
         )
         assert all(
             row.status == "UNRESOLVED_INTERFACE_MISMATCH"
@@ -115,6 +115,18 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
             if row.status == "FAST_SURVIVE"
         ]
         assert len(fast_survivors) == expected[object_id]["path_safe"]
+        table_survivors = [
+            row for row in result.raw_fast_filter_results
+            if row.sequential_closure_sweep_pass
+        ]
+        assert len(table_survivors) == expected[object_id].get("table_safe", 0)
+        if object_id == OBJECT_B:
+            assert all(
+                any(reason.startswith(
+                    "NONPAD_HAND_OBJECT_COLLISION:FINGER_1_CLOSURE_"
+                ) and reason.endswith(":f1Link3") for reason in row.reasons)
+                for row in table_survivors
+            )
         assert all(
             row.sequential_closure_sweep_pass
             and row.minimum_table_clearance_m is not None
@@ -126,10 +138,15 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
             for row in result.raw_fast_filter_results
         )
         assert all(
-            row.offline_task_gate_passed
-            and row.selection_status == "EXECUTABLE_CANDIDATE"
+            not row.offline_task_gate_passed
+            and row.selection_status == "FORMAL_TASK_ELIGIBLE_NOT_EXECUTABLE"
             and row.task_quality.status == "TASK_SURVIVE"
-            for row in result.executable_candidates
+            for row in result.formal_task_candidates
+        )
+        assert all(
+            row.task_quality.nominal_gravity_lift_balance_pass
+            and row.selection_status == "RESEARCH_TASK_ELIGIBLE_NOT_EXECUTABLE"
+            for row in result.research_task_candidates
         )
         assert all(
             not row.offline_task_gate_passed
@@ -142,4 +159,4 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
         if not any(
             row.status == "TASK_SURVIVE" for row in result.task_quality_results
         ):
-            assert result.executable_candidates == ()
+            assert result.formal_task_candidates == ()

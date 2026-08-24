@@ -221,6 +221,11 @@ def _rejected_quality(
     margins: tuple[float | None, ...],
     reason: str,
     nominal_failure_count: int = 0,
+    *,
+    nominal_pass: bool = False,
+    nominal_margin: float | None = None,
+    operation_cap_n: float | None = None,
+    nominal_reason: str = "",
 ) -> TaskQualityResult:
     return TaskQualityResult(
         candidate_id=candidate_id,
@@ -235,6 +240,10 @@ def _rejected_quality(
         sensitivity=None,
         failure_reason=reason,
         nominal_balance_infeasible_count=nominal_failure_count,
+        nominal_gravity_lift_balance_pass=nominal_pass,
+        nominal_parameter_task_margin=nominal_margin,
+        nominal_operation_force_cap_n=operation_cap_n,
+        nominal_balance_failure_reason=nominal_reason,
     )
 
 
@@ -243,6 +252,8 @@ def _nominal_infeasible_quality(
     margins: tuple[float | None, ...],
     lower_tail_fraction: float,
     nominal_failure_count: int,
+    nominal_margin: float,
+    operation_cap_n: float,
 ) -> TaskQualityResult:
     """Rank proven nominal-load failures at a conservative zero lower bound."""
 
@@ -266,6 +277,9 @@ def _nominal_infeasible_quality(
             "NOMINAL_LOAD_INFEASIBLE_ZERO_IS_RANKING_LOWER_BOUND_NOT_FEASIBILITY"
         ),
         nominal_balance_infeasible_count=nominal_failure_count,
+        nominal_gravity_lift_balance_pass=True,
+        nominal_parameter_task_margin=nominal_margin,
+        nominal_operation_force_cap_n=operation_cap_n,
     )
 
 
@@ -291,6 +305,19 @@ def evaluate_task_quality(
     friction_interval = (
         inputs.object_contract.contact_material_uncertainty.friction_coefficient_interval
     )
+    nominal_margin, _force, _joint_load, nominal_failure = _evaluate_scenario(
+        inputs, prediction, np.full(_SCENARIO_DIMENSION, 0.5), hand, settings,
+        friction_interval,
+    )
+    nominal_pass = not nominal_failure and nominal_margin is not None
+    if not nominal_pass:
+        return _rejected_quality(
+            prediction.seed.candidate_id, (),
+            "NOMINAL_PARAMETERS_GRAVITY_LIFT_BALANCE_FAILED",
+            nominal_pass=False, nominal_margin=nominal_margin,
+            operation_cap_n=force_cap,
+            nominal_reason=nominal_failure or "MISSING_NOMINAL_MARGIN",
+        )
     margins: list[float | None] = []
     forces: list[float] = []
     joint_loads: list[float] = []
@@ -311,6 +338,9 @@ def evaluate_task_quality(
                 tuple(margins),
                 f"SCENARIO_{row_index}:{failure}",
                 nominal_balance_failure_count,
+                nominal_pass=True,
+                nominal_margin=nominal_margin,
+                operation_cap_n=force_cap,
             )
         assert margin is not None
         margins.append(margin)
@@ -325,6 +355,8 @@ def evaluate_task_quality(
             tuple(margins),
             float(settings["lower_tail_fraction"]),
             nominal_balance_failure_count,
+            nominal_margin,
+            force_cap,
         )
     finite_margins = [float(value) for value in margins if value is not None]
     worst = min(finite_margins)
@@ -362,6 +394,9 @@ def evaluate_task_quality(
             )
         ),
         nominal_balance_infeasible_count=0,
+        nominal_gravity_lift_balance_pass=True,
+        nominal_parameter_task_margin=nominal_margin,
+        nominal_operation_force_cap_n=force_cap,
     )
 
 

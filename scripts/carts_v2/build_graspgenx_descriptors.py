@@ -27,7 +27,7 @@ from kcg_connector.grasp.robust.hand_contract import load_carts_hand_contract
 from kcg_connector.grasp.robust.object_model import load_stl_mesh
 
 
-_MAXIMUM_CLOSURE_PHASE = 0.50
+_CLOSURE_SEARCH_UPPER_PHASE = 0.75
 _MAXIMUM_JOINT_INCREMENT_RAD = 0.0015
 
 
@@ -94,6 +94,7 @@ def _self_collision_audits(hand, meshes, maximum_closure_phase: float) -> list[d
     audits = []
     for spread in shared_preshape_grid(hand):
         first_forbidden = None
+        last_safe_phase = None
         checked = 0
         for closure in positions:
             joints = (spread, closure, closure, closure)
@@ -114,6 +115,7 @@ def _self_collision_audits(hand, meshes, maximum_closure_phase: float) -> list[d
                     "pairs": [list(pair) for pair in forbidden],
                 }
                 break
+            last_safe_phase = float(closure / closure_upper)
         audits.append(
             {
                 "preshape_f1j1_rad": float(spread),
@@ -123,6 +125,7 @@ def _self_collision_audits(hand, meshes, maximum_closure_phase: float) -> list[d
                     close_position / step_count
                 ),
                 "first_forbidden_collision": first_forbidden,
+                "last_verified_self_collision_free_phase": last_safe_phase,
                 "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
                 "direct_parent_child_pairs_excluded": True,
             }
@@ -193,13 +196,19 @@ def main() -> int:
     hand = contract.build_hand_model()
     roster = load_authoritative_collision_link_roster(roster_path, repository_root=root)
     meshes = _registered_hand_meshes(root, roster, hand)
-    legacy_audits = _self_collision_audits(hand, meshes, 0.75)
-    audits = _self_collision_audits(hand, meshes, _MAXIMUM_CLOSURE_PHASE)
-    legal = [row["preshape_f1j1_rad"] for row in audits if row["pass"]]
+    audits = _self_collision_audits(
+        hand, meshes, _CLOSURE_SEARCH_UPPER_PHASE
+    )
+    safe_phase_by_preshape = {
+        row["preshape_f1j1_rad"]: row["last_verified_self_collision_free_phase"]
+        for row in audits
+        if row["last_verified_self_collision_free_phase"] is not None
+    }
+    legal = list(safe_phase_by_preshape)
     descriptors = build_kcg_graspgenx_descriptors(
         contract,
         hand,
-        maximum_closure_phase=_MAXIMUM_CLOSURE_PHASE,
+        closure_phase_by_preshape=safe_phase_by_preshape,
         legal_samples_rad=legal,
     )
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -212,6 +221,7 @@ def main() -> int:
             {
                 "descriptor_id": descriptor.descriptor_id,
                 "preshape_f1j1_rad": descriptor.preshape_f1j1_rad,
+                "maximum_closure_phase": descriptor.maximum_closure_phase,
                 "open_joint_positions_rad": dict(descriptor.open_joint_positions_rad),
                 "half_joint_positions_rad": dict(descriptor.half_joint_positions_rad),
                 "close_joint_positions_rad": dict(descriptor.close_joint_positions_rad),
@@ -235,20 +245,35 @@ def main() -> int:
         "collision_roster": str(roster_path.relative_to(root)),
         "collision_roster_sha256": _sha256(roster_path),
         "f1j1_grid_rule": "URDF_LIMIT_10_TO_90_PERCENT_9_UNIFORM",
-        "maximum_closure_phase": _MAXIMUM_CLOSURE_PHASE,
+        "maximum_closure_phase_rule": (
+            "PER_PRESHAPE_LAST_SAMPLED_SELF_COLLISION_FREE_STATE"
+        ),
+        "maximum_closure_phase_range": [
+            min(row.maximum_closure_phase for row in descriptors),
+            max(row.maximum_closure_phase for row in descriptors),
+        ],
         "maximum_joint_increment_rad": _MAXIMUM_JOINT_INCREMENT_RAD,
         "self_collision_backend": "python-fcl-0.7.0.8_via_trimesh",
         "legacy_closure_phase_audit": {
-            "maximum_closure_phase": 0.75,
-            "all_preshapes_pass": all(row["pass"] for row in legacy_audits),
-            "audits": legacy_audits,
+            "maximum_closure_phase": _CLOSURE_SEARCH_UPPER_PHASE,
+            "all_preshapes_pass": all(row["pass"] for row in audits),
+            "audits": audits,
         },
         "sweep_volume_method": "OFFICIAL_WIZARD_INNER_FINGERTIP_SPACE_AABB",
         "canonical_closing_axis": "+X",
         "canonical_origin_rule": (
             "APPROACH_AXIS_AT_MEAN_PROXIMAL_FINGER_JOINT_PLANE"
         ),
-        "self_collision_audits": audits,
+        "self_collision_audits": [
+            row for row in audits
+            if any(
+                np.isclose(
+                    row["preshape_f1j1_rad"], descriptor.preshape_f1j1_rad,
+                    atol=1.0e-12,
+                )
+                for descriptor in descriptors
+            )
+        ],
         "descriptors": rows,
     }
     destination = args.output_dir / "descriptor_manifest.json"

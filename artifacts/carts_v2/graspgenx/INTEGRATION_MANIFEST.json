@@ -1,6 +1,6 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T17:09:51Z",
+  "updated_at_utc": "2026-08-24T20:43:00Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
@@ -58,11 +58,16 @@
     "planner": "graspmoe",
     "random_seed": 20260824,
     "object_sample_point_count": 8192,
+    "object_surface_sample_method": "TRIMESH_ALLOWED_FACE_SAMPLE_EXPLICIT_SEED",
+    "proposal_conditioning_mode": "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD",
+    "proposal_visibility_method": "OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_VISIBILITY",
+    "downstream_collision_geometry_scope": "FULL_REGISTERED_OBJECT_MESH",
+    "collision_scope_claim": "FULL_MESH_IS_USED_BY_DOWNSTREAM_V2_CONTROL_STATE_FCL_NOT_BY_GRASPGENX_PROPOSAL_VISIBILITY",
     "raw_target_per_descriptor_object": 256,
     "keep_per_descriptor_object": 128,
+    "proposal_keep_method": "FIXED_SIX_APPROACH_STRATA_THEN_SCORE_FILL",
+    "merged_keep_method": "DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL",
     "merged_max_per_object": 256,
-    "fast_filter_max_per_object": 64,
-    "expensive_validation_max_per_object": 3,
     "grasp_threshold": -1.0,
     "topk_num_grasps": -1,
     "moe_num_yaws": 36,
@@ -71,7 +76,7 @@
     "moe_outlier_k": 20,
     "moe_obb_mode": "advanced",
     "moe_skip_obb_rule": "auto",
-    "moe_obb_density": "sparse",
+    "moe_obb_density": "dense-topandside",
     "moe_obb_position_spacing_cm": 1.0
   },
   "objects": [
@@ -81,25 +86,71 @@
   "descriptor_count": 5,
   "descriptors": {
     "manifest": "artifacts/carts_v2/graspgenx/descriptors/descriptor_manifest.json",
-    "sha256": "224bf42346d1faf62bb59f49516a89381e4af86e18dd05e973f86ce7cebb3457",
+    "sha256": "694bc74812b8c20cba432b3cc3df0f8c24912c4602718bdd7b84e4358ef43b02",
     "preshape_f1j1_rad": [0.628, 1.413, 0.15700000000000003, 0.9420000000000001, 0.31400000000000006],
-    "maximum_closure_phase": 0.5,
+    "maximum_closure_phase_rule": "PER_PRESHAPE_LAST_SAMPLED_SELF_COLLISION_FREE_STATE",
+    "maximum_closure_phase_range": [
+      0.5214592274678111,
+      0.6909871244635193
+    ],
     "maximum_joint_increment_rad": 0.0015,
-    "self_collision_checked_state_count": 4203,
+    "self_collision_checked_state_count": 2644,
     "self_collision_pass": true,
     "sweep_volume_method": "OFFICIAL_WIZARD_INNER_FINGERTIP_SPACE_AABB",
     "canonical_origin_rule": "APPROACH_AXIS_AT_MEAN_PROXIMAL_FINGER_JOINT_PLANE",
+    "fingertip_reference_rule": "MEAN_OF_PER_PAD_MAXIMUM_PLUS_Z_REGISTERED_ALLOWED_SURFACE_DEPTH",
     "fingertip_depth_range_m": [
-      0.09723491375035985,
-      0.10152684424896292
+      0.11194911155293075,
+      0.11647381616906509
     ],
     "claim_scope": "MODEL_CONDITIONING_ONLY_NOT_COLLISION_PROOF"
   },
   "object_inputs": {
     "manifest": "artifacts/carts_v2/graspgenx/objects/object_manifest.json",
-    "sha256": "7af34586412cc270453da0393dc2c895bebd47109c0f8b5acdda5363b2eea597",
+    "sha256": "968e14c890692d9bc53a488b16a640150528dc93b33bdd9043f8c44064779fb3",
+    "manifest_committed": true,
     "sample_point_count": 8192,
-    "standardized_meshes_committed": false
+    "standardized_meshes_committed": false,
+    "inference_frame": "FROZEN_SCENE_WORLD",
+    "proposal_output_frame": "REGISTERED_OBJECT_LOCAL",
+    "point_cloud_random_seed": 20260824,
+    "proposal_conditioning_mode": "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD",
+    "downstream_collision_geometry_scope": "FULL_REGISTERED_OBJECT_MESH",
+    "point_cloud_hash_by_object": {
+      "current_d38999_26kj61sn_public_spec": "1e2eec0618b21b247378bacedc4b44e892e83c0fa4ccba290f2e395928b17573",
+      "te_deutsch_d38999_26fj35pn_step": "d2a299076315fe1b7e1cf98004c3883dd0d576210ecdb6c8ec5a7a09b3f07658"
+    },
+    "legacy_full_object_point_cloud_hash_by_object_audit_only_not_consumed": {
+      "current_d38999_26kj61sn_public_spec": "3fe94183963e0a176ffd8b3886c704cd16abd1c5e49420f00aed2ff974cda1d6",
+      "te_deutsch_d38999_26fj35pn_step": "6525139f5e4afa5a056fa035e5f5e394cb01beb00a2ee6035945f01812036cb4"
+    },
+    "allowed_face_domain_sha256_by_object": {
+      "current_d38999_26kj61sn_public_spec": "2f7be52f955479bf160d52c603b6bf019fdd735386122f64d4e056ed0141a462",
+      "te_deutsch_d38999_26fj35pn_step": "bb94c34f94afaddf9b8a4ac74e2f0de991e89dc02c18c1b9c7e28cccfe07eebb"
+    },
+    "proposal_sha256_by_object": {
+      "current_d38999_26kj61sn_public_spec": "45db950fb3991fda0569604581d91839c72a179941d3a16b2a4b709a483983a0",
+      "te_deutsch_d38999_26fj35pn_step": "b629d5601249ebf6e8f02f15060e76fccbd0860b30cd61e9cc64eb3d24035aaa"
+    },
+    "proposal_path_by_object": {
+      "current_d38999_26kj61sn_public_spec": "artifacts/carts_v2/graspgenx/proposals_allowed_surface_roi_v1/current_d38999_26kj61sn_public_spec.json",
+      "te_deutsch_d38999_26fj35pn_step": "artifacts/carts_v2/graspgenx/proposals_allowed_surface_roi_v1/te_deutsch_d38999_26fj35pn_step.json"
+    },
+    "exact_repeat_candidate_arrays_pass": null,
+    "exact_repeat_scope": "ROI_PROPOSAL_FILES_HASH_BOUND_BUT_NOT_REGENERATED_TWICE",
+    "proposal_files_committed": true
+  },
+  "pretrained_descriptor_domain_audit": {
+    "status": "PRETRAINED_DESCRIPTOR_EXTRAPOLATION",
+    "kcg_open_sweep_y_range_m": [0.1175, 0.3055],
+    "official_training_descriptor_open_y_max_m": 0.0673,
+    "kcg_open_lateral_offset_nonzero": true,
+    "official_training_open_lateral_offset_zero": true,
+    "learned_diffusion_visible_count_object_a": 44,
+    "learned_diffusion_visible_count_object_b": 41,
+    "learned_diffusion_retained_count_object_a": 26,
+    "learned_diffusion_retained_count_object_b": 26,
+    "claim_limit": "OFFICIAL_GRASPMOE_RUNS_BUT_MOST_RETAINED_KCG_PROPOSALS_ARE_OFFICIAL_OBB_NOT_LEARNED_DIFFUSION"
   },
   "official_positive_control": {
     "status": "OFFICIAL_HEADLESS_POSITIVE_CONTROL_PASS",
@@ -119,6 +170,24 @@
     "output_sha256": "8a421eb7dfdc27b34d4e8402d20ae5b55d4b21ec40c8313d414bcb35bddfdea6",
     "static_visualization_sha256": "9c3248e5256f072a97fe765234d24e94e9fc9a1ecdc29c90516d7f6066f72f39",
     "claim_scope": "OFFICIAL_MODEL_ENVIRONMENT_AND_OUTPUT_ONLY_NOT_CARTS_GRASP_EVIDENCE"
+  },
+  "official_gripper_same_objects_control": {
+    "status": "OFFICIAL_GRIPPER_SAME_OBJECTS_DIFFUSION_CONTROL_COMPLETE",
+    "gripper": "robotiq_3f",
+    "objects": [
+      "current_d38999_26kj61sn_public_spec",
+      "te_deutsch_d38999_26fj35pn_step"
+    ],
+    "random_seed": 20260824,
+    "requested_pose_count_per_object": 256,
+    "finite_pose_count_per_object": 256,
+    "model_load_count": 1,
+    "batch_inference_seconds": 0.37588569000945427,
+    "wall_seconds": 2.7208238869934576,
+    "peak_gpu_allocated_bytes": 652459008,
+    "output": "artifacts/carts_v2/graspgenx/official_gripper_same_objects_control.json",
+    "output_sha256": "a5e8f75040c36d3a2067fc020938e3f9d645652f54e3056c840d65e465212c06",
+    "claim_scope": "OBJECT_INPUT_AND_OFFICIAL_GRIPPER_DOMAIN_DIAGNOSTIC_NOT_KCG_COLLISION_TASK_OR_DYNAMIC_EVIDENCE"
   },
   "evidence_boundaries": {
     "hardware_authorized": false,

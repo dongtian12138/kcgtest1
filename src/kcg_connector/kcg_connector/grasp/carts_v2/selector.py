@@ -34,7 +34,7 @@ def _selected_rows(rows, status: str, top_k: int) -> tuple[SelectedCandidate, ..
                 fast_filter=fast_filter,
                 task_quality=quality,
                 path_minimum_clearance_m=clearance,
-                offline_task_gate_passed=status == "EXECUTABLE_CANDIDATE",
+                offline_task_gate_passed=False,
                 selection_status=status,
             )
         )
@@ -48,8 +48,12 @@ def select_candidate_rankings(
     *,
     top_k: int,
     path_clearance_by_id: Mapping[str, float | None] | None = None,
-) -> tuple[tuple[SelectedCandidate, ...], tuple[SelectedCandidate, ...]]:
-    """Return disjoint executable and diagnostic rankings."""
+) -> tuple[
+    tuple[SelectedCandidate, ...],
+    tuple[SelectedCandidate, ...],
+    tuple[SelectedCandidate, ...],
+]:
+    """Return nominal-task, robust-task, and diagnostic rankings."""
 
     if top_k < 1:
         raise ValueError("top_k must be positive")
@@ -61,7 +65,8 @@ def select_candidate_rankings(
     ):
         raise ValueError("prediction, fast-filter and task-quality sets differ")
     clearances = {} if path_clearance_by_id is None else dict(path_clearance_by_id)
-    executable = []
+    research_task = []
+    formal_task = []
     diagnostic = []
     for candidate_id, quality in quality_by_id.items():
         fast_filter = filter_by_id.get(candidate_id)
@@ -82,13 +87,24 @@ def select_candidate_rankings(
             _minimum_metric(quality.maximum_joint_load_utilization),
             _maximum_metric(clearance),
             _minimum_metric(quality.sensitivity),
+            _maximum_metric(prediction.seed.generator_score),
             candidate_id,
         )
-        destination = executable if quality.status == "TASK_SURVIVE" else diagnostic
-        destination.append((key, prediction, fast_filter, quality, clearance))
+        row = (key, prediction, fast_filter, quality, clearance)
+        if quality.nominal_gravity_lift_balance_pass:
+            research_task.append(row)
+            if quality.status == "TASK_SURVIVE":
+                formal_task.append(row)
+        else:
+            diagnostic.append(row)
 
     return (
-        _selected_rows(executable, "EXECUTABLE_CANDIDATE", top_k),
+        _selected_rows(
+            research_task, "RESEARCH_TASK_ELIGIBLE_NOT_EXECUTABLE", top_k
+        ),
+        _selected_rows(
+            formal_task, "FORMAL_TASK_ELIGIBLE_NOT_EXECUTABLE", top_k
+        ),
         _selected_rows(diagnostic, "DIAGNOSTIC_ONLY_NOT_EXECUTABLE", top_k),
     )
 

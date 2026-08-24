@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 import math
 from pathlib import Path
 from types import MappingProxyType
@@ -28,7 +30,7 @@ from kcg_connector.grasp.robust.object_contract import (
     LoadedObjectContract,
     load_object_contract,
 )
-from kcg_connector.grasp.robust.object_model import load_stl_mesh
+from kcg_connector.grasp.robust.object_model import file_sha256, load_stl_mesh
 
 
 _SCHEMA = "carts_grasp_v2"
@@ -140,6 +142,10 @@ class CandidateSeed:
     pregrasp_joint_positions_rad: tuple[float, ...]
     pregrasp_closure_phases: tuple[float, float, float]
     source_sample_index: int
+    generator_score: float | None = None
+    descriptor_id: str = ""
+    approach_direction_object: tuple[float, float, float] | None = None
+    maximum_closure_phase: float | None = None
 
     def object_from_hand_matrix(self) -> np.ndarray:
         return np.asarray(self.object_from_hand, dtype=np.float64).reshape(4, 4)
@@ -187,7 +193,6 @@ class FastFilterResult:
     first_table_violation_link: str = ""
     first_table_violation_finger_stage: str = ""
 
-
 @dataclass(frozen=True)
 class TaskQualityResult:
     candidate_id: str
@@ -203,7 +208,10 @@ class TaskQualityResult:
     failure_reason: str = ""
     evidence_scope: str = "RESEARCH_OFFLINE_QMC_NOT_FORMAL"
     nominal_balance_infeasible_count: int = 0
-
+    nominal_gravity_lift_balance_pass: bool = False
+    nominal_parameter_task_margin: float | None = None
+    nominal_operation_force_cap_n: float | None = None
+    nominal_balance_failure_reason: str = ""
 
 @dataclass(frozen=True)
 class SelectedCandidate:
@@ -214,7 +222,6 @@ class SelectedCandidate:
     path_minimum_clearance_m: float | None
     offline_task_gate_passed: bool
     selection_status: str
-
 
 @dataclass(frozen=True)
 class ExactValidationResult:
@@ -477,3 +484,67 @@ def load_v2_inputs(
         table_xy_bounds_m=table_bounds,
         table_top_z_m=table_top,
     )
+
+
+def allowed_face_domain_sha256(face_count: int, face_indices: Any) -> str:
+    """Digest one sorted allowed-face domain in the registered face identity."""
+
+    indices = np.asarray(face_indices, dtype="<u8")
+    if (
+        indices.ndim != 1
+        or int(face_count) <= 0
+        or len(indices) == 0
+        or np.any(indices >= int(face_count))
+        or not np.array_equal(indices, np.unique(indices))
+    ):
+        raise ValueError("allowed face domain is invalid")
+    header = np.asarray((int(face_count), len(indices)), dtype="<u8").tobytes()
+    return hashlib.sha256(header + indices.tobytes()).hexdigest()
+
+
+def write_standardized_object_manifest(
+    inputs_by_object: Mapping[str, V2Inputs], output_dir: Path | str,
+    manifest_path: Path | str, sample_point_count: int,
+) -> dict[str, Any]:
+    """Export full SI meshes plus their registered allowed-face identities."""
+
+    count = int(sample_point_count)
+    if count <= 0 or not inputs_by_object:
+        raise ValueError("a positive point count and at least one object are required")
+    destination = Path(output_dir).resolve()
+    destination.mkdir(parents=True, exist_ok=True)
+    rows = []
+    for object_id, inputs in sorted(inputs_by_object.items()):
+        if object_id != inputs.object_contract.object_id:
+            raise ValueError("object manifest key differs from object identity")
+        mesh = inputs.object_contract.model.mesh
+        allowed = inputs.face_roles.allowed_face_indices
+        path = destination / f"{object_id}.npz"
+        np.savez_compressed(
+            path, faces=np.asarray(mesh.faces), vertices_m=np.asarray(mesh.vertices_m),
+            allowed_face_indices=np.asarray(allowed, dtype=np.int64),
+        )
+        rows.append({
+            "object_id": object_id,
+            "source_mesh_sha256": inputs.object_contract.model.provenance.source_sha256,
+            "standardized_mesh_npz": str(path),
+            "standardized_mesh_sha256": file_sha256(path),
+            "sample_point_count": count, "length_unit": "m",
+            "vertex_count": int(len(mesh.vertices_m)), "face_count": int(len(mesh.faces)),
+            "allowed_face_count": int(len(allowed)),
+            "allowed_surface_area_m2": float(inputs.face_roles.allowed_area_m2),
+            "allowed_face_domain_sha256": allowed_face_domain_sha256(len(mesh.faces), allowed),
+            "face_role_method": inputs.face_roles.method,
+            "inference_frame": "FROZEN_SCENE_WORLD",
+            "inference_from_object_row_major": [
+                float(value) for value in inputs.frozen_world_from_object.ravel()
+            ],
+        })
+    payload = {"schema_version": "graspgenx_carts_objects_v1", "objects": rows}
+    manifest = Path(manifest_path).resolve()
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(
+        json.dumps(payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    return payload

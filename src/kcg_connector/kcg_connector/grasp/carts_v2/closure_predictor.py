@@ -227,7 +227,13 @@ class SequentialClosurePredictor:
             return self._failure(seed, phases, initial_clearance, "INITIAL_PAD_TOO_CLOSE")
 
         contacts: list[PredictedContact] = []
-        maximum = float(generation["maximum_closure_phase"])
+        maximum = (
+            float(generation["maximum_closure_phase"])
+            if seed.maximum_closure_phase is None
+            else float(seed.maximum_closure_phase)
+        )
+        if not 0.0 < maximum <= float(generation["maximum_closure_phase"]):
+            raise ValueError("candidate closure phase exceeds the configured ceiling")
         contact_distance = float(settings["contact_distance_m"])
         sample_count = int(settings["phase_sample_count"])
         for pad_name in settings["closing_order"]:

@@ -156,7 +156,9 @@ def gravity_biased_arm_target(
     }
 
 
-def _solve_approach_waypoints(inputs, model, settings, hand, target):
+def _solve_approach_waypoints(
+    inputs, model, settings, hand, target, approach_direction_world
+):
     clearance = float(
         inputs.config.section("dynamic")["approach_clearance_height_m"]
     )
@@ -166,9 +168,13 @@ def _solve_approach_waypoints(inputs, model, settings, hand, target):
     previous = None
     first_seed = None
     last_seed = None
+    direction = np.asarray(approach_direction_world, dtype=np.float64)
+    norm = float(np.linalg.norm(direction))
+    if direction.shape != (3,) or not np.isfinite(norm) or abs(norm - 1.0) > 1.0e-6:
+        raise ValueError("approach direction must be one finite unit vector")
     for index, fraction in enumerate(np.linspace(1.0, 0.0, count)):
         path_target = np.array(target, copy=True)
-        path_target[2, 3] += clearance * float(fraction)
+        path_target[:3, 3] -= direction * clearance * float(fraction)
         keyword = {} if previous is None else {"seed_arm_positions": (previous,)}
         previous, position_error, orientation_error, seed_index = (
             solve_bounded_hand_base_ik(
@@ -235,9 +241,17 @@ def build_joint_motion_plan(
     )
     model = inputs.robot_model
     solver_settings = inputs.config.section("ik")["solver"]
+    direction_object = control_plan.get("approach_direction_object")
+    approach_direction_world = (
+        np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
+        if direction_object is None
+        else world_from_object_matrix[:3, :3]
+        @ np.asarray(direction_object, dtype=np.float64)
+    )
     approach_rows, approach_errors, approach_seed, seed_index = (
         _solve_approach_waypoints(
-            inputs, model, solver_settings, pregrasp_hand, target
+            inputs, model, solver_settings, pregrasp_hand, target,
+            approach_direction_world,
         )
     )
     arm = approach_rows[-1]
@@ -254,6 +268,9 @@ def build_joint_motion_plan(
         "final_hand_positions_rad": final_hand,
         "lift_arm_waypoints_rad": tuple(lift_rows),
         "world_from_hand_base_target": tuple(float(v) for v in target.ravel()),
+        "approach_direction_world": tuple(
+            float(value) for value in approach_direction_world
+        ),
         "approach_seed_index": approach_seed,
         "pregrasp_seed_index": seed_index,
         "maximum_ik_position_error_m": max(row[0] for row in lift_errors),
