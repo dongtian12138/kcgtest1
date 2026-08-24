@@ -269,6 +269,24 @@ class TruthAuditRecorder:
         self.table_top_z_m = float(table_top_z_m)
         self.physics_dt_s = float(physics_dt_s)
         self.samples: list[dict[str, object]] = []
+        self._event_headers: list[tuple[tuple[str, ...], int]] = []
+        self._contact_report_subscription = contact_interface.subscribe_contact_report_events(
+            self._on_contact_report
+        )
+
+    def _decode_headers(self, headers) -> list[tuple[tuple[str, ...], int]]:
+        return [
+            (
+                tuple(str(self.path_decoder(value)) for value in (
+                    header.actor0, header.actor1, header.collider0, header.collider1
+                )),
+                int(header.num_contact_data),
+            )
+            for header in headers
+        ]
+
+    def _on_contact_report(self, headers, _contact_data) -> None:
+        self._event_headers.extend(self._decode_headers(headers))
 
     def _hand_pose(self) -> tuple[list[float], list[float]]:
         matrix = self.UsdGeom.Xformable(
@@ -291,21 +309,34 @@ class TruthAuditRecorder:
             "robot_object_unauthorized": 0,
             "robot_table": 0,
             "robot_fixture": 0,
+            "robot_unclassified": 0,
             "object_table": 0,
+            "event_header_count": 0,
+            "event_contact_data_count": 0,
+            "poll_header_count": 0,
+            "poll_contact_data_count": 0,
+            "contact_report_channels_agree": True,
+            "event_headers": [],
+            "poll_headers": [],
             "examples": {},
         }
         headers, _, _ = self.contact_interface.get_full_contact_report()
-        for header in headers:
-            paths = tuple(
-                str(self.path_decoder(value))
-                for value in (
-                    header.actor0,
-                    header.actor1,
-                    header.collider0,
-                    header.collider1,
-                )
-            )
-            records = int(header.num_contact_data)
+        polled = self._decode_headers(headers)
+        events, self._event_headers = self._event_headers, []
+        result.update({
+            "event_header_count": len(events),
+            "event_contact_data_count": sum(row[1] for row in events),
+            "poll_header_count": len(polled),
+            "poll_contact_data_count": sum(row[1] for row in polled),
+            "event_headers": [{"paths": list(row[0]), "records": row[1]} for row in events],
+            "poll_headers": [{"paths": list(row[0]), "records": row[1]} for row in polled],
+        })
+        event_map, poll_map = dict(events), dict(polled)
+        result["contact_report_channels_agree"] = event_map == poll_map
+        combined = poll_map | {
+            paths: max(records, poll_map.get(paths, 0)) for paths, records in events
+        }
+        for paths, records in combined.items():
             has_robot = any(_below(path, self.roots["robot"]) for path in paths)
             has_object = any(_below(path, self.roots["object"]) for path in paths)
             has_table = any(_below(path, self.roots["table"]) for path in paths)
@@ -318,6 +349,9 @@ class TruthAuditRecorder:
             if has_robot and has_fixture:
                 result["robot_fixture"] += records
                 result["examples"].setdefault("robot_fixture", list(paths))
+            if has_robot and not (has_object or has_table or has_fixture):
+                result["robot_unclassified"] += records
+                result["examples"].setdefault("robot_unclassified", list(paths))
             if not (has_robot and has_object):
                 continue
             terminal_hits = [
@@ -478,13 +512,18 @@ def _contact_metrics(samples, grasped) -> dict[str, object]:
         ),
         "examples": examples,
         "terminal_examples": terminal_examples,
+        "channels_agree": all(
+            row["contacts"].get("contact_report_channels_agree") is True
+            for row in samples
+        ),
     }
 
 
 def _safety_metrics(samples, criteria) -> dict[str, object]:
     unauthorized = {
         key: sum(row["contacts"][key] for row in samples)
-        for key in ("robot_object_unauthorized", "robot_table", "robot_fixture")
+        for key in ("robot_object_unauthorized", "robot_table", "robot_fixture",
+                    "robot_unclassified")
     }
     overall_penetration = max(
         0.0, -min(float(row["object_bottom_clearance_m"]) for row in samples)
@@ -568,6 +607,7 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
         control_complete,
         safety["collision_pass"],
         safety["penetration_pass"],
+        document.get("contact_report_api_audit", {}).get("complete") is True,
     )
     controller_preflight_pass = bool(
         document["mode"] == "preflight"
@@ -585,9 +625,19 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
     )
     pad_identity = bool(document.get("pad_surface_identity_verified", False))
     first_hold = [row for row in samples if row["phase"] == "finger_1_hold"]
+    confirmation = next((index for index, row in enumerate(samples)
+                         if row["phase"] == "finger_1_contact_confirmed"), None)
+    evidence = [] if confirmation is None else samples[max(
+        0, confirmation - int(criteria["sustained_three_contact_samples"])):confirmation]
+    first_contact = evidence + [row for row in samples if row["phase"] in (
+        "finger_1_contact_confirmed", "finger_1_contact_settle", "finger_1_hold")]
     proxy, terminal = (bool(document["controller_outcome"].get("contact_targets_rad")),
-                       any(row["contacts"]["terminal_link_object"][0] > 0 for row in first_hold))
-    contact_class = ("NO_CONTACT_PROXY" if not proxy else "FALSE_CONTACT_PROXY" if not terminal
+                       any(row["contacts"]["terminal_link_object"][0] > 0 for row in first_contact))
+    witness_complete = document.get("contact_report_api_audit", {}).get("complete") is True
+    contact_class = ("NO_CONTACT_PROXY" if not proxy else
+                     "UNRESOLVED_CONTACT_REPORT_API_COVERAGE" if not witness_complete else
+                     "UNRESOLVED_CONTACT_REPORT_DISAGREEMENT" if not contacts["channels_agree"] else
+                     "FALSE_CONTACT_PROXY" if not terminal
                      else "UNRESOLVED_TERMINAL_LINK_CONTACT_PATCH" if not pad_identity else "ALLOWED_PAD_CONTACT")
     pregrasp_hand = document.get("motion_plan", {}).get("pregrasp_hand_positions_rad")
     only_first = bool(len(document["controller_outcome"].get("contact_targets_rad", ())) == 1 and pregrasp_hand is not None and all(np.allclose(row["active_targets_rad"][9:], pregrasp_hand[2:], atol=1.0e-12, rtol=0.0) for row in first_hold))
@@ -631,6 +681,8 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
         "unauthorized_contact_records": safety["unauthorized"],
         "first_unauthorized_contact_paths": contacts["examples"],
         "first_terminal_link_object_paths": contacts["terminal_examples"],
+        "contact_report_channels_agree": contacts["channels_agree"],
+        "contact_report_api_complete": witness_complete,
         "first_finger_contact_classification": contact_class,
         "first_finger_hold_duration_s": len(first_hold) * physics_dt_s,
         "first_finger_maximum_target_delta_rad": document["controller_outcome"].get("maximum_finger_target_delta_rad"), "only_first_finger_commanded": only_first,

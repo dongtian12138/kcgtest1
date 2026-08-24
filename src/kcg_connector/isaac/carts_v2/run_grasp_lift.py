@@ -474,9 +474,16 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
         trace["accepted_preflight_evaluation_sha256"] = file_sha256(
             arguments.preflight_evaluation_path)
     add_reference_to_stage(str(robot_asset), ROBOT_ROOT)
+    rigid_body_prims, contact_report_prims = [], []
     for prim in stage.Traverse():
         if prim.HasAPI(UsdPhysics.RigidBodyAPI):
+            rigid_body_prims.append(str(prim.GetPath()))
             PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr().Set(0.0)
+            contact_report_prims.append(str(prim.GetPath()))
+    trace["contact_report_api_audit"] = {
+        "before_reset_rigid_body_paths": rigid_body_prims,
+        "before_reset_reporter_paths": contact_report_prims,
+    }
     hand_base_prim = stage.GetPrimAtPath(HAND_BASE_PATH)
     if not hand_base_prim.IsValid():
         raise RuntimeError("hand base prim is missing")
@@ -488,6 +495,16 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
     )
     context.set_gravity(float(scene["gravity_m_s2"]))
     world.reset()
+    after_rigid = [str(prim.GetPath()) for prim in stage.Traverse()
+                   if prim.HasAPI(UsdPhysics.RigidBodyAPI)]
+    after_reporters = [str(prim.GetPath()) for prim in stage.Traverse()
+                       if prim.HasAPI(PhysxSchema.PhysxContactReportAPI)]
+    trace["contact_report_api_audit"].update({
+        "after_reset_rigid_body_paths": after_rigid,
+        "after_reset_reporter_paths": after_reporters,
+        "complete": (set(rigid_body_prims) == set(contact_report_prims)
+                     == set(after_rigid) == set(after_reporters)),
+    })
     backend = gpu_backend_record(world, context)
     if not backend["pass"]:
         raise RuntimeError(f"GPU physics backend audit failed: {backend}")

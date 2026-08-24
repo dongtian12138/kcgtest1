@@ -50,12 +50,14 @@ def _accepted_document() -> dict[str, object]:
 def _preflight_trace() -> dict[str, object]:
     contacts = {
         "terminal_link_object": [0, 0, 0], "robot_object_unauthorized": 0,
-        "robot_table": 0, "robot_fixture": 0, "object_table": 1, "examples": {},
+        "robot_table": 0, "robot_fixture": 0, "robot_unclassified": 0,
+        "object_table": 1, "contact_report_channels_agree": True, "examples": {},
     }
     return {
         "mode": "preflight", "object_id": "A", "candidate_id": "candidate_11",
         "physics_dt_s": 1.0 / 120.0, "offline_task_gate_passed": False,
         "identity_hash_check_pass": True, "pad_surface_identity_verified": False,
+        "contact_report_api_audit": {"complete": True},
         "controller_outcome": {"completed": True, "failure_reason": None},
         "criteria": {
             "maximum_table_penetration_m": 5.0e-5, "lift_distance_m": 0.05,
@@ -153,6 +155,13 @@ def test_first_finger_proxy_fails_closed_without_pad_contact() -> None:
     false_proxy = evaluate_trace(document)
     assert false_proxy["first_finger_contact_classification"] == "FALSE_CONTACT_PROXY"
     assert false_proxy["first_finger_diagnostic_pass"] is False
+    trigger_only = deepcopy(document)
+    trigger, confirmed = deepcopy(hold), deepcopy(hold)
+    trigger["phase"], confirmed["phase"] = "finger_1_approach", "finger_1_contact_confirmed"
+    trigger["contacts"]["terminal_link_object"] = [1, 0, 0]
+    trigger["contacts"]["terminal_link_object_examples"] = [["f1Link3", "object"], None, None]
+    trigger_only["samples"][1:1] = [trigger, confirmed]
+    assert evaluate_trace(trigger_only)["first_finger_contact_classification"] == "UNRESOLVED_TERMINAL_LINK_CONTACT_PATCH"
     for row in document["samples"][1:]:
         row["contacts"]["terminal_link_object"] = [1, 0, 0]
         row["contacts"]["terminal_link_object_examples"] = [["f1Link3", "object"], None, None]
@@ -160,6 +169,10 @@ def test_first_finger_proxy_fails_closed_without_pad_contact() -> None:
     assert unresolved["first_finger_contact_classification"] == "UNRESOLVED_TERMINAL_LINK_CONTACT_PATCH"
     assert unresolved["first_terminal_link_object_paths"][0] == ["f1Link3", "object"]
     assert unresolved["only_first_finger_commanded"] is True
+    document["samples"][-1]["contacts"]["robot_unclassified"] = 1
+    assert evaluate_trace(document)["unauthorized_contact_records"]["robot_unclassified"] == 1
+    document["samples"][-1]["contacts"]["contact_report_channels_agree"] = False
+    assert evaluate_trace(document)["first_finger_contact_classification"] == "UNRESOLVED_CONTACT_REPORT_DISAGREEMENT"
     missing_signal = deepcopy(document)
     del missing_signal["samples"][-1]["arm_control"]["f1_mimic_diagnostic"]["f1j3"]["equivalent_effort_nm"]
     assert evaluate_trace(missing_signal)["finite_throughout"] is False

@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T11:17:00Z",
+  "updated_at_utc": "2026-08-24T11:27:38Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,7 +8,7 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_CONTACT_WITNESS_UNCLASSIFIED_PATHS",
+  "current_milestone": "V2_CONTACT_WITNESS_SOURCE_BOUND_PREFLIGHT",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -25,8 +25,8 @@
     "prior_pause_at_utc": "2026-08-24T09:36:16Z",
     "prior_pause_reason": "OBJECT_A_F1J3_SPEED_ABORT_AFTER_TWO_EVIDENCED_FIX_ATTEMPTS",
     "prior_pause_reclassified_as": "ROOT_CAUSE_REVIEW",
-    "active_execution_elapsed_s": 8593,
-    "remaining_active_budget_s": 6707,
+    "active_execution_elapsed_s": 9231,
+    "remaining_active_budget_s": 6069,
     "resumed_at_utc": "2026-08-24T10:16:54Z",
     "resume_wall_deadline_utc": "2026-08-24T13:08:47Z",
     "stop_reason": null
@@ -64,9 +64,9 @@
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
-    "allowed": false,
-    "scope": "CONTACT_WITNESS_INSTRUMENTATION_ONLY",
-    "reason": "Exact-target isolated replay was stable; complete scene interaction is necessary, so unclassified robot contacts must be made visible before another source-bound preflight"
+    "allowed": true,
+    "scope": "OBJECT_A_CONTACT_WITNESS_SOURCE_BOUND_PREFLIGHT_ONLY",
+    "reason": "Dual-channel contact witness and fail-closed rigid-body coverage tests pass; a new-source accepted preflight is required before repeating first-finger closure"
   },
   "first_finger_diagnostic_instrumentation": {
     "mode": "first-finger-diagnostic",
@@ -79,6 +79,23 @@
     "whole_terminal_link_does_not_verify_pad_patch": true,
     "targeted_test_functions_passed": 14,
     "production_net_new_lines_since_root_cause_review": 119
+  },
+  "contact_witness_instrumentation": {
+    "event_callback_recorded_postrun_only": true,
+    "post_step_polling_retained": true,
+    "channels_stored_separately_and_union_classified": true,
+    "channel_disagreement_is_unresolved": true,
+    "robot_unclassified_is_unauthorized": true,
+    "rigid_body_reporter_sets_must_match_before_and_after_reset": true,
+    "first_finger_evidence_window_includes_preconfirmation_samples": 6,
+    "whole_terminal_link_does_not_verify_pad_patch": true,
+    "targeted_tests_passed": 14,
+    "contact_witness_net_text_lines": 69,
+    "total_production_net_text_lines_since_root_cause_review": 189,
+    "contact_witness_net_nloc": 67,
+    "total_production_net_nloc_since_root_cause_review": 186,
+    "recovery2_source_limit": 250,
+    "online_truth_returned_to_controller": false
   },
   "object_a_bumpless_source_preflight": {
     "run_id": "A_candidate11_bumpless_source_preflight",
