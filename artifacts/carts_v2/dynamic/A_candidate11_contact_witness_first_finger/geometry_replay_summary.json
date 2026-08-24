@@ -1,0 +1,56 @@
+{
+  "schema_version": "carts_v2_recorded_joint_geometry_replay_v1",
+  "created_at_utc": "2026-08-24T11:46:11Z",
+  "object_id": "current_d38999_26kj61sn_public_spec",
+  "candidate_id": "candidate_11",
+  "hardware_authorized": false,
+  "formal_dynamic_pass": false,
+  "research_dynamic_pass": false,
+  "method": {
+    "joint_source": "RECORDED_ACTIVE_JOINT_POSITIONS_STEPS_1078_THROUGH_1102",
+    "kinematics": "REGISTERED_AGGREGATE_ROBOT_FORWARD_KINEMATICS",
+    "hand_geometry": "AUTHORITATIVE_COLLISION_ROSTER_TRIANGLE_VERTICES_AND_CENTROIDS",
+    "object_geometry": "REGISTERED_OBJECT_MESH_LOCAL_NEAREST_TRIANGLES",
+    "table_geometry": "REGISTERED_FINITE_TABLE_TOP_PLANE",
+    "planned_closure_samples": 401,
+    "pad_surface_samples": 1024,
+    "online_truth_returned_to_controller": false
+  },
+  "recorded_trace_findings": {
+    "first_negative_table_gap_step": 1083,
+    "first_negative_table_gap_link": "f1Link3",
+    "first_negative_table_gap_m": -0.000025,
+    "proxy_confirmation_evidence_step": 1088,
+    "proxy_step_f1j2_position_rad": 0.3728076219558716,
+    "proxy_step_f1link3_table_gap_m": -0.000220,
+    "proxy_step_pad_object_distance_m": 0.041873,
+    "proxy_step_pad_nearest_object_face_allowed": true,
+    "object_maximum_translation_during_evidence_window_m": 0.000001495,
+    "object_maximum_orientation_change_during_evidence_window_rad": 0.00008750
+  },
+  "planned_closure_sweep_findings": {
+    "start_f1j2_rad": 0.251334,
+    "end_f1j2_rad": 0.6492795,
+    "first_table_crossing_phase": 0.2875,
+    "first_table_crossing_f1j2_rad": 0.365743331,
+    "first_table_crossing_gap_m": -0.000011203,
+    "minimum_table_gap_phase": 0.5375,
+    "minimum_table_gap_f1j2_rad": 0.465229706,
+    "minimum_table_gap_m": -0.001838040,
+    "endpoint_table_gap_m": 0.004233288,
+    "endpoint_pad_object_distance_m": 0.000007518,
+    "fast_filter_table_penetration_tolerance_m": 0.00001,
+    "fast_filter_sampling_scope": "PREGRASP_APPROACH_AND_CONTACT_STOP_ENDPOINTS_ONLY"
+  },
+  "classification": "INTERMEDIATE_FINGER_CLOSURE_HAND_TABLE_SWEEP_MISSED_BY_ENDPOINT_ONLY_FAST_FILTER",
+  "decision": "REJECT_CANDIDATE_11_DYNAMIC_PATH_UNDER_FROZEN_SCOPE",
+  "evidence_limit": "OFFLINE_REGISTERED_GEOMETRY_REPLAY_NOT_PHYSX_CONTACT_IMPULSE_OR_FORMAL_CONTINUOUS_CERTIFICATE",
+  "bindings": {
+    "config_sha256": "c41e10936effd08d4c8044dfe79861e479ac751f32453ef5d12ee5b785a948f7",
+    "offline_result_sha256": "828569feb92d3b6f28d6c25da91038612af579400bafcd1838d32b209cfeb483",
+    "collision_roster_sha256": "e0d020f7d32792dd0a55430011eaf40895d85f8a0d1619bdc54a762f78bc3bd9",
+    "scene_sha256": "99b2dfec9a4b96ecacaff559e32d9605d74227cdbe13baaf9c954a0e74a3b809",
+    "evaluation_sha256": "b11f6e22d6f7f1112552027e42823368ff04dc845b27843cfef612cd7875d281",
+    "trace_sha256": "57d9a0f76f31944e6011b56e22a5fea5770e9d3f304f86c18af41d8d0143de25"
+  }
+}

@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T11:32:16Z",
+  "updated_at_utc": "2026-08-24T11:46:11Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
   "config_sha256": "c41e10936effd08d4c8044dfe79861e479ac751f32453ef5d12ee5b785a948f7",
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "IMPLEMENTING",
-  "current_milestone": "V2_OBJECT_A_FIRST_FINGER_CONTACT_WITNESS_DIAGNOSTIC",
+  "status": "PARKED",
+  "current_milestone": "V2_RECOVERY2_CLOSED_UNSAFE_INTERMEDIATE_FINGER_TABLE_SWEEP",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -25,11 +25,12 @@
     "prior_pause_at_utc": "2026-08-24T09:36:16Z",
     "prior_pause_reason": "OBJECT_A_F1J3_SPEED_ABORT_AFTER_TWO_EVIDENCED_FIX_ATTEMPTS",
     "prior_pause_reclassified_as": "ROOT_CAUSE_REVIEW",
-    "active_execution_elapsed_s": 9509,
-    "remaining_active_budget_s": 5791,
+    "active_execution_elapsed_s": 10344,
+    "remaining_active_budget_s": 4956,
     "resumed_at_utc": "2026-08-24T10:16:54Z",
     "resume_wall_deadline_utc": "2026-08-24T13:08:47Z",
-    "stop_reason": null
+    "stopped_at_utc": "2026-08-24T11:46:11Z",
+    "stop_reason": "OBJECT_A_CANDIDATE11_INTERMEDIATE_F1LINK3_TABLE_SWEEP_REQUIRES_FROZEN_PATH_CHANGE"
   },
   "git_delivery": {
     "workspace_git_directory_writable": true,
@@ -64,9 +65,9 @@
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
-    "allowed": true,
-    "scope": "OBJECT_A_CANDIDATE11_CONTACT_WITNESS_FIRST_FINGER_ONLY",
-    "reason": "New-source preflight accepted complete ContactReportAPI coverage, agreeing dual channels, engine health and identity binding; only the bounded first-finger contact witness diagnostic is allowed"
+    "allowed": false,
+    "scope": "NONE",
+    "reason": "Registered geometry replay proves candidate_11 has an unauthorized intermediate f1Link3 table sweep; candidate, fast filter and path are frozen in this window"
   },
   "first_finger_diagnostic_instrumentation": {
     "mode": "first-finger-diagnostic",
@@ -133,6 +134,64 @@
     "trace_committed": false,
     "first_finger_diagnostic_binding_allowed": true,
     "grasp_lift_binding_allowed": false
+  },
+  "object_a_contact_witness_first_finger_diagnostic": {
+    "run_id": "A_candidate11_contact_witness_first_finger",
+    "artifact": "artifacts/carts_v2/dynamic/A_candidate11_contact_witness_first_finger/evaluation.json",
+    "accepted_preflight_bound": true,
+    "physics_time_advanced_s": 9.191666666666666,
+    "controller_completed": false,
+    "failure_reason": "JOINT_SPEED_ABORT",
+    "failure_step": 1102,
+    "failure_phase": "finger_1_contact_settle",
+    "maximum_target_delta_rad": 0.0015000000000000013,
+    "maximum_f1j2_speed_rad_s": 2.8021371364593506,
+    "maximum_f1j3_speed_rad_s": 4.1243085861206055,
+    "maximum_mimic_position_error_rad": 0.021295487880706787,
+    "maximum_mimic_velocity_error_rad_s": 3.3554370403289795,
+    "maximum_absolute_hand_effort_nm": 0.45329901576042175,
+    "first_finger_contact_classification": "FALSE_CONTACT_PROXY",
+    "first_finger_hold_duration_s": 0,
+    "terminal_link_object_records": 0,
+    "pad_surface_identity_verified": false,
+    "contact_report_api_complete": true,
+    "event_contact_header_total": 0,
+    "poll_contact_header_total": 0,
+    "contact_report_positive_control_present": false,
+    "maximum_object_translation_during_evidence_window_m": 0.000001495,
+    "maximum_object_orientation_change_during_evidence_window_rad": 0.00008750,
+    "maximum_lift_m": 0,
+    "table_release_observed": false,
+    "physx_capacity_warning_count": 0,
+    "physx_error_count": 0,
+    "evaluation_sha256": "b11f6e22d6f7f1112552027e42823368ff04dc845b27843cfef612cd7875d281",
+    "evaluation_size_bytes": 5659,
+    "trace_sha256": "57d9a0f76f31944e6011b56e22a5fea5770e9d3f304f86c18af41d8d0143de25",
+    "trace_size_bytes": 6735153,
+    "trace_committed": false,
+    "first_finger_diagnostic_pass": false,
+    "full_object_a_allowed": false
+  },
+  "object_a_candidate11_geometry_replay": {
+    "artifact": "artifacts/carts_v2/dynamic/A_candidate11_contact_witness_first_finger/geometry_replay_summary.json",
+    "artifact_sha256": "bdb19c3cb5b63bfa231b289fb64541fd087ac481ff078a500142eb8f1f42b078",
+    "method": "RECORDED_JOINT_FK_REGISTERED_COLLISION_MESH_AND_401_SAMPLE_PLANNED_CLOSURE",
+    "first_observed_table_penetration_step": 1083,
+    "first_observed_table_penetration_m": 0.000025,
+    "proxy_step": 1088,
+    "proxy_step_f1link3_table_penetration_m": 0.000220,
+    "proxy_step_pad_object_distance_m": 0.041873,
+    "planned_first_table_crossing_f1j2_rad": 0.365743331,
+    "planned_maximum_table_penetration_m": 0.001838040,
+    "planned_endpoint_table_clearance_m": 0.004233288,
+    "planned_endpoint_pad_object_distance_m": 0.000007518,
+    "fast_filter_table_penetration_tolerance_m": 0.00001,
+    "classification": "INTERMEDIATE_FINGER_CLOSURE_HAND_TABLE_SWEEP_MISSED_BY_ENDPOINT_ONLY_FAST_FILTER",
+    "academic_supervisor": "APPROVE_STOP_FULL_A",
+    "complexity_supervisor": "REJECT_CONTINUED_DYNAMIC_AND_WITHDRAW_FILTERED_PAIRS_EXPERIMENT",
+    "candidate_11_dynamic_path_accepted": false,
+    "object_b_allowed": false,
+    "evidence_limit": "OFFLINE_REGISTERED_GEOMETRY_REPLAY_NOT_PHYSX_CONTACT_IMPULSE_OR_FORMAL_CONTINUOUS_CERTIFICATE"
   },
   "object_a_bumpless_source_preflight": {
     "run_id": "A_candidate11_bumpless_source_preflight",
@@ -660,7 +719,7 @@
       "uncommitted_gpu_object_route_reverted": true
     }
   },
-  "evidence_level": "OFFLINE_ALGORITHM_WITH_RESEARCH_DYNAMIC_FAILURE_EVIDENCE",
+  "evidence_level": "OFFLINE_REGISTERED_GEOMETRY_WITH_RESEARCH_DYNAMIC_FAILURE_EVIDENCE",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -681,8 +740,9 @@
     "final_full_regression_duration_s": 982.86
   },
   "blockers": [
-    "UNRESOLVED_CONTACT_SETTLE_F1J3_FOLLOWER_INSTABILITY",
-    "FALSE_CONTACT_PROXY_WITH_INCOMPLETE_CONTACT_REPORTER_EVIDENCE",
+    "INTERMEDIATE_FINGER_CLOSURE_HAND_TABLE_SWEEP_MISSED_BY_ENDPOINT_ONLY_FAST_FILTER",
+    "PHYSX_CONTACT_REPORT_HAS_NO_POSITIVE_OBJECT_TABLE_WITNESS",
+    "CONTACT_SETTLE_F1J3_SPEED_ABORT_IS_NOT_PROVEN_UNIQUE_TO_TABLE_IMPULSE",
     "DYNAMIC_THREE_PAD_CONTACT_NOT_ACHIEVED",
     "OBJECT_A_LIFT_50MM_AND_HOLD_2S_NOT_REACHED",
     "OBJECT_B_NOT_RUN_BECAUSE_OBJECT_A_GATE_FAILED",
