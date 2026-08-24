@@ -41,8 +41,11 @@ def test_settle_uses_bounded_effort_correction_before_next_finger() -> None:
     controller.step(measured, [0.0, -0.094812326, 0.0, 0.0], 0.0015)
     confirmed = controller.target.copy()
     controller.step(measured, [0.0] * 4, 0.0015)
+    low = controller.step(measured, [0.0, 0.002, 0.0, 0.0], 0.0015)
+    assert controller.state == "CONTACT_SETTLE"
+    assert 0.0 <= low[1] - confirmed[1] <= 0.0015 + 1.0e-12
     settled = controller.step(measured, [0.0, 0.10, 0.0, 0.0], 0.0015)
-    assert abs((confirmed[1] - settled[1]) - 0.0015) <= 1.0e-12
+    assert abs(settled[1] - confirmed[1]) <= 1.0e-12
     assert controller.state == "CONTACT_SETTLE"
     held = controller.step(measured, [0.0, 0.02, 0.0, 0.0], 0.0015)
     assert controller.state == "HOLD"

@@ -326,12 +326,13 @@ class SequentialEffortContactController:
 
     def _effort_adjust(self, index, measured_effort, maximum_increment):
         direction = float(np.sign(self.goal[index] - self.start[index]))
-        effort_error = self.effort_rise_nm - abs(float(measured_effort[index]))
+        measured = abs(float(measured_effort[index]))
+        effort_error = self.effort_rise_nm - measured
         raw_change = direction * effort_error / self.hand_stiffness
         change = np.clip(raw_change, -maximum_increment, maximum_increment)
         lower, upper = sorted((self.start[index], self.goal[index]))
         self.target[index] = np.clip(self.target[index] + change, lower, upper)
-        return abs(raw_change) <= maximum_increment
+        return measured >= self.effort_rise_nm and abs(raw_change) <= maximum_increment
 
     def step(
         self,
