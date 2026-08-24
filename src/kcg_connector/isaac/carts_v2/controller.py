@@ -297,9 +297,7 @@ class SequentialEffortContactController:
         self.consecutive_samples = int(consecutive_samples)
         self.endpoint_timeout_samples = int(endpoint_timeout_samples)
         self.finger_order = (1, 2, 3)
-        self.active_finger = 0
-        self._evidence_count = 0
-        self._endpoint_count = 0
+        self.active_finger = self._evidence_count = self._endpoint_count = 0
         self._contact_targets: list[float] = []
         self.failure_reason: str | None = None
 
@@ -323,6 +321,8 @@ class SequentialEffortContactController:
     ) -> np.ndarray:
         if self.complete or self.failed:
             return self.target.copy()
+        for completed in self.finger_order[:self.active_finger]:
+            self.target[completed] = float(measured_position[completed])
         index = self.finger_order[self.active_finger]
         remaining = self.goal[index] - self.target[index]
         increment = math.copysign(

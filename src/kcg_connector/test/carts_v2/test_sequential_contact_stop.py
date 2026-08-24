@@ -24,8 +24,9 @@ def test_confirmed_contact_removes_residual_position_push() -> None:
     assert target[1] == 0.03
     assert controller.contact_targets_rad == (0.03,)
     next_target = controller.step(
-        measured_position=target, measured_effort_delta=[0.0] * 4,
+        measured_position=[0.0, 0.035, 0.0, 0.0], measured_effort_delta=[0.0] * 4,
         maximum_increment_rad=0.1,
     )
-    assert next_target[1] == 0.03
+    assert next_target[1] == 0.035
     assert next_target[2] == 0.1
+    assert controller.contact_targets_rad == (0.03,)
