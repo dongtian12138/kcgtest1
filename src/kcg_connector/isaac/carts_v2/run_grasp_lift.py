@@ -15,12 +15,21 @@ import numpy as np
 
 if __package__:
     from . import controller as control
-    from .evaluate_run import TruthAuditRecorder, evaluate_trace
+    from .evaluate_run import (
+        IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
+        audit_mimic_schema, compare_reference_targets,
+        evaluate_isolated_hand_trace, evaluate_trace,
+    )
 else:
     import controller as control
-    from evaluate_run import TruthAuditRecorder, evaluate_trace
+    from evaluate_run import (
+        IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
+        audit_mimic_schema, compare_reference_targets,
+        evaluate_isolated_hand_trace, evaluate_trace,
+    )
 from kcg_connector.grasp.carts_v2.models import load_v2_inputs
 from kcg_connector.grasp.robust.object_model import file_sha256
+from kcg_connector.robot_model import MIMIC_HAND_JOINTS
 
 
 ROBOT_ROOT = "/World/HandArm"
@@ -32,8 +41,6 @@ HAND_BASE_PATH = ARTICULATION_PATH + (
 EXPECTED_DOF_NAMES = control.ARM_JOINT_NAMES + (
     "f1j1", "f1j2", "f1j3", "f2j1", "f2j2", "f3j1", "f3j2", "f3j3",
 )
-
-
 def _json_sha256(value: object) -> str:
     payload = json.dumps(
         value, ensure_ascii=True, allow_nan=False, sort_keys=True, separators=(",", ":")
@@ -43,7 +50,9 @@ def _json_sha256(value: object) -> str:
 
 def _arguments(repository: Path) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("preflight", "grasp-lift"), required=True)
+    parser.add_argument(
+        "--mode", choices=("isolated-hand", "preflight", "grasp-lift"), required=True
+    )
     parser.add_argument("--object-id", default="current_d38999_26kj61sn_public_spec")
     parser.add_argument(
         "--config", default=str(repository / "src/kcg_connector/config/carts_grasp_v2.yaml")
@@ -56,11 +65,14 @@ def _arguments(repository: Path) -> argparse.Namespace:
         ),
     )
     parser.add_argument("--preflight-evaluation")
+    parser.add_argument("--reference-trace")
     parser.add_argument("--output-directory", required=True)
     parser.add_argument("--gui", action="store_true")
     arguments = parser.parse_args()
     if arguments.mode == "grasp-lift" and not arguments.preflight_evaluation:
         parser.error("grasp-lift requires --preflight-evaluation")
+    if arguments.mode == "isolated-hand" and not arguments.reference_trace:
+        parser.error("isolated-hand requires --reference-trace")
     return arguments
 
 
@@ -94,12 +106,18 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         observed = (preflight.get("object_id"), preflight.get("candidate_id"))
         if observed != expected or not preflight.get("preflight_pass"):
             raise ValueError("matching independent preflight did not pass")
-    world_from_object = np.asarray(
-        scene_entry["frozen_settled_world_from_object_row_major"], dtype=np.float64
-    ).reshape(4, 4)
-    motion_plan = control.build_joint_motion_plan(
-        repository, inputs, selected["control_plan"], world_from_object
-    )
+    if arguments.mode == "isolated-hand":
+        arguments.reference_document = json.loads(
+            Path(arguments.reference_trace).read_text(encoding="utf-8")
+        )
+        motion_plan = arguments.reference_document["motion_plan"]
+    else:
+        world_from_object = np.asarray(
+            scene_entry["frozen_settled_world_from_object_row_major"], dtype=np.float64
+        ).reshape(4, 4)
+        motion_plan = control.build_joint_motion_plan(
+            repository, inputs, selected["control_plan"], world_from_object
+        )
     return inputs, report, selected, scene_entry, motion_plan
 
 
@@ -216,6 +234,9 @@ def _initial_trace(arguments, report, selected, motion_plan, dynamic):
         "hardware_authorized": False,
         "formal_dynamic_pass": False,
         "physics_dt_s": float(dynamic["physics_dt_s"]),
+        "maximum_joint_speed_limit_rad_s": float(
+            dynamic["maximum_joint_speed_rad_s"]
+        ),
         "object_pose_writes_after_start": 0,
         "controller_online_signals": list(motion_plan["online_signals"]),
         "online_object_or_contact_truth_used": False,
@@ -227,6 +248,195 @@ def _initial_trace(arguments, report, selected, motion_plan, dynamic):
         "controller_outcome": {"completed": False, "failure_reason": None},
         "samples": [],
     }
+
+
+def _initial_isolated_trace(arguments, report, selected, motion_plan, dynamic):
+    reference_path = Path(arguments.reference_trace).resolve()
+    reference = arguments.reference_document
+    expected = (arguments.object_id, selected["candidate_id"], "preflight")
+    observed = (
+        reference.get("object_id"), reference.get("candidate_id"), reference.get("mode")
+    )
+    if observed != expected or reference.get("config_sha256") != report["config_sha256"]:
+        raise ValueError("isolated diagnostic reference differs from the failed preflight")
+    if (
+        float(reference.get("physics_dt_s", -1.0)) != float(dynamic["physics_dt_s"])
+        or _json_sha256(reference.get("motion_plan")) != _json_sha256(motion_plan)
+    ):
+        raise ValueError("isolated diagnostic trajectory differs from the failed preflight")
+    return {
+        "schema_version": "carts_grasp_v2_isolated_hand_diagnostic_v1",
+        "object_id": arguments.object_id,
+        "candidate_id": selected["candidate_id"],
+        "mode": arguments.mode,
+        "config_sha256": report["config_sha256"],
+        "physics_dt_s": float(dynamic["physics_dt_s"]),
+        "maximum_joint_speed_limit_rad_s": float(
+            dynamic["maximum_joint_speed_rad_s"]
+        ),
+        "hardware_authorized": False,
+        "formal_dynamic_pass": False,
+        "research_dynamic_pass": False,
+        "object_loaded": False,
+        "table_loaded": False,
+        "online_object_or_contact_truth_used": False,
+        "object_pose_writes_after_start": 0,
+        "reference_trace": str(reference_path),
+        "reference_trace_sha256": file_sha256(reference_path),
+        "reference_failure_reason": reference["controller_outcome"]["failure_reason"],
+        "reference_maximum_joint_speed_rad_s": reference["controller_outcome"][
+            "maximum_joint_speed_rad_s"
+        ],
+        "reference_controller_source_sha256": reference["evidence_binding"][
+            "controller_source_sha256"
+        ],
+        "reference_robot_asset_sha256": reference["evidence_binding"][
+            "robot_asset_sha256"
+        ],
+        "reference_active_drive_audit_sha256": _json_sha256(
+            reference["controller_outcome"]["native_drive_audit"]
+        ),
+        "motion_plan": motion_plan,
+        "samples": [],
+    }
+
+
+def _full_drive_audit(robot, dof_names):
+    stiffnesses, dampings = robot.get_dof_gains(indices=0)
+    efforts = robot.get_dof_max_efforts(indices=0)
+    drive_types = robot.get_dof_drive_types(indices=0)[0]
+    stiffnesses = stiffnesses.numpy()[0]
+    dampings = dampings.numpy()[0]
+    efforts = efforts.numpy()[0]
+    return {
+        name: {
+            "drive_type": drive_types[index],
+            "stiffness": float(stiffnesses[index]),
+            "damping": float(dampings[index]),
+            "maximum_effort_nm": float(efforts[index]),
+            "mimic_source": MIMIC_HAND_JOINTS.get(name),
+        }
+        for index, name in enumerate(dof_names)
+    }
+
+
+def _isolated_gravity(repository, scene_entry):
+    from kcg_connector.d38999_tabletop_scene import load_d38999_tabletop_scene
+
+    key = (
+        "scene_config" if scene_entry["scene_kind"] == "D38999_PAIR_TABLETOP"
+        else "environment_scene_config"
+    )
+    scene_path = (repository / scene_entry[key]).resolve()
+    return float(load_d38999_tabletop_scene(scene_path).physics.gravity_m_s2), scene_path
+
+
+def _create_isolated_runtime(repository, inputs, scene_entry, trace):
+    from isaacsim.core.api import World
+    from isaacsim.core.simulation_manager import SimulationManager
+    from isaacsim.core.utils.stage import add_reference_to_stage, get_current_stage
+
+    dynamic = inputs.config.section("dynamic")
+    robot_asset = (repository / dynamic["robot_asset"]).resolve()
+    gravity, gravity_source = _isolated_gravity(repository, scene_entry)
+    World.clear_instance()
+    SimulationManager.set_physics_sim_device("cuda:0")
+    world = World(
+        stage_units_in_meters=1.0, physics_dt=float(dynamic["physics_dt_s"]),
+        rendering_dt=1.0 / 60.0, backend="numpy", device="cuda:0",
+        sim_params={"use_gpu_pipeline": True},
+    )
+    context = world.get_physics_context()
+    context.enable_gpu_dynamics(True)
+    context.set_broadphase_type("GPU")
+    add_reference_to_stage(str(robot_asset), ROBOT_ROOT)
+    context.set_gravity(gravity)
+    world.reset()
+    robot_data = control.create_native_gravity_compensated_robot(
+        ARTICULATION_PATH, EXPECTED_DOF_NAMES, dynamic
+    )
+    robot, active_indices, arm_indices, lower, upper, active_audit = robot_data
+    backend = {
+        "requested_device": "cuda:0",
+        "requested_data_backend": "numpy",
+        "actual_data_backend": str(world.backend),
+        "world_device": str(world.device),
+        "physics_context_device": str(context.device),
+        "gpu_sim": bool(context.use_gpu_sim),
+        "gpu_pipeline": bool(context.use_gpu_pipeline),
+        "gpu_dynamics_enabled": bool(context.is_gpu_dynamics_enabled()),
+        "broadphase_type": str(context.get_broadphase_type()),
+    }
+    if not (
+        "cuda" in backend["world_device"] and backend["gpu_sim"]
+        and backend["gpu_pipeline"] and backend["gpu_dynamics_enabled"]
+        and backend["broadphase_type"] == "GPU"
+    ):
+        raise RuntimeError(f"GPU physics backend audit failed: {backend}")
+    trace["physics_backend"] = backend
+    trace["gravity_m_s2"] = gravity
+    trace["gravity_source"] = str(gravity_source)
+    trace["robot_asset"] = str(robot_asset)
+    trace["robot_asset_sha256"] = file_sha256(robot_asset)
+    trace["active_drive_audit"] = active_audit
+    if (
+        trace["robot_asset_sha256"] != trace["reference_robot_asset_sha256"]
+        or _json_sha256(active_audit) != trace["reference_active_drive_audit_sha256"]
+    ):
+        raise RuntimeError("isolated robot asset or active drive differs from reference")
+    trace["all_dof_drive_audit"] = _full_drive_audit(robot, robot.dof_names)
+    trace["initial_joint_audit"] = audit_initial_joint_state(robot, robot.dof_names)
+    trace["mimic_schema_audit"] = audit_mimic_schema(
+        get_current_stage(), ROBOT_ROOT, MIMIC_HAND_JOINTS
+    )
+    recorder = IsolatedHandRecorder(
+        robot=robot, dof_names=robot.dof_names,
+        active_names=control.ARM_JOINT_NAMES + control.ACTIVE_HAND_JOINT_NAMES,
+        hand_names=EXPECTED_DOF_NAMES[7:], physics_dt_s=dynamic["physics_dt_s"],
+        drive_settings=dynamic,
+    )
+    return world, recorder, robot_data
+
+
+def _execute_isolated(repository, arguments, output, inputs, scene_entry, motion_plan, trace):
+    dynamic = inputs.config.section("dynamic")
+    world, recorder, robot_data = _create_isolated_runtime(
+        repository, inputs, scene_entry, trace
+    )
+    robot, active_indices, arm_indices, lower, upper, drive_audit = robot_data
+    stepper = control.JointSignalStepper(
+        robot=robot, world=world, auditor=recorder, active_indices=active_indices,
+        arm_indices=arm_indices, arm_lower_limits=lower, arm_upper_limits=upper,
+        settings=dynamic, render=arguments.gui,
+    )
+    pregrasp = control.run_pregrasp_sequence(stepper, motion_plan, dynamic)
+    outcome = control.controller_outcome(
+        stepper, mode="preflight", native_drive_audit=drive_audit,
+        pregrasp=pregrasp,
+        grasp={"contact_controller": None, "failure_reason": stepper.abort_reason},
+    )
+    trace["samples"] = recorder.samples
+    trace["controller_outcome"] = outcome
+    trace["reference_target_comparison"] = compare_reference_targets(
+        arguments.reference_document, trace["samples"]
+    )
+    trace["runtime"] = {
+        "git_commit": subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=repository, text=True,
+            check=True, capture_output=True,
+        ).stdout.strip(),
+        "runner_source_sha256": file_sha256(Path(__file__)),
+        "controller_source_sha256": file_sha256(Path(__file__).with_name("controller.py")),
+    }
+    metrics = evaluate_isolated_hand_trace(trace)
+    (output / "trace.json").write_text(
+        json.dumps(trace, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    (output / "summary.json").write_text(
+        json.dumps(metrics, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    print(json.dumps(metrics, ensure_ascii=False, indent=2))
+    return 0 if metrics["diagnostic_pass"] else 2
 
 
 def _evidence_binding(repository, arguments, report, selected, scene, robot_asset):
@@ -372,6 +582,10 @@ def _finish_run(repository, arguments, output, inputs, runtime, trace, outcome):
 
 
 def _execute(repository, arguments, output, inputs, report, selected, scene_entry, motion_plan, trace):
+    if arguments.mode == "isolated-hand":
+        return _execute_isolated(
+            repository, arguments, output, inputs, scene_entry, motion_plan, trace
+        )
     runtime = _create_runtime(
         repository, arguments, inputs, report, selected, scene_entry, trace
     )
@@ -412,7 +626,11 @@ def main() -> int:
         {"headless": not arguments.gui, "multi_gpu": False,
          "active_gpu": 0, "physics_gpu": 0}
     )
-    trace = _initial_trace(arguments, report, selected, motion_plan, dynamic)
+    trace = (
+        _initial_isolated_trace(arguments, report, selected, motion_plan, dynamic)
+        if arguments.mode == "isolated-hand"
+        else _initial_trace(arguments, report, selected, motion_plan, dynamic)
+    )
     try:
         return _execute(
             repository, arguments, output, inputs, report, selected,

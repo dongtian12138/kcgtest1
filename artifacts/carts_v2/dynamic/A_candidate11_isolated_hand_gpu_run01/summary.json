@@ -1,0 +1,30 @@
+{
+  "diagnostic_pass": false,
+  "failure_reason": "MIMIC_OR_ACTIVE_HAND_SPEED_ABORT",
+  "sample_count": 213,
+  "physics_time_advanced_s": 1.775,
+  "speed_abort_joint": "f3j2",
+  "maximum_hand_joint_speed_rad_s": 3.319122314453125,
+  "hand_joint_peak_speeds_rad_s": {
+    "f1j1": 0.5234507322311401,
+    "f1j2": 0.037526264786720276,
+    "f1j3": 2.9750052021881856e-07,
+    "f2j1": 0.03687543421983719,
+    "f2j2": 0.002502169692888856,
+    "f3j1": 0.48824334144592285,
+    "f3j2": 3.319122314453125,
+    "f3j3": 3.139254570007324
+  },
+  "f2j1_maximum_target_delta_rad": 0.0,
+  "f2j1_maximum_speed_rad_s": 0.03687543421983719,
+  "f2j1_peak_speed_step": 0,
+  "f2j1_peak_speed_commanded_drive_effort_nm": -0.07683411240577698,
+  "f2j1_peak_speed_equivalent_joint_effort_nm": 0.05052092671394348,
+  "f2j1_f2j2_maximum_position_error_rad": 0.007301149889826775,
+  "reference_target_prefix_matches": true,
+  "reference_target_maximum_difference_rad": 0.0,
+  "maximum_joint_speed_limit_rad_s": 3.0,
+  "hardware_authorized": false,
+  "formal_dynamic_pass": false,
+  "research_dynamic_pass": false
+}

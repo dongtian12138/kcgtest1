@@ -365,6 +365,7 @@ class JointSignalStepper:
         self.render = bool(render)
         self.step_index = 0
         self.maximum_speed = self.maximum_arm_error = 0.0
+        self.maximum_speed_joint: str | None = None
         self.maximum_hand_effort = self.maximum_gravity_effort = 0.0
         self.maximum_projected_arm_force = self.maximum_target_bias = 0.0
         self.minimum_drive_target_limit_margin = float("inf")
@@ -399,13 +400,12 @@ class JointSignalStepper:
             indices=0, dof_indices=self.active_indices
         ).numpy()[0]
         velocities = self.robot.get_dof_velocities(
-            indices=0, dof_indices=self.active_indices
-        ).numpy()[0]
+            indices=0, dof_indices=self.active_indices).numpy()[0]
+        all_velocities = self.robot.get_dof_velocities(indices=0).numpy()[0]
         efforts = self.robot.get_dof_projected_joint_forces(
-            indices=0, dof_indices=self.active_indices
-        ).numpy()[0]
+            indices=0, dof_indices=self.active_indices).numpy()[0]
         arm_control["projected_joint_force_nm"] = efforts[:7].tolist()
-        self._update_metrics(positions, velocities, efforts, arm_target, arm_control)
+        self._update_metrics(positions, all_velocities, efforts, arm_target, arm_control)
         self.auditor.capture(
             step=self.step_index,
             phase=phase,
@@ -417,13 +417,15 @@ class JointSignalStepper:
         )
         self.step_index += 1
         self.latest = (positions, velocities, efforts)
-        self._apply_signal_aborts(arm_target)
+        self._apply_signal_aborts(arm_target, all_velocities)
         return self.latest
 
-    def _update_metrics(self, positions, velocities, efforts, arm_target, arm_control):
-        self.maximum_speed = max(
-            self.maximum_speed, float(np.max(np.abs(velocities)))
-        )
+    def _update_metrics(self, positions, all_velocities, efforts, arm_target, arm_control):
+        peak_index = int(np.argmax(np.abs(all_velocities)))
+        peak_speed = float(abs(all_velocities[peak_index]))
+        if peak_speed > self.maximum_speed:
+            self.maximum_speed = peak_speed
+            self.maximum_speed_joint = self.robot.dof_names[peak_index]
         self.maximum_arm_error = max(
             self.maximum_arm_error,
             float(np.max(np.abs(positions[:7] - arm_target))),
@@ -447,12 +449,12 @@ class JointSignalStepper:
             float(arm_control["minimum_drive_target_limit_margin_rad"]),
         )
 
-    def _apply_signal_aborts(self, arm_target: np.ndarray) -> None:
+    def _apply_signal_aborts(self, arm_target, all_velocities) -> None:
         assert self.latest is not None
-        positions, velocities, efforts = self.latest
-        if not all(np.all(np.isfinite(row)) for row in (positions, velocities, efforts)):
+        positions, _, efforts = self.latest
+        if not all(np.all(np.isfinite(row)) for row in (positions, all_velocities, efforts)):
             self.abort_reason = "NONFINITE_JOINT_SIGNAL_ABORT"
-        elif float(np.max(np.abs(velocities))) > float(
+        elif float(np.max(np.abs(all_velocities))) > float(
             self.settings["maximum_joint_speed_rad_s"]
         ):
             self.abort_reason = "JOINT_SPEED_ABORT"
@@ -625,6 +627,7 @@ def controller_outcome(
         "completed": completed,
         "failure_reason": failure,
         "maximum_joint_speed_rad_s": stepper.maximum_speed,
+        "maximum_joint_speed_joint": stepper.maximum_speed_joint,
         "maximum_arm_tracking_error_rad": stepper.maximum_arm_error,
         "maximum_absolute_hand_effort_nm": stepper.maximum_hand_effort,
         "maximum_gravity_compensation_nm": stepper.maximum_gravity_effort,
