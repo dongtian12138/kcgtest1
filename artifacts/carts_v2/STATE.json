@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T11:00:24Z",
+  "updated_at_utc": "2026-08-24T11:08:52Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,7 +8,7 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_OBJECT_A_FIRST_FINGER_CONTACT_SETTLE",
+  "current_milestone": "V2_ISOLATED_REPLAY_FIRST_FINGER_SETTLE",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -25,8 +25,8 @@
     "prior_pause_at_utc": "2026-08-24T09:36:16Z",
     "prior_pause_reason": "OBJECT_A_F1J3_SPEED_ABORT_AFTER_TWO_EVIDENCED_FIX_ATTEMPTS",
     "prior_pause_reclassified_as": "ROOT_CAUSE_REVIEW",
-    "active_execution_elapsed_s": 7597,
-    "remaining_active_budget_s": 7703,
+    "active_execution_elapsed_s": 8105,
+    "remaining_active_budget_s": 7195,
     "resumed_at_utc": "2026-08-24T10:16:54Z",
     "resume_wall_deadline_utc": "2026-08-24T13:08:47Z",
     "stop_reason": null
@@ -65,8 +65,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": true,
-    "scope": "OBJECT_A_CANDIDATE11_FIRST_FINGER_DIAGNOSTIC_ONLY",
-    "reason": "New-source preflight is strictly accepted; only the bounded 0.5 s first-finger contact transition may run"
+    "scope": "ISOLATED_HAND_REPLAY_OF_FAILED_FIRST_FINGER_TARGETS_ONLY",
+    "reason": "First-finger target continuity passed but CONTACT_SETTLE still caused f1j3 speed abort; replay the exact targets without object or table to separate hand-internal dynamics from scene coupling"
   },
   "first_finger_diagnostic_instrumentation": {
     "mode": "first-finger-diagnostic",
@@ -110,6 +110,44 @@
     "first_finger_diagnostic_binding_allowed": true,
     "grasp_lift_binding_allowed": false
   },
+  "object_a_first_finger_diagnostic": {
+    "run_id": "A_candidate11_bumpless_first_finger_diagnostic",
+    "artifact": "artifacts/carts_v2/dynamic/A_candidate11_bumpless_first_finger_diagnostic/evaluation.json",
+    "physics_time_advanced_s": 9.191666666666666,
+    "controller_completed": false,
+    "failure_reason": "JOINT_SPEED_ABORT",
+    "failure_step": 1102,
+    "failure_phase": "finger_1_contact_settle",
+    "maximum_joint_speed_joint": "f1j3",
+    "maximum_joint_speed_rad_s": 4.1243085861206055,
+    "maximum_absolute_hand_effort_nm": 0.45329901576042175,
+    "maximum_finger_target_delta_rad": 0.0015000000000000013,
+    "old_failure_step_f1j3_speed_rad_s": 1.2306755781173706,
+    "contact_target_rad": 0.3728076219558716,
+    "first_finger_contact_classification": "FALSE_CONTACT_PROXY",
+    "contact_reporter_completeness_proven": false,
+    "terminal_link_object_records": 0,
+    "pad_surface_identity_verified": false,
+    "first_finger_hold_duration_s": 0.0,
+    "only_first_finger_commanded": true,
+    "maximum_object_center_translation_after_closure_start_m": 1.4799616048983846e-6,
+    "maximum_reference_part_orientation_change_rad": 8.71518e-5,
+    "maximum_lift_m": 0.0,
+    "table_release_observed": false,
+    "unauthorized_contact_records": 0,
+    "physx_capacity_warning_count": 0,
+    "physx_error_count": 0,
+    "observed_found_lost_peak": 1,
+    "observed_total_peak": 7644,
+    "engine_log_sha256": "aa1d20a4e1b947f06718d0ff892045fdcb2f6b2d331ac0f4e69d89e7148df366",
+    "evaluation_sha256": "6def96b539e9989e59bc857966c935271e5578142537d6fc09150034e4d4a724",
+    "evaluation_size_bytes": 5550,
+    "trace_sha256": "88e3057e26d9de92249cc7353c4b9412bfc07afc98b7bddf55d10dfa7afcbe2a",
+    "trace_size_bytes": 6416580,
+    "trace_committed": false,
+    "first_finger_diagnostic_pass": false,
+    "next_bounded_experiment": "ISOLATED_HAND_EXACT_TARGET_REPLAY"
+  },
   "contact_transition_review": {
     "confirmation_target_jump_removed": true,
     "run17_regression_previous_target_rad": 0.399834,
@@ -119,7 +157,9 @@
     "states": ["APPROACH", "CONTACT_CONFIRMED", "CONTACT_SETTLE", "HOLD"],
     "effort_signal_scope": "TARE_SUBTRACTED_PROJECTED_JOINT_EFFORT_PROXY_NOT_PAD_NORMAL_FORCE",
     "targeted_tests_passed": 3,
-    "dynamic_causal_validation_pending": true
+    "dynamic_target_continuity_validated": true,
+    "dynamic_causal_validation_pending": false,
+    "remaining_f1j3_instability_root_cause_pending": true
   },
   "preflight_acceptance_gate": {
     "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
@@ -562,8 +602,7 @@
     "final_full_regression_duration_s": 982.86
   },
   "blockers": [
-    "UNRESOLVED_OBJECT_SCENE_DEPENDENT_F1J3_FOLLOWER_INSTABILITY",
-    "CONTACT_TRANSITION_DYNAMIC_CAUSAL_VALIDATION_PENDING",
+    "UNRESOLVED_CONTACT_SETTLE_F1J3_FOLLOWER_INSTABILITY",
     "FALSE_CONTACT_PROXY_WITH_INCOMPLETE_CONTACT_REPORTER_EVIDENCE",
     "DYNAMIC_THREE_PAD_CONTACT_NOT_ACHIEVED",
     "OBJECT_A_LIFT_50MM_AND_HOLD_2S_NOT_REACHED",
