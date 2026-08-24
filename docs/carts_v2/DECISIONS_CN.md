@@ -145,3 +145,10 @@
 - 先修复预检查失败关闭漏洞，再审计场景结构与两类容量峰值；没有重复碰撞体或错误过滤时，容量按 `next_power_of_two(ceil(2 * observed_peak))` 分别确定。
 - `candidate_11`、`candidate_33`、算法排序、物性、摩擦、增益、力量、3 rad/s、50 mm、2 s、指腹标准、真值防火墙及旧 H102 全部冻结。
 - `hardware_authorized=false`、旧正式动态门、`formal_dynamic_pass=false` 和 `research_dynamic_pass=false` 保持；只有新评价的 `accepted_preflight_pass=true` 才能启动对象 A 抓取。
+
+## 2026-08-24T09:36:16Z — V2_RECOVERY_2 失败收口
+
+- run17 在第二次有证据修复后，仍与 run15 同一步、同阶段触发 `f1j3` 超过 3 rad/s；该根因的两次尝试已用尽。
+- 决定：`status=PARKED`、V2 研究动态门关闭；禁止第三次直接补丁、调增益/阈值或提高限速。
+- 对象 A 未形成三指真实 PAD 接触，抬升和保持均为 0；对象 B 不满足启动前提，因此本窗口不运行。
+- GPU 容量已验证健康，不再列为当前阻塞；正式动态、研究动态和硬件通过均保持 false。
