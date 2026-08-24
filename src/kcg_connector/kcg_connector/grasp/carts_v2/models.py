@@ -175,9 +175,17 @@ class FastFilterResult:
     status: str
     reasons: tuple[str, ...]
     unresolved_checks: tuple[str, ...]
-    sampled_hand_table_clearance_m: float | None = None
-    sampled_hand_table_clearance_link: str = ""
-    sampled_hand_table_clearance_stage: str = ""
+    sequential_closure_sweep_pass: bool = False
+    minimum_table_clearance_m: float | None = None
+    minimum_clearance_link: str = ""
+    minimum_clearance_finger_stage: str = ""
+    minimum_clearance_joint_position_rad: tuple[float, ...] = ()
+    checked_state_count: int = 0
+    maximum_joint_increment_rad: float = 0.0
+    endpoint_only_table_clearance_m: float | None = None
+    first_table_violation_clearance_m: float | None = None
+    first_table_violation_link: str = ""
+    first_table_violation_finger_stage: str = ""
 
 
 @dataclass(frozen=True)

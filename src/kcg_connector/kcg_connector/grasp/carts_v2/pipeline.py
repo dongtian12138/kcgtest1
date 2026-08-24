@@ -87,7 +87,7 @@ def run_offline_pipeline(
         qualities,
         top_k=top_k,
         path_clearance_by_id={
-            row.candidate_id: row.sampled_hand_table_clearance_m for row in filters
+            row.candidate_id: row.minimum_table_clearance_m for row in filters
         },
     )
     timings["selection"] = time.perf_counter() - started

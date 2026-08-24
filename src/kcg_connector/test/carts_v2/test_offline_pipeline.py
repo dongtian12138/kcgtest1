@@ -4,7 +4,10 @@ from pathlib import Path
 
 import numpy as np
 
-from kcg_connector.grasp.carts_v2.models import load_v2_config
+from kcg_connector.grasp.carts_v2.candidate_generator import generate_candidates
+from kcg_connector.grasp.carts_v2.closure_predictor import SequentialClosurePredictor
+from kcg_connector.grasp.carts_v2.fast_filter import fast_filter_predictions
+from kcg_connector.grasp.carts_v2.models import load_v2_config, load_v2_inputs
 from kcg_connector.grasp.carts_v2.pipeline import run_offline_pipeline
 
 
@@ -34,6 +37,29 @@ def test_transfer_scene_reuses_the_finite_table_author() -> None:
     ).read_text(encoding="utf-8")
     assert "author_d38999_tabletop_environment" in runner
     assert "add_default_ground_plane" not in runner
+
+
+def test_candidate_11_endpoint_method_misses_intermediate_sweep() -> None:
+    inputs = load_v2_inputs(ROOT, config_path=CONFIG, object_id=OBJECT_A)
+    seed = next(
+        candidate
+        for candidate in generate_candidates(inputs)
+        if candidate.candidate_id == "candidate_11"
+    )
+    prediction = SequentialClosurePredictor(inputs).predict(seed)
+    assert prediction.status == "CLOSURE_SURVIVE"
+
+    tolerance = inputs.config.section("fast_filter")["table_penetration_tolerance_m"]
+    result = fast_filter_predictions(inputs, (prediction,))[0]
+    assert result.status == "FAST_REJECT"
+    # The old method's minimum over PREGRASP/approach/contact-stop endpoints is safe.
+    assert result.endpoint_only_table_clearance_m >= -tolerance
+    assert result.minimum_table_clearance_m < -0.001
+    assert result.first_table_violation_link == "f1Link3"
+    assert result.first_table_violation_finger_stage.startswith("FINGER_1_CLOSURE_")
+    assert result.checked_state_count > 3
+    assert result.maximum_joint_increment_rad <= 0.0015 + 1.0e-12
+    assert "INTERMEDIATE_SEQUENTIAL_CLOSURE_HAND_TABLE_SWEEP" in result.reasons
 
 
 def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> None:
@@ -74,12 +100,13 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
         ]
         assert len(fast_survivors) >= 3
         assert all(
-            row.sampled_hand_table_clearance_m is not None
-            and row.sampled_hand_table_clearance_m >= -1.0e-5
+            row.sequential_closure_sweep_pass
+            and row.minimum_table_clearance_m is not None
+            and row.minimum_table_clearance_m >= -1.0e-5
             for row in fast_survivors
         )
         assert any(
-            "HAND_TABLE_PENETRATION" in row.reasons
+            "INTERMEDIATE_SEQUENTIAL_CLOSURE_HAND_TABLE_SWEEP" in row.reasons
             for row in result.fast_filter_results
         )
         assert all(not row.offline_task_gate_passed for row in result.selected_top)

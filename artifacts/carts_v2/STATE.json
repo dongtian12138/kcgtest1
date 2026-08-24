@@ -1,36 +1,30 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T11:49:02Z",
+  "updated_at_utc": "2026-08-24T12:30:53Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
   "config_sha256": "c41e10936effd08d4c8044dfe79861e479ac751f32453ef5d12ee5b785a948f7",
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "PARKED",
-  "current_milestone": "V2_RECOVERY2_CLOSED_UNSAFE_INTERMEDIATE_FINGER_TABLE_SWEEP",
+  "status": "IMPLEMENTING",
+  "current_milestone": "V2_COMPLETE_SEQUENTIAL_CLOSURE_SWEEP_RESELECTION",
   "previous_execution_window": {
-    "id": "V2_RECOVERY_1",
-    "started_at_utc": "2026-08-24T07:05:10Z",
-    "stopped_at_utc": "2026-08-24T07:49:45Z",
-    "stop_reason": "OBJECT_GPU_AGGREGATE_PAIR_CAPACITY_RECOVERY_FAILED"
+    "id": "V2_RECOVERY_2",
+    "started_at_utc": "2026-08-24T08:13:09Z",
+    "stopped_at_utc": "2026-08-24T11:46:11Z",
+    "active_execution_elapsed_s": 10344,
+    "stop_reason": "OBJECT_A_CANDIDATE11_INTERMEDIATE_F1LINK3_TABLE_SWEEP_REQUIRES_OFFLINE_RESELECTION",
+    "stop_reclassified_as": "ROLLBACK_TO_PREVIOUS_VALID_STAGE"
   },
   "execution_window": {
-    "id": "V2_RECOVERY_2",
-    "classification": "LOCAL_CORRECTION_PLUS_EXECUTION_CONTINUATION",
-    "started_at_utc": "2026-08-24T08:13:09Z",
-    "hard_deadline_utc": "2026-08-24T12:28:09Z",
-    "maximum_duration_s": 15300,
+    "id": "V2_COMPLETE_SEQUENTIAL_CLOSURE_SWEEP_RESELECTION",
+    "classification": "METHOD_CORRECTION_PLUS_ROLLBACK_TO_OFFLINE_SELECTION_PLUS_AUTONOMOUS_CONTINUATION",
+    "started_at_utc": "2026-08-24T12:11:41Z",
+    "hard_deadline_utc": "2026-08-24T16:11:41Z",
+    "maximum_duration_s": 14400,
     "automatic_extension_allowed": false,
-    "prior_pause_at_utc": "2026-08-24T09:36:16Z",
-    "prior_pause_reason": "OBJECT_A_F1J3_SPEED_ABORT_AFTER_TWO_EVIDENCED_FIX_ATTEMPTS",
-    "prior_pause_reclassified_as": "ROOT_CAUSE_REVIEW",
-    "active_execution_elapsed_s": 10344,
-    "remaining_active_budget_s": 4956,
-    "resumed_at_utc": "2026-08-24T10:16:54Z",
-    "resume_wall_deadline_utc": "2026-08-24T13:08:47Z",
-    "stopped_at_utc": "2026-08-24T11:46:11Z",
-    "stop_reason": "OBJECT_A_CANDIDATE11_INTERMEDIATE_F1LINK3_TABLE_SWEEP_REQUIRES_FROZEN_PATH_CHANGE"
+    "not_a_recovery_window": true
   },
   "git_delivery": {
     "workspace_git_directory_writable": true,
@@ -69,7 +63,28 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "Registered geometry replay proves candidate_11 has an unauthorized intermediate f1Link3 table sweep; candidate, fast filter and path are frozen in this window"
+    "reason": "Offline reselection must first produce an executable candidate under the complete sequential closure sweep and TASK_SURVIVE gates"
+  },
+  "offline_reselection": {
+    "raw_surface_seed_budget": 384,
+    "formal_candidate_budget": 48,
+    "maximum_joint_increment_rad": 0.0015,
+    "candidate_11_status": "INVALIDATED_BY_INTERMEDIATE_HAND_TABLE_SWEEP",
+    "candidate_11_may_run_again": false,
+    "old_top3_reuse_allowed": false,
+    "candidate_33_must_be_recomputed": true,
+    "selected_executable_candidate": null,
+    "candidate_11_regression": {
+      "old_endpoint_only_minimum_clearance_m": 0.0007049611569468484,
+      "new_full_sweep_minimum_clearance_m": -0.0018384500334763798,
+      "first_violation_clearance_m": -0.00003989397693526797,
+      "first_violation_link": "f1Link3",
+      "first_violation_stage": "FINGER_1_CLOSURE_0077",
+      "checked_state_count": 759,
+      "observed_maximum_joint_increment_rad": 0.0014960357142858038,
+      "new_fast_filter_status": "FAST_REJECT",
+      "evidence_limit": "CONTROL_STEP_SAMPLED_FAST_REJECT_NOT_CONTINUOUS_COLLISION_PROOF"
+    }
   },
   "first_finger_diagnostic_instrumentation": {
     "mode": "first-finger-diagnostic",

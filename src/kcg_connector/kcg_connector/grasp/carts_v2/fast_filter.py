@@ -96,13 +96,37 @@ def _sampled_hand_states(
     phase_by_pad = {
         pad.name: index for index, pad in enumerate(inputs.hand_contract.pads)
     }
+    maximum_increment = (
+        float(dynamic["finger_maximum_speed_rad_s"])
+        * float(dynamic["physics_dt_s"])
+    )
     for stop_index, pad_name in enumerate(
         inputs.config.section("closure_prediction")["closing_order"], start=1
     ):
         phase_index = phase_by_pad[str(pad_name)]
+        start_phases = tuple(phases)
         phases[phase_index] = prediction.final_closure_phases[phase_index]
-        joints = joint_positions_for_phases(inputs, tuple(phases))
-        states.append((f"CONTACT_STOP_{stop_index}", base, joints))
+        stop_phases = tuple(phases)
+        start_joints = joint_positions_for_phases(inputs, start_phases)
+        stop_joints = joint_positions_for_phases(inputs, stop_phases)
+        largest_change = float(np.max(np.abs(stop_joints - start_joints)))
+        step_count = max(
+            1,
+            int(math.ceil(largest_change / maximum_increment)),
+        )
+        for step_index in range(1, step_count + 1):
+            fraction = step_index / step_count
+            sample_phases = list(start_phases)
+            sample_phases[phase_index] += fraction * (
+                stop_phases[phase_index] - start_phases[phase_index]
+            )
+            stage = (
+                f"CONTACT_STOP_{stop_index}"
+                if step_index == step_count
+                else f"FINGER_{stop_index}_CLOSURE_{step_index:04d}"
+            )
+            joints = joint_positions_for_phases(inputs, tuple(sample_phases))
+            states.append((stage, base, joints))
     return tuple(states)
 
 
@@ -133,15 +157,46 @@ def _state_table_clearance(
     return (None, "") if minimum is None else minimum
 
 
-def _sampled_hand_table_clearance(
-    inputs: V2Inputs, prediction: ClosurePrediction
-) -> tuple[float | None, str, str]:
-    minimum: tuple[float, str, str] | None = None
-    for stage, base, joints in _sampled_hand_states(inputs, prediction):
+def _state_clearance_summary(
+    inputs: V2Inputs,
+    states: tuple[tuple[str, np.ndarray, np.ndarray], ...],
+    *,
+    violation_below_m: float | None = None,
+) -> tuple[
+    tuple[float, str, str, tuple[float, ...]] | None,
+    tuple[float, str, str] | None,
+]:
+    minimum: tuple[float, str, str, tuple[float, ...]] | None = None
+    first_violation: tuple[float, str, str] | None = None
+    for stage, base, joints in states:
         gap, link_name = _state_table_clearance(inputs, base, joints)
         if gap is not None and (minimum is None or gap < minimum[0]):
-            minimum = (gap, link_name, stage)
-    return (None, "", "") if minimum is None else minimum
+            minimum = (
+                gap,
+                link_name,
+                stage,
+                tuple(float(value) for value in joints),
+            )
+        if (
+            first_violation is None
+            and gap is not None
+            and violation_below_m is not None
+            and gap < violation_below_m
+        ):
+            first_violation = (gap, link_name, stage)
+    return minimum, first_violation
+
+
+def _maximum_joint_increment(
+    states: tuple[tuple[str, np.ndarray, np.ndarray], ...],
+) -> float:
+    return max(
+        (
+            float(np.max(np.abs(right[2] - left[2])))
+            for left, right in zip(states, states[1:])
+        ),
+        default=0.0,
+    )
 
 
 def fast_filter_predictions(
@@ -162,15 +217,37 @@ def fast_filter_predictions(
     for prediction in predictions:
         reasons = _hard_reasons(inputs, prediction)
         clearance: float | None = None
-        clearance_link = ""
-        clearance_stage = ""
+        clearance_link = clearance_stage = ""
+        clearance_joints: tuple[float, ...] = ()
+        checked_state_count = 0
+        endpoint_clearance: float | None = None
+        first_violation: tuple[float, str, str] | None = None
+        maximum_increment = 0.0
         if not reasons:
-            clearance, clearance_link, clearance_stage = (
-                _sampled_hand_table_clearance(inputs, prediction)
+            states = _sampled_hand_states(inputs, prediction)
+            endpoint_states = tuple(
+                state
+                for state in states
+                if "CLOSURE_" not in state[0] or state[0].startswith("CONTACT_STOP_")
             )
             tolerance = float(settings["table_penetration_tolerance_m"])
+            endpoint_minimum, _ = _state_clearance_summary(inputs, endpoint_states)
+            if endpoint_minimum is not None:
+                endpoint_clearance = endpoint_minimum[0]
+            minimum, first_violation = _state_clearance_summary(
+                inputs, states, violation_below_m=-tolerance
+            )
+            if minimum is not None:
+                clearance, clearance_link, clearance_stage, clearance_joints = minimum
+            checked_state_count = len(states)
+            maximum_increment = _maximum_joint_increment(states)
             if clearance is not None and clearance < -tolerance:
-                reasons.append("HAND_TABLE_PENETRATION")
+                reasons.append(
+                    "INTERMEDIATE_SEQUENTIAL_CLOSURE_HAND_TABLE_SWEEP"
+                    if first_violation is not None
+                    and first_violation[2].startswith("FINGER_")
+                    else "HAND_TABLE_PENETRATION"
+                )
         if not reasons:
             duplicate = next(
                 (
@@ -193,9 +270,31 @@ def fast_filter_predictions(
                 status=status,
                 reasons=tuple(reasons),
                 unresolved_checks=() if reasons else unresolved,
-                sampled_hand_table_clearance_m=clearance,
-                sampled_hand_table_clearance_link=clearance_link,
-                sampled_hand_table_clearance_stage=clearance_stage,
+                sequential_closure_sweep_pass=(
+                    prediction.status == "CLOSURE_SURVIVE"
+                    and checked_state_count > 0
+                    and (
+                        clearance is None
+                        or clearance
+                        >= -float(settings["table_penetration_tolerance_m"])
+                    )
+                ),
+                minimum_table_clearance_m=clearance,
+                minimum_clearance_link=clearance_link,
+                minimum_clearance_finger_stage=clearance_stage,
+                minimum_clearance_joint_position_rad=clearance_joints,
+                checked_state_count=checked_state_count,
+                maximum_joint_increment_rad=maximum_increment,
+                endpoint_only_table_clearance_m=endpoint_clearance,
+                first_table_violation_clearance_m=(
+                    None if first_violation is None else first_violation[0]
+                ),
+                first_table_violation_link=(
+                    "" if first_violation is None else first_violation[1]
+                ),
+                first_table_violation_finger_stage=(
+                    "" if first_violation is None else first_violation[2]
+                ),
             )
         )
     return tuple(results)

@@ -59,14 +59,29 @@ def _candidate_rows(result: OfflinePipelineResult):
             ),
             "fast_filter": fast_filter.status,
             "fast_reasons": " | ".join(fast_filter.reasons),
-            "sampled_hand_table_clearance_m": (
-                fast_filter.sampled_hand_table_clearance_m
+            "sequential_closure_sweep_pass": (
+                fast_filter.sequential_closure_sweep_pass
             ),
-            "sampled_hand_table_clearance_link": (
-                fast_filter.sampled_hand_table_clearance_link
+            "minimum_table_clearance_m": fast_filter.minimum_table_clearance_m,
+            "minimum_clearance_link": fast_filter.minimum_clearance_link,
+            "minimum_clearance_finger_stage": (
+                fast_filter.minimum_clearance_finger_stage
             ),
-            "sampled_hand_table_clearance_stage": (
-                fast_filter.sampled_hand_table_clearance_stage
+            "minimum_clearance_joint_position_rad": " ".join(
+                f"{value:.9g}"
+                for value in fast_filter.minimum_clearance_joint_position_rad
+            ),
+            "checked_state_count": fast_filter.checked_state_count,
+            "maximum_joint_increment_rad": fast_filter.maximum_joint_increment_rad,
+            "endpoint_only_table_clearance_m": (
+                fast_filter.endpoint_only_table_clearance_m
+            ),
+            "first_table_violation_clearance_m": (
+                fast_filter.first_table_violation_clearance_m
+            ),
+            "first_table_violation_link": fast_filter.first_table_violation_link,
+            "first_table_violation_finger_stage": (
+                fast_filter.first_table_violation_finger_stage
             ),
             "unresolved_checks": " | ".join(fast_filter.unresolved_checks),
             "task_status": "NOT_EVALUATED" if metric is None else metric.status,
@@ -135,10 +150,10 @@ def _selected_json(result: OfflinePipelineResult) -> list[dict[str, object]]:
                     "SAMPLED_HAND_LINK_TO_FINITE_TABLE_NOT_CONTINUOUS_OR_ARM_COMPLETE"
                 ),
                 "minimum_clearance_link": (
-                    selected.fast_filter.sampled_hand_table_clearance_link
+                    selected.fast_filter.minimum_clearance_link
                 ),
                 "minimum_clearance_stage": (
-                    selected.fast_filter.sampled_hand_table_clearance_stage
+                    selected.fast_filter.minimum_clearance_finger_stage
                 ),
                 "exact_validation_status": exact.status,
                 "exact_validation_reason": exact.reason,

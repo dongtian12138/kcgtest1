@@ -46,7 +46,7 @@ closure_prediction:
 
 fast_filter:
   minimum_three_contact_triangle_area_m2: 1.0e-8
-  hand_table_state_rule: WORLD_Z_APPROACH_AND_SEQUENTIAL_CONTACT_STOPS
+  hand_table_state_rule: WORLD_Z_APPROACH_AND_COMPLETE_SEQUENTIAL_CLOSURE_CONTROL_STEPS
   approach_path_sample_count: 5
   table_penetration_tolerance_m: 1.0e-5
   table_penetration_tolerance_source: NUMERICAL_TOLERANCE
