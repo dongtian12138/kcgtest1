@@ -31,6 +31,7 @@ candidate_generation:
     f1j1: 0.70
   graspgenx:
     planner: graspmoe
+    object_sample_point_count: 8192
     raw_target_per_descriptor_object: 256
     keep_per_descriptor_object: 128
     merged_max_per_object: 256
@@ -38,6 +39,16 @@ candidate_generation:
     expensive_validation_max_per_object: 3
     descriptor_count_maximum: 5
     model_score_role: PHYSICS_FEASIBILITY_POSTERIOR_TIE_BREAK_ONLY
+    grasp_threshold: -1.0
+    topk_num_grasps: -1
+    moe_num_yaws: 36
+    moe_z_offsets_cm: [-8, -6, -4, -2, -1, 0]
+    moe_outlier_threshold: 0.014
+    moe_outlier_k: 20
+    moe_obb_mode: advanced
+    moe_skip_obb_rule: auto
+    moe_obb_density: sparse
+    moe_obb_position_spacing_cm: 1.0
   deduplication:
     palm_position_m: 0.002
     palm_orientation_rad: 0.1308996938995747

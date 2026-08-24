@@ -1,6 +1,6 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T16:00:00Z",
+  "updated_at_utc": "2026-08-24T16:39:00Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
@@ -19,33 +19,60 @@
     "committed_to_main_repository": false
   },
   "environment": {
-    "python_version": "PENDING_ISOLATED_ENVIRONMENT",
-    "pytorch_version": "PENDING",
-    "cuda_version": "PENDING",
+    "python_version": "3.10.12",
+    "pytorch_version": "2.7.0+cu128",
+    "torchvision_version": "0.22.0+cu128",
+    "cuda_version": "12.8",
+    "trimesh_version": "4.5.3",
     "gpu": "NVIDIA GeForce RTX 5070 Ti",
-    "driver_version": "595.84"
+    "gpu_compute_capability": "12.0",
+    "torch_arch_list_contains_sm120": true,
+    "actual_gpu_tensor_pass": true,
+    "driver_version": "595.84",
+    "runtime_deviation": "SM120_COMPATIBLE_TORCH_2.7_CU128_OFFICIAL_SOURCE_AND_MODEL_UNCHANGED"
   },
   "checkpoint": {
-    "path": null,
-    "sha256": null,
+    "path": "third_party/GraspGenX/ext/graspgenx_checkpoints/release",
+    "revision": "7c834043c11a11417e31d6d5ea9355801e40a2c1",
+    "git_tree_sha1": "ca884fbe760d41d9ca57cd3a6757d65105a58204",
+    "sha256": "f301fbd4695f4192cff248884f1429520c038ff1cde8601a0bf6f524ba32babe",
+    "generator_sha256": "8b55f31cdb8340a573b4df27b027c15cff326bd6debcb389bf631d2aaab7ac44",
+    "discriminator_sha256": "cbf3f3bdb2e4c03fca8486ed24de0e6a8a859e6bd22bce2f1434a610335abd3e",
     "license": "NVIDIA Open Model License",
-    "download_complete": false
+    "download_complete": true,
+    "committed_to_main_repository": false
   },
   "gripper_descriptions": {
-    "path": null,
-    "revision": null,
-    "sha256": null,
-    "license": "MIT",
-    "download_complete": false
+    "path": "third_party/GraspGenX/ext/gripper_descriptions",
+    "revision": "19a03c00d19aeaf052d0f6801f0041982d676e8a",
+    "robotiq_3f_git_tree_sha1": "4424cf709995cd1c980c01388cef9c33fc7cabec",
+    "robotiq_3f_sha256": "1d643bc6e352a6fc5838df09288a5ece239920a62f9d97bc8888e787d320e90a",
+    "repository_license": "MIT",
+    "license_file": "LICENSE_ASSETS",
+    "license_file_sha256": "cabc2ed9b0e497d20abb50ca75efb754841bf62997f5b1ee98d1d32c221bd314",
+    "robotiq_3f_asset_license": "BSD-2-Clause",
+    "download_complete": true,
+    "committed_to_main_repository": false
   },
   "fixed_inference": {
     "planner": "graspmoe",
     "random_seed": 20260824,
+    "object_sample_point_count": 8192,
     "raw_target_per_descriptor_object": 256,
     "keep_per_descriptor_object": 128,
     "merged_max_per_object": 256,
     "fast_filter_max_per_object": 64,
-    "expensive_validation_max_per_object": 3
+    "expensive_validation_max_per_object": 3,
+    "grasp_threshold": -1.0,
+    "topk_num_grasps": -1,
+    "moe_num_yaws": 36,
+    "moe_z_offsets_cm": [-8, -6, -4, -2, -1, 0],
+    "moe_outlier_threshold": 0.014,
+    "moe_outlier_k": 20,
+    "moe_obb_mode": "advanced",
+    "moe_skip_obb_rule": "auto",
+    "moe_obb_density": "sparse",
+    "moe_obb_position_spacing_cm": 1.0
   },
   "objects": [
     "current_d38999_26kj61sn_public_spec",
@@ -70,10 +97,23 @@
     "standardized_meshes_committed": false
   },
   "official_positive_control": {
-    "status": "PENDING",
-    "gripper": null,
-    "pose_count": null,
-    "output_sha256": null
+    "status": "OFFICIAL_HEADLESS_POSITIVE_CONTROL_PASS",
+    "gripper": "robotiq_3f",
+    "sample_mesh": "banana.obj",
+    "sample_mesh_sha256": "701947c1f376efdd82de92758f80ca61e823301848efbfd9d645a62053055494",
+    "random_seed": 0,
+    "pose_count": 20,
+    "model_load_count": 1,
+    "model_load_seconds": 1.5960602450068109,
+    "inference_seconds": 0.5223834789940156,
+    "score_range": [0.18668974936008453, 0.986697256565094],
+    "all_poses_finite": true,
+    "maximum_rotation_orthonormal_error": 3.9381719507680657e-7,
+    "peak_gpu_allocated_bytes": 616143360,
+    "output": "artifacts/carts_v2/graspgenx/official_probe/positive_control.json",
+    "output_sha256": "8a421eb7dfdc27b34d4e8402d20ae5b55d4b21ec40c8313d414bcb35bddfdea6",
+    "static_visualization_sha256": "9c3248e5256f072a97fe765234d24e94e9fc9a1ecdc29c90516d7f6066f72f39",
+    "claim_scope": "OFFICIAL_MODEL_ENVIRONMENT_AND_OUTPUT_ONLY_NOT_CARTS_GRASP_EVIDENCE"
   },
   "evidence_boundaries": {
     "hardware_authorized": false,
