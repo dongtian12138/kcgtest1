@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T09:29:31Z",
+  "updated_at_utc": "2026-08-24T09:32:26Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,7 +8,7 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_RECOVERY_2_OBJECT_A_CONTACT_STOP_DYNAMIC_VALIDATION",
+  "current_milestone": "V2_RECOVERY_2_OBJECT_A_CONTINUOUS_COMPLIANT_HOLD_FIX",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -55,8 +55,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": true,
-    "scope": "OBJECT_A_CONTACT_STOP_GRASP_LIFT_ONLY",
-    "reason": "Run14 accepted the measured-position contact-stop source with controller, engine, capacity and identity gates; only one bound object A grasp-lift validation is allowed, while object B remains closed"
+    "scope": "OBJECT_A_FINAL_F1J3_FIX_VALIDATION_ONLY",
+    "reason": "Run15 reduced f1j3 from 48.013 to 4.888 rad/s but still aborted while a stopped finger accumulated fixed-target effort; one final continuous measured-position hold fix, preflight and A validation are allowed"
   },
   "preflight_acceptance_gate": {
     "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
@@ -185,7 +185,21 @@
     "evaluation_sha256": "23f9bd6f5769871f75d62109057d5f10b472dee7ebc51bac26b96fee80512de8",
     "trace_sha256": "e1adc139bcf0ecdde8eb3b5dfeb34e94c9c964c9537dc1d4c0f45bdf62ff0eac",
     "engine_log_sha256": "56b7a0285e4b31e745c1fbafb831fcf27631b9e4512a8b2c8623986acb32a640",
-    "grasp_lift_binding_allowed": true
+    "grasp_lift_binding_allowed": false,
+    "dynamic_run_id": "A_candidate11_contact_stop_grasp_lift_run15",
+    "dynamic_failure_reason": "JOINT_SPEED_ABORT",
+    "dynamic_physics_time_s": 9.108333333333333,
+    "dynamic_maximum_joint_speed_joint": "f1j3",
+    "dynamic_maximum_joint_speed_rad_s": 4.88761568069458,
+    "dynamic_maximum_hand_effort_nm": 0.3190181851387024,
+    "dynamic_contact_target_rad": 0.3728076219558716,
+    "dynamic_three_effective_contacts": false,
+    "dynamic_maximum_lift_m": 0.0,
+    "dynamic_hold_duration_s": 0.0,
+    "dynamic_evaluation_sha256": "1ecb802b141e65ee5cd76ac893b67c72df5c3288cbe5d225e36ebbbe2979f1f2",
+    "dynamic_trace_sha256": "fe5dc6f225796e98e3e4a3192072c105369c0c857f0dad941d17f7501fdd40d4",
+    "dynamic_engine_log_sha256": "504e7437d7fb4e25df82304f6ba58130be59d29352f0a4a3c71078eab4788296",
+    "same_root_final_fix_allowed": true
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
