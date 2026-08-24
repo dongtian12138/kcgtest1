@@ -78,13 +78,14 @@ def create_native_gravity_compensated_robot(
         or np.any(caps <= 0.0)
     ):
         raise RuntimeError("native drive settings must be finite and physically bounded")
+    # Mimic followers keep their kinematic constraint but no independent drive.
+    zero_gains = np.zeros(robot.num_dofs, dtype=np.float32)
+    robot.set_dof_gains(zero_gains, zero_gains, indices=0)
     robot.set_dof_gains(stiffnesses, dampings, indices=0, dof_indices=active_indices)
     robot.set_dof_max_efforts(caps, indices=0, dof_indices=active_indices)
     observed_kp, observed_kd = robot.get_dof_gains(indices=0, dof_indices=active_indices)
     observed_caps = robot.get_dof_max_efforts(indices=0, dof_indices=active_indices)
-    drive_types = robot.get_dof_drive_types(
-        indices=0, dof_indices=active_indices
-    )[0]
+    drive_types = robot.get_dof_drive_types(indices=0, dof_indices=active_indices)[0]
     if drive_types != ["force"] * len(active_indices) or not all(
         np.allclose(observed.numpy()[0], expected)
         for observed, expected in (

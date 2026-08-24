@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T07:25:05Z",
+  "updated_at_utc": "2026-08-24T07:38:08Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -46,8 +46,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": true,
-    "scope": "ISOLATED_HAND_DIAGNOSTIC",
-    "reason": "User reopened V2_RECOVERY_1 only to isolate the f2j1 hand-drive speed abort before any object run"
+    "scope": "OBJECT_A_NOMINAL_RESEARCH_DYNAMIC",
+    "reason": "GPU isolated hand run02 completed the identical trajectory below the unchanged 3 rad/s limit; only candidate_11 preflight and nominal research run are now allowed"
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
@@ -167,9 +167,36 @@
       "summary_sha256": "4ecb6720ec564e404ac1c55d8db84c4ff7d20d83923cd206c14f3dcc80e96cdd",
       "trace_sha256": "d494b95d49f340cae30a76d602420444f9a0b91c0884afcef2cdad5d9ee07d58",
       "raw_trace_committed": false
+    },
+    "isolated_hand_fix_validation": {
+      "run_id": "A_candidate11_isolated_hand_gpu_run02",
+      "mode": "isolated-hand",
+      "diagnostic_pass": true,
+      "object_loaded": false,
+      "table_loaded": false,
+      "gpu_physics_verified": true,
+      "physics_time_advanced_s": 7.75,
+      "physics_sample_count": 930,
+      "target_prefix_matches_run05": true,
+      "target_prefix_compared_samples": 308,
+      "target_prefix_maximum_difference_rad": 0.0,
+      "maximum_joint_speed_joint": "iiwa_joint_5",
+      "maximum_joint_speed_rad_s": 1.4240163564682007,
+      "maximum_hand_speed_joint": "f3j1",
+      "maximum_hand_speed_rad_s": 0.43521848320961,
+      "f2j1_maximum_speed_rad_s": 0.22393107414245605,
+      "f2j1_f2j2_maximum_position_error_rad": 0.0005017518997192383,
+      "mimic_follower_stiffness": 0.0,
+      "mimic_follower_damping": 0.0,
+      "mimic_relationships_unchanged": true,
+      "active_drive_audit_matches_run05": true,
+      "root_cause": "DUPLICATE_MIMIC_FOLLOWER_DRIVE",
+      "summary_sha256": "1aa5e84cb8d5fcb276fb757272150a3783c9e835e239d23ada95b4b85a85eefb",
+      "trace_sha256": "c0b20dd89f47d58152996292391ba04e15793e8c258d2223f73147a45f43b5d7",
+      "raw_trace_committed": false
     }
   },
-  "evidence_level": "OFFLINE_ALGORITHM_WITH_RESEARCH_ISAAC_PREFLIGHT_FAILURE",
+  "evidence_level": "OFFLINE_ALGORITHM_WITH_ISOLATED_HAND_DIAGNOSTIC_PASS",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -188,9 +215,8 @@
   "blockers": [
     "TOP3_FORMAL_50MM_FULL_PATH_COLLISION_UNRESOLVED",
     "BOTH_OBJECTS_ROBUST_TASK_MARGIN_BELOW_ONE",
-    "HAND_PRESHAPE_SPEED_ABORT",
     "CPU_FALLBACK_CONTEXT_NOT_BOUND_IN_TRACE",
-    "DUPLICATE_MIMIC_FOLLOWER_DRIVE_FIX_NOT_YET_VERIFIED",
+    "OBJECT_A_NOMINAL_DYNAMIC_NOT_EXECUTED_AFTER_HAND_FIX",
     "NATIVE_GRAVITY_BIASED_DRIVE_NOT_CAUSALLY_VERIFIED",
     "DYNAMIC_PAD_SURFACE_IDENTITY_NOT_VERIFIED",
     "PREREGISTERED_DISTURBANCE_NOT_EXECUTED"

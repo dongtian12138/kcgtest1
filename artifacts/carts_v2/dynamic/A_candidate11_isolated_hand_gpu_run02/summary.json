@@ -1,0 +1,30 @@
+{
+  "diagnostic_pass": true,
+  "failure_reason": null,
+  "sample_count": 930,
+  "physics_time_advanced_s": 7.75,
+  "maximum_hand_speed_joint": "f3j1",
+  "maximum_hand_joint_speed_rad_s": 0.43521848320961,
+  "hand_joint_peak_speeds_rad_s": {
+    "f1j1": 0.4328240156173706,
+    "f1j2": 0.2478886991739273,
+    "f1j3": 0.1439651995897293,
+    "f2j1": 0.22393107414245605,
+    "f2j2": 0.06619714200496674,
+    "f3j1": 0.43521848320961,
+    "f3j2": 0.2695199251174927,
+    "f3j3": 0.23387162387371063
+  },
+  "f2j1_maximum_target_delta_rad": 0.0013090043154500575,
+  "f2j1_maximum_speed_rad_s": 0.22393107414245605,
+  "f2j1_peak_speed_step": 307,
+  "f2j1_peak_speed_commanded_drive_effort_nm": -0.31115925312042236,
+  "f2j1_peak_speed_equivalent_joint_effort_nm": 0.05359163135290146,
+  "f2j1_f2j2_maximum_position_error_rad": 0.0005017518997192383,
+  "reference_target_prefix_matches": true,
+  "reference_target_maximum_difference_rad": 0.0,
+  "maximum_joint_speed_limit_rad_s": 3.0,
+  "hardware_authorized": false,
+  "formal_dynamic_pass": false,
+  "research_dynamic_pass": false
+}

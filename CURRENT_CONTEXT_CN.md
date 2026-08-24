@@ -1,20 +1,20 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-24T07:25:05Z
+> 快照时间：2026-08-24T07:38:08Z
 > 当前分支：`carts-grasp-v2-rebuild-20260823`
 > 本文件只做恢复路由；物理结论以 V2 原始运行产物为准。
 
 ## 一句话状态
 
-第一次 GPU 孤立手诊断已排除共同 213 步前缀内的目标跳变；仍带独立 drive 的 mimic 从动关节是当前首要、可证伪的根因假设，准备做第 1 次“从动 drive 被动化”验证。
+GPU 孤立手因果验证已通过：四个 mimic 从动 drive 被动化后，同轨迹完整运行 930 周期且 15 DOF 峰值 1.424 rad/s；研究门现只推进到对象 A `candidate_11`，尚无连接器动态成功。
 
 ## 六行恢复摘要
 
 - 总目标：真实允许表面候选 → 任务载荷鲁棒 Top-3 → Isaac 三指接触、离桌、抬升 50 mm、保持至少 2 s；两个对象同算法同主要参数。
-- 当前里程碑：`V2_RECOVERY_HAND_DRIVE_TO_NOMINAL_LIFT`；研究门仅开放孤立手部诊断，对象 A/B 运行仍禁止。
-- 已经完成：GPU 物理后端已由运行时审计确认；孤立手与 run05 的共同 213 步逐周期目标完全一致，`f2j1` 峰值 0.0369 rad/s，目标差为 0。
-- 当前物理/算法阻塞：零目标静置时 `f3j2/f3j3` 达到 3.319/3.139 rad/s；四个 mimic 从动关节仍保留导入的 17.189 阻尼 drive，这是最可能根因但尚待修复后因果验证。run05 的 CPU fallback 未绑定进 trace，不能作 CPU/GPU 因果结论。
-- 下一步最简单动作：只把四个 mimic 从动 drive 增益置零，保持 mimic 关系、主动关节参数、轨迹、dt 和 3 rad/s 门不变，复跑同一孤立手实验。
+- 当前里程碑：`V2_RECOVERY_HAND_DRIVE_TO_NOMINAL_LIFT`；研究门只开放对象 A `candidate_11` 的受限预飞和名义研究动态，对象 B 仍禁止。
+- 已经完成：从动 drive 被动化是唯一动力学改变量；同一 GPU/资产/主动 drive/目标下完整运行 7.75 s，15 DOF 峰值 1.424 rad/s，手部峰值 0.435 rad/s，`f2j1` 峰值 0.224 rad/s。
+- 当前物理/算法阻塞：对象 A 尚未在修复后重新预飞，三指接触、离桌、50 mm、2 s 均未发生；run05 后端未绑定进 trace，不能作 CPU/GPU 因果结论。
+- 下一步最简单动作：保持 candidate_11 和全部主要配置不变，先跑对象 A 预飞；预飞通过后立即运行顺序闭指、50 mm 抬升和 2 s 保持。
 - 绝对禁止跑偏方向：续修 H102、对象专用坐标/阈值、磁吸/隐藏固定、在线读取对象/接触/PhysX 真值、写物体位姿、把退出 0 冒充物理成功。
 
 ## 当前权威字段
@@ -22,12 +22,12 @@
 - 状态：`IMPLEMENTING`
 - 当前里程碑：`V2_RECOVERY_HAND_DRIVE_TO_NOMINAL_LIFT`
 - V2 正式候选：空
-- V2 研究动态门：`allowed=true`，范围仍仅为 `ISOLATED_HAND_DIAGNOSTIC`；对象场景仍不得启动
+- V2 研究动态门：`allowed=true`，范围为 `OBJECT_A_NOMINAL_RESEARCH_DYNAMIC`；仅允许对象 A `candidate_11` 的预飞与名义运行
 - 旧正式动态门：`dynamic_launch_allowed=false`（保持，不由 V2 研究线改写）
 - 正式动态：`FORMAL_DYNAMIC_PASS=false`
 - 研究型动态：`RESEARCH_DYNAMIC_PASS=false`
 - 真实硬件：`hardware_authorized=false`
-- Isaac：6.0.1.0；GPU physics/GPU pipeline/GPU broadphase 已实测启用；最新孤立手运行无对象和桌面，因 `f3j2=3.319 rad/s` 急停，仍未授权对象闭指、抬升或保持
+- Isaac：6.0.1.0；GPU physics/GPU pipeline/GPU broadphase 已实测启用；修复后孤立手完整通过，尚未进行修复后的对象闭指、抬升或保持
 - 最终 CPU 回归：1506 项通过、0 失败、982.86 s；测试通过不改变动态失败状态
 - run05 小型 `evaluation.json` 纳入交付；1.58 MiB 逐步 trace 只留本地，SHA-256 与字节数登记在 `STATE.json`
 - 原工作区已用无历史改写的快进对齐到 `57efc16`；提交 `4d90a52`、`58c9503`、`57efc16` 已普通推送到远端同名分支

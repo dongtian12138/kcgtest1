@@ -134,7 +134,7 @@ def evaluate_isolated_hand_trace(document: Mapping[str, object]) -> dict[str, ob
         "failure_reason": failure,
         "sample_count": len(samples),
         "physics_time_advanced_s": samples[-1]["simulation_time_s"],
-        "speed_abort_joint": peak_hand_joint,
+        "maximum_hand_speed_joint": peak_hand_joint,
         "maximum_hand_joint_speed_rad_s": hand_peaks[peak_hand_joint],
         "hand_joint_peak_speeds_rad_s": hand_peaks,
         "f2j1_maximum_target_delta_rad": max_target_delta,
