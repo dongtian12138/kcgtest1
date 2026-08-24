@@ -4,9 +4,6 @@ import hashlib
 from pathlib import Path
 import sys
 
-import pytest
-
-
 ROOT = Path(__file__).resolve().parents[4]
 ISAAC_V2 = ROOT / "src/kcg_connector/isaac/carts_v2"
 sys.path.insert(0, str(ISAAC_V2))
@@ -33,6 +30,10 @@ def _accepted_document() -> dict[str, object]:
         "observed_gpu_found_lost_aggregate_pairs_peak": 2115,
         "observed_gpu_total_aggregate_pairs_peak": 5855,
         "engine_log_sha256": sha,
+        "engine_log_sync_marker": "CARTS_V2_ENGINE_LOG_SYNC_1",
+        "engine_log_marker_seen": True, "engine_log_audit_byte_count": 1024,
+        "engine_log_audit_boundary": "PROCESS_START_THROUGH_SYNC_MARKER",
+        "physx_error_lines": [],
         "identity_hash_check_pass": True,
         "evidence_binding": {
             "config_sha256": sha, "offline_result_sha256": sha,
@@ -80,11 +81,11 @@ def test_complete_healthy_engine_evidence_is_accepted() -> None:
     assert preflight_is_accepted(_accepted_document())
 
 
-@pytest.mark.parametrize("field", ENGINE_EVIDENCE_FIELDS)
-def test_missing_engine_field_fails_closed(field: str) -> None:
-    document = _accepted_document()
-    del document[field]
-    assert not preflight_is_accepted(document)
+def test_missing_engine_field_fails_closed() -> None:
+    for field in ENGINE_EVIDENCE_FIELDS:
+        document = _accepted_document()
+        del document[field]
+        assert not preflight_is_accepted(document), field
 
 
 def test_warning_or_inconsistent_accepted_flag_fails_closed() -> None:
@@ -94,6 +95,12 @@ def test_warning_or_inconsistent_accepted_flag_fails_closed() -> None:
     inconsistent = _accepted_document()
     inconsistent["engine_health_pass"] = False
     assert not preflight_is_accepted(inconsistent)
+    tampered = _accepted_document()
+    tampered["engine_log_sync_marker"] = "wrong-marker"
+    assert not preflight_is_accepted(tampered)
+    error = _accepted_document()
+    error["physx_error_lines"] = ["[Error] [omni.physx.plugin] invalid data"]
+    assert not preflight_is_accepted(error)
 
 
 def test_incomplete_identity_binding_fails_closed() -> None:

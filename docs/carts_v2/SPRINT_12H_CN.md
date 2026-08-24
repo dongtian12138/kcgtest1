@@ -229,3 +229,9 @@
 - 唯一 API 修正是使用同版本接口普遍采用的 `sdfPathToInt`；容量、碰撞关系、候选、增益、速度和物理标准均不改。
 - `fast_shutdown=false` 在完整扩展卸载后的 Python GC 触发 Isaac 段错误；替代方案是在最后统计和 trace 构造后向本次精确日志写唯一 marker，短超时确认落盘，再审计“进程启动至 marker”并在快速关闭前写证据。
 - Academic Supervisor 只批准一次 run10 替代预检查；marker 缺失、日志读取失败、任一 PhysX Error 或容量警告均失败关闭，抓取门仍未开放。
+
+## 2026-08-24T09:08:06Z — A run10：物理完成，但下游门继续失败关闭
+
+- run10 真实推进 7.75 s，控制器完成、有限数值、三类未授权接触均为 0；GPU found/lost 与 total 峰值分别为 1 和 7644，低于配置 8192/16384，容量警告与 PhysX Error 均为 0。
+- evaluation 内部报告 accepted=true，但两位监督者发现 `preflight_is_accepted()` 尚未强制 marker、截止字节数、精确边界与空 PhysX Error 列表；因此 run10 不绑定抓取，不能启动闭指。
+- 最小修正只收紧下游文件验收：缺失或篡改上述字段一律拒绝；修正会改变源码身份哈希，故必须原样重做预检查，不复用 run10。

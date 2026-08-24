@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T08:59:45Z",
+  "updated_at_utc": "2026-08-24T09:08:06Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -62,8 +62,10 @@
     "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
     "missing_field_rejected": true,
     "controller_engine_identity_conjunction_required": true,
+    "synchronized_log_marker_required": true,
+    "empty_physx_error_lines_required": true,
     "legacy_preflight_pass_rejected": true,
-    "targeted_tests_passed": 19,
+    "targeted_tests_passed": 10,
     "run07_run08_original_evidence_preserved": true
   },
   "gpu_collision_capacity_audit": {
@@ -89,6 +91,23 @@
       "engine_log_sha256": "514bb39b0254e9539eb2eb432affcde3514526d62e2b98b331ce189a6a98f679",
       "engine_log_path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260824_085531.log",
       "replacement_preflight_run10_authorized": true
+    },
+    "run10": {
+      "run_id": "A_candidate11_gpu_capacity_accepted_preflight_run10",
+      "physics_time_advanced_s": 7.75,
+      "controller_completed": true,
+      "reported_accepted_preflight_pass": true,
+      "accepted_for_grasp_lift": false,
+      "invalidation_reason": "DOWNSTREAM_GATE_DID_NOT_REQUIRE_SYNC_MARKER_FIELDS",
+      "physx_capacity_warning_count": 0,
+      "observed_found_lost_peak": 1,
+      "observed_total_peak": 7644,
+      "configured_found_lost_capacity": 8192,
+      "configured_total_capacity": 16384,
+      "unauthorized_contact_records": 0,
+      "evaluation_sha256": "8774605ffdc0f85d41313a14d8e365ad9d3f63ba56d2dc4847a58df16d3c29dc",
+      "trace_sha256": "7295bed36574f20a06018d1110770b7c921ece8a636c0b307bfcead9bf8aa687",
+      "replacement_with_strict_gate_required": true
     }
   },
   "formal_dynamic_pass": false,

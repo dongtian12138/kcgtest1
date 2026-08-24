@@ -19,7 +19,9 @@ ENGINE_EVIDENCE_FIELDS = (
     "configured_gpu_total_aggregate_pairs_capacity",
     "observed_gpu_found_lost_aggregate_pairs_peak",
     "observed_gpu_total_aggregate_pairs_peak",
-    "engine_log_sha256", "identity_hash_check_pass",
+    "engine_log_sha256", "engine_log_sync_marker", "engine_log_marker_seen",
+    "engine_log_audit_byte_count", "engine_log_audit_boundary",
+    "physx_error_lines", "identity_hash_check_pass",
 )
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 _CAPACITY_REQUEST = re.compile(
@@ -330,8 +332,10 @@ def pending_engine_fields(
         "configured_gpu_total_aggregate_pairs_capacity": None,
         "observed_gpu_found_lost_aggregate_pairs_peak": None,
         "observed_gpu_total_aggregate_pairs_peak": None,
-        "engine_log_sha256": None, "identity_hash_check_pass": bool(
-            identity_hash_check_pass),
+        "engine_log_sha256": None, "engine_log_sync_marker": None,
+        "engine_log_marker_seen": False, "engine_log_audit_byte_count": None,
+        "engine_log_audit_boundary": None, "physx_error_lines": None,
+        "identity_hash_check_pass": bool(identity_hash_check_pass),
     }
 
 
@@ -375,11 +379,22 @@ def preflight_is_accepted(document: Mapping[str, object]) -> bool:
     except (TypeError, ValueError):
         return False
     log_sha = document.get("engine_log_sha256")
+    marker = document.get("engine_log_sync_marker")
+    audit_bytes = document.get("engine_log_audit_byte_count")
+    synchronized_log = bool(
+        isinstance(marker, str) and marker.startswith("CARTS_V2_ENGINE_LOG_SYNC_")
+        and document.get("engine_log_marker_seen") is True
+        and isinstance(audit_bytes, int) and not isinstance(audit_bytes, bool)
+        and audit_bytes > 0
+        and document.get("engine_log_audit_boundary")
+        == "PROCESS_START_THROUGH_SYNC_MARKER"
+        and document.get("physx_error_lines") == [])
     capacity_evidence = bool(document.get("physx_capacity_warning_count") == 0
         and 0 <= found_peak < found_capacity
         and 0 <= total_peak < total_capacity
         and isinstance(log_sha, str) and _SHA256.fullmatch(log_sha))
-    expected = boundary and controller and engine and identity and capacity_evidence
+    expected = bool(boundary and controller and engine and identity
+                    and synchronized_log and capacity_evidence)
     return accepted and expected
 
 
