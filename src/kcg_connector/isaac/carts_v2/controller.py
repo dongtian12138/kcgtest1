@@ -278,7 +278,7 @@ def build_joint_motion_plan(
 
 
 class SequentialEffortContactController:
-    """Advance one finger until its joint-side stall evidence persists."""
+    """Close, settle and hold each finger using joint-side effort evidence."""
 
     def __init__(
         self,
@@ -289,16 +289,23 @@ class SequentialEffortContactController:
         position_error_rad: float,
         consecutive_samples: int,
         endpoint_timeout_samples: int,
+        hand_stiffness: float,
     ) -> None:
-        self.target = np.asarray(start, dtype=np.float64)
+        self.start = np.asarray(start, dtype=np.float64)
+        self.target = self.start.copy()
         self.goal = np.asarray(goal, dtype=np.float64)
         self.effort_rise_nm = float(effort_rise_nm)
         self.position_error_rad = float(position_error_rad)
         self.consecutive_samples = int(consecutive_samples)
         self.endpoint_timeout_samples = int(endpoint_timeout_samples)
+        self.hand_stiffness = float(hand_stiffness)
         self.finger_order = (1, 2, 3)
         self.active_finger = self._evidence_count = self._endpoint_count = 0
+        self.state, self._state_samples = "APPROACH", 0
         self._contact_targets: list[float] = []
+        self._contact_efforts: list[float] = []
+        self.last_output_state, self.last_output_finger = self.state, 1
+        self.maximum_target_delta_rad = 0.0
         self.failure_reason: str | None = None
 
     @property
@@ -313,35 +320,74 @@ class SequentialEffortContactController:
     def contact_targets_rad(self) -> tuple[float, ...]:
         return tuple(self._contact_targets)
 
+    @property
+    def contact_efforts_nm(self) -> tuple[float, ...]:
+        return tuple(self._contact_efforts)
+
+    def _effort_adjust(self, index, measured_effort, maximum_increment):
+        direction = float(np.sign(self.goal[index] - self.start[index]))
+        effort_error = self.effort_rise_nm - abs(float(measured_effort[index]))
+        raw_change = direction * effort_error / self.hand_stiffness
+        change = np.clip(raw_change, -maximum_increment, maximum_increment)
+        lower, upper = sorted((self.start[index], self.goal[index]))
+        self.target[index] = np.clip(self.target[index] + change, lower, upper)
+        return abs(raw_change) <= maximum_increment
+
     def step(
         self,
         measured_position: Sequence[float],
         measured_effort_delta: Sequence[float],
         maximum_increment_rad: float,
+        *,
+        advance_after_hold: bool = True,
     ) -> np.ndarray:
         if self.complete or self.failed:
             return self.target.copy()
+        maximum_increment = float(maximum_increment_rad)
+        if maximum_increment <= 0.0 or self.hand_stiffness <= 0.0:
+            raise ValueError("contact control bounds must be positive")
+        previous = self.target.copy()
         for completed in self.finger_order[:self.active_finger]:
-            self.target[completed] = float(measured_position[completed])
+            self._effort_adjust(completed, measured_effort_delta, maximum_increment)
         index = self.finger_order[self.active_finger]
-        remaining = self.goal[index] - self.target[index]
-        increment = math.copysign(
-            min(abs(remaining), float(maximum_increment_rad)), remaining
-        )
-        self.target[index] += increment
-        error = abs(self.target[index] - float(measured_position[index]))
-        loaded = abs(float(measured_effort_delta[index])) >= self.effort_rise_nm
-        contact_evidence = loaded and error >= self.position_error_rad
-        self._evidence_count = self._evidence_count + 1 if contact_evidence else 0
-        at_endpoint = abs(self.goal[index] - self.target[index]) <= 1.0e-12
-        self._endpoint_count = self._endpoint_count + 1 if at_endpoint else 0
-        if self._evidence_count >= self.consecutive_samples:
-            self.target[index] = float(measured_position[index])
-            self._contact_targets.append(float(self.target[index]))
-            self.active_finger += 1
+        output_state, output_finger = self.state, self.active_finger + 1
+        if self.state == "APPROACH":
+            error = abs(self.target[index] - float(measured_position[index]))
+            loaded = abs(float(measured_effort_delta[index])) >= self.effort_rise_nm
+            self._evidence_count = self._evidence_count + 1 if loaded and error >= self.position_error_rad else 0
+            if self._evidence_count >= self.consecutive_samples:
+                self._contact_targets.append(float(measured_position[index]))
+                self._contact_efforts.append(float(measured_effort_delta[index]))
+                self.state, output_state = "CONTACT_CONFIRMED", "CONTACT_CONFIRMED"
+                self._state_samples = self._endpoint_count = 0
+            else:
+                remaining = self.goal[index] - self.target[index]
+                self.target[index] += math.copysign(min(abs(remaining), maximum_increment), remaining)
+                at_endpoint = abs(self.goal[index] - self.target[index]) <= 1.0e-12
+                self._endpoint_count = self._endpoint_count + 1 if at_endpoint else 0
+        elif self.state == "CONTACT_CONFIRMED":
+            self.state = "CONTACT_SETTLE"
+        elif self.state == "CONTACT_SETTLE":
+            settled = self._effort_adjust(index, measured_effort_delta, maximum_increment)
+            self._state_samples = self._state_samples + 1 if settled else 0
+            self._endpoint_count += 1
+            if self._state_samples >= self.consecutive_samples:
+                self.state = "HOLD"
+        else:
+            self._effort_adjust(index, measured_effort_delta, maximum_increment)
+            if advance_after_hold:
+                self.active_finger += 1
+                self.state, self._state_samples = "APPROACH", 0
             self._evidence_count = self._endpoint_count = 0
-        elif self._endpoint_count >= self.endpoint_timeout_samples:
+        if self.state == "APPROACH" and self._endpoint_count >= self.endpoint_timeout_samples:
             self.failure_reason = f"FINGER_{self.active_finger + 1}_NO_CONTACT_SIGNAL"
+        elif self.state == "CONTACT_SETTLE" and self._endpoint_count >= self.endpoint_timeout_samples:
+            self.failure_reason = f"FINGER_{self.active_finger + 1}_CONTACT_SETTLE_TIMEOUT"
+        target_delta = float(np.max(np.abs(self.target - previous)))
+        if target_delta > maximum_increment + 1.0e-12:
+            raise RuntimeError("contact target continuity invariant violated")
+        self.maximum_target_delta_rad = max(self.maximum_target_delta_rad, target_delta)
+        self.last_output_state, self.last_output_finger = output_state, output_finger
         return self.target.copy()
 
 
@@ -542,6 +588,7 @@ def _tare_and_close(stepper, motion_plan, settings, pregrasp):
         position_error_rad=float(settings["contact_position_error_rad"]),
         consecutive_samples=int(settings["contact_consecutive_samples"]),
         endpoint_timeout_samples=round(float(settings["contact_endpoint_timeout_s"]) / dt),
+        hand_stiffness=float(settings["hand_stiffness"]),
     )
     maximum_increment = float(settings["finger_maximum_speed_rad_s"]) * dt
     closure_steps = sum(
@@ -554,7 +601,7 @@ def _tare_and_close(stepper, motion_plan, settings, pregrasp):
         measured_hand = stepper.latest[0][7:]
         effort_delta = stepper.latest[2][7:] - tare
         hand_target = contact.step(measured_hand, effort_delta, maximum_increment)
-        phase = f"finger_{min(contact.active_finger + 1, 3)}"
+        phase = f"finger_{contact.last_output_finger}_{contact.last_output_state.lower()}"
         stepper.advance(phase, pregrasp["arm"], hand_target)
         if stepper.abort_reason or contact.complete or contact.failed:
             break
@@ -567,16 +614,24 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
     direction = np.sign(final_hand - pregrasp["hand"])
     preload_goal = closure_target + float(settings["preload_increment_rad"]) * direction
     preload_steps = round(float(settings["preload_duration_s"]) / dt)
+    maximum_increment = float(settings["finger_maximum_speed_rad_s"]) * dt
+    previous_target = closure_target
     for index in stepper.active_steps(preload_steps):
         blend = minimum_jerk_blend((index + 1) / preload_steps)
-        hand_target = closure_target + blend * (preload_goal - closure_target)
+        desired = closure_target + blend * (preload_goal - closure_target)
+        hand_target = previous_target + np.clip(
+            desired - previous_target, -maximum_increment, maximum_increment
+        )
         latest = stepper.advance("preload", pregrasp["arm"], hand_target)
+        previous_target = hand_target
         if stepper.abort_reason is not None:
             return stepper.abort_reason
         if np.max(np.abs(latest[2][8:] - tare[1:])) > float(
             settings["measured_effort_abort_nm"]
         ):
             return "HAND_MEASURED_EFFORT_ABORT"
+    if not np.allclose(previous_target, preload_goal, atol=1.0e-12, rtol=0.0):
+        return "PRELOAD_TARGET_RATE_LIMIT_ABORT"
     waypoints = np.asarray(motion_plan["lift_arm_waypoints_rad"])
     lift_steps = round(float(settings["lift_duration_s"]) / dt)
     for index in stepper.active_steps(lift_steps):

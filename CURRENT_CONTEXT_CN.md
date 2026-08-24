@@ -6,23 +6,23 @@
 
 ## 一句话状态
 
-run15/run17 离线复盘确认接触代理把目标反向跳变 0.027026 rad（单周期上限的 18 倍），`f1j3` 在 25 ms 后超速；当前先实现并测试无冲击切换，不启动 Isaac。
+接触确认的 0.027026 rad 目标阶跃已从控制器删除，run17 数值回归证明确认周期输出不变且后续每周期不超过 0.0015 rad；真实接触和 `f1j3` 动态因果仍待 Isaac 验证。
 
 ## 六行恢复摘要
 
 - 总目标：真实允许表面候选 → 任务载荷鲁棒 Top-3 → Isaac 三指接触、离桌、抬升 50 mm、保持至少 2 s；两个对象同算法同主要参数。
-- 当前里程碑：`V2_CONTACT_TRANSITION_BUMPLESS_IMPLEMENTATION`；03594b8 只影响接触后的周期，不计作消除确认当周期阶跃的独立修复。
-- 已经完成：GPU 容量按实测规则固定为 8192/16384；run16 严格预检通过；run17 真实推进 9.108 s 后由 3 rad/s 安全门停止。
-- 当前物理/算法阻塞：接触确认最终输出绕过 0.0015 rad 上限；事后没有记录允许 PAD 接触，按当前评价器分类为 `FALSE_CONTACT_PROXY`，但接触采集完整性尚未证明。
-- 下一步最简单动作：删除 `target=measured_position` 直接覆盖，用 APPROACH→CONTACT_CONFIRMED→CONTACT_SETTLE→HOLD 四状态保证每个输出变化受现有上限约束，再做 run17 数值回归。
+- 当前里程碑：`V2_FIRST_FINGER_DIAGNOSTIC_INSTRUMENTATION`；四状态无冲击切换已完成静态回归，尚未获得新动态证据。
+- 已经完成：确认周期保持上一命令；CONTACT_SETTLE/HOLD 用现有 0.020 N·m 关节力代理和 12 N·m/rad 刚度作有界修正；三项定向测试通过。
+- 当前物理/算法阻塞：尚未证明阶跃修复能消除对象场景 `f1j3` 超速；运行时整末端凸包也不能单独证明允许 PAD patch 接触。
+- 下一步最简单动作：在现有 trace 补记 f1j2/f1j3 逐周期信号和末端碰撞路径，重做源码绑定预检查，再执行第一指 CONTACT_SETTLE/HOLD 0.5 s。
 - 绝对禁止跑偏方向：续修 H102、对象专用坐标/阈值、磁吸/隐藏固定、在线读取对象/接触/PhysX 真值、写物体位姿、把退出 0 冒充物理成功。
 
 ## 当前权威字段
 
 - 状态：`IMPLEMENTING`
-- 当前里程碑：`V2_CONTACT_TRANSITION_BUMPLESS_IMPLEMENTATION`
+- 当前里程碑：`V2_FIRST_FINGER_DIAGNOSTIC_INSTRUMENTATION`
 - V2 正式候选：空
-- V2 研究动态门：`allowed=false`，scope=`BOUNDED_CONTACT_TRANSITION_IMPLEMENTATION_AND_TEST_ONLY`；连续性测试通过前禁止 Isaac
+- V2 研究动态门：`allowed=false`，scope=`SOURCE_BOUND_PREFLIGHT_REQUIRED_BEFORE_FIRST_FINGER_DIAGNOSTIC`；新源码绑定预检查前禁止对象动态
 - 旧正式动态门：`dynamic_launch_allowed=false`（保持，不由 V2 研究线改写）
 - 正式动态：`FORMAL_DYNAMIC_PASS=false`
 - 研究型动态：`RESEARCH_DYNAMIC_PASS=false`
