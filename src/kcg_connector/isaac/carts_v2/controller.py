@@ -336,10 +336,10 @@ class SequentialEffortContactController:
         at_endpoint = abs(self.goal[index] - self.target[index]) <= 1.0e-12
         self._endpoint_count = self._endpoint_count + 1 if at_endpoint else 0
         if self._evidence_count >= self.consecutive_samples:
+            self.target[index] = float(measured_position[index])
             self._contact_targets.append(float(self.target[index]))
             self.active_finger += 1
-            self._evidence_count = 0
-            self._endpoint_count = 0
+            self._evidence_count = self._endpoint_count = 0
         elif self._endpoint_count >= self.endpoint_timeout_samples:
             self.failure_reason = f"FINGER_{self.active_finger + 1}_NO_CONTACT_SIGNAL"
         return self.target.copy()
