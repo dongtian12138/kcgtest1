@@ -253,17 +253,16 @@ def _initial_trace(arguments, report, selected, motion_plan, dynamic):
 def _initial_isolated_trace(arguments, report, selected, motion_plan, dynamic):
     reference_path = Path(arguments.reference_trace).resolve()
     reference = arguments.reference_document
-    expected = (arguments.object_id, selected["candidate_id"], "preflight")
-    observed = (
-        reference.get("object_id"), reference.get("candidate_id"), reference.get("mode")
-    )
-    if observed != expected or reference.get("config_sha256") != report["config_sha256"]:
-        raise ValueError("isolated diagnostic reference differs from the failed preflight")
+    observed = (reference.get("object_id"), reference.get("candidate_id"))
+    if (observed != (arguments.object_id, selected["candidate_id"])
+            or reference.get("mode") not in ("preflight", "grasp-lift")
+            or reference.get("config_sha256") != report["config_sha256"]):
+        raise ValueError("isolated diagnostic reference differs from the failed run")
     if (
         float(reference.get("physics_dt_s", -1.0)) != float(dynamic["physics_dt_s"])
         or _json_sha256(reference.get("motion_plan")) != _json_sha256(motion_plan)
     ):
-        raise ValueError("isolated diagnostic trajectory differs from the failed preflight")
+        raise ValueError("isolated diagnostic trajectory differs from the failed run")
     return {
         "schema_version": "carts_grasp_v2_isolated_hand_diagnostic_v1",
         "object_id": arguments.object_id, "candidate_id": selected["candidate_id"],
@@ -376,26 +375,27 @@ def _create_isolated_runtime(repository, inputs, scene_entry, trace):
 
 def _execute_isolated(repository, arguments, output, inputs, scene_entry, motion_plan, trace):
     dynamic = inputs.config.section("dynamic")
-    world, recorder, robot_data = _create_isolated_runtime(
-        repository, inputs, scene_entry, trace
-    )
+    world, recorder, robot_data = _create_isolated_runtime(repository, inputs, scene_entry, trace)
     robot, active_indices, arm_indices, lower, upper, drive_audit = robot_data
     stepper = control.JointSignalStepper(
         robot=robot, world=world, auditor=recorder, active_indices=active_indices,
         arm_indices=arm_indices, arm_lower_limits=lower, arm_upper_limits=upper,
-        settings=dynamic, render=arguments.gui,
-    )
+        settings=dynamic, render=arguments.gui)
     pregrasp = control.run_pregrasp_sequence(stepper, motion_plan, dynamic)
+    if arguments.reference_document.get("mode") == "grasp-lift":
+        for row in arguments.reference_document["samples"][stepper.step_index:]:
+            target = np.asarray(row["active_targets_rad"], dtype=np.float64)
+            stepper.advance(f"replay_{row['phase']}", target[:7], target[7:])
+            if stepper.abort_reason is not None:
+                break
     outcome = control.controller_outcome(
         stepper, mode="preflight", native_drive_audit=drive_audit,
         pregrasp=pregrasp,
-        grasp={"contact_controller": None, "failure_reason": stepper.abort_reason},
-    )
+        grasp={"contact_controller": None, "failure_reason": stepper.abort_reason})
     trace["samples"] = recorder.samples
     trace["controller_outcome"] = outcome
     trace["reference_target_comparison"] = compare_reference_targets(
-        arguments.reference_document, trace["samples"]
-    )
+        arguments.reference_document, trace["samples"])
     trace["runtime"] = {
         "git_commit": subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=repository, text=True,
