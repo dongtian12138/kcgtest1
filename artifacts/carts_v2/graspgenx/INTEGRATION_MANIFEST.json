@@ -1,6 +1,6 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T21:21:22Z",
+  "updated_at_utc": "2026-08-24T21:32:32Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
@@ -223,6 +223,15 @@
     },
     "task_gate_interpretation": "NOT_REACHED_NOT_A_TASK_FAILURE",
     "dynamic_gate_interpretation": "CLOSED_BECAUSE_NO_RESEARCH_EXECUTABLE_CANDIDATE"
+  },
+  "reproducibility_check": {
+    "path": "artifacts/carts_v2/graspgenx/REPRODUCIBILITY_CHECK.json",
+    "sha256": "ffa98d17b5f6690bd9caf9745fcfdf643d1f3a7bc0b8f9e96f9799a700bb2073",
+    "reference_runtime_candidate_csv_byte_match": true,
+    "reference_runtime_coverage_byte_match": true,
+    "reference_runtime_result_without_timings_byte_match": true,
+    "alternate_runtime_numerical_drift_observed": true,
+    "evidence_scope": "OFFLINE_REPRODUCIBILITY_ONLY_NOT_PHYSICAL_SUCCESS"
   },
   "evidence_boundaries": {
     "hardware_authorized": false,

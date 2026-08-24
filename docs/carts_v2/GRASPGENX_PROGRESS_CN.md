@@ -105,3 +105,9 @@
 - Academic Supervisor 确认所有接触均表述为离线预测，12 N 任务、IK、Isaac、50 mm 和 2 s 均为未到达；P1–P4 未被宣称验证。
 - Complexity Supervisor 确认本次报告差异没有生产源码，路线生产源码净增 `2069 NLOC`，12 N、3 rad/s、50 mm、2 s、真值隔离和硬件未授权均未改变。
 - 系统 Python 因缺少 `python-fcl` 得到 `26/27`；绑定项目现有 FCL site-packages 后同组为 `27/27`。前一次缺包失败保留，不把测试数量当作物理进展。
+
+## 2026-08-24T21:32:32Z — 参考运行时复现通过
+
+- 用报告里的等价命令和原始 `/usr/bin/python3` 运行时重放 A/B；候选 CSV 与 coverage JSON 的 SHA-256 均和冻结证据完全一致。
+- 两个 result JSON 仅顶层 `timings_s` 随运行变化；删除该字段后 A/B 的规范化 SHA-256 分别一致为 `e6d1378d…`、`cf55a67f…`。
+- 项目 `.venv` 的 NumPy/SciPy 版本不同，虽阶段计数相同，但部分 Sobol/旋转数值和 A 候选字节不同；这不是新物理失败，而是运行时必须绑定的复现边界。

@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T21:21:22Z",
+  "updated_at_utc": "2026-08-24T21:32:32Z",
   "started_at_utc": "2026-08-24T14:46:08Z",
   "hard_deadline_utc": "2026-08-25T02:46:08Z",
   "branch": "carts-grasp-graspgenx-route1-20260824",
@@ -8,7 +8,7 @@
   "start_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "GRASPGENX_ROUTE1_FINAL_REPORT_REVIEW_APPROVED",
+  "current_milestone": "GRASPGENX_ROUTE1_REFERENCE_RUNTIME_REPRODUCIBILITY_CONFIRMED",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -949,7 +949,9 @@
     "graspgenx_route1_closeout_system_python_failure_reason": "PYTHON_FCL_NOT_INSTALLED_IN_SYSTEM_INTERPRETER",
     "graspgenx_route1_closeout_bound_fcl_environment_passed": 27,
     "graspgenx_route1_academic_supervisor": "APPROVE",
-    "graspgenx_route1_complexity_supervisor": "APPROVE"
+    "graspgenx_route1_complexity_supervisor": "APPROVE",
+    "graspgenx_route1_reference_runtime_reproducibility_passed": true,
+    "graspgenx_route1_reproducibility_check_sha256": "ffa98d17b5f6690bd9caf9745fcfdf643d1f3a7bc0b8f9e96f9799a700bb2073"
   },
   "blockers": [
     "OBJECT_A_ROI_256_HAS_THREE_THREE_PAD_CLOSURE_PREDICTIONS_BUT_ZERO_TABLE_SAFE_PATHS",

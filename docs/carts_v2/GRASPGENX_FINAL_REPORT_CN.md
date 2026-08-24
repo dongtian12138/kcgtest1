@@ -70,6 +70,7 @@
 
 - 代码检查：通过定向接口、坐标变换、描述器、闭合和碰撞回归；不等于抓取成功。
 - 收口复核：系统 Python 因没有 `python-fcl` 为 26/27；绑定项目现有 FCL 环境后同组为 27/27。缺包失败已保留，它不改变离线物理结论。
+- 复现检查：在原 `/usr/bin/python3` 数值栈下，A/B 候选 CSV、覆盖 JSON 和删除 `timings_s` 后的结果 JSON 均逐字节一致；完整结果文件仅因耗时字段不同而哈希不同。
 - 官方模型正对照：`robotiq_3f + banana` 返回 20/20 个有限六维姿态；证明模型、权重和 GPU 推理链可用。
 - 离线算法：A/B 六维覆盖已验证；A 在桌面路径门失败，B 在三指闭合预测门失败。
 - 研究型动态：未运行，`research_dynamic_pass=false`。
@@ -121,6 +122,7 @@
 - 对象 B：`artifacts/carts_v2/graspgenx/offline_B/CURRENT_FINAL_INDEX.json`
 - 动态未运行：`artifacts/carts_v2/graspgenx/dynamic_A/NOT_RUN.json`、`dynamic_B/NOT_RUN.json`
 - 版本与哈希：`artifacts/carts_v2/graspgenx/INTEGRATION_MANIFEST.json`
+- 参考运行时复现：`artifacts/carts_v2/graspgenx/REPRODUCIBILITY_CHECK.json`
 
 ## 复现命令与时间证据缺口
 
