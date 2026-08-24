@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-23T21:44:03Z",
+  "updated_at_utc": "2026-08-24T06:42:18Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,28 +8,38 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "PARKED",
-  "current_milestone": "V2_EVIDENCE_CLOSEOUT_COMPLETE_DYNAMIC_PARKED",
+  "current_milestone": "V2_12H_DEADLINE_CLOSEOUT_DYNAMIC_NOT_ACHIEVED",
   "git_delivery": {
-    "workspace_git_directory_writable": false,
-    "workspace_head": "698a2bb",
-    "workspace_git_error": "CANNOT_CREATE_GIT_INDEX_LOCK_READ_ONLY_FILE_SYSTEM",
+    "workspace_git_directory_writable": true,
+    "workspace_head_at_delivery_sync": "57efc16bfa354cc7b99a5ce4c07c59185b04fa28",
+    "workspace_git_error": null,
     "integration_clone": "/tmp/kcgtest1-carts-v2-integration-20260823",
     "code_commit": "4d90a52",
     "documentation_commit": "58c9503",
-    "remote_push_status": "FAILED_NETWORK",
-    "push_failure": "Couldn't connect to server",
-    "recovery_bundle": "artifacts/carts_v2/CARTS_V2_INTEGRATION_58c9503_INCREMENTAL.bundle",
-    "recovery_bundle_sha256": "b22d65dd19d7b468ac7a1d0cfe2a8c46f9b784d1473f884b93124a9f44c3a9d1",
-    "recovery_bundle_size_bytes": 802864,
+    "handoff_commit": "57efc16",
+    "remote_push_status": "SUCCESS_THROUGH_57EFC16",
+    "push_failure": null,
+    "recovery_branch": "carts-v2-pre-integration-698a2bb",
+    "recovery_bundle": "artifacts/carts_v2/CARTS_V2_INTEGRATION_57efc16_INCREMENTAL.bundle",
+    "recovery_bundle_sha256": "74e1464c3a615ee34558bec4cfb80d5f8d2ed5db27cbf42c04e0649992dfcc68",
+    "recovery_bundle_size_bytes": 804458,
     "recovery_bundle_prerequisite_commit": "698a2bb4398bee15ef03afb2aef45932b7e0438a",
-    "recovery_bundle_tip_commit": "58c95030dc4700bca94d78f3e406e8853cc63feb"
+    "recovery_bundle_tip_commit": "57efc16bfa354cc7b99a5ce4c07c59185b04fa28"
+  },
+  "deadline_closeout": {
+    "evaluated_at_utc": "2026-08-24T06:42:18Z",
+    "deadline_exceeded_by_s": 14440,
+    "new_feature_work_stopped": true,
+    "isaac_runs_after_deadline": 0,
+    "nvidia_smi_available_after_deadline": true,
+    "dynamic_success_target_achieved": false
   },
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": false,
-    "scope": "OBJECT_RUNS_PARKED_PENDING_GPU_HAND_DRIVE_DIFFERENTIATION",
-    "reason": "A native-gravity preflight stopped at 4.4916 rad/s f2j1 speed; startup separately reported CPU fallback, and an isolated same-trajectory hand-drive comparison must pass before another object run"
+    "scope": "OBJECT_RUNS_PARKED_AT_12H_DEADLINE",
+    "reason": "A native-gravity preflight stopped at 4.4916 rad/s f2j1 speed; the required isolated hand-drive comparison was not executed before the hard deadline"
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
@@ -149,7 +159,7 @@
     "BOTH_OBJECTS_ROBUST_TASK_MARGIN_BELOW_ONE",
     "HAND_PRESHAPE_SPEED_ABORT",
     "CPU_FALLBACK_CONTEXT_NOT_BOUND_IN_TRACE",
-    "NVIDIA_DRIVER_UNAVAILABLE",
+    "HAND_DRIVE_BACKEND_CAUSAL_DIFFERENTIATION_NOT_EXECUTED",
     "NATIVE_GRAVITY_BIASED_DRIVE_NOT_CAUSALLY_VERIFIED",
     "DYNAMIC_PAD_SURFACE_IDENTITY_NOT_VERIFIED",
     "PREREGISTERED_DISTURBANCE_NOT_EXECUTED"

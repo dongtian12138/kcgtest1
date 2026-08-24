@@ -123,3 +123,10 @@
 - 本地保留 `/tmp/kcgtest1-carts-v2-integration-20260823`；另生成增量 bundle，要求起点 `698a2bb`，包含到 `58c9503`。
 - bundle 为 802,864 B，SHA-256 `b22d65dd19d7b468ac7a1d0cfe2a8c46f9b784d1473f884b93124a9f44c3a9d1`，已通过 `git bundle verify`。
 - 网络恢复后只允许普通 push 同名 V2 分支，禁止 force push；原工作区同步仍需恢复 `.git` 写权限。
+
+## 2026-08-24T06:42:18Z — STOP：12 小时硬截止
+
+- 本轮硬截止为 `2026-08-24T02:41:38Z`；复核时已经超时 4 h 00 min 40 s，因此停止新增功能、Isaac 运行和 GPU/CPU 区分实验。
+- 截止时只达到双对象离线排序和真实 Isaac 预飞失败证据；三指闭合、离桌、抬升 50 mm、保持 2 s 和扰动均未完成，不能写 `RESEARCH_DYNAMIC_PASS`。
+- 截止后唯一执行的是交付修复：只读确认原工作区内容与临时集成 tip 完全一致，保留 `698a2bb` 恢复分支，再无历史改写快进至 `57efc16`。
+- `57efc16` 已用普通 push 同步远端 `carts-grasp-v2-rebuild-20260823`；没有 force push，没有启动仿真，没有改变对象、参数、成功门或 `hardware_authorized=false`。
