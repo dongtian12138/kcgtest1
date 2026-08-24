@@ -1,0 +1,12 @@
+{
+  "schema_version": "graspgenx_carts_offline_index_v1",
+  "object_id": "te_deutsch_d38999_26fj35pn_step",
+  "source_commit": "db540b3e5b85fd33cbc03d3265aa22ef1372eaae",
+  "final_artifact_directory": "artifacts/carts_v2/graspgenx/offline_final_db540b3_B",
+  "result_sha256": "844ab07bc6a9af7dbb89672e7022a4a9b6256b95a1691ce17f3318c80003134c",
+  "coverage_sha256": "aa4d4d08e5ee6f14d8ef068fed369bb463a1c72c2f4b0c04d1cd158e471aa5bf",
+  "physical_result": "NO_THREE_ALLOWED_PAD_CLOSURE_CANDIDATE",
+  "task_gate_status": "NOT_REACHED",
+  "executable_candidate_count": 0,
+  "isaac_launched": false
+}

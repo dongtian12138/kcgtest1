@@ -1,0 +1,15 @@
+{
+  "schema_version": "graspgenx_carts_dynamic_not_run_v1",
+  "object_id": "te_deutsch_d38999_26fj35pn_step",
+  "source_commit": "db540b3e5b85fd33cbc03d3265aa22ef1372eaae",
+  "isaac_launched": false,
+  "reason": "NO_RESEARCH_EXECUTABLE_CANDIDATE_ZERO_THREE_PAD_CLOSURE_SURVIVORS",
+  "lift_height_m": null,
+  "hold_duration_s": null,
+  "table_contact_after_lift": null,
+  "slip_m": null,
+  "unauthorized_penetration": null,
+  "research_dynamic_pass": false,
+  "formal_dynamic_pass": false,
+  "hardware_authorized": false
+}

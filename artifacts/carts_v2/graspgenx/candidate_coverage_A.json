@@ -1,0 +1,23 @@
+{
+  "schema_version": "graspgenx_carts_6d_coverage_index_v1",
+  "object_id": "current_d38999_26kj61sn_public_spec",
+  "source_commit": "db540b3e5b85fd33cbc03d3265aa22ef1372eaae",
+  "source_artifact": "artifacts/carts_v2/graspgenx/offline_final_db540b3_A/candidate_coverage.json",
+  "source_sha256": "3a1b20f90ac9a7627295a8813213d0aebcef4c74de71d0b37c2ab0dc5c68166d",
+  "candidate_count": 256,
+  "coverage_pass": true,
+  "descriptor_counts": {
+    "kcg_3f_preshape_00": 46,
+    "kcg_3f_preshape_01": 50,
+    "kcg_3f_preshape_02": 68,
+    "kcg_3f_preshape_03": 47,
+    "kcg_3f_preshape_04": 45
+  },
+  "palm_azimuth_quadrant_count": 4,
+  "radial_distance_range_m": [0.003752545869101043, 0.45619616449429357],
+  "approach_azimuth_range_rad": [-3.0826868292703864, 3.0342284729906783],
+  "approach_elevation_range_rad": [-1.5505131967953785, 1.5707963267948966],
+  "roll_pitch_yaw_range_rad": [6.085692289404189, 3.0215288529374567, 6.22778371407329],
+  "effective_dimension_participation_ratio": 2.80365630869519,
+  "evidence_scope": "GENERATOR_COVERAGE_DIAGNOSTIC_NOT_GRASP_SUCCESS"
+}

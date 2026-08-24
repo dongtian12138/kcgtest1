@@ -1,6 +1,6 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T20:43:00Z",
+  "updated_at_utc": "2026-08-24T21:06:00Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
@@ -188,6 +188,40 @@
     "output": "artifacts/carts_v2/graspgenx/official_gripper_same_objects_control.json",
     "output_sha256": "a5e8f75040c36d3a2067fc020938e3f9d645652f54e3056c840d65e465212c06",
     "claim_scope": "OBJECT_INPUT_AND_OFFICIAL_GRIPPER_DOMAIN_DIAGNOSTIC_NOT_KCG_COLLISION_TASK_OR_DYNAMIC_EVIDENCE"
+  },
+  "final_same_source_offline_replay": {
+    "source_commit": "db540b3e5b85fd33cbc03d3265aa22ef1372eaae",
+    "same_source_config_descriptor_and_budget": true,
+    "route_config_sha256": "77b43bf386d5b47fa04cf3dfabe447c23728856201ccb6f1a9e2db9960854f6e",
+    "integration_manifest_sha256_at_run": "033d919d7d68264401fa935c7be1758de8f738635c93bf4388446f425df13d46",
+    "object_a": {
+      "artifact_directory": "artifacts/carts_v2/graspgenx/offline_final_db540b3_A",
+      "result_sha256": "3c94f650403d8790f7e5183a1ed3779b0a60191679b1e0c97ad213c0a2face16",
+      "coverage_sha256": "3a1b20f90ac9a7627295a8813213d0aebcef4c74de71d0b37c2ab0dc5c68166d",
+      "candidate_count": 256,
+      "closure_survive_count": 3,
+      "table_clearance_pass_count": 0,
+      "task_evaluated_count": 0,
+      "research_task_eligible_count": 0,
+      "formal_task_eligible_count": 0,
+      "executable_candidate_count": 0,
+      "isaac_launched": false
+    },
+    "object_b": {
+      "artifact_directory": "artifacts/carts_v2/graspgenx/offline_final_db540b3_B",
+      "result_sha256": "844ab07bc6a9af7dbb89672e7022a4a9b6256b95a1691ce17f3318c80003134c",
+      "coverage_sha256": "aa4d4d08e5ee6f14d8ef068fed369bb463a1c72c2f4b0c04d1cd158e471aa5bf",
+      "candidate_count": 256,
+      "closure_survive_count": 0,
+      "table_clearance_pass_count": 0,
+      "task_evaluated_count": 0,
+      "research_task_eligible_count": 0,
+      "formal_task_eligible_count": 0,
+      "executable_candidate_count": 0,
+      "isaac_launched": false
+    },
+    "task_gate_interpretation": "NOT_REACHED_NOT_EVALUATED_FAILURE",
+    "dynamic_gate_interpretation": "CLOSED_BECAUSE_NO_RESEARCH_EXECUTABLE_CANDIDATE"
   },
   "evidence_boundaries": {
     "hardware_authorized": false,
