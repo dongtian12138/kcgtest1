@@ -63,12 +63,23 @@ def test_candidate_11_endpoint_method_misses_intermediate_sweep() -> None:
 
 
 def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> None:
+    expected = {
+        OBJECT_A: {
+            "closure": 69, "path_safe": 0, "task_evaluated": 0,
+            "diagnostic_top_k": 0,
+        },
+        OBJECT_B: {
+            "closure": 109, "path_safe": 6, "task_evaluated": 6,
+            "diagnostic_top_k": 3,
+        },
+    }
     for object_id in (OBJECT_A, OBJECT_B):
         result = run_offline_pipeline(
             ROOT, config_path=CONFIG, object_id=object_id
         )
         assert len(result.raw_candidates) == 384
-        assert 0 < len(result.candidates) <= 48
+        assert len(result.candidates) == expected[object_id]["path_safe"]
+        assert len(result.candidates) <= 48
         assert len(result.candidates) == len(result.closure_predictions)
         assert len(result.candidates) == len(result.fast_filter_results)
         assert result.scenario_design.shape == (16, 26)
@@ -91,7 +102,7 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
             for row in result.raw_closure_predictions
             if row.status == "CLOSURE_SURVIVE"
         ]
-        assert survivors
+        assert len(survivors) == expected[object_id]["closure"]
         for prediction in survivors:
             assert len(prediction.contacts) == 3
             assert all(
@@ -103,7 +114,7 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
             for row in result.raw_fast_filter_results
             if row.status == "FAST_SURVIVE"
         ]
-        assert len(fast_survivors) >= 3
+        assert len(fast_survivors) == expected[object_id]["path_safe"]
         assert all(
             row.sequential_closure_sweep_pass
             and row.minimum_table_clearance_m is not None
@@ -126,6 +137,8 @@ def test_same_pipeline_preserves_surface_contacts_and_cross_object_outcome() -> 
             and row.task_quality.status != "TASK_SURVIVE"
             for row in result.diagnostic_candidates
         )
+        assert len(result.task_quality_results) == expected[object_id]["task_evaluated"]
+        assert len(result.diagnostic_candidates) == expected[object_id]["diagnostic_top_k"]
         if not any(
             row.status == "TASK_SURVIVE" for row in result.task_quality_results
         ):

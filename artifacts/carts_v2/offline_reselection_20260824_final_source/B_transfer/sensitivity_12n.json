@@ -1,0 +1,86 @@
+{
+  "schema_version": "carts_grasp_v2_force_cap_sensitivity_v1",
+  "status": "SENSITIVITY_ONLY_NOT_EXECUTABLE",
+  "object_id": "te_deutsch_d38999_26fj35pn_step",
+  "hardware_authorized": false,
+  "research_dynamic_pass": false,
+  "formal_dynamic_pass": false,
+  "baseline_normal_force_operation_cap_n": 8.0,
+  "sensitivity_normal_force_operation_cap_n": 12.0,
+  "only_changed_parameter": "task_quality.normal_force_operation_cap_n",
+  "hardware_fact_context": "USER_STATED_PHYSICAL_SINGLE_FINGER_CAPABILITY_AT_LEAST_15N",
+  "main_config_modified": false,
+  "dynamic_force_limit_modified": false,
+  "runner_readable_candidates_emitted": false,
+  "raw_seed_pool_reused": true,
+  "closure_predictions_reused": true,
+  "sequential_sweep_results_reused": true,
+  "uncertainty_design_reused": true,
+  "config_sha256": "2e4670c052752823b0fb8c116e442ac0fbccc557a917221022491ccc1172bdfc",
+  "candidate_ids": [
+    "raw_seed_251",
+    "raw_seed_260",
+    "raw_seed_059",
+    "raw_seed_324",
+    "raw_seed_164",
+    "raw_seed_091"
+  ],
+  "task_survive_count_at_8n": 0,
+  "task_survive_count_at_12n": 0,
+  "best_worst_task_margin_at_8n": 0.08233212531669659,
+  "best_worst_task_margin_candidate_at_8n": "raw_seed_164",
+  "best_worst_task_margin_at_12n": 0.5117534010954482,
+  "best_worst_task_margin_candidate_at_12n": "raw_seed_324",
+  "lambda_one_reached_at_12n": false,
+  "conclusion": "INCREASING_8N_TO_12N_IMPROVES_MARGIN_BUT_REMAINS_INSUFFICIENT_LIMITING_CAUSE_UNRESOLVED",
+  "rows": [
+    {
+      "candidate_id": "raw_seed_251",
+      "worst_task_margin_at_8n": 0.0,
+      "worst_task_margin_at_12n": 0.3463433265829489,
+      "lower_tail_mean_margin_at_8n": 0.0907223472916286,
+      "lower_tail_mean_margin_at_12n": 0.4308663686490881,
+      "task_status_at_12n": "TASK_REJECT"
+    },
+    {
+      "candidate_id": "raw_seed_260",
+      "worst_task_margin_at_8n": 0.0,
+      "worst_task_margin_at_12n": 0.3475813182361967,
+      "lower_tail_mean_margin_at_8n": 0.06458710592809484,
+      "lower_tail_mean_margin_at_12n": 0.44380262804863885,
+      "task_status_at_12n": "TASK_REJECT"
+    },
+    {
+      "candidate_id": "raw_seed_059",
+      "worst_task_margin_at_8n": 0.0,
+      "worst_task_margin_at_12n": 0.3869797169123362,
+      "lower_tail_mean_margin_at_8n": 0.07387452271719425,
+      "lower_tail_mean_margin_at_12n": 0.4549531369279681,
+      "task_status_at_12n": "TASK_REJECT"
+    },
+    {
+      "candidate_id": "raw_seed_324",
+      "worst_task_margin_at_8n": 0.08186592512603538,
+      "worst_task_margin_at_12n": 0.5117534010954482,
+      "lower_tail_mean_margin_at_8n": 0.17085949335364725,
+      "lower_tail_mean_margin_at_12n": 0.5376795130436242,
+      "task_status_at_12n": "TASK_REJECT"
+    },
+    {
+      "candidate_id": "raw_seed_164",
+      "worst_task_margin_at_8n": 0.08233212531669659,
+      "worst_task_margin_at_12n": 0.46239563779600806,
+      "lower_tail_mean_margin_at_8n": 0.14937672928957824,
+      "lower_tail_mean_margin_at_12n": 0.5045523922375372,
+      "task_status_at_12n": "TASK_REJECT"
+    },
+    {
+      "candidate_id": "raw_seed_091",
+      "worst_task_margin_at_8n": 0.0,
+      "worst_task_margin_at_12n": 0.179754360061941,
+      "lower_tail_mean_margin_at_8n": 0.057318788703276655,
+      "lower_tail_mean_margin_at_12n": 0.2968398724509254,
+      "task_status_at_12n": "TASK_REJECT"
+    }
+  ]
+}

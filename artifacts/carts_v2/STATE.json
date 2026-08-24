@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T12:56:36Z",
+  "updated_at_utc": "2026-08-24T13:36:35Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
-  "config_sha256": "c41e10936effd08d4c8044dfe79861e479ac751f32453ef5d12ee5b785a948f7",
+  "config_sha256": "2e4670c052752823b0fb8c116e442ac0fbccc557a917221022491ccc1172bdfc",
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "IMPLEMENTING",
-  "current_milestone": "V2_COMPLETE_SEQUENTIAL_CLOSURE_SWEEP_RESELECTION",
+  "status": "PARKED",
+  "current_milestone": "V2_NO_FEASIBLE_CANDIDATE_ANALYSIS_COMPLETE",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -24,7 +24,15 @@
     "hard_deadline_utc": "2026-08-24T16:11:41Z",
     "maximum_duration_s": 14400,
     "automatic_extension_allowed": false,
-    "not_a_recovery_window": true
+    "not_a_recovery_window": true,
+    "stop_condition_reached_at_utc": "2026-08-24T13:08:26Z",
+    "algorithm_execution_elapsed_to_stop_condition_s": 3405,
+    "stopped_at_utc": "2026-08-24T13:36:35Z",
+    "active_execution_elapsed_s": 5094,
+    "active_execution_elapsed_scope": "ALGORITHM_PLUS_TARGETED_VALIDATION_SUPERVISION_AND_CLOSEOUT",
+    "remaining_execution_budget_s": 9306,
+    "stop_reason": "NO_SAFE_AND_TASK_FEASIBLE_CANDIDATE_AFTER_COMPLETE_384_SEED_TWO_OBJECT_ANALYSIS_AND_FIXED_12N_SENSITIVITY",
+    "stop_rule": "USER_DEFINED_PERMANENT_STOP_RULE_6"
   },
   "git_delivery": {
     "workspace_git_directory_writable": true,
@@ -42,6 +50,10 @@
     "recovery2_latest_code_push_status": "PUSHED",
     "recovery2_latest_evidence_commit": "12c3e4c",
     "recovery2_latest_evidence_push_status": "PUSHED",
+    "offline_reselection_sweep_commit": "4248187",
+    "offline_reselection_ranking_commit": "dadab16",
+    "offline_reselection_code_push_status": "PUSHED",
+    "offline_reselection_final_evidence_commit": "CONTAINING_GIT_COMMIT",
     "push_failure": null,
     "recovery_branch": "carts-v2-pre-integration-698a2bb",
     "recovery_bundle": "artifacts/carts_v2/CARTS_V2_INTEGRATION_57efc16_INCREMENTAL.bundle",
@@ -63,7 +75,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "Offline reselection must first produce an executable candidate under the complete sequential closure sweep and TASK_SURVIVE gates"
+    "reason": "Object A has zero sequential-sweep survivors and object B has zero TASK_SURVIVE candidates at the frozen 8N baseline; neither object has an executable candidate"
   },
   "offline_reselection": {
     "raw_surface_seed_budget": 384,
@@ -72,7 +84,7 @@
     "candidate_11_status": "INVALIDATED_BY_INTERMEDIATE_HAND_TABLE_SWEEP",
     "candidate_11_may_run_again": false,
     "old_top3_reuse_allowed": false,
-    "candidate_33_must_be_recomputed": true,
+    "candidate_33_must_be_recomputed": false,
     "selected_executable_candidate": null,
     "pipeline_order_implemented": "RAW_384_THEN_CLOSURE_THEN_COMPLETE_SWEEP_THEN_DIVERSITY_MAX_48_THEN_TASK_QUALITY",
     "selector_lists": [
@@ -80,7 +92,7 @@
       "diagnostic_candidates"
     ],
     "executable_semantics": "OFFLINE_ELIGIBLE_FOR_BOUND_PREFLIGHT_NOT_DYNAMIC_PASS",
-    "final_same_source_two_object_rerun_pending": true,
+    "final_same_source_two_object_rerun_pending": false,
     "provisional_smoke": {
       "object_a": {
         "raw_seed_count": 384,
@@ -98,7 +110,53 @@
         "executable_candidate_count": 0,
         "diagnostic_top3": ["raw_seed_164", "raw_seed_324", "raw_seed_251"]
       },
-      "evidence_status": "IMPLEMENTATION_SMOKE_AWAITING_FINAL_SAME_SOURCE_RERUN"
+      "evidence_status": "SUPERSEDED_BY_FINAL_SAME_SOURCE_RERUN"
+    },
+    "final_same_source_rerun": {
+      "evidence_source_commit": "dadab16b97eef183956903271c0931857b7f1ef8",
+      "artifact_root": "artifacts/carts_v2/offline_reselection_20260824_final_source",
+      "run_identity_sha256": "9e06e68980515711c8ab3295c394c6e658a253c0d249ebfd6d1a7c850597fcdd",
+      "same_source_and_main_config_for_both_objects": true,
+      "config_sha256": "2e4670c052752823b0fb8c116e442ac0fbccc557a917221022491ccc1172bdfc",
+      "object_a": {
+        "object_id": "current_d38999_26kj61sn_public_spec",
+        "raw_seed_count": 384,
+        "closure_survive_count": 69,
+        "sequential_sweep_survive_count": 0,
+        "intermediate_table_sweep_reject_count": 3,
+        "pregrasp_or_endpoint_table_reject_count": 66,
+        "formal_candidate_count": 0,
+        "task_survive_count_at_8n": 0,
+        "executable_candidate_count": 0,
+        "diagnostic_candidate_count": 0,
+        "selected_executable_candidate": null,
+        "total_time_s": 109.12704145700991,
+        "result_sha256": "3559732bca739ae937398da016f5175ba6ec8a6c54ad944a967117e4dde88ba8"
+      },
+      "object_b": {
+        "object_id": "te_deutsch_d38999_26fj35pn_step",
+        "raw_seed_count": 384,
+        "closure_survive_count": 109,
+        "sequential_sweep_survive_count": 6,
+        "intermediate_table_sweep_reject_count": 1,
+        "pregrasp_or_endpoint_table_reject_count": 102,
+        "formal_candidate_count": 6,
+        "task_survive_count_at_8n": 0,
+        "task_survive_count_at_12n_sensitivity": 0,
+        "executable_candidate_count": 0,
+        "diagnostic_candidate_count": 6,
+        "diagnostic_top3": ["raw_seed_164", "raw_seed_324", "raw_seed_251"],
+        "selected_executable_candidate": null,
+        "best_worst_task_margin_at_8n": 0.08233212531669659,
+        "best_worst_task_margin_at_12n_sensitivity": 0.5117534010954482,
+        "total_time_s": 192.07533361199603,
+        "result_sha256": "35ed963c96277e8a68fa163a201dcb141e89dc2a97c54272c00d3b4162644f8a",
+        "sensitivity_12n_sha256": "e481ac6d74dbe28326b2e141ef71304a4fd9eeecdd63118642be616afa15e48d"
+      },
+      "sensitivity_12n_scope": "READ_ONLY_OBJECT_B_DIAGNOSTIC_NOT_MAIN_CONFIG_NOT_EXECUTABLE_NOT_HARDWARE_LIMIT",
+      "sensitivity_conclusion": "INCREASING_8N_TO_12N_IMPROVES_MARGIN_BUT_REMAINS_INSUFFICIENT_LIMITING_CAUSE_UNRESOLVED",
+      "isaac_launched_from_results": false,
+      "stop_condition_reached": true
     },
     "candidate_11_regression": {
       "old_endpoint_only_minimum_clearance_m": 0.0007049611569468484,
@@ -585,6 +643,7 @@
   },
   "candidate_results": {
     "current_d38999_26kj61sn_public_spec": {
+      "evidence_scope": "LEGACY_ENDPOINT_METHOD_ABLATION_NOT_CURRENT_SELECTION",
       "candidate_count": 48,
       "fast_survive_count": 3,
       "top_candidate": "candidate_11",
@@ -594,6 +653,7 @@
       "offline_task_gate_passed": false
     },
     "te_deutsch_d38999_26fj35pn_step": {
+      "evidence_scope": "LEGACY_ENDPOINT_METHOD_ABLATION_NOT_CURRENT_SELECTION",
       "candidate_count": 48,
       "fast_survive_count": 5,
       "top_candidate": "candidate_33",
@@ -762,7 +822,7 @@
       "uncommitted_gpu_object_route_reverted": true
     }
   },
-  "evidence_level": "OFFLINE_REGISTERED_GEOMETRY_WITH_RESEARCH_DYNAMIC_FAILURE_EVIDENCE",
+  "evidence_level": "OFFLINE_COMPLETE_SEQUENTIAL_SWEEP_RESELECTION_WITH_NO_EXECUTABLE_CANDIDATE_AND_HISTORICAL_RESEARCH_DYNAMIC_FAILURE_EVIDENCE",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -780,17 +840,21 @@
     "contact_recovery_targeted_test_functions_passed": 14,
     "final_full_regression_passed": 1506,
     "final_full_regression_failed": 0,
-    "final_full_regression_duration_s": 982.86
+    "final_full_regression_duration_s": 982.86,
+    "offline_reselection_targeted_tests_passed": 4,
+    "offline_reselection_paired_evidence_validation_passed": true,
+    "offline_reselection_python_compile_passed": true,
+    "full_regression_rerun_for_offline_reselection": false,
+    "full_regression_not_rerun_reason": "NO_SHARED_LEGACY_MODULE_MODIFIED_AND_USER_RESERVED_TIME_FOR_DIRECTLY_RELATED_TESTS"
   },
   "blockers": [
-    "INTERMEDIATE_FINGER_CLOSURE_HAND_TABLE_SWEEP_MISSED_BY_ENDPOINT_ONLY_FAST_FILTER",
+    "OBJECT_A_NO_SEQUENTIAL_SWEEP_SURVIVOR_AFTER_384_RAW_SEEDS",
+    "OBJECT_B_NO_TASK_SURVIVOR_AT_8N_OR_FIXED_12N_SENSITIVITY",
+    "NO_EXECUTABLE_CANDIDATE_FOR_OBJECT_A_OR_OBJECT_B",
     "PHYSX_CONTACT_REPORT_HAS_NO_POSITIVE_OBJECT_TABLE_WITNESS",
-    "CONTACT_SETTLE_F1J3_SPEED_ABORT_IS_NOT_PROVEN_UNIQUE_TO_TABLE_IMPULSE",
     "DYNAMIC_THREE_PAD_CONTACT_NOT_ACHIEVED",
     "OBJECT_A_LIFT_50MM_AND_HOLD_2S_NOT_REACHED",
-    "OBJECT_B_NOT_RUN_BECAUSE_OBJECT_A_GATE_FAILED",
-    "TOP3_FORMAL_50MM_FULL_PATH_COLLISION_UNRESOLVED",
-    "BOTH_OBJECTS_ROBUST_TASK_MARGIN_BELOW_ONE",
+    "OBJECT_B_DYNAMIC_NOT_RUN_BECAUSE_OBJECT_B_HAS_NO_TASK_SURVIVE_CANDIDATE_AT_FROZEN_8N_BASELINE",
     "DYNAMIC_PAD_SURFACE_IDENTITY_NOT_VERIFIED",
     "PREREGISTERED_DISTURBANCE_NOT_EXECUTED"
   ]
