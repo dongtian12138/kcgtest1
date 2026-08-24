@@ -206,3 +206,14 @@
 - 该实验只证明把 8 N 提到 12 N 会改善余量但仍不足；没有约束活跃性或更高力量对照，不能区分力量上限、接触几何和任务模型谁是最终限制，也不能升级成硬件力量结论。
 - 两对象 `executable_candidates` 均为空，`selected_executable_candidate=null`；诊断候选不得进入 Isaac 或被称为最优抓法。
 - 依照用户永久停止规则第 6 条，将状态置为 `PARKED` 并关闭研究动态门；未启动 Isaac，不改变 3 rad/s、0.18 rad/s、0.0015 rad/周期、物性、摩擦、50 mm、2 s、真值隔离或硬件授权。
+
+## 2026-08-24T14:46:08Z — METHOD_REVISION + NEW_AUTONOMOUS_EXECUTION_WINDOW + UNATTENDED_EXECUTION
+
+- 用户明确开启 `GRASPGENX_ROUTE1_12H_UNATTENDED`，截止 `2026-08-25T02:46:08Z`；这不是硬件授权，也不降低碰撞、力量、50 mm、2 s 或真值防火墙。
+- 旧 A/B 结果只否定轴对称窄候选族；旧生成器及 `candidate_11/33` 保留为消融证据，不再约束新完整六维生产候选。
+- 监督建议 1（采纳）：先用单个真实描述器回放并检查 `+Z approach/+X closing → handbase_link`，再冻结最多 5 个描述器；GraspGenX 始终是隔离的离线位姿提案器。
+- 监督建议 2（采纳）：只增加一个薄适配层，复用真实手 FK、PAD、完整闭合、12 N 任务评价、bounded IK 和 Isaac；快筛结果不能冒充完整全手/对象/桌面路径证据。
+- 监督建议 3（采纳）：首次研究型 Isaac 提前到第 6 小时前；此前后置正式误差场景、MoveIt 场景接入、cuRobo、完整消融和文档美化。
+- Lead 选择官方单进程文件输出而非常驻 ZMQ 服务：当前没有跨进程在线请求需求，直接复用官方 Python API 能保持模型只加载一次并减少服务生命周期；不改变官方模型或输出语义。
+- `12 N` 作为两对象一致的仿真研究操作上限，旧 `8 N` 保留为消融；不得在 8～15 N 间扫描或将 12 N 声称为硬件极限。
+- 研究动态门与旧正式门分开；`hardware_authorized=false`、正式动态和研究动态通过均保持 false，直到实际证据满足。

@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T13:36:35Z",
-  "started_at_utc": "2026-08-23T14:41:38Z",
-  "hard_deadline_utc": "2026-08-24T02:41:38Z",
-  "branch": "carts-grasp-v2-rebuild-20260823",
+  "updated_at_utc": "2026-08-24T14:50:59Z",
+  "started_at_utc": "2026-08-24T14:46:08Z",
+  "hard_deadline_utc": "2026-08-25T02:46:08Z",
+  "branch": "carts-grasp-graspgenx-route1-20260824",
   "config_sha256": "2e4670c052752823b0fb8c116e442ac0fbccc557a917221022491ccc1172bdfc",
-  "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
+  "start_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "PARKED",
-  "current_milestone": "V2_NO_FEASIBLE_CANDIDATE_ANALYSIS_COMPLETE",
+  "status": "IMPLEMENTING",
+  "current_milestone": "GRASPGENX_OFFICIAL_POSITIVE_CONTROL",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -18,21 +18,15 @@
     "stop_reclassified_as": "ROLLBACK_TO_PREVIOUS_VALID_STAGE"
   },
   "execution_window": {
-    "id": "V2_COMPLETE_SEQUENTIAL_CLOSURE_SWEEP_RESELECTION",
-    "classification": "METHOD_CORRECTION_PLUS_ROLLBACK_TO_OFFLINE_SELECTION_PLUS_AUTONOMOUS_CONTINUATION",
-    "started_at_utc": "2026-08-24T12:11:41Z",
-    "hard_deadline_utc": "2026-08-24T16:11:41Z",
-    "maximum_duration_s": 14400,
+    "id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
+    "classification": "METHOD_REVISION_PLUS_NEW_AUTONOMOUS_EXECUTION_WINDOW_PLUS_UNATTENDED_EXECUTION",
+    "started_at_utc": "2026-08-24T14:46:08Z",
+    "hard_deadline_utc": "2026-08-25T02:46:08Z",
+    "maximum_duration_s": 43200,
     "automatic_extension_allowed": false,
-    "not_a_recovery_window": true,
-    "stop_condition_reached_at_utc": "2026-08-24T13:08:26Z",
-    "algorithm_execution_elapsed_to_stop_condition_s": 3405,
-    "stopped_at_utc": "2026-08-24T13:36:35Z",
-    "active_execution_elapsed_s": 5094,
-    "active_execution_elapsed_scope": "ALGORITHM_PLUS_TARGETED_VALIDATION_SUPERVISION_AND_CLOSEOUT",
-    "remaining_execution_budget_s": 9306,
-    "stop_reason": "NO_SAFE_AND_TASK_FEASIBLE_CANDIDATE_AFTER_COMPLETE_384_SEED_TWO_OBJECT_ANALYSIS_AND_FIXED_12N_SENSITIVITY",
-    "stop_rule": "USER_DEFINED_PERMANENT_STOP_RULE_6"
+    "unattended_execution": true,
+    "stop_condition_reached": false,
+    "old_narrow_generator_park_superseded": true
   },
   "git_delivery": {
     "workspace_git_directory_writable": true,
@@ -75,7 +69,22 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "Object A has zero sequential-sweep survivors and object B has zero TASK_SURVIVE candidates at the frozen 8N baseline; neither object has an executable candidate"
+    "reason": "GraspGenX route has not yet produced a bound research_executable_candidate"
+  },
+  "graspgenx_route1": {
+    "method_name": "GraspGenX-CARTS",
+    "generator_source": "https://github.com/NVlabs/GraspGenX.git",
+    "generator_commit": "b9429097728cb1c430dd78b92edf17ba318aad03",
+    "random_seed": 20260824,
+    "normal_force_operation_cap_n": 12.0,
+    "legacy_8n_baseline_preserved": true,
+    "same_parameters_two_objects_required": true,
+    "official_positive_control_pass": false,
+    "descriptor_count": 0,
+    "object_a_research_executable_count": null,
+    "object_b_research_executable_count": null,
+    "nominal_research_dynamic_pass": false,
+    "formal_dynamic_pass": false
   },
   "offline_reselection": {
     "raw_surface_seed_budget": 384,
