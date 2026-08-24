@@ -1,0 +1,54 @@
+{
+  "schema_version": "carts_v2_gpu_capacity_audit_v1",
+  "completed_at_utc": "2026-08-24T08:40:43Z",
+  "scope": "OBJECT_A_PREFLIGHT_SCENE_READ_ONLY_STRUCTURE_AND_PRIOR_LOGS",
+  "scene_structure": {
+    "rigid_body_count": 21,
+    "articulation_count": 1,
+    "explicit_aggregate_prim_count": 0,
+    "enabled_collision_shape_count": 14780,
+    "collision_shapes_by_major_object": {
+      "robot": 17,
+      "connector_family_total": 14761,
+      "fixed_receptacle": 7119,
+      "loose_body": 7438,
+      "loose_nut": 204,
+      "table": 1,
+      "fixture": 1
+    },
+    "duplicate_prim_path_count": 0,
+    "duplicate_source_and_world_transform_count": 0,
+    "collision_group_count": 28,
+    "physics_filtered_pairs_api_count": 0,
+    "robot_self_collision_enabled": false,
+    "connector_family_pairs_filtered": 387,
+    "connector_family_pairs_total": 406
+  },
+  "prior_demand": {
+    "run07": {
+      "configured_found_lost": 1024,
+      "configured_total": 1024,
+      "observed_warning_found_lost_peak": 2115,
+      "observed_warning_total_peak": 2048,
+      "engine_log_sha256": "49acae67bc85dd2e66594ba56585c1686adabd31e3e2820af78a7c4f05a259e6"
+    },
+    "run08": {
+      "configured_found_lost": 4096,
+      "configured_total": 4096,
+      "observed_warning_found_lost_peak_upper_bound": 4096,
+      "observed_warning_total_peak": 5855,
+      "engine_log_sha256": "399b84d9944d79271a83ce5e53babf8db269858ab18027a620d560c1c9bc5e3a"
+    }
+  },
+  "conclusion": {
+    "duplicate_scene_inflation_found": false,
+    "obviously_wrong_collision_filter_found": false,
+    "demand_5855_consistent_with_real_compound_scene": true,
+    "configured_found_lost_capacity": 8192,
+    "configured_total_capacity": 16384,
+    "rule": "NEXT_POWER_OF_TWO_OF_CEIL_2X_OBSERVED_PEAK"
+  },
+  "hardware_authorized": false,
+  "formal_dynamic_pass": false,
+  "research_dynamic_pass": false
+}

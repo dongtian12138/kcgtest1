@@ -1,28 +1,28 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-24T08:25:07Z
+> 快照时间：2026-08-24T08:50:31Z
 > 当前分支：`carts-grasp-v2-rebuild-20260823`
 > 本文件只做恢复路由；物理结论以 V2 原始运行产物为准。
 
 ## 一句话状态
 
-预检失败关闭门已补齐并通过定向测试：旧 `preflight_pass`、字段缺失或容量/日志证据不完整都会拒绝；当前进入 GPU 场景结构和容量峰值审计，对象抓取尚未开放。
+GPU 容量审计已排除重复碰撞体和明显错误过滤，并按实测峰值固定为 8192/16384；当前只开放对象 A 一次预检查，抓取尚未开放。
 
 ## 六行恢复摘要
 
 - 总目标：真实允许表面候选 → 任务载荷鲁棒 Top-3 → Isaac 三指接触、离桌、抬升 50 mm、保持至少 2 s；两个对象同算法同主要参数。
-- 当前里程碑：`V2_RECOVERY_2_GPU_CAPACITY_AUDIT`；对象动态门在容量审计和有效 A 预检完成前保持关闭。
-- 已经完成：从动 drive 被动化是唯一动力学改变量；同一 GPU/资产/主动 drive/目标下完整运行 7.75 s，15 DOF 峰值 1.424 rad/s，手部峰值 0.435 rad/s，`f2j1` 峰值 0.224 rad/s。
-- 当前物理/算法阻塞：尚未从运行期统计接口记录刚体、articulation、aggregate、shape 和两类 GPU 配对实际峰值，也尚未排除重复碰撞体/错误过滤。
-- 下一步最简单动作：复用 PhysX `PhysicsSceneStats` 和完整 Kit 日志做一次有界 A 预检审计；若结构正常，按冻结公式分别确定容量。
+- 当前里程碑：`V2_RECOVERY_2_OBJECT_A_ACCEPTED_PREFLIGHT`；研究门只允许对象 A 预检查，抓取仍关闭。
+- 已经完成：手部从动 drive 异常已关闭；容量审计确认 21 个刚体、1 个 articulation、14,780 个碰撞形状，无重复膨胀或明显错误过滤；固定容量为 found/lost 8192、total 16384。
+- 当前物理/算法阻塞：新容量下还没有一份同时满足控制器、引擎完整日志、运行峰值和身份哈希的 accepted preflight。
+- 下一步最简单动作：只运行一次对象 A `candidate_11` GPU 预检查；完整日志零 PhysX Error、峰值低于容量且控制安全时才接受。
 - 绝对禁止跑偏方向：续修 H102、对象专用坐标/阈值、磁吸/隐藏固定、在线读取对象/接触/PhysX 真值、写物体位姿、把退出 0 冒充物理成功。
 
 ## 当前权威字段
 
 - 状态：`IMPLEMENTING`
-- 当前里程碑：`V2_RECOVERY_2_GPU_CAPACITY_AUDIT`
+- 当前里程碑：`V2_RECOVERY_2_OBJECT_A_ACCEPTED_PREFLIGHT`
 - V2 正式候选：空
-- V2 研究动态门：`allowed=false`；当前只允许一次有界对象 A 容量审计预检，不允许抓取
+- V2 研究动态门：`allowed=true`，scope=`OBJECT_A_PREFLIGHT_ONLY`；只允许对象 A 一次预检查，不允许抓取
 - 旧正式动态门：`dynamic_launch_allowed=false`（保持，不由 V2 研究线改写）
 - 正式动态：`FORMAL_DYNAMIC_PASS=false`
 - 研究型动态：`RESEARCH_DYNAMIC_PASS=false`
@@ -80,5 +80,5 @@
 
 - 文件修改前：说明它解决的物理/工程问题及不改变的冻结边界。
 - 超过 15 分钟任务前：先在 `SPRINT_12H_CN.md` 写任务卡和停止条件。
-- Isaac 前：先核对精确进程、旧正式字段、V2 研究门、目标 run_id 和产物时间；当前只允许代码/日志审计，对象运行尚未开放。
+- Isaac 前：先核对精确进程、旧正式字段、V2 研究门、目标 run_id 和产物时间；当前只允许对象 A 一次预检查，抓取仍未开放。
 - 每个大里程碑后：更新本文件、Sprint、State；必要时追加 Decisions；监督审查后只提交本任务路径。

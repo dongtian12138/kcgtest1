@@ -15,7 +15,11 @@ import numpy as np
 
 if __package__:
     from . import controller as control
-    from .engine_health import preflight_is_accepted
+    from .engine_health import (
+        PhysxStatsMonitor, current_engine_log_path, finalize_engine_evaluation,
+        gpu_backend_record, gpu_world_parameters, identity_hashes_match,
+        load_runtime_resources, preflight_is_accepted,
+    )
     from .evaluate_run import (
         IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
         audit_mimic_schema, compare_reference_targets,
@@ -23,7 +27,11 @@ if __package__:
     )
 else:
     import controller as control
-    from engine_health import preflight_is_accepted
+    from engine_health import (
+        PhysxStatsMonitor, current_engine_log_path, finalize_engine_evaluation,
+        gpu_backend_record, gpu_world_parameters, identity_hashes_match,
+        load_runtime_resources, preflight_is_accepted,
+    )
     from evaluate_run import (
         IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
         audit_mimic_schema, compare_reference_targets,
@@ -44,28 +52,22 @@ EXPECTED_DOF_NAMES = control.ARM_JOINT_NAMES + (
     "f1j1", "f1j2", "f1j3", "f2j1", "f2j2", "f3j1", "f3j2", "f3j3",
 )
 def _json_sha256(value: object) -> str:
-    payload = json.dumps(
-        value, ensure_ascii=True, allow_nan=False, sort_keys=True, separators=(",", ":")
-    ).encode("utf-8")
+    payload = json.dumps(value, ensure_ascii=True, allow_nan=False, sort_keys=True,
+                         separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
 def _arguments(repository: Path) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--mode", choices=("isolated-hand", "preflight", "grasp-lift"), required=True
-    )
+    parser.add_argument("--mode", choices=("isolated-hand", "preflight", "grasp-lift"),
+                        required=True)
     parser.add_argument("--object-id", default="current_d38999_26kj61sn_public_spec")
-    parser.add_argument(
-        "--config", default=str(repository / "src/kcg_connector/config/carts_grasp_v2.yaml")
-    )
-    parser.add_argument(
-        "--offline-result",
-        default=str(
-            repository
-            / "artifacts/carts_v2/offline/current_d38999_26kj61sn_public_spec/result.json"
-        ),
-    )
+    parser.add_argument("--config", default=str(
+        repository / "src/kcg_connector/config/carts_grasp_v2.yaml"))
+    parser.add_argument("--offline-result", default=str(
+        repository / "artifacts/carts_v2/offline/current_d38999_26kj61sn_public_spec/result.json"))
+    parser.add_argument("--runtime-resources", default=str(
+        repository / "src/kcg_connector/config/carts_v2_isaac_runtime.json"))
     parser.add_argument("--preflight-evaluation")
     parser.add_argument("--reference-trace")
     parser.add_argument("--output-directory", required=True)
@@ -80,6 +82,9 @@ def _arguments(repository: Path) -> argparse.Namespace:
 
 def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
     config_path = Path(arguments.config).resolve()
+    arguments.runtime_resources_path = Path(arguments.runtime_resources).resolve()
+    arguments.runtime_resources_document = load_runtime_resources(
+        arguments.runtime_resources_path)
     report_path = Path(arguments.offline_result).resolve()
     report = json.loads(report_path.read_text(encoding="utf-8"))
     if report["object_id"] != arguments.object_id:
@@ -93,33 +98,31 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
     selected = report["top_candidates"][0]
     if selected["rank"] != 1 or not selected["three_effective_pad_contacts"]:
         raise ValueError("dynamic candidate must be the official three-contact Top-1")
-    inputs = load_v2_inputs(
-        repository, config_path=config_path, object_id=arguments.object_id
-    )
+    inputs = load_v2_inputs(repository, config_path=config_path,
+                            object_id=arguments.object_id)
     dynamic = inputs.config.section("dynamic")
     scene_entry = dynamic["object_scenes"].get(arguments.object_id)
     if not isinstance(scene_entry, dict):
         raise ValueError("object has no registered free tabletop dynamic scene")
     if arguments.mode == "grasp-lift":
-        preflight = json.loads(
-            Path(arguments.preflight_evaluation).read_text(encoding="utf-8")
-        )
+        arguments.preflight_evaluation_path = Path(
+            arguments.preflight_evaluation).resolve()
+        preflight = json.loads(arguments.preflight_evaluation_path.read_text(
+            encoding="utf-8"))
+        arguments.preflight_document = preflight
         expected = (arguments.object_id, selected["candidate_id"])
         observed = (preflight.get("object_id"), preflight.get("candidate_id"))
         if observed != expected or not preflight_is_accepted(preflight):
             raise ValueError("matching independent preflight did not pass")
     if arguments.mode == "isolated-hand":
         arguments.reference_document = json.loads(
-            Path(arguments.reference_trace).read_text(encoding="utf-8")
-        )
+            Path(arguments.reference_trace).read_text(encoding="utf-8"))
         motion_plan = arguments.reference_document["motion_plan"]
     else:
-        world_from_object = np.asarray(
-            scene_entry["frozen_settled_world_from_object_row_major"], dtype=np.float64
-        ).reshape(4, 4)
+        world_from_object = np.asarray(scene_entry[
+            "frozen_settled_world_from_object_row_major"], dtype=np.float64).reshape(4, 4)
         motion_plan = control.build_joint_motion_plan(
-            repository, inputs, selected["control_plan"], world_from_object
-        )
+            repository, inputs, selected["control_plan"], world_from_object)
     return inputs, report, selected, scene_entry, motion_plan
 
 
@@ -144,8 +147,7 @@ def _prepare_dynamic_scene(
         author_d38999_tabletop_scene(
             stage, scene, asset, add_reference_to_stage=add_reference_to_stage,
             Gf=Gf, Sdf=Sdf, UsdGeom=UsdGeom, UsdPhysics=UsdPhysics,
-            UsdShade=UsdShade, physics_utils=physicsUtils,
-        )
+            UsdShade=UsdShade, physics_utils=physicsUtils)
         return {
             "object_asset": asset,
             "part_prim_paths": (scene.asset.body_prim_path, scene.asset.nut_prim_path),
@@ -180,15 +182,13 @@ def _prepare_dynamic_scene(
     root = str(entry["reference_prim_path"])
     author_d38999_tabletop_environment(
         stage, environment, Gf=Gf, Sdf=Sdf, UsdGeom=UsdGeom,
-        UsdPhysics=UsdPhysics, UsdShade=UsdShade, physics_utils=physicsUtils,
-    )
+        UsdPhysics=UsdPhysics, UsdShade=UsdShade, physics_utils=physicsUtils)
     add_reference_to_stage(str(asset), root)
     object_prim = stage.GetPrimAtPath(root)
     if not object_prim.IsValid() or not object_prim.HasAPI(UsdPhysics.RigidBodyAPI):
         raise RuntimeError("free object rigid body is missing")
-    matrix = np.asarray(
-        entry["frozen_settled_world_from_object_row_major"], dtype=np.float64
-    ).reshape(4, 4)
+    matrix = np.asarray(entry["frozen_settled_world_from_object_row_major"],
+                        dtype=np.float64).reshape(4, 4)
     xformable = UsdGeom.Xformable(object_prim)
     if xformable.GetOrderedXformOps():
         raise RuntimeError("free object root already has a transform stack")
@@ -227,14 +227,12 @@ def _initial_trace(arguments, report, selected, motion_plan, dynamic):
     )
     return {
         "schema_version": "carts_grasp_v2_dynamic_trace_v1",
-        "object_id": arguments.object_id,
-        "candidate_id": selected["candidate_id"],
+        "object_id": arguments.object_id, "candidate_id": selected["candidate_id"],
         "mode": arguments.mode,
         "config_sha256": report["config_sha256"],
         "offline_worst_task_margin": selected["worst_task_margin"],
         "offline_task_gate_passed": selected["offline_task_gate_passed"],
-        "hardware_authorized": False,
-        "formal_dynamic_pass": False,
+        "hardware_authorized": False, "formal_dynamic_pass": False,
         "physics_dt_s": float(dynamic["physics_dt_s"]),
         "maximum_joint_speed_limit_rad_s": float(
             dynamic["maximum_joint_speed_rad_s"]
@@ -268,36 +266,29 @@ def _initial_isolated_trace(arguments, report, selected, motion_plan, dynamic):
         raise ValueError("isolated diagnostic trajectory differs from the failed preflight")
     return {
         "schema_version": "carts_grasp_v2_isolated_hand_diagnostic_v1",
-        "object_id": arguments.object_id,
-        "candidate_id": selected["candidate_id"],
+        "object_id": arguments.object_id, "candidate_id": selected["candidate_id"],
         "mode": arguments.mode,
         "config_sha256": report["config_sha256"],
         "physics_dt_s": float(dynamic["physics_dt_s"]),
         "maximum_joint_speed_limit_rad_s": float(
             dynamic["maximum_joint_speed_rad_s"]
         ),
-        "hardware_authorized": False,
-        "formal_dynamic_pass": False,
+        "hardware_authorized": False, "formal_dynamic_pass": False,
         "research_dynamic_pass": False,
-        "object_loaded": False,
-        "table_loaded": False,
+        "object_loaded": False, "table_loaded": False,
         "online_object_or_contact_truth_used": False,
         "object_pose_writes_after_start": 0,
         "reference_trace": str(reference_path),
         "reference_trace_sha256": file_sha256(reference_path),
         "reference_failure_reason": reference["controller_outcome"]["failure_reason"],
         "reference_maximum_joint_speed_rad_s": reference["controller_outcome"][
-            "maximum_joint_speed_rad_s"
-        ],
+            "maximum_joint_speed_rad_s"],
         "reference_controller_source_sha256": reference["evidence_binding"][
-            "controller_source_sha256"
-        ],
+            "controller_source_sha256"],
         "reference_robot_asset_sha256": reference["evidence_binding"][
-            "robot_asset_sha256"
-        ],
+            "robot_asset_sha256"],
         "reference_active_drive_audit_sha256": _json_sha256(
-            reference["controller_outcome"]["native_drive_audit"]
-        ),
+            reference["controller_outcome"]["native_drive_audit"]),
         "motion_plan": motion_plan,
         "samples": [],
     }
@@ -349,31 +340,14 @@ def _create_isolated_runtime(repository, inputs, scene_entry, trace):
         sim_params={"use_gpu_pipeline": True},
     )
     context = world.get_physics_context()
-    context.enable_gpu_dynamics(True)
-    context.set_broadphase_type("GPU")
     add_reference_to_stage(str(robot_asset), ROBOT_ROOT)
     context.set_gravity(gravity)
     world.reset()
     robot_data = control.create_native_gravity_compensated_robot(
-        ARTICULATION_PATH, EXPECTED_DOF_NAMES, dynamic
-    )
+        ARTICULATION_PATH, EXPECTED_DOF_NAMES, dynamic)
     robot, active_indices, arm_indices, lower, upper, active_audit = robot_data
-    backend = {
-        "requested_device": "cuda:0",
-        "requested_data_backend": "numpy",
-        "actual_data_backend": str(world.backend),
-        "world_device": str(world.device),
-        "physics_context_device": str(context.device),
-        "gpu_sim": bool(context.use_gpu_sim),
-        "gpu_pipeline": bool(context.use_gpu_pipeline),
-        "gpu_dynamics_enabled": bool(context.is_gpu_dynamics_enabled()),
-        "broadphase_type": str(context.get_broadphase_type()),
-    }
-    if not (
-        "cuda" in backend["world_device"] and backend["gpu_sim"]
-        and backend["gpu_pipeline"] and backend["gpu_dynamics_enabled"]
-        and backend["broadphase_type"] == "GPU"
-    ):
+    backend = gpu_backend_record(world, context)
+    if not backend["pass"]:
         raise RuntimeError(f"GPU physics backend audit failed: {backend}")
     trace["physics_backend"] = backend
     trace["gravity_m_s2"] = gravity
@@ -448,6 +422,9 @@ def _evidence_binding(repository, arguments, report, selected, scene, robot_asse
         "config_sha256": report["config_sha256"],
         "offline_result_sha256": file_sha256(Path(arguments.offline_result).resolve()),
         "control_plan_sha256": _json_sha256(selected["control_plan"]),
+        "runtime_resources_sha256": file_sha256(arguments.runtime_resources_path),
+        "capacity_audit_sha256": arguments.runtime_resources_document[
+            "capacity_audit_sha256"],
         "scene_evidence_sha256": {
             str(path.relative_to(repository)): file_sha256(path) for path in evidence_paths
         },
@@ -457,12 +434,14 @@ def _evidence_binding(repository, arguments, report, selected, scene, robot_asse
         "controller_source_sha256": file_sha256(Path(__file__).with_name("controller.py")),
         "runner_source_sha256": file_sha256(Path(__file__)),
         "evaluator_source_sha256": file_sha256(Path(__file__).with_name("evaluate_run.py")),
+        "engine_health_source_sha256": file_sha256(Path(__file__).with_name("engine_health.py")),
     }
 
 
 def _create_runtime(repository, arguments, inputs, report, selected, scene_entry, trace):
     from isaacsim.core.api import World
     from isaacsim.core.prims import SingleRigidPrim
+    from isaacsim.core.simulation_manager import SimulationManager
     from isaacsim.core.utils.stage import add_reference_to_stage, get_current_stage
     from omni.physx import get_physx_simulation_interface
     from pxr import Gf, PhysxSchema, PhysicsSchemaTools, Usd, UsdGeom, UsdPhysics
@@ -472,24 +451,25 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
     if not robot_asset.is_file():
         raise ValueError("registered robot asset is missing")
     World.clear_instance()
+    SimulationManager.set_physics_sim_device("cuda:0")
     world = World(
         stage_units_in_meters=1.0,
         physics_dt=float(dynamic["physics_dt_s"]),
         rendering_dt=1.0 / 60.0,
-        backend="numpy",
-        device="cpu",
+        **gpu_world_parameters(arguments.runtime_resources_document),
     )
+    context = world.get_physics_context()
     stage = get_current_stage()
     scene = _prepare_dynamic_scene(repository, stage, scene_entry, add_reference_to_stage)
     trace["evidence_binding"] = _evidence_binding(
-        repository, arguments, report, selected, scene, robot_asset
-    )
+        repository, arguments, report, selected, scene, robot_asset)
     if arguments.mode == "grasp-lift":
-        preflight = json.loads(
-            Path(arguments.preflight_evaluation).read_text(encoding="utf-8")
-        )
+        preflight = arguments.preflight_document
         if preflight.get("evidence_binding") != trace["evidence_binding"]:
             raise ValueError("preflight evidence binding does not match this run")
+        trace["accepted_preflight_bound"] = True
+        trace["accepted_preflight_evaluation_sha256"] = file_sha256(
+            arguments.preflight_evaluation_path)
     add_reference_to_stage(str(robot_asset), ROBOT_ROOT)
     for prim in stage.Traverse():
         if prim.HasAPI(UsdPhysics.RigidBodyAPI):
@@ -503,11 +483,15 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
         )
         for index, path in enumerate(scene["part_prim_paths"])
     )
-    world.get_physics_context().set_gravity(float(scene["gravity_m_s2"]))
+    context.set_gravity(float(scene["gravity_m_s2"]))
     world.reset()
+    backend = gpu_backend_record(world, context)
+    if not backend["pass"]:
+        raise RuntimeError(f"GPU physics backend audit failed: {backend}")
+    trace["physics_backend"] = backend
+    engine_monitor = PhysxStatsMonitor(context)
     robot_data = control.create_native_gravity_compensated_robot(
-        ARTICULATION_PATH, EXPECTED_DOF_NAMES, dynamic
-    )
+        ARTICULATION_PATH, EXPECTED_DOF_NAMES, dynamic)
     auditor = TruthAuditRecorder(
         object_parts=object_parts,
         hand_base_prim=hand_base_prim,
@@ -519,10 +503,17 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
         part_bottom_offsets_m=scene["part_bottom_offsets_m"],
         table_top_z_m=scene["table_top_z_m"],
         physics_dt_s=float(dynamic["physics_dt_s"]),
+        engine_monitor=engine_monitor,
     )
     return {
         "world": world, "scene": scene, "robot_asset": robot_asset,
         "auditor": auditor, "robot_data": robot_data,
+        "engine_monitor": engine_monitor,
+        "runtime_resources_path": arguments.runtime_resources_path,
+        "capacity_audit_sha256": arguments.runtime_resources_document[
+            "capacity_audit_sha256"],
+        "offline_result_path": Path(arguments.offline_result).resolve(),
+        "control_plan": selected["control_plan"],
     }
 
 
@@ -549,38 +540,42 @@ def _run_controller(runtime, arguments, motion_plan, dynamic):
 
 def _runtime_record(repository, inputs, runtime):
     scene = runtime["scene"]
-    robot_asset = runtime["robot_asset"]
-    object_asset = scene["object_asset"]
     return {
         "git_commit": subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=repository, text=True,
             check=True, capture_output=True,
         ).stdout.strip(),
         "config_path": str(inputs.config.path),
+        "config_sha256": file_sha256(inputs.config.path),
+        "offline_result_sha256": file_sha256(runtime["offline_result_path"]),
+        "control_plan_sha256": _json_sha256(runtime["control_plan"]),
+        "runtime_resources_sha256": file_sha256(runtime["runtime_resources_path"]),
+        "capacity_audit_sha256": runtime["capacity_audit_sha256"],
         "scene_evidence_paths": [str(path) for path in scene["evidence_paths"]],
-        "robot_asset_sha256": file_sha256(robot_asset),
-        "object_asset_sha256": file_sha256(object_asset),
+        "scene_evidence_sha256": {
+            str(path.relative_to(repository)): file_sha256(path)
+            for path in scene["evidence_paths"]
+        },
+        "robot_asset_sha256": file_sha256(runtime["robot_asset"]),
+        "object_asset_sha256": file_sha256(scene["object_asset"]),
         "source_sha256": {
             name: file_sha256(Path(__file__).with_name(name))
-            for name in ("controller.py", "run_grasp_lift.py", "evaluate_run.py")
+            for name in (
+                "controller.py", "run_grasp_lift.py", "evaluate_run.py",
+                "engine_health.py",
+            )
         },
     }
 
 
-def _finish_run(repository, arguments, output, inputs, runtime, trace, outcome):
+def _finish_run(repository, inputs, runtime, trace, outcome):
     trace["controller_outcome"] = outcome
     trace["samples"] = runtime["auditor"].samples
     trace["runtime"] = _runtime_record(repository, inputs, runtime)
-    evaluation = evaluate_trace(trace)
-    (output / "trace.json").write_text(
-        json.dumps(trace, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
-    (output / "evaluation.json").write_text(
-        json.dumps(evaluation, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
-    print(json.dumps(evaluation, ensure_ascii=False, indent=2))
-    key = "accepted_preflight_pass" if arguments.mode == "preflight" else "research_dynamic_pass"
-    return 0 if evaluation[key] else 2
+    trace["identity_hash_check_pass"] = identity_hashes_match(trace)
+    engine_runtime = runtime["engine_monitor"].summary()
+    engine_runtime["gpu_backend_pass"] = trace["physics_backend"]["pass"]
+    return trace, evaluate_trace(trace), engine_runtime
 
 
 def _execute(repository, arguments, output, inputs, report, selected, scene_entry, motion_plan, trace):
@@ -592,25 +587,15 @@ def _execute(repository, arguments, output, inputs, report, selected, scene_entr
         repository, arguments, inputs, report, selected, scene_entry, trace
     )
     dynamic = inputs.config.section("dynamic")
-    stepper, outcome = _run_controller(runtime, arguments, motion_plan, dynamic)
-    return _finish_run(repository, arguments, output, inputs, runtime, trace, outcome)
+    _, outcome = _run_controller(runtime, arguments, motion_plan, dynamic)
+    return _finish_run(repository, inputs, runtime, trace, outcome)
 
 
 def _write_failure(output: Path, error: Exception) -> None:
+    payload = {"error_type": type(error).__name__, "error": str(error),
+               "traceback": traceback.format_exc(), "hardware_authorized": False}
     (output / "failure.json").write_text(
-        json.dumps(
-            {
-                "error_type": type(error).__name__,
-                "error": str(error),
-                "traceback": traceback.format_exc(),
-                "hardware_authorized": False,
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def main() -> int:
@@ -619,31 +604,44 @@ def main() -> int:
     output = Path(arguments.output_directory).resolve()
     output.mkdir(parents=True, exist_ok=False)
     inputs, report, selected, scene_entry, motion_plan = _load_plan_inputs(
-        repository, arguments
-    )
+        repository, arguments)
     dynamic = inputs.config.section("dynamic")
     from isaacsim import SimulationApp
 
-    simulation_app = SimulationApp(
-        {"headless": not arguments.gui, "multi_gpu": False,
-         "active_gpu": 0, "physics_gpu": 0}
-    )
-    trace = (
-        _initial_isolated_trace(arguments, report, selected, motion_plan, dynamic)
-        if arguments.mode == "isolated-hand"
-        else _initial_trace(arguments, report, selected, motion_plan, dynamic)
-    )
+    simulation_app = SimulationApp({
+        "headless": not arguments.gui, "multi_gpu": False,
+        "active_gpu": 0, "physics_gpu": 0, "fast_shutdown": False,
+    })
+    engine_log_path = current_engine_log_path()
+    trace = (_initial_isolated_trace(arguments, report, selected, motion_plan, dynamic)
+             if arguments.mode == "isolated-hand"
+             else _initial_trace(arguments, report, selected, motion_plan, dynamic))
     try:
-        return _execute(
-            repository, arguments, output, inputs, report, selected,
-            scene_entry, motion_plan, trace,
-        )
+        result = _execute(repository, arguments, output, inputs, report, selected,
+                          scene_entry, motion_plan, trace)
+    except Exception as error:
+        _write_failure(output, error)
+        traceback.print_exc()
+        simulation_app.close()
+        return 1
+    try:
+        simulation_app.close()
+        if isinstance(result, int):
+            return result
+        trace, evaluation, engine_runtime = result
+        evaluation = finalize_engine_evaluation(evaluation, engine_runtime, engine_log_path)
+        (output / "trace.json").write_text(
+            json.dumps(trace, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        (output / "evaluation.json").write_text(
+            json.dumps(evaluation, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps(evaluation, ensure_ascii=False, indent=2))
+        key = ("accepted_preflight_pass" if arguments.mode == "preflight"
+               else "nominal_research_dynamic_pass")
+        return 0 if evaluation[key] else 2
     except Exception as error:
         _write_failure(output, error)
         traceback.print_exc()
         return 1
-    finally:
-        simulation_app.close()
 
 
 if __name__ == "__main__":

@@ -25,6 +25,12 @@ def _below(path: str, root: str) -> bool:
     return path == root or path.startswith(root + "/")
 
 
+def _host_array(value) -> np.ndarray:
+    if hasattr(value, "detach"):
+        value = value.detach().cpu()
+    return np.asarray(value, dtype=np.float64)
+
+
 def _quaternion_rotation_matrix(quaternion: Sequence[float]) -> np.ndarray:
     value = np.asarray(quaternion, dtype=np.float64)
     value /= np.linalg.norm(value)
@@ -50,8 +56,8 @@ def _quaternion_distance(left: Sequence[float], right: Sequence[float]) -> float
 def _relative_position(
     point: Sequence[float], origin: Sequence[float], orientation: Sequence[float]
 ) -> list[float]:
-    rotation = _quaternion_rotation_matrix(orientation)
-    return list(rotation.T @ (np.asarray(point) - np.asarray(origin)))
+    return list(_quaternion_rotation_matrix(orientation).T
+                @ (np.asarray(point) - np.asarray(origin)))
 
 
 class IsolatedHandRecorder:
@@ -237,6 +243,7 @@ class TruthAuditRecorder:
         part_bottom_offsets_m: Sequence[float],
         table_top_z_m: float,
         physics_dt_s: float,
+        engine_monitor,
     ) -> None:
         self.object_parts = tuple(object_parts)
         self.hand_base_prim = hand_base_prim
@@ -244,11 +251,10 @@ class TruthAuditRecorder:
         self.contact_interface = contact_interface
         self.path_decoder = path_decoder
         self.roots = dict(roots)
-        self.masses = np.asarray(
-            [float(part.get_mass()) for part in self.object_parts], dtype=np.float64
-        )
+        self.engine_monitor = engine_monitor
+        self.masses = np.asarray([float(_host_array(part.get_mass()).reshape(-1)[0]) for part in self.object_parts])
         self.local_coms = tuple(
-            np.asarray(part.get_com()[0], dtype=np.float64).reshape(-1)
+            _host_array(part.get_com()[0]).reshape(-1)
             for part in self.object_parts
         )
         self.bottom_offsets = tuple(map(float, part_bottom_offsets_m))
@@ -339,7 +345,8 @@ class TruthAuditRecorder:
         active_targets: Sequence[float],
         arm_control: Mapping[str, object],
     ) -> None:
-        poses = [part.get_world_pose() for part in self.object_parts]
+        self.engine_monitor.sample()
+        poses = [tuple(_host_array(value) for value in part.get_world_pose()) for part in self.object_parts]
         positions = np.asarray([pose[0] for pose in poses], dtype=np.float64)
         centers = np.asarray(
             [
@@ -572,39 +579,39 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
         and document["offline_task_gate_passed"]
         and pad_identity
     )
+    truth_isolation = bool(
+        document.get("online_object_or_contact_truth_used") is False
+        and document.get("truth_audit_data_returned_to_controller") is False
+        and document.get("object_pose_writes_after_start") == 0)
     return {
         "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
-        "object_id": document["object_id"],
-        "candidate_id": document["candidate_id"],
+        "object_id": document["object_id"], "candidate_id": document["candidate_id"],
         "mode": document["mode"],
         "physics_time_advanced_s": len(samples) * physics_dt_s,
         "three_terminal_link_contacts_observed": contact_pass,
         "terminal_link_contact_records": contacts["terminal_records"],
         "pad_surface_identity_verified": pad_identity,
-        "maximum_consecutive_simultaneous_contact_samples": (
-            contacts["maximum_sustained"]
-        ),
+        "maximum_consecutive_simultaneous_contact_samples": contacts["maximum_sustained"],
         "maximum_lift_m": motion["maximum_lift_m"],
         "lift_50mm_passed": lift_pass,
         "hold_duration_s": motion["hold_duration_s"],
         "hold_2s_passed": hold_pass,
         "table_contact_released_during_hold": motion["table_released"],
         "maximum_relative_slip_m": motion["maximum_slip_m"],
-        "maximum_orientation_change_rad": motion[
-            "maximum_orientation_change_rad"
-        ],
+        "maximum_orientation_change_rad": motion["maximum_orientation_change_rad"],
         "actual_lift_peak_acceleration_m_s2": acceleration["actual"],
         "registered_lift_peak_acceleration_m_s2": acceleration["registered"],
         "lift_acceleration_consistent": acceleration["passed"],
         "maximum_table_penetration_m": safety["overall_penetration_m"],
-        "maximum_post_settle_table_penetration_m": (
-            safety["post_settle_penetration_m"]
-        ),
+        "maximum_post_settle_table_penetration_m": safety["post_settle_penetration_m"],
         "unauthorized_contact_records": safety["unauthorized"],
         "first_unauthorized_contact_paths": contacts["examples"],
         "finite_throughout": safety["finite"],
         "controller_completed": control_complete,
         "controller_failure_reason": document["controller_outcome"]["failure_reason"],
+        "truth_isolation_pass": truth_isolation,
+        "accepted_preflight_bound": bool(document.get("accepted_preflight_bound")),
+        "accepted_preflight_evaluation_sha256": document.get("accepted_preflight_evaluation_sha256"),
         "preflight_pass": False,
         **pending_engine_fields(
             controller_preflight_pass,
@@ -627,13 +634,12 @@ def main() -> int:
     parser.add_argument("--output", required=True)
     arguments = parser.parse_args()
     trace = json.loads(Path(arguments.trace_json).read_text(encoding="utf-8"))
-    isolated = trace.get("mode") == "isolated-hand"
-    result = evaluate_isolated_hand_trace(trace) if isolated else evaluate_trace(trace)
+    result = evaluate_isolated_hand_trace(trace) if trace.get("mode") == "isolated-hand" else evaluate_trace(trace)
     Path(arguments.output).write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    passed = result["diagnostic_pass"] if isolated else result["research_dynamic_pass"]
+    passed = result["diagnostic_pass"] if trace.get("mode") == "isolated-hand" else result["research_dynamic_pass"]
     return 0 if passed else 2
 
 

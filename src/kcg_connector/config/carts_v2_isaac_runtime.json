@@ -1,0 +1,20 @@
+{
+  "schema_version": "carts_v2_isaac_runtime_resources_v1",
+  "capacity_rule": {
+    "multiplier": 2.0,
+    "rounding": "NEXT_POWER_OF_TWO"
+  },
+  "capacity_basis": {
+    "observed_found_lost_peak": 2115,
+    "observed_total_peak": 5855,
+    "source_runs": [
+      "A_candidate11_gpu_mimic_passive_preflight_run07",
+      "A_candidate11_gpu_capacity_preflight_run08"
+    ]
+  },
+  "capacity_audit_sha256": "f941c8d8d9326129a92ce0a9c0efc63336bad50e20b18895b08df021aa6045dc",
+  "gpu_found_lost_aggregate_pairs_capacity": 8192,
+  "gpu_total_aggregate_pairs_capacity": 16384,
+  "algorithm_or_physics_parameter": false,
+  "hardware_authorized": false
+}

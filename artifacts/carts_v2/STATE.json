@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T08:25:07Z",
+  "updated_at_utc": "2026-08-24T08:40:43Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,7 +8,7 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_RECOVERY_2_GPU_CAPACITY_AUDIT",
+  "current_milestone": "V2_RECOVERY_2_OBJECT_A_ACCEPTED_PREFLIGHT",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -54,17 +54,31 @@
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
-    "allowed": false,
-    "scope": "GPU_CAPACITY_AUDIT_ONLY",
-    "reason": "Fail-closed acceptance code is tested; object grasp remains closed until bounded scene and capacity audit produces a warning-free accepted preflight"
+    "allowed": true,
+    "scope": "OBJECT_A_PREFLIGHT_ONLY",
+    "reason": "Bounded scene audit found no duplicate inflation or erroneous collision filtering; one A preflight is allowed with measured 2x power-of-two capacities, while grasp-lift remains closed"
   },
   "preflight_acceptance_gate": {
     "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
     "missing_field_rejected": true,
     "controller_engine_identity_conjunction_required": true,
     "legacy_preflight_pass_rejected": true,
-    "targeted_tests_passed": 14,
+    "targeted_tests_passed": 19,
     "run07_run08_original_evidence_preserved": true
+  },
+  "gpu_collision_capacity_audit": {
+    "artifact": "artifacts/carts_v2/recovery2_capacity_audit.json",
+    "artifact_sha256": "f941c8d8d9326129a92ce0a9c0efc63336bad50e20b18895b08df021aa6045dc",
+    "scene_rigid_body_count": 21,
+    "scene_articulation_count": 1,
+    "enabled_collision_shape_count": 14780,
+    "duplicate_source_transform_count": 0,
+    "robot_self_collision_enabled": false,
+    "prior_found_lost_peak": 2115,
+    "prior_total_peak": 5855,
+    "configured_found_lost_capacity": 8192,
+    "configured_total_capacity": 16384,
+    "runtime_measurement_pending": true
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
