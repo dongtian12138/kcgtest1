@@ -1,28 +1,28 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-24T11:27:38Z
+> 快照时间：2026-08-24T11:32:16Z
 > 当前分支：`carts-grasp-v2-rebuild-20260823`
 > 本文件只做恢复路由；物理结论以 V2 原始运行产物为准。
 
 ## 一句话状态
 
-双通道事后接触见证已实现并失败关闭；下一步先做新源码绑定预检查，只有通过后才重复一次第一指诊断。
+双通道接触见证的新源码预检查已被接受；下一步只运行对象 A 第一指 0.5 s 接触保持诊断。
 
 ## 六行恢复摘要
 
 - 总目标：真实允许表面候选 → 任务载荷鲁棒 Top-3 → Isaac 三指接触、离桌、抬升 50 mm、保持至少 2 s；两个对象同算法同主要参数。
-- 当前里程碑：`V2_CONTACT_WITNESS_SOURCE_BOUND_PREFLIGHT`；事件回调与步后轮询分别保存并取不遮蔽并集，未分类机器人接触已进入安全失败门。
-- 已经完成：接触见证覆盖确认前 6 个证据周期、CONTACT_CONFIRMED、CONTACT_SETTLE 和 HOLD；报告器 reset 前后覆盖不完整或两通道分歧均不能形成允许接触结论；14 项定向测试通过。
-- 当前物理/算法阻塞：新见证尚未在完整场景运行，仍不知道 step 1087 的分叉对应哪一条实际碰撞路径或仅是全局求解耦合。
-- 下一步最简单动作：对象 A、candidate_11 无闭指 preflight；只有引擎、身份、报告器覆盖和安全门同时通过，才重复一次第一指 0.5 s 诊断。
+- 当前里程碑：`V2_OBJECT_A_FIRST_FINGER_CONTACT_WITNESS_DIAGNOSTIC`；只允许第一指闭合、接触切换和 0.5 s 保持，不启动第二指。
+- 已经完成：对象 A 预检查推进 7.75 s，22 个刚体报告器 reset 前后完整；事件回调与步后轮询均为零接触且逐步一致，引擎、身份、容量和安全门同时通过。
+- 当前物理/算法阻塞：仍不知道上一轮 step 1087 的关节力代理是否对应真实允许指腹接触，或对应未分类碰撞/场景求解耦合。
+- 下一步最简单动作：同一对象 A、candidate_11 运行唯一第一指诊断；事后用双通道路径验证接触真实性，同时检查速度、受力、目标连续性和物体位移。
 - 绝对禁止跑偏方向：续修 H102、对象专用坐标/阈值、磁吸/隐藏固定、在线读取对象/接触/PhysX 真值、写物体位姿、把退出 0 冒充物理成功。
 
 ## 当前权威字段
 
 - 状态：`IMPLEMENTING`
-- 当前里程碑：`V2_CONTACT_WITNESS_SOURCE_BOUND_PREFLIGHT`
+- 当前里程碑：`V2_OBJECT_A_FIRST_FINGER_CONTACT_WITNESS_DIAGNOSTIC`
 - V2 正式候选：空
-- V2 研究动态门：`allowed=true`，scope=`OBJECT_A_CONTACT_WITNESS_SOURCE_BOUND_PREFLIGHT_ONLY`；预检查接受前禁止闭指
+- V2 研究动态门：`allowed=true`，scope=`OBJECT_A_CANDIDATE11_CONTACT_WITNESS_FIRST_FINGER_ONLY`；禁止第二指、预紧和抬升
 - 旧正式动态门：`dynamic_launch_allowed=false`（保持，不由 V2 研究线改写）
 - 正式动态：`FORMAL_DYNAMIC_PASS=false`
 - 研究型动态：`RESEARCH_DYNAMIC_PASS=false`
@@ -36,7 +36,7 @@
 - 本轮开始：`2026-08-23T14:41:38Z`
 - 硬截止：`2026-08-24T02:41:38Z`
 - 补足窗口：`V2_RECOVERY_1`，开始 `2026-08-24T07:05:10Z`，原截止 `12:05:10Z`；因 GPU 碰撞容量恢复失败于 `07:49:45Z` 提前停止，不得自动重开
-- 当前补足窗口：`V2_RECOVERY_2`，截至本快照累计已用约 9231 s、余约 6069 s；连续执行截止仍为 `13:08:47Z`
+- 当前补足窗口：`V2_RECOVERY_2`，截至本快照累计已用约 9509 s、余约 5791 s；连续执行截止仍为 `13:08:47Z`
 
 ## 冻结事实与复用边界
 
