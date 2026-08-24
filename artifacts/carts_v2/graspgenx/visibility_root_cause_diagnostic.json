@@ -1,0 +1,1525 @@
+{
+  "claim_scope": "FIXED_INPUT_OFFLINE_DIAGNOSTIC_NOT_COLLISION_TASK_IK_OR_DYNAMIC_EVIDENCE",
+  "descriptor_manifest": "artifacts/carts_v2/graspgenx/descriptors/descriptor_manifest.json",
+  "descriptor_manifest_sha256": "694bc74812b8c20cba432b3cc3df0f8c24912c4602718bdd7b84e4358ef43b02",
+  "elapsed_s": 6.912611146006384,
+  "environment": {
+    "cuda": "12.8",
+    "gpu": "NVIDIA GeForce RTX 5070 Ti",
+    "python": "3.10.12",
+    "torch": "2.7.0+cu128"
+  },
+  "object_manifest": "artifacts/carts_v2/graspgenx/objects/object_manifest.json",
+  "object_manifest_sha256": "968e14c890692d9bc53a488b16a640150528dc93b33bdd9043f8c44064779fb3",
+  "objects": {
+    "current_d38999_26kj61sn_public_spec": [
+      {
+        "descriptor_id": "kcg_3f_preshape_00",
+        "half_box": {
+          "bounds_m": [
+            [
+              -0.0792752206325531,
+              -0.0709792162233498,
+              0.08252537064254284
+            ],
+            [
+              0.014751255512237549,
+              0.07102110135019757,
+              0.14139613695442677
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.04869538281334133,
+            0.10008314486737753,
+            0.22693564744653086
+          ],
+          "closest_point_index": 3507,
+          "closest_pose_index": 7,
+          "maximum_per_axis_inside_point_count": [
+            5159,
+            8192,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.17812933223309366,
+            "median": 0.1359412313941271,
+            "minimum": 0.0965081033222433,
+            "p05": 0.10085623909683097,
+            "p95": 0.17723915449109326
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "manual_half_matches_official": true,
+        "manual_open_matches_official": true,
+        "official_half_visible_count": 0,
+        "official_open_visible_count": 0,
+        "open_box": {
+          "bounds_m": [
+            [
+              -0.12162825465202332,
+              -0.10938579589128494,
+              0.0714612528681755
+            ],
+            [
+              0.050048645585775375,
+              0.10947062820196152,
+              0.11700349301099777
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.05607317409061163,
+            0.11691201055231237,
+            0.2224759112897681
+          ],
+          "closest_point_index": 5347,
+          "closest_pose_index": 7,
+          "maximum_per_axis_inside_point_count": [
+            8192,
+            8192,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.16457637281862197,
+            "median": 0.12305294585037035,
+            "minimum": 0.10590609110226655,
+            "p05": 0.11049287032496781,
+            "p95": 0.16059277777533895
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "pose_distribution": {
+          "approach_axis_xyz_range": [
+            [
+              -0.24359741806983948,
+              0.991946280002594
+            ],
+            [
+              -0.8715784549713135,
+              0.5527873039245605
+            ],
+            [
+              -0.9928994178771973,
+              0.27609068155288696
+            ]
+          ],
+          "branch_counts": {
+            "diff": 12
+          },
+          "maximum_rotation_determinant": 1.000000276520717,
+          "maximum_rotation_orthonormal_error": 2.449731670850497e-07,
+          "minimum_rotation_determinant": 0.9999998954285306,
+          "translation_distance_from_center_m": {
+            "maximum": 0.32148669523150575,
+            "median": 0.30762440434160343,
+            "minimum": 0.2798592952575697,
+            "p05": 0.29073062481268874,
+            "p95": 0.3214125230732423
+          },
+          "translation_xyz_m": [
+            {
+              "maximum": 0.06716453284025192,
+              "median": 0.01557623315602541,
+              "minimum": -0.248896986246109,
+              "p05": -0.2330421544611454,
+              "p95": 0.06582093983888626
+            },
+            {
+              "maximum": 0.21011751890182495,
+              "median": 0.10358943790197372,
+              "minimum": 0.016911067068576813,
+              "p05": 0.03259762190282345,
+              "p95": 0.20486954003572463
+            },
+            {
+              "maximum": 0.30575963854789734,
+              "median": 0.28325559198856354,
+              "minimum": -0.04931408911943436,
+              "p05": 0.009898779354989534,
+              "p95": 0.30508666187524797
+            }
+          ]
+        },
+        "raw_pose_count": 12,
+        "recorded_half_visible_count": 0,
+        "recorded_open_visible_count": 0,
+        "recorded_raw_count": 12,
+        "replay_counts_match_record": true,
+        "score_range": {
+          "maximum": 0.8151707053184509,
+          "median": 0.7392514944076538,
+          "minimum": 0.7102256417274475,
+          "p05": 0.7130449414253235,
+          "p95": 0.8000462770462036
+        }
+      },
+      {
+        "descriptor_id": "kcg_3f_preshape_01",
+        "half_box": {
+          "bounds_m": [
+            [
+              -0.03127200179733336,
+              -0.08760611629679715,
+              0.08552342467010021
+            ],
+            [
+              0.028669323539361358,
+              0.08760893428132022,
+              0.1391096729785204
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.07717880143269776,
+            0.27749670954779637,
+            0.15927072046395713
+          ],
+          "closest_point_index": 1272,
+          "closest_pose_index": 23,
+          "maximum_per_axis_inside_point_count": [
+            2423,
+            8192,
+            4293
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.33740987383355575,
+            "median": 0.2648507771819446,
+            "minimum": 0.19702031488363297,
+            "p05": 0.22921004941732315,
+            "p95": 0.3103642005133448
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "manual_half_matches_official": true,
+        "manual_open_matches_official": true,
+        "official_half_visible_count": 0,
+        "official_open_visible_count": 0,
+        "open_box": {
+          "bounds_m": [
+            [
+              -0.07953949272632599,
+              -0.15274380147457123,
+              0.07215793430805206
+            ],
+            [
+              0.034207530319690704,
+              0.15275491774082184,
+              0.12229023873806
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.07304696619625127,
+            0.27856693468933635,
+            0.15891533958306286
+          ],
+          "closest_point_index": 7811,
+          "closest_pose_index": 23,
+          "maximum_per_axis_inside_point_count": [
+            8192,
+            8192,
+            2070
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.28576809609357956,
+            "median": 0.24445955125062582,
+            "minimum": 0.13666954086324207,
+            "p05": 0.1713802062039948,
+            "p95": 0.27680402128021475
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "pose_distribution": {
+          "approach_axis_xyz_range": [
+            [
+              -0.49159690737724304,
+              0.9626040458679199
+            ],
+            [
+              -0.9612501859664917,
+              0.8794858455657959
+            ],
+            [
+              -0.9933885335922241,
+              0.9059103727340698
+            ]
+          ],
+          "branch_counts": {
+            "diff": 31
+          },
+          "maximum_rotation_determinant": 1.00000037769626,
+          "maximum_rotation_orthonormal_error": 3.966227950513712e-07,
+          "minimum_rotation_determinant": 0.9999997191979867,
+          "translation_distance_from_center_m": {
+            "maximum": 0.4868201256140252,
+            "median": 0.4182517049052552,
+            "minimum": 0.3577445250346362,
+            "p05": 0.36809015000879863,
+            "p95": 0.47979554289802195
+          },
+          "translation_xyz_m": [
+            {
+              "maximum": 0.30575963854789734,
+              "median": 0.0048472206108272076,
+              "minimum": -0.30575963854789734,
+              "p05": -0.3055296838283539,
+              "p95": 0.2816661447286606
+            },
+            {
+              "maximum": 0.30575963854789734,
+              "median": 0.284427672624588,
+              "minimum": -0.30575963854789734,
+              "p05": -0.07124003395438194,
+              "p95": 0.30575963854789734
+            },
+            {
+              "maximum": 0.30575963854789734,
+              "median": 0.22811484336853027,
+              "minimum": -0.3049532473087311,
+              "p05": -0.2695281058549881,
+              "p95": 0.30575963854789734
+            }
+          ]
+        },
+        "raw_pose_count": 31,
+        "recorded_half_visible_count": 0,
+        "recorded_open_visible_count": 0,
+        "recorded_raw_count": 31,
+        "replay_counts_match_record": true,
+        "score_range": {
+          "maximum": 0.9659373164176941,
+          "median": 0.8235739469528198,
+          "minimum": 0.7128798365592957,
+          "p05": 0.7229645252227783,
+          "p95": 0.9515097141265869
+        }
+      },
+      {
+        "descriptor_id": "kcg_3f_preshape_02",
+        "half_box": {
+          "bounds_m": [
+            [
+              -0.07101024687290192,
+              -0.04523462385441235,
+              0.08041898906230927
+            ],
+            [
+              -0.007476784288883209,
+              0.045272026653037756,
+              0.14257130026817322
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            -0.036576706521375874,
+            0.009047936152463958,
+            0.11486553028225899
+          ],
+          "closest_point_index": 7811,
+          "closest_pose_index": 146,
+          "maximum_per_axis_inside_point_count": [
+            8192,
+            8192,
+            6531
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.026693832234989157,
+            "median": -0.011075379388686437,
+            "minimum": -0.02770576998591423,
+            "p05": -0.022156196489854858,
+            "p95": 0.016573702922168233
+          },
+          "points_inside_per_pose": {
+            "maximum": 3813.0,
+            "median": 862.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 2545.5
+          },
+          "visible_pose_count": 295
+        },
+        "manual_half_matches_official": true,
+        "manual_open_matches_official": true,
+        "official_half_visible_count": 295,
+        "official_open_visible_count": 246,
+        "open_box": {
+          "bounds_m": [
+            [
+              -0.13281019032001495,
+              -0.05870918929576874,
+              0.06844835728406906
+            ],
+            [
+              0.056779924780130386,
+              0.05881671607494354,
+              0.12218338996171951
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.017406422568677162,
+            -0.03030777224802541,
+            0.1148418691009283
+          ],
+          "closest_point_index": 7581,
+          "closest_pose_index": 141,
+          "maximum_per_axis_inside_point_count": [
+            8192,
+            8192,
+            1732
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.046005473508958145,
+            "median": -0.005894953476993606,
+            "minimum": -0.007341520860791206,
+            "p05": -0.007341520860791206,
+            "p95": 0.03481623581138597
+          },
+          "points_inside_per_pose": {
+            "maximum": 1732.0,
+            "median": 1616.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 1732.0
+          },
+          "visible_pose_count": 246
+        },
+        "pose_distribution": {
+          "approach_axis_xyz_range": [
+            [
+              -0.9968080520629883,
+              0.9978317022323608
+            ],
+            [
+              -0.9976117610931396,
+              0.9990832805633545
+            ],
+            [
+              -1.0,
+              0.9998431205749512
+            ]
+          ],
+          "branch_counts": {
+            "diff": 141,
+            "obb": 246
+          },
+          "maximum_rotation_determinant": 1.00000038053423,
+          "maximum_rotation_orthonormal_error": 3.7409162079171665e-07,
+          "minimum_rotation_determinant": 0.9999997295383672,
+          "translation_distance_from_center_m": {
+            "maximum": 0.19648129430473799,
+            "median": 0.14113041381228708,
+            "minimum": 0.13432260491580564,
+            "p05": 0.13498622354377937,
+            "p95": 0.17995589400639436
+          },
+          "translation_xyz_m": [
+            {
+              "maximum": 0.17808324098587036,
+              "median": -0.007796240970492363,
+              "minimum": -0.17579707503318787,
+              "p05": -0.12842488959431647,
+              "p95": 0.11857810616493225
+            },
+            {
+              "maximum": 0.18221919238567352,
+              "median": -0.08374834060668945,
+              "minimum": -0.1691596508026123,
+              "p05": -0.12307510524988174,
+              "p95": 0.13569386154413213
+            },
+            {
+              "maximum": 0.1848532259464264,
+              "median": 0.0026347883976995945,
+              "minimum": -0.1814505159854889,
+              "p05": -0.158909472823143,
+              "p95": 0.13684310466051097
+            }
+          ]
+        },
+        "raw_pose_count": 387,
+        "recorded_half_visible_count": 295,
+        "recorded_open_visible_count": 246,
+        "recorded_raw_count": 387,
+        "replay_counts_match_record": true,
+        "score_range": {
+          "maximum": 0.9836733341217041,
+          "median": 0.9240266680717468,
+          "minimum": 0.7017249464988708,
+          "p05": 0.7471011102199554,
+          "p95": 0.9690348029136657
+        }
+      },
+      {
+        "descriptor_id": "kcg_3f_preshape_03",
+        "half_box": {
+          "bounds_m": [
+            [
+              -0.06278163194656372,
+              -0.08107790228041267,
+              0.08474772982299328
+            ],
+            [
+              0.01877181977033615,
+              0.08110538247910881,
+              0.13856892473995686
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            -0.09395941049265137,
+            0.1716457117046277,
+            0.21293226847330846
+          ],
+          "closest_point_index": 5347,
+          "closest_pose_index": 15,
+          "maximum_per_axis_inside_point_count": [
+            0,
+            8192,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.300820144815054,
+            "median": 0.22811984083631887,
+            "minimum": 0.12124154396302793,
+            "p05": 0.18018307533136196,
+            "p95": 0.272911800866417
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "manual_half_matches_official": true,
+        "manual_open_matches_official": true,
+        "official_half_visible_count": 0,
+        "official_open_visible_count": 0,
+        "open_box": {
+          "bounds_m": [
+            [
+              -0.10754455626010895,
+              -0.13440155982971191,
+              0.07511624693870544
+            ],
+            [
+              0.0440526157617569,
+              0.13446062803268433,
+              0.11360304057598114
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            -0.09512266850185225,
+            0.1828268931490861,
+            0.2027462956109546
+          ],
+          "closest_point_index": 7608,
+          "closest_pose_index": 15,
+          "maximum_per_axis_inside_point_count": [
+            5659,
+            8192,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.26202029673869537,
+            "median": 0.20949740452110743,
+            "minimum": 0.10141900965568726,
+            "p05": 0.15203634978773412,
+            "p95": 0.2399081773193926
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "pose_distribution": {
+          "approach_axis_xyz_range": [
+            [
+              -0.5358133912086487,
+              0.9574456810951233
+            ],
+            [
+              -0.9672072529792786,
+              0.8574237823486328
+            ],
+            [
+              -0.9909708499908447,
+              0.7991925477981567
+            ]
+          ],
+          "branch_counts": {
+            "diff": 16
+          },
+          "maximum_rotation_determinant": 1.0000002625480648,
+          "maximum_rotation_orthonormal_error": 4.649239311316222e-07,
+          "minimum_rotation_determinant": 0.9999995902782919,
+          "translation_distance_from_center_m": {
+            "maximum": 0.47213002317879443,
+            "median": 0.40035399691964346,
+            "minimum": 0.31866749274879486,
+            "p05": 0.3564895991019798,
+            "p95": 0.4580797378692784
+          },
+          "translation_xyz_m": [
+            {
+              "maximum": 0.30533596873283386,
+              "median": -0.19794073700904846,
+              "minimum": -0.30575963854789734,
+              "p05": -0.30575963854789734,
+              "p95": 0.23037352412939072
+            },
+            {
+              "maximum": 0.30575963854789734,
+              "median": 0.26723310351371765,
+              "minimum": -0.08344486355781555,
+              "p05": 0.09651710093021393,
+              "p95": 0.30575963854789734
+            },
+            {
+              "maximum": 0.30575963854789734,
+              "median": 0.23126424103975296,
+              "minimum": -0.09049876034259796,
+              "p05": -0.03378833387978375,
+              "p95": 0.30575963854789734
+            }
+          ]
+        },
+        "raw_pose_count": 16,
+        "recorded_half_visible_count": 0,
+        "recorded_open_visible_count": 0,
+        "recorded_raw_count": 16,
+        "replay_counts_match_record": true,
+        "score_range": {
+          "maximum": 0.9099844694137573,
+          "median": 0.8160202205181122,
+          "minimum": 0.7148495316505432,
+          "p05": 0.7195330709218979,
+          "p95": 0.8949228376150131
+        }
+      },
+      {
+        "descriptor_id": "kcg_3f_preshape_04",
+        "half_box": {
+          "bounds_m": [
+            [
+              -0.08432092890143394,
+              -0.0549437993850006,
+              0.08114201202988625
+            ],
+            [
+              0.008243169635534286,
+              0.05499060510737763,
+              0.14362193271517754
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.008797685723625649,
+            0.036239628043487786,
+            0.1514815143146171
+          ],
+          "closest_point_index": 7265,
+          "closest_pose_index": 8,
+          "maximum_per_axis_inside_point_count": [
+            8192,
+            8192,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.05500324848006879,
+            "median": 0.030496008094811382,
+            "minimum": 0.007879118669635648,
+            "p05": 0.01864413967212089,
+            "p95": 0.04625821713767855
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "manual_half_matches_official": true,
+        "manual_open_matches_official": true,
+        "official_half_visible_count": 0,
+        "official_open_visible_count": 0,
+        "open_box": {
+          "bounds_m": [
+            [
+              -0.13053332269191742,
+              -0.07683151960372925,
+              0.06906998157501221
+            ],
+            [
+              0.054898008704185486,
+              0.07693372666835785,
+              0.12111079692840576
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.023353156869489557,
+            0.026543537623497083,
+            0.14824102578451198
+          ],
+          "closest_point_index": 2705,
+          "closest_pose_index": 8,
+          "maximum_per_axis_inside_point_count": [
+            8192,
+            8192,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.07645897779774646,
+            "median": 0.05185644748773202,
+            "minimum": 0.02713022885610622,
+            "p05": 0.0367650570140593,
+            "p95": 0.06816464691820545
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "pose_distribution": {
+          "approach_axis_xyz_range": [
+            [
+              -0.9931129813194275,
+              0.9992675185203552
+            ],
+            [
+              -0.990728497505188,
+              0.9878700971603394
+            ],
+            [
+              -0.9993218183517456,
+              0.9992997050285339
+            ]
+          ],
+          "branch_counts": {
+            "diff": 101
+          },
+          "maximum_rotation_determinant": 1.0000003679777048,
+          "maximum_rotation_orthonormal_error": 3.738455265356322e-07,
+          "minimum_rotation_determinant": 0.9999996323916448,
+          "translation_distance_from_center_m": {
+            "maximum": 0.22032468460221413,
+            "median": 0.20119576041294526,
+            "minimum": 0.17728858925923963,
+            "p05": 0.18394391575656702,
+            "p95": 0.21348410052505454
+          },
+          "translation_xyz_m": [
+            {
+              "maximum": 0.19356389343738556,
+              "median": -0.01518989633768797,
+              "minimum": -0.20789073407649994,
+              "p05": -0.17447122931480408,
+              "p95": 0.14622923731803894
+            },
+            {
+              "maximum": 0.20317532122135162,
+              "median": 0.008277113549411297,
+              "minimum": -0.20334076881408691,
+              "p05": -0.18703177571296692,
+              "p95": 0.17601023614406586
+            },
+            {
+              "maximum": 0.2151978313922882,
+              "median": 0.005858035292476416,
+              "minimum": -0.2108049988746643,
+              "p05": -0.1958283632993698,
+              "p95": 0.19983243942260742
+            }
+          ]
+        },
+        "raw_pose_count": 101,
+        "recorded_half_visible_count": 0,
+        "recorded_open_visible_count": 0,
+        "recorded_raw_count": 101,
+        "replay_counts_match_record": true,
+        "score_range": {
+          "maximum": 0.9816107749938965,
+          "median": 0.8299522399902344,
+          "minimum": 0.7009191513061523,
+          "p05": 0.7106844186782837,
+          "p95": 0.9672539830207825
+        }
+      }
+    ],
+    "te_deutsch_d38999_26fj35pn_step": [
+      {
+        "descriptor_id": "kcg_3f_preshape_00",
+        "half_box": {
+          "bounds_m": [
+            [
+              -0.0792752206325531,
+              -0.0709792162233498,
+              0.08252537064254284
+            ],
+            [
+              0.014751255512237549,
+              0.07102110135019757,
+              0.14139613695442677
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.000400309982955099,
+            -0.07831827651105872,
+            0.16547640252082302
+          ],
+          "closest_point_index": 4867,
+          "closest_pose_index": 0,
+          "maximum_per_axis_inside_point_count": [
+            4939,
+            4593,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.12880519733219403,
+            "median": 0.0690815183778607,
+            "minimum": 0.02517381567531619,
+            "p05": 0.03001435023297578,
+            "p95": 0.1215922663367661
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "manual_half_matches_official": true,
+        "manual_open_matches_official": true,
+        "official_half_visible_count": 0,
+        "official_open_visible_count": 0,
+        "open_box": {
+          "bounds_m": [
+            [
+              -0.12162825465202332,
+              -0.10938579589128494,
+              0.0714612528681755
+            ],
+            [
+              0.050048645585775375,
+              0.10947062820196152,
+              0.11700349301099777
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.003568546905378579,
+            -0.09067295049548302,
+            0.1632152457231783
+          ],
+          "closest_point_index": 7293,
+          "closest_pose_index": 0,
+          "maximum_per_axis_inside_point_count": [
+            8192,
+            8192,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.10991835628533994,
+            "median": 0.08203028964184424,
+            "minimum": 0.04621175271218053,
+            "p05": 0.05002528642597989,
+            "p95": 0.10729439311446577
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "pose_distribution": {
+          "approach_axis_xyz_range": [
+            [
+              -0.13895079493522644,
+              0.6253265142440796
+            ],
+            [
+              -0.9801778793334961,
+              0.7803333401679993
+            ],
+            [
+              -0.8702722787857056,
+              0.14122313261032104
+            ]
+          ],
+          "branch_counts": {
+            "diff": 4
+          },
+          "maximum_rotation_determinant": 0.9999999484861395,
+          "maximum_rotation_orthonormal_error": 3.897969109711852e-07,
+          "minimum_rotation_determinant": 0.9999997647247135,
+          "translation_distance_from_center_m": {
+            "maximum": 0.29630878314576986,
+            "median": 0.26655510179805064,
+            "minimum": 0.2072109809659085,
+            "p05": 0.21470921566177048,
+            "p95": 0.29324911437257134
+          },
+          "translation_xyz_m": [
+            {
+              "maximum": -0.06347493827342987,
+              "median": -0.08669287711381912,
+              "minimum": -0.24445796012878418,
+              "p05": -0.22414799854159356,
+              "p95": -0.06360282823443413
+            },
+            {
+              "maximum": 0.25341883301734924,
+              "median": 0.016481738537549973,
+              "minimum": -0.07643785327672958,
+              "p05": -0.07620767839252948,
+              "p95": 0.23158603273332112
+            },
+            {
+              "maximum": 0.26837587356567383,
+              "median": 0.10295239184051752,
+              "minimum": 0.0034749966580420732,
+              "p05": 0.00646834425861016,
+              "p95": 0.25549061298370357
+            }
+          ]
+        },
+        "raw_pose_count": 4,
+        "recorded_half_visible_count": 0,
+        "recorded_open_visible_count": 0,
+        "recorded_raw_count": 4,
+        "replay_counts_match_record": true,
+        "score_range": {
+          "maximum": 0.8128179311752319,
+          "median": 0.7300904989242554,
+          "minimum": 0.709109365940094,
+          "p05": 0.7105262964963913,
+          "p95": 0.8021390557289123
+        }
+      },
+      {
+        "descriptor_id": "kcg_3f_preshape_01",
+        "half_box": {
+          "bounds_m": [
+            [
+              -0.03127200179733336,
+              -0.08760611629679715,
+              0.08552342467010021
+            ],
+            [
+              0.028669323539361358,
+              0.08760893428132022,
+              0.1391096729785204
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.06242094761519771,
+            0.2893154862564547,
+            0.21770463177816007
+          ],
+          "closest_point_index": 7201,
+          "closest_pose_index": 1,
+          "maximum_per_axis_inside_point_count": [
+            0,
+            0,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.2563236578674243,
+            "median": 0.2377084774289665,
+            "minimum": 0.21909329699050875,
+            "p05": 0.22095481503435452,
+            "p95": 0.2544621398235785
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "manual_half_matches_official": true,
+        "manual_open_matches_official": true,
+        "official_half_visible_count": 0,
+        "official_open_visible_count": 0,
+        "open_box": {
+          "bounds_m": [
+            [
+              -0.07953949272632599,
+              -0.15274380147457123,
+              0.07215793430805206
+            ],
+            [
+              0.034207530319690704,
+              0.15275491774082184,
+              0.12229023873806
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.06167559763191394,
+            0.29114216367218476,
+            0.2142318590117038
+          ],
+          "closest_point_index": 7053,
+          "closest_pose_index": 1,
+          "maximum_per_axis_inside_point_count": [
+            3457,
+            0,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.2014199944603625,
+            "median": 0.1849103328840242,
+            "minimum": 0.16840067130768588,
+            "p05": 0.1700516374653197,
+            "p95": 0.19976902830272866
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "pose_distribution": {
+          "approach_axis_xyz_range": [
+            [
+              0.9365716576576233,
+              0.9692133069038391
+            ],
+            [
+              0.10918748378753662,
+              0.16596537828445435
+            ],
+            [
+              -0.33303403854370117,
+              -0.18188154697418213
+            ]
+          ],
+          "branch_counts": {
+            "diff": 2
+          },
+          "maximum_rotation_determinant": 1.0000001615041625,
+          "maximum_rotation_orthonormal_error": 2.0988254911813442e-07,
+          "minimum_rotation_determinant": 0.9999997593350486,
+          "translation_distance_from_center_m": {
+            "maximum": 0.42814615516257515,
+            "median": 0.40961683016687755,
+            "minimum": 0.39108750517118,
+            "p05": 0.39294043767074976,
+            "p95": 0.4262932226630054
+          },
+          "translation_xyz_m": [
+            {
+              "maximum": -0.2514039874076843,
+              "median": -0.27858181297779083,
+              "minimum": -0.30575963854789734,
+              "p05": -0.3030418559908867,
+              "p95": -0.254121769964695
+            },
+            {
+              "maximum": 0.29899877309799194,
+              "median": 0.29491232335567474,
+              "minimum": 0.29082587361335754,
+              "p05": 0.29123451858758925,
+              "p95": 0.29859012812376023
+            },
+            {
+              "maximum": 0.07187338173389435,
+              "median": 0.02569087129086256,
+              "minimum": -0.020491639152169228,
+              "p05": -0.015873388107866048,
+              "p95": 0.06725513068959116
+            }
+          ]
+        },
+        "raw_pose_count": 2,
+        "recorded_half_visible_count": 0,
+        "recorded_open_visible_count": 0,
+        "recorded_raw_count": 2,
+        "replay_counts_match_record": true,
+        "score_range": {
+          "maximum": 0.781151533126831,
+          "median": 0.7536777853965759,
+          "minimum": 0.7262040376663208,
+          "p05": 0.7289514124393464,
+          "p95": 0.7784041583538055
+        }
+      },
+      {
+        "descriptor_id": "kcg_3f_preshape_02",
+        "half_box": {
+          "bounds_m": [
+            [
+              -0.07101024687290192,
+              -0.04523462385441235,
+              0.08041898906230927
+            ],
+            [
+              -0.007476784288883209,
+              0.045272026653037756,
+              0.14257130026817322
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            -0.03082331713714469,
+            -0.003414672859674199,
+            0.11951777525246143
+          ],
+          "closest_point_index": 3415,
+          "closest_pose_index": 157,
+          "maximum_per_axis_inside_point_count": [
+            8192,
+            8192,
+            7011
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.03677124346671578,
+            "median": -0.010131484541459488,
+            "minimum": -0.023053525015711784,
+            "p05": -0.019659698488020547,
+            "p95": 0.015048313251868308
+          },
+          "points_inside_per_pose": {
+            "maximum": 4098.0,
+            "median": 1159.5,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 2947.75
+          },
+          "visible_pose_count": 374
+        },
+        "manual_half_matches_official": true,
+        "manual_open_matches_official": true,
+        "official_half_visible_count": 374,
+        "official_open_visible_count": 340,
+        "open_box": {
+          "bounds_m": [
+            [
+              -0.13281019032001495,
+              -0.05870918929576874,
+              0.06844835728406906
+            ],
+            [
+              0.056779924780130386,
+              0.05881671607494354,
+              0.12218338996171951
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            0.028851656382881997,
+            0.006978405396697556,
+            0.11555794812738895
+          ],
+          "closest_point_index": 2321,
+          "closest_pose_index": 146,
+          "maximum_per_axis_inside_point_count": [
+            8192,
+            8192,
+            1488
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.04663583806506463,
+            "median": -0.006334521211509278,
+            "minimum": -0.006625441834330559,
+            "p05": -0.006625441834330559,
+            "p95": 0.03344416758419442
+          },
+          "points_inside_per_pose": {
+            "maximum": 1488.0,
+            "median": 1439.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 1483.0
+          },
+          "visible_pose_count": 340
+        },
+        "pose_distribution": {
+          "approach_axis_xyz_range": [
+            [
+              -0.9940792322158813,
+              0.991742730140686
+            ],
+            [
+              -0.9980908632278442,
+              0.9669729471206665
+            ],
+            [
+              -1.0,
+              0.9993587136268616
+            ]
+          ],
+          "branch_counts": {
+            "diff": 146,
+            "obb": 340
+          },
+          "maximum_rotation_determinant": 1.0000003734549903,
+          "maximum_rotation_orthonormal_error": 3.802049484136205e-07,
+          "minimum_rotation_determinant": 0.9999995865422436,
+          "translation_distance_from_center_m": {
+            "maximum": 0.18899585382948156,
+            "median": 0.1395690204235141,
+            "minimum": 0.13394347151929648,
+            "p05": 0.1341252504890636,
+            "p95": 0.17831387693952938
+          },
+          "translation_xyz_m": [
+            {
+              "maximum": 0.16822414100170135,
+              "median": -0.002900310675613582,
+              "minimum": -0.17394860088825226,
+              "p05": -0.12251788005232811,
+              "p95": 0.11613108962774277
+            },
+            {
+              "maximum": 0.17383919656276703,
+              "median": -0.08397188410162926,
+              "minimum": -0.16216464340686798,
+              "p05": -0.10749983042478561,
+              "p95": 0.13129207119345665
+            },
+            {
+              "maximum": 0.18234318494796753,
+              "median": 0.0034994417801499367,
+              "minimum": -0.1812303364276886,
+              "p05": -0.12405892834067345,
+              "p95": 0.1339188665151596
+            }
+          ]
+        },
+        "raw_pose_count": 486,
+        "recorded_half_visible_count": 374,
+        "recorded_open_visible_count": 340,
+        "recorded_raw_count": 486,
+        "replay_counts_match_record": true,
+        "score_range": {
+          "maximum": 0.9847772121429443,
+          "median": 0.9021117687225342,
+          "minimum": 0.7003182172775269,
+          "p05": 0.714604452252388,
+          "p95": 0.980098620057106
+        }
+      },
+      {
+        "descriptor_id": "kcg_3f_preshape_03",
+        "half_box": {
+          "bounds_m": [
+            [
+              -0.06278163194656372,
+              -0.08107790228041267,
+              0.08474772982299328
+            ],
+            [
+              0.01877181977033615,
+              0.08110538247910881,
+              0.13856892473995686
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": null,
+          "closest_point_index": null,
+          "closest_pose_index": null,
+          "maximum_per_axis_inside_point_count": null,
+          "nearest_signed_box_gap_m": {
+            "maximum": null,
+            "median": null,
+            "minimum": null,
+            "p05": null,
+            "p95": null
+          },
+          "points_inside_per_pose": {
+            "maximum": null,
+            "median": null,
+            "minimum": null,
+            "p05": null,
+            "p95": null
+          },
+          "visible_pose_count": 0
+        },
+        "manual_half_matches_official": true,
+        "manual_open_matches_official": true,
+        "official_half_visible_count": 0,
+        "official_open_visible_count": 0,
+        "open_box": {
+          "bounds_m": [
+            [
+              -0.10754455626010895,
+              -0.13440155982971191,
+              0.07511624693870544
+            ],
+            [
+              0.0440526157617569,
+              0.13446062803268433,
+              0.11360304057598114
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": null,
+          "closest_point_index": null,
+          "closest_pose_index": null,
+          "maximum_per_axis_inside_point_count": null,
+          "nearest_signed_box_gap_m": {
+            "maximum": null,
+            "median": null,
+            "minimum": null,
+            "p05": null,
+            "p95": null
+          },
+          "points_inside_per_pose": {
+            "maximum": null,
+            "median": null,
+            "minimum": null,
+            "p05": null,
+            "p95": null
+          },
+          "visible_pose_count": 0
+        },
+        "pose_distribution": {
+          "approach_axis_xyz_range": null,
+          "branch_counts": {},
+          "maximum_rotation_determinant": null,
+          "maximum_rotation_orthonormal_error": null,
+          "minimum_rotation_determinant": null,
+          "translation_distance_from_center_m": {
+            "maximum": null,
+            "median": null,
+            "minimum": null,
+            "p05": null,
+            "p95": null
+          },
+          "translation_xyz_m": [
+            {
+              "maximum": null,
+              "median": null,
+              "minimum": null,
+              "p05": null,
+              "p95": null
+            },
+            {
+              "maximum": null,
+              "median": null,
+              "minimum": null,
+              "p05": null,
+              "p95": null
+            },
+            {
+              "maximum": null,
+              "median": null,
+              "minimum": null,
+              "p05": null,
+              "p95": null
+            }
+          ]
+        },
+        "raw_pose_count": 0,
+        "recorded_half_visible_count": 0,
+        "recorded_open_visible_count": 0,
+        "recorded_raw_count": 0,
+        "replay_counts_match_record": true,
+        "score_range": {
+          "maximum": null,
+          "median": null,
+          "minimum": null,
+          "p05": null,
+          "p95": null
+        }
+      },
+      {
+        "descriptor_id": "kcg_3f_preshape_04",
+        "half_box": {
+          "bounds_m": [
+            [
+              -0.08432092890143394,
+              -0.0549437993850006,
+              0.08114201202988625
+            ],
+            [
+              0.008243169635534286,
+              0.05499060510737763,
+              0.14362193271517754
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            -0.019885371373158652,
+            -0.00434666285164953,
+            0.15257479237940935
+          ],
+          "closest_point_index": 1579,
+          "closest_pose_index": 1,
+          "maximum_per_axis_inside_point_count": [
+            8192,
+            8192,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.05721367706221552,
+            "median": 0.033045207985514274,
+            "minimum": 0.008952859664231816,
+            "p05": 0.020249042351490228,
+            "p95": 0.0431929942482863
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "manual_half_matches_official": true,
+        "manual_open_matches_official": true,
+        "official_half_visible_count": 0,
+        "official_open_visible_count": 0,
+        "open_box": {
+          "bounds_m": [
+            [
+              -0.13053332269191742,
+              -0.07683151960372925,
+              0.06906998157501221
+            ],
+            [
+              0.054898008704185486,
+              0.07693372666835785,
+              0.12111079692840576
+            ]
+          ],
+          "closest_point_in_gripper_frame_m": [
+            -0.019885371373158652,
+            -0.00434666285164953,
+            0.15257479237940935
+          ],
+          "closest_point_index": 1579,
+          "closest_pose_index": 1,
+          "maximum_per_axis_inside_point_count": [
+            8192,
+            8192,
+            0
+          ],
+          "nearest_signed_box_gap_m": {
+            "maximum": 0.07280513116756401,
+            "median": 0.05441834874135695,
+            "minimum": 0.03146399545100359,
+            "p05": 0.04160073456813396,
+            "p95": 0.06515041516372234
+          },
+          "points_inside_per_pose": {
+            "maximum": 0.0,
+            "median": 0.0,
+            "minimum": 0.0,
+            "p05": 0.0,
+            "p95": 0.0
+          },
+          "visible_pose_count": 0
+        },
+        "pose_distribution": {
+          "approach_axis_xyz_range": [
+            [
+              -0.9892579317092896,
+              0.9991676211357117
+            ],
+            [
+              -0.9893530011177063,
+              0.9980420470237732
+            ],
+            [
+              -0.9983041286468506,
+              0.9974463582038879
+            ]
+          ],
+          "branch_counts": {
+            "diff": 97
+          },
+          "maximum_rotation_determinant": 1.0000004698913796,
+          "maximum_rotation_orthonormal_error": 5.123389799077671e-07,
+          "minimum_rotation_determinant": 0.9999996053652418,
+          "translation_distance_from_center_m": {
+            "maximum": 0.21196940636023118,
+            "median": 0.20128658313181982,
+            "minimum": 0.17911416229110297,
+            "p05": 0.1872805210036188,
+            "p95": 0.2108113526723811
+          },
+          "translation_xyz_m": [
+            {
+              "maximum": 0.20606400072574615,
+              "median": -0.03899066522717476,
+              "minimum": -0.21052736043930054,
+              "p05": -0.1975431591272354,
+              "p95": 0.15925377309322325
+            },
+            {
+              "maximum": 0.20101436972618103,
+              "median": 0.02145906537771225,
+              "minimum": -0.19057707488536835,
+              "p05": -0.1671472430229187,
+              "p95": 0.1840045183897018
+            },
+            {
+              "maximum": 0.20767691731452942,
+              "median": -0.0035911034792661667,
+              "minimum": -0.20617395639419556,
+              "p05": -0.1935357540845871,
+              "p95": 0.18895006775856013
+            }
+          ]
+        },
+        "raw_pose_count": 97,
+        "recorded_half_visible_count": 0,
+        "recorded_open_visible_count": 0,
+        "recorded_raw_count": 97,
+        "replay_counts_match_record": true,
+        "score_range": {
+          "maximum": 0.9743159413337708,
+          "median": 0.8180602788925171,
+          "minimum": 0.700237512588501,
+          "p05": 0.7107852458953857,
+          "p95": 0.9454606413841247
+        }
+      }
+    ]
+  },
+  "official_visibility_rule": "inverse(grasp_pose) transforms object points into gripper frame; any point inside axis-aligned bounds makes pose visible",
+  "official_visibility_source": "third_party/GraspGenX/graspgenx/dataset/xgrasp_dataset_utils.py::filter_xgripper_grasps_by_point_cloud_visibility",
+  "random_seed": 20260824,
+  "schema_version": "graspgenx_visibility_root_cause_diagnostic_v1"
+}

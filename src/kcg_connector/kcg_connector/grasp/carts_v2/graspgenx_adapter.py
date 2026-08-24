@@ -296,32 +296,12 @@ def _select_six_d_diverse(
         nearest = np.minimum(nearest, distance[:, chosen])
     return [rows[index] for index in selected]
 
-def _descriptor_sweep_contains_surface(
-    surface_points: np.ndarray,
-    surface_tree: cKDTree,
-    object_from_generator: np.ndarray,
-    descriptor: Mapping[str, Any],
-) -> bool:
-    for prefix in ("open", "half"):
-        lower = descriptor[f"{prefix}_sweep_lower"]
-        upper = descriptor[f"{prefix}_sweep_upper"]
-        center = object_from_generator[:3, :3] @ (0.5 * (lower + upper)) + object_from_generator[:3, 3]
-        nearby = surface_tree.query_ball_point(center, 0.5 * np.linalg.norm(upper - lower))
-        points_generator = (
-            surface_points[np.asarray(nearby)] - object_from_generator[:3, 3]
-        ) @ object_from_generator[:3, :3] if nearby else np.empty((0, 3))
-        if np.any(np.all((points_generator >= lower) & (points_generator <= upper), axis=1)):
-            return True
-    return False
-
 def _convert_and_deduplicate(
     payload: Mapping[str, Any], descriptors: Mapping[str, Mapping[str, Any]],
-    surface_points: np.ndarray,
     translation_tolerance_m: float, rotation_tolerance_rad: float, maximum_candidates: int,
 ) -> list[tuple[Any, ...]]:
     converted = []
     seen_sources: set[tuple[str, int]] = set()
-    surface_tree = cKDTree(surface_points)
     for row in payload.get("proposals", ()):
         descriptor_id = str(row.get("descriptor_id", ""))
         raw_index = int(row.get("raw_index", -1))
@@ -338,10 +318,6 @@ def _convert_and_deduplicate(
         seen_sources.add(key)
         descriptor = descriptors[descriptor_id]
         object_from_generator = _rigid(row["object_from_graspgenx_row_major"], "object_from_graspgenx")
-        if not _descriptor_sweep_contains_surface(
-            surface_points, surface_tree, object_from_generator, descriptor
-        ):
-            continue
         object_from_hand = _rigid(
             object_from_generator @ descriptor["generator_from_hand"],
             "object_from_handbase",
@@ -471,9 +447,7 @@ def _adapt_rows(
             "descriptor_manifest_sha256": descriptor_sha,
             "proposal_file_sha256": proposal_sha,
             "random_seed": int(random_seed),
-            "descriptor_sweep_surface_occupancy_pass": True,
-            "descriptor_sweep_surface_basis": "REGISTERED_MESH_VERTICES_AND_FACE_CENTROIDS_OPEN_OR_HALF",
-            "open_sweep_claim_scope": "SEMANTIC_REACHABILITY_FILTER_NOT_COLLISION_PROOF",
+            "open_sweep_claim_scope": "POINT_CLOUD_VISIBILITY_DIAGNOSTIC_NOT_SELECTION_OR_COLLISION_PROOF",
             "merged_keep_method": _MERGED_KEEP_METHOD,
             "merged_keep_stratum": _approach_stratum(
                 item, _rigid(
@@ -530,12 +504,8 @@ def load_graspgenx_candidates(
         raise ValueError("proposal descriptor identity differs from frozen route")
     descriptors = _descriptor_rows(inputs, descriptor_path, descriptor_sha)
     mesh_sha = _validate_mesh(inputs, payload, mesh_path)
-    registered = inputs.object_contract.model.mesh
-    surface_points = np.vstack((registered.vertices_m, registered.face_centroids_m))
-    if surface_points.ndim != 2 or surface_points.shape[1] != 3 or not np.all(np.isfinite(surface_points)):
-        raise ValueError("registered object surface points are invalid")
     accepted = _convert_and_deduplicate(
-        payload, descriptors, surface_points, translation_tolerance_m,
+        payload, descriptors, translation_tolerance_m,
         rotation_tolerance_rad, int(maximum_candidates),
     )
     return _adapt_rows(

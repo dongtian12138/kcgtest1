@@ -1,12 +1,12 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T22:47:00Z",
+  "updated_at_utc": "2026-08-24T23:45:19Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "method_name": "GraspGenX-CARTS",
   "active_route_config": "src/kcg_connector/config/carts_graspgenx_route1.yaml",
-  "active_route_config_sha256": "a78a6c07f8c886ebfe39a887dacd3974f859061716637d18dd91ef7f3106503e",
+  "active_route_config_sha256": "84eb806a5ef9aaabb5e40e97cc14b4d431afb0adeca9be9e6be12eb10ef8c18d",
   "official_sources": {
     "repository": "https://github.com/NVlabs/GraspGenX.git",
     "paper": "https://arxiv.org/abs/2606.00998",
@@ -62,12 +62,12 @@
     "object_sample_point_count": 8192,
     "object_surface_sample_method": "TRIMESH_ALLOWED_FACE_SAMPLE_EXPLICIT_SEED",
     "proposal_conditioning_mode": "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD",
-    "proposal_visibility_method": "OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_VISIBILITY",
+    "proposal_visibility_method": "OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_DIAGNOSTIC_ONLY",
     "downstream_collision_geometry_scope": "FULL_REGISTERED_OBJECT_MESH",
     "collision_scope_claim": "FULL_MESH_IS_USED_BY_DOWNSTREAM_V2_CONTROL_STATE_FCL_NOT_BY_GRASPGENX_PROPOSAL_VISIBILITY",
     "raw_target_per_descriptor_object": 256,
     "keep_per_descriptor_object": 128,
-    "proposal_keep_method": "FIXED_SIX_APPROACH_STRATA_THEN_SCORE_FILL",
+    "proposal_keep_method": "HIGHEST_SCORE_PER_DESCRIPTOR",
     "merged_keep_method": "DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL",
     "merged_max_per_object": 256,
     "grasp_threshold": 0.7,
@@ -108,7 +108,7 @@
     }
   },
   "official_object_pc_default_replay": {
-    "status": "COVERAGE_REJECT_SINGLE_DESCRIPTOR_BOTH_OBJECTS",
+    "status": "PRESERVED_LEGACY_VISIBILITY_HARD_GATE_DIAGNOSTIC_NOT_CURRENT_METHOD",
     "parameter_scope": "CURRENT_OFFICIAL_DEMO_OBJECT_PC_DEFAULTS_EXCEPT_USER_FIXED_NUM_GRASPS_256",
     "object_a": {
       "raw_after_score_threshold_count": 547,
@@ -137,7 +137,61 @@
       "scene_pc_filter_audit_sha256": "94feb0b6978ce1141639d24a067a6f95ca05e2181e67874fda37ed075ff0c483"
     },
     "scene_pc_filter_scope": "OFFICIAL_COARSE_OPEN_HAND_SCENE_PC_REJECT_ONLY_TARGET_OBJECT_EXCLUDED",
-    "claim_limit": "COVERAGE_FAILED; SCENE_PC_COUNTS_ARE_EARLY_REJECTION_ONLY; NO_CLOSURE_MESH_PATH_TASK_IK_OR_ISAAC_EVALUATION"
+    "claim_limit": "VISIBILITY_WAS_INCORRECTLY_USED_AS_A_HARD_GATE; FILES_ARE_UNMODIFIED_ABLATION_EVIDENCE_NOT_CURRENT_METHOD_OUTPUT"
+  },
+  "current_score_per_descriptor_control_step_offline": {
+    "status": "MULTI_DESCRIPTOR_6D_COVERAGE_PASS_ZERO_THREE_PAD_ALLOWED_CONTACT",
+    "route_config_sha256": "84eb806a5ef9aaabb5e40e97cc14b4d431afb0adeca9be9e6be12eb10ef8c18d",
+    "generator_runner_sha256": "1cb485c0d2e4b0f9d6f3cd4b1361cff2717efacf323ab5efced24c6f653c9341",
+    "adapter_sha256": "34d6c3fd2c3058b85d6841354e65fb83af1544c6559959ccd36577394b2890f8",
+    "closure_predictor_sha256": "8d50b052fbcc475f33a9681f08c84437551337bb6bdc5a7a222d470f6ae5e3f4",
+    "proposal_visibility_role": "AUDIT_ONLY_NOT_SELECTION_GATE",
+    "proposal_keep_method": "HIGHEST_SCORE_PER_DESCRIPTOR_MAX_128_THEN_6D_DEDUP_MAX_256",
+    "closure_sampling_rule": "DYNAMIC_CONTROL_STEP_BOUNDED",
+    "maximum_joint_increment_rad": 0.0015,
+    "object_a": {
+      "proposal_path": "artifacts/carts_v2/graspgenx/proposals_score_per_descriptor_v2/current_d38999_26kj61sn_public_spec.json",
+      "proposal_sha256": "e29c87e1159afd8b1bdcbfdaacd9807403050150b9354101d1631fd3ef9ca69b",
+      "proposal_file_count": 288,
+      "adapted_candidate_count": 256,
+      "descriptor_counts": {"kcg_3f_preshape_00": 12, "kcg_3f_preshape_01": 31, "kcg_3f_preshape_02": 114, "kcg_3f_preshape_03": 16, "kcg_3f_preshape_04": 83},
+      "coverage_pass": true,
+      "coverage_sha256": "0c7ce309071c8d93a34d481b5d8afe4cea67b542beb2807a195d0c322c18f8b8",
+      "scene_pc_retained_count": 86,
+      "scene_pc_audit_sha256": "98d85f9d678670799798e67efb53ad39f4efdd11f3c3ed413a789398c09751ec",
+      "closure_survive_before_scene_filter": 0,
+      "closure_survive_after_scene_filter": 0,
+      "task_evaluated_count": 0,
+      "selected_executable_candidate": null,
+      "result_path": "artifacts/carts_v2/graspgenx/offline_control_step_bounded_A/result.json",
+      "result_sha256": "01a32e46c4532eca739acbc911a06c490c8c1015b884ef44cb0185754c7a6031"
+    },
+    "object_b": {
+      "proposal_path": "artifacts/carts_v2/graspgenx/proposals_score_per_descriptor_v2/te_deutsch_d38999_26fj35pn_step.json",
+      "proposal_sha256": "4d6d11a5fc79d65eb730e70a18c2b1990aa52f65bc41e54165a052986c4a465c",
+      "proposal_file_count": 231,
+      "adapted_candidate_count": 231,
+      "descriptor_counts": {"kcg_3f_preshape_00": 4, "kcg_3f_preshape_01": 2, "kcg_3f_preshape_02": 128, "kcg_3f_preshape_04": 97},
+      "coverage_pass": true,
+      "coverage_sha256": "d2c14ed7d305671ce1f1906ace92bc7934643ff65b4f4e4d125e8f1875f2fe7a",
+      "scene_pc_retained_count": 34,
+      "scene_pc_audit_sha256": "9a93dc11e138b0a3eb30ce3d5650260eb77574de5c3f6ce6da104c1928792171",
+      "closure_survive_before_scene_filter": 0,
+      "closure_survive_after_scene_filter": 0,
+      "task_evaluated_count": 0,
+      "selected_executable_candidate": null,
+      "result_path": "artifacts/carts_v2/graspgenx/offline_control_step_bounded_B/result.json",
+      "result_sha256": "a0f2724638e32cf5383ad4370debba836459b4d0a6669376f897a1de195abd84"
+    },
+    "diagnostics": {
+      "visibility_path": "artifacts/carts_v2/graspgenx/visibility_root_cause_diagnostic.json",
+      "visibility_sha256": "82e5fc76577b08a1c4a52e616f4f3df9ea2ac823dbca1fc2e5fe996d321b9af3",
+      "pad_distance_path": "artifacts/carts_v2/graspgenx/closure_no_contact_diagnostic.json",
+      "pad_distance_sha256": "60f67a18e6dc972ba7351d9de432bd9f0f447bfa9625c4f55a1883a24a933f91",
+      "prefilter_closure_path": "artifacts/carts_v2/graspgenx/prefilter_closure_stratified_diagnostic.json",
+      "prefilter_closure_sha256": "d2345ab1d5ac4c13721a75270e0adbaf5bcc1a761ecf4392363a628faa01c981"
+    },
+    "claim_limit": "OFFLINE_CONTACT_GEOMETRY_ONLY; TASK_IK_PATH_AND_ISAAC_NOT_REACHED"
   },
   "objects": [
     "current_d38999_26kj61sn_public_spec",
@@ -189,15 +243,15 @@
       "te_deutsch_d38999_26fj35pn_step": "bb94c34f94afaddf9b8a4ac74e2f0de991e89dc02c18c1b9c7e28cccfe07eebb"
     },
     "proposal_sha256_by_object": {
-      "current_d38999_26kj61sn_public_spec": "89d814595484b19ccbe327ae6ab2f606d6665cc271c4c81228d5122d6a7974d0",
-      "te_deutsch_d38999_26fj35pn_step": "e4d8c42211f12e25bd85182d5f25e0e1cebf80263e7a5d5c5853800fe1321f36"
+      "current_d38999_26kj61sn_public_spec": "e29c87e1159afd8b1bdcbfdaacd9807403050150b9354101d1631fd3ef9ca69b",
+      "te_deutsch_d38999_26fj35pn_step": "4d6d11a5fc79d65eb730e70a18c2b1990aa52f65bc41e54165a052986c4a465c"
     },
     "proposal_path_by_object": {
-      "current_d38999_26kj61sn_public_spec": "artifacts/carts_v2/graspgenx/proposals_official_object_defaults_v1/current_d38999_26kj61sn_public_spec.json",
-      "te_deutsch_d38999_26fj35pn_step": "artifacts/carts_v2/graspgenx/proposals_official_object_defaults_v1/te_deutsch_d38999_26fj35pn_step.json"
+      "current_d38999_26kj61sn_public_spec": "artifacts/carts_v2/graspgenx/proposals_score_per_descriptor_v2/current_d38999_26kj61sn_public_spec.json",
+      "te_deutsch_d38999_26fj35pn_step": "artifacts/carts_v2/graspgenx/proposals_score_per_descriptor_v2/te_deutsch_d38999_26fj35pn_step.json"
     },
     "exact_repeat_candidate_arrays_pass": null,
-    "exact_repeat_scope": "OFFICIAL_OBJECT_PC_DEFAULT_PROPOSAL_FILES_HASH_BOUND_BUT_NOT_REGENERATED_TWICE",
+    "exact_repeat_scope": "CURRENT_SCORE_PER_DESCRIPTOR_PROPOSAL_FILES_HASH_BOUND_BUT_NOT_INDEPENDENTLY_REGENERATED_TWICE",
     "proposal_files_committed": true
   },
   "descriptor_conditioning_config_audit": {

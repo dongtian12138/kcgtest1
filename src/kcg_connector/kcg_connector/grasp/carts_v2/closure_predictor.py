@@ -127,6 +127,47 @@ def _farthest_surface_points(points: np.ndarray, count: int) -> np.ndarray:
     return np.asarray(points[farthest_point_indices(points, count)], dtype=np.float64)
 
 
+def closure_phase_samples(
+    inputs: V2Inputs,
+    phases: tuple[float, float, float],
+    phase_index: int,
+    maximum_phase: float,
+    reference_joint_positions_rad: tuple[float, ...],
+) -> np.ndarray:
+    """Sample one finger no coarser than its real per-cycle joint command."""
+
+    settings = inputs.config.section("closure_prediction")
+    minimum_intervals = int(settings["phase_sample_count"]) - 1
+    if settings.get("phase_sampling_rule", "FIXED_COUNT") == "FIXED_COUNT":
+        return np.linspace(phases[phase_index], maximum_phase, minimum_intervals + 1)[1:]
+    if settings["phase_sampling_rule"] != "DYNAMIC_CONTROL_STEP_BOUNDED":
+        raise ValueError("unknown closure phase sampling rule")
+    start_phases = tuple(float(value) for value in phases)
+    stop_phases = list(start_phases)
+    stop_phases[phase_index] = float(maximum_phase)
+    start_joints = joint_positions_for_phases(
+        inputs, start_phases,
+        reference_joint_positions_rad=reference_joint_positions_rad,
+    )
+    stop_joints = joint_positions_for_phases(
+        inputs, tuple(stop_phases),
+        reference_joint_positions_rad=reference_joint_positions_rad,
+    )
+    maximum_increment = (
+        float(inputs.config.section("dynamic")["finger_maximum_speed_rad_s"])
+        * float(inputs.config.section("dynamic")["physics_dt_s"])
+    )
+    if (
+        minimum_intervals < 1
+        or not np.isfinite(maximum_increment)
+        or maximum_increment <= 0.0
+    ):
+        raise ValueError("closure sampling bounds must be positive")
+    required = int(np.ceil(np.max(np.abs(stop_joints - start_joints)) / maximum_increment))
+    interval_count = max(minimum_intervals, required, 1)
+    return np.linspace(phases[phase_index], maximum_phase, interval_count + 1)[1:]
+
+
 class SequentialClosurePredictor:
     """Reusable object index and real PAD surface samples for many candidates."""
 
@@ -235,13 +276,14 @@ class SequentialClosurePredictor:
         if not 0.0 < maximum <= float(generation["maximum_closure_phase"]):
             raise ValueError("candidate closure phase exceeds the configured ceiling")
         contact_distance = float(settings["contact_distance_m"])
-        sample_count = int(settings["phase_sample_count"])
         for pad_name in settings["closing_order"]:
             phase_index = self._pad_to_phase[str(pad_name)]
             start = float(phases[phase_index])
             previous = start
             contact: PredictedContact | None = None
-            for phase in np.linspace(start, maximum, sample_count)[1:]:
+            for phase in closure_phase_samples(
+                self.inputs, tuple(phases), phase_index, maximum, reference
+            ):
                 phases[phase_index] = float(phase)
                 selected, nearest, normals, inward = self._contact_at_phase(
                     str(pad_name), tuple(phases), base, reference
@@ -336,4 +378,4 @@ class SequentialClosurePredictor:
         )
 
 
-__all__ = ["SequentialClosurePredictor"]
+__all__ = ["SequentialClosurePredictor", "closure_phase_samples"]

@@ -35,8 +35,8 @@ INFERENCE_PARAMETERS = {
     "collision_geometry_scope": "FULL_REGISTERED_OBJECT_MESH",
     "num_grasps": 256,
     "keep_per_descriptor": 128,
-    "proposal_keep_method": "FIXED_SIX_APPROACH_STRATA_THEN_SCORE_FILL",
-    "proposal_visibility_method": "OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_VISIBILITY",
+    "proposal_keep_method": "HIGHEST_SCORE_PER_DESCRIPTOR",
+    "proposal_visibility_method": "OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_DIAGNOSTIC_ONLY",
     "grasp_threshold": 0.7,
     "topk_num_grasps": -1,
     "moe_num_yaws": 36,
@@ -82,7 +82,7 @@ class _Config:
                     "raw_target_per_descriptor_object": 256,
                     "keep_per_descriptor_object": 128,
                     "proposal_keep_method": (
-                        "FIXED_SIX_APPROACH_STRATA_THEN_SCORE_FILL"
+                        "HIGHEST_SCORE_PER_DESCRIPTOR"
                     ),
                     "merged_keep_method": (
                         "DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL"
@@ -405,7 +405,7 @@ def test_merged_limit_preserves_approach_strata_before_farthest_fill(
     }
 
 
-def test_open_sweep_occupancy_rejects_unreachable_pose_before_six_d_selection(
+def test_sweep_box_outside_pose_is_preserved_for_real_physics_filters(
     adapter_case,
 ) -> None:
     document = json.loads(adapter_case.descriptor_path.read_text(encoding="utf-8"))
@@ -432,8 +432,9 @@ def test_open_sweep_occupancy_rejects_unreachable_pose_before_six_d_selection(
 
     candidates = _load(adapter_case)
 
-    assert len(candidates) == 2
-    assert all(row.evidence["descriptor_sweep_surface_occupancy_pass"] for row in candidates)
+    assert len(candidates) == 3
+    assert any(row.evidence["raw_index"] == 3 for row in candidates)
+    assert all("descriptor_sweep_surface_occupancy_pass" not in row.evidence for row in candidates)
 
 
 def test_model_score_breaks_only_an_exact_physics_tie() -> None:

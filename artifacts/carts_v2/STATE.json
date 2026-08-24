@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T22:47:00Z",
+  "updated_at_utc": "2026-08-24T23:45:19Z",
   "started_at_utc": "2026-08-24T14:46:08Z",
   "hard_deadline_utc": "2026-08-25T02:46:08Z",
   "branch": "carts-grasp-graspgenx-route1-20260824",
-  "config_sha256": "a78a6c07f8c886ebfe39a887dacd3974f859061716637d18dd91ef7f3106503e",
+  "config_sha256": "84eb806a5ef9aaabb5e40e97cc14b4d431afb0adeca9be9e6be12eb10ef8c18d",
   "start_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "GRASPGENX_ROUTE1_SINGLE_DESCRIPTOR_VISIBILITY_ROOT_CAUSE_REVIEW",
+  "current_milestone": "GRASPGENX_ROUTE1_RAW_UNTRUNCATED_CLOSURE_DIAGNOSTIC",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -69,7 +69,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "official object-PC defaults leave only one KCG descriptor for both objects; official coarse scene-PC filtering retains A 29 and B 23 proposals but cannot repair the preregistered multi-descriptor coverage failure, so closure and Isaac remain closed"
+    "reason": "multi-descriptor 6D coverage now passes, but control-step-bounded closure predicts zero three-pad allowed-contact candidates for A 256 and B 231 both before and after the coarse scene-PC filter; task, IK, path, and Isaac gates are therefore not reached"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -122,7 +122,7 @@
     "legacy_mixed_parameter_open_sweep_visibility_before_score_keep": true,
     "legacy_mixed_parameter_object_a_open_sweep_visible_range_per_descriptor": [2592, 2700],
     "legacy_mixed_parameter_object_b_open_sweep_visible_range_per_descriptor": [2592, 2700],
-    "proposal_keep_method": "FIXED_SIX_APPROACH_STRATA_THEN_SCORE_FILL",
+    "proposal_keep_method": "HIGHEST_SCORE_PER_DESCRIPTOR",
     "merged_keep_method": "DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL",
     "legacy_mixed_parameter_object_a_merged_candidate_count": 256,
     "legacy_mixed_parameter_object_a_previous_merge_closure_survive_count": 2,
@@ -167,6 +167,7 @@
       "isaac_launched": false
     },
     "active_official_object_pc_default_replay": {
+      "status": "PRESERVED_LEGACY_VISIBILITY_HARD_GATE_DIAGNOSTIC_NOT_CURRENT_METHOD",
       "route_config_sha256": "a78a6c07f8c886ebfe39a887dacd3974f859061716637d18dd91ef7f3106503e",
       "parameter_scope": "OFFICIAL_DEMO_OBJECT_PC_DEFAULTS_EXCEPT_USER_FIXED_NUM_GRASPS_256",
       "object_a": {
@@ -191,6 +192,40 @@
       },
       "scene_pc_filter_scope": "OFFICIAL_COARSE_OPEN_HAND_SCENE_PC_REJECT_ONLY_TARGET_OBJECT_EXCLUDED_NOT_PATH_SAFETY_PROOF",
       "task_ik_isaac_status": "NOT_REACHED"
+    },
+    "active_score_per_descriptor_control_step_offline": {
+      "route_config_sha256": "84eb806a5ef9aaabb5e40e97cc14b4d431afb0adeca9be9e6be12eb10ef8c18d",
+      "proposal_visibility_role": "AUDIT_ONLY_NOT_SELECTION_GATE",
+      "closure_sampling_rule": "DYNAMIC_CONTROL_STEP_BOUNDED",
+      "maximum_joint_increment_rad": 0.0015,
+      "object_a": {
+        "raw_after_score_threshold_count": 547,
+        "proposal_file_count": 288,
+        "adapted_candidate_count": 256,
+        "descriptor_counts": {"kcg_3f_preshape_00": 12, "kcg_3f_preshape_01": 31, "kcg_3f_preshape_02": 114, "kcg_3f_preshape_03": 16, "kcg_3f_preshape_04": 83},
+        "coverage_pass": true,
+        "scene_pc_retained_count": 86,
+        "closure_survive_before_scene_filter": 0,
+        "closure_survive_after_scene_filter": 0,
+        "task_evaluated_count": 0,
+        "selected_executable_candidate": null,
+        "result_sha256": "01a32e46c4532eca739acbc911a06c490c8c1015b884ef44cb0185754c7a6031"
+      },
+      "object_b": {
+        "raw_after_score_threshold_count": 589,
+        "proposal_file_count": 231,
+        "adapted_candidate_count": 231,
+        "descriptor_counts": {"kcg_3f_preshape_00": 4, "kcg_3f_preshape_01": 2, "kcg_3f_preshape_02": 128, "kcg_3f_preshape_04": 97},
+        "coverage_pass": true,
+        "scene_pc_retained_count": 34,
+        "closure_survive_before_scene_filter": 0,
+        "closure_survive_after_scene_filter": 0,
+        "task_evaluated_count": 0,
+        "selected_executable_candidate": null,
+        "result_sha256": "a0f2724638e32cf5383ad4370debba836459b4d0a6669376f897a1de195abd84"
+      },
+      "prefilter_closure_diagnostic_sha256": "d2345ab1d5ac4c13721a75270e0adbaf5bcc1a761ecf4392363a628faa01c981",
+      "task_ik_isaac_status": "NOT_REACHED_NO_THREE_PAD_ALLOWED_CONTACT_CANDIDATE"
     },
     "object_a_all_visible_raw_pool_existence_check": "COMPLETED_NO_TABLE_SAFE_THREE_PAD_CONTACT",
     "allowed_surface_roi_experiment_frozen": true,
@@ -948,7 +983,7 @@
       "uncommitted_gpu_object_route_reverted": true
     }
   },
-  "evidence_level": "GRASPGENX_OFFICIAL_DEFAULT_SINGLE_DESCRIPTOR_COVERAGE_REJECT_WITH_COARSE_SCENE_FILTER_A29_B23_COMPLETE_PATH_TASK_IK_DYNAMIC_NOT_RUN",
+  "evidence_level": "GRASPGENX_MULTI_DESCRIPTOR_6D_COVERAGE_PASS_CONTROL_STEP_CLOSURE_A256_B231_ZERO_THREE_PAD_ALLOWED_CONTACT_TASK_IK_DYNAMIC_NOT_REACHED",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -988,11 +1023,14 @@
     "scene_pc_filter_targeted_tests_passed": 19,
     "scene_pc_filter_two_object_audit_pass": true,
     "scene_pc_filter_academic_supervisor": "APPROVE_AFTER_EVIDENCE_IDENTITY_CORRECTION",
-    "scene_pc_filter_complexity_supervisor": "APPROVE_2194_ADDED_76_DELETED_2118_NET_NLOC"
+    "scene_pc_filter_complexity_supervisor": "APPROVE_2194_ADDED_76_DELETED_2118_NET_NLOC",
+    "score_per_descriptor_targeted_sampling_tests_passed": 17,
+    "score_per_descriptor_complexity_supervisor": "APPROVE_2178_ADDED_79_DELETED_2099_NET_NLOC",
+    "score_per_descriptor_academic_supervisor": "APPROVE_VISIBILITY_AUDIT_ONLY_AND_CONTROL_STEP_BOUNDED_CLOSURE"
   },
   "blockers": [
-    "ACTIVE_OFFICIAL_DEFAULT_A_B_PROPOSALS_RETAIN_ONLY_ONE_DESCRIPTOR_COVERAGE_FAILED_AFTER_COARSE_SCENE_FILTER_A29_B23",
-    "ACTIVE_FOUR_KCG_DESCRIPTORS_HAVE_RAW_PROPOSALS_BUT_ZERO_OPEN_OR_HALF_VISIBILITY_ROOT_CAUSE_UNRESOLVED",
+    "ACTIVE_SCORE_PER_DESCRIPTOR_A256_B231_CONTROL_STEP_CLOSURE_ZERO_THREE_PAD_ALLOWED_CONTACT",
+    "ACTIVE_RAW_UNTRUNCATED_POOL_CHECK_PENDING_TO_DISTINGUISH_TOP128_TRUNCATION_FROM_DESCRIPTOR_MODEL_GEOMETRY",
     "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_A_ROI_256_THREE_CLOSURE_PREDICTIONS_ZERO_TABLE_SAFE_PATHS",
     "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_B_ROI_256_ZERO_THREE_PAD_CLOSURE_PREDICTION_SURVIVORS",
     "KCG_CONDITIONING_BOX_EXTENT_OUTSIDE_AUDITED_OFFICIAL_CONFIG_RANGES_CAUSAL_UNPROVEN",

@@ -35,9 +35,11 @@ GraspGenX-CARTS 不把神经网络分数当作“抓得住”的证明。官方�
         ↓
 官方 GraspGenX + 5 个固定预构型提出六维姿态
         ↓
-六维去重并限制为每对象 256 个
+点云可见性只审计；每描述器按分数保留最多 128 个
         ↓
-三指按真实顺序预测首次允许 PAD 接触
+跨描述器六维去重和多样性合并，限制为每对象 256 个
+        ↓
+三指按真实顺序和 0.0015 rad 控制步预测首次允许 PAD 接触
         ↓
 每个 0.0015 rad 控制步检查整手—桌面
         ↓
@@ -59,9 +61,12 @@ load official model once
 for descriptor in frozen_descriptor_library:
     proposals += GraspGenX(object_points, descriptor, frozen_seed)
 
-candidates = deduplicate_6d_and_limit(proposals, 256)
+    keep at most 128 by (-model_score, raw_index)
+    record open/half point-cloud visibility as audit only
+
+candidates = descriptor_aware_deduplicate_6d_and_limit(proposals, 256)
 for candidate in candidates:
-    contacts = predict_sequential_first_pad_contacts(candidate)
+    contacts = predict_sequential_first_pad_contacts(candidate, max_joint_step=0.0015)
     if contacts are not three allowed PAD contacts: reject
     if any sampled closure state intersects table: reject
     if non-PAD/object or nonadjacent self collision: reject
@@ -86,7 +91,7 @@ for candidate in task_top3:
 
 ## 复杂度
 
-设保留候选数为 `N≤256`，每个候选三指闭合离散状态总数为 `S`，注册手部碰撞三角面和对象查询成本由 FCL/BVH 记为 `C_mesh`，误差场景数为 `U=16`。候选物理筛选约为 `O(N·S·C_mesh)`，任务评价约为 `O(N_survive·(U+1)·C_LP)`。昂贵严格检查只服务最多 3 个候选，不随原始提案数量线性扩张。
+设阈值后原始提案数为 `R`、保留候选数为 `N≤256`，每个候选三指闭合离散状态总数为 `S`，注册手部碰撞三角面和对象查询成本由 FCL/BVH 记为 `C_mesh`，误差场景数为 `U=16`。分数截断和六维去重约为 `O(R log R + N²)`；候选物理筛选约为 `O(N·S·C_mesh)`，任务评价约为 `O(N_survive·(U+1)·C_LP)`。昂贵严格检查只服务最多 3 个候选。
 
 ## 可迁移条件
 
@@ -102,13 +107,14 @@ for candidate in task_top3:
 3. GraspGenX 分数排序 vs 任务载荷字典序：比较 Top-3 组成和 Isaac 物理结果。
 4. 名义任务门 vs 16 场景鲁棒门：区分研究观察资格与正式鲁棒证据。
 
-本轮只有第 1 项的离线覆盖/路径证据；没有动态成功，因此不能完成动态优劣结论。
+本轮已有第 1 项的离线覆盖对照，以及“点云可见性硬门 vs 审计-only”和“25 点粗闭合 vs 控制步长闭合”两项方法接线消融；没有动态成功，因此不能完成路径或动态优劣结论。
 
 ## 当前限制
 
 - KCG 描述器 open 条件箱的 `extents[1]` 为 `0.117526–0.305499 m`；本轮扫描的 32 个官方程序化配置中 open/half-open 同分量最大为 `0.067305 m`，26 个运行时描述器的 open 最大为 `0.060 m`。这是模型条件配置箱的尺度对照，不是 `points.json` 整手点云跨度或真实可达工作区；它支持但不证明域外推或失败因果。
-- 每对象 640 条保留提案中仅 26 条来自学习分支，其余 614 条来自官方 OBB 分支；不能把结果全部归因于学习模型。
-- A 的 ROI 候选有 3 个三指接触预测，但全在桌面路径门失败；B 没有三指闭合存活。
+- 当前每描述器最高分保留后，A/B 适配池分别为 256/231 个候选且多描述器六维覆盖通过；控制步长闭合的三指允许接触幸存数均为 0。旧混合参数的 A `256→3→桌面安全0`、B `256→闭合0` 只作消融，不代表当前生产池。
+- 官方 scene-PC 粗筛前重放当前全部 256/231 个候选仍为闭合 0，故当前主因不是粗筛误删；任务、IK 和路径尚未到达。
+- 当前描述器 `base_rotation` 带平移，不符合官方字段的纯旋转语义；sweep-only API 未读取它，所以现有结果不受影响。未来使用官方 mesh/viewer 路径前必须拆分该字段并重新绑定。
 - 当前没有任务评价、机械臂 IK、Isaac 接触、离桌、50 mm 或 2 s 证据。
 - 旧动态配置含尚无来源的 `2 mm` 对象—桌面事后接受阈值；本路线未执行该门，未来动态前必须先完成分阶段容差与来源审查，不能让它支持“无穿透”。
 - 离散控制步碰撞检查是快速失败关闭，不是状态间连续数学证明。

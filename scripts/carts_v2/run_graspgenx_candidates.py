@@ -30,8 +30,8 @@ from graspgenx.utils.checkpoint_io import load_model_cfg
 _SCHEMA = "graspgenx_carts_proposals_v1"
 _DESCRIPTOR_SCHEMA = "kcg_graspgenx_descriptors_v1"
 _OBJECT_SCHEMA = "graspgenx_carts_objects_v1"
-_KEEP_METHOD = "FIXED_SIX_APPROACH_STRATA_THEN_SCORE_FILL"
-_VISIBILITY_METHOD = "OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_VISIBILITY"
+_KEEP_METHOD = "HIGHEST_SCORE_PER_DESCRIPTOR"
+_VISIBILITY_METHOD = "OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_DIAGNOSTIC_ONLY"
 _SAMPLE_METHOD = "TRIMESH_ALLOWED_FACE_SAMPLE_EXPLICIT_SEED"
 _CONDITIONING_MODE = "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD"
 _DOWNSTREAM_COLLISION_SCOPE = "FULL_REGISTERED_OBJECT_MESH"
@@ -227,45 +227,6 @@ def _open_or_half_visibility(poses, point_cloud, gripper):
     return masks[0], masks[1], masks[0] | masks[1]
 
 
-def _approach_stratum(tag: str, pose: np.ndarray) -> str:
-    if tag != "obb":
-        return "diff"
-    approach = pose[:3, 2]
-    if approach[2] < -0.5:
-        return "obb_top"
-    azimuth = float(np.mod(np.arctan2(approach[1], approach[0]), 2.0 * np.pi))
-    return f"obb_side_{min(int(azimuth / (0.5 * np.pi)), 3)}"
-
-
-def _direction_stratified_keep(
-    poses: np.ndarray, scores: np.ndarray, tags: list[str], valid: np.ndarray,
-    keep: int,
-) -> tuple[np.ndarray, dict[str, int], dict[str, int]]:
-    names = ("diff", "obb_top", "obb_side_0", "obb_side_1", "obb_side_2", "obb_side_3")
-    groups = {name: [] for name in names}
-    for index in np.flatnonzero(valid):
-        groups[_approach_stratum(str(tags[index]), poses[index])].append(int(index))
-    selected: list[int] = []
-    base, remainder = divmod(int(keep), len(names))
-    for position, name in enumerate(names):
-        quota = base + int(position < remainder)
-        ranked = sorted(groups[name], key=lambda index: (-scores[index], index))
-        selected.extend(ranked[:quota])
-    selected_set = set(selected)
-    remaining = sorted(
-        (int(index) for index in np.flatnonzero(valid) if int(index) not in selected_set),
-        key=lambda index: (-scores[index], index),
-    )
-    selected.extend(remaining[: max(0, int(keep) - len(selected))])
-    selected = sorted(selected, key=lambda index: (-scores[index], index))
-    visible_counts = {name: len(groups[name]) for name in names}
-    kept_counts = {
-        name: sum(_approach_stratum(str(tags[index]), poses[index]) == name for index in selected)
-        for name in names
-    }
-    return np.asarray(selected, dtype=np.int64), visible_counts, kept_counts
-
-
 def _infer(
     point_cloud: np.ndarray,
     center: np.ndarray,
@@ -290,6 +251,13 @@ def _infer(
         return [], {
             "raw_count": 0,
             "invalid_pose_count": 0,
+            "open_sweep_visible_count": 0,
+            "half_sweep_visible_count": 0,
+            "open_or_half_sweep_visible_count": 0,
+            "open_or_half_sweep_not_visible_count": 0,
+            "proposal_visibility_method": _VISIBILITY_METHOD,
+            "proposal_visibility_selection_role": "AUDIT_ONLY_NOT_SELECTION_GATE",
+            "proposal_keep_method": _KEEP_METHOD,
             "kept_count": 0,
             "elapsed_s": elapsed,
         }
@@ -301,10 +269,10 @@ def _infer(
     open_visibility, half_visibility, visibility = _open_or_half_visibility(
         poses, point_cloud, sampler.gripper
     )
-    valid = rigid & visibility
-    order, visible_strata, kept_strata = _direction_stratified_keep(
-        poses, scores, list(tags), valid, keep
-    )
+    order = sorted(
+        (int(index) for index in np.flatnonzero(rigid)),
+        key=lambda index: (-scores[index], index),
+    )[:keep]
     rows = []
     for raw_index in order:
         inference_from_generator = np.array(poses[raw_index], copy=True)
@@ -325,12 +293,11 @@ def _infer(
         "open_sweep_visible_count": int(np.count_nonzero(rigid & open_visibility)),
         "half_sweep_visible_count": int(np.count_nonzero(rigid & half_visibility)),
         "open_or_half_sweep_visible_count": int(np.count_nonzero(rigid & visibility)),
-        "open_or_half_sweep_reject_count": int(np.count_nonzero(rigid & ~visibility)),
+        "open_or_half_sweep_not_visible_count": int(np.count_nonzero(rigid & ~visibility)),
         "proposal_visibility_method": _VISIBILITY_METHOD,
-        "open_sweep_claim_scope": "SEMANTIC_REACHABILITY_FILTER_NOT_COLLISION_PROOF",
+        "proposal_visibility_selection_role": "AUDIT_ONLY_NOT_SELECTION_GATE",
+        "open_sweep_claim_scope": "POINT_CLOUD_VISIBILITY_DIAGNOSTIC_NOT_SELECTION_OR_COLLISION_PROOF",
         "proposal_keep_method": _KEEP_METHOD,
-        "visible_approach_stratum_counts": visible_strata,
-        "kept_approach_stratum_counts": kept_strata,
         "kept_count": len(rows),
         "elapsed_s": elapsed,
     }
