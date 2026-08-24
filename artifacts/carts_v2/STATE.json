@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T10:49:20Z",
+  "updated_at_utc": "2026-08-24T11:00:24Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,7 +8,7 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_OBJECT_A_SOURCE_BOUND_PREFLIGHT",
+  "current_milestone": "V2_OBJECT_A_FIRST_FINGER_CONTACT_SETTLE",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -25,8 +25,8 @@
     "prior_pause_at_utc": "2026-08-24T09:36:16Z",
     "prior_pause_reason": "OBJECT_A_F1J3_SPEED_ABORT_AFTER_TWO_EVIDENCED_FIX_ATTEMPTS",
     "prior_pause_reclassified_as": "ROOT_CAUSE_REVIEW",
-    "active_execution_elapsed_s": 6933,
-    "remaining_active_budget_s": 8367,
+    "active_execution_elapsed_s": 7597,
+    "remaining_active_budget_s": 7703,
     "resumed_at_utc": "2026-08-24T10:16:54Z",
     "resume_wall_deadline_utc": "2026-08-24T13:08:47Z",
     "stop_reason": null
@@ -65,8 +65,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": true,
-    "scope": "OBJECT_A_SOURCE_BOUND_PREFLIGHT_ONLY",
-    "reason": "Bumpless transition and diagnostic trace tests pass; a new-source accepted preflight is required before first-finger closure"
+    "scope": "OBJECT_A_CANDIDATE11_FIRST_FINGER_DIAGNOSTIC_ONLY",
+    "reason": "New-source preflight is strictly accepted; only the bounded 0.5 s first-finger contact transition may run"
   },
   "first_finger_diagnostic_instrumentation": {
     "mode": "first-finger-diagnostic",
@@ -79,6 +79,36 @@
     "whole_terminal_link_does_not_verify_pad_patch": true,
     "targeted_test_functions_passed": 14,
     "production_net_new_lines_since_root_cause_review": 119
+  },
+  "object_a_bumpless_source_preflight": {
+    "run_id": "A_candidate11_bumpless_source_preflight",
+    "artifact": "artifacts/carts_v2/dynamic/A_candidate11_bumpless_source_preflight/evaluation.json",
+    "accepted_preflight_pass": true,
+    "controller_preflight_pass": true,
+    "engine_health_pass": true,
+    "identity_hash_check_pass": true,
+    "truth_isolation_pass": true,
+    "physics_time_advanced_s": 7.75,
+    "controller_completed": true,
+    "finite_throughout": true,
+    "maximum_joint_speed_rad_s": 1.425191044807434,
+    "maximum_absolute_hand_effort_nm": 0.13165542483329773,
+    "maximum_post_settle_table_penetration_m": 2.555847168073111e-7,
+    "unauthorized_contact_records": 0,
+    "physx_capacity_warning_count": 0,
+    "physx_error_count": 0,
+    "observed_found_lost_peak": 1,
+    "observed_total_peak": 7644,
+    "configured_found_lost_capacity": 8192,
+    "configured_total_capacity": 16384,
+    "engine_log_sha256": "d89c4f2f6f5b54dca74e23cd98ae9669778206e4b156b2b37721380fa293059c",
+    "evaluation_sha256": "46822ab5bc561aa8e755352f561e49aac582acc8ecdfcf56b8f42a7ca1b3bc02",
+    "evaluation_size_bytes": 5422,
+    "trace_sha256": "8014522ae5b713578bda1546a6dc74d90c66890ea9d142d2c354d564d84a5f7b",
+    "trace_size_bytes": 5413942,
+    "trace_committed": false,
+    "first_finger_diagnostic_binding_allowed": true,
+    "grasp_lift_binding_allowed": false
   },
   "contact_transition_review": {
     "confirmation_target_jump_removed": true,
