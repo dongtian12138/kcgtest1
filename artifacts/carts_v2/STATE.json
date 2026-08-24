@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T21:49:19Z",
+  "updated_at_utc": "2026-08-24T22:17:40Z",
   "started_at_utc": "2026-08-24T14:46:08Z",
   "hard_deadline_utc": "2026-08-25T02:46:08Z",
   "branch": "carts-grasp-graspgenx-route1-20260824",
-  "config_sha256": "77b43bf386d5b47fa04cf3dfabe447c23728856201ccb6f1a9e2db9960854f6e",
+  "config_sha256": "09c1a51b010d25e247d8e4f45d0256ca1e140dc97b0c7e85e2d43e5511abc5e5",
   "start_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "GRASPGENX_ROUTE1_DESCRIPTOR_AND_DYNAMIC_BOUNDARY_AUDIT",
+  "current_milestone": "GRASPGENX_ROUTE1_OFFICIAL_SCENE_COLLISION_FILTER_BINDING",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -69,7 +69,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "A has 0 complete table-safe paths and B has 0 three-pad closure predictions under the frozen ROI experiment"
+    "reason": "official object-PC defaults leave only one KCG descriptor for both objects, so the preregistered multi-descriptor coverage gate fails before closure; legacy mixed parameters remain diagnostic only"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -107,7 +107,7 @@
     "descriptor_maximum_closure_phase_range": [0.5214592274678111, 0.6909871244635193],
     "descriptor_self_collision_checked_state_count": 2644,
     "descriptor_self_collision_pass": true,
-    "proposal_count_per_object": 640,
+    "legacy_mixed_parameter_proposal_count_before_merge_per_object": 640,
     "proposal_model_load_count": 1,
     "object_surface_sample_seed_explicit": true,
     "object_a_point_cloud_sha256": "1e2eec0618b21b247378bacedc4b44e892e83c0fa4ccba290f2e395928b17573",
@@ -116,25 +116,25 @@
     "downstream_collision_geometry_scope": "FULL_REGISTERED_OBJECT_MESH",
     "collision_scope_claim": "FULL_MESH_IS_USED_BY_DOWNSTREAM_V2_CONTROL_STATE_FCL_NOT_BY_GRASPGENX_PROPOSAL_VISIBILITY",
     "proposal_exact_repeat_pass": null,
-    "official_raw_proposal_count_per_object": 17480,
-    "object_a_open_sweep_visible_total": 15704,
-    "object_b_open_sweep_visible_total": 15701,
-    "open_sweep_visibility_before_score_keep": true,
-    "object_a_open_sweep_visible_range_per_descriptor": [2592, 2700],
-    "object_b_open_sweep_visible_range_per_descriptor": [2592, 2700],
+    "legacy_mixed_parameter_official_raw_proposal_count_per_object": 17480,
+    "legacy_mixed_parameter_object_a_open_sweep_visible_total": 15704,
+    "legacy_mixed_parameter_object_b_open_sweep_visible_total": 15701,
+    "legacy_mixed_parameter_open_sweep_visibility_before_score_keep": true,
+    "legacy_mixed_parameter_object_a_open_sweep_visible_range_per_descriptor": [2592, 2700],
+    "legacy_mixed_parameter_object_b_open_sweep_visible_range_per_descriptor": [2592, 2700],
     "proposal_keep_method": "FIXED_SIX_APPROACH_STRATA_THEN_SCORE_FILL",
     "merged_keep_method": "DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL",
-    "object_a_merged_candidate_count": 256,
-    "object_a_previous_merge_closure_survive_count": 2,
-    "object_a_previous_merge_sweep_survive_count": 0,
-    "object_a_closure_survive_count": 3,
-    "object_a_sequential_sweep_survive_count": 0,
+    "legacy_mixed_parameter_object_a_merged_candidate_count": 256,
+    "legacy_mixed_parameter_object_a_previous_merge_closure_survive_count": 2,
+    "legacy_mixed_parameter_object_a_previous_merge_sweep_survive_count": 0,
+    "legacy_mixed_parameter_object_a_closure_survive_count": 3,
+    "legacy_mixed_parameter_object_a_sequential_sweep_survive_count": 0,
     "object_a_research_executable_count": 0,
-    "object_b_previous_merge_closure_survive_count": 7,
-    "object_b_previous_merge_sweep_survive_count": 0,
-    "object_b_closure_survive_count": 0,
-    "object_b_sequential_sweep_survive_count": 0,
-    "object_b_coverage_diagnostic_pass": true,
+    "legacy_mixed_parameter_object_b_previous_merge_closure_survive_count": 7,
+    "legacy_mixed_parameter_object_b_previous_merge_sweep_survive_count": 0,
+    "legacy_mixed_parameter_object_b_closure_survive_count": 0,
+    "legacy_mixed_parameter_object_b_sequential_sweep_survive_count": 0,
+    "legacy_mixed_parameter_object_b_coverage_diagnostic_pass": true,
     "object_b_research_executable_count": 0,
     "legacy_object_b_current_filter_audit": {
       "raw_seed_count": 384,
@@ -144,7 +144,7 @@
       "shared_reject_reason": "F1LINK3_NONPAD_OBJECT_COLLISION_DURING_FINGER1_CLOSURE",
       "collision_step_range": [269, 272]
     },
-    "final_same_source_replay": {
+    "legacy_mixed_parameter_final_same_source_replay": {
       "source_commit": "db540b3e5b85fd33cbc03d3265aa22ef1372eaae",
       "route_config_sha256": "77b43bf386d5b47fa04cf3dfabe447c23728856201ccb6f1a9e2db9960854f6e",
       "object_a_result_sha256": "3c94f650403d8790f7e5183a1ed3779b0a60191679b1e0c97ad213c0a2face16",
@@ -165,6 +165,23 @@
       },
       "task_gate_status": "NOT_REACHED_FOR_BOTH_OBJECTS",
       "isaac_launched": false
+    },
+    "active_official_object_pc_default_replay": {
+      "route_config_sha256": "09c1a51b010d25e247d8e4f45d0256ca1e140dc97b0c7e85e2d43e5511abc5e5",
+      "parameter_scope": "OFFICIAL_DEMO_OBJECT_PC_DEFAULTS_EXCEPT_USER_FIXED_NUM_GRASPS_256",
+      "object_a": {
+        "proposal_count": 128,
+        "descriptor_counts": {"kcg_3f_preshape_02": 128},
+        "coverage_pass": false,
+        "closure_status": "NOT_RUN_COVERAGE_FAILED"
+      },
+      "object_b": {
+        "proposal_count": 128,
+        "descriptor_counts": {"kcg_3f_preshape_02": 128},
+        "coverage_pass": false,
+        "closure_status": "NOT_RUN_COVERAGE_FAILED"
+      },
+      "task_ik_isaac_status": "NOT_REACHED"
     },
     "object_a_all_visible_raw_pool_existence_check": "COMPLETED_NO_TABLE_SAFE_THREE_PAD_CONTACT",
     "allowed_surface_roi_experiment_frozen": true,

@@ -1,10 +1,12 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T21:49:19Z",
+  "updated_at_utc": "2026-08-24T22:17:40Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "method_name": "GraspGenX-CARTS",
+  "active_route_config": "src/kcg_connector/config/carts_graspgenx_route1.yaml",
+  "active_route_config_sha256": "09c1a51b010d25e247d8e4f45d0256ca1e140dc97b0c7e85e2d43e5511abc5e5",
   "official_sources": {
     "repository": "https://github.com/NVlabs/GraspGenX.git",
     "paper": "https://arxiv.org/abs/2606.00998",
@@ -68,16 +70,52 @@
     "proposal_keep_method": "FIXED_SIX_APPROACH_STRATA_THEN_SCORE_FILL",
     "merged_keep_method": "DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL",
     "merged_max_per_object": 256,
-    "grasp_threshold": -1.0,
+    "grasp_threshold": 0.7,
     "topk_num_grasps": -1,
     "moe_num_yaws": 36,
-    "moe_z_offsets_cm": [-8, -6, -4, -2, -1, 0],
+    "moe_z_offsets_cm": [-2, 0],
     "moe_outlier_threshold": 0.014,
     "moe_outlier_k": 20,
     "moe_obb_mode": "advanced",
     "moe_skip_obb_rule": "auto",
     "moe_obb_density": "dense-topandside",
     "moe_obb_position_spacing_cm": 1.0
+  },
+  "legacy_mixed_parameter_proposals": {
+    "status": "PRESERVED_AS_DIAGNOSTIC_NOT_CURRENT_METHOD_OUTPUT",
+    "grasp_threshold": -1.0,
+    "moe_z_offsets_cm": [-8, -6, -4, -2, -1, 0],
+    "proposal_path_by_object": {
+      "current_d38999_26kj61sn_public_spec": "artifacts/carts_v2/graspgenx/proposals_allowed_surface_roi_v1/current_d38999_26kj61sn_public_spec.json",
+      "te_deutsch_d38999_26fj35pn_step": "artifacts/carts_v2/graspgenx/proposals_allowed_surface_roi_v1/te_deutsch_d38999_26fj35pn_step.json"
+    },
+    "proposal_sha256_by_object": {
+      "current_d38999_26kj61sn_public_spec": "45db950fb3991fda0569604581d91839c72a179941d3a16b2a4b709a483983a0",
+      "te_deutsch_d38999_26fj35pn_step": "b629d5601249ebf6e8f02f15060e76fccbd0860b30cd61e9cc64eb3d24035aaa"
+    }
+  },
+  "official_object_pc_default_replay": {
+    "status": "COVERAGE_REJECT_SINGLE_DESCRIPTOR_BOTH_OBJECTS",
+    "parameter_scope": "CURRENT_OFFICIAL_DEMO_OBJECT_PC_DEFAULTS_EXCEPT_USER_FIXED_NUM_GRASPS_256",
+    "object_a": {
+      "raw_after_score_threshold_count": 547,
+      "open_or_half_visible_count": 295,
+      "proposal_count": 128,
+      "descriptor_counts": {"kcg_3f_preshape_02": 128},
+      "coverage_pass": false,
+      "coverage_path": "artifacts/carts_v2/graspgenx/offline_official_object_defaults_v1_A/candidate_coverage.json",
+      "coverage_sha256": "f9c549f255034d08c371b5ad7af756342fe29f5e6f7c6ecc167d02649f20d247"
+    },
+    "object_b": {
+      "raw_after_score_threshold_count": 589,
+      "open_or_half_visible_count": 374,
+      "proposal_count": 128,
+      "descriptor_counts": {"kcg_3f_preshape_02": 128},
+      "coverage_pass": false,
+      "coverage_path": "artifacts/carts_v2/graspgenx/offline_official_object_defaults_v1_B/candidate_coverage.json",
+      "coverage_sha256": "e475a9595d93274ae9dd4a5334f00d9f7549b8036ae0de191bc6f24cf0475370"
+    },
+    "claim_limit": "COVERAGE_DIAGNOSTIC_ONLY_NO_CLOSURE_COLLISION_TASK_IK_OR_ISAAC_EVALUATION"
   },
   "objects": [
     "current_d38999_26kj61sn_public_spec",
@@ -129,15 +167,15 @@
       "te_deutsch_d38999_26fj35pn_step": "bb94c34f94afaddf9b8a4ac74e2f0de991e89dc02c18c1b9c7e28cccfe07eebb"
     },
     "proposal_sha256_by_object": {
-      "current_d38999_26kj61sn_public_spec": "45db950fb3991fda0569604581d91839c72a179941d3a16b2a4b709a483983a0",
-      "te_deutsch_d38999_26fj35pn_step": "b629d5601249ebf6e8f02f15060e76fccbd0860b30cd61e9cc64eb3d24035aaa"
+      "current_d38999_26kj61sn_public_spec": "89d814595484b19ccbe327ae6ab2f606d6665cc271c4c81228d5122d6a7974d0",
+      "te_deutsch_d38999_26fj35pn_step": "e4d8c42211f12e25bd85182d5f25e0e1cebf80263e7a5d5c5853800fe1321f36"
     },
     "proposal_path_by_object": {
-      "current_d38999_26kj61sn_public_spec": "artifacts/carts_v2/graspgenx/proposals_allowed_surface_roi_v1/current_d38999_26kj61sn_public_spec.json",
-      "te_deutsch_d38999_26fj35pn_step": "artifacts/carts_v2/graspgenx/proposals_allowed_surface_roi_v1/te_deutsch_d38999_26fj35pn_step.json"
+      "current_d38999_26kj61sn_public_spec": "artifacts/carts_v2/graspgenx/proposals_official_object_defaults_v1/current_d38999_26kj61sn_public_spec.json",
+      "te_deutsch_d38999_26fj35pn_step": "artifacts/carts_v2/graspgenx/proposals_official_object_defaults_v1/te_deutsch_d38999_26fj35pn_step.json"
     },
     "exact_repeat_candidate_arrays_pass": null,
-    "exact_repeat_scope": "ROI_PROPOSAL_FILES_HASH_BOUND_BUT_NOT_REGENERATED_TWICE",
+    "exact_repeat_scope": "OFFICIAL_OBJECT_PC_DEFAULT_PROPOSAL_FILES_HASH_BOUND_BUT_NOT_REGENERATED_TWICE",
     "proposal_files_committed": true
   },
   "descriptor_conditioning_config_audit": {
@@ -204,7 +242,7 @@
     "output_sha256": "a5e8f75040c36d3a2067fc020938e3f9d645652f54e3056c840d65e465212c06",
     "claim_scope": "OBJECT_INPUT_AND_OFFICIAL_GRIPPER_DOMAIN_DIAGNOSTIC_NOT_KCG_COLLISION_TASK_OR_DYNAMIC_EVIDENCE"
   },
-  "final_same_source_offline_replay": {
+  "legacy_mixed_parameter_final_same_source_offline_replay": {
     "source_commit": "db540b3e5b85fd33cbc03d3265aa22ef1372eaae",
     "same_source_config_descriptor_and_budget": true,
     "route_config_sha256": "77b43bf386d5b47fa04cf3dfabe447c23728856201ccb6f1a9e2db9960854f6e",

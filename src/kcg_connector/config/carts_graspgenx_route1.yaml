@@ -43,10 +43,10 @@ candidate_generation:
     merged_keep_method: DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL
     merged_max_per_object: 256
     model_score_role: PHYSICS_FEASIBILITY_POSTERIOR_TIE_BREAK_ONLY
-    grasp_threshold: -1.0
+    grasp_threshold: 0.7
     topk_num_grasps: -1
     moe_num_yaws: 36
-    moe_z_offsets_cm: [-8, -6, -4, -2, -1, 0]
+    moe_z_offsets_cm: [-2, 0]
     moe_outlier_threshold: 0.014
     moe_outlier_k: 20
     moe_obb_mode: advanced

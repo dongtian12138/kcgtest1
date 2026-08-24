@@ -36,10 +36,10 @@ _SAMPLE_METHOD = "TRIMESH_ALLOWED_FACE_SAMPLE_EXPLICIT_SEED"
 _CONDITIONING_MODE = "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD"
 _DOWNSTREAM_COLLISION_SCOPE = "FULL_REGISTERED_OBJECT_MESH"
 _GRASPMOE_PARAMETERS = {
-    "grasp_threshold": -1.0,
+    "grasp_threshold": 0.7,
     "topk_num_grasps": -1,
     "moe_num_yaws": 36,
-    "moe_z_offsets_cm": [-8, -6, -4, -2, -1, 0],
+    "moe_z_offsets_cm": [-2, 0],
     "moe_outlier_threshold": 0.014,
     "moe_outlier_k": 20,
     "moe_obb_mode": "advanced",
