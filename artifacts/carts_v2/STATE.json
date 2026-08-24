@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-24T09:15:32Z",
+  "updated_at_utc": "2026-08-24T09:26:20Z",
   "started_at_utc": "2026-08-23T14:41:38Z",
   "hard_deadline_utc": "2026-08-24T02:41:38Z",
   "branch": "carts-grasp-v2-rebuild-20260823",
@@ -8,7 +8,7 @@
   "start_commit": "330c54d317077bcb216cedb1f9bbd54ad781d482",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "V2_RECOVERY_2_OBJECT_A_F1J3_DIFFERENTIATION",
+  "current_milestone": "V2_RECOVERY_2_OBJECT_A_CONTACT_STOP_FIX",
   "previous_execution_window": {
     "id": "V2_RECOVERY_1",
     "started_at_utc": "2026-08-24T07:05:10Z",
@@ -55,8 +55,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": true,
-    "scope": "OBJECT_A_F1J3_DIAGNOSTIC_ONLY",
-    "reason": "Run12 aborted at 48.013 rad/s on passive f1j3 before three-finger contact; one same-parameter instrumented differentiation is allowed, while object B remains closed"
+    "scope": "OBJECT_A_CONTACT_STOP_FIX_VALIDATION_ONLY",
+    "reason": "Run13 replayed all 1104 run12 targets without object/table and did not reproduce the spike; one measured-position contact-stop fix, bound preflight and A validation are allowed, while object B remains closed"
   },
   "preflight_acceptance_gate": {
     "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
@@ -151,7 +151,25 @@
     "trace_sha256": "e2c30c01edcd2e846adea2232cb5cea4c60d1bf4e2a7e71bbe5ad28e8fdb4f7f",
     "engine_log_sha256": "c55fdfc06b5b54fb66b1e03bff7e5c9933d16a39b9cdfd58d21e19fb3f8546d3",
     "nominal_research_dynamic_pass": false,
-    "single_differentiation_allowed": true
+    "single_differentiation_allowed": false
+  },
+  "object_a_f1j3_differentiation": {
+    "run_id": "A_candidate11_isolated_run12_target_replay_run13",
+    "object_loaded": false,
+    "table_loaded": false,
+    "reference_sample_count": 1104,
+    "observed_sample_count": 1104,
+    "maximum_target_difference_rad": 0.0,
+    "physics_time_advanced_s": 9.2,
+    "maximum_hand_joint_speed_rad_s": 0.43521848320961,
+    "f1j3_maximum_speed_rad_s": 0.1588120013475418,
+    "speed_abort_triggered": false,
+    "inference": "OBJECT_SCENE_INTERACTION_OR_SCENE_DEPENDENT_CONSTRAINT_IS_NECESSARY_NOT_YET_SUFFICIENTLY_IDENTIFIED",
+    "summary_sha256": "ad11579534c87145503f0d37430ba9caa95256b202ea6491570372137cc923ef",
+    "trace_sha256": "aa9c085fcb32ab6d7d67c7f761a448eb88df5c53d17592e5dca783680071217e",
+    "research_dynamic_pass": false,
+    "formal_dynamic_pass": false,
+    "hardware_authorized": false
   },
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
