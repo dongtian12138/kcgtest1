@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T17:36:00Z",
+  "updated_at_utc": "2026-08-25T18:40:00Z",
   "started_at_utc": "2026-08-25T15:15:34Z",
   "hard_deadline_utc": "2026-08-26T03:15:34Z",
   "branch": "carts-grasp-nailfree-heightprojected-20260825",
-  "config_sha256": null,
+  "config_sha256": "87fdda414ccd8571526e7dae9e379880c6122762ec623b9adc153e4b77cc3350",
   "start_commit": "6a356bdfd2f579b79e53ec7e01e0880fe9f75a59",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "HEIGHT_FEASIBILITY_BEFORE_TOPK_INTEGRATION",
+  "current_milestone": "OBJECT_A_FULL_POOL_HEIGHT_PROJECTED_OFFLINE",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -1227,8 +1227,17 @@
     "task_grip_surface_status": "STATIC_SEMANTIC_ACCEPTED_NOT_OBJECT_CONTACT_OR_DYNAMIC_PROOF",
     "task_grip_surface_face_counts_f1_f2_f3": [2200, 2304, 2199],
     "task_grip_surface_manifest_sha256": "5d173d8446a4dc2f7648f8f9cd394c3061da5e83dc381f2e9ac01874dcadce17",
-    "height_feasibility_before_topk_status": "IMPLEMENTING",
-    "two_object_offline_status": "NOT_STARTED",
+    "height_feasibility_before_topk_status": "SINGLE_ANGLE_OFFLINE_SAMPLED_PASS_PRODUCTION_INTEGRATION_READY",
+    "height_single_angle_object_a": {
+      "palm_configuration_rad": 0.0,
+      "input_seed_count": 64,
+      "projected_exact_survivor_count": 2,
+      "conservative_empty_intersection_count": 57,
+      "projected_height_revalidation_failure_count": 5,
+      "elapsed_s": 109.79836294599227,
+      "evidence_scope": "OFFLINE_SAMPLED_HAND_HEIGHT_FEASIBLE_AT_PROJECTED_Z_NOT_TASK_IK_OR_DYNAMIC"
+    },
+    "two_object_offline_status": "OBJECT_A_FULL_POOL_NOT_STARTED",
     "isaac_asset_smoke_status": "NOT_STARTED",
     "object_a_dynamic_status": "NOT_STARTED",
     "object_b_dynamic_status": "NOT_STARTED",
@@ -1240,7 +1249,7 @@
     "minimum_hold_time_s": 2.0,
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
-  "evidence_level": "STATIC_NAILFREE_VISUAL_AND_TASK_GRIP_SEMANTICS_ISAAC_NOT_STARTED",
+  "evidence_level": "OFFLINE_SINGLE_ANGLE_NAILFREE_HEIGHT_PROJECTED_HAND_PATH_ISAAC_NOT_STARTED",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1292,11 +1301,15 @@
     "full_palm_targeted_system_python_skipped_without_fcl": 2,
     "full_palm_bound_fcl_contact_checks_passed": true,
     "full_palm_actual_object_certificate_checks_passed": true,
-    "full_palm_descriptor_and_contact_supervisor": "APPROVE_WITH_EVIDENCE_BOUNDARY"
+    "full_palm_descriptor_and_contact_supervisor": "APPROVE_WITH_EVIDENCE_BOUNDARY",
+    "nailfree_height_projected_targeted_passed": 28,
+    "nailfree_height_projected_targeted_duration_s": 17.32,
+    "nailfree_height_projected_complexity_supervisor": "ACCEPT_2178_ADDED_437_DELETED_1741_NET_NLOC",
+    "nailfree_height_projected_academic_supervisor": "APPROVE_WITH_EVIDENCE_LIMITS"
   },
   "blockers": [
     "NAILFREE_DYNAMIC_COLLISION_AND_INERTIA_RUNTIME_BINDING_NOT_ACCEPTED",
-    "HEIGHT_FEASIBILITY_BEFORE_TOPK_NOT_YET_IMPLEMENTED",
+    "TWO_OBJECT_FULL_POOL_HEIGHT_AND_TASK_RANKING_NOT_COMPLETE",
     "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND"
   ]
 }

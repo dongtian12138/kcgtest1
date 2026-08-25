@@ -1,6 +1,6 @@
 {
   "schema_version": "nailfree_height_projected_manifest_v1",
-  "updated_at_utc": "2026-08-25T17:36:00Z",
+  "updated_at_utc": "2026-08-25T18:40:00Z",
   "execution_window": {
     "id": "NAILFREE_HEIGHT_PROJECTED_12H",
     "started_at_utc": "2026-08-25T15:15:34Z",
@@ -62,14 +62,14 @@
   "current_gates": {
     "nailfree_hand_model_audit": "STATIC_EXACT_VISUAL_PASS_PHYSICAL_PROPERTIES_PROVISIONAL_RUNTIME_BINDING_REJECTED",
     "task_grip_surface_audit": "STATIC_SEMANTIC_ACCEPTED_NOT_OBJECT_CONTACT_TESTED",
-    "height_feasibility_before_topk": "IMPLEMENTING",
+    "height_feasibility_before_topk": "SINGLE_ANGLE_OFFLINE_SAMPLED_PASS_PRODUCTION_INTEGRATION_READY",
     "two_object_offline_ranking": "NOT_STARTED",
     "arm_path": "NOT_STARTED",
     "isaac_research_dynamic": "NOT_STARTED_COLLISION_ASSET_FAIL_CLOSED"
   },
   "supervision": {
     "nailfree_geometry": "APPROVE_EXACT_VISUAL_WITH_PROVISIONAL_PHYSICAL_ESTIMATE_AND_RUNTIME_GATES_CLOSED",
-    "height_search": "APPROVE_ANALYTIC_FINITE_TABLE_ENVELOPE_PLUS_BOUNDED_CONTACT_INTERVAL_SEARCH",
+    "height_search": "APPROVE_ANALYTIC_REACH_OUTER_BOUND_PLUS_EXACT_PROJECTED_REVALIDATION_WITH_EVIDENCE_LIMITS",
     "academic_complexity": "APPROVE_WITH_THREE_SIMPLIFICATIONS",
     "rejected_expansions": [
       "GENERAL_MESH_REPAIR_FRAMEWORK",
@@ -84,6 +84,16 @@
     "terminal_source_retained_removed_face_counts": [14192, 11836, 2356],
     "task_grip_surface_face_counts_f1_f2_f3": [2200, 2304, 2199],
     "collision_runtime_binding_accepted": false,
-    "isaac_started": false
+    "isaac_started": false,
+    "object_a_qp0_height_smoke": {
+      "input_seed_count": 64,
+      "projected_exact_survivor_count": 2,
+      "conservative_empty_intersection_count": 57,
+      "projected_revalidation_failure_count": 5,
+      "elapsed_s": 109.79836294599227,
+      "audit_path": "artifacts/carts_v2/nailfree_height_projected/height_projection_smoke_A_qp000_analytic_v1/cascade_audit.json",
+      "audit_sha256": "21586b0088ce60b796c0a3d6f5154bdf79c1ac655d28061d4d019cd299699068",
+      "claim_scope": "SINGLE_ANGLE_OFFLINE_SAMPLED_HAND_HEIGHT_FEASIBILITY_NOT_TASK_IK_OR_DYNAMIC"
+    }
   }
 }
