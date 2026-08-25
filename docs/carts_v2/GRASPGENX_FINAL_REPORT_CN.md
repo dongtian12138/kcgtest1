@@ -1,6 +1,6 @@
 # GraspGenX-CARTS 路线一事实报告
 
-> 当前事实更新时间：2026-08-24T23:45:19Z
+> 当前事实更新时间：2026-08-25T00:10:10Z
 > 分支：`carts-grasp-graspgenx-route1-20260824`
 > 12 小时窗口尚未结束；本文件只写当前已验证事实，不把退出码、覆盖图或静态测试写成抓取成功。
 
@@ -23,6 +23,7 @@
 - 官方真实张开手—有限桌面点云粗筛保留 86 个、拒绝 170 个；该粗筛不是完整碰撞证明。
 - 86 个保留候选按控制器参数派生的离线关节步长闭合：82 个第一指没有有效接触，2 个第二指没有有效接触，2 个第一接触为禁抓面，三指接触幸存数为 0。这里重放的是目标位置增量，不是 Isaac 中的受力接触动态。
 - 把粗筛前全部 256 个候选重放，三指接触幸存数仍为 0；因此当前零候选不是桌面粗筛误删造成。
+- 进一步取消 Top-128 截断，对全部 547 个阈值后原始提案重放，三指接触仍为 0；较低分尾部没有补回可接触候选。
 - 任务受力、机械臂 IK、接近/抬升路径和 Isaac 都没有启动；连接器没有离桌或抬升。
 
 ### 对象 B：`te_deutsch_d38999_26fj35pn_step`
@@ -32,6 +33,7 @@
 - 同一张开手—有限桌面粗筛保留 34 个、拒绝 197 个。
 - 34 个保留候选中 33 个第一指没有有效接触，1 个第二指没有有效接触，三指接触幸存数为 0。
 - 粗筛前全部 231 个候选重放也为三指接触 0。
+- 全部 589 个阈值后原始提案重放也为三指接触 0，Top-128 同样不是原因。
 - 任务、IK、路径和 Isaac 均未启动；连接器没有离桌或抬升。
 
 ## 三、当前方法怎样工作
@@ -117,8 +119,8 @@
 
 ## 九、仍未解决的问题
 
-1. 每描述器 Top-128 之外的低分原始提案是否存在三指允许接触，正在做一次固定输入、未截断的只读诊断。
-2. 若原始池仍为 0，需要把问题归因限定为当前描述器/官方提案姿态与真实 KCG 闭合几何不匹配；不能外推成完整六维空间或三指手本体无解。
+1. Top-128 已由 A 547/B 589 全原始池零幸存排除；当前需纠正 GraspGenX 只看允许面 ROI 而非完整对象外形的输入语义，并重新生成双对象提案。
+2. 若完整对象网格条件化后仍为 0，只能限定为当前固定完整网格提案池与真实 KCG 闭合几何不匹配；不能外推成完整六维空间或三指手本体无解。
 3. 描述器的 `base_rotation` 当前含平移，而官方字段语义是纯旋转；sweep-only API 未使用它。未来若换官方 mesh/viewer 路径，需要拆分字段并重新绑定证据。
 4. 由于闭合门没有候选，桌面/FCL、12 N、IK、接近/抬升规划、Isaac 和双对象动态迁移都尚无证据。
 5. 旧动态评价的 `2 mm` 对象—桌面接受阈值无可追溯来源；本路线未运行它，未来动态前必须先审查。
@@ -132,6 +134,7 @@
 - 当前 A/B 提案：`artifacts/carts_v2/graspgenx/proposals_score_per_descriptor_v2/`
 - 当前 A/B 离线：`artifacts/carts_v2/graspgenx/offline_control_step_bounded_A/`、`offline_control_step_bounded_B/`
 - 过滤前后闭合：`artifacts/carts_v2/graspgenx/prefilter_closure_stratified_diagnostic.json`
+- 未截断闭合：`artifacts/carts_v2/graspgenx/raw_untruncated_closure_diagnostic.json`
 - 指腹距离：`artifacts/carts_v2/graspgenx/closure_no_contact_diagnostic.json`
 - 可见性根因：`artifacts/carts_v2/graspgenx/visibility_root_cause_diagnostic.json`
 - 版本与哈希：`artifacts/carts_v2/graspgenx/INTEGRATION_MANIFEST.json`

@@ -1,6 +1,6 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-24T23:45:19Z",
+  "updated_at_utc": "2026-08-25T00:10:10Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
@@ -189,7 +189,12 @@
       "pad_distance_path": "artifacts/carts_v2/graspgenx/closure_no_contact_diagnostic.json",
       "pad_distance_sha256": "60f67a18e6dc972ba7351d9de432bd9f0f447bfa9625c4f55a1883a24a933f91",
       "prefilter_closure_path": "artifacts/carts_v2/graspgenx/prefilter_closure_stratified_diagnostic.json",
-      "prefilter_closure_sha256": "d2345ab1d5ac4c13721a75270e0adbaf5bcc1a761ecf4392363a628faa01c981"
+      "prefilter_closure_sha256": "d2345ab1d5ac4c13721a75270e0adbaf5bcc1a761ecf4392363a628faa01c981",
+      "raw_untruncated_closure_path": "artifacts/carts_v2/graspgenx/raw_untruncated_closure_diagnostic.json",
+      "raw_untruncated_closure_sha256": "8b2225f2105a396ace0fc401a3a4a052a9f8b8884a02b3a7763db81d73988d18",
+      "raw_untruncated_counts_a_b": [547, 589],
+      "raw_untruncated_closure_survivors_a_b": [0, 0],
+      "raw_untruncated_claim": "TOP128_TRUNCATION_RULED_OUT_FOR_CURRENT_ROI_CONDITIONED_POOL_CLOSURE_ONLY"
     },
     "claim_limit": "OFFLINE_CONTACT_GEOMETRY_ONLY; TASK_IK_PATH_AND_ISAAC_NOT_REACHED"
   },

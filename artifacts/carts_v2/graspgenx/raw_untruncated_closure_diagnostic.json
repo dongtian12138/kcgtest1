@@ -1,0 +1,1139 @@
+{
+  "claim_scope": "THRESHOLD_AFTER_ALL_RAW_POSES_CLOSURE_PREDICTION_ONLY_NOT_TABLE_COLLISION_TASK_IK_OR_DYNAMIC_EVIDENCE",
+  "closure_sampling": {
+    "maximum_joint_increment_rad": 0.0015,
+    "minimum_phase_sample_count": 25,
+    "per_descriptor": {
+      "kcg_3f_preshape_00": {
+        "maximum_adjacent_independent_joint_increment_rad": 0.0014981759656653715,
+        "sample_point_count_first_finger": 487
+      },
+      "kcg_3f_preshape_01": {
+        "maximum_adjacent_independent_joint_increment_rad": 0.0014981759656653715,
+        "sample_point_count_first_finger": 491
+      },
+      "kcg_3f_preshape_02": {
+        "maximum_adjacent_independent_joint_increment_rad": 0.0014981759656653715,
+        "sample_point_count_first_finger": 645
+      },
+      "kcg_3f_preshape_03": {
+        "maximum_adjacent_independent_joint_increment_rad": 0.0014981759656653715,
+        "sample_point_count_first_finger": 491
+      },
+      "kcg_3f_preshape_04": {
+        "maximum_adjacent_independent_joint_increment_rad": 0.0014981759656653715,
+        "sample_point_count_first_finger": 525
+      }
+    },
+    "rule": "DYNAMIC_CONTROL_STEP_BOUNDED"
+  },
+  "command": "CUDA_VISIBLE_DEVICES=0 PYTHONPATH=third_party/GraspGenX:src/kcg_connector third_party/GraspGenX/.venv/bin/python /tmp/graspgenx_raw_untruncated_closure_diagnostic.py",
+  "downstream_not_run": [
+    "SCENE_PC_FILTER",
+    "TABLE_SWEEP",
+    "FULL_HAND_FCL",
+    "TASK_12N",
+    "IK",
+    "ISAAC"
+  ],
+  "finished_at_utc": "2026-08-25T00:09:02.871540Z",
+  "gpu": {
+    "cuda": "12.8",
+    "cuda_visible_devices": "0",
+    "name": "NVIDIA GeForce RTX 5070 Ti",
+    "peak_memory_allocated_bytes": 662435840,
+    "pytorch": "2.7.0+cu128"
+  },
+  "identity": {
+    "bound_file_sha256": {
+      "artifacts/carts_v2/graspgenx/INTEGRATION_MANIFEST.json": "6aa985cdd868e97761f82dafc1ce115326157763b6dcf9f2bd74b366c314dab9",
+      "artifacts/carts_v2/graspgenx/descriptors/descriptor_manifest.json": "694bc74812b8c20cba432b3cc3df0f8c24912c4602718bdd7b84e4358ef43b02",
+      "artifacts/carts_v2/graspgenx/objects/object_manifest.json": "968e14c890692d9bc53a488b16a640150528dc93b33bdd9043f8c44064779fb3",
+      "scripts/carts_v2/run_graspgenx_candidates.py": "1cb485c0d2e4b0f9d6f3cd4b1361cff2717efacf323ab5efced24c6f653c9341",
+      "src/kcg_connector/config/carts_graspgenx_route1.yaml": "84eb806a5ef9aaabb5e40e97cc14b4d431afb0adeca9be9e6be12eb10ef8c18d",
+      "src/kcg_connector/kcg_connector/grasp/carts_v2/closure_predictor.py": "8d50b052fbcc475f33a9681f08c84437551337bb6bdc5a7a222d470f6ae5e3f4"
+    },
+    "checkpoint_root": "/home/noob/WorkPlace/kcgtest1/third_party/GraspGenX/ext/graspgenx_checkpoints/release",
+    "checkpoint_sha256": "f301fbd4695f4192cff248884f1429520c038ff1cde8601a0bf6f524ba32babe",
+    "official_source_commit": "b9429097728cb1c430dd78b92edf17ba318aad03",
+    "official_source_path": "/home/noob/WorkPlace/kcgtest1/third_party/GraspGenX",
+    "random_seed": 20260824,
+    "temporary_script_sha256": "5c9f9fd4ad8b0646df464241a9433c9136e74cd4242f1e674424d483a37a9437"
+  },
+  "inference": {
+    "global_merge_or_deduplication_applied": false,
+    "num_grasps_per_descriptor": 256,
+    "parameters": {
+      "grasp_threshold": 0.7,
+      "moe_num_yaws": 36,
+      "moe_obb_density": "dense-topandside",
+      "moe_obb_mode": "advanced",
+      "moe_obb_position_spacing_cm": 1.0,
+      "moe_outlier_k": 20,
+      "moe_outlier_threshold": 0.014,
+      "moe_skip_obb_rule": "auto",
+      "moe_z_offsets_cm": [
+        -2,
+        0
+      ],
+      "topk_num_grasps": -1
+    },
+    "planner": "graspmoe",
+    "scene_pc_filter_applied": false,
+    "top_per_descriptor_truncation_applied": false,
+    "visibility_selection_applied": false
+  },
+  "maximum_rss_kib": 3297404,
+  "objects": {
+    "current_d38999_26kj61sn_public_spec": {
+      "branch_counts": {
+        "diff": 301,
+        "obb": 246
+      },
+      "closure_survive_count": 0,
+      "count": 547,
+      "evaluated_count": 547,
+      "failure_reason_counts": {
+        "FORBIDDEN_FIRST_CONTACT_FACE_100140": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_100294": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_100296": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_100306": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_100308": 3,
+        "FORBIDDEN_FIRST_CONTACT_FACE_100356": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_100536": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_100656": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_100668": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_100692": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_100728": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_7074": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_71460": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_7147": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_7436": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_98133": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_98254": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_98554": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_98675": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_98962": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_98986": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_99178": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_99190": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_99462": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_99526": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_99538": 3,
+        "FORBIDDEN_FIRST_CONTACT_FACE_99550": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_99804": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_99816": 3,
+        "FORBIDDEN_FIRST_CONTACT_FACE_99828": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_99840": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_99852": 1,
+        "NO_EFFECTIVE_CONTACT_finger_1_pad": 452,
+        "NO_EFFECTIVE_CONTACT_finger_2_pad": 54,
+        "NO_EFFECTIVE_CONTACT_finger_3_pad": 3
+      },
+      "inference_seconds": 2.6962197779794224,
+      "per_descriptor": {
+        "kcg_3f_preshape_00": {
+          "branch_counts": {
+            "diff": 12
+          },
+          "closure_survive_count": 0,
+          "count": 12,
+          "failure_reason_counts": {
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 12
+          },
+          "score_max": 0.8151707053184509,
+          "score_median": 0.7392514944076538,
+          "score_min": 0.7102256417274475,
+          "score_rank_quartiles_within_descriptor": {
+            "Q1_LOWEST": {
+              "branch_counts": {
+                "diff": 3
+              },
+              "closure_survive_count": 0,
+              "count": 3,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 3
+              },
+              "score_max": 0.7162991762161255,
+              "score_median": 0.7153516411781311,
+              "score_min": 0.7102256417274475
+            },
+            "Q2": {
+              "branch_counts": {
+                "diff": 3
+              },
+              "closure_survive_count": 0,
+              "count": 3,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 3
+              },
+              "score_max": 0.7392178177833557,
+              "score_median": 0.726163387298584,
+              "score_min": 0.7250963449478149
+            },
+            "Q3": {
+              "branch_counts": {
+                "diff": 3
+              },
+              "closure_survive_count": 0,
+              "count": 3,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 3
+              },
+              "score_max": 0.7652117609977722,
+              "score_median": 0.7526065707206726,
+              "score_min": 0.7392851710319519
+            },
+            "Q4_HIGHEST": {
+              "branch_counts": {
+                "diff": 3
+              },
+              "closure_survive_count": 0,
+              "count": 3,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 3
+              },
+              "score_max": 0.8151707053184509,
+              "score_median": 0.7876717448234558,
+              "score_min": 0.7697890996932983
+            }
+          }
+        },
+        "kcg_3f_preshape_01": {
+          "branch_counts": {
+            "diff": 31
+          },
+          "closure_survive_count": 0,
+          "count": 31,
+          "failure_reason_counts": {
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 31
+          },
+          "score_max": 0.9659373164176941,
+          "score_median": 0.8235739469528198,
+          "score_min": 0.7128798365592957,
+          "score_rank_quartiles_within_descriptor": {
+            "Q1_LOWEST": {
+              "branch_counts": {
+                "diff": 8
+              },
+              "closure_survive_count": 0,
+              "count": 8,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 8
+              },
+              "score_max": 0.7691794037818909,
+              "score_median": 0.7425430119037628,
+              "score_min": 0.7128798365592957
+            },
+            "Q2": {
+              "branch_counts": {
+                "diff": 8
+              },
+              "closure_survive_count": 0,
+              "count": 8,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 8
+              },
+              "score_max": 0.8235739469528198,
+              "score_median": 0.7823822796344757,
+              "score_min": 0.7723858952522278
+            },
+            "Q3": {
+              "branch_counts": {
+                "diff": 8
+              },
+              "closure_survive_count": 0,
+              "count": 8,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 8
+              },
+              "score_max": 0.9213980436325073,
+              "score_median": 0.8758322894573212,
+              "score_min": 0.8539730310440063
+            },
+            "Q4_HIGHEST": {
+              "branch_counts": {
+                "diff": 7
+              },
+              "closure_survive_count": 0,
+              "count": 7,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 7
+              },
+              "score_max": 0.9659373164176941,
+              "score_median": 0.9500494599342346,
+              "score_min": 0.9223511815071106
+            }
+          }
+        },
+        "kcg_3f_preshape_02": {
+          "branch_counts": {
+            "diff": 141,
+            "obb": 246
+          },
+          "closure_survive_count": 0,
+          "count": 387,
+          "failure_reason_counts": {
+            "FORBIDDEN_FIRST_CONTACT_FACE_100140": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100294": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100296": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100306": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100308": 3,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100356": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100536": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100656": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100668": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100692": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100728": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_7074": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_71460": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_7147": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_7436": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_98133": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_98254": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_98554": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_98675": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_98962": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_98986": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99178": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99190": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99462": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99526": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99538": 3,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99550": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99804": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99816": 3,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99828": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99840": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99852": 1,
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 292,
+            "NO_EFFECTIVE_CONTACT_finger_2_pad": 54,
+            "NO_EFFECTIVE_CONTACT_finger_3_pad": 3
+          },
+          "score_max": 0.9836733341217041,
+          "score_median": 0.9240266680717468,
+          "score_min": 0.7017249464988708,
+          "score_rank_quartiles_within_descriptor": {
+            "Q1_LOWEST": {
+              "branch_counts": {
+                "diff": 51,
+                "obb": 46
+              },
+              "closure_survive_count": 0,
+              "count": 97,
+              "failure_reason_counts": {
+                "FORBIDDEN_FIRST_CONTACT_FACE_99538": 1,
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 81,
+                "NO_EFFECTIVE_CONTACT_finger_2_pad": 12,
+                "NO_EFFECTIVE_CONTACT_finger_3_pad": 3
+              },
+              "score_max": 0.8735045194625854,
+              "score_median": 0.814092755317688,
+              "score_min": 0.7017249464988708
+            },
+            "Q2": {
+              "branch_counts": {
+                "diff": 33,
+                "obb": 64
+              },
+              "closure_survive_count": 0,
+              "count": 97,
+              "failure_reason_counts": {
+                "FORBIDDEN_FIRST_CONTACT_FACE_98254": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_98675": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_98986": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99828": 1,
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 85,
+                "NO_EFFECTIVE_CONTACT_finger_2_pad": 8
+              },
+              "score_max": 0.9240266680717468,
+              "score_median": 0.9038092494010925,
+              "score_min": 0.8735752701759338
+            },
+            "Q3": {
+              "branch_counts": {
+                "diff": 18,
+                "obb": 79
+              },
+              "closure_survive_count": 0,
+              "count": 97,
+              "failure_reason_counts": {
+                "FORBIDDEN_FIRST_CONTACT_FACE_100308": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_100656": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_100668": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_100692": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_7147": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_7436": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_98962": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99190": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99804": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99816": 1,
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 70,
+                "NO_EFFECTIVE_CONTACT_finger_2_pad": 17
+              },
+              "score_max": 0.9472282528877258,
+              "score_median": 0.9366892576217651,
+              "score_min": 0.924204409122467
+            },
+            "Q4_HIGHEST": {
+              "branch_counts": {
+                "diff": 39,
+                "obb": 57
+              },
+              "closure_survive_count": 0,
+              "count": 96,
+              "failure_reason_counts": {
+                "FORBIDDEN_FIRST_CONTACT_FACE_100140": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_100294": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_100296": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_100306": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_100308": 2,
+                "FORBIDDEN_FIRST_CONTACT_FACE_100356": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_100536": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_100728": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_7074": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_71460": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_98133": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_98554": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99178": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99462": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99526": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99538": 2,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99550": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99816": 2,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99840": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_99852": 1,
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 56,
+                "NO_EFFECTIVE_CONTACT_finger_2_pad": 17
+              },
+              "score_max": 0.9836733341217041,
+              "score_median": 0.9585325717926025,
+              "score_min": 0.9476854205131531
+            }
+          }
+        },
+        "kcg_3f_preshape_03": {
+          "branch_counts": {
+            "diff": 16
+          },
+          "closure_survive_count": 0,
+          "count": 16,
+          "failure_reason_counts": {
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 16
+          },
+          "score_max": 0.9099844694137573,
+          "score_median": 0.8160202205181122,
+          "score_min": 0.7148495316505432,
+          "score_rank_quartiles_within_descriptor": {
+            "Q1_LOWEST": {
+              "branch_counts": {
+                "diff": 4
+              },
+              "closure_survive_count": 0,
+              "count": 4,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 4
+              },
+              "score_max": 0.7597482204437256,
+              "score_median": 0.7327911853790283,
+              "score_min": 0.7148495316505432
+            },
+            "Q2": {
+              "branch_counts": {
+                "diff": 4
+              },
+              "closure_survive_count": 0,
+              "count": 4,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 4
+              },
+              "score_max": 0.811295747756958,
+              "score_median": 0.7969311773777008,
+              "score_min": 0.7890294790267944
+            },
+            "Q3": {
+              "branch_counts": {
+                "diff": 4
+              },
+              "closure_survive_count": 0,
+              "count": 4,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 4
+              },
+              "score_max": 0.867095947265625,
+              "score_median": 0.8388932347297668,
+              "score_min": 0.8207446932792664
+            },
+            "Q4_HIGHEST": {
+              "branch_counts": {
+                "diff": 4
+              },
+              "closure_survive_count": 0,
+              "count": 4,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 4
+              },
+              "score_max": 0.9099844694137573,
+              "score_median": 0.8884139060974121,
+              "score_min": 0.8739123940467834
+            }
+          }
+        },
+        "kcg_3f_preshape_04": {
+          "branch_counts": {
+            "diff": 101
+          },
+          "closure_survive_count": 0,
+          "count": 101,
+          "failure_reason_counts": {
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 101
+          },
+          "score_max": 0.9816107749938965,
+          "score_median": 0.8299522399902344,
+          "score_min": 0.7009191513061523,
+          "score_rank_quartiles_within_descriptor": {
+            "Q1_LOWEST": {
+              "branch_counts": {
+                "diff": 26
+              },
+              "closure_survive_count": 0,
+              "count": 26,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 26
+              },
+              "score_max": 0.7678168416023254,
+              "score_median": 0.7268893718719482,
+              "score_min": 0.7009191513061523
+            },
+            "Q2": {
+              "branch_counts": {
+                "diff": 25
+              },
+              "closure_survive_count": 0,
+              "count": 25,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 25
+              },
+              "score_max": 0.8299522399902344,
+              "score_median": 0.7980967164039612,
+              "score_min": 0.7709872722625732
+            },
+            "Q3": {
+              "branch_counts": {
+                "diff": 25
+              },
+              "closure_survive_count": 0,
+              "count": 25,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 25
+              },
+              "score_max": 0.8949876427650452,
+              "score_median": 0.8579419255256653,
+              "score_min": 0.830883800983429
+            },
+            "Q4_HIGHEST": {
+              "branch_counts": {
+                "diff": 25
+              },
+              "closure_survive_count": 0,
+              "count": 25,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 25
+              },
+              "score_max": 0.9816107749938965,
+              "score_median": 0.9172899127006531,
+              "score_min": 0.8997171521186829
+            }
+          }
+        }
+      },
+      "score_max": 0.9836733341217041,
+      "score_median": 0.904431164264679,
+      "score_min": 0.7009191513061523,
+      "score_rank_quartiles_global": {
+        "Q1_LOWEST": {
+          "branch_counts": {
+            "diff": 114,
+            "obb": 23
+          },
+          "closure_survive_count": 0,
+          "count": 137,
+          "failure_reason_counts": {
+            "FORBIDDEN_FIRST_CONTACT_FACE_99538": 1,
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 123,
+            "NO_EFFECTIVE_CONTACT_finger_2_pad": 10,
+            "NO_EFFECTIVE_CONTACT_finger_3_pad": 3
+          },
+          "score_max": 0.8200214505195618,
+          "score_median": 0.7618170380592346,
+          "score_min": 0.7009191513061523
+        },
+        "Q2": {
+          "branch_counts": {
+            "diff": 84,
+            "obb": 53
+          },
+          "closure_survive_count": 0,
+          "count": 137,
+          "failure_reason_counts": {
+            "FORBIDDEN_FIRST_CONTACT_FACE_98254": 1,
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 128,
+            "NO_EFFECTIVE_CONTACT_finger_2_pad": 8
+          },
+          "score_max": 0.904431164264679,
+          "score_median": 0.8713212013244629,
+          "score_min": 0.820630669593811
+        },
+        "Q3": {
+          "branch_counts": {
+            "diff": 46,
+            "obb": 91
+          },
+          "closure_survive_count": 0,
+          "count": 137,
+          "failure_reason_counts": {
+            "FORBIDDEN_FIRST_CONTACT_FACE_100656": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100692": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_7436": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_98675": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_98986": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99190": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99816": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99828": 1,
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 116,
+            "NO_EFFECTIVE_CONTACT_finger_2_pad": 13
+          },
+          "score_max": 0.9409357905387878,
+          "score_median": 0.9256641268730164,
+          "score_min": 0.9053641557693481
+        },
+        "Q4_HIGHEST": {
+          "branch_counts": {
+            "diff": 57,
+            "obb": 79
+          },
+          "closure_survive_count": 0,
+          "count": 136,
+          "failure_reason_counts": {
+            "FORBIDDEN_FIRST_CONTACT_FACE_100140": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100294": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100296": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100306": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100308": 3,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100356": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100536": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100668": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_100728": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_7074": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_71460": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_7147": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_98133": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_98554": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_98962": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99178": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99462": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99526": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99538": 2,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99550": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99804": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99816": 2,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99840": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_99852": 1,
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 85,
+            "NO_EFFECTIVE_CONTACT_finger_2_pad": 23
+          },
+          "score_max": 0.9836733341217041,
+          "score_median": 0.9557064771652222,
+          "score_min": 0.9412544965744019
+        }
+      },
+      "survivors": []
+    },
+    "te_deutsch_d38999_26fj35pn_step": {
+      "branch_counts": {
+        "diff": 249,
+        "obb": 340
+      },
+      "closure_survive_count": 0,
+      "count": 589,
+      "evaluated_count": 589,
+      "failure_reason_counts": {
+        "FORBIDDEN_FIRST_CONTACT_FACE_18296": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_18359": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_19630": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_19707": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_20879": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_20889": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_20890": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_20894": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_20896": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_20954": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_20955": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_20956": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_20959": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_21080": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_21118": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_21196": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_21202": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_21257": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_21278": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_21283": 2,
+        "FORBIDDEN_FIRST_CONTACT_FACE_21284": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_21313": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_21584": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_29211": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_30848": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_33763": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_33786": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_36443": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_69431": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_9763": 1,
+        "FORBIDDEN_FIRST_CONTACT_FACE_9835": 1,
+        "NO_EFFECTIVE_CONTACT_finger_1_pad": 494,
+        "NO_EFFECTIVE_CONTACT_finger_2_pad": 63
+      },
+      "inference_seconds": 2.473316151968902,
+      "per_descriptor": {
+        "kcg_3f_preshape_00": {
+          "branch_counts": {
+            "diff": 4
+          },
+          "closure_survive_count": 0,
+          "count": 4,
+          "failure_reason_counts": {
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 4
+          },
+          "score_max": 0.8128179311752319,
+          "score_median": 0.7300904989242554,
+          "score_min": 0.709109365940094,
+          "score_rank_quartiles_within_descriptor": {
+            "Q1_LOWEST": {
+              "branch_counts": {
+                "diff": 1
+              },
+              "closure_survive_count": 0,
+              "count": 1,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 1
+              },
+              "score_max": 0.709109365940094,
+              "score_median": 0.709109365940094,
+              "score_min": 0.709109365940094
+            },
+            "Q2": {
+              "branch_counts": {
+                "diff": 1
+              },
+              "closure_survive_count": 0,
+              "count": 1,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 1
+              },
+              "score_max": 0.7185555696487427,
+              "score_median": 0.7185555696487427,
+              "score_min": 0.7185555696487427
+            },
+            "Q3": {
+              "branch_counts": {
+                "diff": 1
+              },
+              "closure_survive_count": 0,
+              "count": 1,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 1
+              },
+              "score_max": 0.7416254281997681,
+              "score_median": 0.7416254281997681,
+              "score_min": 0.7416254281997681
+            },
+            "Q4_HIGHEST": {
+              "branch_counts": {
+                "diff": 1
+              },
+              "closure_survive_count": 0,
+              "count": 1,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 1
+              },
+              "score_max": 0.8128179311752319,
+              "score_median": 0.8128179311752319,
+              "score_min": 0.8128179311752319
+            }
+          }
+        },
+        "kcg_3f_preshape_01": {
+          "branch_counts": {
+            "diff": 2
+          },
+          "closure_survive_count": 0,
+          "count": 2,
+          "failure_reason_counts": {
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 2
+          },
+          "score_max": 0.781151533126831,
+          "score_median": 0.7536777853965759,
+          "score_min": 0.7262040376663208,
+          "score_rank_quartiles_within_descriptor": {
+            "Q1_LOWEST": {
+              "branch_counts": {
+                "diff": 1
+              },
+              "closure_survive_count": 0,
+              "count": 1,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 1
+              },
+              "score_max": 0.7262040376663208,
+              "score_median": 0.7262040376663208,
+              "score_min": 0.7262040376663208
+            },
+            "Q2": {
+              "branch_counts": {
+                "diff": 1
+              },
+              "closure_survive_count": 0,
+              "count": 1,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 1
+              },
+              "score_max": 0.781151533126831,
+              "score_median": 0.781151533126831,
+              "score_min": 0.781151533126831
+            },
+            "Q3": {
+              "branch_counts": {},
+              "closure_survive_count": 0,
+              "count": 0,
+              "failure_reason_counts": {},
+              "score_max": null,
+              "score_median": null,
+              "score_min": null
+            },
+            "Q4_HIGHEST": {
+              "branch_counts": {},
+              "closure_survive_count": 0,
+              "count": 0,
+              "failure_reason_counts": {},
+              "score_max": null,
+              "score_median": null,
+              "score_min": null
+            }
+          }
+        },
+        "kcg_3f_preshape_02": {
+          "branch_counts": {
+            "diff": 146,
+            "obb": 340
+          },
+          "closure_survive_count": 0,
+          "count": 486,
+          "failure_reason_counts": {
+            "FORBIDDEN_FIRST_CONTACT_FACE_18296": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_18359": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_19630": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_19707": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20879": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20889": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20890": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20894": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20896": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20954": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20955": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20956": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20959": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21080": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21118": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21196": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21202": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21257": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21278": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21283": 2,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21284": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21313": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21584": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_29211": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_30848": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_33763": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_33786": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_36443": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_69431": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_9763": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_9835": 1,
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 391,
+            "NO_EFFECTIVE_CONTACT_finger_2_pad": 63
+          },
+          "score_max": 0.9847772121429443,
+          "score_median": 0.9021117687225342,
+          "score_min": 0.7003182172775269,
+          "score_rank_quartiles_within_descriptor": {
+            "Q1_LOWEST": {
+              "branch_counts": {
+                "diff": 28,
+                "obb": 94
+              },
+              "closure_survive_count": 0,
+              "count": 122,
+              "failure_reason_counts": {
+                "FORBIDDEN_FIRST_CONTACT_FACE_18296": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_19630": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_20879": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_21283": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_21584": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_29211": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_30848": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_9763": 1,
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 97,
+                "NO_EFFECTIVE_CONTACT_finger_2_pad": 17
+              },
+              "score_max": 0.7999882698059082,
+              "score_median": 0.73081836104393,
+              "score_min": 0.7003182172775269
+            },
+            "Q2": {
+              "branch_counts": {
+                "diff": 52,
+                "obb": 70
+              },
+              "closure_survive_count": 0,
+              "count": 122,
+              "failure_reason_counts": {
+                "FORBIDDEN_FIRST_CONTACT_FACE_20890": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_20896": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_20959": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_21196": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_21278": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_21283": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_21313": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_33763": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_33786": 1,
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 95,
+                "NO_EFFECTIVE_CONTACT_finger_2_pad": 18
+              },
+              "score_max": 0.9023224711418152,
+              "score_median": 0.8682162761688232,
+              "score_min": 0.8012800216674805
+            },
+            "Q3": {
+              "branch_counts": {
+                "diff": 48,
+                "obb": 73
+              },
+              "closure_survive_count": 0,
+              "count": 121,
+              "failure_reason_counts": {
+                "FORBIDDEN_FIRST_CONTACT_FACE_18359": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_19707": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_20889": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_20894": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_21080": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_21257": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_9835": 1,
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 102,
+                "NO_EFFECTIVE_CONTACT_finger_2_pad": 12
+              },
+              "score_max": 0.9577758312225342,
+              "score_median": 0.9273355603218079,
+              "score_min": 0.9024943113327026
+            },
+            "Q4_HIGHEST": {
+              "branch_counts": {
+                "diff": 18,
+                "obb": 103
+              },
+              "closure_survive_count": 0,
+              "count": 121,
+              "failure_reason_counts": {
+                "FORBIDDEN_FIRST_CONTACT_FACE_20954": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_20955": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_20956": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_21118": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_21202": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_21284": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_36443": 1,
+                "FORBIDDEN_FIRST_CONTACT_FACE_69431": 1,
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 97,
+                "NO_EFFECTIVE_CONTACT_finger_2_pad": 16
+              },
+              "score_max": 0.9847772121429443,
+              "score_median": 0.9752247333526611,
+              "score_min": 0.9578530788421631
+            }
+          }
+        },
+        "kcg_3f_preshape_04": {
+          "branch_counts": {
+            "diff": 97
+          },
+          "closure_survive_count": 0,
+          "count": 97,
+          "failure_reason_counts": {
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 97
+          },
+          "score_max": 0.9743159413337708,
+          "score_median": 0.8180602788925171,
+          "score_min": 0.700237512588501,
+          "score_rank_quartiles_within_descriptor": {
+            "Q1_LOWEST": {
+              "branch_counts": {
+                "diff": 25
+              },
+              "closure_survive_count": 0,
+              "count": 25,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 25
+              },
+              "score_max": 0.7596446871757507,
+              "score_median": 0.7322677373886108,
+              "score_min": 0.700237512588501
+            },
+            "Q2": {
+              "branch_counts": {
+                "diff": 24
+              },
+              "closure_survive_count": 0,
+              "count": 24,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 24
+              },
+              "score_max": 0.8180602788925171,
+              "score_median": 0.7930566072463989,
+              "score_min": 0.7701458930969238
+            },
+            "Q3": {
+              "branch_counts": {
+                "diff": 24
+              },
+              "closure_survive_count": 0,
+              "count": 24,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 24
+              },
+              "score_max": 0.8865371942520142,
+              "score_median": 0.8396373689174652,
+              "score_min": 0.8196816444396973
+            },
+            "Q4_HIGHEST": {
+              "branch_counts": {
+                "diff": 24
+              },
+              "closure_survive_count": 0,
+              "count": 24,
+              "failure_reason_counts": {
+                "NO_EFFECTIVE_CONTACT_finger_1_pad": 24
+              },
+              "score_max": 0.9743159413337708,
+              "score_median": 0.9245778322219849,
+              "score_min": 0.8879458904266357
+            }
+          }
+        }
+      },
+      "score_max": 0.9847772121429443,
+      "score_median": 0.8879458904266357,
+      "score_min": 0.700237512588501,
+      "score_rank_quartiles_global": {
+        "Q1_LOWEST": {
+          "branch_counts": {
+            "diff": 60,
+            "obb": 88
+          },
+          "closure_survive_count": 0,
+          "count": 148,
+          "failure_reason_counts": {
+            "FORBIDDEN_FIRST_CONTACT_FACE_18296": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_19630": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20879": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21283": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21584": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_29211": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_30848": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_9763": 1,
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 125,
+            "NO_EFFECTIVE_CONTACT_finger_2_pad": 15
+          },
+          "score_max": 0.7861654162406921,
+          "score_median": 0.7304675579071045,
+          "score_min": 0.700237512588501
+        },
+        "Q2": {
+          "branch_counts": {
+            "diff": 92,
+            "obb": 55
+          },
+          "closure_survive_count": 0,
+          "count": 147,
+          "failure_reason_counts": {
+            "FORBIDDEN_FIRST_CONTACT_FACE_20896": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20959": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21196": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21278": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21283": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21313": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_33763": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_33786": 1,
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 124,
+            "NO_EFFECTIVE_CONTACT_finger_2_pad": 15
+          },
+          "score_max": 0.8879458904266357,
+          "score_median": 0.8397179841995239,
+          "score_min": 0.7869380712509155
+        },
+        "Q3": {
+          "branch_counts": {
+            "diff": 61,
+            "obb": 86
+          },
+          "closure_survive_count": 0,
+          "count": 147,
+          "failure_reason_counts": {
+            "FORBIDDEN_FIRST_CONTACT_FACE_18359": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_19707": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20889": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20890": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20894": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21080": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21257": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_9835": 1,
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 122,
+            "NO_EFFECTIVE_CONTACT_finger_2_pad": 17
+          },
+          "score_max": 0.9465299844741821,
+          "score_median": 0.9191553592681885,
+          "score_min": 0.8881622552871704
+        },
+        "Q4_HIGHEST": {
+          "branch_counts": {
+            "diff": 36,
+            "obb": 111
+          },
+          "closure_survive_count": 0,
+          "count": 147,
+          "failure_reason_counts": {
+            "FORBIDDEN_FIRST_CONTACT_FACE_20954": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20955": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_20956": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21118": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21202": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_21284": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_36443": 1,
+            "FORBIDDEN_FIRST_CONTACT_FACE_69431": 1,
+            "NO_EFFECTIVE_CONTACT_finger_1_pad": 123,
+            "NO_EFFECTIVE_CONTACT_finger_2_pad": 16
+          },
+          "score_max": 0.9847772121429443,
+          "score_median": 0.9741933941841125,
+          "score_min": 0.9467807412147522
+        }
+      },
+      "survivors": []
+    }
+  },
+  "runtime": {
+    "numpy": "1.26.4",
+    "python": "3.10.12",
+    "python_executable": "/usr/bin/python3.10"
+  },
+  "schema_version": "graspgenx_raw_untruncated_closure_diagnostic_v1",
+  "started_at_utc": "2026-08-24T23:51:05.746225Z",
+  "wall_seconds": 1077.125313445009
+}
