@@ -83,3 +83,41 @@ def test_object_conditioning_samples_all_registered_faces(tmp_path, monkeypatch)
 
     assert observed["face_count"] == 2
     assert points.shape == (4, 3)
+
+
+def test_obb_pose_accounts_for_descriptor_lateral_sweep_offset(monkeypatch) -> None:
+    runner = _runner()
+    obb_pose = np.eye(4)
+    obb_pose[:3, :3] = np.asarray(((0.0, -1.0, 0.0), (1.0, 0.0, 0.0), (0.0, 0.0, 1.0)))
+    diff_pose = np.eye(4)
+    diff_pose[:3, 3] = (0.4, -0.2, 0.1)
+    monkeypatch.setattr(
+        runner,
+        "run_planner_on_object",
+        lambda *_args, **_kwargs: (
+            np.stack((obb_pose, diff_pose)), np.asarray([0.8, 0.7]),
+            ["obb", "diff"], None,
+        ),
+    )
+    monkeypatch.setattr(
+        runner,
+        "_open_or_half_visibility",
+        lambda *_args: tuple(np.ones(2, dtype=bool) for _ in range(3)),
+    )
+    gripper = SimpleNamespace(
+        sweep_volume=np.asarray([0.1, 0.2, 0.3, 0.03, -0.02, 0.1])
+    )
+
+    rows, _audit = runner._infer(
+        np.zeros((16, 3)), np.zeros(3), SimpleNamespace(gripper=gripper),
+        object_from_inference=np.eye(4), num_grasps=256, keep=128,
+    )
+
+    by_branch = {row["branch"]: row for row in rows}
+    corrected = np.asarray(by_branch["obb"]["object_from_graspgenx_row_major"]).reshape(4, 4)
+    expected_translation = obb_pose[:3, :3] @ np.asarray((-0.03, 0.02, 0.0))
+    assert np.allclose(corrected[:3, 3], expected_translation)
+    assert by_branch["obb"]["obb_lateral_offset_applied"] is True
+    unchanged = np.asarray(by_branch["diff"]["object_from_graspgenx_row_major"]).reshape(4, 4)
+    assert np.allclose(unchanged, diff_pose)
+    assert by_branch["diff"]["obb_lateral_offset_applied"] is False

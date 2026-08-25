@@ -1,12 +1,13 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-25T00:58:00Z",
+  "updated_at_utc": "2026-08-25T01:45:00Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "method_name": "GraspGenX-CARTS",
   "active_route_config": "src/kcg_connector/config/carts_graspgenx_route1.yaml",
   "active_route_config_sha256": "70caae32dacce1f03e8faca39f9de1d5ffdaa71821449a07844568b1f001b1ea",
+  "active_generator_runner_sha256": "d1035ca13f634d4ae30692c6c5dc1a4ddb84d2cc8ad57f69bbc47ba9d2e26d6f",
   "official_sources": {
     "repository": "https://github.com/NVlabs/GraspGenX.git",
     "paper": "https://arxiv.org/abs/2606.00998",
@@ -80,6 +81,7 @@
     "moe_skip_obb_rule": "auto",
     "moe_obb_density": "dense-topandside",
     "moe_obb_position_spacing_cm": 1.0,
+    "obb_lateral_offset_rule": "NEGATE_OPEN_SWEEP_XY_IN_GENERATOR_FRAME",
     "scene_collision_filter": {
       "enabled": true,
       "official_function": "graspgenx.utils.collision_filter.filter_colliding_grasps",
@@ -311,16 +313,57 @@
       "te_deutsch_d38999_26fj35pn_step": "bb94c34f94afaddf9b8a4ac74e2f0de991e89dc02c18c1b9c7e28cccfe07eebb"
     },
     "proposal_sha256_by_object": {
-      "current_d38999_26kj61sn_public_spec": "b0b2d974d7e806bcd868755de3ee72f1bc9a3eb8c28c2b2fc2f01b91e1b3cab5",
-      "te_deutsch_d38999_26fj35pn_step": "2edbe0a89df36527d235bc125582ec6a0ed3c46574e42caad92aa283405730ea"
+      "current_d38999_26kj61sn_public_spec": "b89fb5a349980d33c86cf78b9011cc49357fed2dc8ef6a190b12c96ae92b4296",
+      "te_deutsch_d38999_26fj35pn_step": "57eb736424c88b9ff05acbdb3a0e29b622eb49ef8d10f0d9e9aa8ed5ccdde2a1"
     },
     "proposal_path_by_object": {
-      "current_d38999_26kj61sn_public_spec": "artifacts/carts_v2/graspgenx/proposals_full_object_score_post_v4/current_d38999_26kj61sn_public_spec.json",
-      "te_deutsch_d38999_26fj35pn_step": "artifacts/carts_v2/graspgenx/proposals_full_object_score_post_v4/te_deutsch_d38999_26fj35pn_step.json"
+      "current_d38999_26kj61sn_public_spec": "artifacts/carts_v2/graspgenx/proposals_obb_xy_fixed_v5/current_d38999_26kj61sn_public_spec.json",
+      "te_deutsch_d38999_26fj35pn_step": "artifacts/carts_v2/graspgenx/proposals_obb_xy_fixed_v5/te_deutsch_d38999_26fj35pn_step.json"
     },
     "exact_repeat_candidate_arrays_pass": null,
     "exact_repeat_scope": "CURRENT_FULL_OBJECT_PROPOSAL_FILES_HASH_BOUND_BUT_NOT_INDEPENDENTLY_REGENERATED_TWICE",
     "proposal_files_committed": true
+  },
+  "active_obb_lateral_interface_fix_offline": {
+    "rule": "O_T_H_PRIME_EQUALS_O_T_G_TIMES_TRANSLATE_NEGATIVE_OPEN_SWEEP_XY_TIMES_G_T_H",
+    "applies_to_branch": "obb",
+    "diffusion_branch_modified": false,
+    "z_offset_modified": false,
+    "same_rule_for_both_objects": true,
+    "per_proposal_applied_boolean_present": true,
+    "object_a": {
+      "artifact_directory": "artifacts/carts_v2/graspgenx/offline_obb_xy_fixed_v5_A",
+      "result_sha256": "30c3b985c5fd636efd4b931fba96669ab0c449f15fe33f7534d23813a3ddec27",
+      "coverage_sha256": "e572587a32b77d921e20662c18bf87646b041e5cbe24b6d7c6824b541836d972",
+      "proposal_file_count": 640,
+      "adapted_count": 256,
+      "scene_retained_count": 100,
+      "closure_survive_count": 0,
+      "sequential_sweep_survive_count": 0,
+      "task_evaluated_count": 0
+    },
+    "object_b": {
+      "artifact_directory": "artifacts/carts_v2/graspgenx/offline_obb_xy_fixed_v5_B",
+      "result_sha256": "5e6cf4f7ef1cb18e16345a33e57be103437389d97cb9aee1b14fd19e4603ff2a",
+      "coverage_sha256": "3e9703566c1923dca396452803d2dce1d3da10b4bbf6ba4ac892f692e6e53b60",
+      "proposal_file_count": 640,
+      "adapted_count": 256,
+      "scene_retained_count": 116,
+      "closure_survive_count": 2,
+      "closure_survivor_ids": ["graspgenx_131", "graspgenx_133"],
+      "sequential_sweep_survive_count": 0,
+      "table_sweep_reject_count": 2,
+      "first_table_violation_clearance_m": -0.0000324547441362,
+      "first_table_violation_link": "f1Link3",
+      "first_table_violation_stage": "FINGER_1_CLOSURE_0164",
+      "minimum_table_clearance_m": -0.0044599482137958,
+      "minimum_clearance_link": "f3Link3",
+      "minimum_clearance_stage": "FINGER_3_CLOSURE_0267",
+      "task_evaluated_count": 0
+    },
+    "selected_executable_candidate": null,
+    "isaac_launched": false,
+    "claim_scope": "OFFLINE_KINEMATIC_AND_MESH_CLEARANCE_EVIDENCE_ONLY"
   },
   "descriptor_conditioning_config_audit": {
     "status": "CONFIG_SCALE_DIFFERENCE_OBSERVED_CAUSALITY_NOT_PROVEN",

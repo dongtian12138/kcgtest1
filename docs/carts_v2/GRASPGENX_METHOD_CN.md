@@ -2,7 +2,7 @@
 
 ## 白话方法
 
-GraspGenX-CARTS 不把神经网络分数当作“抓得住”的证明。官方预训练模型先围绕允许表面 ROI 点云提出完整六维手掌姿态，随后用 KCG 三指手的真实关节关系、指腹面、完整对象网格、整手网格、桌面和任务载荷逐层淘汰错误姿态。只有完成三指允许接触、闭合路径、机械臂逆解与完整路径检查的候选，才可能进入 Isaac；动态结果还要独立检查离桌、50 mm、2 s、滑移和穿透。
+GraspGenX-CARTS 不把神经网络分数当作“抓得住”的证明。官方预训练模型先读取完整登记对象网格的点云并提出完整六维手掌姿态，随后用 KCG 三指手的真实关节关系、指腹面、完整对象网格、整手网格、桌面和任务载荷逐层淘汰错误姿态。只有完成三指允许接触、闭合路径、机械臂逆解与完整路径检查的候选，才可能进入 Isaac；动态结果还要独立检查离桌、50 mm、2 s、滑移和穿透。
 
 ## 问题定义
 
@@ -35,6 +35,8 @@ GraspGenX-CARTS 不把神经网络分数当作“抓得住”的证明。官方�
         ↓
 官方 GraspGenX + 5 个固定预构型提出六维姿态
         ↓
+OBB 分支按描述器 open 工作区 x/y 偏移统一对齐真实手基座
+        ↓
 点云可见性只审计；每描述器按分数保留最多 128 个
         ↓
 跨描述器六维去重和多样性合并，限制为每对象 256 个
@@ -60,6 +62,9 @@ Isaac 逐指接触、离桌、50 mm、保持至少 2 s
 load official model once
 for descriptor in frozen_descriptor_library:
     proposals += GraspGenX(object_points, descriptor, frozen_seed)
+
+    for obb_proposal:
+        pose = pose @ translate(-open_box_offset_x, -open_box_offset_y, 0)
 
     keep at most 128 by (-model_score, raw_index)
     record open/half point-cloud visibility as audit only
@@ -112,8 +117,9 @@ for candidate in task_top3:
 ## 当前限制
 
 - KCG 描述器 open 条件箱的 `extents[1]` 为 `0.117526–0.305499 m`；本轮扫描的 32 个官方程序化配置中 open/half-open 同分量最大为 `0.067305 m`，26 个运行时描述器的 open 最大为 `0.060 m`。这是模型条件配置箱的尺度对照，不是 `points.json` 整手点云跨度或真实可达工作区；它支持但不证明域外推或失败因果。
-- 当前每描述器最高分保留后，A/B 适配池分别为 256/231 个候选且多描述器六维覆盖通过；控制步长闭合的三指允许接触幸存数均为 0。旧混合参数的 A `256→3→桌面安全0`、B `256→闭合0` 只作消融，不代表当前生产池。
-- 官方 scene-PC 粗筛前重放当前全部 256/231 个候选仍为闭合 0，故当前主因不是粗筛误删；任务、IK 和路径尚未到达。
+- 当前完整网格、无绝对分数硬门、OBB 横向对齐后的 A/B 适配池均为 256 个，五个描述器和六维覆盖诊断均通过。A 在场景粗筛后 100 项中三指允许接触为 0；B 在 116 项中有 2 项三指接触，但两项都在第一指闭合时开始穿桌，第三指阶段最深约 4.46 mm，完整路径幸存为 0。
+- OBB 横向修正确实把 B 的三指闭合数从 0 改为 2，说明该接口遗漏有因果影响；A 无变化且 B 两项仍扫桌，所以它不是全部失败的充分解释。任务、IK 和路径尚未到达。
+- released generator/discriminator 的实际 backbone 都是 `sweep_volume_v2`，会读取 open/mid 工作箱，但没有直接读取 `gripper_type=revolute_3f` 来表达三指关节拓扑；这是当前 checkpoint 接口限制，不能据此唯一归因失败。
 - 当前描述器 `base_rotation` 带平移，不符合官方字段的纯旋转语义；sweep-only API 未读取它，所以现有结果不受影响。未来使用官方 mesh/viewer 路径前必须拆分该字段并重新绑定。
 - 当前没有任务评价、机械臂 IK、Isaac 接触、离桌、50 mm 或 2 s 证据。
 - 旧动态配置含尚无来源的 `2 mm` 对象—桌面事后接受阈值；本路线未执行该门，未来动态前必须先完成分阶段容差与来源审查，不能让它支持“无穿透”。

@@ -273,13 +273,21 @@ def _infer(
     rows = []
     for raw_index in order:
         inference_from_generator = np.array(poses[raw_index], copy=True)
+        branch = str(tags[raw_index])
+        obb_lateral_offset_applied = branch == "obb"
+        if obb_lateral_offset_applied:
+            lateral = np.eye(4)
+            lateral[:2, 3] = -np.asarray(sampler.gripper.sweep_volume[3:5])
+            inference_from_generator = inference_from_generator @ lateral
         inference_from_generator[:3, 3] += center
         pose = object_from_inference @ inference_from_generator
         rows.append(
             {
                 "raw_index": int(raw_index),
                 "score": float(scores[raw_index]),
-                "branch": str(tags[raw_index]),
+                "branch": branch,
+                "obb_lateral_offset_applied": obb_lateral_offset_applied,
+                "obb_lateral_offset_rule": "NEGATE_OPEN_SWEEP_XY_IN_GENERATOR_FRAME" if obb_lateral_offset_applied else "NOT_APPLIED",
                 "object_from_graspgenx_row_major": pose.ravel().tolist(),
             }
         )

@@ -1,23 +1,23 @@
 {
   "schema_version": "graspgenx_carts_6d_coverage_index_v1",
   "object_id": "te_deutsch_d38999_26fj35pn_step",
-  "source_commit": "db540b3e5b85fd33cbc03d3265aa22ef1372eaae",
-  "source_artifact": "artifacts/carts_v2/graspgenx/offline_final_db540b3_B/candidate_coverage.json",
-  "source_sha256": "aa4d4d08e5ee6f14d8ef068fed369bb463a1c72c2f4b0c04d1cd158e471aa5bf",
+  "source_commit": "CONTAINING_GIT_COMMIT",
+  "source_artifact": "artifacts/carts_v2/graspgenx/offline_obb_xy_fixed_v5_B/candidate_coverage.json",
+  "source_sha256": "3e9703566c1923dca396452803d2dce1d3da10b4bbf6ba4ac892f692e6e53b60",
   "candidate_count": 256,
   "coverage_pass": true,
   "descriptor_counts": {
-    "kcg_3f_preshape_00": 45,
-    "kcg_3f_preshape_01": 49,
-    "kcg_3f_preshape_02": 67,
-    "kcg_3f_preshape_03": 48,
-    "kcg_3f_preshape_04": 47
+    "kcg_3f_preshape_00": 42,
+    "kcg_3f_preshape_01": 55,
+    "kcg_3f_preshape_02": 62,
+    "kcg_3f_preshape_03": 52,
+    "kcg_3f_preshape_04": 45
   },
   "palm_azimuth_quadrant_count": 4,
-  "radial_distance_range_m": [0.00258120982022975, 0.4489195204238881],
-  "approach_azimuth_range_rad": [-3.0409044083005448, 3.133300256911768],
-  "approach_elevation_range_rad": [-1.3436551076544925, 1.5707963267948966],
-  "roll_pitch_yaw_range_rad": [6.268346752975326, 3.0428596630659785, 6.196762809755296],
-  "effective_dimension_participation_ratio": 2.6969766527263346,
+  "radial_distance_range_m": [0.007660272389076911, 0.7086684301806466],
+  "approach_azimuth_range_rad": [-3.039619930312441, 3.06418216181971],
+  "approach_elevation_range_rad": [-1.5636952183338246, 1.5707963267948966],
+  "roll_pitch_yaw_range_rad": [6.271434921736715, 2.9355878043790585, 6.23574240474175],
+  "effective_dimension_participation_ratio": 2.884922535406922,
   "evidence_scope": "GENERATOR_COVERAGE_DIAGNOSTIC_NOT_GRASP_SUCCESS"
 }

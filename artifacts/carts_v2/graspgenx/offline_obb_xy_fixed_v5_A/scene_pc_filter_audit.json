@@ -1,0 +1,854 @@
+{
+  "claim_scope": "EARLY_PROXIMITY_REJECT_NOT_MESH_OR_PATH_SAFETY_PROOF",
+  "collision_roster_sha256": "e0d020f7d32792dd0a55430011eaf40895d85f8a0d1619bdc54a762f78bc3bd9",
+  "collision_threshold_m": 0.02,
+  "descriptor_manifest_sha256": "694bc74812b8c20cba432b3cc3df0f8c24912c4602718bdd7b84e4358ef43b02",
+  "generator_commit": "b9429097728cb1c430dd78b92edf17ba318aad03",
+  "gripper_surface_sample_count": 2000,
+  "input_count": 256,
+  "input_proposal_sha256": "b89fb5a349980d33c86cf78b9011cc49357fed2dc8ef6a190b12c96ae92b4296",
+  "method": "OFFICIAL_COARSE_OPEN_HAND_SCENE_PC_REJECT_ONLY",
+  "object_id": "current_d38999_26kj61sn_public_spec",
+  "official_function": "graspgenx.utils.collision_filter.filter_colliding_grasps",
+  "official_source_sha256": "de66b483639c6c18bca6b58ab251328678609ca1fc145a15bafb693e32fe692b",
+  "per_descriptor": [
+    {
+      "canonical_surface_sha256": "7c2c95b5c0431accee0afe22ac60d8bfb1a31a71a73cb78c364f60e451eb4f1d",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "input_count": 59,
+      "rejected_count": 40,
+      "retained_count": 19
+    },
+    {
+      "canonical_surface_sha256": "1e76c96a67741b064479fb04bcc34938287f4eced89a708ecdf858a989fe6680",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "input_count": 49,
+      "rejected_count": 21,
+      "retained_count": 28
+    },
+    {
+      "canonical_surface_sha256": "ea06b101115173eb3d1e49121c447ceeddf2454a18c2a76f59a7cd0dc2ba50df",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "input_count": 63,
+      "rejected_count": 54,
+      "retained_count": 9
+    },
+    {
+      "canonical_surface_sha256": "3e90206b483e657734bc94144233d4d54ff25be4fde9b4ef821531ca862ea374",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "input_count": 43,
+      "rejected_count": 19,
+      "retained_count": 24
+    },
+    {
+      "canonical_surface_sha256": "78f183ddc74258a86b5b8572c621fb13a3f49667d7ed0a2f7608a99413b8b373",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "input_count": 42,
+      "rejected_count": 22,
+      "retained_count": 20
+    }
+  ],
+  "registered_hand_link_count": 9,
+  "rejected": [
+    {
+      "candidate_id": "graspgenx_000",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 0
+    },
+    {
+      "candidate_id": "graspgenx_001",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 1
+    },
+    {
+      "candidate_id": "graspgenx_002",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 2
+    },
+    {
+      "candidate_id": "graspgenx_003",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 3
+    },
+    {
+      "candidate_id": "graspgenx_005",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 5
+    },
+    {
+      "candidate_id": "graspgenx_006",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 6
+    },
+    {
+      "candidate_id": "graspgenx_007",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 7
+    },
+    {
+      "candidate_id": "graspgenx_008",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 8
+    },
+    {
+      "candidate_id": "graspgenx_009",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 9
+    },
+    {
+      "candidate_id": "graspgenx_012",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 12
+    },
+    {
+      "candidate_id": "graspgenx_013",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 13
+    },
+    {
+      "candidate_id": "graspgenx_020",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 20
+    },
+    {
+      "candidate_id": "graspgenx_024",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 24
+    },
+    {
+      "candidate_id": "graspgenx_025",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 25
+    },
+    {
+      "candidate_id": "graspgenx_027",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 27
+    },
+    {
+      "candidate_id": "graspgenx_028",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 28
+    },
+    {
+      "candidate_id": "graspgenx_031",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 31
+    },
+    {
+      "candidate_id": "graspgenx_032",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 32
+    },
+    {
+      "candidate_id": "graspgenx_034",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 34
+    },
+    {
+      "candidate_id": "graspgenx_036",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 639
+    },
+    {
+      "candidate_id": "graspgenx_037",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 641
+    },
+    {
+      "candidate_id": "graspgenx_038",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 675
+    },
+    {
+      "candidate_id": "graspgenx_039",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 637
+    },
+    {
+      "candidate_id": "graspgenx_040",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 567
+    },
+    {
+      "candidate_id": "graspgenx_041",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 677
+    },
+    {
+      "candidate_id": "graspgenx_042",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 673
+    },
+    {
+      "candidate_id": "graspgenx_043",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 569
+    },
+    {
+      "candidate_id": "graspgenx_044",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 603
+    },
+    {
+      "candidate_id": "graspgenx_045",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 495
+    },
+    {
+      "candidate_id": "graspgenx_046",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 497
+    },
+    {
+      "candidate_id": "graspgenx_047",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 565
+    },
+    {
+      "candidate_id": "graspgenx_048",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 635
+    },
+    {
+      "candidate_id": "graspgenx_049",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 643
+    },
+    {
+      "candidate_id": "graspgenx_050",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 605
+    },
+    {
+      "candidate_id": "graspgenx_051",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 671
+    },
+    {
+      "candidate_id": "graspgenx_052",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 601
+    },
+    {
+      "candidate_id": "graspgenx_235",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 106
+    },
+    {
+      "candidate_id": "graspgenx_237",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 39
+    },
+    {
+      "candidate_id": "graspgenx_238",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 72
+    },
+    {
+      "candidate_id": "graspgenx_251",
+      "descriptor_id": "kcg_3f_preshape_00",
+      "raw_index": 98
+    },
+    {
+      "candidate_id": "graspgenx_053",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 0
+    },
+    {
+      "candidate_id": "graspgenx_055",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 2
+    },
+    {
+      "candidate_id": "graspgenx_056",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 3
+    },
+    {
+      "candidate_id": "graspgenx_057",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 4
+    },
+    {
+      "candidate_id": "graspgenx_058",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 5
+    },
+    {
+      "candidate_id": "graspgenx_059",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 6
+    },
+    {
+      "candidate_id": "graspgenx_060",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 7
+    },
+    {
+      "candidate_id": "graspgenx_061",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 8
+    },
+    {
+      "candidate_id": "graspgenx_062",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 9
+    },
+    {
+      "candidate_id": "graspgenx_063",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 10
+    },
+    {
+      "candidate_id": "graspgenx_065",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 12
+    },
+    {
+      "candidate_id": "graspgenx_066",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 13
+    },
+    {
+      "candidate_id": "graspgenx_069",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 16
+    },
+    {
+      "candidate_id": "graspgenx_075",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 22
+    },
+    {
+      "candidate_id": "graspgenx_079",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 26
+    },
+    {
+      "candidate_id": "graspgenx_080",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 27
+    },
+    {
+      "candidate_id": "graspgenx_081",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 28
+    },
+    {
+      "candidate_id": "graspgenx_084",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 31
+    },
+    {
+      "candidate_id": "graspgenx_086",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 33
+    },
+    {
+      "candidate_id": "graspgenx_229",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 85
+    },
+    {
+      "candidate_id": "graspgenx_231",
+      "descriptor_id": "kcg_3f_preshape_01",
+      "raw_index": 86
+    },
+    {
+      "candidate_id": "graspgenx_089",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 0
+    },
+    {
+      "candidate_id": "graspgenx_090",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 1
+    },
+    {
+      "candidate_id": "graspgenx_091",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 2
+    },
+    {
+      "candidate_id": "graspgenx_092",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 3
+    },
+    {
+      "candidate_id": "graspgenx_093",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 4
+    },
+    {
+      "candidate_id": "graspgenx_094",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 5
+    },
+    {
+      "candidate_id": "graspgenx_095",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 6
+    },
+    {
+      "candidate_id": "graspgenx_096",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 7
+    },
+    {
+      "candidate_id": "graspgenx_097",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 8
+    },
+    {
+      "candidate_id": "graspgenx_099",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 10
+    },
+    {
+      "candidate_id": "graspgenx_102",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 13
+    },
+    {
+      "candidate_id": "graspgenx_103",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 14
+    },
+    {
+      "candidate_id": "graspgenx_104",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 15
+    },
+    {
+      "candidate_id": "graspgenx_105",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 16
+    },
+    {
+      "candidate_id": "graspgenx_106",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 17
+    },
+    {
+      "candidate_id": "graspgenx_108",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 19
+    },
+    {
+      "candidate_id": "graspgenx_111",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 22
+    },
+    {
+      "candidate_id": "graspgenx_113",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 24
+    },
+    {
+      "candidate_id": "graspgenx_116",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 813
+    },
+    {
+      "candidate_id": "graspgenx_117",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 811
+    },
+    {
+      "candidate_id": "graspgenx_118",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 809
+    },
+    {
+      "candidate_id": "graspgenx_119",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 897
+    },
+    {
+      "candidate_id": "graspgenx_120",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 883
+    },
+    {
+      "candidate_id": "graspgenx_121",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 885
+    },
+    {
+      "candidate_id": "graspgenx_122",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 825
+    },
+    {
+      "candidate_id": "graspgenx_123",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 881
+    },
+    {
+      "candidate_id": "graspgenx_124",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 823
+    },
+    {
+      "candidate_id": "graspgenx_125",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 741
+    },
+    {
+      "candidate_id": "graspgenx_126",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 817
+    },
+    {
+      "candidate_id": "graspgenx_127",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 737
+    },
+    {
+      "candidate_id": "graspgenx_128",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 895
+    },
+    {
+      "candidate_id": "graspgenx_129",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 781
+    },
+    {
+      "candidate_id": "graspgenx_130",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 745
+    },
+    {
+      "candidate_id": "graspgenx_131",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 819
+    },
+    {
+      "candidate_id": "graspgenx_132",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 779
+    },
+    {
+      "candidate_id": "graspgenx_133",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 891
+    },
+    {
+      "candidate_id": "graspgenx_134",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 815
+    },
+    {
+      "candidate_id": "graspgenx_135",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 747
+    },
+    {
+      "candidate_id": "graspgenx_136",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 821
+    },
+    {
+      "candidate_id": "graspgenx_137",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 853
+    },
+    {
+      "candidate_id": "graspgenx_138",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 743
+    },
+    {
+      "candidate_id": "graspgenx_139",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 851
+    },
+    {
+      "candidate_id": "graspgenx_140",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 889
+    },
+    {
+      "candidate_id": "graspgenx_141",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 789
+    },
+    {
+      "candidate_id": "graspgenx_142",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 787
+    },
+    {
+      "candidate_id": "graspgenx_143",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 893
+    },
+    {
+      "candidate_id": "graspgenx_144",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 707
+    },
+    {
+      "candidate_id": "graspgenx_145",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 861
+    },
+    {
+      "candidate_id": "graspgenx_146",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 739
+    },
+    {
+      "candidate_id": "graspgenx_147",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 807
+    },
+    {
+      "candidate_id": "graspgenx_148",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 887
+    },
+    {
+      "candidate_id": "graspgenx_149",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 783
+    },
+    {
+      "candidate_id": "graspgenx_150",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 859
+    },
+    {
+      "candidate_id": "graspgenx_151",
+      "descriptor_id": "kcg_3f_preshape_02",
+      "raw_index": 899
+    },
+    {
+      "candidate_id": "graspgenx_152",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 0
+    },
+    {
+      "candidate_id": "graspgenx_156",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 4
+    },
+    {
+      "candidate_id": "graspgenx_157",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 5
+    },
+    {
+      "candidate_id": "graspgenx_159",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 7
+    },
+    {
+      "candidate_id": "graspgenx_160",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 8
+    },
+    {
+      "candidate_id": "graspgenx_165",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 13
+    },
+    {
+      "candidate_id": "graspgenx_168",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 16
+    },
+    {
+      "candidate_id": "graspgenx_171",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 19
+    },
+    {
+      "candidate_id": "graspgenx_173",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 21
+    },
+    {
+      "candidate_id": "graspgenx_174",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 22
+    },
+    {
+      "candidate_id": "graspgenx_180",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 28
+    },
+    {
+      "candidate_id": "graspgenx_181",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 29
+    },
+    {
+      "candidate_id": "graspgenx_183",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 31
+    },
+    {
+      "candidate_id": "graspgenx_184",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 32
+    },
+    {
+      "candidate_id": "graspgenx_185",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 33
+    },
+    {
+      "candidate_id": "graspgenx_187",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 35
+    },
+    {
+      "candidate_id": "graspgenx_241",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 94
+    },
+    {
+      "candidate_id": "graspgenx_242",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 110
+    },
+    {
+      "candidate_id": "graspgenx_254",
+      "descriptor_id": "kcg_3f_preshape_03",
+      "raw_index": 127
+    },
+    {
+      "candidate_id": "graspgenx_188",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 0
+    },
+    {
+      "candidate_id": "graspgenx_192",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 4
+    },
+    {
+      "candidate_id": "graspgenx_199",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 11
+    },
+    {
+      "candidate_id": "graspgenx_202",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 14
+    },
+    {
+      "candidate_id": "graspgenx_205",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 17
+    },
+    {
+      "candidate_id": "graspgenx_206",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 18
+    },
+    {
+      "candidate_id": "graspgenx_208",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 20
+    },
+    {
+      "candidate_id": "graspgenx_209",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 21
+    },
+    {
+      "candidate_id": "graspgenx_210",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 22
+    },
+    {
+      "candidate_id": "graspgenx_211",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 23
+    },
+    {
+      "candidate_id": "graspgenx_212",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 24
+    },
+    {
+      "candidate_id": "graspgenx_213",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 25
+    },
+    {
+      "candidate_id": "graspgenx_215",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 27
+    },
+    {
+      "candidate_id": "graspgenx_217",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 29
+    },
+    {
+      "candidate_id": "graspgenx_219",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 31
+    },
+    {
+      "candidate_id": "graspgenx_220",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 32
+    },
+    {
+      "candidate_id": "graspgenx_223",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 35
+    },
+    {
+      "candidate_id": "graspgenx_224",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 101
+    },
+    {
+      "candidate_id": "graspgenx_232",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 116
+    },
+    {
+      "candidate_id": "graspgenx_248",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 72
+    },
+    {
+      "candidate_id": "graspgenx_249",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 62
+    },
+    {
+      "candidate_id": "graspgenx_252",
+      "descriptor_id": "kcg_3f_preshape_04",
+      "raw_index": 92
+    }
+  ],
+  "rejected_count": 156,
+  "retained_count": 100,
+  "scene_components": [
+    "FINITE_TABLE_TOP"
+  ],
+  "schema_version": "graspgenx_carts_scene_pc_filter_v1",
+  "table_point_cloud_sha256": "a164c7bf4e7154f5f2cad3d4110bb5c58e5cd17c53f95d896dd33f2e8a5ac43d",
+  "table_point_count": 8160,
+  "table_top_z_m": 0.2,
+  "table_xy_bounds_m": [
+    [
+      0.15000000000000002,
+      0.9500000000000001
+    ],
+    [
+      -0.45,
+      0.45
+    ]
+  ],
+  "target_object_points_included": false
+}
