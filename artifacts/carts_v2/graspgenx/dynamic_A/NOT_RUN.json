@@ -1,7 +1,7 @@
 {
   "schema_version": "graspgenx_carts_dynamic_not_run_v1",
   "object_id": "current_d38999_26kj61sn_public_spec",
-  "source_commit": "CONTAINING_GIT_COMMIT",
+  "source_commit": "c26160a298507dcc360b32920f9f41f53173073b",
   "generator_runner_sha256": "d1035ca13f634d4ae30692c6c5dc1a4ddb84d2cc8ad57f69bbc47ba9d2e26d6f",
   "proposal_sha256": "b89fb5a349980d33c86cf78b9011cc49357fed2dc8ef6a190b12c96ae92b4296",
   "offline_result_sha256": "30c3b985c5fd636efd4b931fba96669ab0c449f15fe33f7534d23813a3ddec27",

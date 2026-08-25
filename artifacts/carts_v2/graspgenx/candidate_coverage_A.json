@@ -1,7 +1,7 @@
 {
   "schema_version": "graspgenx_carts_6d_coverage_index_v1",
   "object_id": "current_d38999_26kj61sn_public_spec",
-  "source_commit": "CONTAINING_GIT_COMMIT",
+  "source_commit": "c26160a298507dcc360b32920f9f41f53173073b",
   "source_artifact": "artifacts/carts_v2/graspgenx/offline_obb_xy_fixed_v5_A/candidate_coverage.json",
   "source_sha256": "e572587a32b77d921e20662c18bf87646b041e5cbe24b6d7c6824b541836d972",
   "candidate_count": 256,

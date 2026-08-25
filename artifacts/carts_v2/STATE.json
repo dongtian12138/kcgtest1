@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T01:45:00Z",
+  "updated_at_utc": "2026-08-25T05:28:39Z",
   "started_at_utc": "2026-08-24T14:46:08Z",
   "hard_deadline_utc": "2026-08-25T02:46:08Z",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "config_sha256": "70caae32dacce1f03e8faca39f9de1d5ffdaa71821449a07844568b1f001b1ea",
   "start_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "IMPLEMENTING",
-  "current_milestone": "GRASPGENX_ROUTE1_OBB_INTERFACE_FIX_CLOSEOUT",
+  "status": "PARKED",
+  "current_milestone": "GRASPGENX_ROUTE1_12H_CLOSED_NO_RESEARCH_EXECUTABLE",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -25,7 +25,9 @@
     "maximum_duration_s": 43200,
     "automatic_extension_allowed": false,
     "unattended_execution": true,
-    "stop_condition_reached": false,
+    "stop_condition_reached": true,
+    "stopped_at_utc": "2026-08-25T02:46:08Z",
+    "stop_reason": "TWELVE_HOUR_WALL_DEADLINE_REACHED_WITH_NO_RESEARCH_EXECUTABLE_CANDIDATE",
     "old_narrow_generator_park_superseded": true
   },
   "git_delivery": {
@@ -47,7 +49,9 @@
     "offline_reselection_sweep_commit": "4248187",
     "offline_reselection_ranking_commit": "dadab16",
     "offline_reselection_code_push_status": "PUSHED",
-    "offline_reselection_final_evidence_commit": "CONTAINING_GIT_COMMIT",
+    "offline_reselection_final_evidence_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
+    "graspgenx_route1_evidence_commit": "c26160a298507dcc360b32920f9f41f53173073b",
+    "graspgenx_route1_evidence_push_status": "PUSHED",
     "push_failure": null,
     "recovery_branch": "carts-v2-pre-integration-698a2bb",
     "recovery_bundle": "artifacts/carts_v2/CARTS_V2_INTEGRATION_57efc16_INCREMENTAL.bundle",
@@ -57,9 +61,11 @@
     "recovery_bundle_tip_commit": "57efc16bfa354cc7b99a5ce4c07c59185b04fa28"
   },
   "deadline_closeout": {
-    "evaluated_at_utc": "2026-08-24T06:42:18Z",
-    "deadline_exceeded_by_s": 14440,
+    "evaluated_at_utc": "2026-08-25T05:28:39Z",
+    "deadline_exceeded_by_s": 9751,
+    "actual_wall_elapsed_s_at_closeout": 52951,
     "new_feature_work_stopped": true,
+    "post_deadline_scope": "EVIDENCE_REPRODUCIBILITY_COMPLETION_AND_CLOSEOUT_ONLY_NO_NEW_FEATURE_OR_ISAAC",
     "isaac_runs_after_deadline": 0,
     "nvidia_smi_available_after_deadline": true,
     "dynamic_success_target_achieved": false
@@ -115,7 +121,7 @@
     "proposal_conditioning_mode": "REGISTERED_FULL_OBJECT_MESH_SURFACE_POINT_CLOUD",
     "downstream_collision_geometry_scope": "FULL_REGISTERED_OBJECT_MESH",
     "collision_scope_claim": "FULL_MESH_IS_USED_BY_DOWNSTREAM_V2_CONTROL_STATE_FCL_NOT_BY_GRASPGENX_PROPOSAL_VISIBILITY",
-    "proposal_exact_repeat_pass": null,
+    "proposal_exact_repeat_pass": true,
     "legacy_mixed_parameter_official_raw_proposal_count_per_object": 17480,
     "legacy_mixed_parameter_object_a_open_sweep_visible_total": 15704,
     "legacy_mixed_parameter_object_b_open_sweep_visible_total": 15701,
@@ -254,6 +260,11 @@
     "active_obb_lateral_interface_fix_offline": {
       "rule": "ONLY_OBB_POSTMULTIPLY_TRANSLATION_NEGATIVE_OPEN_SWEEP_XY_GENERATOR_FRAME_Z_UNCHANGED",
       "same_rule_for_both_objects": true,
+      "separate_process_repeat_proposal_arrays_exact_match": true,
+      "repeat_scope": "SAME_ENVIRONMENT_AND_SEED_SEPARATE_PROCESS_TEMP_DIRECTORY_DETERMINISTIC_REPLAY; PROPOSALS_ARRAY_EXACT; DOWNSTREAM_CANDIDATES_COVERAGE_AND_SCENE_AUDIT_BYTE_EXACT; RESULT_EXACT_AFTER_TIMINGS_REMOVED; NOT_A_STATISTICALLY_INDEPENDENT_TRIAL",
+      "separate_process_repeat_downstream_exact_match": true,
+      "object_a_repeat_result_without_timings_sha256": "43ea080de3ce218992fd62dd65dd3649d1c59a111263d1c8afbf54d20965587b",
+      "object_b_repeat_result_without_timings_sha256": "6ab7da22b2d0fb5c6ce75609f80ad2bf074b1ef3751d014f38407f672a1e34e3",
       "generator_runner_sha256": "d1035ca13f634d4ae30692c6c5dc1a4ddb84d2cc8ad57f69bbc47ba9d2e26d6f",
       "object_a": {
         "proposal_file_count": 640,
@@ -1077,8 +1088,8 @@
     "graspgenx_route1_closeout_bound_fcl_environment_passed": 27,
     "graspgenx_route1_academic_supervisor": "APPROVE",
     "graspgenx_route1_complexity_supervisor": "APPROVE",
-    "graspgenx_route1_reference_runtime_reproducibility_passed": true,
-    "graspgenx_route1_reproducibility_check_sha256": "ffa98d17b5f6690bd9caf9745fcfdf643d1f3a7bc0b8f9e96f9799a700bb2073",
+    "legacy_pre_obb_reference_runtime_reproducibility_passed": true,
+    "legacy_pre_obb_reproducibility_check_sha256": "ffa98d17b5f6690bd9caf9745fcfdf643d1f3a7bc0b8f9e96f9799a700bb2073",
     "scene_pc_filter_targeted_tests_passed": 19,
     "scene_pc_filter_two_object_audit_pass": true,
     "scene_pc_filter_academic_supervisor": "APPROVE_AFTER_EVIDENCE_IDENTITY_CORRECTION",
@@ -1086,9 +1097,9 @@
     "score_per_descriptor_targeted_sampling_tests_passed": 17,
     "score_per_descriptor_complexity_supervisor": "APPROVE_2178_ADDED_79_DELETED_2099_NET_NLOC",
     "score_per_descriptor_academic_supervisor": "APPROVE_VISIBILITY_AUDIT_ONLY_AND_CONTROL_STEP_BOUNDED_CLOSURE",
-    "obb_xy_fix_targeted_system_python_passed": 25,
+    "obb_xy_fix_targeted_system_python_passed": 26,
     "obb_xy_fix_targeted_system_python_skipped": 3,
-    "obb_xy_fix_bound_graspgenx_environment_passed": 3,
+    "obb_xy_fix_bound_graspgenx_environment_passed": 5,
     "obb_xy_fix_python_compile_passed": true
   },
   "blockers": [

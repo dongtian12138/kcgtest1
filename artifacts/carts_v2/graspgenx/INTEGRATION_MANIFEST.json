@@ -1,9 +1,10 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-25T01:45:00Z",
+  "updated_at_utc": "2026-08-25T05:28:39Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
+  "active_evidence_commit": "c26160a298507dcc360b32920f9f41f53173073b",
   "method_name": "GraspGenX-CARTS",
   "active_route_config": "src/kcg_connector/config/carts_graspgenx_route1.yaml",
   "active_route_config_sha256": "70caae32dacce1f03e8faca39f9de1d5ffdaa71821449a07844568b1f001b1ea",
@@ -320,8 +321,18 @@
       "current_d38999_26kj61sn_public_spec": "artifacts/carts_v2/graspgenx/proposals_obb_xy_fixed_v5/current_d38999_26kj61sn_public_spec.json",
       "te_deutsch_d38999_26fj35pn_step": "artifacts/carts_v2/graspgenx/proposals_obb_xy_fixed_v5/te_deutsch_d38999_26fj35pn_step.json"
     },
-    "exact_repeat_candidate_arrays_pass": null,
-    "exact_repeat_scope": "CURRENT_FULL_OBJECT_PROPOSAL_FILES_HASH_BOUND_BUT_NOT_INDEPENDENTLY_REGENERATED_TWICE",
+    "exact_repeat_candidate_arrays_pass": true,
+    "exact_repeat_scope": "SAME_ENVIRONMENT_AND_SEED_SEPARATE_PROCESS_TEMP_DIRECTORY_DETERMINISTIC_REPLAY_PROPOSALS_ARRAY_EXACT_METADATA_TIMINGS_EXCLUDED_NOT_A_STATISTICALLY_INDEPENDENT_TRIAL",
+    "repeat_checked_at_utc": "2026-08-25T01:54:00Z",
+    "repeat_source_commit": "c26160a298507dcc360b32920f9f41f53173073b",
+    "repeat_runner_sha256": "d1035ca13f634d4ae30692c6c5dc1a4ddb84d2cc8ad57f69bbc47ba9d2e26d6f",
+    "repeat_route_config_sha256": "70caae32dacce1f03e8faca39f9de1d5ffdaa71821449a07844568b1f001b1ea",
+    "repeat_descriptor_manifest_sha256": "694bc74812b8c20cba432b3cc3df0f8c24912c4602718bdd7b84e4358ef43b02",
+    "repeat_runtime": "PYTHON_3.10.12_TORCH_2.7.0_CU128_SM120",
+    "proposal_array_sha256_by_object": {
+      "current_d38999_26kj61sn_public_spec": "1ee02582632ecf023185b2fc78948f9dc14d87907450d75d8038f97a9b67bb27",
+      "te_deutsch_d38999_26fj35pn_step": "7b7c82446901de3dc74c7c201e3512a62d8ac87a21740dcf315bada1ea497a19"
+    },
     "proposal_files_committed": true
   },
   "active_obb_lateral_interface_fix_offline": {
@@ -331,6 +342,38 @@
     "z_offset_modified": false,
     "same_rule_for_both_objects": true,
     "per_proposal_applied_boolean_present": true,
+    "separate_process_downstream_repeat": {
+      "pass": true,
+      "scope": "SAME_ENVIRONMENT_AND_SEED_SEPARATE_PROCESS_TEMP_DIRECTORY_DETERMINISTIC_REPLAY_CANDIDATES_CSV_COVERAGE_AND_SCENE_AUDIT_BYTE_EXACT_RESULT_JSON_EXACT_AFTER_TIMINGS_REMOVED_NOT_A_STATISTICALLY_INDEPENDENT_TRIAL",
+      "source_commit": "c26160a298507dcc360b32920f9f41f53173073b",
+      "entrypoint": "scripts/carts_v2/run_graspgenx_offline.py",
+      "entrypoint_sha256": "290ee0ee31813cfe05d2c4fa471f92e84906a1d6c008fd006ed6ce4529135f02",
+      "route_config_sha256": "70caae32dacce1f03e8faca39f9de1d5ffdaa71821449a07844568b1f001b1ea",
+      "baseline_config_sha256": "a027610187c61cb2cced3ea1c2196285b9e49aee705d759fdc20fcab068675cb",
+      "object_manifest_sha256": "968e14c890692d9bc53a488b16a640150528dc93b33bdd9043f8c44064779fb3",
+      "integration_manifest_sha256_at_run": "8a3622e6501f0850208760c214f95eb33439231cfeaa1dd1a7dcb0bd5521de85",
+      "python_executable": "third_party/GraspGenX/.venv/bin/python",
+      "numpy_version": "1.26.4",
+      "scipy_version": "1.15.3",
+      "temporary_outputs_committed": false,
+      "object_a": {
+        "completed_at_utc": "2026-08-25T02:02:25Z",
+        "proposal_sha256": "b89fb5a349980d33c86cf78b9011cc49357fed2dc8ef6a190b12c96ae92b4296",
+        "candidates_csv_sha256": "8651cc1ac1b9c12837b30e5441b1374f7dbb2bcdbfea5a59a8c7c52d99138b23",
+        "coverage_sha256": "e572587a32b77d921e20662c18bf87646b041e5cbe24b6d7c6824b541836d972",
+        "scene_audit_sha256": "4e6fb474245b7f8325a83c9fef5352d5c00aaf6f580d83b2682c088f2a829182",
+        "result_without_timings_sha256": "43ea080de3ce218992fd62dd65dd3649d1c59a111263d1c8afbf54d20965587b"
+      },
+      "object_b": {
+        "completed_at_utc": "2026-08-25T05:27:08Z",
+        "proposal_sha256": "57eb736424c88b9ff05acbdb3a0e29b622eb49ef8d10f0d9e9aa8ed5ccdde2a1",
+        "candidates_csv_sha256": "9babf4d6d68184f625ba16fb58c2a408d9baebac0e0f3ad93f9ff54cea7b3b33",
+        "coverage_sha256": "3e9703566c1923dca396452803d2dce1d3da10b4bbf6ba4ac892f692e6e53b60",
+        "scene_audit_sha256": "4d1fc3a6d59adeefa80868c6f03ebe19c8dd099619ff5a3b9ca09e82a786838b",
+        "result_without_timings_sha256": "6ab7da22b2d0fb5c6ce75609f80ad2bf074b1ef3751d014f38407f672a1e34e3"
+      },
+      "claim_scope": "OFFLINE_REPRODUCIBILITY_ONLY_NOT_PHYSICAL_SUCCESS"
+    },
     "object_a": {
       "artifact_directory": "artifacts/carts_v2/graspgenx/offline_obb_xy_fixed_v5_A",
       "result_sha256": "30c3b985c5fd636efd4b931fba96669ab0c449f15fe33f7534d23813a3ddec27",
@@ -463,7 +506,9 @@
     "task_gate_interpretation": "NOT_REACHED_NOT_A_TASK_FAILURE",
     "dynamic_gate_interpretation": "CLOSED_BECAUSE_NO_RESEARCH_EXECUTABLE_CANDIDATE"
   },
-  "reproducibility_check": {
+  "legacy_pre_obb_reproducibility_check": {
+    "status": "LEGACY_PRE_OBB_DB540B3_NOT_CURRENT_V5_REPEAT",
+    "source_commit": "db540b3e5b85fd33cbc03d3265aa22ef1372eaae",
     "path": "artifacts/carts_v2/graspgenx/REPRODUCIBILITY_CHECK.json",
     "sha256": "ffa98d17b5f6690bd9caf9745fcfdf643d1f3a7bc0b8f9e96f9799a700bb2073",
     "reference_runtime_candidate_csv_byte_match": true,
@@ -478,6 +523,16 @@
     "not_exercised_in_route1": true,
     "not_evidence_of_no_penetration": true,
     "required_before_future_dynamic_launch": "PHASE_SPECIFIC_TOLERANCE_AND_PROVENANCE_REVIEW"
+  },
+  "execution_closeout": {
+    "status": "PARKED",
+    "milestone": "GRASPGENX_ROUTE1_12H_CLOSED_NO_RESEARCH_EXECUTABLE",
+    "hard_deadline_utc": "2026-08-25T02:46:08Z",
+    "evaluated_at_utc": "2026-08-25T05:28:39Z",
+    "new_feature_work_stopped": true,
+    "isaac_launched": false,
+    "stop_reason": "TWELVE_HOUR_WALL_DEADLINE_REACHED_WITH_NO_RESEARCH_EXECUTABLE_CANDIDATE",
+    "automatic_extension_allowed": false
   },
   "evidence_boundaries": {
     "hardware_authorized": false,
