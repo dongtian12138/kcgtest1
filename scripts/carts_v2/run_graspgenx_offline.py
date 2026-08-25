@@ -23,9 +23,14 @@ from kcg_connector.grasp.carts_v2.graspgenx_adapter import (
     load_graspgenx_candidates,
 )
 from kcg_connector.grasp.carts_v2.models import V2Inputs, load_v2_inputs
+from kcg_connector.grasp.carts_v2.height_projected_search import (
+    SampledPathEnvelope, sampled_height_path_states,
+    search_height_projected_pregrasps,
+)
 from kcg_connector.grasp.carts_v2.pipeline import run_offline_pipeline
 from kcg_connector.grasp.carts_v2.reporting import write_offline_report
 from kcg_connector.grasp.robust.object_model import file_sha256
+from kcg_connector.grasp.carts_v2.surface_contact import ExactContactSurfaceQuery
 
 
 def summarize_six_d_coverage(inputs: V2Inputs,
@@ -293,91 +298,27 @@ def _candidate_sequence_sha256(adapted) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def _budget_diagnostics(inputs, adapted, scene_preferred, probe_reports) -> dict[str, dict]:
+def _pregrasp_contact_key(inputs, query, seed) -> tuple[float, ...]:
+    transforms = inputs.hand_model.forward_kinematics(
+        seed.pregrasp_joint_positions_rad,
+        base_transform=seed.object_from_hand_matrix())
+    distances = []
+    for name, surface in sorted(inputs.task_grip_surfaces.items()):
+        nearest, _point, _normal = query.query_pad(name, transforms[surface.link_name])
+        distances.append(float(nearest.distance_m[0]))
+    if len(distances) != 3 or any(not np.isfinite(value) for value in distances):
+        raise ValueError("pregrasp task-surface distances are invalid")
+    return max(distances), sum(distances), *seed.pregrasp_closure_phases
+
+
+def _contact_height_bounds(inputs, seed, reach_cache) -> tuple[float, float]:
+    if seed.descriptor_id not in reach_cache:
+        reach_cache[seed.descriptor_id] = _hand_reach_radius(inputs, seed)
     vertices = inputs.object_contract.model.mesh.vertices_m
-    lower, upper = np.min(vertices, axis=0), np.max(vertices, axis=0)
-    preferred_ids = {row.seed.candidate_id for row in scene_preferred}
-    if len(probe_reports) != len(adapted):
-        raise ValueError("phase-zero real-mesh probe count changed")
-    probes = {}
-    for row, report in zip(adapted, probe_reports):
-        candidate_id = row.seed.candidate_id
-        if (str(report.get("candidate_id")) != candidate_id
-                or tuple(report.get("pregrasp_closure_phases", ())) != (0.0, 0.0, 0.0)
-                or type(report.get("accepted")) is not bool):
-            raise ValueError("phase-zero real-mesh probe identity changed")
-        probes[candidate_id] = dict(report)
-    reach_by_descriptor = {}
-    result = {}
-    for row in adapted:
-        seed = row.seed
-        if seed.descriptor_id not in reach_by_descriptor:
-            reach_by_descriptor[seed.descriptor_id] = _hand_reach_radius(inputs, seed)
-        reach = reach_by_descriptor[seed.descriptor_id]
-        handbase = seed.object_from_hand_matrix()[:3, 3]
-        displacement = np.maximum(np.maximum(lower - handbase, handbase - upper), 0.0)
-        base_aabb_gap = float(np.linalg.norm(displacement))
-        reach_gap = max(0.0, base_aabb_gap - reach)
-        probe = probes[seed.candidate_id]
-        pad_map = probe.get("pregrasp_pad_clearance_by_name_m")
-        pad_values = () if not isinstance(pad_map, dict) else tuple(
-            float(value) for value in pad_map.values())
-        if pad_values and (len(pad_values) != 3
-                           or any(not np.isfinite(value) for value in pad_values)):
-            raise ValueError("phase-zero real-mesh PAD distances are invalid")
-        result[seed.candidate_id] = {
-            "branch": str(row.evidence["graspgenx_branch"]),
-            "generator_score": float(row.evidence["graspgenx_score"]),
-            "physical_selection_key": [
-                0.0 if probe["accepted"] else 1.0,
-                0.0 if pad_values else 1.0,
-                max(pad_values, default=0.0),
-                0.0 if seed.candidate_id in preferred_ids else 1.0,
-                reach_gap, base_aabb_gap,
-            ],
-            "phase_zero_real_mesh_probe_accepted": probe["accepted"],
-            "phase_zero_real_mesh_probe_reasons": list(probe.get("reasons", ())),
-            "phase_zero_pregrasp_pad_clearance_by_name_m": pad_map,
-            "real_mesh_probe_role": "DIAGNOSTIC_ONLY_NOT_HARD_REJECT",
-            "official_scene_pc_preferred": seed.candidate_id in preferred_ids,
-            "hand_reach_sphere_radius_m": reach,
-            "handbase_to_object_aabb_gap_m": base_aabb_gap,
-            "aabb_reach_gap_m": reach_gap,
-            "aabb_selection_role": "DIAGNOSTIC_ONLY_NOT_HARD_REJECT",
-        }
-    return result
-
-
-def _precise_result(predictor, inputs, seed) -> dict[str, object]:
-    prediction = predictor.predict(seed)
-    filtered = fast_filter_predictions(inputs, (prediction,))[0]
-    closure_pass = prediction.status == "CLOSURE_SURVIVE" and len(prediction.contacts) == 3
-    fast_pass = (
-        filtered.status == "FAST_SURVIVE"
-        and filtered.sequential_closure_sweep_pass
-        and (filtered.minimum_table_clearance_m is None
-             or np.isfinite(filtered.minimum_table_clearance_m))
-    )
-    accepted = bool(closure_pass and fast_pass)
-    clearance = filtered.minimum_table_clearance_m
-    reason = ""
-    if not closure_pass:
-        reason = prediction.reason or "NO_THREE_PAD_CONTACT"
-    elif not fast_pass:
-        reason = ";".join(filtered.reasons) or "PRECISE_FAST_FILTER_REJECT"
-    return {
-        "accepted": accepted, "closure_pass": bool(closure_pass),
-        "fast_filter_pass": bool(fast_pass), "reason": reason,
-        "closure_status": prediction.status, "closure_reason": prediction.reason,
-        "contact_count": len(prediction.contacts),
-        "fast_filter_status": filtered.status,
-        "fast_filter_reasons": list(filtered.reasons),
-        "minimum_table_clearance_m": clearance,
-        "selection_key": ([0.0, 0.0] if clearance is None else
-                          [1.0, -float(clearance)]) + [
-            -float(prediction.minimum_initial_pad_clearance_m)
-        ] if accepted else [0.0],
-    }
+    world = (vertices @ inputs.frozen_world_from_object[:3, :3].T
+             + inputs.frozen_world_from_object[:3, 3])
+    reach = float(reach_cache[seed.descriptor_id])
+    return float(np.min(world[:, 2]) - reach), float(np.max(world[:, 2]) + reach)
 
 
 def _render_coverage(inputs, adapted, baseline, destination: Path) -> None:
@@ -449,7 +390,7 @@ def main() -> int:
     coverage = summarize_six_d_coverage(inputs, adapted)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     _write_json(args.output_dir / "candidate_coverage.json", coverage)
-    scene_preferred, scene_audit = _filter_open_hand_from_table(inputs, adapted)
+    _scene_preferred, scene_audit = _filter_open_hand_from_table(inputs, adapted)
     _write_json(args.output_dir / "scene_pc_filter_audit.json", scene_audit)
     if not args.skip_coverage_render:
         baseline_inputs = load_v2_inputs(
@@ -465,14 +406,42 @@ def main() -> int:
         print("six-dimensional coverage diagnostic failed closed")
         return 2
     predictor = SequentialClosurePredictor(inputs)
-    probe_reports = fast_filter_pregrasp_paths(
-        inputs, tuple((row.seed, (0.0, 0.0, 0.0)) for row in adapted),
-        budget_probe_only=True)
-    _write_json(args.output_dir / "phase0_real_mesh_budget_probe.json", {
-        "schema_version": "carts_full_palm_phase0_budget_probe_v1",
-        "claim_scope": "REAL_MESH_PREGRASP_SNAPSHOT_DIAGNOSTIC_ONLY_NOT_PATH_PROOF",
-        "reports": probe_reports,
-    })
+    surface_query = ExactContactSurfaceQuery(inputs)
+    height_settings = inputs.config.section("height_projection")
+    fast_settings = inputs.config.section("fast_filter")
+    pregrasp_settings = inputs.config.section(
+        "candidate_generation")["pregrasp_search"]
+    reach_cache: dict[str, float] = {}
+
+    def height_evaluator(seed):
+        return search_height_projected_pregrasps(
+            inputs, seed, predictor,
+            sampled_path_envelope=lambda bound: SampledPathEnvelope(
+                tuple(sampled_height_path_states(inputs, bound)),
+                "REGISTERED_CONTROL_STEPS_PALM_PRESHAPE_APPROACH_"
+                "SEQUENTIAL_CLOSURE_PRELOAD_LIFT_START",
+            ),
+            pregrasp_contact_key=lambda bound: _pregrasp_contact_key(
+                inputs, surface_query, bound),
+            pregrasp_path_callback=lambda bound: fast_filter_pregrasp_paths(
+                inputs, ((bound, bound.pregrasp_closure_phases),))[0],
+            fast_filter_callback=lambda prediction: fast_filter_predictions(
+                inputs, (prediction,))[0],
+            contact_height_bounds_m=_contact_height_bounds(
+                inputs, seed, reach_cache),
+            coarse_sample_count=int(
+                height_settings["contact_search_coarse_sample_count"]),
+            boundary_tolerance_m=float(
+                height_settings["contact_boundary_tolerance_m"]),
+            maximum_bisection_iterations=int(
+                height_settings["maximum_bisection_iterations"]),
+            table_numerical_tolerance_m=float(
+                fast_settings["table_penetration_tolerance_m"]),
+            required_table_clearance_m=float(
+                height_settings["table_operation_clearance_m"]),
+            maximum_exact_variants=int(
+                pregrasp_settings["maximum_exact_preclosures_per_seed"]),
+        )
     checkpoint_path = args.output_dir / "full_palm_cascade_checkpoint.json"
     resume_audit = _read(checkpoint_path) if checkpoint_path.exists() else None
     checkpoint_binding = {
@@ -480,6 +449,8 @@ def main() -> int:
             "config": args.config.resolve(),
             "runner": Path(__file__).resolve(),
             "cascade": root / "src/kcg_connector/kcg_connector/grasp/carts_v2/full_palm_search.py",
+            "height_projection": root / "src/kcg_connector/kcg_connector/grasp/carts_v2/height_projection.py",
+            "height_projected_search": root / "src/kcg_connector/kcg_connector/grasp/carts_v2/height_projected_search.py",
             "fast_filter": root / "src/kcg_connector/kcg_connector/grasp/carts_v2/fast_filter.py",
             "closure_predictor": root / "src/kcg_connector/kcg_connector/grasp/carts_v2/closure_predictor.py",
             "surface_contact": root / "src/kcg_connector/kcg_connector/grasp/carts_v2/surface_contact.py",
@@ -504,12 +475,7 @@ def main() -> int:
     selected_seeds, cascade_audit = run_full_palm_cascade(
         inputs, tuple(row.seed for row in adapted),
         _palm_grid(descriptor_document, search_manifest),
-        budget_diagnostics=_budget_diagnostics(
-            inputs, adapted, scene_preferred, probe_reports),
-        pregrasp_evaluator=lambda variants: fast_filter_pregrasp_paths(
-            inputs, variants
-        ),
-        precise_evaluator=lambda seed: _precise_result(predictor, inputs, seed),
+        height_evaluator=height_evaluator,
         resume_audit=resume_audit,
         progress_callback=checkpoint,
     )

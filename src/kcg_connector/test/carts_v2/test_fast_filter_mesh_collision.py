@@ -48,7 +48,9 @@ class FastFilterMeshCollisionTest(TestCase):
         self.assertEqual(len(scene[3]), 28)
         reason = fast_filter._first_state_collision(
             self.inputs,
-            fast_filter._sampled_hand_states(self.inputs, self.prediction),
+            fast_filter.sampled_sequential_closure_states(
+                self.inputs, self.prediction.seed,
+                self.prediction.final_closure_phases),
             scene,
         )
         self.assertEqual(
@@ -93,9 +95,9 @@ class FastFilterMeshCollisionTest(TestCase):
         self.assertTrue(safe_second["accepted"])
         self.assertLessEqual(safe["maximum_joint_increment_rad"], 0.0015 + 1e-12)
         self.assertGreater(safe["checked_state_count"], 5)
-        states = fast_filter._bounded_pregrasp_states(
+        states = fast_filter.sampled_pregrasp_path_states(
             self.inputs, far, (0.1, 0.1, 0.1))
-        second_states = fast_filter._bounded_pregrasp_states(
+        second_states = fast_filter.sampled_pregrasp_path_states(
             self.inputs, far, (0.2, 0.2, 0.2))
         shared = sum(state[0].startswith("PALM_FAR_") for state in states)
         self.assertEqual(inspect.call_count, len(states) + len(second_states) - shared)

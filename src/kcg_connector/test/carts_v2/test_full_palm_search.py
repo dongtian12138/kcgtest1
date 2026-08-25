@@ -1,15 +1,17 @@
-import json
+"""Regressions for height feasibility before the per-angle Top-8 budget."""
+
 from dataclasses import replace
+import json
 from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
 from kcg_connector.grasp.carts_v2.full_palm_search import (
+    bind_pregrasp,
     fixed_pregrasp_phase_combinations,
     group_candidates_by_palm,
     run_full_palm_cascade,
-    select_pregrasp_combination,
 )
 from kcg_connector.grasp.carts_v2.models import CandidateSeed
 
@@ -26,7 +28,6 @@ class _Hand:
 
     def resolve_joint_positions(self, positions, *, enforce_limits):
         assert enforce_limits
-        assert len(positions) == 4
         return dict(zip(self.independent_joint_names, positions))
 
 
@@ -55,19 +56,35 @@ def _seed(identifier: str, palm_index: int, source_index: int = 0) -> CandidateS
     )
 
 
-def _pregrasp_result(seed, phases):
-    distance = sum(abs(value - 0.1) for value in phases)
-    return {
-        "candidate_id": seed.candidate_id,
-        "pregrasp_closure_phases": phases,
-        "accepted": True, "reasons": (),
-        "minimum_table_clearance_m": 0.02 - distance,
-        "pregrasp_pad_clearance_by_name_m": {
-            "finger_1_pad": 0.001 + distance,
-            "finger_2_pad": 0.002 + distance,
-            "finger_3_pad": 0.003 + distance,
-        },
-    }
+def _height_evaluator(calls, rejected=()):
+    rejected = set(rejected)
+
+    def evaluate(seed):
+        calls.append(seed.candidate_id)
+        phases = (0.1, 0.1, 0.1)
+        if seed.candidate_id in rejected:
+            return (), {
+                "candidate_id": seed.candidate_id,
+                "exact_variant_evaluated_count": 1,
+                "evaluated": [{"pregrasp_closure_phases": list(phases),
+                               "status": "HARD_REJECT",
+                               "reason": "EMPTY_TABLE_AND_CONTACT_HEIGHT_INTERSECTION"}],
+            }
+        projected = bind_pregrasp(INPUTS, seed, phases)
+        pose = projected.object_from_hand_matrix().copy()
+        pose[2, 3] = 0.1 + 0.001 * seed.source_sample_index
+        projected = replace(projected, object_from_hand=tuple(pose.ravel()))
+        return (projected,), {
+            "candidate_id": seed.candidate_id,
+            "exact_variant_evaluated_count": 1,
+            "evaluated": [{
+                "pregrasp_closure_phases": list(phases),
+                "status": "OFFLINE_SAMPLED_HAND_HEIGHT_FEASIBLE_AT_PROJECTED_Z",
+                "selection_key": [float(seed.source_sample_index)],
+            }],
+        }
+
+    return evaluate
 
 
 def test_fixed_design_and_group_identity_are_fail_closed() -> None:
@@ -79,160 +96,69 @@ def test_fixed_design_and_group_identity_are_fail_closed() -> None:
     assert [seed.candidate_id for seed in groups[0][1]] == ["a", "z"]
     with pytest.raises(ValueError, match="64-candidate"):
         group_candidates_by_palm(
-            tuple(_seed(f"c{index:02d}", 1, index) for index in range(65)), GRID
-        )
-    with pytest.raises(ValueError, match="no finite palm"):
-        group_candidates_by_palm(
-            (replace(_seed("bad", 0), palm_configuration_rad=None),), GRID
-        )
+            tuple(_seed(f"c{index:02d}", 1, index) for index in range(65)), GRID)
 
 
-def test_pregrasp_choice_requires_all_27_bound_phase_results() -> None:
-    seed = _seed("candidate", 45)
-    rows = tuple(
-        (phases, _pregrasp_result(seed, phases))
-        for phases in fixed_pregrasp_phase_combinations()
-    )
-    selected = select_pregrasp_combination(seed, rows)
-    assert selected["pregrasp_closure_phases"] == (0.1, 0.1, 0.1)
-    outside_table = dict(rows[0][1], minimum_table_clearance_m=None)
-    outside_selected = select_pregrasp_combination(
-        seed, ((rows[0][0], outside_table), *rows[1:])
-    )
-    assert outside_selected["pregrasp_closure_phases"] == (0.1, 0.1, 0.1)
-    assert outside_selected["worst_pregrasp_pad_clearance_m"] == pytest.approx(0.003)
-    misleading = dict(rows[0][1], pregrasp_pad_clearance_by_name_m={
-        "finger_1_pad": 0.0001, "finger_2_pad": 0.05, "finger_3_pad": 0.05})
-    worst_selected = select_pregrasp_combination(
-        seed, ((rows[0][0], misleading), *rows[1:]))
-    assert worst_selected["pregrasp_closure_phases"] == (0.1, 0.1, 0.1)
-    changed = dict(rows[0][1], pregrasp_closure_phases=(0.2, 0.2, 0.2))
-    with pytest.raises(ValueError, match="phase identity"):
-        select_pregrasp_combination(seed, ((rows[0][0], changed), *rows[1:]))
-
-
-def test_cascade_reserves_each_branch_and_binds_selected_preshape() -> None:
-    candidates = tuple(_seed(f"diff_{index}", 30, index) for index in range(9))
-    candidates += tuple(_seed(f"obb_{index}", 30, 100 + index) for index in range(9))
-    diagnostics = {
-        seed.candidate_id: {
-            "branch": "obb" if seed.candidate_id.startswith("obb") else "diff",
-            "generator_score": 1000.0 if seed.candidate_id.startswith("diff") else -1000.0,
-            "physical_selection_key": [float(seed.source_sample_index)],
-            "aabb_selection_role": "DIAGNOSTIC_ONLY_NOT_HARD_REJECT",
-        }
-        for seed in candidates
-    }
-    batch_sizes, precise = [], []
-
-    def pregrasp(variants):
-        batch_sizes.append(len(variants))
-        return tuple(_pregrasp_result(seed, phases) for seed, phases in variants)
-
-    def exact(seed):
-        precise.append(seed)
-        return {
-            "accepted": True, "closure_pass": True, "fast_filter_pass": True,
-            "selection_key": [float(seed.source_sample_index)],
-        }
-
-    checkpoints = []
+def test_every_seed_is_height_evaluated_before_per_angle_top8() -> None:
+    candidates = tuple(_seed(f"seed_{index:02d}", 30, index)
+                       for index in range(12))
+    calls, checkpoints = [], []
     selected, audit = run_full_palm_cascade(
-        INPUTS, candidates, GRID, budget_diagnostics=diagnostics,
-        pregrasp_evaluator=pregrasp, precise_evaluator=exact,
+        INPUTS, candidates, GRID, height_evaluator=_height_evaluator(calls),
         progress_callback=lambda value: checkpoints.append(
             json.loads(json.dumps(value))),
     )
-    assert batch_sizes == [8 * 27]
-    assert sum(seed.candidate_id.startswith("diff") for seed in precise) == 7
-    assert sum(seed.candidate_id.startswith("obb") for seed in precise) == 1
+    assert calls == sorted(seed.candidate_id for seed in candidates)
     assert len(selected) == 8
-    assert selected[0].candidate_id == "diff_0"
-    assert selected[0].pregrasp_closure_phases == (0.1, 0.1, 0.1)
-    assert selected[0].pregrasp_joint_positions_rad == pytest.approx(
-        (GRID[30], 0.1, 0.1, 0.1)
-    )
-    assert selected[0].palm_configuration_rad == GRID[30]
+    assert [seed.source_sample_index for seed in selected] == list(range(8))
+    angle = audit["per_angle"][30]
+    assert angle["height_evaluated_seed_count"] == 12
+    assert angle["budget_retained_count"] == 8
+    assert angle["budget_deferred_count"] == 4
     assert {row["reason"] for row in audit["deferred"]} == {
-        "DEFERRED_BY_PER_ANGLE_PRECISE_BUDGET"
+        "DEFERRED_BY_POST_HEIGHT_PER_ANGLE_TOP8"
     }
-    assert max(audit["callback_evaluation_count_by_candidate"].values()) == 28
-    assert audit["pregrasp_physical_query_state_count"] == 0
-    assert audit["pregrasp_reused_identical_state_count"] == 0
     assert len(checkpoints) == 91
-    assert checkpoints[-1]["completed_palm_bucket_count"] == 91
-    resumed, resumed_audit = run_full_palm_cascade(
-        INPUTS, candidates, GRID, budget_diagnostics=diagnostics,
-        pregrasp_evaluator=lambda _rows: pytest.fail("completed checkpoint reran paths"),
-        precise_evaluator=lambda _seed_value: pytest.fail("checkpoint reran closure"),
+    resumed, _ = run_full_palm_cascade(
+        INPUTS, candidates, GRID,
+        height_evaluator=lambda _seed_value: pytest.fail("complete checkpoint reran"),
         resume_audit=checkpoints[-1],
     )
     assert resumed == selected
-    assert resumed_audit["task_evaluation_candidate_ids"] == [
-        seed.candidate_id for seed in selected]
-    json.dumps(audit, allow_nan=False)
 
 
-def test_partial_checkpoint_resumes_at_next_palm_bucket() -> None:
-    candidates = tuple(_seed(f"palm_{index}", index) for index in range(3))
-    diagnostics = {seed.candidate_id: {
-        "branch": "diff", "generator_score": 1.0,
-        "physical_selection_key": [float(index)]}
-        for index, seed in enumerate(candidates)}
-    full_calls, checkpoints = [], []
-
-    def pregrasp(rows):
-        return tuple(_pregrasp_result(seed, phases) for seed, phases in rows)
-
-    def exact(seed):
-        full_calls.append(seed.candidate_id)
-        return {"accepted": True, "closure_pass": True,
-                "fast_filter_pass": True, "selection_key": [0.0]}
-
+def test_partial_checkpoint_resumes_at_next_angle_and_preserves_projection() -> None:
+    candidates = tuple(_seed(f"palm_{index}", index, index) for index in range(3))
+    calls, checkpoints = [], []
     full, _ = run_full_palm_cascade(
-        INPUTS, candidates, GRID, budget_diagnostics=diagnostics,
-        pregrasp_evaluator=pregrasp, precise_evaluator=exact,
+        INPUTS, candidates, GRID, height_evaluator=_height_evaluator(calls),
         progress_callback=lambda value: checkpoints.append(
             json.loads(json.dumps(value))),
     )
-    assert full_calls == ["palm_0", "palm_1", "palm_2"]
-    partial = checkpoints[1]
-    resumed_calls, resumed_checkpoints = [], []
+    resumed_calls = []
     resumed, _ = run_full_palm_cascade(
-        INPUTS, candidates, GRID, budget_diagnostics=diagnostics,
-        pregrasp_evaluator=pregrasp,
-        precise_evaluator=lambda seed: (
-            resumed_calls.append(seed.candidate_id) or {
-                "accepted": True, "closure_pass": True,
-                "fast_filter_pass": True, "selection_key": [0.0]}),
-        resume_audit=partial,
-        progress_callback=lambda value: resumed_checkpoints.append(
-            json.loads(json.dumps(value))),
+        INPUTS, candidates, GRID,
+        height_evaluator=_height_evaluator(resumed_calls),
+        resume_audit=checkpoints[1],
     )
     assert resumed_calls == ["palm_2"]
-    assert resumed_checkpoints[0]["completed_palm_bucket_count"] == 3
     assert resumed == full
+    assert [seed.object_from_hand_matrix()[2, 3] for seed in resumed] == pytest.approx(
+        [0.1, 0.101, 0.102])
 
 
-def test_precise_rejection_is_diagnostic_and_selects_nothing() -> None:
+def test_height_rejection_is_not_promoted_and_old_checkpoint_fails_closed() -> None:
     seed = _seed("rejected", 0)
-    diagnostic = {
-        seed.candidate_id: {"branch": "diff", "generator_score": 1.0,
-                            "physical_selection_key": [0.0]}
-    }
     selected, audit = run_full_palm_cascade(
-        INPUTS, (seed,), GRID, budget_diagnostics=diagnostic,
-        pregrasp_evaluator=lambda rows: tuple(
-            _pregrasp_result(candidate, phases) for candidate, phases in rows
-        ),
-        precise_evaluator=lambda _seed_value: {
-            "accepted": False, "closure_pass": False, "fast_filter_pass": False,
-            "reason": "NO_THREE_PAD_CONTACT", "selection_key": [0.0],
-        },
+        INPUTS, (seed,), GRID,
+        height_evaluator=_height_evaluator([], rejected={seed.candidate_id}),
     )
     assert selected == ()
     assert audit["rejected"][0]["reason"] == (
-        "SELECTED_PREGRASP_PRECISE_REJECT:NO_THREE_PAD_CONTACT")
-    assert audit["rejected"][0]["alternative_pregrasp_status"] == (
-        "BUDGET_DEFERRED_NOT_PHYSICAL_FAILURE")
-    assert audit["claim_scope"].startswith("OFFLINE_")
+        "EMPTY_TABLE_AND_CONTACT_HEIGHT_INTERSECTION")
+    old = dict(audit, schema_version="carts_full_palm_cascade_v1")
+    with pytest.raises(ValueError, match="checkpoint identity"):
+        run_full_palm_cascade(
+            INPUTS, (seed,), GRID, height_evaluator=_height_evaluator([]),
+            resume_audit=old,
+        )

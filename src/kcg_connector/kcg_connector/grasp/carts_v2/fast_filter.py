@@ -71,8 +71,6 @@ def _exact_nonpad_surfaces(inputs: V2Inputs) -> dict[str, np.ndarray]:
         result[link_name] = np.asarray(mesh.face_vertices_m[keep], dtype=np.float64)
     return result
 def build_fcl_bvh_model(vertices: np.ndarray, faces: np.ndarray | None = None):
-    """Build the one shared python-fcl triangle BVH representation."""
-
     if fcl is None:
         raise RuntimeError("python-fcl mesh backend is unavailable")
     if faces is None:
@@ -211,15 +209,15 @@ def _approach_states(
         stage = "PREGRASP" if index == sample_count - 1 else f"APPROACH_{index:02d}"
         states.append((stage, shifted, joints))
     return tuple(states)
-def _sampled_hand_states(
-    inputs: V2Inputs, prediction: ClosurePrediction
+def sampled_sequential_closure_states(inputs: V2Inputs, seed: CandidateSeed,
+    final_phases: tuple[float, float, float]
 ) -> tuple[tuple[str, np.ndarray, np.ndarray], ...]:
     dynamic = inputs.config.section("dynamic")
-    pregrasp = np.asarray(prediction.seed.pregrasp_joint_positions_rad)
-    approach = _approach_states(inputs, prediction.seed, pregrasp)
+    pregrasp = np.asarray(seed.pregrasp_joint_positions_rad)
+    approach = _approach_states(inputs, seed, pregrasp)
     base = approach[-1][1]
     states = list(approach)
-    phases = list(prediction.seed.pregrasp_closure_phases)
+    phases = list(seed.pregrasp_closure_phases)
     phase_by_pad = {
         pad.name: index for index, pad in enumerate(inputs.hand_contract.pads)
     }
@@ -229,7 +227,7 @@ def _sampled_hand_states(
     ):
         phase_index = phase_by_pad[str(pad_name)]
         start_phases = tuple(phases)
-        phases[phase_index] = prediction.final_closure_phases[phase_index]
+        phases[phase_index] = final_phases[phase_index]
         stop_phases = tuple(phases)
         start_joints = joint_positions_for_phases(
             inputs, start_phases, reference_joint_positions_rad=pregrasp
@@ -255,6 +253,8 @@ def _sampled_hand_states(
             )
             states.append((stage, base, joints))
     return tuple(states)
+
+
 def _state_table_clearance(
     inputs: V2Inputs, base: np.ndarray, joints: np.ndarray
 ) -> tuple[float | None, str]:
@@ -312,7 +312,7 @@ def _maximum_joint_increment(
 def _control_increment(inputs: V2Inputs) -> float:
     dynamic = inputs.config.section("dynamic")
     return float(dynamic["finger_maximum_speed_rad_s"]) * float(dynamic["physics_dt_s"])
-def _bounded_pregrasp_states(
+def sampled_pregrasp_path_states(
     inputs: V2Inputs, seed: CandidateSeed, phases: tuple[float, float, float]
 ) -> tuple[tuple[str, np.ndarray, np.ndarray], ...]:
     reference = np.asarray(seed.pregrasp_joint_positions_rad, dtype=np.float64)
@@ -371,7 +371,6 @@ def fast_filter_pregrasp_paths(
     variants: tuple[tuple[CandidateSeed, tuple[float, float, float]], ...],
     *, budget_probe_only: bool = False,
 ) -> tuple[dict[str, object], ...]:
-    """Check bounded preshape and sampled approach paths with one shared FCL scene."""
     settings = inputs.config.section("fast_filter")
     if settings["nonpad_collision_policy"] != _NONPAD_POLICY:
         raise ValueError("fast-filter non-PAD collision policy changed")
@@ -409,7 +408,7 @@ def fast_filter_pregrasp_paths(
                 inputs, phases, reference_joint_positions_rad=reference)
             states = _approach_states(inputs, seed, target)[-1:]
         else:
-            states = _bounded_pregrasp_states(inputs, seed, phases)
+            states = sampled_pregrasp_path_states(inputs, seed, phases)
         maximum_increment = _maximum_joint_increment(states)
         if maximum_increment > control_increment + 1.0e-12:
             reasons.append("PREGRASP_CONTROL_STEP_INCREMENT_EXCEEDED")
@@ -468,8 +467,6 @@ def fast_filter_pregrasp_paths(
 def fast_filter_predictions(
     inputs: V2Inputs, predictions: tuple[ClosurePrediction, ...]
 ) -> tuple[FastFilterResult, ...]:
-    """Return FAST_REJECT or FAST_SURVIVE without promoting unresolved checks."""
-
     settings = inputs.config.section("fast_filter")
     if settings["nonpad_collision_policy"] != _NONPAD_POLICY:
         raise ValueError("fast-filter non-PAD collision policy changed")
@@ -490,7 +487,8 @@ def fast_filter_predictions(
         first_violation: tuple[float, str, str] | None = None
         maximum_increment = 0.0
         if not reasons:
-            states = _sampled_hand_states(inputs, prediction)
+            states = sampled_sequential_closure_states(
+                inputs, prediction.seed, prediction.final_closure_phases)
             endpoint_states = tuple(
                 state
                 for state in states
@@ -545,4 +543,5 @@ def fast_filter_predictions(
         )
     return tuple(results)
 
-__all__ = ["fast_filter_predictions", "fast_filter_pregrasp_paths"]
+__all__ = ["fast_filter_predictions", "fast_filter_pregrasp_paths",
+           "sampled_pregrasp_path_states", "sampled_sequential_closure_states"]
