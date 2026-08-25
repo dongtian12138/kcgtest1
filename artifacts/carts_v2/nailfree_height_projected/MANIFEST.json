@@ -1,6 +1,6 @@
 {
   "schema_version": "nailfree_height_projected_manifest_v1",
-  "updated_at_utc": "2026-08-25T20:20:10Z",
+  "updated_at_utc": "2026-08-25T20:45:42Z",
   "execution_window": {
     "id": "NAILFREE_HEIGHT_PROJECTED_12H",
     "started_at_utc": "2026-08-25T15:15:34Z",
@@ -64,8 +64,8 @@
     "nailfree_hand_model_audit": "ISAAC_IMPORT_PASS_F1_EXACT_SDF_DIAGNOSTIC_FAILED_CLOSED_RUNTIME_BINDING_REJECTED",
     "task_grip_surface_audit": "STATIC_SEMANTIC_ACCEPTED_NOT_OBJECT_CONTACT_TESTED",
     "height_feasibility_before_topk": "SINGLE_ANGLE_OFFLINE_SAMPLED_PASS_PRODUCTION_INTEGRATION_READY",
-    "two_object_offline_ranking": "CHECKPOINTED_A_44_OF_91_B_18_OF_91_SAME_COMMIT_AND_CONFIG",
-    "arm_path": "NOT_STARTED",
+    "two_object_offline_ranking": "OBJECT_A_COMPLETE_B_CHECKPOINTED_A_91_OF_91_B_35_OF_91_SAME_COMMIT_AND_CONFIG",
+    "arm_path": "OBJECT_A_TOP3_DISCRETE_BOUNDED_IK_PASS_FULL_COLLISION_UNRESOLVED",
     "isaac_research_dynamic": "NOT_STARTED_F1_COLLISION_SDF_FAIL_CLOSED"
   },
   "supervision": {
@@ -104,15 +104,22 @@
       "claim_scope": "ISAAC_ASSET_DIAGNOSTIC_ONLY_NOT_OBJECT_OR_GRASP_RUN"
     },
     "two_object_offline_checkpoint": {
-      "object_a_completed_angle_count": 44,
+      "object_a_completed_angle_count": 91,
       "object_a_candidate_count": 32,
-      "object_a_rejected_count": 2776,
-      "object_a_checkpoint_sha256": "a83c58c40dd366d9a6bb5d3928236d3db5ded21d5bd1818447944c027928dce9",
-      "object_b_completed_angle_count": 18,
+      "object_a_rejected_count": 5784,
+      "object_a_geometric_survivor_count": 40,
+      "object_a_per_angle_topk_retained_count": 32,
+      "object_a_budget_deferred_count": 8,
+      "object_a_nominal_task_eligible_count": 32,
+      "object_a_formal_task_eligible_count": 12,
+      "object_a_result_sha256": "bf8137bf69c61815afbb2bb87855db4fb9b848d5669857f20126c37bc61278bd",
+      "object_a_top3_bounded_ik_reachable_count": 3,
+      "object_a_bounded_ik_sha256": "eb21c914cb583a8bad6dc7b4721bfac2d5cf98a7acc6b2ebcf72ed22148750b2",
+      "object_b_completed_angle_count": 35,
       "object_b_candidate_count": 1,
-      "object_b_rejected_count": 1151,
-      "object_b_checkpoint_sha256": "cdd4995d453196ef4395ff33ff526cc55694295787715c24e1f5125f588adb24",
-      "claim_scope": "IN_PROGRESS_OFFLINE_CHECKPOINT_NOT_FINAL_RANKING"
+      "object_b_rejected_count": 2239,
+      "object_b_checkpoint_sha256": "e2283537763e9e171b96b994f2de839f820255afbfd9c2dfbfcf18f8a5b33efd",
+      "claim_scope": "OBJECT_A_OFFLINE_TASK_AND_DISCRETE_IK_COMPLETE_OBJECT_B_IN_PROGRESS_NOT_DYNAMIC_OR_FULL_PATH_COLLISION"
     },
     "object_a_qp0_height_smoke": {
       "input_seed_count": 64,
