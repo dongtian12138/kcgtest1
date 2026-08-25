@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T10:29:22Z",
+  "updated_at_utc": "2026-08-25T10:35:40Z",
   "started_at_utc": "2026-08-25T09:11:20Z",
   "hard_deadline_utc": "2026-08-25T21:11:20Z",
   "branch": "carts-grasp-full-palm-search-20260825",
@@ -1088,7 +1088,7 @@
     "old_five_descriptor_results_preserved_as_baseline": true,
     "old_axisymmetric_results_preserved_as_baseline": true,
     "supervisor_review": "APPROVE_WITH_CASCADE_BUDGETS_AND_RESCUE_ONLY_REFINEMENT",
-    "implementation_status": "DESCRIPTOR_AND_EXACT_CONTACT_OFFLINE_PASS_AB_PROPOSAL_GENERATION_NEXT",
+    "implementation_status": "AB_91_CONFIGURATION_PROPOSALS_OFFLINE_PASS_PHYSICS_CASCADE_IN_PROGRESS",
     "descriptor_audit": {
       "status": "OFFLINE_PASS",
       "schema_version": "kcg_graspgenx_descriptors_v2",
@@ -1097,7 +1097,7 @@
       "descriptor_count": 91,
       "palm_configuration_range_rad": [0.0, 1.57],
       "mimic_identity_checked": true,
-      "actual_v2_proposal_generated": false
+      "actual_v2_proposal_generated": true
     },
     "exact_pad_surface_audit": {
       "status": "OFFLINE_PASS",
@@ -1108,6 +1108,23 @@
       "object_a_certificate_bound": true,
       "object_b_certificate_bound": true,
       "claim_scope": "EXACT_GLOBAL_FCL_WITH_DENSE_COMPATIBILITY_FALLBACK_NOT_CONTINUOUS_SURFACE_PROOF"
+    },
+    "proposal_generation_audit": {
+      "status": "OFFLINE_PASS_GENERATOR_OUTPUT_ONLY",
+      "model_load_count": 1,
+      "descriptor_count_per_object": 91,
+      "kept_per_descriptor": 64,
+      "proposal_count_per_object": 5824,
+      "raw_finite_pose_count_per_object": 109928,
+      "palm_configuration_bound_per_proposal": true,
+      "random_seed": 20260825,
+      "object_a_path": "artifacts/carts_v2/full_palm_search/proposals/current_d38999_26kj61sn_public_spec.json",
+      "object_a_sha256": "aed02e498d476a79dd7e62c24e2edb6931f33c0862f31f97d298713acc4297d4",
+      "object_a_size_bytes": 4332195,
+      "object_b_path": "artifacts/carts_v2/full_palm_search/proposals/te_deutsch_d38999_26fj35pn_step.json",
+      "object_b_sha256": "0086d1be25fb3f74ef292a43676da5900c0bab881923e38eddcfcedf235caeea",
+      "object_b_size_bytes": 4337528,
+      "claim_scope": "SIX_D_GENERATOR_PROPOSALS_NOT_COLLISION_CONTACT_TASK_IK_OR_DYNAMIC_EVIDENCE"
     },
     "visual_truth_audit": {
       "status": "OFFLINE_VISUAL_AUDIT_PASS_B_REAL_SWEEP_A_OLD_DESCRIPTOR_CONTACT_DEFICIT_CONFIRMED",
@@ -1135,7 +1152,7 @@
       "evidence_scope": "OFFLINE_GEOMETRY_REPLAY_NOT_TASK_OR_DYNAMIC_SUCCESS"
     }
   },
-  "evidence_level": "FULL_PALM_DESCRIPTOR_AND_EXACT_CONTACT_OFFLINE_PASS_PROPOSAL_TASK_IK_DYNAMIC_NOT_REACHED",
+  "evidence_level": "FULL_PALM_AB_PROPOSAL_GENERATION_OFFLINE_PASS_PHYSICS_TASK_IK_DYNAMIC_NOT_REACHED",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1190,7 +1207,6 @@
     "full_palm_descriptor_and_contact_supervisor": "APPROVE_WITH_EVIDENCE_BOUNDARY"
   },
   "blockers": [
-    "NEW_91_CONFIGURATION_OFFICIAL_PROPOSAL_GENERATION_NOT_YET_RUN",
     "FULL_PALM_CASCADE_NOT_YET_BOUND_TO_ACTUAL_PROPOSALS",
     "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_A_ROI_256_THREE_CLOSURE_PREDICTIONS_ZERO_TABLE_SAFE_PATHS",
     "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_B_ROI_256_ZERO_THREE_PAD_CLOSURE_PREDICTION_SURVIVORS",
