@@ -136,9 +136,6 @@ def _search(predictor, fast, **overrides):
         },
         fast_filter_callback=fast,
         contact_height_bounds_m=(0.0, 0.4),
-        coarse_sample_count=9,
-        boundary_tolerance_m=1.0e-6,
-        maximum_bisection_iterations=32,
         table_numerical_tolerance_m=1.0e-5,
         required_table_clearance_m=0.001,
     )
@@ -175,6 +172,9 @@ def test_empty_contact_table_intersection_is_hard_reject() -> None:
     assert survivors == ()
     assert audit["evaluated"][0]["reason"] == (
         "EMPTY_TABLE_AND_CONTACT_HEIGHT_INTERSECTION_CONSERVATIVE_GATE")
+    assert audit["evaluated"][0]["table_path_checked_state_count"] == 1
+    assert audit["evaluated"][0]["table_path_scan_complete"] is False
+    assert audit["evaluated"][0]["table_path_early_empty_intersection"] is True
 
 
 def test_projected_candidate_requires_fresh_complete_sequential_sweep() -> None:

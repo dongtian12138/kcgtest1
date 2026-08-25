@@ -105,7 +105,8 @@ def _table_requirement(
     required_clearance_m: float,
     *,
     require_complete_path: bool = True,
-) -> tuple[TableHeightRequirement, str | None]:
+    reject_above_handbase_z_m: float | None = None,
+) -> tuple[TableHeightRequirement, str | None, int, bool]:
     """Reduce existing FK path states without materializing one giant mesh array."""
 
     if require_complete_path:
@@ -117,8 +118,10 @@ def _table_requirement(
     best: TableHeightRequirement | None = None
     best_stage = None
     overlap_count = 0
+    checked_state_count, early_stop = 0, False
     bounds = inputs.table_xy_bounds_m
     for state_index, (stage, _base, joints) in enumerate(envelope.states):
+        checked_state_count += 1
         transforms = inputs.hand_model.forward_kinematics(joints, base_transform=_base)
         for link_index, (link, corners) in enumerate(link_boxes):
             transform = np.asarray(transforms[link], dtype=np.float64)
@@ -138,11 +141,18 @@ def _table_requirement(
                     "REGISTERED_LINK_LOCAL_AABB_CONSERVATIVE",
                     "SAMPLED_CONTROL_PATH_LINK_BOX_SUPPORT_NOT_CONTINUOUS")
                 best_stage = str(stage)
+                if (reject_above_handbase_z_m is not None
+                        and minimum > reject_above_handbase_z_m):
+                    early_stop = True
+                    break
+        if early_stop:
+            break
     if best is None:
         best = TableHeightRequirement(None, None, None, None, None, 0,
             "REGISTERED_LINK_LOCAL_AABB_CONSERVATIVE",
             "SAMPLED_CONTROL_PATH_LINK_BOX_SUPPORT_NOT_CONTINUOUS")
-    return replace(best, overlapping_primitive_count=overlap_count), best_stage
+    return (replace(best, overlapping_primitive_count=overlap_count), best_stage,
+            checked_state_count, early_stop)
 
 
 def _seed_at_world_height(
@@ -238,22 +248,11 @@ def _evaluate_variant(
     fast_filter_callback: FastFilterCallback,
     requirement: TableHeightRequirement,
     stage: str | None,
-    bounds: tuple[float, float],
-    coarse_sample_count: int,
-    boundary_tolerance_m: float,
-    maximum_bisection_iterations: int,
+    bounded_reach: tuple[tuple[float, float], ...],
+    reach_evidence: Mapping[str, object],
     required_table_clearance_m: float,
     table_numerical_tolerance_m: float,
 ) -> tuple[CandidateSeed | None, dict[str, object]]:
-    reach, reach_evidence = _swept_contact_reach_interval(inputs, seed)
-    if (coarse_sample_count < 2 or boundary_tolerance_m <= 0.0
-            or maximum_bisection_iterations < 1):
-        raise ValueError("registered future exact-height refinement is invalid")
-    bounded_reach = ()
-    if reach is not None:
-        lower, upper = max(reach[0], bounds[0]), min(reach[1], bounds[1])
-        if lower <= upper:
-            bounded_reach = ((float(lower), float(upper)),)
     feasible = intersect_contact_with_table(
         bounded_reach, requirement.minimum_handbase_z_m)
     row: dict[str, object] = {
@@ -265,12 +264,6 @@ def _evaluate_variant(
         "height_evidence_scope": (
             "ANALYTIC_REACH_OUTER_BOUND_PLUS_EXACT_PROJECTED_REVALIDATION"),
         "contact_reach_evidence": reach_evidence,
-        "future_exact_height_refinement": {
-            "coarse_sample_count": coarse_sample_count,
-            "boundary_tolerance_m": boundary_tolerance_m,
-            "maximum_bisection_iterations": maximum_bisection_iterations,
-            "applied": False,
-        },
     }
     if not feasible:
         row.update(
@@ -360,9 +353,6 @@ def search_height_projected_pregrasps(
     pregrasp_path_callback: PregraspPathCallback,
     fast_filter_callback: FastFilterCallback,
     contact_height_bounds_m: tuple[float, float],
-    coarse_sample_count: int,
-    boundary_tolerance_m: float,
-    maximum_bisection_iterations: int,
     table_numerical_tolerance_m: float,
     required_table_clearance_m: float = 0.0,
     maximum_exact_variants: int = 2,
@@ -388,7 +378,7 @@ def search_height_projected_pregrasps(
             (("PREGRASP", base, np.asarray(bound.pregrasp_joint_positions_rad)),),
             "SINGLE_STATE_PRESELECTION_ONLY",
         )
-        requirement, _stage = _table_requirement(
+        requirement, _stage, _checked, _early = _table_requirement(
             inputs, bound, snapshot, link_boxes, required_table_clearance_m,
             require_complete_path=False)
         table_key = ((0.0, 0.0) if requirement.minimum_handbase_z_m is None
@@ -405,16 +395,33 @@ def search_height_projected_pregrasps(
                 if row[2] not in selected_phases]
     survivors, evaluated = [], []
     for _contact_key, _table_key, _phases, bound in selected:
-        envelope = sampled_path_envelope(bound)
-        requirement, stage = _table_requirement(
-            inputs, bound, envelope, link_boxes, required_table_clearance_m)
+        reach, reach_evidence = _swept_contact_reach_interval(inputs, bound)
+        bounded_reach = ()
+        if reach is not None:
+            lower, upper = max(reach[0], contact_height_bounds_m[0]), min(
+                reach[1], contact_height_bounds_m[1])
+            if lower <= upper:
+                bounded_reach = ((float(lower), float(upper)),)
+        envelope = sampled_path_envelope(bound) if bounded_reach else None
+        if envelope is None:
+            requirement = TableHeightRequirement(None, None, None, None, None, 0,
+                "NOT_EVALUATED_NO_CONTACT_REACH", "NO_CONTACT_REACH_OUTER_INTERVAL")
+            stage, checked, early, scope = None, 0, False, requirement.evidence_scope
+        else:
+            requirement, stage, checked, early = _table_requirement(
+                inputs, bound, envelope, link_boxes, required_table_clearance_m,
+                reject_above_handbase_z_m=bounded_reach[0][1])
+            scope = envelope.evidence_scope
         survivor, row = _evaluate_variant(
             inputs, bound, predictor, pregrasp_path_callback,
             fast_filter_callback, requirement, stage,
-            contact_height_bounds_m, coarse_sample_count, boundary_tolerance_m,
-            maximum_bisection_iterations, required_table_clearance_m,
+            bounded_reach, reach_evidence, required_table_clearance_m,
             table_numerical_tolerance_m)
-        row["path_evidence_scope"] = envelope.evidence_scope
+        row.update(path_evidence_scope=scope, table_path_checked_state_count=checked,
+                   table_path_scan_complete=bool(envelope is not None and not early),
+                   table_path_early_empty_intersection=early)
+        if early:
+            row["height_evidence_scope"] = "OUTER_BOUND_MONOTONIC_TABLE_EARLY_REJECT"
         evaluated.append(row)
         if survivor is not None:
             survivors.append(survivor)

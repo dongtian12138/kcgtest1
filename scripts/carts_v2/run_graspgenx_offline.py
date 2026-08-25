@@ -298,14 +298,19 @@ def _candidate_sequence_sha256(adapted) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def _pregrasp_contact_key(inputs, query, seed) -> tuple[float, ...]:
+def _pregrasp_contact_key(inputs, query, seed, cache=None) -> tuple[float, ...]:
     transforms = inputs.hand_model.forward_kinematics(
         seed.pregrasp_joint_positions_rad,
         base_transform=seed.object_from_hand_matrix())
+    cache = {} if cache is None else cache
     distances = []
     for name, surface in sorted(inputs.task_grip_surfaces.items()):
-        nearest, _point, _normal = query.query_pad(name, transforms[surface.link_name])
-        distances.append(float(nearest.distance_m[0]))
+        transform = np.asarray(transforms[surface.link_name], dtype="<f8")
+        key = (name, transform.tobytes())
+        if key not in cache:
+            nearest, _point, _normal = query.query_pad(name, transform)
+            cache[key] = float(nearest.distance_m[0])
+        distances.append(cache[key])
     if len(distances) != 3 or any(not np.isfinite(value) for value in distances):
         raise ValueError("pregrasp task-surface distances are invalid")
     return max(distances), sum(distances), *seed.pregrasp_closure_phases
@@ -414,6 +419,7 @@ def main() -> int:
     reach_cache: dict[str, float] = {}
 
     def height_evaluator(seed):
+        contact_cache = {}
         return search_height_projected_pregrasps(
             inputs, seed, predictor,
             sampled_path_envelope=lambda bound: SampledPathEnvelope(
@@ -422,19 +428,13 @@ def main() -> int:
                 "SEQUENTIAL_CLOSURE_PRELOAD_LIFT_START",
             ),
             pregrasp_contact_key=lambda bound: _pregrasp_contact_key(
-                inputs, surface_query, bound),
+                inputs, surface_query, bound, contact_cache),
             pregrasp_path_callback=lambda bound: fast_filter_pregrasp_paths(
                 inputs, ((bound, bound.pregrasp_closure_phases),))[0],
             fast_filter_callback=lambda prediction: fast_filter_predictions(
                 inputs, (prediction,))[0],
             contact_height_bounds_m=_contact_height_bounds(
                 inputs, seed, reach_cache),
-            coarse_sample_count=int(
-                height_settings["contact_search_coarse_sample_count"]),
-            boundary_tolerance_m=float(
-                height_settings["contact_boundary_tolerance_m"]),
-            maximum_bisection_iterations=int(
-                height_settings["maximum_bisection_iterations"]),
             table_numerical_tolerance_m=float(
                 fast_settings["table_penetration_tolerance_m"]),
             required_table_clearance_m=float(
