@@ -17,7 +17,6 @@ from kcg_connector.grasp.carts_v2.task_quality import (
     minimum_jerk_peak_acceleration,
 )
 
-
 def _array_sha256(value: np.ndarray) -> str:
     data = np.ascontiguousarray(value, dtype=np.float64)
     return hashlib.sha256(data.tobytes()).hexdigest()
@@ -26,10 +25,8 @@ def _array_sha256(value: np.ndarray) -> str:
 def _plain_metric(value: object) -> str:
     return "不可用" if value is None else f"{float(value):.3f}"
 
-
 def _quality_map(result: OfflinePipelineResult):
     return {row.candidate_id: row for row in result.task_quality_results}
-
 
 def _filter_map(result: OfflinePipelineResult):
     return {row.candidate_id: row for row in result.raw_fast_filter_results}
@@ -46,6 +43,7 @@ def _candidate_rows(result: OfflinePipelineResult):
         yield {
             "candidate_id": candidate_id,
             "descriptor_id": prediction.seed.descriptor_id,
+            "palm_configuration_rad": prediction.seed.palm_configuration_rad,
             "graspgenx_score": prediction.seed.generator_score,
             "source_sample_index": prediction.seed.source_sample_index,
             "anchor_face_index": prediction.seed.anchor_face_index,
@@ -126,7 +124,6 @@ def _candidate_rows(result: OfflinePipelineResult):
             "evidence": "OFFLINE_RESEARCH_NOT_FORMAL",
         }
 
-
 def _selected_json(result: OfflinePipelineResult, selected_rows) -> list[dict[str, object]]:
     rows = []
     exact_by_id = {
@@ -148,6 +145,7 @@ def _selected_json(result: OfflinePipelineResult, selected_rows) -> list[dict[st
                 "rank": selected.rank,
                 "candidate_id": prediction.seed.candidate_id,
                 "descriptor_id": prediction.seed.descriptor_id,
+                "palm_configuration_rad": prediction.seed.palm_configuration_rad,
                 "graspgenx_score": prediction.seed.generator_score,
                 "selection_status": selected.selection_status,
                 "selection_scope": scope,
@@ -208,6 +206,7 @@ def _selected_json(result: OfflinePipelineResult, selected_rows) -> list[dict[st
                 "formal_dynamic_eligible": False,
                 "control_plan": {
                     "transform_semantics": "OBJECT_FROM_HAND_BASE",
+                    "palm_configuration_rad": prediction.seed.palm_configuration_rad,
                     "object_from_hand_row_major": list(
                         prediction.seed.object_from_hand
                     ),
@@ -341,6 +340,7 @@ def _result_document(result: OfflinePipelineResult) -> dict[str, object]:
     )
     generation = result.inputs.config.section("candidate_generation")
     backend = str(generation.get("backend", "LEGACY_SURFACE_AXISYMMETRIC"))
+    is_graspgenx = backend in {"GRASPGENX", "GRASPGENX_FULL_PALM"}
     return {
         "schema_version": "carts_grasp_v2_offline_result_v2",
         "object_id": result.inputs.object_contract.object_id,
@@ -354,13 +354,13 @@ def _result_document(result: OfflinePipelineResult) -> dict[str, object]:
         "candidate_generation_backend": backend,
         "raw_candidate_count": len(result.raw_candidates),
         "raw_surface_seed_count": (
-            len(result.raw_candidates) if backend != "GRASPGENX" else None
+            None if is_graspgenx else len(result.raw_candidates)
         ),
         "candidate_count": len(result.candidates),
         "candidate_selection_method": (
             "GRASPGENX_DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL_"
             "THEN_CONTROL_STATE_FAST_FILTER_THEN_DIVERSITY_MAX_64"
-            if backend == "GRASPGENX"
+            if is_graspgenx
             else "FIXED_384_SURFACE_POOL_THEN_CLOSURE_SWEEP_THEN_DIVERSITY_MAX_48"
         ),
         "closure_reject_count": len(result.raw_candidates) - closure_survive_count,
@@ -491,7 +491,7 @@ def _write_summary(
         )
     generation_text = (
         "GraspGenX 六维候选"
-        if document["candidate_generation_backend"] == "GRASPGENX"
+        if str(document["candidate_generation_backend"]).startswith("GRASPGENX")
         else "固定轴对称表面种子"
     )
     if document["task_evaluated_count"]:

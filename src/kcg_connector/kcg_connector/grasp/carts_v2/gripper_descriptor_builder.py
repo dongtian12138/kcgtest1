@@ -14,6 +14,8 @@ from kcg_connector.grasp.robust.hand_model import ThreeFingerHandModel
 
 _SHARED_JOINT = "f1j1"
 _REFERENCE_PAD = "finger_2_pad"
+_FULL_PALM_SAMPLE_COUNT = 91
+_LEGACY_PRESHAPE_SAMPLE_COUNT = 9
 
 
 def _finite_array(value: object, shape: tuple[int, ...], label: str) -> np.ndarray:
@@ -45,11 +47,11 @@ class DescriptorFrame:
 @dataclass(frozen=True)
 class KCGGraspGenXDescriptor:
     descriptor_id: str
-    preshape_f1j1_rad: float
-    maximum_closure_phase: float
+    palm_configuration_rad: float
+    conditioning_close_phase: float
     open_joint_positions_rad: Mapping[str, float]
     half_joint_positions_rad: Mapping[str, float]
-    close_joint_positions_rad: Mapping[str, float]
+    conditioning_close_joint_positions_rad: Mapping[str, float]
     frame: DescriptorFrame
     fingertip_graspgenx_m: tuple[float, float, float]
     open_aabb_extents_m: tuple[float, float, float]
@@ -62,7 +64,7 @@ class KCGGraspGenXDescriptor:
 
         return {
             "open": dict(self.open_joint_positions_rad),
-            "close": dict(self.close_joint_positions_rad),
+            "close": dict(self.conditioning_close_joint_positions_rad),
             "fingertip": list(self.fingertip_graspgenx_m),
             "sweep_volume": {
                 "extents": list(self.open_aabb_extents_m),
@@ -77,13 +79,29 @@ class KCGGraspGenXDescriptor:
 
 
 def shared_preshape_grid(
-    hand: ThreeFingerHandModel, *, sample_count: int = 9
+    hand: ThreeFingerHandModel, *, sample_count: int = _FULL_PALM_SAMPLE_COUNT
 ) -> tuple[float, ...]:
-    if sample_count != 9:
-        raise ValueError("the registered descriptor design uses exactly 9 samples")
+    """Return the production 91-point closed-interval palm grid."""
+
+    if sample_count != _FULL_PALM_SAMPLE_COUNT:
+        raise ValueError("the full-palm descriptor design uses exactly 91 samples")
+    limit = hand.independent_joint_limits[_SHARED_JOINT]
+    values = np.linspace(limit.lower, limit.upper, _FULL_PALM_SAMPLE_COUNT)
+    return tuple(float(value) for value in values)
+
+
+def legacy_shared_preshape_grid(
+    hand: ThreeFingerHandModel,
+) -> tuple[float, ...]:
+    """Return the frozen 10--90% nine-point baseline grid."""
+
     limit = hand.independent_joint_limits[_SHARED_JOINT]
     span = limit.upper - limit.lower
-    values = np.linspace(limit.lower + 0.1 * span, limit.lower + 0.9 * span, 9)
+    values = np.linspace(
+        limit.lower + 0.1 * span,
+        limit.lower + 0.9 * span,
+        _LEGACY_PRESHAPE_SAMPLE_COUNT,
+    )
     return tuple(float(value) for value in values)
 
 
@@ -95,9 +113,11 @@ def select_preshape_values(
     maximum_count: int = 5,
     nominal_rad: float = 0.70,
 ) -> tuple[float, ...]:
+    """Select at most five palm angles for the legacy baseline only."""
+
     if (self_collision_free is None) == (legal_samples_rad is None):
         raise ValueError("provide exactly one collision callback or legal sample list")
-    grid = np.asarray(shared_preshape_grid(hand), dtype=np.float64)
+    grid = np.asarray(legacy_shared_preshape_grid(hand), dtype=np.float64)
     if self_collision_free is not None:
         legal = grid[[bool(self_collision_free(float(value))) for value in grid]]
     else:
@@ -127,20 +147,22 @@ def select_preshape_values(
 def descriptor_joint_states(
     contract: CARTSHandContract,
     hand: ThreeFingerHandModel,
-    preshape_f1j1_rad: float,
-    maximum_closure_phase: float,
+    palm_configuration_rad: float,
+    conditioning_close_phase: float,
 ) -> tuple[Mapping[str, float], Mapping[str, float], Mapping[str, float]]:
-    if not 0.0 <= maximum_closure_phase <= 1.0:
-        raise ValueError("maximum closure phase must lie in [0, 1]")
+    """Build GraspGenX open/half/close conditioning, not a physical gate."""
+
+    if not 0.0 <= conditioning_close_phase <= 1.0:
+        raise ValueError("conditioning close phase must lie in [0, 1]")
     names = tuple(hand.independent_joint_names)
     lower, upper = hand.joint_limit_vectors()
     open_values = lower.copy()
-    open_values[names.index(_SHARED_JOINT)] = float(preshape_f1j1_rad)
+    open_values[names.index(_SHARED_JOINT)] = float(palm_configuration_rad)
     close_values = open_values.copy()
     directions = contract.closing_actuation_directions_unit(hand)
     for row in directions:
         for index in np.flatnonzero(row):
-            close_values[index] = lower[index] + maximum_closure_phase * (
+            close_values[index] = lower[index] + conditioning_close_phase * (
                 upper[index] - lower[index]
             )
     half_values = 0.5 * (open_values + close_values)
@@ -266,33 +288,29 @@ def inner_work_aabb(
     )
 
 
-def build_kcg_graspgenx_descriptors(
+def _build_descriptors(
     contract: CARTSHandContract,
     hand: ThreeFingerHandModel,
     *,
-    closure_phase_by_preshape: Mapping[float, float],
-    self_collision_free: Callable[[float], bool] | None = None,
-    legal_samples_rad: Sequence[float] | None = None,
+    palm_configurations_rad: Sequence[float],
+    conditioning_close_phase_by_palm: Mapping[float, float],
+    descriptor_prefix: str,
+    descriptor_index_width: int,
 ) -> tuple[KCGGraspGenXDescriptor, ...]:
-    """Build at most five object-independent, physically registered descriptors."""
-
-    preshapes = select_preshape_values(
-        hand,
-        self_collision_free=self_collision_free,
-        legal_samples_rad=legal_samples_rad,
-    )
     descriptors = []
-    for index, preshape in enumerate(preshapes):
+    for index, palm_configuration in enumerate(palm_configurations_rad):
         matches = [
             float(phase)
-            for value, phase in closure_phase_by_preshape.items()
-            if np.isclose(float(value), preshape, atol=1.0e-12)
+            for value, phase in conditioning_close_phase_by_palm.items()
+            if np.isclose(float(value), palm_configuration, atol=1.0e-12)
         ]
         if len(matches) != 1 or not 0.0 < matches[0] <= 1.0:
-            raise ValueError("each selected preshape needs one safe closure phase")
-        maximum_closure_phase = matches[0]
+            raise ValueError(
+                "each palm configuration needs one conditioning close phase"
+            )
+        conditioning_close_phase = matches[0]
         open_map, half_map, close_map = descriptor_joint_states(
-            contract, hand, preshape, maximum_closure_phase
+            contract, hand, palm_configuration, conditioning_close_phase
         )
         frame = build_descriptor_frame(contract, hand, open_map)
         open_extents, open_offset = inner_work_aabb(
@@ -310,12 +328,68 @@ def build_kcg_graspgenx_descriptors(
             float(np.mean([np.max(points[:, 2]) for points in pad_points])),
         )
         descriptors.append(KCGGraspGenXDescriptor(
-            descriptor_id=f"kcg_3f_preshape_{index:02d}", preshape_f1j1_rad=preshape,
-            maximum_closure_phase=maximum_closure_phase,
+            descriptor_id=(
+                f"{descriptor_prefix}_{index:0{descriptor_index_width}d}"
+            ),
+            palm_configuration_rad=float(palm_configuration),
+            conditioning_close_phase=conditioning_close_phase,
             open_joint_positions_rad=open_map, half_joint_positions_rad=half_map,
-            close_joint_positions_rad=close_map, frame=frame,
+            conditioning_close_joint_positions_rad=close_map, frame=frame,
             fingertip_graspgenx_m=fingertip, open_aabb_extents_m=open_extents,
             open_aabb_offset_m=open_offset, half_aabb_extents_m=half_extents,
             half_aabb_offset_m=half_offset,
         ))
     return tuple(descriptors)
+
+
+def build_kcg_graspgenx_descriptors(
+    contract: CARTSHandContract,
+    hand: ThreeFingerHandModel,
+    *,
+    conditioning_close_phase_by_palm: Mapping[float, float],
+) -> tuple[KCGGraspGenXDescriptor, ...]:
+    """Build all 91 full-palm descriptors or fail closed."""
+
+    palm_grid = shared_preshape_grid(hand)
+    supplied = np.sort(
+        np.asarray(tuple(conditioning_close_phase_by_palm), dtype=np.float64)
+    )
+    if (
+        supplied.shape != (_FULL_PALM_SAMPLE_COUNT,)
+        or not np.all(np.isfinite(supplied))
+        or not np.allclose(supplied, palm_grid, atol=1.0e-12, rtol=0.0)
+    ):
+        raise ValueError("full-palm production requires all 91 registered angles")
+    return _build_descriptors(
+        contract,
+        hand,
+        palm_configurations_rad=palm_grid,
+        conditioning_close_phase_by_palm=conditioning_close_phase_by_palm,
+        descriptor_prefix="kcg_3f_palm",
+        descriptor_index_width=3,
+    )
+
+
+def build_legacy_kcg_graspgenx_descriptors(
+    contract: CARTSHandContract,
+    hand: ThreeFingerHandModel,
+    *,
+    closure_phase_by_preshape: Mapping[float, float],
+    self_collision_free: Callable[[float], bool] | None = None,
+    legal_samples_rad: Sequence[float] | None = None,
+) -> tuple[KCGGraspGenXDescriptor, ...]:
+    """Retain the historical five-angle descriptor baseline explicitly."""
+
+    preshapes = select_preshape_values(
+        hand,
+        self_collision_free=self_collision_free,
+        legal_samples_rad=legal_samples_rad,
+    )
+    return _build_descriptors(
+        contract,
+        hand,
+        palm_configurations_rad=preshapes,
+        conditioning_close_phase_by_palm=closure_phase_by_preshape,
+        descriptor_prefix="kcg_3f_preshape",
+        descriptor_index_width=2,
+    )

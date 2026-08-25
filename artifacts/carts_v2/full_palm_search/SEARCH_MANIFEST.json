@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_full_palm_search_manifest_v1",
-  "updated_at_utc": "2026-08-25T09:58:00Z",
+  "updated_at_utc": "2026-08-25T10:29:22Z",
   "execution_window_id": "FULL_PALM_6D_SEARCH_12H",
   "branch": "carts-grasp-full-palm-search-20260825",
   "start_commit": "18bb79343e305b0f31cc99cd47594ac01ad095d0",
@@ -24,6 +24,13 @@
     "grid_count": 91,
     "grid_rule": "numpy.linspace inclusive endpoints",
     "anchor_indices": [0, 30, 45, 60, 90]
+  },
+  "descriptor_manifest": {
+    "path": "artifacts/carts_v2/full_palm_search/descriptors/descriptor_manifest.json",
+    "schema_version": "kcg_graspgenx_descriptors_v2",
+    "sha256": "a40764abcb712b2e20a6c9f3174c6f861409f607fe7b3dfa7bda2ac623b12493",
+    "descriptor_count": 91,
+    "actual_v2_proposal_generated": false
   },
   "cascade_budgets": {
     "raw_proposals_per_angle": 128,
@@ -55,8 +62,8 @@
   },
   "gates": {
     "visual_collision_identity_audit": "OFFLINE_PASS_B_REAL_SWEEP_AND_A_OLD_DESCRIPTOR_CONTACT_DEFICIT",
-    "full_palm_descriptor_audit": "NOT_STARTED",
-    "exact_pad_surface_contact": "NOT_STARTED",
+    "full_palm_descriptor_audit": "OFFLINE_PASS_91_QP_BOUND_DESCRIPTORS",
+    "exact_pad_surface_contact": "OFFLINE_PASS_CERTIFICATE_ORIENTED_FULL_PAD_FCL_WITH_DENSE_COMPATIBILITY_FALLBACK",
     "complete_sequential_closure": "NOT_STARTED",
     "nominal_12n_task": "NOT_STARTED",
     "arm_ik_and_paths": "NOT_STARTED",

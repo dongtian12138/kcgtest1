@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import numpy as np
 from scipy.spatial import cKDTree
 
@@ -14,17 +12,15 @@ from kcg_connector.grasp.carts_v2.models import (
     farthest_point_indices,
     joint_positions_for_phases,
 )
+from kcg_connector.grasp.carts_v2.surface_contact import (
+    ExactPadSurfaceQuery,
+    NearestSurface,
+    nearest_motion_compatible_index,
+)
 from kcg_connector.grasp.robust.grasp_optimizer import (
     GraspCandidate,
     PlannedPadContact,
 )
-
-
-@dataclass(frozen=True)
-class _NearestSurface:
-    point_m: np.ndarray
-    distance_m: np.ndarray
-    face_index: np.ndarray
 
 
 def _closest_points_on_triangles(
@@ -85,7 +81,7 @@ def _closest_points_on_triangles(
 
 
 class _MeshProximityIndex:
-    """Small approximate BVH: centroid tree followed by exact local triangles."""
+    """Legacy centroid-neighborhood surface query retained for the baseline."""
 
     def __init__(self, inputs: V2Inputs) -> None:
         triangles = np.asarray(inputs.object_contract.model.mesh.face_vertices_m)
@@ -98,7 +94,7 @@ class _MeshProximityIndex:
             ]
         )
 
-    def query(self, points_m: np.ndarray) -> _NearestSurface:
+    def query(self, points_m: np.ndarray) -> NearestSurface:
         count = min(self._neighbor_count, len(self._triangles))
         _distance, face_ids = self._tree.query(points_m, k=count)
         if count == 1:
@@ -114,7 +110,7 @@ class _MeshProximityIndex:
         local_closest = local_closest.reshape(len(points_m), count, 3)
         selected = np.argmin(local_distance, axis=1)
         rows = np.arange(len(points_m))
-        return _NearestSurface(
+        return NearestSurface(
             point_m=local_closest[rows, selected],
             distance_m=local_distance[rows, selected],
             face_index=face_ids[rows, selected],
@@ -173,7 +169,24 @@ class SequentialClosurePredictor:
 
     def __init__(self, inputs: V2Inputs) -> None:
         self.inputs = inputs
-        self._proximity = _MeshProximityIndex(inputs)
+        backend = str(
+            inputs.config.section("closure_prediction").get(
+                "surface_query_backend", "LOCAL_CENTROID_BASELINE"
+            )
+        )
+        if backend not in {"LOCAL_CENTROID_BASELINE", "FCL_EXACT_PAD_MESH"}:
+            raise ValueError(f"unknown closure surface query backend {backend!r}")
+        self._surface_query_backend = backend
+        self._proximity = (
+            _MeshProximityIndex(inputs)
+            if backend == "LOCAL_CENTROID_BASELINE"
+            else None
+        )
+        self._exact_pad_mesh = (
+            ExactPadSurfaceQuery(inputs)
+            if backend == "FCL_EXACT_PAD_MESH"
+            else None
+        )
         count = int(
             inputs.config.section("closure_prediction")["pad_surface_sample_count"]
         )
@@ -200,16 +213,33 @@ class SequentialClosurePredictor:
         local = self._pad_points[pad_name]
         return local @ transform[:3, :3].T + transform[:3, 3]
 
+    def _pad_transform(
+        self, pad_name: str, phases: tuple[float, float, float], base: np.ndarray,
+        reference_joint_positions_rad: tuple[float, ...],
+    ) -> np.ndarray:
+        joints = joint_positions_for_phases(
+            self.inputs, phases,
+            reference_joint_positions_rad=reference_joint_positions_rad,
+        )
+        return self.inputs.hand_model.pad_transforms(
+            joints, base_transform=base
+        )[pad_name]
+
     def _contact_at_phase(
         self,
         pad_name: str,
         phases: tuple[float, float, float],
         base: np.ndarray,
         reference_joint_positions_rad: tuple[float, ...],
-    ) -> tuple[int, _NearestSurface, np.ndarray, np.ndarray]:
+    ) -> tuple[int, NearestSurface, np.ndarray, np.ndarray]:
+        if self._exact_pad_mesh is not None:
+            return self._exact_contact_at_phase(
+                pad_name, phases, base, reference_joint_positions_rad
+            )
         points = self._world_pad_points(
             pad_name, phases, base, reference_joint_positions_rad
         )
+        assert self._proximity is not None
         nearest = self._proximity.query(points)
         phase_index = self._pad_to_phase[pad_name]
         delta = min(
@@ -242,8 +272,57 @@ class SequentialClosurePredictor:
         )
         eligible = valid_radial & (inward >= minimum_motion)
         eligible_distance = np.where(eligible, nearest.distance_m, np.inf)
-        selected = int(np.argmin(eligible_distance))
+        selected = int(np.argmin(eligible_distance)) if np.any(eligible) else -1
         return selected, nearest, normals, inward
+
+    def _exact_contact_at_phase(
+        self,
+        pad_name: str,
+        phases: tuple[float, float, float],
+        base: np.ndarray,
+        reference_joint_positions_rad: tuple[float, ...],
+    ) -> tuple[int, NearestSurface, np.ndarray, np.ndarray]:
+        assert self._exact_pad_mesh is not None
+        current = self._pad_transform(
+            pad_name, phases, base, reference_joint_positions_rad
+        )
+        nearest, pad_point, normal = self._exact_pad_mesh.query_pad(pad_name, current)
+        phase_index = self._pad_to_phase[pad_name]
+        delta = min(
+            float(self.inputs.config.section("closure_prediction")[
+                "motion_derivative_phase_step"
+            ]),
+            1.0 - phases[phase_index],
+        )
+        if nearest.intersecting or delta <= 0.0:
+            return -1, nearest, normal[None, :], np.asarray((-np.inf,))
+        moved_phases = list(phases)
+        moved_phases[phase_index] += delta
+        moved = self._pad_transform(
+            pad_name, tuple(moved_phases), base, reference_joint_positions_rad
+        )
+        pad_local = (pad_point - current[:3, 3]) @ current[:3, :3]
+        moved_point = pad_local @ moved[:3, :3].T + moved[:3, 3]
+        inward = -float(np.dot((moved_point - pad_point) / delta, normal))
+        minimum = float(self.inputs.config.section("closure_prediction")[
+            "minimum_inward_motion_m_per_phase"
+        ])
+        if inward >= minimum or nearest.distance_m[0] > float(
+            self.inputs.config.section("closure_prediction")["contact_distance_m"]
+        ):
+            selected = 0 if inward >= minimum else -1
+            return selected, nearest, normal[None, :], np.asarray((inward,))
+        local = self._pad_points[pad_name]
+        current_points = local @ current[:3, :3].T + current[:3, 3]
+        moved_points = local @ moved[:3, :3].T + moved[:3, 3]
+        dense, dense_normals = self._exact_pad_mesh.query_points(current_points)
+        dense_inward = -np.einsum(
+            "ij,ij->i", (moved_points - current_points) / delta, dense_normals
+        )
+        selected = nearest_motion_compatible_index(
+            dense.distance_m, dense_inward, minimum
+        )
+        return selected, dense, dense_normals, dense_inward
 
     def _initial_clearance(
         self,
@@ -253,8 +332,20 @@ class SequentialClosurePredictor:
     ) -> float:
         clearances = []
         for pad in self.inputs.hand_contract.pads:
-            points = self._world_pad_points(pad.name, phases, seed_base, reference)
-            clearances.append(float(np.min(self._proximity.query(points).distance_m)))
+            if self._exact_pad_mesh is not None:
+                transform = self._pad_transform(
+                    pad.name, phases, seed_base, reference
+                )
+                nearest, _pad_point, _normal = self._exact_pad_mesh.query_pad(
+                    pad.name, transform
+                )
+            else:
+                points = self._world_pad_points(
+                    pad.name, phases, seed_base, reference
+                )
+                assert self._proximity is not None
+                nearest = self._proximity.query(points)
+            clearances.append(float(np.min(nearest.distance_m)))
         return min(clearances)
 
     def predict(self, seed) -> ClosurePrediction:
@@ -262,6 +353,25 @@ class SequentialClosurePredictor:
         generation = self.inputs.config.section("candidate_generation")
         base = seed.object_from_hand_matrix()
         reference = seed.pregrasp_joint_positions_rad
+        full_palm = generation.get("backend") == "GRASPGENX_FULL_PALM"
+        if full_palm and seed.palm_configuration_rad is None:
+            return self._failure(
+                seed,
+                seed.pregrasp_closure_phases,
+                0.0,
+                "PALM_CONFIGURATION_LOST_IN_PIPELINE",
+            )
+        if seed.palm_configuration_rad is not None:
+            palm_index = self.inputs.hand_model.independent_joint_names.index("f1j1")
+            if not np.isclose(
+                reference[palm_index], seed.palm_configuration_rad, atol=1.0e-12
+            ):
+                return self._failure(
+                    seed,
+                    seed.pregrasp_closure_phases,
+                    0.0,
+                    "PALM_CONFIGURATION_LOST_IN_PIPELINE",
+                )
         phases = list(seed.pregrasp_closure_phases)
         initial_clearance = self._initial_clearance(base, tuple(phases), reference)
         if initial_clearance <= float(settings["initial_clearance_m"]):
@@ -281,6 +391,7 @@ class SequentialClosurePredictor:
             start = float(phases[phase_index])
             previous = start
             contact: PredictedContact | None = None
+            motion_incompatible_contact_seen = False
             for phase in closure_phase_samples(
                 self.inputs, tuple(phases), phase_index, maximum, reference
             ):
@@ -288,6 +399,19 @@ class SequentialClosurePredictor:
                 selected, nearest, normals, inward = self._contact_at_phase(
                     str(pad_name), tuple(phases), base, reference
                 )
+                if nearest.intersecting:
+                    return self._failure(
+                        seed,
+                        phases,
+                        initial_clearance,
+                        f"PAD_OBJECT_INTERSECTION_BEFORE_VALID_CONTACT_{pad_name}",
+                        contacts,
+                    )
+                if selected < 0:
+                    if float(np.min(nearest.distance_m)) <= contact_distance:
+                        motion_incompatible_contact_seen = True
+                    previous = float(phase)
+                    continue
                 distance = float(nearest.distance_m[selected])
                 if distance <= contact_distance:
                     face_index = int(nearest.face_index[selected])
@@ -316,11 +440,16 @@ class SequentialClosurePredictor:
                     break
                 previous = float(phase)
             if contact is None:
+                reason = (
+                    f"NO_MOTION_COMPATIBLE_PAD_POINT_{pad_name}"
+                    if motion_incompatible_contact_seen
+                    else f"NO_EFFECTIVE_CONTACT_{pad_name}"
+                )
                 return self._failure(
                     seed,
                     phases,
                     initial_clearance,
-                    f"NO_EFFECTIVE_CONTACT_{pad_name}",
+                    reason,
                     contacts,
                 )
             contacts.append(contact)

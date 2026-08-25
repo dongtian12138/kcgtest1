@@ -10,7 +10,6 @@ from typing import Any, Mapping
 
 import numpy as np
 from scipy.spatial import cKDTree
-from scipy.spatial.transform import Rotation
 
 from kcg_connector.grasp.carts_v2.models import (
     CandidateSeed,
@@ -20,8 +19,16 @@ from kcg_connector.grasp.carts_v2.models import (
 )
 from kcg_connector.grasp.robust.object_model import file_sha256
 
-_PROPOSAL_SCHEMA = "graspgenx_carts_proposals_v1"
-_DESCRIPTOR_SCHEMA = "kcg_graspgenx_descriptors_v1"
+_SCHEMAS_BY_BACKEND = {
+    "GRASPGENX": (
+        "graspgenx_carts_proposals_v1",
+        "kcg_graspgenx_descriptors_v1",
+    ),
+    "GRASPGENX_FULL_PALM": (
+        "graspgenx_carts_full_palm_proposals_v2",
+        "kcg_graspgenx_descriptors_v2",
+    ),
+}
 _ROTATION_NUMERICAL_ATOL = 1e-6
 _MERGED_KEEP_METHOD = "DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL"
 _CLOSURE_PHASE_RULE = "PER_PRESHAPE_LAST_SAMPLED_SELF_COLLISION_FREE_STATE"
@@ -31,74 +38,6 @@ class AdaptedCandidate:
 
     seed: CandidateSeed
     evidence: Mapping[str, Any]
-def summarize_six_d_coverage(
-    inputs: V2Inputs, candidates: tuple[AdaptedCandidate, ...]
-) -> dict[str, Any]:
-    """Diagnose global pose coverage without promoting it to grasp evidence."""
-
-    if len(candidates) < 2:
-        raise ValueError("at least two candidates are required for coverage")
-    poses = np.asarray([row.seed.object_from_hand_matrix() for row in candidates])
-    generator_poses = np.asarray([
-        np.asarray(row.evidence["object_from_graspgenx_row_major"]).reshape(4, 4)
-        for row in candidates
-    ])
-    positions = poses[:, :3, 3]
-    origin = inputs.object_contract.model.assembly_axis_origin_m
-    basis = inputs.object_contract.task_frame_rotation_object
-    task_positions = (positions - origin) @ basis
-    radial = np.linalg.norm(task_positions[:, :2], axis=1)
-    approach = generator_poses[:, :3, 2]
-    approach_azimuth = np.arctan2(approach[:, 1], approach[:, 0])
-    approach_elevation = np.arcsin(np.clip(approach[:, 2], -1.0, 1.0))
-    rpy = Rotation.from_matrix(poses[:, :3, :3]).as_euler("xyz")
-    radius_scale = max(
-        float(inputs.object_contract.characteristic_radius_m), 1.0e-9
-    )
-    features = np.column_stack((
-        positions / radius_scale,
-        Rotation.from_matrix(poses[:, :3, :3]).as_rotvec() / np.pi,
-    ))
-    covariance = np.cov(features, rowvar=False)
-    eigenvalues = np.maximum(np.linalg.eigvalsh(covariance), 0.0)
-    effective_dimension = float(
-        np.sum(eigenvalues) ** 2 / max(np.sum(eigenvalues ** 2), 1.0e-18)
-    )
-    dedup = inputs.config.section("candidate_generation")["deduplication"]
-    descriptor_counts = {
-        descriptor_id: sum(row.seed.descriptor_id == descriptor_id for row in candidates)
-        for descriptor_id in sorted({row.seed.descriptor_id for row in candidates})
-    }
-    palm_azimuth = np.mod(np.arctan2(task_positions[:, 1], task_positions[:, 0]), 2 * np.pi)
-    occupied_quadrants = len(np.unique(np.floor(palm_azimuth / (0.5 * np.pi)).astype(int)))
-    checks = {
-        "at_least_100_candidates": len(candidates) >= 100,
-        "multiple_descriptors": len(descriptor_counts) > 1,
-        "multiple_palm_sides": occupied_quadrants >= 2,
-        "radial_distance_not_constant": float(np.ptp(radial)) > float(dedup["palm_position_m"]),
-        "roll_not_constant": float(np.ptp(rpy[:, 0])) > float(dedup["palm_orientation_rad"]),
-        "pitch_not_constant": float(np.ptp(rpy[:, 1])) > float(dedup["palm_orientation_rad"]),
-    }
-    return {
-        "schema_version": "graspgenx_carts_6d_coverage_v1",
-        "object_id": inputs.object_contract.object_id,
-        "candidate_count": len(candidates),
-        "position_range_object_m": np.ptp(positions, axis=0).tolist(),
-        "position_min_object_m": np.min(positions, axis=0).tolist(),
-        "position_max_object_m": np.max(positions, axis=0).tolist(),
-        "radial_distance_range_m": [float(np.min(radial)), float(np.max(radial))],
-        "approach_azimuth_range_rad": [float(np.min(approach_azimuth)), float(np.max(approach_azimuth))],
-        "approach_elevation_range_rad": [float(np.min(approach_elevation)), float(np.max(approach_elevation))],
-        "roll_pitch_yaw_range_rad": np.ptp(rpy, axis=0).tolist(),
-        "descriptor_counts": descriptor_counts,
-        "palm_azimuth_quadrant_count": occupied_quadrants,
-        "normalized_pose_covariance": covariance.tolist(),
-        "normalized_pose_covariance_eigenvalues": eigenvalues.tolist(),
-        "effective_dimension_participation_ratio": effective_dimension,
-        "diagnostic_checks": checks,
-        "coverage_pass": all(checks.values()),
-        "evidence_scope": "GENERATOR_COVERAGE_DIAGNOSTIC_NOT_GRASP_SUCCESS",
-    }
 
 def _json_object(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
@@ -143,19 +82,33 @@ def _rigid(value: Any, label: str) -> np.ndarray:
     result[:3, :3] = canonical
     return result
 
-def _descriptor_rows(inputs: V2Inputs, path: Path, expected_sha256: str) -> dict[str, dict[str, Any]]:
+def _descriptor_rows(
+    inputs: V2Inputs, path: Path, expected_sha256: str, expected_schema: str,
+) -> dict[str, dict[str, Any]]:
     if file_sha256(path) != _digest(expected_sha256, "descriptor manifest SHA-256"):
         raise ValueError("descriptor manifest SHA-256 mismatch")
     document = _json_object(path)
-    if document.get("schema_version") != _DESCRIPTOR_SCHEMA or document.get("object_independent") is not True:
+    schema = str(document.get("schema_version", ""))
+    if schema != expected_schema or document.get("object_independent") is not True:
         raise ValueError("descriptor manifest identity changed")
-    configured_rule = inputs.config.section("candidate_generation").get(
-        "maximum_closure_phase_rule"
-    )
-    if configured_rule != _CLOSURE_PHASE_RULE or document.get(
-        "maximum_closure_phase_rule"
-    ) != _CLOSURE_PHASE_RULE:
-        raise ValueError("descriptor closure phase rule differs from frozen route")
+    full_palm = schema == "kcg_graspgenx_descriptors_v2"
+    if full_palm:
+        if (
+            document.get("palm_configuration_grid_rule")
+            != "URDF_CLOSED_LIMITS_91_UNIFORM"
+            or int(document.get("palm_configuration_count", 0)) != 91
+            or document.get("conditioning_close_selection_role")
+            != "GRASPGENX_CONDITIONING_ONLY_NOT_SEQUENTIAL_PHYSICAL_LIMIT"
+        ):
+            raise ValueError("full-palm descriptor grid/conditioning identity changed")
+    else:
+        configured_rule = inputs.config.section("candidate_generation").get(
+            "maximum_closure_phase_rule"
+        )
+        if configured_rule != _CLOSURE_PHASE_RULE or document.get(
+            "maximum_closure_phase_rule"
+        ) != _CLOSURE_PHASE_RULE:
+            raise ValueError("descriptor closure phase rule differs from frozen route")
     roster = inputs.repository_root / inputs.config.section("inputs")["collision_roster"]
     if file_sha256(inputs.hand_contract.contract_path) != document.get("hand_contract_sha256"):
         raise ValueError("descriptor hand contract does not match current hand")
@@ -171,9 +124,25 @@ def _descriptor_rows(inputs: V2Inputs, path: Path, expected_sha256: str) -> dict
         if not np.allclose(hand_from_generator @ generator_from_hand, np.eye(4), atol=1e-9):
             raise ValueError("descriptor frame transforms are not inverse")
         open_map = {str(k): float(v) for k, v in row["open_joint_positions_rad"].items()}
-        close_map = {str(k): float(v) for k, v in row["close_joint_positions_rad"].items()}
+        close_key = (
+            "conditioning_close_joint_positions_rad"
+            if full_palm
+            else "close_joint_positions_rad"
+        )
+        close_map = {str(k): float(v) for k, v in row[close_key].items()}
         inputs.hand_model.resolve_joint_positions(open_map, enforce_limits=True)
         inputs.hand_model.resolve_joint_positions(close_map, enforce_limits=True)
+        palm_configuration = float(
+            row["palm_configuration_rad"]
+            if full_palm
+            else row.get("preshape_f1j1_rad", open_map["f1j1"])
+        )
+        if (
+            not math.isfinite(palm_configuration)
+            or not np.isclose(open_map["f1j1"], palm_configuration, atol=1.0e-12)
+            or not np.isclose(open_map["f3j1"], palm_configuration, atol=1.0e-12)
+        ):
+            raise ValueError("descriptor palm configuration was lost or changed")
         fingertip = np.asarray(row["graspgenx_config"]["fingertip"], dtype=np.float64)
         if fingertip.shape != (3,) or not np.all(np.isfinite(fingertip)):
             raise ValueError("descriptor fingertip must be one finite 3-vector")
@@ -201,10 +170,26 @@ def _descriptor_rows(inputs: V2Inputs, path: Path, expected_sha256: str) -> dict
             "half_sweep_lower": half_offset - 0.5 * half_extents,
             "half_sweep_upper": half_offset + 0.5 * half_extents,
             "open_independent": tuple(open_map[name] for name in inputs.hand_model.independent_joint_names),
-            "maximum_closure_phase": float(row["maximum_closure_phase"]),
+            "palm_configuration_rad": palm_configuration,
+            "conditioning_close_phase": float(
+                row["conditioning_close_phase"]
+                if full_palm
+                else row["maximum_closure_phase"]
+            ),
+            "physical_maximum_closure_phase": (
+                None if full_palm else float(row["maximum_closure_phase"])
+            ),
         }
     if not result:
         raise ValueError("descriptor manifest has no descriptor")
+    if full_palm:
+        limit = inputs.hand_model.independent_joint_limits["f1j1"]
+        expected = np.linspace(limit.lower, limit.upper, 91)
+        observed = np.asarray([
+            result[key]["palm_configuration_rad"] for key in sorted(result)
+        ])
+        if len(result) != 91 or not np.allclose(observed, expected, atol=1.0e-12):
+            raise ValueError("PALM_CONFIGURATION_LOST_IN_PIPELINE")
     return result
 
 def _validate_mesh(inputs: V2Inputs, payload: Mapping[str, Any], path: Path) -> str:
@@ -299,6 +284,7 @@ def _select_six_d_diverse(
 def _convert_and_deduplicate(
     payload: Mapping[str, Any], descriptors: Mapping[str, Mapping[str, Any]],
     translation_tolerance_m: float, rotation_tolerance_rad: float, maximum_candidates: int,
+    *, require_palm_configuration: bool,
 ) -> list[tuple[Any, ...]]:
     converted = []
     seen_sources: set[tuple[str, int]] = set()
@@ -317,6 +303,17 @@ def _convert_and_deduplicate(
             raise ValueError("proposal source identity or score is invalid")
         seen_sources.add(key)
         descriptor = descriptors[descriptor_id]
+        proposal_palm = row.get("palm_configuration_rad")
+        if require_palm_configuration and proposal_palm is None:
+            raise ValueError("PALM_CONFIGURATION_LOST_IN_PIPELINE")
+        if proposal_palm is not None and (
+            not math.isfinite(float(proposal_palm))
+            or not np.isclose(
+                float(proposal_palm), descriptor["palm_configuration_rad"],
+                atol=1.0e-12, rtol=0.0,
+            )
+        ):
+            raise ValueError("PALM_CONFIGURATION_LOST_IN_PIPELINE")
         object_from_generator = _rigid(row["object_from_graspgenx_row_major"], "object_from_graspgenx")
         object_from_hand = _rigid(
             object_from_generator @ descriptor["generator_from_hand"],
@@ -405,7 +402,8 @@ def _adapt_rows(
             approach_direction_object=tuple(
                 float(value) for value in raw_pose[:3, 2]
             ),
-            maximum_closure_phase=descriptor["maximum_closure_phase"],
+            maximum_closure_phase=descriptor["physical_maximum_closure_phase"],
+            palm_configuration_rad=descriptor["palm_configuration_rad"],
         )
         descriptor_row = descriptor["row"]
         evidence = {
@@ -426,8 +424,22 @@ def _adapt_rows(
             ),
             "graspgenx_from_handbase_row_major": descriptor["generator_from_hand"].ravel().tolist(),
             "open_joint_positions_rad": descriptor_row["open_joint_positions_rad"],
-            "close_joint_positions_rad": descriptor_row["close_joint_positions_rad"],
-            "maximum_closure_phase": descriptor["maximum_closure_phase"],
+            "conditioning_close_joint_positions_rad": descriptor_row.get(
+                "conditioning_close_joint_positions_rad",
+                descriptor_row.get("close_joint_positions_rad"),
+            ),
+            "conditioning_close_phase": descriptor["conditioning_close_phase"],
+            "close_joint_positions_rad": descriptor_row.get(
+                "close_joint_positions_rad",
+                descriptor_row.get("conditioning_close_joint_positions_rad"),
+            ),
+            "maximum_closure_phase": descriptor[
+                "physical_maximum_closure_phase"
+            ],
+            "palm_configuration_rad": descriptor["palm_configuration_rad"],
+            "sequential_physical_maximum_closure_phase": (
+                descriptor["physical_maximum_closure_phase"]
+            ),
             "generator_commit": commit,
             "checkpoint_sha256": checkpoint,
             "source_mesh_sha256": payload["source_mesh_sha256"],
@@ -472,15 +484,20 @@ def load_graspgenx_candidates(
     tolerances = (translation_tolerance_m, rotation_tolerance_rad)
     if any(not math.isfinite(value) or value <= 0.0 for value in tolerances):
         raise ValueError("6-D de-duplication tolerances must be positive")
-    if not 1 <= int(maximum_candidates) <= 256:
-        raise ValueError("maximum_candidates must lie in [1, 256]")
+    if not 1 <= int(maximum_candidates) <= 5824:
+        raise ValueError("maximum_candidates must lie in [1, 5824]")
     proposals_path = Path(proposal_path).resolve()
     descriptor_path = Path(descriptor_manifest_path).resolve()
     mesh_path = Path(standardized_mesh_path).resolve()
     payload = _json_object(proposals_path)
     commit = _digest(expected_generator_commit, "generator commit", length=40)
     checkpoint = _digest(expected_checkpoint_sha256, "checkpoint SHA-256")
-    if payload.get("schema_version") != _PROPOSAL_SCHEMA or payload.get("object_id") != inputs.object_contract.object_id:
+    backend = str(inputs.config.section("candidate_generation").get("backend", ""))
+    schemas = _SCHEMAS_BY_BACKEND.get(backend)
+    if schemas is None:
+        raise ValueError("unsupported GraspGenX candidate backend")
+    proposal_schema, descriptor_schema = schemas
+    if payload.get("schema_version") != proposal_schema or payload.get("object_id") != inputs.object_contract.object_id:
         raise ValueError("proposal schema/object identity changed")
     if payload.get("generator_commit") != commit or payload.get("checkpoint_sha256") != checkpoint:
         raise ValueError("proposal generator/checkpoint identity mismatch")
@@ -502,11 +519,14 @@ def load_graspgenx_candidates(
         expected_descriptor_manifest_sha256, "expected descriptor SHA-256"
     ):
         raise ValueError("proposal descriptor identity differs from frozen route")
-    descriptors = _descriptor_rows(inputs, descriptor_path, descriptor_sha)
+    descriptors = _descriptor_rows(
+        inputs, descriptor_path, descriptor_sha, descriptor_schema
+    )
     mesh_sha = _validate_mesh(inputs, payload, mesh_path)
     accepted = _convert_and_deduplicate(
         payload, descriptors, translation_tolerance_m,
         rotation_tolerance_rad, int(maximum_candidates),
+        require_palm_configuration=backend == "GRASPGENX_FULL_PALM",
     )
     return _adapt_rows(
         inputs, accepted, payload, commit=commit, checkpoint=checkpoint,

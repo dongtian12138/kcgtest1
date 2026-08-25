@@ -146,6 +146,7 @@ class CandidateSeed:
     descriptor_id: str = ""
     approach_direction_object: tuple[float, float, float] | None = None
     maximum_closure_phase: float | None = None
+    palm_configuration_rad: float | None = None
 
     def object_from_hand_matrix(self) -> np.ndarray:
         return np.asarray(self.object_from_hand, dtype=np.float64).reshape(4, 4)
@@ -250,6 +251,10 @@ def joint_positions_for_phases(
     lower = np.asarray([hand.joints[name].limit.lower for name in names])
     upper = np.asarray([hand.joints[name].limit.upper for name in names])
     if reference_joint_positions_rad is None:
+        if inputs.config.section("candidate_generation").get("backend") == (
+            "GRASPGENX_FULL_PALM"
+        ):
+            raise ValueError("PALM_CONFIGURATION_LOST_IN_PIPELINE")
         positions = lower.copy()
         preshape = inputs.config.section("candidate_generation")[
             "preshape_joint_positions_rad"
@@ -287,6 +292,22 @@ def load_v2_config(path: Path | str) -> CARTSV2Config:
     count = int(generation.get("candidate_count", 0))
     if count < 32 or count > 64:
         raise ValueError("candidate_count must stay in [32, 64]")
+    if generation.get("backend") == "GRASPGENX_FULL_PALM":
+        palm = generation.get("palm_configuration", {})
+        pregrasp = generation.get("pregrasp_search", {})
+        graspgenx = generation.get("graspgenx", {})
+        if (
+            int(palm.get("grid_count", 0)) != 91
+            or float(palm.get("lower_rad", math.nan)) != 0.0
+            or float(palm.get("upper_rad", math.nan)) != 1.57
+            or list(palm.get("anchor_indices", ())) != [0, 30, 45, 60, 90]
+            or list(pregrasp.get("phase_values_per_finger", ()))
+            != [0.0, 0.1, 0.2]
+            or int(pregrasp.get("combination_count", 0)) != 27
+            or int(graspgenx.get("raw_target_per_descriptor_object", 0)) != 128
+            or int(graspgenx.get("keep_per_descriptor_object", 0)) != 64
+        ):
+            raise ValueError("full-palm search identity changed")
     dynamic = value.get("dynamic", {})
     if (
         float(dynamic.get("lift_distance_m", 0.0)) != 0.05

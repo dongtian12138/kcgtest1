@@ -9,16 +9,100 @@ import json
 from pathlib import Path
 
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 from kcg_connector.grasp.carts_v2.candidate_generator import generate_raw_candidates
 from kcg_connector.grasp.carts_v2.graspgenx_adapter import (
+    AdaptedCandidate,
     load_graspgenx_candidates,
-    summarize_six_d_coverage,
 )
-from kcg_connector.grasp.carts_v2.models import load_v2_inputs
+from kcg_connector.grasp.carts_v2.models import V2Inputs, load_v2_inputs
 from kcg_connector.grasp.carts_v2.pipeline import run_offline_pipeline
 from kcg_connector.grasp.carts_v2.reporting import write_offline_report
 from kcg_connector.grasp.robust.object_model import file_sha256
+
+
+def summarize_six_d_coverage(
+    inputs: V2Inputs, candidates: tuple[AdaptedCandidate, ...]
+) -> dict[str, object]:
+    """Diagnose proposal coverage without treating it as grasp evidence."""
+
+    if len(candidates) < 2:
+        raise ValueError("at least two candidates are required for coverage")
+    poses = np.asarray([row.seed.object_from_hand_matrix() for row in candidates])
+    generator_poses = np.asarray([
+        np.asarray(row.evidence["object_from_graspgenx_row_major"]).reshape(4, 4)
+        for row in candidates
+    ])
+    positions = poses[:, :3, 3]
+    origin = inputs.object_contract.model.assembly_axis_origin_m
+    basis = inputs.object_contract.task_frame_rotation_object
+    task_positions = (positions - origin) @ basis
+    radial = np.linalg.norm(task_positions[:, :2], axis=1)
+    approach = generator_poses[:, :3, 2]
+    approach_azimuth = np.arctan2(approach[:, 1], approach[:, 0])
+    approach_elevation = np.arcsin(np.clip(approach[:, 2], -1.0, 1.0))
+    rotations = Rotation.from_matrix(poses[:, :3, :3])
+    rpy = rotations.as_euler("xyz")
+    radius_scale = max(
+        float(inputs.object_contract.characteristic_radius_m), 1.0e-9
+    )
+    features = np.column_stack((
+        positions / radius_scale, rotations.as_rotvec() / np.pi,
+    ))
+    covariance = np.cov(features, rowvar=False)
+    eigenvalues = np.maximum(np.linalg.eigvalsh(covariance), 0.0)
+    effective_dimension = float(
+        np.sum(eigenvalues) ** 2 / max(np.sum(eigenvalues ** 2), 1.0e-18)
+    )
+    dedup = inputs.config.section("candidate_generation")["deduplication"]
+    descriptor_counts = {
+        descriptor_id: sum(
+            row.seed.descriptor_id == descriptor_id for row in candidates
+        )
+        for descriptor_id in sorted({row.seed.descriptor_id for row in candidates})
+    }
+    palm_azimuth = np.mod(
+        np.arctan2(task_positions[:, 1], task_positions[:, 0]), 2 * np.pi
+    )
+    occupied_quadrants = len(np.unique(
+        np.floor(palm_azimuth / (0.5 * np.pi)).astype(int)
+    ))
+    checks = {
+        "at_least_100_candidates": len(candidates) >= 100,
+        "multiple_descriptors": len(descriptor_counts) > 1,
+        "multiple_palm_sides": occupied_quadrants >= 2,
+        "radial_distance_not_constant": float(np.ptp(radial))
+        > float(dedup["palm_position_m"]),
+        "roll_not_constant": float(np.ptp(rpy[:, 0]))
+        > float(dedup["palm_orientation_rad"]),
+        "pitch_not_constant": float(np.ptp(rpy[:, 1]))
+        > float(dedup["palm_orientation_rad"]),
+    }
+    return {
+        "schema_version": "graspgenx_carts_6d_coverage_v1",
+        "object_id": inputs.object_contract.object_id,
+        "candidate_count": len(candidates),
+        "position_range_object_m": np.ptp(positions, axis=0).tolist(),
+        "position_min_object_m": np.min(positions, axis=0).tolist(),
+        "position_max_object_m": np.max(positions, axis=0).tolist(),
+        "radial_distance_range_m": [float(np.min(radial)), float(np.max(radial))],
+        "approach_azimuth_range_rad": [
+            float(np.min(approach_azimuth)), float(np.max(approach_azimuth))
+        ],
+        "approach_elevation_range_rad": [
+            float(np.min(approach_elevation)), float(np.max(approach_elevation))
+        ],
+        "roll_pitch_yaw_range_rad": np.ptp(rpy, axis=0).tolist(),
+        "descriptor_counts": descriptor_counts,
+        "palm_azimuth_quadrant_count": occupied_quadrants,
+        "normalized_pose_covariance": covariance.tolist(),
+        "normalized_pose_covariance_eigenvalues": eigenvalues.tolist(),
+        "effective_dimension_participation_ratio": effective_dimension,
+        "diagnostic_checks": checks,
+        "coverage_pass": all(checks.values()),
+        "evidence_scope": "GENERATOR_COVERAGE_DIAGNOSTIC_NOT_GRASP_SUCCESS",
+    }
 
 
 def _arguments() -> argparse.Namespace:

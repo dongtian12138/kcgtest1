@@ -68,21 +68,38 @@ def run_offline_pipeline(
     timings["load_inputs"] = time.perf_counter() - started
 
     started = time.perf_counter()
+    generation = inputs.config.section("candidate_generation")
+    backend = str(generation.get("backend", ""))
     if candidate_seeds is None:
+        if backend in {"GRASPGENX", "GRASPGENX_FULL_PALM"}:
+            raise ValueError("GraspGenX backend requires file-bound candidate seeds")
         raw_candidates = generate_raw_candidates(inputs)
     else:
         raw_candidates = tuple(candidate_seeds)
         identifiers = [row.candidate_id for row in raw_candidates]
-        generation = inputs.config.section("candidate_generation")
         limit = int(generation.get("graspgenx", {}).get("merged_max_per_object", 256))
         if (
-            generation.get("backend") != "GRASPGENX"
+            backend not in {"GRASPGENX", "GRASPGENX_FULL_PALM"}
             or not raw_candidates
             or len(raw_candidates) > limit
             or len(set(identifiers)) != len(identifiers)
             or any(row.object_id != object_id for row in raw_candidates)
         ):
             raise ValueError("external candidate set violates GraspGenX route identity")
+        if backend == "GRASPGENX_FULL_PALM":
+            palm_index = inputs.hand_model.independent_joint_names.index("f1j1")
+            if any(
+                row.palm_configuration_rad is None
+                or not np.isfinite(row.palm_configuration_rad)
+                or not np.isclose(
+                    row.pregrasp_joint_positions_rad[palm_index],
+                    row.palm_configuration_rad,
+                    atol=1.0e-12,
+                    rtol=0.0,
+                )
+                for row in raw_candidates
+            ):
+                raise ValueError("PALM_CONFIGURATION_LOST_IN_PIPELINE")
     timings["candidate_generation"] = time.perf_counter() - started
 
     started = time.perf_counter()

@@ -15,7 +15,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import trimesh
 
-from kcg_connector.grasp.carts_v2.gripper_descriptor_builder import build_kcg_graspgenx_descriptors, shared_preshape_grid
+from kcg_connector.grasp.carts_v2.gripper_descriptor_builder import (
+    build_kcg_graspgenx_descriptors,
+    shared_preshape_grid,
+)
 from kcg_connector.grasp.robust.collision_roster import load_authoritative_collision_link_roster
 from kcg_connector.grasp.robust.hand_contract import load_carts_hand_contract
 from kcg_connector.grasp.robust.object_model import file_sha256, load_stl_mesh
@@ -58,7 +61,9 @@ def _registered_hand_meshes(root: Path, roster, hand) -> dict[str, trimesh.Trime
     return meshes
 
 
-def _self_collision_audits(hand, meshes, maximum_closure_phase: float) -> list[dict]:
+def _self_collision_audits(
+    hand, meshes, conditioning_search_upper_phase: float
+) -> list[dict]:
     structural = {
         tuple(sorted((joint.parent_link, joint.child_link)))
         for joint in hand.joints.values()
@@ -68,7 +73,7 @@ def _self_collision_audits(hand, meshes, maximum_closure_phase: float) -> list[d
     for name, mesh in meshes.items():
         manager.add_object(name, mesh)
     closure_upper = hand.independent_joint_limits["f1j2"].upper
-    close_position = float(maximum_closure_phase) * closure_upper
+    close_position = float(conditioning_search_upper_phase) * closure_upper
     step_count = max(1, math.ceil(close_position / _MAXIMUM_JOINT_INCREMENT_RAD))
     positions = np.linspace(0.0, close_position, step_count + 1)
     audits = []
@@ -98,7 +103,7 @@ def _self_collision_audits(hand, meshes, maximum_closure_phase: float) -> list[d
             last_safe_phase = float(closure / closure_upper)
         audits.append(
             {
-                "preshape_f1j1_rad": float(spread),
+                "palm_configuration_rad": float(spread),
                 "pass": first_forbidden is None,
                 "checked_state_count": checked,
                 "maximum_observed_joint_increment_rad": float(
@@ -108,6 +113,7 @@ def _self_collision_audits(hand, meshes, maximum_closure_phase: float) -> list[d
                 "last_verified_self_collision_free_phase": last_safe_phase,
                 "path": "SYNCHRONOUS_OPEN_TO_CLOSE_AND_REVERSE_SAME_STATES",
                 "direct_parent_child_pairs_excluded": True,
+                "selection_role": "CONDITIONING_CLOSE_ONLY_NOT_PALM_REJECTION",
             }
         )
     return audits
@@ -130,7 +136,7 @@ def _render_descriptor(path: Path, descriptor, hand, meshes) -> None:
     states = (
         ("open", descriptor.open_joint_positions_rad),
         ("half", descriptor.half_joint_positions_rad),
-        ("close", descriptor.close_joint_positions_rad),
+        ("conditioning_close", descriptor.conditioning_close_joint_positions_rad),
     )
     figure = plt.figure(figsize=(12, 4), constrained_layout=True)
     transform = descriptor.frame.graspgenx_from_handbase
@@ -179,17 +185,15 @@ def main() -> int:
     audits = _self_collision_audits(
         hand, meshes, _CLOSURE_SEARCH_UPPER_PHASE
     )
-    safe_phase_by_preshape = {
-        row["preshape_f1j1_rad"]: row["last_verified_self_collision_free_phase"]
+    conditioning_phase_by_palm = {
+        row["palm_configuration_rad"]: row["last_verified_self_collision_free_phase"]
         for row in audits
         if row["last_verified_self_collision_free_phase"] is not None
     }
-    legal = list(safe_phase_by_preshape)
     descriptors = build_kcg_graspgenx_descriptors(
         contract,
         hand,
-        closure_phase_by_preshape=safe_phase_by_preshape,
-        legal_samples_rad=legal,
+        conditioning_close_phase_by_palm=conditioning_phase_by_palm,
     )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     rows = []
@@ -200,11 +204,16 @@ def main() -> int:
         rows.append(
             {
                 "descriptor_id": descriptor.descriptor_id,
-                "preshape_f1j1_rad": descriptor.preshape_f1j1_rad,
-                "maximum_closure_phase": descriptor.maximum_closure_phase,
+                "palm_configuration_rad": descriptor.palm_configuration_rad,
+                "palm_configuration_nominal_deg": math.degrees(
+                    descriptor.palm_configuration_rad
+                ),
+                "conditioning_close_phase": descriptor.conditioning_close_phase,
                 "open_joint_positions_rad": dict(descriptor.open_joint_positions_rad),
                 "half_joint_positions_rad": dict(descriptor.half_joint_positions_rad),
-                "close_joint_positions_rad": dict(descriptor.close_joint_positions_rad),
+                "conditioning_close_joint_positions_rad": dict(
+                    descriptor.conditioning_close_joint_positions_rad
+                ),
                 "handbase_from_graspgenx_row_major": (
                     descriptor.frame.handbase_from_graspgenx.ravel().tolist()
                 ),
@@ -215,28 +224,44 @@ def main() -> int:
                 "render": image_name,
                 "render_sha256": file_sha256(image_path),
                 "aabb_claim": "MODEL_CONDITIONING_ONLY_NOT_COLLISION_PROOF",
+                "conditioning_close_claim": (
+                    "GRASPGENX_CONDITIONING_ONLY_NOT_SEQUENTIAL_PHYSICAL_LIMIT"
+                ),
             }
         )
     payload = {
-        "schema_version": "kcg_graspgenx_descriptors_v1",
+        "schema_version": "kcg_graspgenx_descriptors_v2",
         "object_independent": True,
         "hand_contract": str(contract_path.relative_to(root)),
         "hand_contract_sha256": file_sha256(contract_path),
         "collision_roster": str(roster_path.relative_to(root)),
         "collision_roster_sha256": file_sha256(roster_path),
-        "f1j1_grid_rule": "URDF_LIMIT_10_TO_90_PERCENT_9_UNIFORM",
-        "maximum_closure_phase_rule": (
-            "PER_PRESHAPE_LAST_SAMPLED_SELF_COLLISION_FREE_STATE"
+        "palm_configuration_joint": "f1j1",
+        "palm_configuration_mimic_joint": "f3j1",
+        "palm_configuration_grid_rule": "URDF_CLOSED_LIMITS_91_UNIFORM",
+        "palm_configuration_count": len(descriptors),
+        "palm_configuration_anchor_indices": [0, 30, 45, 60, 90],
+        "palm_configuration_anchor_rad": [
+            descriptors[index].palm_configuration_rad
+            for index in (0, 30, 45, 60, 90)
+        ],
+        "conditioning_close_phase_rule": (
+            "PER_PALM_LAST_SAMPLED_SYNCHRONOUS_SELF_COLLISION_FREE_STATE"
         ),
-        "maximum_closure_phase_range": [
-            min(row.maximum_closure_phase for row in descriptors),
-            max(row.maximum_closure_phase for row in descriptors),
+        "conditioning_close_selection_role": (
+            "GRASPGENX_CONDITIONING_ONLY_NOT_SEQUENTIAL_PHYSICAL_LIMIT"
+        ),
+        "conditioning_close_phase_range": [
+            min(row.conditioning_close_phase for row in descriptors),
+            max(row.conditioning_close_phase for row in descriptors),
         ],
         "maximum_joint_increment_rad": _MAXIMUM_JOINT_INCREMENT_RAD,
         "self_collision_backend": "python-fcl-0.7.0.8_via_trimesh",
-        "legacy_closure_phase_audit": {
-            "maximum_closure_phase": _CLOSURE_SEARCH_UPPER_PHASE,
-            "all_preshapes_pass": all(row["pass"] for row in audits),
+        "synchronous_conditioning_close_audit": {
+            "conditioning_search_upper_phase": _CLOSURE_SEARCH_UPPER_PHASE,
+            "all_palm_configurations_reach_search_upper_phase": all(
+                row["pass"] for row in audits
+            ),
             "audits": audits,
         },
         "sweep_volume_method": "OFFICIAL_WIZARD_INNER_FINGERTIP_SPACE_AABB",
@@ -244,16 +269,6 @@ def main() -> int:
         "canonical_origin_rule": (
             "APPROACH_AXIS_AT_MEAN_PROXIMAL_FINGER_JOINT_PLANE"
         ),
-        "self_collision_audits": [
-            row for row in audits
-            if any(
-                np.isclose(
-                    row["preshape_f1j1_rad"], descriptor.preshape_f1j1_rad,
-                    atol=1.0e-12,
-                )
-                for descriptor in descriptors
-            )
-        ],
         "descriptors": rows,
     }
     destination = args.output_dir / "descriptor_manifest.json"

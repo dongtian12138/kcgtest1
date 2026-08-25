@@ -74,7 +74,11 @@ def _exact_nonpad_surfaces(inputs: V2Inputs) -> dict[str, np.ndarray]:
     return result
 
 
-def _fcl_model(vertices: np.ndarray, faces: np.ndarray | None = None):
+def build_fcl_bvh_model(vertices: np.ndarray, faces: np.ndarray | None = None):
+    """Build the one shared python-fcl triangle BVH representation."""
+
+    if fcl is None:
+        raise RuntimeError("python-fcl mesh backend is unavailable")
     if faces is None:
         vertices = np.asarray(vertices).reshape(-1, 3)
         faces = np.arange(len(vertices), dtype=np.int32).reshape(-1, 3)
@@ -91,9 +95,9 @@ def _prepare_fcl_scene(inputs: V2Inputs):
         return None
     registered = inputs.hand_collision_triangles_by_link
     nonpad = _exact_nonpad_surfaces(inputs)
-    self_objects = {name: fcl.CollisionObject(_fcl_model(triangles))
+    self_objects = {name: fcl.CollisionObject(build_fcl_bvh_model(triangles))
                     for name, triangles in registered.items()}
-    nonpad_objects = {name: fcl.CollisionObject(_fcl_model(triangles))
+    nonpad_objects = {name: fcl.CollisionObject(build_fcl_bvh_model(triangles))
                       for name, triangles in nonpad.items()}
     links = tuple(sorted(self_objects))
     adjacent = {
@@ -107,7 +111,7 @@ def _prepare_fcl_scene(inputs: V2Inputs):
         raise ValueError("registered hand self-collision pair coverage changed")
     mesh = inputs.object_contract.model.mesh
     world_from_object = inputs.frozen_world_from_object
-    object_collision = fcl.CollisionObject(_fcl_model(mesh.vertices_m, mesh.faces),
+    object_collision = fcl.CollisionObject(build_fcl_bvh_model(mesh.vertices_m, mesh.faces),
         fcl.Transform(world_from_object[:3, :3], world_from_object[:3, 3]))
     return self_objects, nonpad_objects, object_collision, pairs
 

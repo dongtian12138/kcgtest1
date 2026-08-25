@@ -27,8 +27,8 @@ from graspgenx.serving.types import SweepVolumeParams
 from graspgenx.utils.checkpoint_io import load_model_cfg
 
 
-_SCHEMA = "graspgenx_carts_proposals_v1"
-_DESCRIPTOR_SCHEMA = "kcg_graspgenx_descriptors_v1"
+_SCHEMA = "graspgenx_carts_full_palm_proposals_v2"
+_DESCRIPTOR_SCHEMA = "kcg_graspgenx_descriptors_v2"
 _OBJECT_SCHEMA = "graspgenx_carts_objects_v1"
 _KEEP_METHOD = "HIGHEST_SCORE_PER_DESCRIPTOR"
 _VISIBILITY_METHOD = "OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_DIAGNOSTIC_ONLY"
@@ -56,9 +56,9 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--checkpoints", type=Path)
     parser.add_argument("--generator-commit", required=True)
-    parser.add_argument("--seed", type=int, default=20260824)
-    parser.add_argument("--num-grasps", type=int, default=256)
-    parser.add_argument("--keep-per-descriptor", type=int, default=128)
+    parser.add_argument("--seed", type=int, default=20260825)
+    parser.add_argument("--num-grasps", type=int, default=128)
+    parser.add_argument("--keep-per-descriptor", type=int, default=64)
     return parser.parse_args()
 
 
@@ -311,8 +311,8 @@ def _infer(
 
 def main() -> int:
     args = _arguments()
-    if args.num_grasps != 256 or args.keep_per_descriptor != 128:
-        raise ValueError("route1 fixes generation=256 and per-descriptor keep=128")
+    if args.num_grasps != 128 or args.keep_per_descriptor != 64:
+        raise ValueError("full-palm route fixes generation=128 and per-angle keep=64")
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
@@ -321,7 +321,7 @@ def main() -> int:
     if (
         descriptors.get("schema_version") != _DESCRIPTOR_SCHEMA
         or descriptors.get("object_independent") is not True
-        or not 1 <= len(descriptors.get("descriptors", ())) <= 5
+        or len(descriptors.get("descriptors", ())) != 91
     ):
         raise ValueError("descriptor manifest identity/count changed")
     if objects.get("schema_version") != _OBJECT_SCHEMA or not objects.get("objects"):
@@ -362,9 +362,18 @@ def main() -> int:
             )
             for row in rows:
                 row["descriptor_id"] = descriptor["descriptor_id"]
+                row["palm_configuration_rad"] = float(
+                    descriptor["palm_configuration_rad"]
+                )
             collected[object_id].extend(rows)
             audits[object_id].append(
-                {"descriptor_id": descriptor["descriptor_id"], **audit}
+                {
+                    "descriptor_id": descriptor["descriptor_id"],
+                    "palm_configuration_rad": float(
+                        descriptor["palm_configuration_rad"]
+                    ),
+                    **audit,
+                }
             )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for object_id, (

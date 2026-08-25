@@ -9,15 +9,16 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
+from kcg_connector.grasp.carts_v2 import pipeline as pipeline_module
 from kcg_connector.grasp.carts_v2.graspgenx_adapter import (
     load_graspgenx_candidates,
-    summarize_six_d_coverage,
 )
 from kcg_connector.grasp.carts_v2.models import (
     CandidateSeed, ClosurePrediction, FastFilterResult, TaskQualityResult,
     write_standardized_object_manifest,
 )
 from kcg_connector.grasp.carts_v2.selector import select_candidate_rankings
+from kcg_connector.grasp.carts_v2.reporting import _candidate_rows, _selected_json
 from kcg_connector.grasp.robust.hand_contract import load_carts_hand_contract
 
 
@@ -55,12 +56,15 @@ def _sha256(path: Path) -> str:
 
 
 class _Config:
+    def __init__(self, backend: str = "GRASPGENX") -> None:
+        self.backend = backend
+
     def section(self, name: str):
         if name == "inputs":
             return {"collision_roster": str(COLLISION_ROSTER.relative_to(ROOT))}
         if name == "candidate_generation":
             return {
-                "backend": "GRASPGENX",
+                "backend": self.backend,
                 "maximum_closure_phase_rule": (
                     "PER_PRESHAPE_LAST_SAMPLED_SELF_COLLISION_FREE_STATE"
                 ),
@@ -263,6 +267,52 @@ def _load(case, *, maximum_candidates=256, expected_descriptor_sha=None):
     )
 
 
+def _use_full_palm_schema(case, descriptor_index: int = 30) -> float:
+    legacy = json.loads(case.descriptor_path.read_text(encoding="utf-8"))
+    base = legacy["descriptors"][0]
+    limit = case.inputs.hand_model.independent_joint_limits["f1j1"]
+    palms = np.linspace(limit.lower, limit.upper, 91)
+    descriptors = []
+    for index, palm in enumerate(palms):
+        row = copy.deepcopy(base)
+        row["descriptor_id"] = f"kcg_3f_palm_{index:03d}"
+        row["palm_configuration_rad"] = float(palm)
+        row["conditioning_close_phase"] = 0.5
+        close_map = row.pop("close_joint_positions_rad")
+        row["conditioning_close_joint_positions_rad"] = close_map
+        for joint_map in (
+            row["open_joint_positions_rad"],
+            row["conditioning_close_joint_positions_rad"],
+        ):
+            joint_map["f1j1"] = float(palm)
+            joint_map["f3j1"] = float(palm)
+        descriptors.append(row)
+    document = {
+        **{key: legacy[key] for key in (
+            "object_independent", "hand_contract_sha256", "collision_roster_sha256"
+        )},
+        "schema_version": "kcg_graspgenx_descriptors_v2",
+        "palm_configuration_grid_rule": "URDF_CLOSED_LIMITS_91_UNIFORM",
+        "palm_configuration_count": 91,
+        "conditioning_close_selection_role": (
+            "GRASPGENX_CONDITIONING_ONLY_NOT_SEQUENTIAL_PHYSICAL_LIMIT"
+        ),
+        "descriptors": descriptors,
+    }
+    case.descriptor_path.write_text(json.dumps(document), encoding="utf-8")
+    payload = copy.deepcopy(case.payload)
+    payload["schema_version"] = "graspgenx_carts_full_palm_proposals_v2"
+    chosen = descriptors[descriptor_index]
+    for row in payload["proposals"]:
+        row["descriptor_id"] = chosen["descriptor_id"]
+        row["palm_configuration_rad"] = chosen["palm_configuration_rad"]
+    payload["descriptor_manifest_sha256"] = _sha256(case.descriptor_path)
+    case.proposal_path.write_text(json.dumps(payload), encoding="utf-8")
+    case.inputs.config = _Config("GRASPGENX_FULL_PALM")
+    case.payload = payload
+    return float(chosen["palm_configuration_rad"])
+
+
 def test_standardized_mesh_transform_evidence_and_six_d_dedup(adapter_case) -> None:
     candidates = _load(adapter_case)
     assert len(candidates) == 2
@@ -276,6 +326,60 @@ def test_standardized_mesh_transform_evidence_and_six_d_dedup(adapter_case) -> N
     assert first.evidence["close_joint_positions_rad"] == adapter_case.descriptor["close_joint_positions_rad"]
     assert first.evidence["checkpoint_sha256"] == CHECKPOINT_SHA
     assert first.evidence["transform_chain"] == "object_from_graspgenx @ graspgenx_from_handbase"
+
+
+def test_backend_binds_exact_schema_pair_and_preserves_full_palm_qp(
+    adapter_case,
+) -> None:
+    adapter_case.inputs.config = _Config("GRASPGENX_FULL_PALM")
+    with pytest.raises(ValueError, match="schema/object identity"):
+        _load(adapter_case)
+
+    palm = _use_full_palm_schema(adapter_case)
+    candidates = _load(adapter_case)
+    assert candidates
+    assert all(row.seed.palm_configuration_rad == palm for row in candidates)
+    assert all(row.evidence["palm_configuration_rad"] == palm for row in candidates)
+
+    adapter_case.inputs.config = _Config("GRASPGENX")
+    with pytest.raises(ValueError, match="schema/object identity"):
+        _load(adapter_case)
+
+
+@pytest.mark.parametrize("proposal_palm", [None, 0.123456789])
+def test_full_palm_proposal_qp_is_required_and_descriptor_bound(
+    adapter_case, proposal_palm,
+) -> None:
+    expected = _use_full_palm_schema(adapter_case)
+    payload = copy.deepcopy(adapter_case.payload)
+    if proposal_palm is None:
+        payload["proposals"][0].pop("palm_configuration_rad")
+    else:
+        assert proposal_palm != expected
+        payload["proposals"][0]["palm_configuration_rad"] = proposal_palm
+    adapter_case.proposal_path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ValueError, match="PALM_CONFIGURATION_LOST_IN_PIPELINE"):
+        _load(adapter_case)
+
+
+@pytest.mark.parametrize("palm", [None, 0.2])
+def test_full_palm_pipeline_rejects_missing_or_inconsistent_seed_qp(
+    adapter_case, monkeypatch, palm,
+) -> None:
+    adapter_case.inputs.config = _Config("GRASPGENX_FULL_PALM")
+    seed = CandidateSeed(
+        "external", OBJECT_ID, 0, (0.0, 0.0, 0.0),
+        tuple(np.eye(4).ravel()), tuple(adapter_case.open_values),
+        (0.0, 0.0, 0.0), 0, palm_configuration_rad=palm,
+    )
+    monkeypatch.setattr(
+        pipeline_module, "load_v2_inputs", lambda *_args, **_kwargs: adapter_case.inputs
+    )
+    with pytest.raises(ValueError, match="PALM_CONFIGURATION_LOST_IN_PIPELINE"):
+        pipeline_module.run_offline_pipeline(
+            ROOT, config_path=adapter_case.proposal_path, object_id=OBJECT_ID,
+            candidate_seeds=(seed,),
+        )
 
 
 def test_generator_checkpoint_object_and_seed_identity_fail_closed(adapter_case) -> None:
@@ -469,6 +573,7 @@ def test_nominal_task_candidate_does_not_become_formal_or_executable() -> None:
         "nominal_only", OBJECT_ID, 0, (0.0, 0.0, 0.0),
         tuple(np.eye(4).ravel()), (0.0, 0.0, 0.0, 0.0),
         (0.0, 0.0, 0.0), 0, 0.9, "kcg_3f_preshape_00",
+        palm_configuration_rad=0.7,
     )
     prediction = ClosurePrediction(
         seed, "CLOSURE_SURVIVE", (), (), (0.0, 0.0, 0.0), 0.01
@@ -491,13 +596,18 @@ def test_nominal_task_candidate_does_not_become_formal_or_executable() -> None:
     ]
     assert research[0].offline_task_gate_passed is False
     assert formal == () and diagnostic == ()
-
-
-def test_coverage_report_stays_a_failed_diagnostic_for_tiny_fixture(adapter_case) -> None:
-    report = summarize_six_d_coverage(adapter_case.inputs, _load(adapter_case))
-    assert report["candidate_count"] == 2
-    assert report["coverage_pass"] is False
-    assert report["evidence_scope"].endswith("NOT_GRASP_SUCCESS")
+    report_result = SimpleNamespace(
+        task_quality_results=(quality,), raw_fast_filter_results=(fast_filter,),
+        candidates=(seed,), raw_closure_predictions=(prediction,),
+        diversity_rejection_reasons={}, exact_validation_results=(),
+        inputs=SimpleNamespace(config=SimpleNamespace(
+            section=lambda _name: {"closing_order": ["finger_1", "finger_2", "finger_3"]}
+        )),
+    )
+    assert next(_candidate_rows(report_result))["palm_configuration_rad"] == 0.7
+    selected = _selected_json(report_result, research)[0]
+    assert selected["palm_configuration_rad"] == 0.7
+    assert selected["control_plan"]["palm_configuration_rad"] == 0.7
 
 
 def test_nonrigid_or_left_handed_pose_fails_closed(adapter_case) -> None:
