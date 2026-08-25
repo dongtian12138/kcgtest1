@@ -1159,6 +1159,15 @@
         "table_reject_variant_count": 132,
         "elapsed_s": 63.8122,
         "claim_scope": "SAMPLED_PREGRASP_PATH_GATE_NOT_THREE_PAD_CONTACT_OR_GRASP_SUCCESS"
+      },
+      "object_a_full_pool_attempt": {
+        "status": "STARTED_COMMAND_TIME_LIMIT_REACHED_NOT_A_PHYSICAL_FAILURE",
+        "wall_time_s": 1490.24,
+        "phase_zero_snapshot_count": 5824,
+        "phase_zero_snapshot_accepted_count": 1709,
+        "phase_zero_snapshot_table_reject_count": 4115,
+        "complete_cascade_audit_written": false,
+        "resume_method": "ATOMIC_PER_PALM_BUCKET_SOURCE_AND_CANDIDATE_BOUND_CHECKPOINT"
       }
     },
     "visual_truth_audit": {
@@ -1242,7 +1251,7 @@
     "full_palm_descriptor_and_contact_supervisor": "APPROVE_WITH_EVIDENCE_BOUNDARY"
   },
   "blockers": [
-    "OBJECT_A_FULL_POOL_PREGRASP_AND_CLOSURE_CASCADE_NOT_YET_RUN",
+    "OBJECT_A_FULL_POOL_PREGRASP_AND_CLOSURE_CASCADE_STARTED_NOT_YET_COMPLETED",
     "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_A_ROI_256_THREE_CLOSURE_PREDICTIONS_ZERO_TABLE_SAFE_PATHS",
     "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_B_ROI_256_ZERO_THREE_PAD_CLOSURE_PREDICTION_SURVIVORS",
     "FUTURE_DYNAMIC_2MM_TABLE_PENETRATION_ACCEPTANCE_BOUND_HAS_NO_VALIDATED_PROVENANCE",

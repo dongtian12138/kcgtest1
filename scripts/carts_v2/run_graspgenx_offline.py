@@ -110,10 +110,12 @@ def _read(path: Path) -> dict:
 
 
 def _write_json(path: Path, value: object) -> None:
-    path.write_text(
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
         json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
     )
+    temporary.replace(path)
 
 
 def _resolve(root: Path, value: str) -> Path:
@@ -272,6 +274,23 @@ def _hand_reach_radius(inputs, seed) -> float:
     if not np.isfinite(maximum) or maximum <= 0.0:
         raise ValueError("registered hand reach radius is invalid")
     return maximum
+
+
+def _candidate_sequence_sha256(adapted) -> str:
+    rows = []
+    for row in adapted:
+        seed = row.seed
+        rows.append({
+            "object_id": seed.object_id, "candidate_id": seed.candidate_id,
+            "object_from_hand": seed.object_from_hand,
+            "pregrasp_joint_positions_rad": seed.pregrasp_joint_positions_rad,
+            "palm_configuration_rad": seed.palm_configuration_rad,
+            "approach_direction_object": seed.approach_direction_object,
+            "maximum_closure_phase": seed.maximum_closure_phase,
+        })
+    payload = json.dumps(rows, sort_keys=True, separators=(",", ":"),
+                         allow_nan=False).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _budget_diagnostics(inputs, adapted, scene_preferred, probe_reports) -> dict[str, dict]:
@@ -454,6 +473,34 @@ def main() -> int:
         "claim_scope": "REAL_MESH_PREGRASP_SNAPSHOT_DIAGNOSTIC_ONLY_NOT_PATH_PROOF",
         "reports": probe_reports,
     })
+    checkpoint_path = args.output_dir / "full_palm_cascade_checkpoint.json"
+    resume_audit = _read(checkpoint_path) if checkpoint_path.exists() else None
+    checkpoint_binding = {
+        name: file_sha256(path) for name, path in {
+            "config": args.config.resolve(),
+            "runner": Path(__file__).resolve(),
+            "cascade": root / "src/kcg_connector/kcg_connector/grasp/carts_v2/full_palm_search.py",
+            "fast_filter": root / "src/kcg_connector/kcg_connector/grasp/carts_v2/fast_filter.py",
+            "closure_predictor": root / "src/kcg_connector/kcg_connector/grasp/carts_v2/closure_predictor.py",
+            "surface_contact": root / "src/kcg_connector/kcg_connector/grasp/carts_v2/surface_contact.py",
+            "models": root / "src/kcg_connector/kcg_connector/grasp/carts_v2/models.py",
+            "search_manifest": args.integration_manifest.resolve(),
+        }.items()
+    }
+    checkpoint_binding.update({
+        "object_id": args.object_id,
+        "proposal_sha256": file_sha256(args.proposal.resolve()),
+        "adapted_candidate_sequence_sha256": _candidate_sequence_sha256(adapted),
+    })
+    if (resume_audit is not None
+            and resume_audit.get("checkpoint_binding") != checkpoint_binding):
+        raise ValueError("full-palm checkpoint source/config binding changed")
+    def checkpoint(audit):
+        compact = dict(audit)
+        compact["deferred"] = []
+        compact["checkpoint_deferred_recomputed_on_resume"] = True
+        compact["checkpoint_binding"] = checkpoint_binding
+        _write_json(checkpoint_path, compact)
     selected_seeds, cascade_audit = run_full_palm_cascade(
         inputs, tuple(row.seed for row in adapted),
         _palm_grid(descriptor_document, search_manifest),
@@ -463,7 +510,12 @@ def main() -> int:
             inputs, variants
         ),
         precise_evaluator=lambda seed: _precise_result(predictor, inputs, seed),
+        resume_audit=resume_audit,
+        progress_callback=checkpoint,
     )
+    if cascade_audit.get("completed_palm_bucket_count") != 91:
+        raise RuntimeError("full-palm cascade returned before all 91 buckets")
+    cascade_audit["checkpoint_binding"] = checkpoint_binding
     _write_json(args.output_dir / "full_palm_cascade_audit.json", cascade_audit)
     if not selected_seeds:
         print("full-palm cascade found no path/contact candidate")

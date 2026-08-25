@@ -24,6 +24,7 @@ PhaseTriple = tuple[float, float, float]
 Variant = tuple[CandidateSeed, PhaseTriple]
 PregraspBatchEvaluator = Callable[[tuple[Variant, ...]], Sequence[Mapping[str, object]]]
 PreciseEvaluator = Callable[[CandidateSeed], Mapping[str, object]]
+ProgressCallback = Callable[[Mapping[str, object]], None]
 
 
 def fixed_pregrasp_phase_combinations() -> tuple[PhaseTriple, ...]:
@@ -182,15 +183,13 @@ def _bound_pregrasp(inputs: V2Inputs, seed: CandidateSeed, phases: PhaseTriple):
     return bound
 
 
-def _allocate_groups(groups, diagnostics, combinations):
-    plans, variants, deferred = [], [], []
+def _allocate_groups(groups, diagnostics):
+    plans, deferred = [], []
     for palm_angle, seeds in groups:
         retained, angle_deferred = _budget_candidates(seeds, diagnostics)
-        start = len(variants)
-        variants.extend((seed, phases) for seed in retained for phases in combinations)
-        plans.append((palm_angle, seeds, retained, start))
+        plans.append((palm_angle, seeds, retained, 0))
         deferred.extend(angle_deferred)
-    return plans, tuple(variants), deferred
+    return plans, deferred
 
 
 def _evaluate_angle(inputs, plan, reports, combinations, precise_evaluator):
@@ -255,38 +254,14 @@ def _evaluate_angle(inputs, plan, reports, combinations, precise_evaluator):
     return precise_rows, rejected, callback_counts, audit
 
 
-def run_full_palm_cascade(
-    inputs: V2Inputs,
-    candidates: Sequence[CandidateSeed],
-    palm_grid_rad: Sequence[float],
-    *,
-    budget_diagnostics: Mapping[str, Mapping[str, object]],
-    pregrasp_evaluator: PregraspBatchEvaluator,
-    precise_evaluator: PreciseEvaluator,
-) -> tuple[tuple[CandidateSeed, ...], dict[str, object]]:
-    """Allocate 64-to-8 per angle and return every exact survivor."""
-
-    combinations = fixed_pregrasp_phase_combinations()
-    plans, variants, deferred = _allocate_groups(
-        group_candidates_by_palm(candidates, palm_grid_rad),
-        budget_diagnostics, combinations)
-    reports = tuple(pregrasp_evaluator(variants)) if variants else ()
-    if len(reports) != len(variants):
-        raise ValueError("pregrasp batch result count differs from requested variants")
-    selected, rejected, per_angle = [], [], []
-    callback_counts: dict[str, int] = {}
-    for plan in plans:
-        precise_rows, angle_rejected, angle_counts, angle_audit = _evaluate_angle(
-            inputs, plan, reports, combinations, precise_evaluator
-        )
-        rejected.extend(angle_rejected)
-        callback_counts.update(angle_counts)
-        selected.extend(row[2] for row in precise_rows)
-        per_angle.append(angle_audit)
-    audit = {
+def _cascade_audit(candidates, selected, rejected, deferred, per_angle,
+                   callback_counts, state_counts, completed):
+    return {
         "schema_version": "carts_full_palm_cascade_audit_v1",
         "claim_scope": "OFFLINE_CALLBACK_CASCADE_NOT_GRASP_OR_DYNAMIC_SUCCESS",
         "input_candidate_count": len(candidates),
+        "input_candidate_ids": [seed.candidate_id for seed in candidates],
+        "completed_palm_bucket_count": completed,
         "task_evaluation_candidate_ids": [seed.candidate_id for seed in selected],
         "task_evaluation_candidates": [{"candidate_id": seed.candidate_id,
             "palm_configuration_rad": seed.palm_configuration_rad,
@@ -295,17 +270,101 @@ def run_full_palm_cascade(
             for seed in selected],
         "candidate_level_callback_limit_per_seed": _MAXIMUM_CALLBACK_EVALUATIONS_PER_SEED,
         "internal_control_states_count_as_candidate_calls": False,
-        "pregrasp_logical_state_count": sum(
-            int(row.get("checked_state_count", 0)) for row in reports),
-        "pregrasp_physical_query_state_count": sum(
-            int(row.get("physical_query_state_count", 0)) for row in reports),
-        "pregrasp_reused_identical_state_count": sum(
-            int(row.get("reused_identical_state_count", 0)) for row in reports),
-        "per_angle": per_angle,
-        "deferred": deferred,
-        "rejected": rejected,
+        "pregrasp_logical_state_count": state_counts[0],
+        "pregrasp_physical_query_state_count": state_counts[1],
+        "pregrasp_reused_identical_state_count": state_counts[2],
+        "per_angle": per_angle, "deferred": deferred, "rejected": rejected,
         "callback_evaluation_count_by_candidate": callback_counts,
     }
+
+
+def _resume_cascade(inputs, candidates, plans, resume):
+    if resume is None:
+        return 0, [], [], [], {}, [0, 0, 0]
+    expected_ids = [seed.candidate_id for seed in candidates]
+    completed = int(resume.get("completed_palm_bucket_count", -1))
+    per_angle = list(resume.get("per_angle", ()))
+    if (resume.get("schema_version") != "carts_full_palm_cascade_audit_v1"
+            or resume.get("input_candidate_ids") != expected_ids
+            or not 0 <= completed <= _PALM_CONFIGURATION_COUNT
+            or len(per_angle) != completed):
+        raise ValueError("full-palm cascade checkpoint identity changed")
+    expected_angles = [float(plan[0]) for plan in plans[:completed]]
+    reported_angles = [float(row.get("palm_configuration_rad", math.nan))
+                       for row in per_angle]
+    if not np.allclose(reported_angles, expected_angles, atol=1.0e-12, rtol=0.0):
+        raise ValueError("checkpoint palm buckets are not the completed prefix")
+    by_id = {seed.candidate_id: seed for seed in candidates}
+    selected = []
+    for row in resume.get("task_evaluation_candidates", ()):
+        seed = by_id.get(str(row.get("candidate_id")))
+        phases = tuple(float(value) for value in row.get(
+            "pregrasp_closure_phases", ()))
+        if seed is None or len(phases) != 3:
+            raise ValueError("checkpoint selected candidate identity changed")
+        if (seed.palm_configuration_rad is None
+                or not any(np.isclose(seed.palm_configuration_rad, value,
+                                      atol=1.0e-12, rtol=0.0)
+                           for value in expected_angles)
+                or not np.isclose(float(row.get("palm_configuration_rad", math.nan)),
+                                  seed.palm_configuration_rad,
+                                  atol=1.0e-12, rtol=0.0)):
+            raise ValueError("checkpoint selected candidate is outside completed prefix")
+        bound = _bound_pregrasp(inputs, seed, phases)  # type: ignore[arg-type]
+        if not np.allclose(bound.pregrasp_joint_positions_rad,
+                           row.get("pregrasp_joint_positions_rad", ()),
+                           atol=1.0e-12, rtol=0.0):
+            raise ValueError("checkpoint pregrasp joint values changed")
+        selected.append(bound)
+    counts = dict(resume.get("callback_evaluation_count_by_candidate", {}))
+    states = [int(resume.get(key, 0)) for key in (
+        "pregrasp_logical_state_count", "pregrasp_physical_query_state_count",
+        "pregrasp_reused_identical_state_count")]
+    return completed, selected, list(resume.get("rejected", ())), per_angle, counts, states
+
+
+def run_full_palm_cascade(
+    inputs: V2Inputs,
+    candidates: Sequence[CandidateSeed],
+    palm_grid_rad: Sequence[float],
+    *,
+    budget_diagnostics: Mapping[str, Mapping[str, object]],
+    pregrasp_evaluator: PregraspBatchEvaluator,
+    precise_evaluator: PreciseEvaluator,
+    resume_audit: Mapping[str, object] | None = None,
+    progress_callback: ProgressCallback | None = None,
+) -> tuple[tuple[CandidateSeed, ...], dict[str, object]]:
+    """Allocate 64-to-8 per angle and return every exact survivor."""
+
+    combinations = fixed_pregrasp_phase_combinations()
+    plans, deferred = _allocate_groups(group_candidates_by_palm(
+        candidates, palm_grid_rad), budget_diagnostics)
+    completed, selected, rejected, per_angle, callback_counts, state_counts = (
+        _resume_cascade(inputs, candidates, plans, resume_audit))
+    for plan in plans[completed:]:
+        variants = tuple((seed, phases) for seed in plan[2]
+                         for phases in combinations)
+        reports = tuple(pregrasp_evaluator(variants)) if variants else ()
+        if len(reports) != len(variants):
+            raise ValueError("pregrasp batch result count differs from requested variants")
+        precise_rows, angle_rejected, angle_counts, angle_audit = _evaluate_angle(
+            inputs, plan, reports, combinations, precise_evaluator
+        )
+        rejected.extend(angle_rejected)
+        callback_counts.update(angle_counts)
+        selected.extend(row[2] for row in precise_rows)
+        per_angle.append(angle_audit)
+        for index, key in enumerate(("checked_state_count",
+                                     "physical_query_state_count",
+                                     "reused_identical_state_count")):
+            state_counts[index] += sum(int(row.get(key, 0)) for row in reports)
+        completed += 1
+        audit = _cascade_audit(candidates, selected, rejected, deferred,
+                               per_angle, callback_counts, state_counts, completed)
+        if progress_callback is not None:
+            progress_callback(audit)
+    audit = _cascade_audit(candidates, selected, rejected, deferred,
+                           per_angle, callback_counts, state_counts, completed)
     return tuple(selected), audit
 
 

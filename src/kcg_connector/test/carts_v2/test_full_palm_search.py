@@ -136,9 +136,12 @@ def test_cascade_reserves_each_branch_and_binds_selected_preshape() -> None:
             "selection_key": [float(seed.source_sample_index)],
         }
 
+    checkpoints = []
     selected, audit = run_full_palm_cascade(
         INPUTS, candidates, GRID, budget_diagnostics=diagnostics,
         pregrasp_evaluator=pregrasp, precise_evaluator=exact,
+        progress_callback=lambda value: checkpoints.append(
+            json.loads(json.dumps(value))),
     )
     assert batch_sizes == [8 * 27]
     assert sum(seed.candidate_id.startswith("diff") for seed in precise) == 7
@@ -156,7 +159,59 @@ def test_cascade_reserves_each_branch_and_binds_selected_preshape() -> None:
     assert max(audit["callback_evaluation_count_by_candidate"].values()) == 28
     assert audit["pregrasp_physical_query_state_count"] == 0
     assert audit["pregrasp_reused_identical_state_count"] == 0
+    assert len(checkpoints) == 91
+    assert checkpoints[-1]["completed_palm_bucket_count"] == 91
+    resumed, resumed_audit = run_full_palm_cascade(
+        INPUTS, candidates, GRID, budget_diagnostics=diagnostics,
+        pregrasp_evaluator=lambda _rows: pytest.fail("completed checkpoint reran paths"),
+        precise_evaluator=lambda _seed_value: pytest.fail("checkpoint reran closure"),
+        resume_audit=checkpoints[-1],
+    )
+    assert resumed == selected
+    assert resumed_audit["task_evaluation_candidate_ids"] == [
+        seed.candidate_id for seed in selected]
     json.dumps(audit, allow_nan=False)
+
+
+def test_partial_checkpoint_resumes_at_next_palm_bucket() -> None:
+    candidates = tuple(_seed(f"palm_{index}", index) for index in range(3))
+    diagnostics = {seed.candidate_id: {
+        "branch": "diff", "generator_score": 1.0,
+        "physical_selection_key": [float(index)]}
+        for index, seed in enumerate(candidates)}
+    full_calls, checkpoints = [], []
+
+    def pregrasp(rows):
+        return tuple(_pregrasp_result(seed, phases) for seed, phases in rows)
+
+    def exact(seed):
+        full_calls.append(seed.candidate_id)
+        return {"accepted": True, "closure_pass": True,
+                "fast_filter_pass": True, "selection_key": [0.0]}
+
+    full, _ = run_full_palm_cascade(
+        INPUTS, candidates, GRID, budget_diagnostics=diagnostics,
+        pregrasp_evaluator=pregrasp, precise_evaluator=exact,
+        progress_callback=lambda value: checkpoints.append(
+            json.loads(json.dumps(value))),
+    )
+    assert full_calls == ["palm_0", "palm_1", "palm_2"]
+    partial = checkpoints[1]
+    resumed_calls, resumed_checkpoints = [], []
+    resumed, _ = run_full_palm_cascade(
+        INPUTS, candidates, GRID, budget_diagnostics=diagnostics,
+        pregrasp_evaluator=pregrasp,
+        precise_evaluator=lambda seed: (
+            resumed_calls.append(seed.candidate_id) or {
+                "accepted": True, "closure_pass": True,
+                "fast_filter_pass": True, "selection_key": [0.0]}),
+        resume_audit=partial,
+        progress_callback=lambda value: resumed_checkpoints.append(
+            json.loads(json.dumps(value))),
+    )
+    assert resumed_calls == ["palm_2"]
+    assert resumed_checkpoints[0]["completed_palm_bucket_count"] == 3
+    assert resumed == full
 
 
 def test_precise_rejection_is_diagnostic_and_selects_nothing() -> None:
