@@ -1,17 +1,22 @@
 {
   "schema_version": "nailfree_height_projected_manifest_v1",
-  "updated_at_utc": "2026-08-25T21:22:41Z",
+  "updated_at_utc": "2026-08-25T21:36:07Z",
   "execution_window": {
     "id": "NAILFREE_HEIGHT_PROJECTED_12H",
     "started_at_utc": "2026-08-25T15:15:34Z",
     "hard_deadline_utc": "2026-08-26T03:15:34Z",
     "maximum_wall_time_s": 43200,
     "unattended_execution": true,
-    "automatic_extension_allowed": false
+    "automatic_extension_allowed": false,
+    "stop_condition_reached": true,
+    "stopped_at_utc": "2026-08-25T21:36:07Z",
+    "stop_reason": "SOURCE_TOPOLOGY_CANNOT_SUPPORT_TRACEABLE_NAILFREE_RUNTIME_COLLISION_WITHOUT_UNAUTHORIZED_FIDELITY_REDUCTION"
   },
   "git": {
     "branch": "carts-grasp-nailfree-heightprojected-20260825",
     "start_commit": "6a356bdfd2f579b79e53ec7e01e0880fe9f75a59",
+    "offline_evidence_commit": "e8bf8fbedea5ae36feae83f79753e9d165d8dded",
+    "offline_evidence_push_status": "PUSHED",
     "baseline_branch": "carts-grasp-full-palm-search-20260825"
   },
   "task_identity": {
@@ -66,7 +71,8 @@
     "height_feasibility_before_topk": "TWO_OBJECT_91_ANGLE_COMPLETE_HEIGHT_BEFORE_TOPK",
     "two_object_offline_ranking": "COMPLETE_A_91_OF_91_B_91_OF_91_SAME_COMMIT_AND_CONFIG",
     "arm_path": "A_TOP3_AND_B_TOP1_DISCRETE_BOUNDED_IK_PASS_FULL_COLLISION_UNRESOLVED",
-    "isaac_research_dynamic": "NOT_STARTED_RUNTIME_COLLISION_SOURCE_TOPOLOGY_FAIL_CLOSED"
+    "isaac_research_dynamic": "NOT_STARTED_RUNTIME_COLLISION_SOURCE_TOPOLOGY_FAIL_CLOSED",
+    "closeout": "PARKED_REQUIRES_CAD_OR_EARLIER_CLOSED_SOURCE_TOPOLOGY"
   },
   "supervision": {
     "nailfree_geometry": "APPROVE_EXACT_VISUAL_WITH_PROVISIONAL_PHYSICAL_ESTIMATE_AND_RUNTIME_GATES_CLOSED",

@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T21:22:41Z",
+  "updated_at_utc": "2026-08-25T21:36:07Z",
   "started_at_utc": "2026-08-25T15:15:34Z",
   "hard_deadline_utc": "2026-08-26T03:15:34Z",
   "branch": "carts-grasp-nailfree-heightprojected-20260825",
   "config_sha256": "87fdda414ccd8571526e7dae9e379880c6122762ec623b9adc153e4b77cc3350",
   "start_commit": "6a356bdfd2f579b79e53ec7e01e0880fe9f75a59",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "IMPLEMENTING",
-  "current_milestone": "FINAL_EVIDENCE_AND_COLLISION_SOURCE_BLOCKED_CLOSEOUT",
+  "status": "PARKED",
+  "current_milestone": "NAILFREE_HEIGHT_PROJECTED_CLOSEOUT_COMPLETE_SOURCE_COLLISION_BLOCKED",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -38,9 +38,9 @@
     "maximum_duration_s": 43200,
     "automatic_extension_allowed": false,
     "unattended_execution": true,
-    "stop_condition_reached": false,
-    "stopped_at_utc": null,
-    "stop_reason": null,
+    "stop_condition_reached": true,
+    "stopped_at_utc": "2026-08-25T21:36:07Z",
+    "stop_reason": "SOURCE_TOPOLOGY_CANNOT_SUPPORT_TRACEABLE_NAILFREE_RUNTIME_COLLISION_WITHOUT_UNAUTHORIZED_FIDELITY_REDUCTION",
     "supersedes_full_palm_nail_present_method_as_current_method": true
   },
   "git_delivery": {
@@ -66,6 +66,8 @@
     "graspgenx_route1_evidence_commit": "c26160a298507dcc360b32920f9f41f53173073b",
     "graspgenx_route1_evidence_push_status": "PUSHED",
     "push_failure": null,
+    "nailfree_height_projected_offline_commit": "e8bf8fbedea5ae36feae83f79753e9d165d8dded",
+    "nailfree_height_projected_offline_push_status": "PUSHED",
     "recovery_branch": "carts-v2-pre-integration-698a2bb",
     "recovery_bundle": "artifacts/carts_v2/CARTS_V2_INTEGRATION_57efc16_INCREMENTAL.bundle",
     "recovery_bundle_sha256": "74e1464c3a615ee34558bec4cfb80d5f8d2ed5db27cbf42c04e0649992dfcc68",
@@ -1324,6 +1326,8 @@
     "maximum_joint_increment_rad": 0.0015,
     "lift_distance_m": 0.05,
     "minimum_hold_time_s": 2.0,
+    "closeout_reason": "CURRENT_SOURCE_REQUIRES_CAD_TOPOLOGY_RECOVERY_OR_UNAUTHORIZED_COLLISION_FIDELITY_REDUCTION",
+    "mechanical_infeasibility_claimed": false,
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
   "evidence_level": "TWO_OBJECT_OFFLINE_TASK_AND_DISCRETE_IK_COMPLETE_ISAAC_ASSET_DIAGNOSTIC_FAILED_CLOSED",
