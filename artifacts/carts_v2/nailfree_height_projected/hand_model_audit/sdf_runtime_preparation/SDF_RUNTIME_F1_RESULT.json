@@ -1,0 +1,14 @@
+{
+  "created_utc": "2026-08-25T20:11:30.044199+00:00",
+  "error": "ValueError: f1Link3: exact collision match count is 0",
+  "evidence_level": "ISAAC_ASSET_DIAGNOSTIC_ONLY",
+  "f1_sdf_diagnostic_pass": false,
+  "formal_dynamic_pass": false,
+  "hardware_authorized": false,
+  "research_dynamic_pass": false,
+  "runtime_binding_accepted": false,
+  "schema_version": "carts_nailfree_f1_sdf_diagnostic_v2",
+  "sdf_persisted_to_asset": false,
+  "status": "FAILED_CLOSED",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/nailfree_height_projected/hand_model_audit/sdf_runtime_preparation/audit_nailfree_sdf_runtime.py\", line 487, in main\n    result.update(_run_f1(root,asset,args.asset_sha256.lower(),preparation,task_surface,app))\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/nailfree_height_projected/hand_model_audit/sdf_runtime_preparation/audit_nailfree_sdf_runtime.py\", line 403, in _run_f1\n    owner, collider, frame = find_identity_collision(stage,\"f1Link3\",exact,11836)\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/nailfree_height_projected/hand_model_audit/sdf_runtime_preparation/_sdf_audit_geometry.py\", line 83, in find_identity_collision\n    raise ValueError(f\"{link}: exact collision match count is {len(matches)}\")\nValueError: f1Link3: exact collision match count is 0\n"
+}

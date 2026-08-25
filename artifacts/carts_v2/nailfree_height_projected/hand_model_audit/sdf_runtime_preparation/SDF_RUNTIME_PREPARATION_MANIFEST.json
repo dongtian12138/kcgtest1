@@ -1,0 +1,397 @@
+{
+  "audit_thresholds": {
+    "maximum_bidirectional_surface_error_m": 0.001,
+    "removed_exclusive_boundary_tolerance_m": 1e-05,
+    "retained_surface_cover_radius_m": 0.00025
+  },
+  "created_utc": "2026-08-25T19:35:15.129403+00:00",
+  "evidence_level": "STATIC_PREPARATION_ONLY",
+  "formal_dynamic_pass": false,
+  "hardware_authorized": false,
+  "limitations": [
+    "Preparation and the f1 diagnostic do not persist SDF into the USD asset.",
+    "Global runtime_binding_accepted remains false regardless of the f1 diagnostic result.",
+    "The mass, COM and inertia remain simulation estimates, not hardware calibration.",
+    "SDF cooking, query validity and geometric acceptance have not run.",
+    "The 200-face and two 888-face joint-housing components are non-task-grip auxiliaries and cannot rescue a failed 7191-face main-body sign gate."
+  ],
+  "links": {
+    "f1Link3": {
+      "exact_nailfree_mesh": "src/iiwa_description/meshes/hand/connector_no_nail/f1Link3_nailfree.stl",
+      "exact_nailfree_mesh_sha256": "965d327c466bec40b898fc4228f8ca240386bab3e8a79af6b48c798db1a0071a",
+      "mass_properties": {
+        "hardware_calibration_claimed": false,
+        "method": "SIMULATION_ESTIMATE_SUBTRACT_REMOVED_ASSEMBLY_FROM_BOUND_OLD_URDF_INERTIA_USING_MATCHED_VOXEL_UNION_MASS_RATIO_NOT_HARDWARE_CALIBRATION",
+        "new_closed_union_volume_m3": 1.6590102781713515e-05,
+        "new_com_m": [
+          -0.01628615393284205,
+          -0.020433286736678404,
+          0.011998981529948431
+        ],
+        "new_inertia_at_com_kg_m2": [
+          [
+            1.610527542600085e-05,
+            1.0644246429017959e-05,
+            9.073734763352293e-09
+          ],
+          [
+            1.0644246429017959e-05,
+            1.1690129186866294e-05,
+            1.206423252882566e-08
+          ],
+          [
+            9.073734763352293e-09,
+            1.206423252882566e-08,
+            2.2763352718985488e-05
+          ]
+        ],
+        "new_inertia_eigenvalues_kg_m2": [
+          3.0269444842318467e-06,
+          2.2763246311726114e-05,
+          2.4768566535894668e-05
+        ],
+        "new_mass_kg": 0.0569850585010327,
+        "old_closed_union_volume_m3": 1.6850356640160248e-05,
+        "old_mass_kg": 0.057879,
+        "old_urdf_com_m": [
+          -0.016803,
+          -0.020891,
+          0.011999
+        ],
+        "old_urdf_inertia_at_com_kg_m2": [
+          [
+            1.6904e-05,
+            9.7694e-06,
+            9.1101e-09
+          ],
+          [
+            9.7694e-06,
+            1.2703e-05,
+            1.2096e-08
+          ],
+          [
+            9.1101e-09,
+            1.2096e-08,
+            2.4528e-05
+          ]
+        ],
+        "removed_nail_assembly_mass_kg": 0.0008939414989672999,
+        "removed_shape_com_m": [
+          -0.0497497905976493,
+          -0.05006831989980465,
+          0.012000177389091253
+        ],
+        "removed_shape_inertia_at_com_kg_m2": [
+          [
+            2.5759423377120507e-08,
+            -2.0205148212906917e-09,
+            1.1441912094997068e-12
+          ],
+          [
+            -2.0205148212906917e-09,
+            2.728294013113823e-08,
+            5.760958895167288e-13
+          ],
+          [
+            1.1441912094997068e-12,
+            5.760958895167288e-13,
+            6.094259907233645e-09
+          ]
+        ],
+        "removed_shape_volume_m3": 2.926653796299372e-07,
+        "runtime_binding_accepted": false
+      },
+      "removed_face_ranges_inclusive": [
+        [
+          11836,
+          12911
+        ],
+        [
+          12912,
+          13551
+        ],
+        [
+          13552,
+          14191
+        ]
+      ],
+      "retained_face_count": 11836,
+      "source_path": "src/iiwa_description/meshes/hand/f1Link3.STL",
+      "source_sha256": "7a33a6ab46729a2237dd13d99be3bcefb92bb3d4b77bbf9e69d884509cffcdb0"
+    },
+    "f2Link2": {
+      "exact_nailfree_mesh": "src/iiwa_description/meshes/hand/connector_no_nail/f2Link2_nailfree.stl",
+      "exact_nailfree_mesh_sha256": "3d11ab9797c2ed6e4c622c3ba6c63b2c9fb8258dbf968326828046efc788e893",
+      "mass_properties": {
+        "hardware_calibration_claimed": false,
+        "method": "SIMULATION_ESTIMATE_SUBTRACT_REMOVED_ASSEMBLY_FROM_BOUND_OLD_URDF_INERTIA_USING_MATCHED_VOXEL_UNION_MASS_RATIO_NOT_HARDWARE_CALIBRATION",
+        "new_closed_union_volume_m3": 1.655699191994651e-05,
+        "new_com_m": [
+          -0.012067735620893064,
+          -0.023186330675307888,
+          -0.012000989782710466
+        ],
+        "new_inertia_at_com_kg_m2": [
+          [
+            1.9309129505231925e-05,
+            9.096618098743819e-06,
+            6.632878796538889e-09
+          ],
+          [
+            9.096618098743819e-06,
+            8.512242713265067e-06,
+            1.3636078032474365e-08
+          ],
+          [
+            6.632878796538889e-09,
+            1.3636078032474365e-08,
+            2.2789269349802656e-05
+          ]
+        ],
+        "new_inertia_eigenvalues_kg_m2": [
+          3.3327972955408997e-06,
+          2.278918101444088e-05,
+          2.448866325831786e-05
+        ],
+        "new_mass_kg": 0.0569972873660585,
+        "old_closed_union_volume_m3": 1.68131183012272e-05,
+        "old_mass_kg": 0.057879,
+        "old_urdf_com_m": [
+          -0.012481,
+          -0.023727,
+          -0.012001
+        ],
+        "old_urdf_inertia_at_com_kg_m2": [
+          [
+            2.0429e-05,
+            8.2585e-06,
+            6.6195e-09
+          ],
+          [
+            8.2585e-06,
+            9.1773e-06,
+            1.3619e-08
+          ],
+          [
+            6.6195e-09,
+            1.3619e-08,
+            2.4528e-05
+          ]
+        ],
+        "removed_nail_assembly_mass_kg": 0.0008817126339415007,
+        "removed_shape_com_m": [
+          -0.03919599496249328,
+          -0.05867793943673018,
+          -0.012001660484794263
+        ],
+        "removed_shape_inertia_at_com_kg_m2": [
+          [
+            2.613677166552989e-08,
+            -2.115079555946215e-09,
+            2.419556553423489e-12
+          ],
+          [
+            -2.115079555946215e-09,
+            2.6052532647729296e-08,
+            3.5907822875425266e-12
+          ],
+          [
+            2.419556553423489e-12,
+            3.5907822875425266e-12,
+            5.9921737887769664e-09
+          ]
+        ],
+        "removed_shape_volume_m3": 2.8805532572080813e-07,
+        "runtime_binding_accepted": false
+      },
+      "removed_face_ranges_inclusive": [
+        [
+          11836,
+          12911
+        ],
+        [
+          12912,
+          13551
+        ],
+        [
+          13552,
+          14191
+        ]
+      ],
+      "retained_face_count": 11836,
+      "source_path": "src/iiwa_description/meshes/hand/f2Link2.STL",
+      "source_sha256": "1758619f7ef1369fc3342c7032edee07222f9bdccc187c33830f9fa59bd508b3"
+    },
+    "f3Link3": {
+      "exact_nailfree_mesh": "src/iiwa_description/meshes/hand/connector_no_nail/f3Link3_nailfree.stl",
+      "exact_nailfree_mesh_sha256": "62d7aa934e7516f83d884adfe6f518e446d3db612d41bd81edfee96ed2f7e27b",
+      "mass_properties": {
+        "hardware_calibration_claimed": false,
+        "method": "SIMULATION_ESTIMATE_SUBTRACT_REMOVED_ASSEMBLY_FROM_BOUND_OLD_URDF_INERTIA_USING_MATCHED_VOXEL_UNION_MASS_RATIO_NOT_HARDWARE_CALIBRATION",
+        "new_closed_union_volume_m3": 1.6590102781713515e-05,
+        "new_com_m": [
+          -0.01628615393284205,
+          -0.020433286736678404,
+          0.011998981529948431
+        ],
+        "new_inertia_at_com_kg_m2": [
+          [
+            1.610527542600085e-05,
+            1.0644246429017959e-05,
+            9.073734763352293e-09
+          ],
+          [
+            1.0644246429017959e-05,
+            1.1690129186866294e-05,
+            1.206423252882566e-08
+          ],
+          [
+            9.073734763352293e-09,
+            1.206423252882566e-08,
+            2.2763352718985488e-05
+          ]
+        ],
+        "new_inertia_eigenvalues_kg_m2": [
+          3.0269444842318467e-06,
+          2.2763246311726114e-05,
+          2.4768566535894668e-05
+        ],
+        "new_mass_kg": 0.0569850585010327,
+        "old_closed_union_volume_m3": 1.6850356640160248e-05,
+        "old_mass_kg": 0.057879,
+        "old_urdf_com_m": [
+          -0.016803,
+          -0.020891,
+          0.011999
+        ],
+        "old_urdf_inertia_at_com_kg_m2": [
+          [
+            1.6904e-05,
+            9.7694e-06,
+            9.1101e-09
+          ],
+          [
+            9.7694e-06,
+            1.2703e-05,
+            1.2096e-08
+          ],
+          [
+            9.1101e-09,
+            1.2096e-08,
+            2.4528e-05
+          ]
+        ],
+        "removed_nail_assembly_mass_kg": 0.0008939414989672999,
+        "removed_shape_com_m": [
+          -0.0497497905976493,
+          -0.05006831989980465,
+          0.012000177389091253
+        ],
+        "removed_shape_inertia_at_com_kg_m2": [
+          [
+            2.5759423377120507e-08,
+            -2.0205148212906917e-09,
+            1.1441912094997068e-12
+          ],
+          [
+            -2.0205148212906917e-09,
+            2.728294013113823e-08,
+            5.760958895167288e-13
+          ],
+          [
+            1.1441912094997068e-12,
+            5.760958895167288e-13,
+            6.094259907233645e-09
+          ]
+        ],
+        "removed_shape_volume_m3": 2.926653796299372e-07,
+        "runtime_binding_accepted": false
+      },
+      "removed_face_ranges_inclusive": [
+        [
+          11836,
+          12911
+        ],
+        [
+          12912,
+          13551
+        ],
+        [
+          13552,
+          14191
+        ]
+      ],
+      "retained_face_count": 11836,
+      "source_path": "src/iiwa_description/meshes/hand/f3Link3.STL",
+      "source_sha256": "93645443cff113b8c6e5a0280e3270192831d04246233cc45d9745c6e3c7d16e"
+    }
+  },
+  "research_dynamic_pass": false,
+  "runtime_binding_accepted": false,
+  "runtime_asset_binding": {
+    "asset_sha256": null,
+    "method": "REQUIRED_PRELAUNCH_SHA256_PLUS_REALIZED_GEOMETRY_AND_MASS_READBACK"
+  },
+  "schema_version": "carts_nailfree_sdf_runtime_preparation_v2",
+  "migration_identity": "F1_MAIN_BODY_NORMAL_CROSSING_V2",
+  "script": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/sdf_runtime_preparation/audit_nailfree_sdf_runtime.py",
+  "script_sha256": "8ab91dfcfc712b5fd3a5509b36db866561bc66fbe288c6386a614d52455c22c1",
+  "private_helper": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/sdf_runtime_preparation/_sdf_audit_geometry.py",
+  "private_helper_sha256": "9a7175195e6e902bb9bc5a2fa8345949c6c7f29eff19247f0c120ff4ef05101d",
+  "task_grip_surface_binding": {
+    "joint_housing_components_rejected": [
+      152,
+      153,
+      154
+    ],
+    "main_body_task_face_count": 518,
+    "manifest": "artifacts/carts_v2/nailfree_height_projected/task_grip_surface_audit/TASK_GRIP_SURFACE_MANIFEST.json",
+    "manifest_sha256": "5d173d8446a4dc2f7648f8f9cd394c3061da5e83dc381f2e9ac01874dcadce17",
+    "minimum_normal_motion_m_per_phase": 1e-05,
+    "surface_npz": "artifacts/carts_v2/nailfree_height_projected/task_grip_surface_audit/f1Link3_TASK_GRIP_SURFACE_local_m.npz",
+    "surface_npz_sha256": "200f93aaa4cf4fadcad9c4838717b12d8d14237fd696d56c95c189983dd1b85a",
+    "task_face_count": 2200
+  },
+  "main_body_sign_gate": {
+    "auxiliary_components": {
+      "152": {
+        "face_count": 200,
+        "triangle_digest": "60bd86312c210018f1a3035879e7a86fef4950f85130db68b489228d28db09a3"
+      },
+      "153": {
+        "face_count": 888,
+        "triangle_digest": "75f25117d9c30a34df385c4fb652d5bb1a4ea28698c1f538434b44cf4d1c4280"
+      },
+      "154": {
+        "face_count": 888,
+        "triangle_digest": "b9a010e0438dee99d6a4e1b59ca43ac3c52b63306f3c61386e699f714a3e364a"
+      }
+    },
+    "component_index": 0,
+    "face_count": 7191,
+    "migration_identity": "F1_MAIN_BODY_NORMAL_CROSSING_V2",
+    "other_sample_count": 24,
+    "task_face_count": 518,
+    "task_sample_count": 12,
+    "triangle_digest": "74283647c5e38a00b4602f386d6d84afdcb42b6ccbf3173cd99c318c7172daf6"
+  },
+  "sdf_parameters": {
+    "bits_per_subgrid_pixel": "BitsPerPixel16",
+    "enable_remeshing": false,
+    "margin": 0.01,
+    "narrow_band_thickness": 0.01,
+    "resolution": 256,
+    "subgrid_resolution": 6,
+    "triangle_count_reduction_factor": 1.0
+  },
+  "status": "STATIC_INPUT_BOUND_RUNTIME_NOT_RUN",
+  "temporary_urdf": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/sdf_runtime_preparation/handarm_connector_no_nail_sdf_audit.urdf",
+  "temporary_urdf_sha256": "e3290b0f6f1add6a76e1de1dddffd7ee0f97701c52460d84ae6f2486e53197a8",
+  "upstream_audit": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/NAILFREE_HAND_MODEL_AUDIT.json",
+  "upstream_audit_sha256": "619ab0a85ef41b5a0e3a79dc0bd4e7da550094c73c4d10e738a5bc5a251a98f8",
+  "xacro_sha256": {
+    "hand.xacro": "b7ddf62c62b8127816e5ba8ecefb72c257622952e3aa2211355a6a61f4d1097f",
+    "handarm.urdf.xacro": "b4ee760ec9d2306e172dc71f697a087f5788c32f89dd3c2e80a2f1e7897af399",
+    "iiwa14.xacro": "0bda9afbdb5204d6606ece542e79590c780b5b0d84f3478ea38a37a640d2297d"
+  }
+}

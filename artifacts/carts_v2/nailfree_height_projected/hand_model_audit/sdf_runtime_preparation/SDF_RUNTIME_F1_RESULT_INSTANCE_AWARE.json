@@ -1,0 +1,14 @@
+{
+  "created_utc": "2026-08-25T20:15:48.692863+00:00",
+  "error": "TimeoutError: PhysX SDF cooking did not complete within 60 s",
+  "evidence_level": "ISAAC_ASSET_DIAGNOSTIC_ONLY",
+  "f1_sdf_diagnostic_pass": false,
+  "formal_dynamic_pass": false,
+  "hardware_authorized": false,
+  "research_dynamic_pass": false,
+  "runtime_binding_accepted": false,
+  "schema_version": "carts_nailfree_f1_sdf_diagnostic_v2",
+  "sdf_persisted_to_asset": false,
+  "status": "FAILED_CLOSED",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/nailfree_height_projected/hand_model_audit/sdf_runtime_preparation/audit_nailfree_sdf_runtime.py\", line 487, in main\n    result.update(_run_f1(root,asset,args.asset_sha256.lower(),preparation,task_surface,app))\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/nailfree_height_projected/hand_model_audit/sdf_runtime_preparation/audit_nailfree_sdf_runtime.py\", line 407, in _run_f1\n    cooking_record = _wait_cooking(app,cooking,before)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/nailfree_height_projected/hand_model_audit/sdf_runtime_preparation/audit_nailfree_sdf_runtime.py\", line 328, in _wait_cooking\n    raise TimeoutError(\"PhysX SDF cooking did not complete within 60 s\")\nTimeoutError: PhysX SDF cooking did not complete within 60 s\n"
+}

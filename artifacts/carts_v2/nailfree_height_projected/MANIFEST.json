@@ -1,6 +1,6 @@
 {
   "schema_version": "nailfree_height_projected_manifest_v1",
-  "updated_at_utc": "2026-08-25T19:42:48Z",
+  "updated_at_utc": "2026-08-25T20:20:10Z",
   "execution_window": {
     "id": "NAILFREE_HEIGHT_PROJECTED_12H",
     "started_at_utc": "2026-08-25T15:15:34Z",
@@ -24,6 +24,7 @@
     ],
     "same_method_and_primary_parameters_required": true,
     "hardware_authorized": false,
+    "research_dynamic_pass": false,
     "formal_dynamic_pass": false
   },
   "preserved_baseline": {
@@ -60,12 +61,12 @@
     "minimum_hold_time_s": 2.0
   },
   "current_gates": {
-    "nailfree_hand_model_audit": "STATIC_EXACT_VISUAL_PASS_PHYSICAL_PROPERTIES_PROVISIONAL_RUNTIME_BINDING_REJECTED",
+    "nailfree_hand_model_audit": "ISAAC_IMPORT_PASS_F1_EXACT_SDF_DIAGNOSTIC_FAILED_CLOSED_RUNTIME_BINDING_REJECTED",
     "task_grip_surface_audit": "STATIC_SEMANTIC_ACCEPTED_NOT_OBJECT_CONTACT_TESTED",
     "height_feasibility_before_topk": "SINGLE_ANGLE_OFFLINE_SAMPLED_PASS_PRODUCTION_INTEGRATION_READY",
-    "two_object_offline_ranking": "CHECKPOINTED_A_15_OF_91_B_18_OF_91_SAME_COMMIT_AND_CONFIG",
+    "two_object_offline_ranking": "CHECKPOINTED_A_44_OF_91_B_18_OF_91_SAME_COMMIT_AND_CONFIG",
     "arm_path": "NOT_STARTED",
-    "isaac_research_dynamic": "NOT_STARTED_COLLISION_ASSET_FAIL_CLOSED"
+    "isaac_research_dynamic": "NOT_STARTED_F1_COLLISION_SDF_FAIL_CLOSED"
   },
   "supervision": {
     "nailfree_geometry": "APPROVE_EXACT_VISUAL_WITH_PROVISIONAL_PHYSICAL_ESTIMATE_AND_RUNTIME_GATES_CLOSED",
@@ -84,7 +85,35 @@
     "terminal_source_retained_removed_face_counts": [14192, 11836, 2356],
     "task_grip_surface_face_counts_f1_f2_f3": [2200, 2304, 2199],
     "collision_runtime_binding_accepted": false,
-    "isaac_started": false,
+    "isaac_started": true,
+    "isaac_grasp_started": false,
+    "isaac_asset_diagnostic": {
+      "temporary_usd_root_sha256": "80d4a763a7c4ac6262facc650c02b649bcc7cdc8a1c0b167bcf3e5a7a2efed42",
+      "f1_result_sha256": "c343e234e4f22e3b5e64ff8ab1dbb7265caaebeb51b7dc82c327c837abeb1fd9",
+      "engine_log_sha256": "64413c7bd137f0276325bffacb722cfe32eea59ba202944dd2fc3c4deed7e1b5",
+      "failure_evidence_path": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/sdf_runtime_preparation/SDF_RUNTIME_F1_FAILURE_EVIDENCE.json",
+      "failure_evidence_sha256": "727ecc2489b615b758531623dc32adb455f973f85b2b525a1d64d82a4c40264f",
+      "failure_reason": "NON_MANIFOLD_NON_WATERTIGHT_DUPLICATE_TRIANGLES_AUTOMATIC_REPAIR_FAILED_AND_COOK_TIMEOUT",
+      "sdf_persisted_to_asset": false,
+      "topology_normalization_status": "FAILED_CLOSED_NO_UNIQUE_NONMANIFOLD_EDGE_PAIRING",
+      "topology_normalization_removed_exact_duplicate_faces": 64,
+      "topology_normalization_remaining_face_count": 11772,
+      "topology_normalization_nonmanifold_edge_count": 97,
+      "topology_normalization_three_face_edge_count": 56,
+      "topology_normalization_audit_sha256": "0b6b38c2a9c7f0b04e4573a6d69a6c46519584d5cdcf2919e58bd61cdd0e13d2",
+      "claim_scope": "ISAAC_ASSET_DIAGNOSTIC_ONLY_NOT_OBJECT_OR_GRASP_RUN"
+    },
+    "two_object_offline_checkpoint": {
+      "object_a_completed_angle_count": 44,
+      "object_a_candidate_count": 32,
+      "object_a_rejected_count": 2776,
+      "object_a_checkpoint_sha256": "a83c58c40dd366d9a6bb5d3928236d3db5ded21d5bd1818447944c027928dce9",
+      "object_b_completed_angle_count": 18,
+      "object_b_candidate_count": 1,
+      "object_b_rejected_count": 1151,
+      "object_b_checkpoint_sha256": "cdd4995d453196ef4395ff33ff526cc55694295787715c24e1f5125f588adb24",
+      "claim_scope": "IN_PROGRESS_OFFLINE_CHECKPOINT_NOT_FINAL_RANKING"
+    },
     "object_a_qp0_height_smoke": {
       "input_seed_count": 64,
       "projected_exact_survivor_count": 2,

@@ -1,0 +1,6941 @@
+{
+  "boolean_backend": {
+    "library": "manifold3d",
+    "performed": false,
+    "reason_not_performed": "INPUT_CANNOT_BE_UNIQUELY_SPLIT_INTO_MANIFOLD_SHELLS",
+    "version": "3.5.2"
+  },
+  "conclusion": "Fifty-six retained edges have three incident faces after removing all 64 exact duplicate triangles.  They cannot be partitioned into two-face manifold edge pairs without deleting or duplicating a retained face, so deterministic topology normalization is not uniquely defined and is rejected before boolean construction.",
+  "evidence_level": "STATIC_GEOMETRY_ONLY",
+  "exact_duplicate_removal": {
+    "duplicate_face_count_removed": 64,
+    "duplicate_groups": [
+      {
+        "removed_face_indices": [
+          7794
+        ],
+        "retained_face_index": 1388
+      },
+      {
+        "removed_face_indices": [
+          7793
+        ],
+        "retained_face_index": 1389
+      },
+      {
+        "removed_face_indices": [
+          7792
+        ],
+        "retained_face_index": 1390
+      },
+      {
+        "removed_face_indices": [
+          7799
+        ],
+        "retained_face_index": 1395
+      },
+      {
+        "removed_face_indices": [
+          7782
+        ],
+        "retained_face_index": 1396
+      },
+      {
+        "removed_face_indices": [
+          7781
+        ],
+        "retained_face_index": 1397
+      },
+      {
+        "removed_face_indices": [
+          7776
+        ],
+        "retained_face_index": 1398
+      },
+      {
+        "removed_face_indices": [
+          7777
+        ],
+        "retained_face_index": 1399
+      },
+      {
+        "removed_face_indices": [
+          7780
+        ],
+        "retained_face_index": 1411
+      },
+      {
+        "removed_face_indices": [
+          7797
+        ],
+        "retained_face_index": 1413
+      },
+      {
+        "removed_face_indices": [
+          7798
+        ],
+        "retained_face_index": 1414
+      },
+      {
+        "removed_face_indices": [
+          7809
+        ],
+        "retained_face_index": 1415
+      },
+      {
+        "removed_face_indices": [
+          7804
+        ],
+        "retained_face_index": 1420
+      },
+      {
+        "removed_face_indices": [
+          7800
+        ],
+        "retained_face_index": 1423
+      },
+      {
+        "removed_face_indices": [
+          9837
+        ],
+        "retained_face_index": 1424
+      },
+      {
+        "removed_face_indices": [
+          9836
+        ],
+        "retained_face_index": 1425
+      },
+      {
+        "removed_face_indices": [
+          9835
+        ],
+        "retained_face_index": 1426
+      },
+      {
+        "removed_face_indices": [
+          9834
+        ],
+        "retained_face_index": 1427
+      },
+      {
+        "removed_face_indices": [
+          9833
+        ],
+        "retained_face_index": 1428
+      },
+      {
+        "removed_face_indices": [
+          9832
+        ],
+        "retained_face_index": 1429
+      },
+      {
+        "removed_face_indices": [
+          9831
+        ],
+        "retained_face_index": 1430
+      },
+      {
+        "removed_face_indices": [
+          9830
+        ],
+        "retained_face_index": 1431
+      },
+      {
+        "removed_face_indices": [
+          9829
+        ],
+        "retained_face_index": 1432
+      },
+      {
+        "removed_face_indices": [
+          9828
+        ],
+        "retained_face_index": 1433
+      },
+      {
+        "removed_face_indices": [
+          9827
+        ],
+        "retained_face_index": 1434
+      },
+      {
+        "removed_face_indices": [
+          9826
+        ],
+        "retained_face_index": 1435
+      },
+      {
+        "removed_face_indices": [
+          9849
+        ],
+        "retained_face_index": 1496
+      },
+      {
+        "removed_face_indices": [
+          9848
+        ],
+        "retained_face_index": 1497
+      },
+      {
+        "removed_face_indices": [
+          9847
+        ],
+        "retained_face_index": 1498
+      },
+      {
+        "removed_face_indices": [
+          9846
+        ],
+        "retained_face_index": 1499
+      },
+      {
+        "removed_face_indices": [
+          9845
+        ],
+        "retained_face_index": 1500
+      },
+      {
+        "removed_face_indices": [
+          9844
+        ],
+        "retained_face_index": 1501
+      },
+      {
+        "removed_face_indices": [
+          9843
+        ],
+        "retained_face_index": 1502
+      },
+      {
+        "removed_face_indices": [
+          9842
+        ],
+        "retained_face_index": 1503
+      },
+      {
+        "removed_face_indices": [
+          9841
+        ],
+        "retained_face_index": 1504
+      },
+      {
+        "removed_face_indices": [
+          9840
+        ],
+        "retained_face_index": 1505
+      },
+      {
+        "removed_face_indices": [
+          9839
+        ],
+        "retained_face_index": 1506
+      },
+      {
+        "removed_face_indices": [
+          9838
+        ],
+        "retained_face_index": 1507
+      },
+      {
+        "removed_face_indices": [
+          9803
+        ],
+        "retained_face_index": 1508
+      },
+      {
+        "removed_face_indices": [
+          9802
+        ],
+        "retained_face_index": 1509
+      },
+      {
+        "removed_face_indices": [
+          9801
+        ],
+        "retained_face_index": 1510
+      },
+      {
+        "removed_face_indices": [
+          9800
+        ],
+        "retained_face_index": 1511
+      },
+      {
+        "removed_face_indices": [
+          9799
+        ],
+        "retained_face_index": 1512
+      },
+      {
+        "removed_face_indices": [
+          9798
+        ],
+        "retained_face_index": 1513
+      },
+      {
+        "removed_face_indices": [
+          9797
+        ],
+        "retained_face_index": 1514
+      },
+      {
+        "removed_face_indices": [
+          9796
+        ],
+        "retained_face_index": 1515
+      },
+      {
+        "removed_face_indices": [
+          9795
+        ],
+        "retained_face_index": 1516
+      },
+      {
+        "removed_face_indices": [
+          9794
+        ],
+        "retained_face_index": 1517
+      },
+      {
+        "removed_face_indices": [
+          9793
+        ],
+        "retained_face_index": 1518
+      },
+      {
+        "removed_face_indices": [
+          9792
+        ],
+        "retained_face_index": 1519
+      },
+      {
+        "removed_face_indices": [
+          9815
+        ],
+        "retained_face_index": 1520
+      },
+      {
+        "removed_face_indices": [
+          9814
+        ],
+        "retained_face_index": 1521
+      },
+      {
+        "removed_face_indices": [
+          9813
+        ],
+        "retained_face_index": 1522
+      },
+      {
+        "removed_face_indices": [
+          9812
+        ],
+        "retained_face_index": 1523
+      },
+      {
+        "removed_face_indices": [
+          9811
+        ],
+        "retained_face_index": 1524
+      },
+      {
+        "removed_face_indices": [
+          9810
+        ],
+        "retained_face_index": 1525
+      },
+      {
+        "removed_face_indices": [
+          9809
+        ],
+        "retained_face_index": 1526
+      },
+      {
+        "removed_face_indices": [
+          9808
+        ],
+        "retained_face_index": 1527
+      },
+      {
+        "removed_face_indices": [
+          9807
+        ],
+        "retained_face_index": 1528
+      },
+      {
+        "removed_face_indices": [
+          9806
+        ],
+        "retained_face_index": 1529
+      },
+      {
+        "removed_face_indices": [
+          9805
+        ],
+        "retained_face_index": 1530
+      },
+      {
+        "removed_face_indices": [
+          9804
+        ],
+        "retained_face_index": 1531
+      },
+      {
+        "removed_face_indices": [
+          7759
+        ],
+        "retained_face_index": 4406
+      },
+      {
+        "removed_face_indices": [
+          7758
+        ],
+        "retained_face_index": 4407
+      }
+    ],
+    "input_face_count": 11836,
+    "output_face_count": 11772,
+    "topology_vertex_registration": {
+      "coordinates_written_or_modified": false,
+      "maximum_topology_group_diameter_m": 3.725290298461914e-09,
+      "method": "ROUND_COORDINATES_TO_8_DECIMALS_FOR_TOPOLOGY_KEYS_ONLY",
+      "nonidentical_topology_group_count": 3
+    },
+    "vertex_coordinates_modified": false,
+    "vertex_count": 5786
+  },
+  "failure_reasons": [
+    "ODD_NONMANIFOLD_EDGE_FACE_INCIDENCE_NOT_PAIRABLE",
+    "NONMANIFOLD_EDGES_REMAIN_AFTER_EXACT_DUPLICATE_REMOVAL"
+  ],
+  "formal_dynamic_pass": false,
+  "gates": {
+    "bidirectional_surface_error_with_cover_radius_le_1mm": {
+      "limit_m": 0.001,
+      "pass": false,
+      "retained_surface_cover_radius_m": 0.00025,
+      "status": "NOT_EVALUATED_NO_CANDIDATE_SOLID"
+    },
+    "exact_input_identity": {
+      "pass": true
+    },
+    "nonmanifold_edge_count_zero": {
+      "count": 97,
+      "pass": false
+    },
+    "removed_exclusive_occupancy_zero": {
+      "boundary_tolerance_m": 1e-05,
+      "pass": false,
+      "required_occupied_sample_count": 0,
+      "status": "NOT_EVALUATED_NO_CANDIDATE_SOLID"
+    },
+    "retained_vertices_not_moved": {
+      "maximum_vertex_displacement_m": 0.0,
+      "pass": true
+    },
+    "self_intersection_free": {
+      "pass": false,
+      "status": "NOT_EVALUATED_UNIQUE_PAIRING_FAILED_NO_CANDIDATE_SOLID"
+    },
+    "unique_nonmanifold_edge_pairing": {
+      "even_incidence_edge_count": 41,
+      "odd_incidence_edge_count": 56,
+      "pass": false
+    },
+    "watertight": {
+      "pass": false,
+      "status": "INPUT_AFTER_EXACT_DEDUPLICATION_ONLY"
+    },
+    "winding_consistent": {
+      "pass": true,
+      "status": "INPUT_AFTER_EXACT_DEDUPLICATION_ONLY"
+    }
+  },
+  "hardware_authorized": false,
+  "input": {
+    "path": "src/iiwa_description/meshes/hand/connector_no_nail/f1Link3_nailfree.stl",
+    "removed_source_face_ranges_inclusive": [
+      [
+        11836,
+        12911
+      ],
+      [
+        12912,
+        13551
+      ],
+      [
+        13552,
+        14191
+      ]
+    ],
+    "sha256": "965d327c466bec40b898fc4228f8ca240386bab3e8a79af6b48c798db1a0071a",
+    "source_path": "src/iiwa_description/meshes/hand/f1Link3.STL",
+    "source_sha256": "7a33a6ab46729a2237dd13d99be3bcefb92bb3d4b77bbf9e69d884509cffcdb0"
+  },
+  "isaac_started": false,
+  "output": {
+    "path": null,
+    "production_mesh_written": false,
+    "sha256": null
+  },
+  "parameter_scan_performed": false,
+  "research_dynamic_pass": false,
+  "runtime_binding_accepted": false,
+  "schema_version": "carts_nailfree_f1_topology_normalization_audit_v1",
+  "script": {
+    "numpy_version": "1.26.4",
+    "path": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/topology_normalization_f1/audit_f1_topology_normalization.py",
+    "sha256": "d1f047e0aa7599076fdf14afe1b26672a713161c870b92d224fac25403d074d1",
+    "trimesh_version": "4.5.3"
+  },
+  "status": "FAIL_CLOSED_NONMANIFOLD_PAIRING_NOT_UNIQUE",
+  "topology": {
+    "all_nonmanifold_edges": [
+      {
+        "edge_endpoints_m": [
+          [
+            -0.045979805290699005,
+            -0.049780894070863724,
+            0.004500000271946192
+          ],
+          [
+            -0.045979805290699005,
+            -0.049780894070863724,
+            0.019500000402331352
+          ]
+        ],
+        "edge_vertex_indices": [
+          300,
+          301
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          4278,
+          4406,
+          7683
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310464213077814,
+            -0.9023297527388503,
+            -0.0
+          ],
+          [
+            0.9023276116217918,
+            -0.4310509033802305,
+            0.0
+          ],
+          [
+            -0.9640507577765315,
+            0.2657181522412339,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            4.967228170449367e-06,
+            0.17578523448857195
+          ],
+          [
+            4.967228170449367e-06,
+            0.9999999999999999,
+            -0.9844276673147857
+          ],
+          [
+            0.17578523448857195,
+            -0.9844276673147857,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.045979805290699005,
+            -0.049780894070863724,
+            0.004500000271946192
+          ],
+          [
+            -0.045548755675554276,
+            -0.04887856915593147,
+            0.004500000271946192
+          ]
+        ],
+        "edge_vertex_indices": [
+          300,
+          355
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          4405,
+          4407,
+          7758
+        ],
+        "incident_face_normals": [
+          [
+            0.8849890282657282,
+            -0.422768089108891,
+            0.19509372793736543
+          ],
+          [
+            0.9023276116217918,
+            -0.4310509033802305,
+            0.0
+          ],
+          [
+            -0.8973844047183136,
+            0.42868948411975816,
+            -0.10453016968078398
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9807846029172261,
+            -0.9958047668198153
+          ],
+          [
+            0.9807846029172261,
+            0.9999999999999999,
+            -0.994521716015546
+          ],
+          [
+            -0.9958047668198153,
+            -0.994521716015546,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.045979805290699005,
+            -0.049780894070863724,
+            0.019500000402331352
+          ],
+          [
+            -0.045548755675554276,
+            -0.04887856915593147,
+            0.019500000402331352
+          ]
+        ],
+        "edge_vertex_indices": [
+          301,
+          356
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1386,
+          4406,
+          9518
+        ],
+        "incident_face_normals": [
+          [
+            0.8715814158241169,
+            -0.41636313886610604,
+            -0.2588195745757872
+          ],
+          [
+            0.9023276116217918,
+            -0.4310509033802305,
+            0.0
+          ],
+          [
+            -0.8849890118705906,
+            0.4227680812767702,
+            0.19509381928158012
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9659256844169785,
+            -0.9978591205965767
+          ],
+          [
+            0.9659256844169785,
+            0.9999999999999999,
+            -0.980784584747398
+          ],
+          [
+            -0.9978591205965767,
+            -0.980784584747398,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.045808095484972,
+            -0.049862928688526154,
+            0.0035432912409305573
+          ],
+          [
+            -0.045377038419246674,
+            -0.048960600048303604,
+            0.0035432912409305573
+          ]
+        ],
+        "edge_vertex_indices": [
+          328,
+          379
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          4403,
+          4404,
+          7760,
+          7761
+        ],
+        "incident_face_normals": [
+          [
+            0.7502571755597411,
+            -0.3584100539648052,
+            0.5555685409902771
+          ],
+          [
+            0.8849877706333343,
+            -0.42277305031337087,
+            0.19508868177874614
+          ],
+          [
+            -0.8617402406213124,
+            0.4116673271592526,
+            -0.2965362868916372
+          ],
+          [
+            -0.8144225413683088,
+            0.3890628927130151,
+            -0.4305182802448305
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9238796712774925,
+            -0.9588187401964734,
+            -0.9896528207974126
+          ],
+          [
+            0.9238796712774925,
+            1.0,
+            -0.9945222993392115,
+            -0.9692285389297162
+          ],
+          [
+            -0.9588187401964734,
+            -0.9945222993392115,
+            0.9999999999999998,
+            0.9896494501689366
+          ],
+          [
+            -0.9896528207974126,
+            -0.9692285389297162,
+            0.9896494501689366,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.045548755675554276,
+            -0.04887856915593147,
+            0.004500000271946192
+          ],
+          [
+            -0.045548755675554276,
+            -0.04887856915593147,
+            0.019500000402331352
+          ]
+        ],
+        "edge_vertex_indices": [
+          355,
+          356
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1410,
+          4407,
+          7774
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310526256821358,
+            -0.9023267888589679,
+            0.0
+          ],
+          [
+            0.9023276116217918,
+            -0.4310509033802305,
+            0.0
+          ],
+          [
+            0.43105156408883943,
+            0.9023272959943999,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            -1.9087332232547993e-06,
+            -0.9999999999993079
+          ],
+          [
+            -1.9087332232547993e-06,
+            0.9999999999999999,
+            7.322270935139485e-07
+          ],
+          [
+            -0.9999999999993079,
+            7.322270935139485e-07,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.045548755675554276,
+            -0.04887856915593147,
+            0.004500000271946192
+          ],
+          [
+            -0.045377038419246674,
+            -0.048960600048303604,
+            0.0035432912409305573
+          ]
+        ],
+        "edge_vertex_indices": [
+          355,
+          379
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1387,
+          4405,
+          7759,
+          7786
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105250096740344,
+            -0.9023268484365846,
+            -4.977501529320921e-07
+          ],
+          [
+            0.8849890282657282,
+            -0.422768089108891,
+            0.19509372793736543
+          ],
+          [
+            -0.8633879788678874,
+            0.4653885353212875,
+            -0.19487100640662508
+          ],
+          [
+            0.4310514232356722,
+            0.9023273632814388,
+            2.601666124950007e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            -1.8336054043442607e-06,
+            -0.047766925781707735,
+            -0.9999999999992586
+          ],
+          [
+            -1.8336054043442607e-06,
+            1.0,
+            -0.9988584213123438,
+            6.158136129937244e-07
+          ],
+          [
+            -0.047766925781707735,
+            -0.9988584213123438,
+            0.9999999999999998,
+            0.047768142183365114
+          ],
+          [
+            -0.9999999999992586,
+            6.158136129937244e-07,
+            0.047768142183365114,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.045548755675554276,
+            -0.04887856915593147,
+            0.004500000271946192
+          ],
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          355,
+          488
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1412,
+          1413,
+          7786
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310535402381417,
+            -0.9023263519563426,
+            3.650107187788736e-06
+          ],
+          [
+            -0.4310488307935164,
+            -0.9023286017000981,
+            -5.048593194655063e-06
+          ],
+          [
+            0.4310514232356722,
+            0.9023273632814388,
+            2.601666124950007e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            0.9999999999485462,
+            -0.9999999999896025
+          ],
+          [
+            0.9999999999485462,
+            1.0000000000000002,
+            -0.9999999999844082
+          ],
+          [
+            -0.9999999999896025,
+            -0.9999999999844082,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.045548755675554276,
+            -0.04887856915593147,
+            0.004500000271946192
+          ],
+          [
+            -0.04311160370707512,
+            -0.05004282668232918,
+            0.017249999567866325
+          ]
+        ],
+        "edge_vertex_indices": [
+          355,
+          493
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1410,
+          1411,
+          7775
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310526256821358,
+            -0.9023267888589679,
+            0.0
+          ],
+          [
+            -0.4310456573075328,
+            -0.902330117702851,
+            -1.6359702413923321e-06
+          ],
+          [
+            0.4310600010770067,
+            0.9023232655032744,
+            -1.7315335475643466e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            0.9999999999688421,
+            -0.9999999999650955
+          ],
+          [
+            0.9999999999688421,
+            1.0000000000000002,
+            -0.9999999998679818
+          ],
+          [
+            -0.9999999999650955,
+            -0.9999999998679818,
+            0.9999999999999998
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.045548755675554276,
+            -0.04887856915593147,
+            0.019500000402331352
+          ],
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.017999999225139618
+          ]
+        ],
+        "edge_vertex_indices": [
+          356,
+          489
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1408,
+          1409,
+          7770,
+          7774
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105250435552883,
+            -0.9023268468165017,
+            -1.7367450151108628e-06
+          ],
+          [
+            -0.43104883078846096,
+            -0.902328601702513,
+            5.048597830449153e-06
+          ],
+          [
+            0.4310535402365562,
+            0.9023263519571001,
+            3.6501008597754704e-06
+          ],
+          [
+            0.43105156408883943,
+            0.9023272959943999,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            0.9999999999686922,
+            -0.9999999999975105,
+            -0.999999999997949
+          ],
+          [
+            0.9999999999686922,
+            0.9999999999999999,
+            -0.9999999999485462,
+            -0.9999999999826679
+          ],
+          [
+            -0.9999999999975105,
+            -0.9999999999485462,
+            1.0000000000000002,
+            0.9999999999909402
+          ],
+          [
+            -0.999999999997949,
+            -0.9999999999826679,
+            0.9999999999909402,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.045377038419246674,
+            -0.048960600048303604,
+            0.0035432912409305573
+          ],
+          [
+            -0.04488804191350937,
+            -0.049194201827049255,
+            0.0027322331443428993
+          ]
+        ],
+        "edge_vertex_indices": [
+          379,
+          415
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1388,
+          4403,
+          7762
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105374586196,
+            -0.9023262537331088,
+            1.5317885176000433e-06
+          ],
+          [
+            0.7502571755597411,
+            -0.3584100539648052,
+            0.5555685409902771
+          ],
+          [
+            -0.733555614293065,
+            0.3920130941849544,
+            -0.5551773542992021
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            2.486423015259711e-06,
+            -0.03752266176543396
+          ],
+          [
+            2.486423015259711e-06,
+            1.0,
+            -0.9992958702560955
+          ],
+          [
+            -0.03752266176543396,
+            -0.9992958702560955,
+            0.9999999999999998
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.045377038419246674,
+            -0.048960600048303604,
+            0.0035432912409305573
+          ],
+          [
+            -0.04311160370707512,
+            -0.05004282668232918,
+            0.005249999929219484
+          ]
+        ],
+        "edge_vertex_indices": [
+          379,
+          491
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1387,
+          1388,
+          7785
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105250096740344,
+            -0.9023268484365846,
+            -4.977501529320921e-07
+          ],
+          [
+            -0.43105374586196,
+            -0.9023262537331088,
+            1.5317885176000433e-06
+          ],
+          [
+            0.43105481332145296,
+            0.90232574378752,
+            -3.2720600166282547e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            0.999999999996989,
+            -0.9999999999896109
+          ],
+          [
+            0.999999999996989,
+            1.0000000000000002,
+            -0.9999999999977861
+          ],
+          [
+            -0.9999999999896109,
+            -0.9999999999977861,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.0453190915286541,
+            -0.050096526741981506,
+            0.0027322331443428993
+          ],
+          [
+            -0.04488804191350937,
+            -0.049194201827049255,
+            0.0027322331443428993
+          ]
+        ],
+        "edge_vertex_indices": [
+          381,
+          415
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          4401,
+          4402,
+          7763,
+          7764
+        ],
+        "incident_face_normals": [
+          [
+            0.5013062889853839,
+            -0.23947901621779646,
+            0.8314696659620597
+          ],
+          [
+            0.7502568229757041,
+            -0.3584051703012837,
+            0.5555721676611518
+          ],
+          [
+            -0.7229932134637708,
+            0.34538107200465473,
+            -0.5983249354541778
+          ],
+          [
+            -0.5398856851355387,
+            0.25790877869896306,
+            -0.8012530866435019
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9238803859660729,
+            -0.9426415983659191,
+            -0.9986294661909312
+          ],
+          [
+            0.9238803859660729,
+            1.0,
+            -0.9986296346529882,
+            -0.9426426728433677
+          ],
+          [
+            -0.9426415983659191,
+            -0.9986296346529882,
+            1.0,
+            0.9588201982141258
+          ],
+          [
+            -0.9986294661909312,
+            -0.9426426728433677,
+            0.9588201982141258,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04488804191350937,
+            -0.049194201827049255,
+            0.0027322331443428993
+          ],
+          [
+            -0.04415620118379593,
+            -0.04954380914568901,
+            0.0021903011947870255
+          ]
+        ],
+        "edge_vertex_indices": [
+          415,
+          451
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1390,
+          4401,
+          7765
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310504527196188,
+            -0.9023278269066906,
+            2.477013044533625e-07
+          ],
+          [
+            0.5013062889853839,
+            -0.23947901621779646,
+            0.8314696659620597
+          ],
+          [
+            -0.4847787529563093,
+            0.2731687726188762,
+            -0.8308840968197805
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            4.834313354828379e-07,
+            -0.037523889856363686
+          ],
+          [
+            4.834313354828379e-07,
+            1.0,
+            -0.9992957489876116
+          ],
+          [
+            -0.037523889856363686,
+            -0.9992957489876116,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04458725079894066,
+            -0.05044613406062126,
+            0.0021903011947870255
+          ],
+          [
+            -0.04415620118379593,
+            -0.04954380914568901,
+            0.0021903011947870255
+          ]
+        ],
+        "edge_vertex_indices": [
+          422,
+          451
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          4399,
+          4400,
+          7766,
+          7769
+        ],
+        "incident_face_normals": [
+          [
+            0.1760350428766092,
+            -0.08409369643710396,
+            0.980785355671145
+          ],
+          [
+            0.5013062889853839,
+            -0.23947901621779646,
+            0.8314696659620597
+          ],
+          [
+            -0.3884603188959349,
+            0.18557137034353524,
+            -0.9025861992918411
+          ],
+          [
+            -0.2675790422874815,
+            0.12782517836989382,
+            -0.9550194657195313
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999998,
+            0.9238794218290984,
+            -0.9692313378741092,
+            -0.9945216862874128
+          ],
+          [
+            0.9238794218290984,
+            1.0,
+            -0.9896510957190103,
+            -0.9588202208123705
+          ],
+          [
+            -0.9692313378741092,
+            -0.9896510957190103,
+            1.0000000000000002,
+            0.9896519234248885
+          ],
+          [
+            -0.9945216862874128,
+            -0.9588202208123705,
+            0.9896519234248885,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04415620118379593,
+            -0.04954380914568901,
+            0.0021903011947870255
+          ],
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.0020000003278255463
+          ]
+        ],
+        "edge_vertex_indices": [
+          451,
+          487
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1392,
+          4399,
+          7767,
+          7784
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310503108981573,
+            -0.9023278946560513,
+            -4.239395502751115e-07
+          ],
+          [
+            0.1760350428766092,
+            -0.08409369643710396,
+            0.980785355671145
+          ],
+          [
+            -0.1760350428766092,
+            0.08409369643710396,
+            -0.980785355671145
+          ],
+          [
+            0.43105022160082485,
+            0.9023279373142973,
+            -7.358368090039885e-08
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            -2.8769469836225963e-07,
+            2.8769469836225963e-07,
+            -0.9999999999998712
+          ],
+          [
+            -2.8769469836225963e-07,
+            0.9999999999999998,
+            -0.9999999999999998,
+            -2.1957555023289217e-07
+          ],
+          [
+            2.8769469836225963e-07,
+            -0.9999999999999998,
+            0.9999999999999998,
+            2.1957555023289217e-07
+          ],
+          [
+            -0.9999999999998712,
+            -2.1957555023289217e-07,
+            2.1957555023289217e-07,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04415620118379593,
+            -0.04954380914568901,
+            0.0021903011947870255
+          ],
+          [
+            -0.042616188526153564,
+            -0.050279486924409866,
+            0.004700961988419294
+          ]
+        ],
+        "edge_vertex_indices": [
+          451,
+          497
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1390,
+          1391,
+          7784
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310504527196188,
+            -0.9023278269066906,
+            2.477013044533625e-07
+          ],
+          [
+            -0.43105163853666273,
+            -0.9023272604291396,
+            1.1410590250114992e-06
+          ],
+          [
+            0.43105022160082485,
+            0.9023279373142973,
+            -7.358368090039885e-08
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            0.9999999999987376,
+            -0.9999999999999521
+          ],
+          [
+            0.9999999999987376,
+            1.0,
+            -0.9999999999981972
+          ],
+          [
+            -0.9999999999999521,
+            -0.9999999999981972,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04372398555278778,
+            -0.050858523696660995,
+            0.0020000003278255463
+          ],
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.0020000003278255463
+          ]
+        ],
+        "edge_vertex_indices": [
+          485,
+          487
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          4379,
+          4398,
+          7286,
+          7767
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.1760350428766092,
+            -0.08409369643710396,
+            0.980785355671145
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            -0.1760350428766092,
+            0.08409369643710396,
+            -0.980785355671145
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.980785355671145,
+            -1.0,
+            -0.980785355671145
+          ],
+          [
+            0.980785355671145,
+            0.9999999999999998,
+            -0.980785355671145,
+            -0.9999999999999998
+          ],
+          [
+            -1.0,
+            -0.980785355671145,
+            1.0,
+            0.980785355671145
+          ],
+          [
+            -0.980785355671145,
+            -0.9999999999999998,
+            0.980785355671145,
+            0.9999999999999998
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04372398555278778,
+            -0.050858523696660995,
+            0.0020000003278255463
+          ],
+          [
+            -0.03902190551161766,
+            -0.053104765713214874,
+            0.0020000003278255463
+          ]
+        ],
+        "edge_vertex_indices": [
+          485,
+          612
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          4255,
+          4380,
+          7286,
+          7436
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310526945780191,
+            -0.9023267559465523,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            -0.08409373627034358,
+            -0.17603422783037495,
+            -0.9807854985430086
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.19508922535020345
+          ],
+          [
+            0.0,
+            1.0,
+            -1.0,
+            -0.9807854985430086
+          ],
+          [
+            0.0,
+            -1.0,
+            1.0,
+            0.9807854985430086
+          ],
+          [
+            0.19508922535020345,
+            -0.9807854985430086,
+            0.9807854985430086,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04372398555278778,
+            -0.050858523696660995,
+            0.02199999988079071
+          ],
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.02199999988079071
+          ]
+        ],
+        "edge_vertex_indices": [
+          486,
+          490
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1362,
+          1381,
+          9414,
+          9526
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.2335395331265076,
+            -0.11156416520186556,
+            -0.9659258374791844
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            -0.09431919536475693,
+            0.045057220730507726,
+            0.9945218631311165
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9659258374791844,
+            -1.0,
+            -0.9945218631311165
+          ],
+          [
+            0.9659258374791844,
+            0.9999999999999999,
+            -0.9659258374791844,
+            -0.9876883956037509
+          ],
+          [
+            -1.0,
+            -0.9659258374791844,
+            1.0,
+            0.9945218631311165
+          ],
+          [
+            -0.9945218631311165,
+            -0.9876883956037509,
+            0.9945218631311165,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04372398555278778,
+            -0.050858523696660995,
+            0.02199999988079071
+          ],
+          [
+            -0.03902190551161766,
+            -0.053104765713214874,
+            0.02199999988079071
+          ]
+        ],
+        "edge_vertex_indices": [
+          486,
+          613
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1362,
+          4267,
+          9415,
+          9429
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            -0.4310526945780191,
+            -0.9023267559465523,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            -0.08409472599405973,
+            -0.17603629962855952,
+            0.9807850418277536
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.0,
+            -1.0,
+            -0.9807850418277536
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.19509152141221303
+          ],
+          [
+            -1.0,
+            0.0,
+            1.0,
+            0.9807850418277536
+          ],
+          [
+            -0.9807850418277536,
+            0.19509152141221303,
+            0.9807850418277536,
+            1.0000000000000004
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.0020000003278255463
+          ],
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.004500000271946192
+          ]
+        ],
+        "edge_vertex_indices": [
+          487,
+          511
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1392,
+          1393,
+          7772,
+          7773
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310503108981573,
+            -0.9023278946560513,
+            -4.239395502751115e-07
+          ],
+          [
+            -0.43104979744129346,
+            -0.9023281399387,
+            -7.653608531478926e-07
+          ],
+          [
+            0.4310512524206188,
+            0.9023274448816101,
+            -2.0212276664123458e-07
+          ],
+          [
+            0.43105178063098293,
+            0.902327192549661,
+            -5.533547264581485e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9999999999997798,
+            -0.9999999999992595,
+            -0.999999999998196
+          ],
+          [
+            0.9999999999997798,
+            1.0,
+            -0.999999999998232,
+            -0.9999999999967153
+          ],
+          [
+            -0.9999999999992595,
+            -0.999999999998232,
+            1.0,
+            0.999999999999767
+          ],
+          [
+            -0.999999999998196,
+            -0.9999999999967153,
+            0.999999999999767,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.0020000003278255463
+          ],
+          [
+            -0.03859085217118263,
+            -0.052202433347702026,
+            0.0020000003278255463
+          ]
+        ],
+        "edge_vertex_indices": [
+          487,
+          621
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1394,
+          4379,
+          7287,
+          7772
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105125242055564,
+            -0.9023274448814779,
+            5.778889441958019e-07
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.4310512524206188,
+            0.9023274448816101,
+            -2.0212276664123458e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            5.778889441958019e-07,
+            -5.778889441958019e-07,
+            -0.9999999999999294
+          ],
+          [
+            5.778889441958019e-07,
+            1.0,
+            -1.0,
+            -2.0212276664123458e-07
+          ],
+          [
+            -5.778889441958019e-07,
+            -1.0,
+            1.0,
+            2.0212276664123458e-07
+          ],
+          [
+            -0.9999999999999294,
+            -2.0212276664123458e-07,
+            2.0212276664123458e-07,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.006000000052154064
+          ],
+          [
+            -0.04311160370707512,
+            -0.05004282668232918,
+            0.005249999929219484
+          ]
+        ],
+        "edge_vertex_indices": [
+          488,
+          491
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1412,
+          1506,
+          7785
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310535402381417,
+            -0.9023263519563426,
+            3.650107187788736e-06
+          ],
+          [
+            0.8715817022473347,
+            -0.4163627294390169,
+            0.25881926868324623
+          ],
+          [
+            0.43105481332145296,
+            0.90232574378752,
+            -3.2720600166282547e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            -2.37089713270898e-06,
+            -0.9999999999989333
+          ],
+          [
+            -2.37089713270898e-06,
+            1.0,
+            3.83155797557723e-06
+          ],
+          [
+            -0.9999999999989333,
+            3.83155797557723e-06,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.017999999225139618
+          ],
+          [
+            -0.04311160370707512,
+            -0.05004282668232918,
+            0.017249999567866325
+          ]
+        ],
+        "edge_vertex_indices": [
+          489,
+          493
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1409,
+          1509,
+          7775
+        ],
+        "incident_face_normals": [
+          [
+            -0.43104883078846096,
+            -0.902328601702513,
+            5.048597830449153e-06
+          ],
+          [
+            0.8715816659971275,
+            -0.41636271212195397,
+            0.25881941861483754
+          ],
+          [
+            0.4310600010770067,
+            0.9023232655032744,
+            -1.7315335475643466e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            3.03244050320112e-06,
+            -0.9999999999178731
+          ],
+          [
+            3.03244050320112e-06,
+            1.0,
+            9.783693233701772e-06
+          ],
+          [
+            -0.9999999999178731,
+            9.783693233701772e-06,
+            0.9999999999999998
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.017999999225139618
+          ],
+          [
+            -0.04311160370707512,
+            -0.05004282668232918,
+            0.01875000074505806
+          ]
+        ],
+        "edge_vertex_indices": [
+          489,
+          494
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1407,
+          1531,
+          7770
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105440347173724,
+            -0.9023259395784359,
+            -3.3937602341821747e-06
+          ],
+          [
+            0.8715818109975781,
+            -0.4163627813900252,
+            -0.2588188188894771
+          ],
+          [
+            0.4310535402365562,
+            0.9023263519571001,
+            3.6501008597754704e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            -3.361324116719139e-06,
+            -0.9999999999995096
+          ],
+          [
+            -3.361324116719139e-06,
+            0.9999999999999999,
+            2.370899128673508e-06
+          ],
+          [
+            -0.9999999999995096,
+            2.370899128673508e-06,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.02199999988079071
+          ],
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.019500000402331352
+          ]
+        ],
+        "edge_vertex_indices": [
+          490,
+          514
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1402,
+          1403,
+          7777,
+          7778
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105125242061876,
+            -0.9023274448816101,
+            -2.021228042895415e-07
+          ],
+          [
+            -0.43105178063042726,
+            -0.9023271925499262,
+            -5.533544600729894e-07
+          ],
+          [
+            0.43104979744023053,
+            0.9023281399392077,
+            -7.653617024937621e-07
+          ],
+          [
+            0.43105031089817,
+            0.9023278946560452,
+            -4.2393962082061576e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9999999999997669,
+            -0.999999999998232,
+            -0.9999999999992595
+          ],
+          [
+            0.9999999999997669,
+            0.9999999999999998,
+            -0.999999999996715,
+            -0.9999999999981958
+          ],
+          [
+            -0.999999999998232,
+            -0.999999999996715,
+            1.0,
+            0.9999999999997796
+          ],
+          [
+            -0.9999999999992595,
+            -0.9999999999981958,
+            0.9999999999997796,
+            0.9999999999999998
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04329293593764305,
+            -0.049956198781728745,
+            0.02199999988079071
+          ],
+          [
+            -0.03859085217118263,
+            -0.052202433347702026,
+            0.02199999988079071
+          ]
+        ],
+        "edge_vertex_indices": [
+          490,
+          622
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1363,
+          1402,
+          7776,
+          9414
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            -0.43105125242061876,
+            -0.9023274448816101,
+            -2.021228042895415e-07
+          ],
+          [
+            0.4310512524205556,
+            0.9023274448814779,
+            5.778888445644493e-07
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            2.021228042895415e-07,
+            -5.778888445644493e-07,
+            -1.0
+          ],
+          [
+            2.021228042895415e-07,
+            1.0,
+            -0.9999999999999293,
+            -2.021228042895415e-07
+          ],
+          [
+            -5.778888445644493e-07,
+            -0.9999999999999293,
+            1.0,
+            5.778888445644493e-07
+          ],
+          [
+            -1.0,
+            -2.021228042895415e-07,
+            5.778888445644493e-07,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04311160370707512,
+            -0.05004282668232918,
+            0.01875000074505806
+          ],
+          [
+            -0.042616188526153564,
+            -0.050279486924409866,
+            0.019299037754535675
+          ]
+        ],
+        "edge_vertex_indices": [
+          494,
+          500
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1405,
+          1529,
+          7781
+        ],
+        "incident_face_normals": [
+          [
+            -0.43104626486707726,
+            -0.9023298274682096,
+            2.3092968400692407e-06
+          ],
+          [
+            0.6380407348290492,
+            -0.30479802543091,
+            -0.7071083257834159
+          ],
+          [
+            0.43104760258598074,
+            0.9023291884287576,
+            -3.791822553160083e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            1.6411955946843702e-06,
+            -0.9999999999978022
+          ],
+          [
+            1.6411955946843702e-06,
+            1.0000000000000002,
+            4.554077955104766e-07
+          ],
+          [
+            -0.9999999999978022,
+            4.554077955104766e-07,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042775675654411316,
+            -0.048873405903577805,
+            0.006000000052154064
+          ],
+          [
+            -0.042594343423843384,
+            -0.04896003380417824,
+            0.005249999929219484
+          ]
+        ],
+        "edge_vertex_indices": [
+          495,
+          501
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1452,
+          1507,
+          9786
+        ],
+        "incident_face_normals": [
+          [
+            0.43105160713466895,
+            0.9023272754210501,
+            -4.2241494583849845e-06
+          ],
+          [
+            0.8715817022473347,
+            -0.4163627294390169,
+            0.25881926868324623
+          ],
+          [
+            0.4310504654653866,
+            0.9023278208064134,
+            -4.563172104916024e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            1.5297003047183926e-07,
+            0.9999999999991419
+          ],
+          [
+            1.5297003047183926e-07,
+            1.0,
+            -1.1569117579375213e-06
+          ],
+          [
+            0.9999999999991419,
+            -1.1569117579375213e-06,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042775675654411316,
+            -0.048873405903577805,
+            0.006000000052154064
+          ],
+          [
+            -0.042594343423843384,
+            -0.04896003380417824,
+            0.006750000175088644
+          ]
+        ],
+        "edge_vertex_indices": [
+          495,
+          502
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1425,
+          1438,
+          9787
+        ],
+        "incident_face_normals": [
+          [
+            0.8715817022473347,
+            -0.4163627294390169,
+            -0.25881926868324623
+          ],
+          [
+            0.43105250113485816,
+            0.902326848348043,
+            3.958672853304958e-06
+          ],
+          [
+            0.4310504654653866,
+            0.9023278208064134,
+            4.563172104916024e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.1786919808618558e-06,
+            -1.1569117579375213e-06
+          ],
+          [
+            1.1786919808618558e-06,
+            1.0000000000000002,
+            0.9999999999972725
+          ],
+          [
+            -1.1569117579375213e-06,
+            0.9999999999972725,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042775675654411316,
+            -0.048873405903577805,
+            0.017999999225139618
+          ],
+          [
+            -0.042594343423843384,
+            -0.04896003380417824,
+            0.017249999567866325
+          ]
+        ],
+        "edge_vertex_indices": [
+          496,
+          503
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1481,
+          1508,
+          9776
+        ],
+        "incident_face_normals": [
+          [
+            0.43105321871307745,
+            0.9023265055527663,
+            -3.7455876214533046e-06
+          ],
+          [
+            0.8715816659971275,
+            -0.41636271212195397,
+            0.25881941861483754
+          ],
+          [
+            0.43105046546538667,
+            0.9023278208064134,
+            -4.563174938107447e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            2.00199708251711e-06,
+            0.9999999999950105
+          ],
+          [
+            2.00199708251711e-06,
+            1.0,
+            -1.1569131762743119e-06
+          ],
+          [
+            0.9999999999950105,
+            -1.1569131762743119e-06,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042775675654411316,
+            -0.048873405903577805,
+            0.017999999225139618
+          ],
+          [
+            -0.042594343423843384,
+            -0.04896003380417824,
+            0.01875000074505806
+          ]
+        ],
+        "edge_vertex_indices": [
+          496,
+          504
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1467,
+          1530,
+          9777
+        ],
+        "incident_face_normals": [
+          [
+            0.43105584815190967,
+            0.902325249433511,
+            2.96475725814488e-06
+          ],
+          [
+            0.8715818109975781,
+            -0.4163627813900252,
+            -0.2588188188894771
+          ],
+          [
+            0.43105046546538667,
+            0.9023278208064134,
+            4.563163605362863e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999998,
+            5.018865781740982e-06,
+            0.9999999999809297
+          ],
+          [
+            5.018865781740982e-06,
+            0.9999999999999999,
+            -1.1569075025537175e-06
+          ],
+          [
+            0.9999999999809297,
+            -1.1569075025537175e-06,
+            0.9999999999999998
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042616188526153564,
+            -0.050279486924409866,
+            0.004700961988419294
+          ],
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.004500000271946192
+          ]
+        ],
+        "edge_vertex_indices": [
+          497,
+          511
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1391,
+          1502,
+          7773
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105163853666273,
+            -0.9023272604291396,
+            1.1410590250114992e-06
+          ],
+          [
+            0.2335396569594194,
+            -0.11156488147020334,
+            0.9659257248100478
+          ],
+          [
+            0.43105178063098293,
+            0.902327192549661,
+            -5.533547264581485e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.484239728196988e-06,
+            -0.999999999999815
+          ],
+          [
+            1.484239728196988e-06,
+            1.0,
+            -8.758034028538058e-07
+          ],
+          [
+            -0.999999999999815,
+            -8.758034028538058e-07,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042616188526153564,
+            -0.050279486924409866,
+            0.007299038115888834
+          ],
+          [
+            -0.042616188526153564,
+            -0.050279486924409866,
+            0.01670096255838871
+          ]
+        ],
+        "edge_vertex_indices": [
+          498,
+          499
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1415,
+          1416,
+          7793
+        ],
+        "incident_face_normals": [
+          [
+            -0.43104418112876136,
+            -0.902330822877638,
+            -0.0
+          ],
+          [
+            -0.4310519144201659,
+            -0.902327128637231,
+            -0.0
+          ],
+          [
+            0.4310519144201659,
+            0.902327128637231,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999998,
+            0.9999999999632743,
+            -0.9999999999632743
+          ],
+          [
+            0.9999999999632743,
+            1.0,
+            -1.0
+          ],
+          [
+            -0.9999999999632743,
+            -1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042616188526153564,
+            -0.050279486924409866,
+            0.007299038115888834
+          ],
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.007500000298023224
+          ]
+        ],
+        "edge_vertex_indices": [
+          498,
+          512
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1417,
+          1428,
+          7793
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310519144201659,
+            -0.902327128637231,
+            -0.0
+          ],
+          [
+            0.2335404743732991,
+            -0.1115644684759064,
+            -0.9659255748778903
+          ],
+          [
+            0.4310519144201659,
+            0.902327128637231,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            -4.2207540078276207e-07,
+            -1.0
+          ],
+          [
+            -4.2207540078276207e-07,
+            1.0,
+            4.2207540078276207e-07
+          ],
+          [
+            -1.0,
+            4.2207540078276207e-07,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042616188526153564,
+            -0.050279486924409866,
+            0.01670096255838871
+          ],
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.016499999910593033
+          ]
+        ],
+        "edge_vertex_indices": [
+          499,
+          513
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1416,
+          1513,
+          7792
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310519144201659,
+            -0.902327128637231,
+            -0.0
+          ],
+          [
+            0.23354066675786825,
+            -0.11156536386383926,
+            0.9659254249455388
+          ],
+          [
+            0.4310519144201659,
+            0.902327128637231,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            3.0292968486445027e-07,
+            -1.0
+          ],
+          [
+            3.0292968486445027e-07,
+            1.0000000000000002,
+            -3.0292968486445027e-07
+          ],
+          [
+            -1.0,
+            -3.0292968486445027e-07,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042616188526153564,
+            -0.050279486924409866,
+            0.019299037754535675
+          ],
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.019500000402331352
+          ]
+        ],
+        "edge_vertex_indices": [
+          500,
+          514
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1403,
+          1527,
+          7779
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105178063042726,
+            -0.9023271925499262,
+            -5.533544600729894e-07
+          ],
+          [
+            0.23354097927308162,
+            -0.1115647096712539,
+            -0.965925424945497
+          ],
+          [
+            0.4310516385356245,
+            0.9023272604296356,
+            1.141058031191274e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999998,
+            1.507986165833401e-07,
+            -0.9999999999998149
+          ],
+          [
+            1.507986165833401e-07,
+            1.0000000000000002,
+            -7.592343777117723e-07
+          ],
+          [
+            -0.9999999999998149,
+            -7.592343777117723e-07,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042594343423843384,
+            -0.04896003380417824,
+            0.005249999929219484
+          ],
+          [
+            -0.04209892824292183,
+            -0.049196694046258926,
+            0.004700961988419294
+          ]
+        ],
+        "edge_vertex_indices": [
+          501,
+          505
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1454,
+          1505,
+          9792
+        ],
+        "incident_face_normals": [
+          [
+            0.43105104162204044,
+            0.9023275455502544,
+            7.603127763720507e-06
+          ],
+          [
+            0.6380412759798001,
+            -0.3047982839436841,
+            0.7071077260580979
+          ],
+          [
+            0.43105210591157356,
+            0.9023270371168443,
+            8.782629429138315e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            5.84540049852562e-06,
+            0.9999999999986088
+          ],
+          [
+            5.84540049852562e-06,
+            1.0,
+            7.513465521711319e-06
+          ],
+          [
+            0.9999999999986088,
+            7.513465521711319e-06,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042594343423843384,
+            -0.04896003380417824,
+            0.006750000175088644
+          ],
+          [
+            -0.04209892824292183,
+            -0.049196694046258926,
+            0.007299038115888834
+          ]
+        ],
+        "edge_vertex_indices": [
+          502,
+          506
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1427,
+          1465,
+          9791
+        ],
+        "incident_face_normals": [
+          [
+            0.6380412759798001,
+            -0.3047982839436841,
+            -0.7071077260580979
+          ],
+          [
+            0.4310516554132524,
+            0.9023272523297081,
+            -8.283363321318731e-06
+          ],
+          [
+            0.43104826730250206,
+            0.9023288708863326,
+            -4.528487110164917e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            6.807397564263441e-06,
+            1.4972077970586914e-06
+          ],
+          [
+            6.807397564263441e-06,
+            1.0,
+            0.9999999999859013
+          ],
+          [
+            1.4972077970586914e-06,
+            0.9999999999859013,
+            1.0000000000000004
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042594343423843384,
+            -0.04896003380417824,
+            0.017249999567866325
+          ],
+          [
+            -0.04209892824292183,
+            -0.049196694046258926,
+            0.01670096255838871
+          ]
+        ],
+        "edge_vertex_indices": [
+          503,
+          507
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1492,
+          1510,
+          9782
+        ],
+        "incident_face_normals": [
+          [
+            0.4310503338939327,
+            0.9023278836450933,
+            6.818798535377482e-06
+          ],
+          [
+            0.6380407348290492,
+            -0.30479802543091,
+            0.7071083257834159
+          ],
+          [
+            0.43105210592993654,
+            0.9023270371080717,
+            8.782664677870638e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            4.736188931691108e-06,
+            0.9999999999961432
+          ],
+          [
+            4.736188931691108e-06,
+            1.0000000000000002,
+            7.513508998477357e-06
+          ],
+          [
+            0.9999999999961432,
+            7.513508998477357e-06,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.042594343423843384,
+            -0.04896003380417824,
+            0.01875000074505806
+          ],
+          [
+            -0.04209892824292183,
+            -0.049196694046258926,
+            0.019299037754535675
+          ]
+        ],
+        "edge_vertex_indices": [
+          504,
+          508
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1490,
+          1528,
+          9781
+        ],
+        "incident_face_normals": [
+          [
+            0.4310517238337801,
+            0.9023272196437666,
+            -8.359204739477556e-06
+          ],
+          [
+            0.6380407348290492,
+            -0.30479802543091,
+            -0.7071083257834159
+          ],
+          [
+            0.4310482672994288,
+            0.9023288708878004,
+            -4.528491385922321e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            6.914647518543534e-06,
+            0.9999999999853256
+          ],
+          [
+            6.914647518543534e-06,
+            1.0000000000000002,
+            1.497212574100427e-06
+          ],
+          [
+            0.9999999999853256,
+            1.497212574100427e-06,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04209892824292183,
+            -0.049196694046258926,
+            0.004700961988419294
+          ],
+          [
+            -0.04142218083143234,
+            -0.04951998218894005,
+            0.004500000271946192
+          ]
+        ],
+        "edge_vertex_indices": [
+          505,
+          519
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1455,
+          1503,
+          9792
+        ],
+        "incident_face_normals": [
+          [
+            0.43105144613971963,
+            0.9023273523196605,
+            6.053750332155218e-06
+          ],
+          [
+            0.23353899288567234,
+            -0.11156376075541351,
+            0.9659260148106865
+          ],
+          [
+            0.43105210591157356,
+            0.9023270371168443,
+            8.782629429138315e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            6.135231059424512e-06,
+            0.9999999999960093
+          ],
+          [
+            6.135231059424512e-06,
+            0.9999999999999998,
+            8.960374036372918e-06
+          ],
+          [
+            0.9999999999960093,
+            8.960374036372918e-06,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04209892824292183,
+            -0.049196694046258926,
+            0.007299038115888834
+          ],
+          [
+            -0.04142218083143234,
+            -0.04951998218894005,
+            0.007500000298023224
+          ]
+        ],
+        "edge_vertex_indices": [
+          506,
+          520
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1429,
+          1464,
+          9790
+        ],
+        "incident_face_normals": [
+          [
+            0.23353918527195774,
+            -0.11156465613906928,
+            -0.9659258648794334
+          ],
+          [
+            0.4310515379778023,
+            0.90232730844499,
+            -6.433585611132808e-06
+          ],
+          [
+            0.43105018662030153,
+            0.9023279540244169,
+            -8.442958621006251e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            5.803464748795377e-06,
+            1.7006437379109776e-08
+          ],
+          [
+            5.803464748795377e-06,
+            0.9999999999999999,
+            0.9999999999832584
+          ],
+          [
+            1.7006437379109776e-08,
+            0.9999999999832584,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04209892824292183,
+            -0.049196694046258926,
+            0.01670096255838871
+          ],
+          [
+            -0.04142218083143234,
+            -0.04951998218894005,
+            0.016499999910593033
+          ]
+        ],
+        "edge_vertex_indices": [
+          507,
+          521
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1494,
+          1512,
+          9782
+        ],
+        "incident_face_normals": [
+          [
+            0.4310487306821069,
+            0.9023286495232977,
+            -5.177466651149374e-06
+          ],
+          [
+            0.23354000268185615,
+            -0.11156424314449326,
+            0.9659257149485954
+          ],
+          [
+            0.43105210592993654,
+            0.9023270371080717,
+            8.782664677870638e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            -5.492180326125005e-06,
+            0.9999999998955612
+          ],
+          [
+            -5.492180326125005e-06,
+            1.0,
+            8.96041278014467e-06
+          ],
+          [
+            0.9999999998955612,
+            8.96041278014467e-06,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04209892824292183,
+            -0.049196694046258926,
+            0.019299037754535675
+          ],
+          [
+            -0.04142218083143234,
+            -0.04951998218894005,
+            0.019500000402331352
+          ]
+        ],
+        "edge_vertex_indices": [
+          508,
+          522
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1489,
+          1526,
+          9780
+        ],
+        "incident_face_normals": [
+          [
+            0.43105186906150944,
+            0.9023271502718364,
+            -7.80295725293962e-06
+          ],
+          [
+            0.23353969016925644,
+            -0.1115648973349673,
+            -0.965925714948249
+          ],
+          [
+            0.43105018662057465,
+            0.9023279540242866,
+            -8.442950352429116e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            7.2211419360299425e-06,
+            0.9999999999740502
+          ],
+          [
+            7.2211419360299425e-06,
+            1.0,
+            1.7003864080767497e-08
+          ],
+          [
+            0.9999999999740502,
+            1.7003864080767497e-08,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.004500000271946192
+          ],
+          [
+            -0.04126269742846489,
+            -0.05092606320977211,
+            0.004700961988419294
+          ]
+        ],
+        "edge_vertex_indices": [
+          511,
+          523
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1393,
+          1500,
+          7771
+        ],
+        "incident_face_normals": [
+          [
+            -0.43104979744129346,
+            -0.9023281399387,
+            -7.653608531478926e-07
+          ],
+          [
+            -0.23353899288567234,
+            0.11156376075541351,
+            0.9659260148106865
+          ],
+          [
+            0.4310503788274194,
+            0.9023278622042272,
+            -1.6392753439737937e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            -9.24430944444042e-07,
+            -0.9999999999969013
+          ],
+          [
+            -9.24430944444042e-07,
+            0.9999999999999998,
+            -1.5650311471185313e-06
+          ],
+          [
+            -0.9999999999969013,
+            -1.5650311471185313e-06,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.007500000298023224
+          ],
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.016499999910593033
+          ]
+        ],
+        "edge_vertex_indices": [
+          512,
+          513
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1417,
+          1418,
+          7791,
+          7792
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310519144201659,
+            -0.902327128637231,
+            -0.0
+          ],
+          [
+            -0.4310499824883616,
+            -0.9023280515404489,
+            -0.0
+          ],
+          [
+            0.4310499824883616,
+            0.9023280515404489,
+            0.0
+          ],
+          [
+            0.4310519144201659,
+            0.902327128637231,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.999999999997708,
+            -0.999999999997708,
+            -1.0
+          ],
+          [
+            0.999999999997708,
+            0.9999999999999999,
+            -0.9999999999999999,
+            -0.999999999997708
+          ],
+          [
+            -0.999999999997708,
+            -0.9999999999999999,
+            0.9999999999999999,
+            0.999999999997708
+          ],
+          [
+            -1.0,
+            -0.999999999997708,
+            0.999999999997708,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.007500000298023224
+          ],
+          [
+            -0.04126269742846489,
+            -0.05092606320977211,
+            0.007299038115888834
+          ]
+        ],
+        "edge_vertex_indices": [
+          512,
+          524
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1419,
+          1430,
+          7791
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310499824883616,
+            -0.9023280515404489,
+            0.0
+          ],
+          [
+            -0.23353918527195774,
+            0.11156465613906928,
+            -0.9659258648794334
+          ],
+          [
+            0.4310499824883616,
+            0.9023280515404489,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            -8.570729229384622e-07,
+            -0.9999999999999999
+          ],
+          [
+            -8.570729229384622e-07,
+            1.0,
+            8.570729229384622e-07
+          ],
+          [
+            -0.9999999999999999,
+            8.570729229384622e-07,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.016499999910593033
+          ],
+          [
+            -0.04126269742846489,
+            -0.05092606320977211,
+            0.01670096255838871
+          ]
+        ],
+        "edge_vertex_indices": [
+          513,
+          525
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1418,
+          1515,
+          7790
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310499824883616,
+            -0.9023280515404489,
+            -0.0
+          ],
+          [
+            -0.23354000268185615,
+            0.11156424314449326,
+            0.9659257149485954
+          ],
+          [
+            0.4310499824883616,
+            0.9023280515404489,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            -1.3207180946106511e-07,
+            -0.9999999999999999
+          ],
+          [
+            -1.3207180946106511e-07,
+            1.0,
+            1.3207180946106511e-07
+          ],
+          [
+            -0.9999999999999999,
+            1.3207180946106511e-07,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.041939444839954376,
+            -0.05060277506709099,
+            0.019500000402331352
+          ],
+          [
+            -0.04126269742846489,
+            -0.05092606320977211,
+            0.019299037754535675
+          ]
+        ],
+        "edge_vertex_indices": [
+          514,
+          526
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1401,
+          1525,
+          7777
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105037882878633,
+            -0.9023278622035743,
+            -1.639273400610056e-06
+          ],
+          [
+            -0.23353969016925644,
+            0.1115648973349673,
+            -0.965925714948249
+          ],
+          [
+            0.43104979744023053,
+            0.9023281399392077,
+            -7.653617024937621e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            8.400261245600907e-07,
+            -0.9999999999969013
+          ],
+          [
+            8.400261245600907e-07,
+            1.0,
+            1.6494356071931446e-06
+          ],
+          [
+            -0.9999999999969013,
+            1.6494356071931446e-06,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04142218083143234,
+            -0.04951998218894005,
+            0.004500000271946192
+          ],
+          [
+            -0.040745437145233154,
+            -0.04984327033162117,
+            0.004700961988419294
+          ]
+        ],
+        "edge_vertex_indices": [
+          519,
+          533
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1449,
+          1501,
+          9794
+        ],
+        "incident_face_normals": [
+          [
+            0.43105201521361175,
+            0.9023270804869542,
+            -4.1688408679002007e-07
+          ],
+          [
+            -0.2335396569594194,
+            0.11156488147020334,
+            0.9659257248100478
+          ],
+          [
+            0.4310522679890685,
+            0.9023269597320818,
+            -1.46237084158505e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            -1.2866183534223924e-07,
+            0.9999999999994144
+          ],
+          [
+            -1.2866183534223924e-07,
+            1.0,
+            -1.2110294832292004e-06
+          ],
+          [
+            0.9999999999994144,
+            -1.2110294832292004e-06,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04142218083143234,
+            -0.04951998218894005,
+            0.007500000298023224
+          ],
+          [
+            -0.040745437145233154,
+            -0.04984327033162117,
+            0.007299038115888834
+          ]
+        ],
+        "edge_vertex_indices": [
+          520,
+          534
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1431,
+          1458,
+          9788
+        ],
+        "incident_face_normals": [
+          [
+            -0.2335404743732991,
+            0.1115644684759064,
+            -0.9659255748778903
+          ],
+          [
+            0.4310519882951448,
+            0.9023270933462594,
+            3.055479270134292e-07
+          ],
+          [
+            0.4310497348553456,
+            0.9023281697918294,
+            -9.014629757407792e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            -7.384019739388574e-07,
+            8.910558491390814e-06
+          ],
+          [
+            -7.384019739388574e-07,
+            1.0,
+            0.9999999999534488
+          ],
+          [
+            8.910558491390814e-06,
+            0.9999999999534488,
+            0.9999999999999998
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04142218083143234,
+            -0.04951998218894005,
+            0.016499999910593033
+          ],
+          [
+            -0.040745437145233154,
+            -0.04984327033162117,
+            0.01670096255838871
+          ]
+        ],
+        "edge_vertex_indices": [
+          521,
+          535
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1495,
+          1514,
+          9784
+        ],
+        "incident_face_normals": [
+          [
+            0.43105198829527047,
+            0.9023270933461993,
+            -3.0554773899196413e-07
+          ],
+          [
+            -0.23354066675786825,
+            0.11156536386383926,
+            0.9659254249455388
+          ],
+          [
+            0.43105226799145674,
+            0.9023269597309409,
+            -1.4623739423380787e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            -1.3396742730482578e-08,
+            0.999999999999283
+          ],
+          [
+            -1.3396742730482578e-08,
+            1.0000000000000002,
+            -1.211031853530727e-06
+          ],
+          [
+            0.999999999999283,
+            -1.211031853530727e-06,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04142218083143234,
+            -0.04951998218894005,
+            0.019500000402331352
+          ],
+          [
+            -0.040745437145233154,
+            -0.04984327033162117,
+            0.019299037754535675
+          ]
+        ],
+        "edge_vertex_indices": [
+          522,
+          536
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1487,
+          1524,
+          9778
+        ],
+        "incident_face_normals": [
+          [
+            0.43105201521392683,
+            0.9023270804868039,
+            4.168834575084207e-07
+          ],
+          [
+            -0.23354097927308162,
+            0.1115647096712539,
+            -0.965925424945497
+          ],
+          [
+            0.4310497348433962,
+            0.9023281697975376,
+            -9.014658291635511e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            -8.536660061760422e-07,
+            0.9999999999523297
+          ],
+          [
+            -8.536660061760422e-07,
+            1.0000000000000002,
+            8.910588568343318e-06
+          ],
+          [
+            0.9999999999523297,
+            8.910588568343318e-06,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04126269742846489,
+            -0.05092606320977211,
+            0.004700961988419294
+          ],
+          [
+            -0.03859085217118263,
+            -0.052202433347702026,
+            0.0020000003278255463
+          ]
+        ],
+        "edge_vertex_indices": [
+          523,
+          621
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1394,
+          1395,
+          7771
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105125242055564,
+            -0.9023274448814779,
+            5.778889441958019e-07
+          ],
+          [
+            -0.4310559164058458,
+            -0.9023252168179838,
+            -5.088715254587995e-06
+          ],
+          [
+            0.4310503788274194,
+            0.9023278622042272,
+            -1.6392753439737937e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9999999999705863,
+            -0.999999999998968
+          ],
+          [
+            0.9999999999705863,
+            1.0,
+            -0.9999999999585356
+          ],
+          [
+            -0.999999999998968,
+            -0.9999999999585356,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04126269742846489,
+            -0.05092606320977211,
+            0.007299038115888834
+          ],
+          [
+            -0.04126269742846489,
+            -0.05092606320977211,
+            0.01670096255838871
+          ]
+        ],
+        "edge_vertex_indices": [
+          524,
+          525
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1419,
+          1420,
+          7790
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310499824883616,
+            -0.9023280515404489,
+            0.0
+          ],
+          [
+            -0.4310605080990351,
+            -0.9023230232890003,
+            -0.0
+          ],
+          [
+            0.4310499824883616,
+            0.9023280515404489,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            0.9999999999319641,
+            -0.9999999999999999
+          ],
+          [
+            0.9999999999319641,
+            1.0,
+            -0.9999999999319641
+          ],
+          [
+            -0.9999999999999999,
+            -0.9999999999319641,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04126269742846489,
+            -0.05092606320977211,
+            0.01670096255838871
+          ],
+          [
+            -0.04076728969812393,
+            -0.051162730902433395,
+            0.006750000175088644
+          ]
+        ],
+        "edge_vertex_indices": [
+          525,
+          530
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1420,
+          1421,
+          7789
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310605080990351,
+            -0.9023230232890003,
+            -0.0
+          ],
+          [
+            -0.4310484155963947,
+            -0.9023288000564379,
+            7.394152670199393e-07
+          ],
+          [
+            0.4310605080990351,
+            0.9023230232890003,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9999999999099268,
+            -1.0
+          ],
+          [
+            0.9999999999099268,
+            1.0,
+            -0.9999999999099268
+          ],
+          [
+            -1.0,
+            -0.9999999999099268,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04126269742846489,
+            -0.05092606320977211,
+            0.01670096255838871
+          ],
+          [
+            -0.04076728969812393,
+            -0.051162730902433395,
+            0.017249999567866325
+          ]
+        ],
+        "edge_vertex_indices": [
+          525,
+          531
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1400,
+          1517,
+          7789
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105903611459967,
+            -0.9023237264869471,
+            -1.6313230043981978e-06
+          ],
+          [
+            -0.6380419212711975,
+            0.3048007873541193,
+            0.7071060646952959
+          ],
+          [
+            0.4310605080990351,
+            0.9023230232890003,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            3.5997839552859886e-06,
+            -0.9999999999973388
+          ],
+          [
+            3.5997839552859886e-06,
+            1.0,
+            -5.906825410351146e-06
+          ],
+          [
+            -0.9999999999973388,
+            -5.906825410351146e-06,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04126269742846489,
+            -0.05092606320977211,
+            0.019299037754535675
+          ],
+          [
+            -0.03859085217118263,
+            -0.052202433347702026,
+            0.02199999988079071
+          ]
+        ],
+        "edge_vertex_indices": [
+          526,
+          622
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1396,
+          1401,
+          7776
+        ],
+        "incident_face_normals": [
+          [
+            -0.43105591640993884,
+            -0.9023252168160284,
+            5.088719350297834e-06
+          ],
+          [
+            -0.43105037882878633,
+            -0.9023278622035743,
+            -1.639273400610056e-06
+          ],
+          [
+            0.4310512524205556,
+            0.9023274448814779,
+            5.778888445644493e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            0.9999999999585356,
+            -0.9999999999705861
+          ],
+          [
+            0.9999999999585356,
+            1.0,
+            -0.999999999998968
+          ],
+          [
+            -0.9999999999705861,
+            -0.999999999998968,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04076728969812393,
+            -0.051162730902433395,
+            0.006750000175088644
+          ],
+          [
+            -0.040585957467556,
+            -0.05124935880303383,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          530,
+          537
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1422,
+          1434,
+          7788
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310317399574784,
+            -0.9023367658733288,
+            1.0123745173635248e-05
+          ],
+          [
+            -0.8715805359294663,
+            0.4163651709037303,
+            -0.2588192686938354
+          ],
+          [
+            0.43106583202702903,
+            0.9023204799065823,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            -2.5347041140724704e-05,
+            -0.9999999992350038
+          ],
+          [
+            -2.5347041140724704e-05,
+            1.0,
+            -1.3768072759157146e-05
+          ],
+          [
+            -0.9999999992350038,
+            -1.3768072759157146e-05,
+            0.9999999999999997
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.04076728969812393,
+            -0.051162730902433395,
+            0.017249999567866325
+          ],
+          [
+            -0.03859085217118263,
+            -0.052202433347702026,
+            0.0020000003278255463
+          ]
+        ],
+        "edge_vertex_indices": [
+          531,
+          621
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1399,
+          1400,
+          7787
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310598551035901,
+            -0.9023233352379411,
+            -1.7748811047365267e-06
+          ],
+          [
+            -0.43105903611459967,
+            -0.9023237264869471,
+            -1.6313230043981978e-06
+          ],
+          [
+            0.4310476793194405,
+            0.9023291517806546,
+            -3.593686557396823e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9999999999995777,
+            -0.9999999999066816
+          ],
+          [
+            0.9999999999995777,
+            1.0,
+            -0.9999999999188134
+          ],
+          [
+            -0.9999999999066816,
+            -0.9999999999188134,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.040745437145233154,
+            -0.04984327033162117,
+            0.004700961988419294
+          ],
+          [
+            -0.0402500256896019,
+            -0.050079938024282455,
+            0.005249999929219484
+          ]
+        ],
+        "edge_vertex_indices": [
+          533,
+          539
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1450,
+          1499,
+          9795
+        ],
+        "incident_face_normals": [
+          [
+            0.43105448962817644,
+            0.9023258984188396,
+            3.745176921770976e-06
+          ],
+          [
+            -0.6380413630548301,
+            0.30479832554024017,
+            0.7071076295579056
+          ],
+          [
+            0.43106864205948053,
+            0.9023191373845771,
+            -1.1939340179891714e-05
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            -5.229404352222698e-07,
+            0.9999999997539964
+          ],
+          [
+            -5.229404352222698e-07,
+            1.0,
+            -2.2704170625660646e-05
+          ],
+          [
+            0.9999999997539964,
+            -2.2704170625660646e-05,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.040745437145233154,
+            -0.04984327033162117,
+            0.007299038115888834
+          ],
+          [
+            -0.0402500256896019,
+            -0.050079938024282455,
+            0.006750000175088644
+          ]
+        ],
+        "edge_vertex_indices": [
+          534,
+          540
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1433,
+          1457,
+          9788
+        ],
+        "incident_face_normals": [
+          [
+            -0.6380405092476353,
+            0.30480011281240166,
+            -0.7071076295646692
+          ],
+          [
+            0.4310550612377852,
+            0.9023256253546204,
+            -3.11169169026069e-06
+          ],
+          [
+            0.4310497348553456,
+            0.9023281697918294,
+            -9.014629757407792e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            5.61916617099479e-07,
+            8.909921673795253e-06
+          ],
+          [
+            5.61916617099479e-07,
+            1.0000000000000002,
+            0.9999999999651553
+          ],
+          [
+            8.909921673795253e-06,
+            0.9999999999651553,
+            0.9999999999999998
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.040745437145233154,
+            -0.04984327033162117,
+            0.01670096255838871
+          ],
+          [
+            -0.0402500256896019,
+            -0.050079938024282455,
+            0.017249999567866325
+          ]
+        ],
+        "edge_vertex_indices": [
+          535,
+          541
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1468,
+          1516,
+          9785
+        ],
+        "incident_face_normals": [
+          [
+            0.4310550612403837,
+            0.902325625353379,
+            3.1116940888280822e-06
+          ],
+          [
+            -0.6380408219041529,
+            0.30479806702750134,
+            0.7071082292833055
+          ],
+          [
+            0.43106864204365464,
+            0.9023191373921378,
+            -1.1939342893209435e-05
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            -1.4188181708856004e-06,
+            0.9999999997734672
+          ],
+          [
+            -1.4188181708856004e-06,
+            0.9999999999999999,
+            -2.2704155206469748e-05
+          ],
+          [
+            0.9999999997734672,
+            -2.2704155206469748e-05,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.040745437145233154,
+            -0.04984327033162117,
+            0.019299037754535675
+          ],
+          [
+            -0.0402500256896019,
+            -0.050079938024282455,
+            0.01875000074505806
+          ]
+        ],
+        "edge_vertex_indices": [
+          536,
+          542
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1486,
+          1522,
+          9778
+        ],
+        "incident_face_normals": [
+          [
+            0.43105448963077364,
+            0.9023258984175989,
+            -3.7451803963608557e-06
+          ],
+          [
+            -0.6380399680976824,
+            0.304799854298147,
+            -0.7071082292900691
+          ],
+          [
+            0.4310497348433962,
+            0.9023281697975376,
+            -9.014658291635511e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            1.4578026256237427e-06,
+            0.999999999972233
+          ],
+          [
+            1.4578026256237427e-06,
+            1.0,
+            8.909954470392495e-06
+          ],
+          [
+            0.999999999972233,
+            8.909954470392495e-06,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.040585957467556,
+            -0.05124935880303383,
+            0.006000000052154064
+          ],
+          [
+            -0.03859085217118263,
+            -0.052202433347702026,
+            0.0020000003278255463
+          ]
+        ],
+        "edge_vertex_indices": [
+          537,
+          621
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1422,
+          1423,
+          7787
+        ],
+        "incident_face_normals": [
+          [
+            -0.4310317399574784,
+            -0.9023367658733288,
+            1.0123745173635248e-05
+          ],
+          [
+            -0.43105400098888097,
+            -0.902326131849862,
+            -3.5132854480741307e-06
+          ],
+          [
+            0.4310476793194405,
+            0.9023291517806546,
+            -3.593686557396823e-07
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9999999996026977,
+            -0.9999999997963097
+          ],
+          [
+            0.9999999996026977,
+            0.9999999999999999,
+            -0.9999999999679596
+          ],
+          [
+            -0.9999999997963097,
+            -0.9999999999679596,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.0402500256896019,
+            -0.050079938024282455,
+            0.005249999929219484
+          ],
+          [
+            -0.04006868973374367,
+            -0.05016655847430229,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          539,
+          543
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1440,
+          1497,
+          9795
+        ],
+        "incident_face_normals": [
+          [
+            0.4310460853875165,
+            0.9023299131939656,
+            -5.241019770992113e-06
+          ],
+          [
+            -0.8715804923987075,
+            0.41636515010853,
+            0.25881944873816576
+          ],
+          [
+            0.43106864205948053,
+            0.9023191373845771,
+            -1.1939340179891714e-05
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            6.013927987417845e-06,
+            0.9999999996651053
+          ],
+          [
+            6.013927987417845e-06,
+            1.0,
+            -1.9866354359161242e-05
+          ],
+          [
+            0.9999999996651053,
+            -1.9866354359161242e-05,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.0402500256896019,
+            -0.050079938024282455,
+            0.006750000175088644
+          ],
+          [
+            -0.04006868973374367,
+            -0.05016655847430229,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          540,
+          543
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1435,
+          1456,
+          9789
+        ],
+        "incident_face_normals": [
+          [
+            -0.8715804404113552,
+            0.41636525893456283,
+            -0.2588194487373441
+          ],
+          [
+            0.4310446736440673,
+            0.9023305875896206,
+            4.821798102499815e-06
+          ],
+          [
+            0.43105918852306413,
+            0.9023236536334637,
+            9.132053209038636e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            7.754279536791942e-06,
+            -8.899241393146509e-06
+          ],
+          [
+            7.754279536791942e-06,
+            1.0000000000000002,
+            0.9999999998613301
+          ],
+          [
+            -8.899241393146509e-06,
+            0.9999999998613301,
+            0.9999999999999998
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.0402500256896019,
+            -0.050079938024282455,
+            0.017249999567866325
+          ],
+          [
+            -0.04006868973374367,
+            -0.05016655847430229,
+            0.017999999225139618
+          ]
+        ],
+        "edge_vertex_indices": [
+          541,
+          544
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1484,
+          1518,
+          9785
+        ],
+        "incident_face_normals": [
+          [
+            0.4310690211603597,
+            0.9023189562735566,
+            -1.205192436213265e-05
+          ],
+          [
+            -0.8715804561485001,
+            0.41636513279134224,
+            0.2588195986698464
+          ],
+          [
+            0.43106864204365464,
+            0.9023191373921378,
+            -1.1939342893209435e-05
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            -2.03013196755889e-05,
+            0.9999999999999054
+          ],
+          [
+            -2.03013196755889e-05,
+            1.0,
+            -1.9866339212171948e-05
+          ],
+          [
+            0.9999999999999054,
+            -1.9866339212171948e-05,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.0402500256896019,
+            -0.050079938024282455,
+            0.01875000074505806
+          ],
+          [
+            -0.04006868973374367,
+            -0.05016655847430229,
+            0.017999999225139618
+          ]
+        ],
+        "edge_vertex_indices": [
+          542,
+          544
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1485,
+          1520,
+          9779
+        ],
+        "incident_face_normals": [
+          [
+            0.4310460853953766,
+            0.9023299131902109,
+            5.241012342910409e-06
+          ],
+          [
+            -0.8715805491615926,
+            0.41636531088595896,
+            -0.25881899894330695
+          ],
+          [
+            0.4310591885090868,
+            0.9023236536401412,
+            9.132032048631835e-06
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            6.134530717445403e-06,
+            0.9999999998869933
+          ],
+          [
+            6.134530717445403e-06,
+            1.0,
+            -8.899217661704699e-06
+          ],
+          [
+            0.9999999998869933,
+            -8.899217661704699e-06,
+            1.0
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.03902190551161766,
+            -0.053104765713214874,
+            0.0020000003278255463
+          ],
+          [
+            -0.03859085217118263,
+            -0.052202433347702026,
+            0.0020000003278255463
+          ]
+        ],
+        "edge_vertex_indices": [
+          612,
+          621
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          4380,
+          4381,
+          7287,
+          7288
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.03902190551161766,
+            -0.053104765713214874,
+            0.02199999988079071
+          ],
+          [
+            -0.03859085217118263,
+            -0.052202433347702026,
+            0.02199999988079071
+          ]
+        ],
+        "edge_vertex_indices": [
+          613,
+          622
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1363,
+          1364,
+          9415,
+          9416
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.03859085217118263,
+            -0.052202433347702026,
+            0.0020000003278255463
+          ],
+          [
+            -0.03859085217118263,
+            -0.052202433347702026,
+            0.02199999988079071
+          ]
+        ],
+        "edge_vertex_indices": [
+          621,
+          622
+        ],
+        "incident_face_count": 3,
+        "incident_face_indices_after_deduplication": [
+          1398,
+          4415,
+          7794
+        ],
+        "incident_face_normals": [
+          [
+            -0.43104826594925316,
+            -0.9023288715441515,
+            -0.0
+          ],
+          [
+            -0.2657424856266082,
+            -0.964044050514805,
+            0.0
+          ],
+          [
+            0.2996362823094384,
+            0.9540535091512312,
+            -0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9844326178382709,
+            -0.9900277262101326
+          ],
+          [
+            0.9844326178382709,
+            1.0,
+            -0.9993756998148428
+          ],
+          [
+            -0.9900277262101326,
+            -0.9993756998148428,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "IMPOSSIBLE_ODD_FACE_INCIDENCE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": false
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.03043527901172638,
+            -0.05002342909574509,
+            0.0020000003278255463
+          ],
+          [
+            -0.03043527901172638,
+            -0.05002342909574509,
+            0.02199999988079071
+          ]
+        ],
+        "edge_vertex_indices": [
+          1407,
+          1408
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1234,
+          4408,
+          7803,
+          7891
+        ],
+        "incident_face_normals": [
+          [
+            0.8112423912905863,
+            -0.5847099986943366,
+            0.0
+          ],
+          [
+            0.7111530650940897,
+            -0.7030372095467503,
+            0.0
+          ],
+          [
+            -0.7355472124260255,
+            0.6774734668548307,
+            0.0
+          ],
+          [
+            -0.814310820184282,
+            0.580429055208991,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999998,
+            0.9879903989767097,
+            -0.9928325894357495,
+            -0.9999861291334997
+          ],
+          [
+            0.9879903989767097,
+            0.9999999999999998,
+            -0.9993757103177645,
+            -0.98716285902732
+          ],
+          [
+            -0.9928325894357495,
+            -0.9993757103177645,
+            1.0,
+            0.9921893381306082
+          ],
+          [
+            -0.9999861291334997,
+            -0.98716285902732,
+            0.9921893381306082,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.03043527901172638,
+            -0.05002342909574509,
+            0.0020000003278255463
+          ],
+          [
+            -0.029611626639962196,
+            -0.050590526312589645,
+            0.0020000003278255463
+          ]
+        ],
+        "edge_vertex_indices": [
+          1407,
+          1452
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          4389,
+          4390,
+          7299,
+          7300
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            -0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            -0.0,
+            -1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.03043527901172638,
+            -0.05002342909574509,
+            0.02199999988079071
+          ],
+          [
+            -0.029611626639962196,
+            -0.050590526312589645,
+            0.02199999988079071
+          ]
+        ],
+        "edge_vertex_indices": [
+          1408,
+          1453
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1375,
+          1376,
+          9404,
+          9405
+        ],
+        "incident_face_normals": [
+          [
+            -0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            -0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.008338225074112415,
+            -0.02322225831449032,
+            0.006000000052154064
+          ],
+          [
+            -0.005709804594516754,
+            -0.020593084394931793,
+            0.004500000271946192
+          ]
+        ],
+        "edge_vertex_indices": [
+          3152,
+          3707
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1205,
+          1206,
+          7826,
+          7827
+        ],
+        "incident_face_normals": [
+          [
+            0.7069183822787263,
+            -0.7072944028268869,
+            -0.0010141628006925076
+          ],
+          [
+            0.7063765618368664,
+            -0.7078302947304251,
+            -0.0029028863855326504
+          ],
+          [
+            -0.7077315746046045,
+            0.7064790392872069,
+            -0.001839933561961877
+          ],
+          [
+            -0.7069848861945818,
+            0.7072282232389175,
+            0.0007816308325508047
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            0.9999979259868484,
+            -0.999995264017246,
+            -0.999999968563188
+          ],
+          [
+            0.9999979259868484,
+            1.0000000000000002,
+            -0.9999869218540361,
+            -0.9999973838631371
+          ],
+          [
+            -0.999995264017246,
+            -0.9999869218540361,
+            1.0,
+            0.9999960042899754
+          ],
+          [
+            -0.999999968563188,
+            -0.9999973838631371,
+            0.9999960042899754,
+            1.0000000000000002
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.008338225074112415,
+            -0.02322225831449032,
+            0.017999999225139618
+          ],
+          [
+            -0.005709804594516754,
+            -0.020593084394931793,
+            0.019500000402331352
+          ]
+        ],
+        "edge_vertex_indices": [
+          3153,
+          3708
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1193,
+          1223,
+          7852,
+          7853
+        ],
+        "incident_face_normals": [
+          [
+            0.706376559256166,
+            -0.7078302972800394,
+            0.002902892673034166
+          ],
+          [
+            0.7079317481907348,
+            -0.7062762612391595,
+            -0.0025461173666104235
+          ],
+          [
+            -0.7066175665998238,
+            0.7075926471810423,
+            -0.002064031944656171
+          ],
+          [
+            -0.7074138436992301,
+            0.706799216532136,
+            0.0007219780052956212
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9999827373244746,
+            -0.9999995908752847,
+            -0.9999923606130204
+          ],
+          [
+            0.9999827373244746,
+            1.0,
+            -0.999987643289063,
+            -0.9999980654041449
+          ],
+          [
+            -0.9999995908752847,
+            -0.999987643289063,
+            1.0,
+            0.9999954872795725
+          ],
+          [
+            -0.9999923606130204,
+            -0.9999980654041449,
+            0.9999954872795725,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.007482701446861029,
+            -0.022355780005455017,
+            0.0020000003278255463
+          ],
+          [
+            -0.00678216340020299,
+            -0.023069508373737335,
+            0.0020000003278255463
+          ]
+        ],
+        "edge_vertex_indices": [
+          3293,
+          3440
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          4397,
+          4416,
+          7283,
+          7962
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            -0.09976906933401054,
+            -0.09792525007285706,
+            0.9901801746159099
+          ],
+          [
+            0.0,
+            -0.0,
+            -1.0
+          ],
+          [
+            0.01716247348322583,
+            0.016845296031449995,
+            -0.9997108009347254
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9901801746159099,
+            -1.0,
+            -0.9997108009347254
+          ],
+          [
+            0.9901801746159099,
+            1.0,
+            -0.9901801746159099,
+            -0.9932556792682797
+          ],
+          [
+            -1.0,
+            -0.9901801746159099,
+            1.0,
+            0.9997108009347254
+          ],
+          [
+            -0.9997108009347254,
+            -0.9932556792682797,
+            0.9997108009347254,
+            0.9999999999999998
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.007482701446861029,
+            -0.022355780005455017,
+            0.02199999988079071
+          ],
+          [
+            -0.00678216340020299,
+            -0.023069508373737335,
+            0.02199999988079071
+          ]
+        ],
+        "edge_vertex_indices": [
+          3294,
+          3441
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1361,
+          1371,
+          9419,
+          9543
+        ],
+        "incident_face_normals": [
+          [
+            -0.08278598407807916,
+            -0.08125602701808407,
+            -0.9932491826895506
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0787666810308547,
+            0.07731100419041417,
+            0.993890747814091
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9932491826895506,
+            -0.9932491826895506,
+            -0.9999839351960471
+          ],
+          [
+            0.9932491826895506,
+            1.0,
+            -1.0,
+            -0.993890747814091
+          ],
+          [
+            -0.9932491826895506,
+            -1.0,
+            1.0,
+            0.993890747814091
+          ],
+          [
+            -0.9999839351960471,
+            -0.993890747814091,
+            0.993890747814091,
+            0.9999999999999997
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.005709804594516754,
+            -0.020593084394931793,
+            0.004500000271946192
+          ],
+          [
+            -0.005709804594516754,
+            -0.020593084394931793,
+            0.019500000402331352
+          ]
+        ],
+        "edge_vertex_indices": [
+          3707,
+          3708
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          1194,
+          4429,
+          7849,
+          9550
+        ],
+        "incident_face_normals": [
+          [
+            0.7074478460216276,
+            -0.7067655517633549,
+            0.0
+          ],
+          [
+            -0.7136704917007263,
+            -0.7004815695474389,
+            0.0
+          ],
+          [
+            -0.707777448935957,
+            0.7064354767264374,
+            0.0
+          ],
+          [
+            0.7136718442086013,
+            0.7004801915713919,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            -0.009808409121618122,
+            -0.9999998912061945,
+            0.009810339856402284
+          ],
+          [
+            -0.009808409121618122,
+            0.9999999999999998,
+            0.01027484847548199,
+            -0.9999999999981359
+          ],
+          [
+            -0.9999998912061945,
+            0.01027484847548199,
+            1.0,
+            -0.01027677920122122
+          ],
+          [
+            0.009810339856402284,
+            -0.9999999999981359,
+            -0.01027677920122122,
+            0.9999999999999999
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.00525361392647028,
+            0.0053525264374911785,
+            -1.0430817320994379e-10
+          ],
+          [
+            -0.00525361392647028,
+            0.0053525264374911785,
+            0.003999999724328518
+          ]
+        ],
+        "edge_vertex_indices": [
+          3796,
+          3797
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          3456,
+          3457,
+          9996,
+          10063
+        ],
+        "incident_face_normals": [
+          [
+            -0.8035004606722447,
+            0.5953041321034908,
+            0.0
+          ],
+          [
+            -0.5802151154744957,
+            0.8144632709796789,
+            0.0
+          ],
+          [
+            0.7633428160648723,
+            -0.645993610775022,
+            0.0
+          ],
+          [
+            0.631644582062861,
+            -0.7752581002160721,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999998,
+            0.9510564632334848,
+            -0.9979089701657982,
+            -0.9690410631739661
+          ],
+          [
+            0.9510564632334848,
+            1.0000000000000002,
+            -0.9690411094335045,
+            -0.9979089822759162
+          ],
+          [
+            -0.9979089701657982,
+            -0.9690411094335045,
+            1.0000000000000002,
+            0.9829731334651479
+          ],
+          [
+            -0.9690410631739661,
+            -0.9979089822759162,
+            0.9829731334651479,
+            0.9999999999999997
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.00525361392647028,
+            0.0053525264374911785,
+            0.019999999552965164
+          ],
+          [
+            -0.00525361392647028,
+            0.0053525264374911785,
+            0.024000000208616257
+          ]
+        ],
+        "edge_vertex_indices": [
+          3798,
+          3799
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          6585,
+          6586,
+          10917,
+          10918
+        ],
+        "incident_face_normals": [
+          [
+            -0.8035004606722447,
+            0.5953041321034908,
+            0.0
+          ],
+          [
+            -0.5802151154744956,
+            0.8144632709796789,
+            0.0
+          ],
+          [
+            0.7633428160648723,
+            -0.6459936107750219,
+            0.0
+          ],
+          [
+            0.6316445820628611,
+            -0.7752581002160722,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999998,
+            0.9510564632334848,
+            -0.997908970165798,
+            -0.9690410631739663
+          ],
+          [
+            0.9510564632334848,
+            1.0,
+            -0.9690411094335044,
+            -0.9979089822759164
+          ],
+          [
+            -0.997908970165798,
+            -0.9690411094335044,
+            1.0,
+            0.982973133465148
+          ],
+          [
+            -0.9690410631739663,
+            -0.9979089822759164,
+            0.982973133465148,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.0011709198588505387,
+            0.008653262630105019,
+            0.006000000052154064
+          ],
+          [
+            -0.0010262569412589073,
+            0.01014626957476139,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          4441,
+          4472
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          3165,
+          6160,
+          9908,
+          9961
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            -0.0,
+            -1.0
+          ],
+          [
+            0.995338605314999,
+            -0.09644200728724218,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            -0.9953386053149991,
+            0.09644200728724221,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.0,
+            -1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.9999999999999998,
+            0.0,
+            -0.9999999999999999
+          ],
+          [
+            -1.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            -0.9999999999999999,
+            0.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.0011709198588505387,
+            0.008653262630105019,
+            0.006000000052154064
+          ],
+          [
+            -0.0002459515235386789,
+            0.009641136042773724,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          4441,
+          4528
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          3166,
+          3167,
+          9908,
+          9909
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.0006631147698499262,
+            0.011115767061710358,
+            0.006000000052154064
+          ],
+          [
+            8.881797111826017e-05,
+            0.01084547396749258,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          4493,
+          4552
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          3162,
+          3163,
+          9902,
+          9903
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            -0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.0002720235788729042,
+            0.007561481557786465,
+            0.003999999724328518
+          ],
+          [
+            -0.0002720235788729042,
+            0.007561481557786465,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          4526,
+          4527
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          6148,
+          6158,
+          9962,
+          9971
+        ],
+        "incident_face_normals": [
+          [
+            0.09644216810859436,
+            0.9953385897324154,
+            -0.0
+          ],
+          [
+            0.35076862712194595,
+            0.9364621563239944,
+            -0.0
+          ],
+          [
+            -0.2887698767312589,
+            -0.9573985368134911,
+            0.0
+          ],
+          [
+            -0.09644217229922317,
+            -0.9953385893263693,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999999,
+            0.9659258089174169,
+            -0.9807853024402323,
+            -0.9999999999999999
+          ],
+          [
+            0.9659258089174169,
+            1.0000000000000002,
+            -0.9978589114609964,
+            -0.9659258100071113
+          ],
+          [
+            -0.9807853024402323,
+            -0.9978589114609964,
+            1.0000000000000002,
+            0.9807853032616118
+          ],
+          [
+            -0.9999999999999999,
+            -0.9659258100071113,
+            0.9807853032616118,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.0002720235788729042,
+            0.007561481557786465,
+            0.006000000052154064
+          ],
+          [
+            0.0006296506035141647,
+            0.008749048225581646,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          4527,
+          4615
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          3176,
+          3177,
+          9919,
+          9920
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            -0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            -0.0002720235788729042,
+            0.007561481557786465,
+            0.006000000052154064
+          ],
+          [
+            0.0017186537152156234,
+            0.007368597202003002,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          4527,
+          4765
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          3176,
+          6149,
+          9921,
+          9972
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            -0.0,
+            -1.0
+          ],
+          [
+            0.09644217229922317,
+            0.9953385893263693,
+            2.1051271285495425e-09
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            -0.09644217229922317,
+            -0.9953385893263693,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            -2.1051271285495425e-09,
+            -1.0,
+            0.0
+          ],
+          [
+            -2.1051271285495425e-09,
+            1.0,
+            2.1051271285495425e-09,
+            -1.0
+          ],
+          [
+            -1.0,
+            2.1051271285495425e-09,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            -1.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            0.0011573038063943386,
+            0.011944063007831573,
+            0.006000000052154064
+          ],
+          [
+            0.0012991896364837885,
+            0.01115772407501936,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          4700,
+          4715
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          3158,
+          3159,
+          9895,
+          9896
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            -0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            -0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            0.0017186537152156234,
+            0.007368597202003002,
+            0.003999999724328518
+          ],
+          [
+            0.0017186537152156234,
+            0.007368597202003002,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          4764,
+          4765
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          6142,
+          6150,
+          9933,
+          9972
+        ],
+        "incident_face_normals": [
+          [
+            -0.16445737517474426,
+            0.9863841907444753,
+            0.0
+          ],
+          [
+            0.09644217648985233,
+            0.9953385889203233,
+            0.0
+          ],
+          [
+            0.09959337504657424,
+            -0.9950282205278563,
+            0.0
+          ],
+          [
+            -0.09644217229922317,
+            -0.9953385893263693,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.9659256213472605,
+            -0.9978589711182383,
+            -0.9659256224369578
+          ],
+          [
+            0.9659256213472605,
+            1.0000000000000002,
+            -0.9807849831026351,
+            -1.0
+          ],
+          [
+            -0.9978589711182383,
+            -0.9807849831026351,
+            0.9999999999999999,
+            0.9807849839240211
+          ],
+          [
+            -0.9659256224369578,
+            -1.0,
+            0.9807849839240211,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            0.001840022625401616,
+            0.009061298333108425,
+            0.006000000052154064
+          ],
+          [
+            0.002810434438288212,
+            0.008267493918538094,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          4773,
+          4936
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          3151,
+          3171,
+          9912,
+          9913
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            -0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            0.002174791879951954,
+            0.010265636257827282,
+            0.006000000052154064
+          ],
+          [
+            0.002784839365631342,
+            0.010781682096421719,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          4834,
+          4931
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          3154,
+          3155,
+          9888,
+          9889
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            -0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            0.002810434438288212,
+            0.008267493918538094,
+            0.006000000052154064
+          ],
+          [
+            0.0029550972394645214,
+            0.00976050179451704,
+            0.006000000052154064
+          ]
+        ],
+        "edge_vertex_indices": [
+          4936,
+          4948
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          3151,
+          6139,
+          9892,
+          9934
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            -0.9953386185398436,
+            0.09644187079892033,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.9953386185398436,
+            -0.09644187079892033,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            0.0,
+            -1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            -1.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            0.00525361392647028,
+            -0.0053525264374911785,
+            -1.0430811769879256e-10
+          ],
+          [
+            0.00525361392647028,
+            -0.0053525264374911785,
+            0.003999999724328518
+          ]
+        ],
+        "edge_vertex_indices": [
+          5189,
+          5190
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          6525,
+          6526,
+          10029,
+          10030
+        ],
+        "incident_face_normals": [
+          [
+            0.8035004606722449,
+            -0.5953041321034909,
+            0.0
+          ],
+          [
+            0.5802151154744956,
+            -0.814463270979679,
+            0.0
+          ],
+          [
+            -0.6316445820628611,
+            0.7752581002160722,
+            0.0
+          ],
+          [
+            -0.7633428160648722,
+            0.6459936107750219,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0000000000000002,
+            0.951056463233485,
+            -0.9690410631739665,
+            -0.9979089701657983
+          ],
+          [
+            0.951056463233485,
+            1.0000000000000002,
+            -0.9979089822759164,
+            -0.9690411094335043
+          ],
+          [
+            -0.9690410631739665,
+            -0.9979089822759164,
+            1.0,
+            0.9829731334651479
+          ],
+          [
+            -0.9979089701657983,
+            -0.9690411094335043,
+            0.9829731334651479,
+            0.9999999999999998
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            0.00525361392647028,
+            -0.0053525264374911785,
+            0.019999999552965164
+          ],
+          [
+            0.00525361392647028,
+            -0.0053525264374911785,
+            0.024000000208616257
+          ]
+        ],
+        "edge_vertex_indices": [
+          5191,
+          5192
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          6605,
+          6606,
+          10884,
+          10951
+        ],
+        "incident_face_normals": [
+          [
+            0.8035004606722447,
+            -0.5953041321034908,
+            0.0
+          ],
+          [
+            0.5802151154744956,
+            -0.8144632709796789,
+            0.0
+          ],
+          [
+            -0.6316445820628611,
+            0.7752581002160722,
+            0.0
+          ],
+          [
+            -0.7633428160648723,
+            0.6459936107750219,
+            0.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            0.9999999999999998,
+            0.9510564632334848,
+            -0.9690410631739663,
+            -0.997908970165798
+          ],
+          [
+            0.9510564632334848,
+            1.0,
+            -0.9979089822759164,
+            -0.9690411094335044
+          ],
+          [
+            -0.9690410631739663,
+            -0.9979089822759164,
+            1.0,
+            0.982973133465148
+          ],
+          [
+            -0.997908970165798,
+            -0.9690411094335044,
+            0.982973133465148,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      },
+      {
+        "edge_endpoints_m": [
+          [
+            0.00525361392647028,
+            -0.0053525264374911785,
+            0.019999999552965164
+          ],
+          [
+            0.005954096093773842,
+            -0.0060661970637738705,
+            0.019999999552965164
+          ]
+        ],
+        "edge_vertex_indices": [
+          5191,
+          5233
+        ],
+        "incident_face_count": 4,
+        "incident_face_indices_after_deduplication": [
+          6625,
+          6626,
+          11004,
+          11005
+        ],
+        "incident_face_normals": [
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            -0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            -0.0,
+            -1.0
+          ]
+        ],
+        "normal_dot_matrix": [
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            1.0,
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ],
+          [
+            -1.0,
+            -1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "pairing_status": "NOT_EVALUATED_AFTER_GLOBAL_ODD_INCIDENCE_FAILURE",
+        "perfect_pairing_possible_without_face_deletion_or_duplication": true
+      }
+    ],
+    "boundary_edge_count": 0,
+    "even_incidence_edge_count": 41,
+    "nonmanifold_edge_count": 97,
+    "nonmanifold_incidence_histogram": {
+      "3": 56,
+      "4": 41
+    },
+    "odd_incidence_edge_count": 56
+  }
+}

@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T19:42:48Z",
+  "updated_at_utc": "2026-08-25T20:20:10Z",
   "started_at_utc": "2026-08-25T15:15:34Z",
   "hard_deadline_utc": "2026-08-26T03:15:34Z",
   "branch": "carts-grasp-nailfree-heightprojected-20260825",
@@ -8,7 +8,7 @@
   "start_commit": "6a356bdfd2f579b79e53ec7e01e0880fe9f75a59",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "TWO_OBJECT_FULL_POOL_HEIGHT_PROJECTED_OFFLINE",
+  "current_milestone": "TWO_OBJECT_OFFLINE_PLUS_RUNTIME_COLLISION_ROOT_CAUSE",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -88,7 +88,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "NO_ACCEPTED_NAILFREE_DYNAMIC_COLLISION_ASSET_OR_HEIGHT_FEASIBLE_TASK_AND_ARM_PATH_CANDIDATE_BOUND_YET"
+    "reason": "NAILFREE_F1_EXACT_MESH_SDF_COOK_FAILED_NON_MANIFOLD_NON_WATERTIGHT_DUPLICATE_TRIANGLES_AND_NO_HEIGHT_FEASIBLE_TASK_ARM_PATH_CANDIDATE_BOUND_YET"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1215,7 +1215,7 @@
     "old_nail_present_model_preserved": true,
     "old_blue_pad_only_semantics_preserved_as_ablation": true,
     "old_select_before_height_results_invalid_for_production": true,
-    "no_nail_asset_status": "STATIC_VISUAL_PASS_PHYSICAL_PROPERTIES_PROVISIONAL_COLLISION_RUNTIME_BINDING_REJECTED",
+    "no_nail_asset_status": "ISAAC_IMPORT_PASS_F1_EXACT_SDF_DIAGNOSTIC_FAILED_CLOSED_COLLISION_RUNTIME_BINDING_REJECTED",
     "terminal_source_face_count_each": 14192,
     "removed_nail_assembly_face_count_each": 2356,
     "nailfree_visual_face_count_each": 11836,
@@ -1237,23 +1237,45 @@
       "elapsed_s": 109.79836294599227,
       "evidence_scope": "OFFLINE_SAMPLED_HAND_HEIGHT_FEASIBLE_AT_PROJECTED_Z_NOT_TASK_IK_OR_DYNAMIC"
     },
-    "two_object_offline_status": "CHECKPOINTED_SAME_COMMIT_AND_CONFIG_A_15_OF_91_B_18_OF_91",
+    "two_object_offline_status": "CHECKPOINTED_SAME_COMMIT_AND_CONFIG_A_44_OF_91_B_18_OF_91",
     "full_pool_runtime_binding": {
       "commit": "c7d07d845226b7eb4ddf5d4c0de89f66f9e0ba7f",
-      "object_a_completed_angle_count": 15,
+      "object_a_completed_angle_count": 44,
       "object_a_height_candidates_so_far": 32,
-      "object_a_checkpoint_sha256": "975ec6ace989ab247ec4069b0326350ace637629554089551a16165a120283bf",
+      "object_a_rejected_count_so_far": 2776,
+      "object_a_last_complete_angle_rad": 0.7501111111111112,
+      "object_a_checkpoint_sha256": "a83c58c40dd366d9a6bb5d3928236d3db5ded21d5bd1818447944c027928dce9",
       "object_b_completed_angle_count": 18,
       "object_b_height_candidates_so_far": 1,
+      "object_b_rejected_count_so_far": 1151,
+      "object_b_last_complete_angle_rad": 0.29655555555555557,
       "object_b_checkpoint_sha256": "cdd4995d453196ef4395ff33ff526cc55694295787715c24e1f5125f588adb24",
       "object_b_last_slice_exit_code": 124,
       "object_b_last_slice_interpretation": "PLANNED_TIME_SLICE_CHECKPOINT_NOT_ALGORITHM_FAILURE",
       "claim_scope": "IN_PROGRESS_OFFLINE_CHECKPOINT_NOT_FINAL_RANKING"
     },
-    "isaac_asset_smoke_status": "NOT_STARTED",
+    "isaac_asset_smoke_status": "IMPORT_PASS_F1_SDF_COOK_FAILED_CLOSED",
+    "isaac_asset_diagnostic": {
+      "temporary_usd_root_sha256": "80d4a763a7c4ac6262facc650c02b649bcc7cdc8a1c0b167bcf3e5a7a2efed42",
+      "f1_result_sha256": "c343e234e4f22e3b5e64ff8ab1dbb7265caaebeb51b7dc82c327c837abeb1fd9",
+      "engine_log_sha256": "64413c7bd137f0276325bffacb722cfe32eea59ba202944dd2fc3c4deed7e1b5",
+      "failure_evidence_path": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/sdf_runtime_preparation/SDF_RUNTIME_F1_FAILURE_EVIDENCE.json",
+      "failure_evidence_sha256": "727ecc2489b615b758531623dc32adb455f973f85b2b525a1d64d82a4c40264f",
+      "failure_reason": "NON_MANIFOLD_NON_WATERTIGHT_DUPLICATE_TRIANGLES_AUTOMATIC_REPAIR_FAILED_AND_COOK_TIMEOUT",
+      "sdf_persisted_to_asset": false,
+      "collision_runtime_binding_accepted": false,
+      "topology_normalization_status": "FAILED_CLOSED_NO_UNIQUE_NONMANIFOLD_EDGE_PAIRING",
+      "topology_normalization_removed_exact_duplicate_faces": 64,
+      "topology_normalization_remaining_face_count": 11772,
+      "topology_normalization_nonmanifold_edge_count": 97,
+      "topology_normalization_three_face_edge_count": 56,
+      "topology_normalization_audit_sha256": "0b6b38c2a9c7f0b04e4573a6d69a6c46519584d5cdcf2919e58bd61cdd0e13d2",
+      "claim_scope": "ISAAC_ASSET_DIAGNOSTIC_ONLY_NOT_OBJECT_OR_GRASP_RUN"
+    },
     "object_a_dynamic_status": "NOT_STARTED",
     "object_b_dynamic_status": "NOT_STARTED",
-    "isaac_started": false,
+    "isaac_started": true,
+    "isaac_grasp_started": false,
     "normal_force_operation_cap_n": 12.0,
     "table_operation_clearance_m": 0.001,
     "maximum_joint_increment_rad": 0.0015,
@@ -1261,7 +1283,7 @@
     "minimum_hold_time_s": 2.0,
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
-  "evidence_level": "OFFLINE_SINGLE_ANGLE_NAILFREE_HEIGHT_PROJECTED_HAND_PATH_ISAAC_NOT_STARTED",
+  "evidence_level": "ISAAC_ASSET_DIAGNOSTIC_FAILED_CLOSED_OFFLINE_CASCADE_IN_PROGRESS",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
