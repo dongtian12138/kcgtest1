@@ -1,0 +1,81 @@
+{
+  "schema_version": "carts_nailfree_boundary_loop_cap_feasibility_v1",
+  "created_at_utc": "2026-08-25T21:20:00Z",
+  "status": "STATIC_REJECTED_NO_UNIQUE_SOURCE_SUPPORTED_CAP",
+  "evidence_level": "STATIC_GEOMETRY_ONLY",
+  "source_component_audit": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/COMPONENT_SDF_READONLY_AUDIT.json",
+  "source_component_audit_sha256": "180d197de5beead58a593cf0e80901b47da80d31f16db2c563d11858e7c6c4c9",
+  "exact_nailfree_mesh": "src/iiwa_description/meshes/hand/connector_no_nail/f1Link3_nailfree.stl",
+  "exact_nailfree_mesh_sha256": "965d327c466bec40b898fc4228f8ca240386bab3e8a79af6b48c798db1a0071a",
+  "method": {
+    "vertex_welding": false,
+    "retained_vertex_motion": false,
+    "mesh_repair": false,
+    "isaac_started": false,
+    "boundary_loop_rule": "EXACT_COMPONENT_BOUNDARY_EDGES_GROUPED_INTO_SIMPLE_CYCLES",
+    "candidate_face_rule": "ORIGINAL_SOURCE_FACES_WITH_REVERSED_COMPATIBLE_ORIENTED_EDGE"
+  },
+  "component_0": {
+    "boundary_edge_count": 43,
+    "simple_loop_count": 3,
+    "loops": [
+      {
+        "edge_count": 19,
+        "extent_mm": [7.389, 4.226, 20.0],
+        "best_fit_plane_maximum_residual_mm": 0.752,
+        "touches_removed_component_vertex": false,
+        "distance_to_removed_nail_surface_mm": {
+          "minimum": 0.0653,
+          "median": 3.413,
+          "maximum": 8.227
+        },
+        "source_edge_owner_count": 4,
+        "interpretation": "NONPLANAR_MULTI_SHELL_PAD_BODY_SEAM_NOT_A_DETERMINISTIC_NAIL_REMOVAL_HOLE"
+      },
+      {
+        "edge_count": 12,
+        "extent_mm": [2.707, 1.293, 3.0],
+        "best_fit_plane_maximum_residual_mm": 3.17e-6,
+        "touches_removed_component_vertex": false,
+        "minimum_distance_to_removed_nail_surface_mm": 3.330,
+        "source_edge_owner_count": 4,
+        "interpretation": "MULTI_SHELL_SOURCE_SEAM_NOT_A_DETERMINISTIC_NAIL_REMOVAL_HOLE"
+      },
+      {
+        "edge_count": 12,
+        "extent_mm": [2.707, 1.293, 3.0],
+        "best_fit_plane_maximum_residual_mm": 3.17e-6,
+        "touches_removed_component_vertex": false,
+        "minimum_distance_to_removed_nail_surface_mm": 3.330,
+        "source_edge_owner_count": 4,
+        "interpretation": "MULTI_SHELL_SOURCE_SEAM_NOT_A_DETERMINISTIC_NAIL_REMOVAL_HOLE"
+      }
+    ]
+  },
+  "component_75": {
+    "boundary_edge_count": 19,
+    "simple_loop_count": 1,
+    "loop_identity": "SAME_19_EDGE_MULTI_SHELL_SEAM_AS_COMPONENT_0"
+  },
+  "candidate_source_face_ambiguity": {
+    "component_0_boundary_edges_with_two_reverse_compatible_choices": 43,
+    "component_75_is_one_consistent_choice_for_19_edge_loop": true,
+    "other_choice_varies_by_small_retained_component": true,
+    "minimum_component_heuristic_is_source_topology_fact": false
+  },
+  "trial_exact_component_union": {
+    "component_indices": [0, 75, 126, 151],
+    "remaining_four_face_nonmanifold_edge_count": 9,
+    "nonadjacent_fcl_self_intersection_pair_count": 1380,
+    "watertight": false
+  },
+  "conclusion": {
+    "unique_cap_without_new_geometry_assumption": false,
+    "can_prove_surface_deviation_below_1mm": false,
+    "can_prove_zero_removed_nail_region_occupancy": false,
+    "production_collision_asset_generated": false,
+    "required_next_source": "CAD_OR_EARLIER_SOURCE_TOPOLOGY_WITH_EXPLICIT_CLOSED_OUTER_SHELL",
+    "unapproved_alternative": "EXPLICITLY_APPROVED_LOWER_FIDELITY_SDF_REMESH_VOXEL_OR_CONVEX_APPROXIMATION"
+  },
+  "claim_scope": "REJECTS_ONLY_AUTOMATIC_SOURCE_UNSUPPORTED_CAPPING; DOES_NOT_PROVE THE HAND CANNOT GRASP"
+}

@@ -1,6 +1,6 @@
 {
   "schema_version": "nailfree_height_projected_manifest_v1",
-  "updated_at_utc": "2026-08-25T20:45:42Z",
+  "updated_at_utc": "2026-08-25T21:22:41Z",
   "execution_window": {
     "id": "NAILFREE_HEIGHT_PROJECTED_12H",
     "started_at_utc": "2026-08-25T15:15:34Z",
@@ -63,10 +63,10 @@
   "current_gates": {
     "nailfree_hand_model_audit": "ISAAC_IMPORT_PASS_F1_EXACT_SDF_DIAGNOSTIC_FAILED_CLOSED_RUNTIME_BINDING_REJECTED",
     "task_grip_surface_audit": "STATIC_SEMANTIC_ACCEPTED_NOT_OBJECT_CONTACT_TESTED",
-    "height_feasibility_before_topk": "SINGLE_ANGLE_OFFLINE_SAMPLED_PASS_PRODUCTION_INTEGRATION_READY",
-    "two_object_offline_ranking": "OBJECT_A_COMPLETE_B_CHECKPOINTED_A_91_OF_91_B_35_OF_91_SAME_COMMIT_AND_CONFIG",
-    "arm_path": "OBJECT_A_TOP3_DISCRETE_BOUNDED_IK_PASS_FULL_COLLISION_UNRESOLVED",
-    "isaac_research_dynamic": "NOT_STARTED_F1_COLLISION_SDF_FAIL_CLOSED"
+    "height_feasibility_before_topk": "TWO_OBJECT_91_ANGLE_COMPLETE_HEIGHT_BEFORE_TOPK",
+    "two_object_offline_ranking": "COMPLETE_A_91_OF_91_B_91_OF_91_SAME_COMMIT_AND_CONFIG",
+    "arm_path": "A_TOP3_AND_B_TOP1_DISCRETE_BOUNDED_IK_PASS_FULL_COLLISION_UNRESOLVED",
+    "isaac_research_dynamic": "NOT_STARTED_RUNTIME_COLLISION_SOURCE_TOPOLOGY_FAIL_CLOSED"
   },
   "supervision": {
     "nailfree_geometry": "APPROVE_EXACT_VISUAL_WITH_PROVISIONAL_PHYSICAL_ESTIMATE_AND_RUNTIME_GATES_CLOSED",
@@ -101,6 +101,18 @@
       "topology_normalization_nonmanifold_edge_count": 97,
       "topology_normalization_three_face_edge_count": 56,
       "topology_normalization_audit_sha256": "0b6b38c2a9c7f0b04e4573a6d69a6c46519584d5cdcf2919e58bd61cdd0e13d2",
+      "exact_component_split_status": "REJECTED_TASK_GRIP_COMPONENTS_ARE_OPEN_NOT_SDF_SOLIDS",
+      "exact_component_count": 155,
+      "exact_component_qualified_count": 2,
+      "task_grip_component_0_face_count": 518,
+      "task_grip_component_75_face_count": 1682,
+      "component_0_boundary_edge_count": 43,
+      "component_75_boundary_edge_count": 19,
+      "component_sdf_audit_sha256": "180d197de5beead58a593cf0e80901b47da80d31f16db2c563d11858e7c6c4c9",
+      "boundary_loop_cap_status": "REJECTED_NO_UNIQUE_SOURCE_SUPPORTED_CAP",
+      "boundary_loop_cap_audit_path": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/BOUNDARY_LOOP_CAP_FEASIBILITY.json",
+      "boundary_loop_cap_audit_sha256": "bbce5a217042b7a2b5c3502063fb086c91c1e8510bb34a4d9476edb3813ab1dd",
+      "required_next_collision_source": "CAD_OR_EARLIER_SOURCE_TOPOLOGY_WITH_EXPLICIT_CLOSED_OUTER_SHELL",
       "claim_scope": "ISAAC_ASSET_DIAGNOSTIC_ONLY_NOT_OBJECT_OR_GRASP_RUN"
     },
     "two_object_offline_checkpoint": {
@@ -108,6 +120,10 @@
       "object_a_candidate_count": 32,
       "object_a_rejected_count": 5784,
       "object_a_geometric_survivor_count": 40,
+      "object_a_nonempty_height_intersection_count": 170,
+      "object_a_empty_height_intersection_count": 5654,
+      "object_a_projected_revalidation_failure_count": 130,
+      "object_a_retained_mean_height_projection_delta_m": 0.003140720817536923,
       "object_a_per_angle_topk_retained_count": 32,
       "object_a_budget_deferred_count": 8,
       "object_a_nominal_task_eligible_count": 32,
@@ -115,11 +131,24 @@
       "object_a_result_sha256": "bf8137bf69c61815afbb2bb87855db4fb9b848d5669857f20126c37bc61278bd",
       "object_a_top3_bounded_ik_reachable_count": 3,
       "object_a_bounded_ik_sha256": "eb21c914cb583a8bad6dc7b4721bfac2d5cf98a7acc6b2ebcf72ed22148750b2",
-      "object_b_completed_angle_count": 35,
+      "object_b_completed_angle_count": 91,
       "object_b_candidate_count": 1,
-      "object_b_rejected_count": 2239,
-      "object_b_checkpoint_sha256": "e2283537763e9e171b96b994f2de839f820255afbfd9c2dfbfcf18f8a5b33efd",
-      "claim_scope": "OBJECT_A_OFFLINE_TASK_AND_DISCRETE_IK_COMPLETE_OBJECT_B_IN_PROGRESS_NOT_DYNAMIC_OR_FULL_PATH_COLLISION"
+      "object_b_rejected_count": 5823,
+      "object_b_geometric_survivor_count": 1,
+      "object_b_nonempty_height_intersection_count": 88,
+      "object_b_empty_height_intersection_count": 5736,
+      "object_b_projected_revalidation_failure_count": 87,
+      "object_b_retained_mean_height_projection_delta_m": 0.002799390490076048,
+      "object_b_per_angle_topk_retained_count": 1,
+      "object_b_budget_deferred_count": 0,
+      "object_b_nominal_task_eligible_count": 1,
+      "object_b_formal_task_eligible_count": 1,
+      "object_b_result_sha256": "c76254d744c9cc9dd3b050c8091bd177f28e78d802fdccd024f0efc5d2e24390",
+      "object_b_top1_bounded_ik_reachable_count": 1,
+      "object_b_bounded_ik_sha256": "a60c9d80ae8907232b527a389b3aceb7a01b4563ba497674a61f08209ab6af4f",
+      "cross_object_summary_path": "artifacts/carts_v2/nailfree_height_projected/OFFLINE_CROSS_OBJECT_SUMMARY.json",
+      "cross_object_summary_sha256": "a6c0d7106193f74dcb2a871b72bc0ecd83d20190ed0f0f09694dcd837ab0beea",
+      "claim_scope": "TWO_OBJECT_OFFLINE_TASK_AND_DISCRETE_IK_COMPLETE_NOT_DYNAMIC_OR_FULL_PATH_COLLISION"
     },
     "object_a_qp0_height_smoke": {
       "input_seed_count": 64,

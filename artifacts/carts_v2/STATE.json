@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T20:45:42Z",
+  "updated_at_utc": "2026-08-25T21:22:41Z",
   "started_at_utc": "2026-08-25T15:15:34Z",
   "hard_deadline_utc": "2026-08-26T03:15:34Z",
   "branch": "carts-grasp-nailfree-heightprojected-20260825",
@@ -8,7 +8,7 @@
   "start_commit": "6a356bdfd2f579b79e53ec7e01e0880fe9f75a59",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "OBJECT_B_FULL_POOL_AND_OFFLINE_KINEMATIC_ROUTES",
+  "current_milestone": "FINAL_EVIDENCE_AND_COLLISION_SOURCE_BLOCKED_CLOSEOUT",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -88,7 +88,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "NAILFREE_F1_EXACT_MESH_SDF_COOK_FAILED_NON_MANIFOLD_NON_WATERTIGHT_DUPLICATE_TRIANGLES_AND_NO_HEIGHT_FEASIBLE_TASK_ARM_PATH_CANDIDATE_BOUND_YET"
+    "reason": "NAILFREE_RUNTIME_COLLISION_ASSET_NOT_ACCEPTED_AND_COMPLETE_FULL_ARM_PATH_COLLISION_NOT_CLOSED"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1227,7 +1227,7 @@
     "task_grip_surface_status": "STATIC_SEMANTIC_ACCEPTED_NOT_OBJECT_CONTACT_OR_DYNAMIC_PROOF",
     "task_grip_surface_face_counts_f1_f2_f3": [2200, 2304, 2199],
     "task_grip_surface_manifest_sha256": "5d173d8446a4dc2f7648f8f9cd394c3061da5e83dc381f2e9ac01874dcadce17",
-    "height_feasibility_before_topk_status": "SINGLE_ANGLE_OFFLINE_SAMPLED_PASS_PRODUCTION_INTEGRATION_READY",
+    "height_feasibility_before_topk_status": "TWO_OBJECT_91_ANGLE_COMPLETE_HEIGHT_BEFORE_TOPK",
     "height_single_angle_object_a": {
       "palm_configuration_rad": 0.0,
       "input_seed_count": 64,
@@ -1237,7 +1237,7 @@
       "elapsed_s": 109.79836294599227,
       "evidence_scope": "OFFLINE_SAMPLED_HAND_HEIGHT_FEASIBLE_AT_PROJECTED_Z_NOT_TASK_IK_OR_DYNAMIC"
     },
-    "two_object_offline_status": "OBJECT_A_COMPLETE_B_CHECKPOINTED_SAME_COMMIT_AND_CONFIG_A_91_OF_91_B_35_OF_91",
+    "two_object_offline_status": "COMPLETE_SAME_COMMIT_AND_CONFIG_A_91_OF_91_B_91_OF_91",
     "full_pool_runtime_binding": {
       "commit": "c7d07d845226b7eb4ddf5d4c0de89f66f9e0ba7f",
       "object_a_completed_angle_count": 91,
@@ -1245,6 +1245,10 @@
       "object_a_rejected_count_so_far": 5784,
       "object_a_last_complete_angle_rad": 1.57,
       "object_a_geometric_survivor_count": 40,
+      "object_a_nonempty_height_intersection_count": 170,
+      "object_a_empty_height_intersection_count": 5654,
+      "object_a_projected_revalidation_failure_count": 130,
+      "object_a_retained_mean_height_projection_delta_m": 0.003140720817536923,
       "object_a_per_angle_topk_retained_count": 32,
       "object_a_budget_deferred_count": 8,
       "object_a_nominal_task_eligible_count": 32,
@@ -1256,14 +1260,31 @@
       "object_a_top1_required_peak_normal_force_n": 8.596684233721668,
       "object_a_top3_bounded_ik_reachable_count": 3,
       "object_a_bounded_ik_sha256": "eb21c914cb583a8bad6dc7b4721bfac2d5cf98a7acc6b2ebcf72ed22148750b2",
-      "object_b_completed_angle_count": 35,
+      "object_b_completed_angle_count": 91,
       "object_b_height_candidates_so_far": 1,
-      "object_b_rejected_count_so_far": 2239,
-      "object_b_last_complete_angle_rad": 0.5931111111111111,
-      "object_b_checkpoint_sha256": "e2283537763e9e171b96b994f2de839f820255afbfd9c2dfbfcf18f8a5b33efd",
+      "object_b_rejected_count_so_far": 5823,
+      "object_b_last_complete_angle_rad": 1.57,
+      "object_b_geometric_survivor_count": 1,
+      "object_b_nonempty_height_intersection_count": 88,
+      "object_b_empty_height_intersection_count": 5736,
+      "object_b_projected_revalidation_failure_count": 87,
+      "object_b_retained_mean_height_projection_delta_m": 0.002799390490076048,
+      "object_b_per_angle_topk_retained_count": 1,
+      "object_b_budget_deferred_count": 0,
+      "object_b_nominal_task_eligible_count": 1,
+      "object_b_formal_task_eligible_count": 1,
+      "object_b_result_sha256": "c76254d744c9cc9dd3b050c8091bd177f28e78d802fdccd024f0efc5d2e24390",
+      "object_b_full_audit_sha256": "077e6729220b318040d18be7136b50888c5178a9ee253b3712d1ce2e2cbea99f",
+      "object_b_top1_candidate_id": "graspgenx_659",
+      "object_b_top1_worst_task_margin": 1.0124192088559383,
+      "object_b_top1_required_peak_normal_force_n": 11.924125039861185,
+      "object_b_top1_bounded_ik_reachable_count": 1,
+      "object_b_bounded_ik_sha256": "a60c9d80ae8907232b527a389b3aceb7a01b4563ba497674a61f08209ab6af4f",
       "object_b_last_slice_exit_code": 124,
       "object_b_last_slice_interpretation": "PLANNED_TIME_SLICE_CHECKPOINT_NOT_ALGORITHM_FAILURE",
-      "claim_scope": "OBJECT_A_OFFLINE_TASK_AND_DISCRETE_IK_COMPLETE_OBJECT_B_IN_PROGRESS_NOT_DYNAMIC_OR_FULL_PATH_COLLISION"
+      "cross_object_summary_path": "artifacts/carts_v2/nailfree_height_projected/OFFLINE_CROSS_OBJECT_SUMMARY.json",
+      "cross_object_summary_sha256": "a6c0d7106193f74dcb2a871b72bc0ecd83d20190ed0f0f09694dcd837ab0beea",
+      "claim_scope": "TWO_OBJECT_OFFLINE_TASK_AND_DISCRETE_IK_COMPLETE_NOT_DYNAMIC_OR_FULL_PATH_COLLISION"
     },
     "isaac_asset_smoke_status": "IMPORT_PASS_F1_SDF_COOK_FAILED_CLOSED",
     "isaac_asset_diagnostic": {
@@ -1281,6 +1302,17 @@
       "topology_normalization_nonmanifold_edge_count": 97,
       "topology_normalization_three_face_edge_count": 56,
       "topology_normalization_audit_sha256": "0b6b38c2a9c7f0b04e4573a6d69a6c46519584d5cdcf2919e58bd61cdd0e13d2",
+      "exact_component_split_status": "REJECTED_TASK_GRIP_COMPONENTS_ARE_OPEN_NOT_SDF_SOLIDS",
+      "exact_component_count": 155,
+      "exact_component_qualified_count": 2,
+      "task_grip_component_0_face_count": 518,
+      "task_grip_component_75_face_count": 1682,
+      "component_0_boundary_edge_count": 43,
+      "component_75_boundary_edge_count": 19,
+      "component_sdf_audit_sha256": "180d197de5beead58a593cf0e80901b47da80d31f16db2c563d11858e7c6c4c9",
+      "boundary_loop_cap_status": "REJECTED_NO_UNIQUE_SOURCE_SUPPORTED_CAP",
+      "boundary_loop_cap_audit_sha256": "bbce5a217042b7a2b5c3502063fb086c91c1e8510bb34a4d9476edb3813ab1dd",
+      "required_next_collision_source": "CAD_OR_EARLIER_SOURCE_TOPOLOGY_WITH_EXPLICIT_CLOSED_OUTER_SHELL",
       "claim_scope": "ISAAC_ASSET_DIAGNOSTIC_ONLY_NOT_OBJECT_OR_GRASP_RUN"
     },
     "object_a_dynamic_status": "NOT_STARTED",
@@ -1294,7 +1326,7 @@
     "minimum_hold_time_s": 2.0,
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
-  "evidence_level": "ISAAC_ASSET_DIAGNOSTIC_FAILED_CLOSED_OFFLINE_CASCADE_IN_PROGRESS",
+  "evidence_level": "TWO_OBJECT_OFFLINE_TASK_AND_DISCRETE_IK_COMPLETE_ISAAC_ASSET_DIAGNOSTIC_FAILED_CLOSED",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1348,7 +1380,7 @@
     "full_palm_actual_object_certificate_checks_passed": true,
     "full_palm_descriptor_and_contact_supervisor": "APPROVE_WITH_EVIDENCE_BOUNDARY",
     "nailfree_height_projected_targeted_passed": 29,
-    "nailfree_height_projected_targeted_duration_s": 17.37,
+    "nailfree_height_projected_targeted_duration_s": 17.26,
     "nailfree_height_projected_complexity_supervisor": "ACCEPT_2186_ADDED_438_DELETED_1748_NET_NLOC",
     "nailfree_height_projected_academic_supervisor": "APPROVE_WITH_EVIDENCE_LIMITS"
   },

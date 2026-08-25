@@ -1,0 +1,136 @@
+{
+  "schema_version": "nailfree_height_projected_cross_object_summary_v1",
+  "created_at_utc": "2026-08-25T21:15:25Z",
+  "method": "NF-HPGS",
+  "hand_variant": "CONNECTOR_GRASP_NO_NAIL",
+  "contact_semantics": "TASK_GRIP_SURFACE",
+  "config_sha256": "87fdda414ccd8571526e7dae9e379880c6122762ec623b9adc153e4b77cc3350",
+  "same_method_and_primary_parameters": true,
+  "normal_force_operation_cap_n": 12.0,
+  "objects": {
+    "current_d38999_26kj61sn_public_spec": {
+      "input_seed_count": 5824,
+      "table_reach_outer_height_intersection_nonempty_count": 170,
+      "empty_table_reach_outer_height_intersection_count": 5654,
+      "projected_height_exact_revalidation_failure_count": 130,
+      "geometric_survivor_count": 40,
+      "per_angle_topk_retained_count": 32,
+      "per_angle_budget_deferred_count": 8,
+      "nominal_12n_task_eligible_count": 32,
+      "registered_uncertainty_task_eligible_count": 12,
+      "retained_height_projection_delta_m": {
+        "count": 32,
+        "mean": 0.003140720817536923,
+        "minimum": 0.0031062049234520384,
+        "maximum": 0.0031668883398142667
+      },
+      "geometric_survivors_by_palm_configuration_rad": {
+        "0.0": 2,
+        "0.017444444444444446": 15,
+        "0.03488888888888889": 9,
+        "0.05233333333333334": 5,
+        "0.06977777777777779": 4,
+        "0.08722222222222223": 5
+      },
+      "retained_by_palm_configuration_rad": {
+        "0.0": 2,
+        "0.017444444444444446": 8,
+        "0.03488888888888889": 8,
+        "0.05233333333333334": 5,
+        "0.06977777777777779": 4,
+        "0.08722222222222223": 5
+      },
+      "offline_task_top3_candidate_ids": [
+        "graspgenx_726",
+        "graspgenx_498",
+        "graspgenx_874"
+      ],
+      "top1": {
+        "candidate_id": "graspgenx_726",
+        "worst_task_margin": 1.5801860084335106,
+        "lower_tail_mean_margin": 1.6711981335940034,
+        "required_peak_normal_force_n": 8.596684233721668,
+        "sampled_hand_table_clearance_m": 0.005290374961619937
+      },
+      "bounded_ik": {
+        "reachable_count": 3,
+        "route_count": 3,
+        "approach_waypoint_count_each": 5,
+        "lift_50mm_waypoint_count_each": 11,
+        "maximum_position_error_m": 1.2436246403690858e-12,
+        "maximum_orientation_error_rad": 1.0144483090500777e-11,
+        "maximum_approach_joint_step_rad": 0.1103614209321594,
+        "maximum_lift_joint_step_rad": 0.017397130575639297,
+        "complete_arm_path_collision_checked": false
+      },
+      "offline_result_sha256": "bf8137bf69c61815afbb2bb87855db4fb9b848d5669857f20126c37bc61278bd",
+      "full_cascade_audit_sha256": "f7044b482873d6fc1fd74f6c49aedb5e603ced74386c488c6ffbd64195e82bd7",
+      "bounded_ik_sha256": "eb21c914cb583a8bad6dc7b4721bfac2d5cf98a7acc6b2ebcf72ed22148750b2"
+    },
+    "te_deutsch_d38999_26fj35pn_step": {
+      "input_seed_count": 5824,
+      "table_reach_outer_height_intersection_nonempty_count": 88,
+      "empty_table_reach_outer_height_intersection_count": 5736,
+      "projected_height_exact_revalidation_failure_count": 87,
+      "geometric_survivor_count": 1,
+      "per_angle_topk_retained_count": 1,
+      "per_angle_budget_deferred_count": 0,
+      "nominal_12n_task_eligible_count": 1,
+      "registered_uncertainty_task_eligible_count": 1,
+      "retained_height_projection_delta_m": {
+        "count": 1,
+        "mean": 0.002799390490076048,
+        "minimum": 0.002799390490076048,
+        "maximum": 0.002799390490076048
+      },
+      "geometric_survivors_by_palm_configuration_rad": {
+        "0.06977777777777779": 1
+      },
+      "retained_by_palm_configuration_rad": {
+        "0.06977777777777779": 1
+      },
+      "offline_task_top3_candidate_ids": [
+        "graspgenx_659"
+      ],
+      "top1": {
+        "candidate_id": "graspgenx_659",
+        "worst_task_margin": 1.0124192088559383,
+        "lower_tail_mean_margin": 1.0955100901972334,
+        "required_peak_normal_force_n": 11.924125039861185,
+        "sampled_hand_table_clearance_m": 0.005292927182026286
+      },
+      "bounded_ik": {
+        "reachable_count": 1,
+        "route_count": 1,
+        "approach_waypoint_count_each": 5,
+        "lift_50mm_waypoint_count_each": 11,
+        "maximum_position_error_m": 7.477101751343023e-13,
+        "maximum_orientation_error_rad": 7.58819478522191e-12,
+        "maximum_approach_joint_step_rad": 0.08702314421653778,
+        "maximum_lift_joint_step_rad": 0.014876770604923317,
+        "complete_arm_path_collision_checked": false
+      },
+      "offline_result_sha256": "c76254d744c9cc9dd3b050c8091bd177f28e78d802fdccd024f0efc5d2e24390",
+      "full_cascade_audit_sha256": "077e6729220b318040d18be7136b50888c5178a9ee253b3712d1ce2e2cbea99f",
+      "bounded_ik_sha256": "a60c9d80ae8907232b527a389b3aceb7a01b4563ba497674a61f08209ab6af4f"
+    }
+  },
+  "runtime_collision_asset": {
+    "accepted": false,
+    "exact_whole_mesh_sdf": "FAILED_CLOSED",
+    "deterministic_topology_normalization": "FAILED_CLOSED",
+    "exact_component_split": "FAILED_CLOSED_TASK_GRIP_COMPONENTS_OPEN",
+    "component_audit_sha256": "180d197de5beead58a593cf0e80901b47da80d31f16db2c563d11858e7c6c4c9"
+  },
+  "dynamic_evidence": {
+    "isaac_asset_diagnostic_started": true,
+    "isaac_connector_grasp_started": false,
+    "dynamic_measurement_status": "NOT_MEASURED_NO_CONNECTOR_GRASP_RUN",
+    "connector_actual_lift_m": null,
+    "connector_hold_time_s": null,
+    "research_dynamic_pass": false,
+    "formal_dynamic_pass": false,
+    "hardware_authorized": false
+  },
+  "claim_scope": "TWO_OBJECT_OFFLINE_HEIGHT_CONTACT_TASK_AND_DISCRETE_IK_EVIDENCE_ONLY; NOT_EXECUTABLE_FULL_PATH_OR_DYNAMIC_GRASP_EVIDENCE"
+}

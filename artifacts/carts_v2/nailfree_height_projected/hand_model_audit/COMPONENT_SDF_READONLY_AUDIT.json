@@ -1,0 +1,157 @@
+{
+  "schema_version": "carts_nailfree_component_sdf_readonly_audit_v1",
+  "status": "STATIC_REJECTED_EXACT_COMPONENTS_ARE_NOT_INDIVIDUAL_SDF_SOLIDS",
+  "evidence_level": "STATIC_GEOMETRY_ONLY",
+  "hand_variant": "CONNECTOR_GRASP_NO_NAIL",
+  "hardware_authorized": false,
+  "formal_dynamic_pass": false,
+  "research_dynamic_pass": false,
+  "dynamic_grasp_claimed": false,
+  "runtime_binding_accepted": false,
+  "isaac_started_by_this_audit": false,
+  "source_asset_modified": false,
+  "method": {
+    "component_identity": "EXACT_STL_COORDINATE_INDEX_AND_ORIGINAL_MANIFOLD_EDGE_FACE_COMPONENT",
+    "source_loader": "CARTS_GRASP_DETERMINISTIC_STL_V1",
+    "component_splitter": "CARTS_EXACT_RAW_STL_MANIFOLD_EDGE_PAD_SOURCE_V1",
+    "coordinate_tolerance_used": false,
+    "round_weld_used": false,
+    "vertex_position_changed": false,
+    "mesh_repair_used": false,
+    "parameter_scan_performed": false,
+    "interpretation": "Faces are joined only across edges owned by exactly two source triangles. Edges with more than two owners separate original components; no approximate vertex welding is performed."
+  },
+  "input": {
+    "exact_nailfree_mesh": "src/iiwa_description/meshes/hand/connector_no_nail/f1Link3_nailfree.stl",
+    "exact_nailfree_mesh_sha256": "965d327c466bec40b898fc4228f8ca240386bab3e8a79af6b48c798db1a0071a",
+    "authored_source_mesh": "src/iiwa_description/meshes/hand/f1Link3.STL",
+    "authored_source_mesh_sha256": "7a33a6ab46729a2237dd13d99be3bcefb92bb3d4b77bbf9e69d884509cffcdb0",
+    "exact_nailfree_face_count": 11836,
+    "retained_original_component_count": 155
+  },
+  "component_summary": {
+    "watertight_winding_consistent_nonmanifold_zero_count": 2,
+    "qualifying_component_indices": [152, 154],
+    "qualifying_face_count": 1088,
+    "nonqualifying_component_count": 153,
+    "nonqualifying_face_count": 10748,
+    "all_components_have_zero_internal_nonmanifold_edges_after_exact_split": true,
+    "interpretation": "Exact splitting removes cross-component nonmanifold adjacency but exposes open boundaries; it does not turn the retained surfaces into closed SDF solids."
+  },
+  "key_components": {
+    "0": {
+      "role": "TERMINAL_MAIN_BODY_AND_ADDED_TASK_GRIP_SOURCE",
+      "face_count": 7191,
+      "vertex_count": 3596,
+      "boundary_edge_count": 43,
+      "nonmanifold_edge_count": 0,
+      "watertight": false,
+      "winding_consistent": true,
+      "is_volume": false,
+      "signed_volume_m3_not_accepted_as_solid_evidence": 9.367008199631671e-06,
+      "self_intersection_audit": {
+        "backend": "python-fcl_0.7.0.11_BVH_SELF_QUERY",
+        "returned_contact_count": 126657,
+        "contact_limit": 1000000,
+        "complete_below_contact_limit": true,
+        "nonadjacent_face_pair_count": 0
+      },
+      "component_sdf_eligible": false
+    },
+    "75": {
+      "role": "LEGACY_BLUE_PAD_AND_TASK_GRIP_SOURCE",
+      "face_count": 2479,
+      "vertex_count": 1250,
+      "boundary_edge_count": 19,
+      "nonmanifold_edge_count": 0,
+      "watertight": false,
+      "winding_consistent": true,
+      "is_volume": false,
+      "signed_volume_m3_not_accepted_as_solid_evidence": 3.940566116784276e-06,
+      "self_intersection_audit": {
+        "backend": "python-fcl_0.7.0.11_BVH_SELF_QUERY",
+        "returned_contact_count": 42876,
+        "contact_limit": 1000000,
+        "complete_below_contact_limit": true,
+        "nonadjacent_face_pair_count": 0
+      },
+      "component_sdf_eligible": false
+    },
+    "153": {
+      "role": "JOINT_HOUSING_REJECTED_FROM_TASK_GRIP",
+      "face_count": 888,
+      "vertex_count": 445,
+      "boundary_edge_count": 4,
+      "nonmanifold_edge_count": 0,
+      "watertight": false,
+      "winding_consistent": true,
+      "is_volume": false,
+      "self_intersection_audit": {
+        "backend": "python-fcl_0.7.0.11_BVH_SELF_QUERY",
+        "returned_contact_count": 16902,
+        "contact_limit": 1000000,
+        "complete_below_contact_limit": true,
+        "nonadjacent_face_pair_count": 1,
+        "example_local_face_pair": [439, 517]
+      },
+      "component_sdf_eligible": false
+    },
+    "152": {
+      "role": "JOINT_HOUSING_REJECTED_FROM_TASK_GRIP",
+      "face_count": 200,
+      "boundary_edge_count": 0,
+      "nonmanifold_edge_count": 0,
+      "watertight": true,
+      "winding_consistent": true,
+      "is_volume": true,
+      "nonadjacent_self_intersection_pair_count": 0,
+      "component_sdf_geometry_gate_pass": true
+    },
+    "154": {
+      "role": "JOINT_HOUSING_REJECTED_FROM_TASK_GRIP",
+      "face_count": 888,
+      "boundary_edge_count": 0,
+      "nonmanifold_edge_count": 0,
+      "watertight": true,
+      "winding_consistent": true,
+      "is_volume": true,
+      "nonadjacent_self_intersection_pair_count": 0,
+      "component_sdf_geometry_gate_pass": true
+    }
+  },
+  "task_grip_surface_provenance": {
+    "manifest": "artifacts/carts_v2/nailfree_height_projected/task_grip_surface_audit/TASK_GRIP_SURFACE_MANIFEST.json",
+    "surface_npz": "artifacts/carts_v2/nailfree_height_projected/task_grip_surface_audit/f1Link3_TASK_GRIP_SURFACE_local_m.npz",
+    "task_grip_face_count": 2200,
+    "face_distribution_by_original_component": {
+      "0": 518,
+      "75": 1682
+    },
+    "all_task_grip_faces_are_on_individually_watertight_components": false,
+    "semantic_identity_preservable_by_component_prim": true,
+    "physical_sdf_solid_validity_preserved": false
+  },
+  "cross_component_fcl_contact_counts": {
+    "0_75": 2799,
+    "0_152": 1817,
+    "0_153": 1420,
+    "0_154": 1651,
+    "75_152": 0,
+    "75_153": 0,
+    "75_154": 0,
+    "interpretation": "Counts establish extensive exact component seam or overlap contact. They do not by themselves distinguish tangency from volume overlap, but warn that separate colliders may duplicate external contacts at shared regions."
+  },
+  "conclusion": {
+    "multiple_exact_components_as_independent_sdf_colliders_feasible": false,
+    "reason": "Both components carrying TASK_GRIP_SURFACE, component 0 and component 75, are open surfaces rather than individually watertight solids. Component splitting removes the aggregate nonmanifold edges by converting them into boundaries and therefore does not provide a defined signed interior for production SDF collision.",
+    "followup_experiment_recommended": false,
+    "stop_reason": "NOT_ALL_TASK_GRIP_AND_MAIN_BODY_COMPONENTS_ARE_INDIVIDUALLY_WATERTIGHT_SELF_INTERSECTION_FREE_SOLIDS"
+  },
+  "claim_scope": [
+    "This audit rejects only direct per-original-component SDF binding of the exact f1Link3 nail-free triangle components.",
+    "It does not claim that the fixed whole-mesh SDF audit failed.",
+    "It does not claim that every possible traceable collision representation is impossible.",
+    "It does not prove or disprove grasp contact, lift, hold, robustness, formal dynamics, or hardware behavior.",
+    "No Isaac simulation, SDF cooking, collision binding, dynamic control, or hardware action occurred in this audit."
+  ]
+}
