@@ -87,6 +87,46 @@ def test_outward_normal_sign_is_bound_to_material_certificate() -> None:
     assert np.allclose(ExactPadSurfaceQuery(inputs).normal(0), (0.0, 0.0, 1.0))
 
 
+def test_task_grip_query_returns_hand_face_identity_and_real_normal() -> None:
+    pytest.importorskip("fcl")
+    vertices = np.asarray(((0, 0, 0), (1, 0, 0), (0, 1, 0)), dtype=float)
+    faces = np.asarray(((0, 1, 2),), dtype=np.int64)
+    mesh = TriangleMesh(vertices, faces, ("allowed",))
+    orientation_sha = "c" * 64
+    surface = SimpleNamespace(
+        points_local_m=vertices,
+        faces=faces,
+        face_normals_local=np.asarray(((0.0, 0.0, 1.0),)),
+        source_face_indices=np.asarray((7,), dtype=np.int64),
+        legacy_blue_pad_face_mask=np.asarray((False,), dtype=np.bool_),
+    )
+    inputs = SimpleNamespace(
+        object_contract=SimpleNamespace(
+            model=SimpleNamespace(mesh=mesh),
+            orientation_certificate=SimpleNamespace(
+                positive_volume_winding_sign_by_source_face=(1,),
+                canonical_sha256=orientation_sha,
+            ),
+            material_boundary_evidence=SimpleNamespace(
+                formal_material_boundary_eligible=True,
+                certificate=SimpleNamespace(
+                    orientation_certificate_sha256=orientation_sha
+                ),
+            ),
+        ),
+        hand_contract=SimpleNamespace(pads=()),
+        task_grip_surfaces={"finger_1_pad": surface},
+    )
+    transform = np.eye(4)
+    transform[2, 3] = 0.1
+    nearest, _point, _normal = ExactPadSurfaceQuery(inputs).query_pad(
+        "finger_1_pad", transform
+    )
+    assert nearest.surface_face_index.tolist() == [7]
+    assert np.allclose(nearest.surface_normal_m, ((0.0, 0.0, 1.0),))
+    assert nearest.surface_legacy_blue_pad.tolist() == [False]
+
+
 def test_second_nearest_motion_compatible_witness_is_not_lost() -> None:
     selected = nearest_motion_compatible_index(
         np.asarray((1.0e-4, 2.0e-4)),

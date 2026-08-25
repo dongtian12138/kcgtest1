@@ -12,7 +12,7 @@ except ImportError:
     fcl = None
 try:
     import trimesh
-except ImportError:
+except (ImportError, TypeError):
     trimesh = None
 
 from kcg_connector.grasp.carts_v2.fast_filter import build_fcl_bvh_model
@@ -24,6 +24,9 @@ class NearestSurface:
     distance_m: np.ndarray
     face_index: np.ndarray
     intersecting: bool = False
+    surface_face_index: np.ndarray | None = None
+    surface_normal_m: np.ndarray | None = None
+    surface_legacy_blue_pad: np.ndarray | None = None
 
 
 def nearest_motion_compatible_index(
@@ -47,12 +50,12 @@ def nearest_motion_compatible_index(
     return int(np.argmin(np.where(eligible, distance, np.inf)))
 
 
-class ExactPadSurfaceQuery:
-    """FCL full-mesh witness plus exact-object dense-PAD compatibility fallback."""
+class ExactContactSurfaceQuery:
+    """FCL witness between the full object and one registered hand surface."""
 
     def __init__(self, inputs) -> None:
-        if fcl is None or trimesh is None:
-            raise RuntimeError("FCL_EXACT_PAD_MESH requires python-fcl and trimesh")
+        if fcl is None:
+            raise RuntimeError("FCL_EXACT_PAD_MESH requires python-fcl")
         loaded = inputs.object_contract
         mesh = loaded.model.mesh
         certificate = loaded.orientation_certificate
@@ -74,16 +77,51 @@ class ExactPadSurfaceQuery:
         self._object = fcl.CollisionObject(
             build_fcl_bvh_model(mesh.vertices_m, mesh.faces)
         )
-        self._pads = {
-            pad.name: fcl.CollisionObject(
-                build_fcl_bvh_model(pad.points_local_m, pad.faces)
-            )
-            for pad in inputs.hand_contract.pads
-        }
-        object_mesh = trimesh.Trimesh(
-            vertices=mesh.vertices_m, faces=mesh.faces, process=False
+        task_surfaces = getattr(inputs, "task_grip_surfaces", None)
+        geometry = (
+            {
+                pad.name: (
+                    pad.points_local_m,
+                    pad.faces,
+                    np.zeros((len(pad.faces), 3), dtype=np.float64),
+                    np.arange(len(pad.faces), dtype=np.int64),
+                    np.ones(len(pad.faces), dtype=np.bool_),
+                )
+                for pad in inputs.hand_contract.pads
+            }
+            if task_surfaces is None
+            else {
+                pad_name: (
+                    surface.points_local_m,
+                    surface.faces,
+                    surface.face_normals_local,
+                    surface.source_face_indices,
+                    surface.legacy_blue_pad_face_mask,
+                )
+                for pad_name, surface in task_surfaces.items()
+            }
         )
-        self._proximity = trimesh.proximity.ProximityQuery(object_mesh)
+        self._task_surface_mode = task_surfaces is not None
+        self._pads = {
+            name: fcl.CollisionObject(build_fcl_bvh_model(points, faces))
+            for name, (points, faces, _normals, _source, _legacy) in geometry.items()
+        }
+        self._surface_normals_local = {
+            name: np.asarray(row[2]) for name, row in geometry.items()
+        }
+        self._surface_face_count = {
+            name: len(row[1]) for name, row in geometry.items()
+        }
+        self._surface_source_faces = {name: np.asarray(row[3])
+                                      for name, row in geometry.items()}
+        self._surface_legacy_blue = {name: np.asarray(row[4])
+                                     for name, row in geometry.items()}
+        self._proximity = None
+        if trimesh is not None:
+            object_mesh = trimesh.Trimesh(
+                vertices=mesh.vertices_m, faces=mesh.faces, process=False
+            )
+            self._proximity = trimesh.proximity.ProximityQuery(object_mesh)
         self._distance_request = fcl.DistanceRequest(enable_nearest_points=True)
         self._collision_request = fcl.CollisionRequest(
             num_max_contacts=1, enable_contact=True
@@ -108,23 +146,40 @@ class ExactPadSurfaceQuery:
             fcl.distance(self._object, pad, self._distance_request, result)
         )
         face_index = int(result.b1)
+        surface_face_index = int(result.b2)
         if (
             not np.isfinite(distance)
             or not 0 <= face_index < self._face_count
+            or not 0 <= surface_face_index < self._surface_face_count[pad_name]
             or len(result.nearest_points) != 2
         ):
-            raise RuntimeError("exact PAD mesh query returned an invalid witness")
+            raise RuntimeError("exact contact-surface query returned an invalid witness")
         object_point = np.asarray(result.nearest_points[0], dtype=np.float64)
         pad_point = np.asarray(result.nearest_points[1], dtype=np.float64)
+        surface_normal = None
+        if self._task_surface_mode:
+            surface_normal = (
+                transform[:3, :3]
+                @ self._surface_normals_local[pad_name][surface_face_index]
+            )[None, :]
         nearest = NearestSurface(
             point_m=object_point[None, :],
             distance_m=np.asarray((distance,), dtype=np.float64),
             face_index=np.asarray((face_index,), dtype=np.int64),
             intersecting=intersects,
+            surface_face_index=np.asarray((
+                self._surface_source_faces[pad_name][surface_face_index],
+            ), dtype=np.int64),
+            surface_normal_m=surface_normal,
+            surface_legacy_blue_pad=np.asarray((
+                self._surface_legacy_blue[pad_name][surface_face_index],
+            ), dtype=np.bool_),
         )
         return nearest, pad_point, self.normal(face_index)
 
     def query_points(self, points_object_m: np.ndarray) -> tuple[NearestSurface, np.ndarray]:
+        if self._proximity is None:
+            raise RuntimeError("dense surface fallback requires trimesh")
         points = np.asarray(points_object_m, dtype=np.float64)
         if points.ndim != 2 or points.shape[1] != 3 or not np.all(np.isfinite(points)):
             raise ValueError("PAD surface samples must be one finite (N,3) array")
@@ -145,7 +200,11 @@ class ExactPadSurfaceQuery:
         return nearest, self._normals[face_index]
 
 
+ExactPadSurfaceQuery = ExactContactSurfaceQuery
+
+
 __all__ = [
+    "ExactContactSurfaceQuery",
     "ExactPadSurfaceQuery",
     "NearestSurface",
     "nearest_motion_compatible_index",

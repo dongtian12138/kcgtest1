@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T15:30:30Z",
+  "updated_at_utc": "2026-08-25T17:36:00Z",
   "started_at_utc": "2026-08-25T15:15:34Z",
   "hard_deadline_utc": "2026-08-26T03:15:34Z",
   "branch": "carts-grasp-nailfree-heightprojected-20260825",
@@ -8,7 +8,7 @@
   "start_commit": "6a356bdfd2f579b79e53ec7e01e0880fe9f75a59",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "NAILFREE_HAND_MODEL_AUDIT",
+  "current_milestone": "HEIGHT_FEASIBILITY_BEFORE_TOPK_INTEGRATION",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -88,7 +88,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "NO_NAILFREE_HEIGHT_FEASIBLE_TASK_AND_ARM_PATH_CANDIDATE_BOUND_YET"
+    "reason": "NO_ACCEPTED_NAILFREE_DYNAMIC_COLLISION_ASSET_OR_HEIGHT_FEASIBLE_TASK_AND_ARM_PATH_CANDIDATE_BOUND_YET"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1215,9 +1215,19 @@
     "old_nail_present_model_preserved": true,
     "old_blue_pad_only_semantics_preserved_as_ablation": true,
     "old_select_before_height_results_invalid_for_production": true,
-    "no_nail_asset_status": "NOT_STARTED",
-    "task_grip_surface_status": "NOT_STARTED",
-    "height_feasibility_before_topk_status": "NOT_STARTED",
+    "no_nail_asset_status": "STATIC_VISUAL_PASS_PHYSICAL_PROPERTIES_PROVISIONAL_COLLISION_RUNTIME_BINDING_REJECTED",
+    "terminal_source_face_count_each": 14192,
+    "removed_nail_assembly_face_count_each": 2356,
+    "nailfree_visual_face_count_each": 11836,
+    "estimated_terminal_mass_kg_f1_f3": 0.0569850585010327,
+    "estimated_terminal_mass_kg_f2": 0.0569972873660585,
+    "mass_com_inertia_claim_scope": "SIMULATION_ESTIMATE_PROVISIONAL_NOT_RUNTIME_BOUND_NOT_HARDWARE_CALIBRATION",
+    "hand_model_audit_sha256": "619ab0a85ef41b5a0e3a79dc0bd4e7da550094c73c4d10e738a5bc5a251a98f8",
+    "collision_runtime_binding_accepted": false,
+    "task_grip_surface_status": "STATIC_SEMANTIC_ACCEPTED_NOT_OBJECT_CONTACT_OR_DYNAMIC_PROOF",
+    "task_grip_surface_face_counts_f1_f2_f3": [2200, 2304, 2199],
+    "task_grip_surface_manifest_sha256": "5d173d8446a4dc2f7648f8f9cd394c3061da5e83dc381f2e9ac01874dcadce17",
+    "height_feasibility_before_topk_status": "IMPLEMENTING",
     "two_object_offline_status": "NOT_STARTED",
     "isaac_asset_smoke_status": "NOT_STARTED",
     "object_a_dynamic_status": "NOT_STARTED",
@@ -1230,7 +1240,7 @@
     "minimum_hold_time_s": 2.0,
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
-  "evidence_level": "TASK_MODEL_CORRECTION_CONTROL_PLANE_ONLY_ISAAC_NOT_STARTED",
+  "evidence_level": "STATIC_NAILFREE_VISUAL_AND_TASK_GRIP_SEMANTICS_ISAAC_NOT_STARTED",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1285,8 +1295,7 @@
     "full_palm_descriptor_and_contact_supervisor": "APPROVE_WITH_EVIDENCE_BOUNDARY"
   },
   "blockers": [
-    "NAILFREE_HAND_MODEL_AUDIT_NOT_YET_PASSED",
-    "TASK_GRIP_SURFACE_NOT_YET_REGISTERED",
+    "NAILFREE_DYNAMIC_COLLISION_AND_INERTIA_RUNTIME_BINDING_NOT_ACCEPTED",
     "HEIGHT_FEASIBILITY_BEFORE_TOPK_NOT_YET_IMPLEMENTED",
     "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND"
   ]

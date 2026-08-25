@@ -1,6 +1,6 @@
 {
   "schema_version": "nailfree_height_projected_manifest_v1",
-  "updated_at_utc": "2026-08-25T15:30:30Z",
+  "updated_at_utc": "2026-08-25T17:36:00Z",
   "execution_window": {
     "id": "NAILFREE_HEIGHT_PROJECTED_12H",
     "started_at_utc": "2026-08-25T15:15:34Z",
@@ -60,15 +60,15 @@
     "minimum_hold_time_s": 2.0
   },
   "current_gates": {
-    "nailfree_hand_model_audit": "NOT_STARTED",
-    "task_grip_surface_audit": "NOT_STARTED",
-    "height_feasibility_before_topk": "NOT_STARTED",
+    "nailfree_hand_model_audit": "STATIC_EXACT_VISUAL_PASS_PHYSICAL_PROPERTIES_PROVISIONAL_RUNTIME_BINDING_REJECTED",
+    "task_grip_surface_audit": "STATIC_SEMANTIC_ACCEPTED_NOT_OBJECT_CONTACT_TESTED",
+    "height_feasibility_before_topk": "IMPLEMENTING",
     "two_object_offline_ranking": "NOT_STARTED",
     "arm_path": "NOT_STARTED",
-    "isaac_research_dynamic": "NOT_STARTED"
+    "isaac_research_dynamic": "NOT_STARTED_COLLISION_ASSET_FAIL_CLOSED"
   },
   "supervision": {
-    "nailfree_geometry": "APPROVE_DETERMINISTIC_TIP_COMPONENT_SEPARATION_WITH_FAIL_CLOSED_SOURCE_IDENTITY",
+    "nailfree_geometry": "APPROVE_EXACT_VISUAL_WITH_PROVISIONAL_PHYSICAL_ESTIMATE_AND_RUNTIME_GATES_CLOSED",
     "height_search": "APPROVE_ANALYTIC_FINITE_TABLE_ENVELOPE_PLUS_BOUNDED_CONTACT_INTERVAL_SEARCH",
     "academic_complexity": "APPROVE_WITH_THREE_SIMPLIFICATIONS",
     "rejected_expansions": [
@@ -77,5 +77,13 @@
       "NEW_CONTINUOUS_COLLISION_PROVER",
       "OPTIONAL_ABLATIONS_BEFORE_FIRST_DYNAMIC"
     ]
+  },
+  "static_evidence": {
+    "hand_model_audit_sha256": "619ab0a85ef41b5a0e3a79dc0bd4e7da550094c73c4d10e738a5bc5a251a98f8",
+    "task_grip_surface_manifest_sha256": "5d173d8446a4dc2f7648f8f9cd394c3061da5e83dc381f2e9ac01874dcadce17",
+    "terminal_source_retained_removed_face_counts": [14192, 11836, 2356],
+    "task_grip_surface_face_counts_f1_f2_f3": [2200, 2304, 2199],
+    "collision_runtime_binding_accepted": false,
+    "isaac_started": false
   }
 }

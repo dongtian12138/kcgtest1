@@ -2,6 +2,7 @@
 
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import TestCase, mock
 
 import numpy as np
@@ -172,3 +173,26 @@ class FastFilterMeshCollisionTest(TestCase):
         self.assertEqual(len(result["pregrasp_pad_clearance_by_name_m"]), 3)
         self.assertLessEqual(
             result["pregrasp_pad_clearance_by_name_m"]["finger_1_pad"], 0.001)
+
+    def test_task_grip_surface_intersection_is_not_hidden_from_path_gate(self) -> None:
+        vertices = np.asarray(((0.0, 0.0, 0.0), (0.01, 0.0, 0.0),
+                               (0.0, 0.01, 0.0)))
+        faces = np.asarray(((0, 1, 2),), dtype=np.int64)
+        object_collision = fast_filter.fcl.CollisionObject(
+            fast_filter.build_fcl_bvh_model(vertices, faces))
+        contact_collision = fast_filter.fcl.CollisionObject(
+            fast_filter.build_fcl_bvh_model(vertices, faces))
+        hand = SimpleNamespace(forward_kinematics=lambda *_args, **_kwargs: {
+            "tip": np.eye(4)
+        })
+        inputs = SimpleNamespace(
+            hand_model=hand, task_grip_surfaces={"finger_1_pad": object()})
+        scene = ({}, {}, object_collision, (), {
+            "finger_1_pad": ("tip", contact_collision)
+        })
+        reason = fast_filter._first_state_collision(
+            inputs, (("APPROACH_00", np.eye(4), np.zeros(1)),), scene)
+        self.assertEqual(
+            reason,
+            "TASK_GRIP_SURFACE_OBJECT_INTERSECTION:APPROACH_00:finger_1_pad",
+        )

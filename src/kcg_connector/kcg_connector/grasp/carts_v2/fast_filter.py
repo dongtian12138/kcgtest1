@@ -12,16 +12,17 @@ except ImportError:  # The fast gate must reject, never silently skip.
     fcl = None
 
 from kcg_connector.grasp.carts_v2.models import (
-    CandidateSeed,
-    ClosurePrediction,
-    FastFilterResult,
-    V2Inputs,
+    CandidateSeed, ClosurePrediction, FastFilterResult, V2Inputs,
     joint_positions_for_phases,
 )
 from kcg_connector.grasp.robust.object_model import load_stl_mesh
+from kcg_connector.grasp.carts_v2.task_grip_surface import task_noncontact_triangles
 
 _NONPAD_POLICY = "FCL_EXACT_NONPAD_AND_SELF_CONTROL_STATES_SAMPLED"
 def _exact_nonpad_surfaces(inputs: V2Inputs) -> dict[str, np.ndarray]:
+    if inputs.task_grip_surfaces is not None:
+        return task_noncontact_triangles(inputs.hand_collision_triangles_by_link,
+                                         inputs.task_grip_surfaces)
     manifest_path = inputs.hand_contract.source_manifest.absolute_path
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     rows = manifest.get("links", ())
@@ -92,6 +93,13 @@ def _prepare_fcl_scene(inputs: V2Inputs):
                     for name, triangles in registered.items()}
     nonpad_objects = {name: fcl.CollisionObject(build_fcl_bvh_model(triangles))
                       for name, triangles in nonpad.items()}
+    contact_geometry = ({pad.name: (pad.link_name, pad.points_local_m, pad.faces)
+                         for pad in inputs.hand_contract.pads}
+                        if inputs.task_grip_surfaces is None else
+                        {name: (row.link_name, row.points_local_m, row.faces)
+                         for name, row in inputs.task_grip_surfaces.items()})
+    contact_objects = {name: (link, fcl.CollisionObject(build_fcl_bvh_model(points, faces)))
+        for name, (link, points, faces) in contact_geometry.items()}
     links = tuple(sorted(self_objects))
     adjacent = {
         tuple(sorted((joint.parent_link, joint.child_link)))
@@ -106,11 +114,11 @@ def _prepare_fcl_scene(inputs: V2Inputs):
     world_from_object = inputs.frozen_world_from_object
     object_collision = fcl.CollisionObject(build_fcl_bvh_model(mesh.vertices_m, mesh.faces),
         fcl.Transform(world_from_object[:3, :3], world_from_object[:3, 3]))
-    return self_objects, nonpad_objects, object_collision, pairs
+    return self_objects, nonpad_objects, object_collision, pairs, contact_objects
 def _first_state_collision(inputs: V2Inputs, states, scene) -> str:
     if scene is None:
         return "FCL_MESH_COLLISION_BACKEND_UNAVAILABLE"
-    self_objects, nonpad_objects, object_collision, pairs = scene
+    self_objects, nonpad_objects, object_collision, pairs, contact_objects = scene
     request = fcl.CollisionRequest(num_max_contacts=1, enable_contact=False)
     for stage, base, joints in states:
         transforms = inputs.hand_model.forward_kinematics(joints, base_transform=base)
@@ -119,6 +127,10 @@ def _first_state_collision(inputs: V2Inputs, states, scene) -> str:
             fcl_transform = fcl.Transform(transform[:3, :3], transform[:3, 3])
             self_objects[link_name].setTransform(fcl_transform)
             nonpad_objects[link_name].setTransform(fcl_transform)
+        for _name, (link_name, collision_object) in contact_objects.items():
+            transform = transforms[link_name]
+            collision_object.setTransform(fcl.Transform(transform[:3, :3],
+                                                        transform[:3, 3]))
         for first, second in pairs:
             if fcl.collide(self_objects[first], self_objects[second], request,
                            fcl.CollisionResult()):
@@ -127,6 +139,12 @@ def _first_state_collision(inputs: V2Inputs, states, scene) -> str:
             if fcl.collide(nonpad_objects[link_name], object_collision, request,
                            fcl.CollisionResult()):
                 return f"NONPAD_HAND_OBJECT_COLLISION:{stage}:{link_name}"
+        task_items = (() if inputs.task_grip_surfaces is None
+                      else sorted(contact_objects.items()))
+        for name, (_link, collision_object) in task_items:
+            if fcl.collide(collision_object, object_collision, request,
+                           fcl.CollisionResult()):
+                return f"TASK_GRIP_SURFACE_OBJECT_INTERSECTION:{stage}:{name}"
     return ""
 def _hard_reasons(inputs: V2Inputs, prediction: ClosurePrediction) -> list[str]:
     if prediction.status != "CLOSURE_SURVIVE":
@@ -220,10 +238,7 @@ def _sampled_hand_states(
             inputs, stop_phases, reference_joint_positions_rad=pregrasp
         )
         largest_change = float(np.max(np.abs(stop_joints - start_joints)))
-        step_count = max(
-            1,
-            int(math.ceil(largest_change / maximum_increment)),
-        )
+        step_count = max(1, int(math.ceil(largest_change / maximum_increment)))
         for step_index in range(1, step_count + 1):
             fraction = step_index / step_count
             sample_phases = list(start_phases)
@@ -279,12 +294,8 @@ def _state_clearance_summary(
     for stage, base, joints in states:
         gap, link_name = _state_table_clearance(inputs, base, joints)
         if gap is not None and (minimum is None or gap < minimum[0]):
-            minimum = (
-                gap,
-                link_name,
-                stage,
-                tuple(float(value) for value in joints),
-            )
+            minimum = (gap, link_name, stage,
+                       tuple(float(value) for value in joints))
         if (
             first_violation is None
             and gap is not None
@@ -301,16 +312,16 @@ def _maximum_joint_increment(
 def _control_increment(inputs: V2Inputs) -> float:
     dynamic = inputs.config.section("dynamic")
     return float(dynamic["finger_maximum_speed_rad_s"]) * float(dynamic["physics_dt_s"])
-def _bounded_pregrasp_states(inputs: V2Inputs, seed: CandidateSeed,
-    phases: tuple[float, float, float]
+def _bounded_pregrasp_states(
+    inputs: V2Inputs, seed: CandidateSeed, phases: tuple[float, float, float]
 ) -> tuple[tuple[str, np.ndarray, np.ndarray], ...]:
     reference = np.asarray(seed.pregrasp_joint_positions_rad, dtype=np.float64)
-    opened = joint_positions_for_phases(
-        inputs, (0.0, 0.0, 0.0), reference_joint_positions_rad=reference)
+    opened = joint_positions_for_phases(inputs, (0.0, 0.0, 0.0),
+                                        reference_joint_positions_rad=reference)
     home = joint_positions_for_phases(inputs, (0.0, 0.0, 0.0),
-        reference_joint_positions_rad=np.zeros_like(reference))
-    target = joint_positions_for_phases(
-        inputs, phases, reference_joint_positions_rad=reference)
+                                      reference_joint_positions_rad=np.zeros_like(reference))
+    target = joint_positions_for_phases(inputs, phases,
+                                        reference_joint_positions_rad=reference)
     approach = _approach_states(inputs, seed, target)
     maximum_increment = _control_increment(inputs)
     if not np.isfinite(maximum_increment) or maximum_increment <= 0.0:
@@ -334,7 +345,7 @@ def _precontact_mesh_report(inputs: V2Inputs, state, scene, pad_objects, pad_cle
     collision_reason = _first_state_collision(inputs, (state,), scene)
     if scene is None or collision_reason:
         return collision_reason, None
-    _self_objects, _nonpad_objects, object_collision, _pairs = scene
+    _self_objects, _nonpad_objects, object_collision, _pairs, _surfaces = scene
     stage, base, joints = state
     transforms = inputs.hand_model.forward_kinematics(joints, base_transform=base)
     collision_request = fcl.CollisionRequest(num_max_contacts=1, enable_contact=False)
@@ -342,8 +353,7 @@ def _precontact_mesh_report(inputs: V2Inputs, state, scene, pad_objects, pad_cle
     too_close = None
     for pad_name, (link_name, collision_object) in pad_objects.items():
         transform = transforms[link_name]
-        collision_object.setTransform(fcl.Transform(transform[:3, :3],
-                                                     transform[:3, 3]))
+        collision_object.setTransform(fcl.Transform(transform[:3, :3], transform[:3, 3]))
         intersects = bool(fcl.collide(collision_object, object_collision,
             collision_request, fcl.CollisionResult()))
         if intersects:
@@ -366,9 +376,7 @@ def fast_filter_pregrasp_paths(
     if settings["nonpad_collision_policy"] != _NONPAD_POLICY:
         raise ValueError("fast-filter non-PAD collision policy changed")
     scene = _prepare_fcl_scene(inputs)
-    pad_objects = {} if scene is None else {pad.name: (pad.link_name,
-        fcl.CollisionObject(build_fcl_bvh_model(pad.points_local_m, pad.faces)))
-        for pad in inputs.hand_contract.pads}
+    pad_objects = {} if scene is None else scene[4]
     configured_maximum = float(inputs.config.section(
         "candidate_generation")["maximum_closure_phase"])
     control_increment = _control_increment(inputs)
@@ -475,11 +483,10 @@ def fast_filter_predictions(
     results: list[FastFilterResult] = []
     for prediction in predictions:
         reasons = _hard_reasons(inputs, prediction)
-        clearance: float | None = None
+        clearance = endpoint_clearance = None
         clearance_link = clearance_stage = ""
         clearance_joints: tuple[float, ...] = ()
         checked_state_count = 0
-        endpoint_clearance: float | None = None
         first_violation: tuple[float, str, str] | None = None
         maximum_increment = 0.0
         if not reasons:
@@ -512,21 +519,18 @@ def fast_filter_predictions(
                 if collision_reason:
                     reasons.append(collision_reason)
         status = "FAST_REJECT" if reasons else "FAST_SURVIVE"
+        sweep_pass = (prediction.status == "CLOSURE_SURVIVE"
+                      and checked_state_count > 0
+                      and (clearance is None or clearance >= -float(
+                          settings["table_penetration_tolerance_m"])))
+        violation = (None, "", "") if first_violation is None else first_violation
         results.append(
             FastFilterResult(
                 candidate_id=prediction.seed.candidate_id,
                 status=status,
                 reasons=tuple(reasons),
                 unresolved_checks=() if reasons else unresolved,
-                sequential_closure_sweep_pass=(
-                    prediction.status == "CLOSURE_SURVIVE"
-                    and checked_state_count > 0
-                    and (
-                        clearance is None
-                        or clearance
-                        >= -float(settings["table_penetration_tolerance_m"])
-                    )
-                ),
+                sequential_closure_sweep_pass=sweep_pass,
                 minimum_table_clearance_m=clearance,
                 minimum_clearance_link=clearance_link,
                 minimum_clearance_finger_stage=clearance_stage,
@@ -534,15 +538,9 @@ def fast_filter_predictions(
                 checked_state_count=checked_state_count,
                 maximum_joint_increment_rad=maximum_increment,
                 endpoint_only_table_clearance_m=endpoint_clearance,
-                first_table_violation_clearance_m=(
-                    None if first_violation is None else first_violation[0]
-                ),
-                first_table_violation_link=(
-                    "" if first_violation is None else first_violation[1]
-                ),
-                first_table_violation_finger_stage=(
-                    "" if first_violation is None else first_violation[2]
-                ),
+                first_table_violation_clearance_m=violation[0],
+                first_table_violation_link=violation[1],
+                first_table_violation_finger_stage=violation[2],
             )
         )
     return tuple(results)

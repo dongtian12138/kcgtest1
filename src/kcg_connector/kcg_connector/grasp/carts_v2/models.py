@@ -31,6 +31,9 @@ from kcg_connector.grasp.robust.object_contract import (
     load_object_contract,
 )
 from kcg_connector.grasp.robust.object_model import file_sha256, load_stl_mesh
+from kcg_connector.grasp.carts_v2.task_grip_surface import (
+    TaskGripSurface, bind_task_hand_variant,
+)
 
 
 _SCHEMA = "carts_grasp_v2"
@@ -130,6 +133,8 @@ class V2Inputs:
     frozen_world_from_object: np.ndarray
     table_xy_bounds_m: np.ndarray
     table_top_z_m: float
+    task_grip_surfaces: Mapping[str, TaskGripSurface] | None = None
+    hand_variant: str = "LEGACY_NAIL_PRESENT"
 
 
 @dataclass(frozen=True)
@@ -162,6 +167,9 @@ class PredictedContact:
     phase_upper: float
     clearance_m: float
     inward_motion_m_per_phase: float
+    hand_surface_face_index: int | None = None
+    hand_surface_normal_object: tuple[float, float, float] | None = None
+    hand_surface_legacy_blue_pad: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -488,6 +496,9 @@ def load_v2_inputs(
     closing = _readonly(closing, np.float64, ndim=2)
     face_roles = build_face_role_map(object_contract, config)
     collision_triangles = _load_hand_collision_triangles(roster, hand_model)
+    task_surfaces, collision_triangles, hand_variant = bind_task_hand_variant(
+        root, inputs, collision_triangles
+    )
     world_from_object, table_bounds, table_top = _load_frozen_scene_geometry(
         root, config, object_id
     )
@@ -504,6 +515,8 @@ def load_v2_inputs(
         frozen_world_from_object=world_from_object,
         table_xy_bounds_m=table_bounds,
         table_top_z_m=table_top,
+        task_grip_surfaces=task_surfaces,
+        hand_variant=hand_variant,
     )
 
 

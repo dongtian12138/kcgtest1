@@ -17,6 +17,9 @@ from kcg_connector.grasp.carts_v2.surface_contact import (
     NearestSurface,
     nearest_motion_compatible_index,
 )
+from kcg_connector.grasp.carts_v2.task_grip_surface import (
+    motion_faces_current_workspace,
+)
 from kcg_connector.grasp.robust.grasp_optimizer import (
     GraspCandidate,
     PlannedPadContact,
@@ -174,8 +177,16 @@ class SequentialClosurePredictor:
                 "surface_query_backend", "LOCAL_CENTROID_BASELINE"
             )
         )
-        if backend not in {"LOCAL_CENTROID_BASELINE", "FCL_EXACT_PAD_MESH"}:
+        if backend not in {
+            "LOCAL_CENTROID_BASELINE",
+            "FCL_EXACT_PAD_MESH",
+            "FCL_EXACT_TASK_GRIP_SURFACE",
+        }:
             raise ValueError(f"unknown closure surface query backend {backend!r}")
+        if (backend == "FCL_EXACT_TASK_GRIP_SURFACE") != (
+            inputs.task_grip_surfaces is not None
+        ):
+            raise ValueError("TASK_GRIP_SURFACE backend and hand variant must be bound together")
         self._surface_query_backend = backend
         self._proximity = (
             _MeshProximityIndex(inputs)
@@ -184,17 +195,29 @@ class SequentialClosurePredictor:
         )
         self._exact_pad_mesh = (
             ExactPadSurfaceQuery(inputs)
-            if backend == "FCL_EXACT_PAD_MESH"
+            if backend in {"FCL_EXACT_PAD_MESH", "FCL_EXACT_TASK_GRIP_SURFACE"}
             else None
         )
+        self._task_surface_mode = inputs.task_grip_surfaces is not None
         count = int(
             inputs.config.section("closure_prediction")["pad_surface_sample_count"]
         )
         self._pad_points: dict[str, np.ndarray] = {}
-        for pad in inputs.hand_contract.pads:
-            centroids = np.mean(pad.points_local_m[pad.faces], axis=1)
-            surface = np.vstack((pad.points_local_m, centroids))
-            self._pad_points[pad.name] = _farthest_surface_points(surface, count)
+        geometry = (
+            {
+                pad.name: (pad.points_local_m, pad.faces)
+                for pad in inputs.hand_contract.pads
+            }
+            if inputs.task_grip_surfaces is None
+            else {
+                name: (surface.points_local_m, surface.faces)
+                for name, surface in inputs.task_grip_surfaces.items()
+            }
+        )
+        for name, (points, faces) in geometry.items():
+            centroids = np.mean(points[faces], axis=1)
+            samples = np.vstack((points, centroids))
+            self._pad_points[name] = _farthest_surface_points(samples, count)
         self._pad_to_phase = {
             pad.name: index for index, pad in enumerate(inputs.hand_contract.pads)
         }
@@ -203,13 +226,9 @@ class SequentialClosurePredictor:
         self, pad_name: str, phases: tuple[float, float, float], base: np.ndarray,
         reference_joint_positions_rad: tuple[float, ...],
     ) -> np.ndarray:
-        joints = joint_positions_for_phases(
-            self.inputs, phases,
-            reference_joint_positions_rad=reference_joint_positions_rad,
+        transform = self._pad_transform(
+            pad_name, phases, base, reference_joint_positions_rad
         )
-        transform = self.inputs.hand_model.pad_transforms(
-            joints, base_transform=base
-        )[pad_name]
         local = self._pad_points[pad_name]
         return local @ transform[:3, :3].T + transform[:3, 3]
 
@@ -221,6 +240,11 @@ class SequentialClosurePredictor:
             self.inputs, phases,
             reference_joint_positions_rad=reference_joint_positions_rad,
         )
+        if self.inputs.task_grip_surfaces is not None:
+            link_name = self.inputs.task_grip_surfaces[pad_name].link_name
+            return self.inputs.hand_model.forward_kinematics(
+                joints, base_transform=base
+            )[link_name]
         return self.inputs.hand_model.pad_transforms(
             joints, base_transform=base
         )[pad_name]
@@ -303,15 +327,36 @@ class SequentialClosurePredictor:
         )
         pad_local = (pad_point - current[:3, 3]) @ current[:3, :3]
         moved_point = pad_local @ moved[:3, :3].T + moved[:3, 3]
-        inward = -float(np.dot((moved_point - pad_point) / delta, normal))
+        motion = (moved_point - pad_point) / delta
+        inward = -float(np.dot(motion, normal))
         minimum = float(self.inputs.config.section("closure_prediction")[
             "minimum_inward_motion_m_per_phase"
         ])
-        if inward >= minimum or nearest.distance_m[0] > float(
+        compatible = inward >= minimum
+        if self._task_surface_mode:
+            if (nearest.surface_normal_m is None
+                    or nearest.surface_legacy_blue_pad is None):
+                raise RuntimeError("TASK_GRIP_SURFACE witness has no hand-side normal")
+            hand_normal = nearest.surface_normal_m[0]
+            tolerance = 64.0 * np.finfo(np.float64).eps
+            compatible = (
+                compatible
+                and motion_faces_current_workspace(
+                    self.inputs.task_grip_surfaces, self.inputs.hand_model,
+                    joint_positions_for_phases(
+                        self.inputs, phases,
+                        reference_joint_positions_rad=reference_joint_positions_rad,
+                    ), base, pad_name, pad_point, hand_normal, motion, minimum,
+                )
+                and float(np.dot(hand_normal, normal)) < -tolerance
+            )
+        if compatible or nearest.distance_m[0] > float(
             self.inputs.config.section("closure_prediction")["contact_distance_m"]
         ):
-            selected = 0 if inward >= minimum else -1
+            selected = 0 if compatible else -1
             return selected, nearest, normal[None, :], np.asarray((inward,))
+        if self._task_surface_mode:
+            return -1, nearest, normal[None, :], np.asarray((inward,))
         local = self._pad_points[pad_name]
         current_points = local @ current[:3, :3].T + current[:3, 3]
         moved_points = local @ moved[:3, :3].T + moved[:3, 3]
@@ -436,12 +481,33 @@ class SequentialClosurePredictor:
                         phase_upper=float(phase),
                         clearance_m=distance,
                         inward_motion_m_per_phase=float(inward[selected]),
+                        hand_surface_face_index=(
+                            None
+                            if nearest.surface_face_index is None
+                            else int(nearest.surface_face_index[selected])
+                        ),
+                        hand_surface_normal_object=(
+                            None
+                            if nearest.surface_normal_m is None
+                            else tuple(
+                                float(value)
+                                for value in nearest.surface_normal_m[selected]
+                            )
+                        ),
+                        hand_surface_legacy_blue_pad=(
+                            None if nearest.surface_legacy_blue_pad is None
+                            else bool(nearest.surface_legacy_blue_pad[selected])
+                        ),
                     )
                     break
                 previous = float(phase)
             if contact is None:
                 reason = (
-                    f"NO_MOTION_COMPATIBLE_PAD_POINT_{pad_name}"
+                    (
+                        f"NO_MOTION_COMPATIBLE_TASK_GRIP_SURFACE_{pad_name}"
+                        if self._task_surface_mode
+                        else f"NO_MOTION_COMPATIBLE_PAD_POINT_{pad_name}"
+                    )
                     if motion_incompatible_contact_seen
                     else f"NO_EFFECTIVE_CONTACT_{pad_name}"
                 )
