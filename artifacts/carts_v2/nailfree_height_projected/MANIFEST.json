@@ -1,6 +1,6 @@
 {
   "schema_version": "nailfree_height_projected_manifest_v1",
-  "updated_at_utc": "2026-08-25T18:40:00Z",
+  "updated_at_utc": "2026-08-25T19:42:48Z",
   "execution_window": {
     "id": "NAILFREE_HEIGHT_PROJECTED_12H",
     "started_at_utc": "2026-08-25T15:15:34Z",
@@ -63,14 +63,14 @@
     "nailfree_hand_model_audit": "STATIC_EXACT_VISUAL_PASS_PHYSICAL_PROPERTIES_PROVISIONAL_RUNTIME_BINDING_REJECTED",
     "task_grip_surface_audit": "STATIC_SEMANTIC_ACCEPTED_NOT_OBJECT_CONTACT_TESTED",
     "height_feasibility_before_topk": "SINGLE_ANGLE_OFFLINE_SAMPLED_PASS_PRODUCTION_INTEGRATION_READY",
-    "two_object_offline_ranking": "NOT_STARTED",
+    "two_object_offline_ranking": "CHECKPOINTED_A_15_OF_91_B_18_OF_91_SAME_COMMIT_AND_CONFIG",
     "arm_path": "NOT_STARTED",
     "isaac_research_dynamic": "NOT_STARTED_COLLISION_ASSET_FAIL_CLOSED"
   },
   "supervision": {
     "nailfree_geometry": "APPROVE_EXACT_VISUAL_WITH_PROVISIONAL_PHYSICAL_ESTIMATE_AND_RUNTIME_GATES_CLOSED",
     "height_search": "APPROVE_ANALYTIC_REACH_OUTER_BOUND_PLUS_EXACT_PROJECTED_REVALIDATION_WITH_EVIDENCE_LIMITS",
-    "academic_complexity": "APPROVE_WITH_THREE_SIMPLIFICATIONS",
+    "academic_complexity": "APPROVE_HEIGHT_OPTIMIZATION_2186_ADDED_NLOC",
     "rejected_expansions": [
       "GENERAL_MESH_REPAIR_FRAMEWORK",
       "FULL_5824_BY_27_BY_MULTIHEIGHT_CARTESIAN_PRODUCT",
