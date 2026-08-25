@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T00:10:10Z",
+  "updated_at_utc": "2026-08-25T00:58:00Z",
   "started_at_utc": "2026-08-24T14:46:08Z",
   "hard_deadline_utc": "2026-08-25T02:46:08Z",
   "branch": "carts-grasp-graspgenx-route1-20260824",
-  "config_sha256": "84eb806a5ef9aaabb5e40e97cc14b4d431afb0adeca9be9e6be12eb10ef8c18d",
+  "config_sha256": "70caae32dacce1f03e8faca39f9de1d5ffdaa71821449a07844568b1f001b1ea",
   "start_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "GRASPGENX_ROUTE1_FULL_OBJECT_MESH_CONDITIONING_CORRECTION",
+  "current_milestone": "GRASPGENX_ROUTE1_FIXED_POOL_CONTACT_GAP_REVIEW",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -69,7 +69,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "multi-descriptor 6D coverage now passes, but control-step-bounded closure predicts zero three-pad allowed-contact candidates for A 256 and B 231 both before and after the coarse scene-PC filter; task, IK, path, and Isaac gates are therefore not reached"
+    "reason": "full-object score-posterior pools retain A/B 256 candidates; bypassing the coarse table screen still yields zero three-pad allowed-contact survivors, so task, IK, path, and Isaac are not reached"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -110,9 +110,9 @@
     "legacy_mixed_parameter_proposal_count_before_merge_per_object": 640,
     "proposal_model_load_count": 1,
     "object_surface_sample_seed_explicit": true,
-    "object_a_point_cloud_sha256": "1e2eec0618b21b247378bacedc4b44e892e83c0fa4ccba290f2e395928b17573",
-    "object_b_point_cloud_sha256": "d2a299076315fe1b7e1cf98004c3883dd0d576210ecdb6c8ec5a7a09b3f07658",
-    "proposal_conditioning_mode": "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD",
+    "object_a_point_cloud_sha256": "3fe94183963e0a176ffd8b3886c704cd16abd1c5e49420f00aed2ff974cda1d6",
+    "object_b_point_cloud_sha256": "6525139f5e4afa5a056fa035e5f5e394cb01beb00a2ee6035945f01812036cb4",
+    "proposal_conditioning_mode": "REGISTERED_FULL_OBJECT_MESH_SURFACE_POINT_CLOUD",
     "downstream_collision_geometry_scope": "FULL_REGISTERED_OBJECT_MESH",
     "collision_scope_claim": "FULL_MESH_IS_USED_BY_DOWNSTREAM_V2_CONTROL_STATE_FCL_NOT_BY_GRASPGENX_PROPOSAL_VISIBILITY",
     "proposal_exact_repeat_pass": null,
@@ -235,6 +235,20 @@
         "maximum_observed_joint_increment_rad": 0.00149818,
         "conclusion": "TOP128_SCORE_TRUNCATION_NOT_CAUSE_OF_ZERO_CLOSURE_SURVIVORS"
       },
+      "task_ik_isaac_status": "NOT_REACHED_NO_THREE_PAD_ALLOWED_CONTACT_CANDIDATE"
+    },
+    "active_full_object_score_posterior_offline": {
+      "route_config_sha256": "70caae32dacce1f03e8faca39f9de1d5ffdaa71821449a07844568b1f001b1ea",
+      "grasp_threshold": -1.0,
+      "object_a_counts": {"proposal_file": 640, "adapted": 256, "scene_retained": 100, "closure_survive": 0, "task_evaluated": 0},
+      "object_b_counts": {"proposal_file": 640, "adapted": 256, "scene_retained": 116, "closure_survive": 0, "task_evaluated": 0},
+      "prefilter_object_a_counts": {"closure_input": 256, "first_pad_no_contact": 220, "second_pad_no_contact": 24, "forbidden_first_contact": 12, "closure_survive": 0},
+      "prefilter_object_b_counts": {"closure_input": 256, "first_pad_no_contact": 240, "second_pad_no_contact": 12, "forbidden_first_contact": 4, "closure_survive": 0},
+      "descriptor_conditioning_tensor_exact_match": true,
+      "descriptor_conditioning_distinct_sha256_count": 5,
+      "abstract_box_object_occupancy_count": {"object_a": 69, "object_b": 56},
+      "one_allowed_pad_contact_count": {"object_a": 24, "object_b": 12},
+      "two_or_three_allowed_pad_contact_count": {"object_a": 0, "object_b": 0},
       "task_ik_isaac_status": "NOT_REACHED_NO_THREE_PAD_ALLOWED_CONTACT_CANDIDATE"
     },
     "object_a_all_visible_raw_pool_existence_check": "COMPLETED_NO_TABLE_SAFE_THREE_PAD_CONTACT",

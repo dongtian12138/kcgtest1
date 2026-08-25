@@ -30,14 +30,14 @@ CHECKPOINT_SHA = "c" * 64
 SEED = 20260824
 INFERENCE_PARAMETERS = {
     "object_sample_point_count": 2048,
-    "object_surface_sample_method": "TRIMESH_ALLOWED_FACE_SAMPLE_EXPLICIT_SEED",
-    "proposal_conditioning_mode": "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD",
+    "object_surface_sample_method": "TRIMESH_FULL_REGISTERED_MESH_SAMPLE_EXPLICIT_SEED",
+    "proposal_conditioning_mode": "REGISTERED_FULL_OBJECT_MESH_SURFACE_POINT_CLOUD",
     "collision_geometry_scope": "FULL_REGISTERED_OBJECT_MESH",
     "num_grasps": 256,
     "keep_per_descriptor": 128,
     "proposal_keep_method": "HIGHEST_SCORE_PER_DESCRIPTOR",
     "proposal_visibility_method": "OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_DIAGNOSTIC_ONLY",
-    "grasp_threshold": 0.7,
+    "grasp_threshold": -1.0,
     "topk_num_grasps": -1,
     "moe_num_yaws": 36,
     "moe_z_offsets_cm": [-2, 0],
@@ -71,10 +71,10 @@ class _Config:
                 "graspgenx": {
                     "object_sample_point_count": 2048,
                     "object_surface_sample_method": (
-                        "TRIMESH_ALLOWED_FACE_SAMPLE_EXPLICIT_SEED"
+                        "TRIMESH_FULL_REGISTERED_MESH_SAMPLE_EXPLICIT_SEED"
                     ),
                 "proposal_conditioning_mode": (
-                    "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD"
+                    "REGISTERED_FULL_OBJECT_MESH_SURFACE_POINT_CLOUD"
                 ),
                     "downstream_collision_geometry_scope": (
                         "FULL_REGISTERED_OBJECT_MESH"
@@ -208,7 +208,7 @@ def adapter_case(tmp_path: Path):
         "standardized_mesh_sha256": object_row["standardized_mesh_sha256"],
         "object_point_cloud_sha256": "1" * 64,
         "full_object_point_cloud_sha256": "2" * 64,
-        "proposal_conditioning_mode": "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD",
+        "proposal_conditioning_mode": "REGISTERED_FULL_OBJECT_MESH_SURFACE_POINT_CLOUD",
         "collision_geometry_scope": "FULL_REGISTERED_OBJECT_MESH",
         "allowed_face_count": object_row["allowed_face_count"],
         "allowed_surface_area_m2": object_row["allowed_surface_area_m2"],

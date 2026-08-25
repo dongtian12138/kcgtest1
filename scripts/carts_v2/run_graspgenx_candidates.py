@@ -32,11 +32,11 @@ _DESCRIPTOR_SCHEMA = "kcg_graspgenx_descriptors_v1"
 _OBJECT_SCHEMA = "graspgenx_carts_objects_v1"
 _KEEP_METHOD = "HIGHEST_SCORE_PER_DESCRIPTOR"
 _VISIBILITY_METHOD = "OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_DIAGNOSTIC_ONLY"
-_SAMPLE_METHOD = "TRIMESH_ALLOWED_FACE_SAMPLE_EXPLICIT_SEED"
-_CONDITIONING_MODE = "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD"
+_SAMPLE_METHOD = "TRIMESH_FULL_REGISTERED_MESH_SAMPLE_EXPLICIT_SEED"
+_CONDITIONING_MODE = "REGISTERED_FULL_OBJECT_MESH_SURFACE_POINT_CLOUD"
 _DOWNSTREAM_COLLISION_SCOPE = "FULL_REGISTERED_OBJECT_MESH"
 _GRASPMOE_PARAMETERS = {
-    "grasp_threshold": 0.7,
+    "grasp_threshold": -1.0,
     "topk_num_grasps": -1,
     "moe_num_yaws": 36,
     "moe_z_offsets_cm": [-2, 0],
@@ -159,16 +159,13 @@ def _load_object(
     )
     if not np.all(np.isfinite(mesh.vertices)) or len(mesh.faces) == 0:
         raise ValueError(f"invalid standardized mesh: {path}")
-    allowed_mesh = trimesh.Trimesh(
-        vertices=vertices_inference, faces=faces[allowed], process=False
-    )
     points, sampled_faces = trimesh.sample.sample_surface(
-        allowed_mesh, int(row["sample_point_count"]), seed=int(seed)
+        mesh, int(row["sample_point_count"]), seed=int(seed)
     )
     if len(points) != int(row["sample_point_count"]) or np.any(
-        (sampled_faces < 0) | (sampled_faces >= len(allowed))
+        (sampled_faces < 0) | (sampled_faces >= len(faces))
     ):
-        raise ValueError("allowed-surface sampling left the registered domain")
+        raise ValueError("full-mesh sampling left the registered domain")
     center = np.mean(points, axis=0)
     centered = np.asarray(points - center, dtype=np.float32)
     point_cloud_sha256 = hashlib.sha256(

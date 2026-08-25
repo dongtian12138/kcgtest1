@@ -1,12 +1,12 @@
 {
   "schema_version": "graspgenx_carts_integration_v1",
-  "updated_at_utc": "2026-08-25T00:10:10Z",
+  "updated_at_utc": "2026-08-25T00:58:00Z",
   "execution_window_id": "GRASPGENX_ROUTE1_12H_UNATTENDED",
   "branch": "carts-grasp-graspgenx-route1-20260824",
   "base_commit": "bd710ee5941f963ee404d6ede236206560f215bf",
   "method_name": "GraspGenX-CARTS",
   "active_route_config": "src/kcg_connector/config/carts_graspgenx_route1.yaml",
-  "active_route_config_sha256": "84eb806a5ef9aaabb5e40e97cc14b4d431afb0adeca9be9e6be12eb10ef8c18d",
+  "active_route_config_sha256": "70caae32dacce1f03e8faca39f9de1d5ffdaa71821449a07844568b1f001b1ea",
   "official_sources": {
     "repository": "https://github.com/NVlabs/GraspGenX.git",
     "paper": "https://arxiv.org/abs/2606.00998",
@@ -60,8 +60,8 @@
     "planner": "graspmoe",
     "random_seed": 20260824,
     "object_sample_point_count": 8192,
-    "object_surface_sample_method": "TRIMESH_ALLOWED_FACE_SAMPLE_EXPLICIT_SEED",
-    "proposal_conditioning_mode": "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD",
+    "object_surface_sample_method": "TRIMESH_FULL_REGISTERED_MESH_SAMPLE_EXPLICIT_SEED",
+    "proposal_conditioning_mode": "REGISTERED_FULL_OBJECT_MESH_SURFACE_POINT_CLOUD",
     "proposal_visibility_method": "OFFICIAL_OPEN_OR_HALF_SWEEP_POINT_CLOUD_DIAGNOSTIC_ONLY",
     "downstream_collision_geometry_scope": "FULL_REGISTERED_OBJECT_MESH",
     "collision_scope_claim": "FULL_MESH_IS_USED_BY_DOWNSTREAM_V2_CONTROL_STATE_FCL_NOT_BY_GRASPGENX_PROPOSAL_VISIBILITY",
@@ -70,7 +70,7 @@
     "proposal_keep_method": "HIGHEST_SCORE_PER_DESCRIPTOR",
     "merged_keep_method": "DESCRIPTOR_APPROACH_STRATA_THEN_6D_FARTHEST_FILL",
     "merged_max_per_object": 256,
-    "grasp_threshold": 0.7,
+    "grasp_threshold": -1.0,
     "topk_num_grasps": -1,
     "moe_num_yaws": 36,
     "moe_z_offsets_cm": [-2, 0],
@@ -140,7 +140,7 @@
     "claim_limit": "VISIBILITY_WAS_INCORRECTLY_USED_AS_A_HARD_GATE; FILES_ARE_UNMODIFIED_ABLATION_EVIDENCE_NOT_CURRENT_METHOD_OUTPUT"
   },
   "current_score_per_descriptor_control_step_offline": {
-    "status": "MULTI_DESCRIPTOR_6D_COVERAGE_PASS_ZERO_THREE_PAD_ALLOWED_CONTACT",
+    "status": "PRESERVED_ALLOWED_SURFACE_ROI_CONDITIONING_ABLATION_SUPERSEDED_BY_FULL_OBJECT_INPUT",
     "route_config_sha256": "84eb806a5ef9aaabb5e40e97cc14b4d431afb0adeca9be9e6be12eb10ef8c18d",
     "generator_runner_sha256": "1cb485c0d2e4b0f9d6f3cd4b1361cff2717efacf323ab5efced24c6f653c9341",
     "adapter_sha256": "34d6c3fd2c3058b85d6841354e65fb83af1544c6559959ccd36577394b2890f8",
@@ -198,6 +198,69 @@
     },
     "claim_limit": "OFFLINE_CONTACT_GEOMETRY_ONLY; TASK_IK_PATH_AND_ISAAC_NOT_REACHED"
   },
+  "current_full_object_score_posterior_offline": {
+    "status": "OFFLINE_COMPLETE_NO_THREE_PAD_CONTACT_SURVIVOR",
+    "route_config_sha256": "70caae32dacce1f03e8faca39f9de1d5ffdaa71821449a07844568b1f001b1ea",
+    "generator_runner_sha256": "eb58654b9c1c6a71ea605f8872852b22177459aff32b9d7d869e8cc4f6dba4b0",
+    "conditioning": "REGISTERED_FULL_OBJECT_MESH_SURFACE_POINT_CLOUD",
+    "grasp_threshold": -1.0,
+    "score_role": "PHYSICS_FEASIBILITY_POSTERIOR_TIE_BREAK_ONLY",
+    "closure_sampling_rule": "DYNAMIC_CONTROL_STEP_BOUNDED",
+    "maximum_joint_increment_rad": 0.0015,
+    "object_a": {
+      "proposal_file_count": 640,
+      "adapted_candidate_count": 256,
+      "descriptor_counts": {"kcg_3f_preshape_00": 59, "kcg_3f_preshape_01": 49, "kcg_3f_preshape_02": 63, "kcg_3f_preshape_03": 43, "kcg_3f_preshape_04": 42},
+      "scene_pc_retained_count": 100,
+      "prefilter_closure_input_count": 256,
+      "prefilter_first_pad_no_contact_count": 220,
+      "prefilter_second_pad_no_contact_count": 24,
+      "prefilter_forbidden_first_contact_count": 12,
+      "closure_survive_count": 0,
+      "task_evaluated_count": 0,
+      "selected_executable_candidate": null,
+      "result_path": "artifacts/carts_v2/graspgenx/offline_score_post_v4_A/result.json",
+      "result_sha256": "271374ef2cc19fb593e8509ecc967a6a230a409b04a682d45a9b4c28916430e4",
+      "prefilter_result_path": "artifacts/carts_v2/graspgenx/offline_score_post_prefilter_A/result.json",
+      "prefilter_result_sha256": "bdedd17c90ecef2760dc32933ad450edd0657d339f1a207cbef9ed84afa21d92"
+    },
+    "object_b": {
+      "proposal_file_count": 640,
+      "adapted_candidate_count": 256,
+      "descriptor_counts": {"kcg_3f_preshape_00": 42, "kcg_3f_preshape_01": 55, "kcg_3f_preshape_02": 62, "kcg_3f_preshape_03": 52, "kcg_3f_preshape_04": 45},
+      "scene_pc_retained_count": 116,
+      "prefilter_closure_input_count": 256,
+      "prefilter_first_pad_no_contact_count": 240,
+      "prefilter_second_pad_no_contact_count": 12,
+      "prefilter_forbidden_first_contact_count": 4,
+      "closure_survive_count": 0,
+      "task_evaluated_count": 0,
+      "selected_executable_candidate": null,
+      "result_path": "artifacts/carts_v2/graspgenx/offline_score_post_v4_B/result.json",
+      "result_sha256": "40acac45fdb5d81f57f437e8873e0db0c520f5d074733f929ae1f99f023e0bb1",
+      "prefilter_result_path": "artifacts/carts_v2/graspgenx/offline_score_post_prefilter_B/result.json",
+      "prefilter_result_sha256": "a6b414604931b6cb6cfa5507a3c2600a0ecd7025d6307d6ee12e26d87bbc6cae"
+    },
+    "runtime_conditioning_tensor_audit": {
+      "generator_backbone": "sweep_volume_v2",
+      "discriminator_backbone": "sweep_volume_v2",
+      "manifest_exact_match_all_descriptors": true,
+      "distinct_sha256_count": 5,
+      "sha256_by_descriptor": {
+        "kcg_3f_preshape_00": "4dfdf012da6c0a474f3c30b1895fb92a065a918e4fb92d1b71a51410c20a7a34",
+        "kcg_3f_preshape_01": "821d9fed7c834cd0330ec493b97f6eef1d5d56e9be900a0d741fcaf41e67079d",
+        "kcg_3f_preshape_02": "453febe90d19cfffaa15d7cafd766457bbfe33145d4f8b0cfa0fe0a0be1d76c9",
+        "kcg_3f_preshape_03": "e3a4111a82a79e483cae4e82b34bb562c4f8128182eeaea6ddf9cb81ac323b42",
+        "kcg_3f_preshape_04": "699d4e4e22adc6bd6481c12f83619d0635dbf919087e56226c0b986d63c4361c"
+      }
+    },
+    "abstract_box_vs_real_pad_cross_check": {
+      "object_a": {"box_contains_registered_object_points": 69, "exactly_one_allowed_pad_contact": 24, "two_or_three_allowed_pad_contacts": 0},
+      "object_b": {"box_contains_registered_object_points": 56, "exactly_one_allowed_pad_contact": 12, "two_or_three_allowed_pad_contacts": 0},
+      "interpretation": "SWEEP_BOX_OCCUPANCY_DOES_NOT_IMPLY_KCG_THREE_PAD_CONTACT"
+    },
+    "claim_limit": "OFFLINE_KINEMATIC_CONTACT_ONLY; TABLE_SWEEP_TASK_IK_PATH_AND_ISAAC_NOT_REACHED"
+  },
   "objects": [
     "current_d38999_26kj61sn_public_spec",
     "te_deutsch_d38999_26fj35pn_step"
@@ -233,30 +296,30 @@
     "inference_frame": "FROZEN_SCENE_WORLD",
     "proposal_output_frame": "REGISTERED_OBJECT_LOCAL",
     "point_cloud_random_seed": 20260824,
-    "proposal_conditioning_mode": "REGISTERED_ALLOWED_SURFACE_ROI_POINT_CLOUD",
+    "proposal_conditioning_mode": "REGISTERED_FULL_OBJECT_MESH_SURFACE_POINT_CLOUD",
     "downstream_collision_geometry_scope": "FULL_REGISTERED_OBJECT_MESH",
     "point_cloud_hash_by_object": {
-      "current_d38999_26kj61sn_public_spec": "1e2eec0618b21b247378bacedc4b44e892e83c0fa4ccba290f2e395928b17573",
-      "te_deutsch_d38999_26fj35pn_step": "d2a299076315fe1b7e1cf98004c3883dd0d576210ecdb6c8ec5a7a09b3f07658"
-    },
-    "legacy_full_object_point_cloud_hash_by_object_audit_only_not_consumed": {
       "current_d38999_26kj61sn_public_spec": "3fe94183963e0a176ffd8b3886c704cd16abd1c5e49420f00aed2ff974cda1d6",
       "te_deutsch_d38999_26fj35pn_step": "6525139f5e4afa5a056fa035e5f5e394cb01beb00a2ee6035945f01812036cb4"
+    },
+    "legacy_allowed_surface_roi_point_cloud_hash_by_object": {
+      "current_d38999_26kj61sn_public_spec": "1e2eec0618b21b247378bacedc4b44e892e83c0fa4ccba290f2e395928b17573",
+      "te_deutsch_d38999_26fj35pn_step": "d2a299076315fe1b7e1cf98004c3883dd0d576210ecdb6c8ec5a7a09b3f07658"
     },
     "allowed_face_domain_sha256_by_object": {
       "current_d38999_26kj61sn_public_spec": "2f7be52f955479bf160d52c603b6bf019fdd735386122f64d4e056ed0141a462",
       "te_deutsch_d38999_26fj35pn_step": "bb94c34f94afaddf9b8a4ac74e2f0de991e89dc02c18c1b9c7e28cccfe07eebb"
     },
     "proposal_sha256_by_object": {
-      "current_d38999_26kj61sn_public_spec": "e29c87e1159afd8b1bdcbfdaacd9807403050150b9354101d1631fd3ef9ca69b",
-      "te_deutsch_d38999_26fj35pn_step": "4d6d11a5fc79d65eb730e70a18c2b1990aa52f65bc41e54165a052986c4a465c"
+      "current_d38999_26kj61sn_public_spec": "b0b2d974d7e806bcd868755de3ee72f1bc9a3eb8c28c2b2fc2f01b91e1b3cab5",
+      "te_deutsch_d38999_26fj35pn_step": "2edbe0a89df36527d235bc125582ec6a0ed3c46574e42caad92aa283405730ea"
     },
     "proposal_path_by_object": {
-      "current_d38999_26kj61sn_public_spec": "artifacts/carts_v2/graspgenx/proposals_score_per_descriptor_v2/current_d38999_26kj61sn_public_spec.json",
-      "te_deutsch_d38999_26fj35pn_step": "artifacts/carts_v2/graspgenx/proposals_score_per_descriptor_v2/te_deutsch_d38999_26fj35pn_step.json"
+      "current_d38999_26kj61sn_public_spec": "artifacts/carts_v2/graspgenx/proposals_full_object_score_post_v4/current_d38999_26kj61sn_public_spec.json",
+      "te_deutsch_d38999_26fj35pn_step": "artifacts/carts_v2/graspgenx/proposals_full_object_score_post_v4/te_deutsch_d38999_26fj35pn_step.json"
     },
     "exact_repeat_candidate_arrays_pass": null,
-    "exact_repeat_scope": "CURRENT_SCORE_PER_DESCRIPTOR_PROPOSAL_FILES_HASH_BOUND_BUT_NOT_INDEPENDENTLY_REGENERATED_TWICE",
+    "exact_repeat_scope": "CURRENT_FULL_OBJECT_PROPOSAL_FILES_HASH_BOUND_BUT_NOT_INDEPENDENTLY_REGENERATED_TWICE",
     "proposal_files_committed": true
   },
   "descriptor_conditioning_config_audit": {
