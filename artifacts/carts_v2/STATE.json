@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T15:07:33Z",
-  "started_at_utc": "2026-08-25T09:11:20Z",
-  "hard_deadline_utc": "2026-08-25T21:11:20Z",
-  "branch": "carts-grasp-full-palm-search-20260825",
-  "config_sha256": "e3789927e6527609c9850ebe85affd3b4326f081e8585d7173295c01dc56c579",
-  "start_commit": "18bb79343e305b0f31cc99cd47594ac01ad095d0",
+  "updated_at_utc": "2026-08-25T15:30:30Z",
+  "started_at_utc": "2026-08-25T15:15:34Z",
+  "hard_deadline_utc": "2026-08-26T03:15:34Z",
+  "branch": "carts-grasp-nailfree-heightprojected-20260825",
+  "config_sha256": null,
+  "start_commit": "6a356bdfd2f579b79e53ec7e01e0880fe9f75a59",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "PARKED",
-  "current_milestone": "SAFE_PAUSE_FOR_TASK_MODEL_REVISION",
+  "status": "IMPLEMENTING",
+  "current_milestone": "NAILFREE_HAND_MODEL_AUDIT",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -31,18 +31,17 @@
     "old_narrow_generator_park_superseded": true
   },
   "execution_window": {
-    "id": "FULL_PALM_6D_SEARCH_12H",
-    "classification": "METHOD_CORRECTION_PLUS_FULL_PALM_CONFIGURATION_SEARCH_PLUS_VISUAL_TRUTH_DIAGNOSIS_PLUS_AUTONOMOUS_ISAAC_VALIDATION",
-    "started_at_utc": "2026-08-25T09:11:20Z",
-    "hard_deadline_utc": "2026-08-25T21:11:20Z",
+    "id": "NAILFREE_HEIGHT_PROJECTED_12H",
+    "classification": "TASK_MODEL_CORRECTION_PLUS_NAIL_FREE_HAND_VARIANT_PLUS_HEIGHT_FEASIBILITY_BEFORE_TOPK_PLUS_CONTACT_SEMANTICS_REVISION_PLUS_AUTONOMOUS_ISAAC_VALIDATION",
+    "started_at_utc": "2026-08-25T15:15:34Z",
+    "hard_deadline_utc": "2026-08-26T03:15:34Z",
     "maximum_duration_s": 43200,
     "automatic_extension_allowed": false,
     "unattended_execution": true,
-    "stop_condition_reached": true,
-    "stopped_at_utc": "2026-08-25T15:04:55Z",
-    "stop_reason": "TASK_MODEL_SUPERSEDED_BY_USER_CONFIRMED_NAIL_FREE_HEIGHT_FIRST_GRASP_DEFINITION",
-    "safe_pause_requested_by_user": true,
-    "supersedes_old_five_configuration_search_as_current_method": true
+    "stop_condition_reached": false,
+    "stopped_at_utc": null,
+    "stop_reason": null,
+    "supersedes_full_palm_nail_present_method_as_current_method": true
   },
   "git_delivery": {
     "workspace_git_directory_writable": true,
@@ -89,7 +88,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "SAFE_PAUSE_FOR_TASK_MODEL_REVISION; current nail-present blue-PAD select-before-height task model is superseded and Isaac was not launched"
+    "reason": "NO_NAILFREE_HEIGHT_FEASIBLE_TASK_AND_ARM_PATH_CANDIDATE_BOUND_YET"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1208,7 +1207,30 @@
       "evidence_scope": "OFFLINE_GEOMETRY_REPLAY_NOT_TASK_OR_DYNAMIC_SUCCESS"
     }
   },
-  "evidence_level": "OLD_TASK_MODEL_OFFLINE_CONTROL_SAFE_PAUSED_AT_89_OF_91_ISAAC_NOT_STARTED",
+  "nailfree_height_projected": {
+    "method_name": "NF-HPGS",
+    "hand_variant": "CONNECTOR_GRASP_NO_NAIL",
+    "contact_semantics": "TASK_GRIP_SURFACE",
+    "same_parameters_two_objects_required": true,
+    "old_nail_present_model_preserved": true,
+    "old_blue_pad_only_semantics_preserved_as_ablation": true,
+    "old_select_before_height_results_invalid_for_production": true,
+    "no_nail_asset_status": "NOT_STARTED",
+    "task_grip_surface_status": "NOT_STARTED",
+    "height_feasibility_before_topk_status": "NOT_STARTED",
+    "two_object_offline_status": "NOT_STARTED",
+    "isaac_asset_smoke_status": "NOT_STARTED",
+    "object_a_dynamic_status": "NOT_STARTED",
+    "object_b_dynamic_status": "NOT_STARTED",
+    "isaac_started": false,
+    "normal_force_operation_cap_n": 12.0,
+    "table_operation_clearance_m": 0.001,
+    "maximum_joint_increment_rad": 0.0015,
+    "lift_distance_m": 0.05,
+    "minimum_hold_time_s": 2.0,
+    "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
+  },
+  "evidence_level": "TASK_MODEL_CORRECTION_CONTROL_PLANE_ONLY_ISAAC_NOT_STARTED",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1263,12 +1285,9 @@
     "full_palm_descriptor_and_contact_supervisor": "APPROVE_WITH_EVIDENCE_BOUNDARY"
   },
   "blockers": [
-    "TASK_MODEL_SUPERSEDED_BY_USER_CONFIRMED_NAIL_FREE_HEIGHT_FIRST_GRASP_DEFINITION",
-    "SAFE_PAUSE_WAITING_FOR_NEW_MASTER_PROMPT",
-    "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_A_ROI_256_THREE_CLOSURE_PREDICTIONS_ZERO_TABLE_SAFE_PATHS",
-    "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_B_ROI_256_ZERO_THREE_PAD_CLOSURE_PREDICTION_SURVIVORS",
-    "FUTURE_DYNAMIC_2MM_TABLE_PENETRATION_ACCEPTANCE_BOUND_HAS_NO_VALIDATED_PROVENANCE",
-    "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND",
-    "NO_GRASPGENX_ISAAC_RUN_BECAUSE_RESEARCH_GATE_IS_CLOSED"
+    "NAILFREE_HAND_MODEL_AUDIT_NOT_YET_PASSED",
+    "TASK_GRIP_SURFACE_NOT_YET_REGISTERED",
+    "HEIGHT_FEASIBILITY_BEFORE_TOPK_NOT_YET_IMPLEMENTED",
+    "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND"
   ]
 }

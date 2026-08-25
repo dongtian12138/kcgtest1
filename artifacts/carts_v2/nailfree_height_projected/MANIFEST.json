@@ -1,0 +1,81 @@
+{
+  "schema_version": "nailfree_height_projected_manifest_v1",
+  "updated_at_utc": "2026-08-25T15:30:30Z",
+  "execution_window": {
+    "id": "NAILFREE_HEIGHT_PROJECTED_12H",
+    "started_at_utc": "2026-08-25T15:15:34Z",
+    "hard_deadline_utc": "2026-08-26T03:15:34Z",
+    "maximum_wall_time_s": 43200,
+    "unattended_execution": true,
+    "automatic_extension_allowed": false
+  },
+  "git": {
+    "branch": "carts-grasp-nailfree-heightprojected-20260825",
+    "start_commit": "6a356bdfd2f579b79e53ec7e01e0880fe9f75a59",
+    "baseline_branch": "carts-grasp-full-palm-search-20260825"
+  },
+  "task_identity": {
+    "method_name": "NF-HPGS",
+    "hand_variant": "CONNECTOR_GRASP_NO_NAIL",
+    "contact_semantics": "TASK_GRIP_SURFACE",
+    "object_ids": [
+      "current_d38999_26kj61sn_public_spec",
+      "te_deutsch_d38999_26fj35pn_step"
+    ],
+    "same_method_and_primary_parameters_required": true,
+    "hardware_authorized": false,
+    "formal_dynamic_pass": false
+  },
+  "preserved_baseline": {
+    "method": "NAIL_PRESENT_PLUS_BLUE_PAD_ONLY_PLUS_SELECT_BEFORE_HEIGHT",
+    "checkpoint_completed_palm_buckets": 89,
+    "checkpoint_planned_palm_buckets": 91,
+    "checkpoint_sha256": "b7a1c2df12e0d7729831fee613ada3f9c2afb1c5653ed55e79665d40d26d642d",
+    "stop_reason": "TASK_MODEL_SUPERSEDED_BY_USER_CONFIRMED_NAIL_FREE_HEIGHT_FIRST_GRASP_DEFINITION",
+    "isaac_started": false,
+    "claim_scope": "OLD_TASK_MODEL_OFFLINE_CONTROL_NOT_GRASP_FAILURE_OR_MECHANICAL_INFEASIBILITY"
+  },
+  "reusable_generator_inputs": {
+    "generator_commit": "b9429097728cb1c430dd78b92edf17ba318aad03",
+    "checkpoint_tree_sha256": "f301fbd4695f4192cff248884f1429520c038ff1cde8601a0bf6f524ba32babe",
+    "object_a_proposal_count": 5824,
+    "object_a_proposal_sha256": "aed02e498d476a79dd7e62c24e2edb6931f33c0862f31f97d298713acc4297d4",
+    "object_b_proposal_count": 5824,
+    "object_b_proposal_sha256": "0086d1be25fb3f74ef292a43676da5900c0bab881923e38eddcfcedf235caeea",
+    "reuse_condition": "ONLY_IF_NAIL_REMOVAL_DOES_NOT_CHANGE_DESCRIPTOR_FRAME_OR_WORKSPACE_SCALE; ALL_OLD_GATE_RESULTS_INVALIDATED"
+  },
+  "fixed_study_parameters": {
+    "palm_configuration_grid_count": 91,
+    "palm_configuration_range_rad": [0.0, 1.57],
+    "finger_preclosure_phases": [0.0, 0.1, 0.2],
+    "preclosure_combination_count": 27,
+    "maximum_exact_preclosures_per_seed": 2,
+    "maximum_precise_candidates_per_palm_angle": 8,
+    "normal_force_operation_cap_n": 12.0,
+    "finger_maximum_speed_rad_s": 0.18,
+    "physics_dt_s": 0.008333333333333333,
+    "maximum_joint_increment_rad": 0.0015,
+    "table_operation_clearance_m": 0.001,
+    "lift_distance_m": 0.05,
+    "minimum_hold_time_s": 2.0
+  },
+  "current_gates": {
+    "nailfree_hand_model_audit": "NOT_STARTED",
+    "task_grip_surface_audit": "NOT_STARTED",
+    "height_feasibility_before_topk": "NOT_STARTED",
+    "two_object_offline_ranking": "NOT_STARTED",
+    "arm_path": "NOT_STARTED",
+    "isaac_research_dynamic": "NOT_STARTED"
+  },
+  "supervision": {
+    "nailfree_geometry": "APPROVE_DETERMINISTIC_TIP_COMPONENT_SEPARATION_WITH_FAIL_CLOSED_SOURCE_IDENTITY",
+    "height_search": "APPROVE_ANALYTIC_FINITE_TABLE_ENVELOPE_PLUS_BOUNDED_CONTACT_INTERVAL_SEARCH",
+    "academic_complexity": "APPROVE_WITH_THREE_SIMPLIFICATIONS",
+    "rejected_expansions": [
+      "GENERAL_MESH_REPAIR_FRAMEWORK",
+      "FULL_5824_BY_27_BY_MULTIHEIGHT_CARTESIAN_PRODUCT",
+      "NEW_CONTINUOUS_COLLISION_PROVER",
+      "OPTIONAL_ABLATIONS_BEFORE_FIRST_DYNAMIC"
+    ]
+  }
+}
