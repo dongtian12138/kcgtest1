@@ -1,0 +1,688 @@
+{
+  "audit_images": {
+    "removed_nail_highlight": {
+      "path": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/removed_nail_highlight.png",
+      "sha256": "c91028473d8413ac8610135b764f8f9c854bd906855b27a0a5d3c536e3378024"
+    },
+    "three_views": {
+      "path": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/nailfree_three_views.png",
+      "sha256": "03eac499fe4b9d3967cb94c5857dfb88bcddfd89bd6ab4e282b7ea00ed98c28f"
+    }
+  },
+  "collision_runtime_binding_accepted": false,
+  "dynamic_grasp_claimed": false,
+  "evidence_level": "STATIC_GEOMETRY_ONLY",
+  "formal_dynamic_pass": false,
+  "hand_variant": "CONNECTOR_GRASP_NO_NAIL",
+  "hardware_authorized": false,
+  "limitations": [
+    "Authored STL is non-manifold; the matched watertight voxel unions are simulation estimates.",
+    "Exact retained visual faces carry semantics and offline triangle checks.",
+    "The watertight voxel unions are numerical volume estimates, not exact or conservative collision surfaces.",
+    "Voxel pitch and simplification tolerance are numerical choices without a hardware-tolerance claim.",
+    "Mass, COM and inertia subtract the estimated removed assembly from the bound old URDF baseline.",
+    "The estimated inertial values remain provisional until runtime model review and binding.",
+    "The two mounting posts are simulation geometry identities, not a hardware BOM claim.",
+    "Collision decomposition is a separate fail-closed milestone.",
+    "No URDF/Xacro runtime binding is performed by this builder."
+  ],
+  "links": [
+    {
+      "closed_physical_face_count": 56538,
+      "closed_physical_output": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/volume_estimate_sources/f1Link3_nailfree_closed.stl",
+      "closed_physical_output_sha256": "7f8cd81cf61647a07c3bb5f4e294693e3f1714c8e6dbf4b7e653dd491c5b1289",
+      "closed_physical_surface_deviation": {
+        "closed_to_raw": {
+          "maximum_m": 0.00032706316637451036,
+          "p95_m": 0.0002555991320241943,
+          "rms_m": 0.00017763880864092563
+        },
+        "raw_to_closed": {
+          "maximum_m": 0.0017022447986394784,
+          "p95_m": 0.00112603459429393,
+          "rms_m": 0.00040443983351654683
+        }
+      },
+      "closed_physical_watertight": true,
+      "closed_union_method": {
+        "interpretation": "NUMERICAL_CLOSED_VOLUME_ESTIMATE_NOT_COLLISION_ACCEPTANCE",
+        "manifold3d_version": "3.5.2",
+        "manifold_simplify_tolerance_m": 5e-05,
+        "trimesh_version": "5.0.0",
+        "voxel_pitch_m": 0.00025
+      },
+      "inside_removed_sample_distance_to_retained_raw_max_m": 0.00026149208779688055,
+      "mass_properties": {
+        "hardware_calibration_claimed": false,
+        "method": "SIMULATION_ESTIMATE_SUBTRACT_REMOVED_ASSEMBLY_FROM_BOUND_OLD_URDF_INERTIA_USING_MATCHED_VOXEL_UNION_MASS_RATIO_NOT_HARDWARE_CALIBRATION",
+        "new_closed_union_volume_m3": 1.6590102781713515e-05,
+        "new_com_m": [
+          -0.01628615393284205,
+          -0.020433286736678404,
+          0.011998981529948431
+        ],
+        "new_inertia_at_com_kg_m2": [
+          [
+            1.610527542600085e-05,
+            1.0644246429017959e-05,
+            9.073734763352293e-09
+          ],
+          [
+            1.0644246429017959e-05,
+            1.1690129186866294e-05,
+            1.206423252882566e-08
+          ],
+          [
+            9.073734763352293e-09,
+            1.206423252882566e-08,
+            2.2763352718985488e-05
+          ]
+        ],
+        "new_inertia_eigenvalues_kg_m2": [
+          3.0269444842318467e-06,
+          2.2763246311726114e-05,
+          2.4768566535894668e-05
+        ],
+        "new_mass_kg": 0.0569850585010327,
+        "old_closed_union_volume_m3": 1.6850356640160248e-05,
+        "old_mass_kg": 0.057879,
+        "old_urdf_com_m": [
+          -0.016803,
+          -0.020891,
+          0.011999
+        ],
+        "old_urdf_inertia_at_com_kg_m2": [
+          [
+            1.6904e-05,
+            9.7694e-06,
+            9.1101e-09
+          ],
+          [
+            9.7694e-06,
+            1.2703e-05,
+            1.2096e-08
+          ],
+          [
+            9.1101e-09,
+            1.2096e-08,
+            2.4528e-05
+          ]
+        ],
+        "removed_nail_assembly_mass_kg": 0.0008939414989672999,
+        "removed_shape_com_m": [
+          -0.0497497905976493,
+          -0.05006831989980465,
+          0.012000177389091253
+        ],
+        "removed_shape_inertia_at_com_kg_m2": [
+          [
+            2.5759423377120507e-08,
+            -2.0205148212906917e-09,
+            1.1441912094997068e-12
+          ],
+          [
+            -2.0205148212906917e-09,
+            2.728294013113823e-08,
+            5.760958895167288e-13
+          ],
+          [
+            1.1441912094997068e-12,
+            5.760958895167288e-13,
+            6.094259907233645e-09
+          ]
+        ],
+        "removed_shape_volume_m3": 2.926653796299372e-07,
+        "runtime_binding_accepted": false
+      },
+      "mounting_identity_tolerance_m": 2e-05,
+      "mounting_post_to_shell_minimum_distances_m": [
+        5.805639359014492e-06,
+        1.552265404891601e-05
+      ],
+      "prior_tip_semantic_covers_tool_shell_only": true,
+      "removed_area_m2": 0.00048942874212073,
+      "removed_component_count": 3,
+      "removed_components": [
+        {
+          "area_rank_zero_based": 4,
+          "bounds_m": [
+            [
+              -0.05350880324840546,
+              -0.054157454520463943,
+              0.0030000004917383194
+            ],
+            [
+              -0.045979805290699005,
+              -0.04805669188499451,
+              0.020999999716877937
+            ]
+          ],
+          "centroid_m": [
+            -0.05008446653624259,
+            -0.050518818059198896,
+            0.012000002957698076
+          ],
+          "role": "TOOL_SHELL",
+          "source_component_tuple_index": 155,
+          "source_face_count": 1076,
+          "source_face_index_range_inclusive": [
+            11836,
+            12911
+          ],
+          "source_vertex_count": 534
+        },
+        {
+          "area_rank_zero_based": 7,
+          "bounds_m": [
+            [
+              -0.049494918435811996,
+              -0.05070918798446655,
+              0.005453760735690594
+            ],
+            [
+              -0.04547387361526489,
+              -0.04600265249609947,
+              0.008546238765120506
+            ]
+          ],
+          "centroid_m": [
+            -0.04743380575944459,
+            -0.048648746410620794,
+            0.007000002454744265
+          ],
+          "role": "MOUNTING_POST",
+          "source_component_tuple_index": 156,
+          "source_face_count": 640,
+          "source_face_index_range_inclusive": [
+            12912,
+            13551
+          ],
+          "source_vertex_count": 330
+        },
+        {
+          "area_rank_zero_based": 6,
+          "bounds_m": [
+            [
+              -0.0494966134428978,
+              -0.05071000009775162,
+              0.015451882034540176
+            ],
+            [
+              -0.04547932371497154,
+              -0.046005260199308395,
+              0.018548117950558662
+            ]
+          ],
+          "centroid_m": [
+            -0.04743380380331294,
+            -0.048648745315529936,
+            0.01699999851117071
+          ],
+          "role": "MOUNTING_POST",
+          "source_component_tuple_index": 157,
+          "source_face_count": 640,
+          "source_face_index_range_inclusive": [
+            13552,
+            14191
+          ],
+          "source_vertex_count": 329
+        }
+      ],
+      "removed_effective_volume_m3": 2.1794025998872898e-07,
+      "removed_source_face_count": 2356,
+      "removed_source_vertex_count": 1193,
+      "removed_surface_sample_count": 3549,
+      "removed_surface_samples_inside_closed_physical": 350,
+      "retained_face_count": 11836,
+      "source_component_count": 158,
+      "source_face_count": 14192,
+      "source_is_watertight": false,
+      "source_path": "src/iiwa_description/meshes/hand/f1Link3.STL",
+      "source_sha256": "7a33a6ab46729a2237dd13d99be3bcefb92bb3d4b77bbf9e69d884509cffcdb0",
+      "tip_prior_semantic_npz": "artifacts/agent_control/tasks/D38999-AUTONOMOUS-DYNAMIC-CLOSEOUT-V2/DYN-B-V5-PAD-FORCE-CLOSURE-MULTI-GRASP/BLUE_PAD_SDF_SOURCE_ASSET_V2/f1Link3_TIP_exact_source_local_m.npz",
+      "tip_prior_semantic_npz_sha256": "2cc23d2ae5982e322414dca9befe2f15e18d2752b2701caa20078b130241a1a6",
+      "visual_output": "src/iiwa_description/meshes/hand/connector_no_nail/f1Link3_nailfree.stl",
+      "visual_output_sha256": "965d327c466bec40b898fc4228f8ca240386bab3e8a79af6b48c798db1a0071a"
+    },
+    {
+      "closed_physical_face_count": 68328,
+      "closed_physical_output": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/volume_estimate_sources/f2Link2_nailfree_closed.stl",
+      "closed_physical_output_sha256": "b4558482ccaa4029ab6b87a983f98c0f9939c5c13724fada082f14edccd69e4c",
+      "closed_physical_surface_deviation": {
+        "closed_to_raw": {
+          "maximum_m": 0.0003663084605568424,
+          "p95_m": 0.00025323969947515856,
+          "rms_m": 0.00017698394797522468
+        },
+        "raw_to_closed": {
+          "maximum_m": 0.0017157625542941327,
+          "p95_m": 0.001127477555339689,
+          "rms_m": 0.0003991733519145049
+        }
+      },
+      "closed_physical_watertight": true,
+      "closed_union_method": {
+        "interpretation": "NUMERICAL_CLOSED_VOLUME_ESTIMATE_NOT_COLLISION_ACCEPTANCE",
+        "manifold3d_version": "3.5.2",
+        "manifold_simplify_tolerance_m": 5e-05,
+        "trimesh_version": "5.0.0",
+        "voxel_pitch_m": 0.00025
+      },
+      "inside_removed_sample_distance_to_retained_raw_max_m": 0.0002606846079429638,
+      "mass_properties": {
+        "hardware_calibration_claimed": false,
+        "method": "SIMULATION_ESTIMATE_SUBTRACT_REMOVED_ASSEMBLY_FROM_BOUND_OLD_URDF_INERTIA_USING_MATCHED_VOXEL_UNION_MASS_RATIO_NOT_HARDWARE_CALIBRATION",
+        "new_closed_union_volume_m3": 1.655699191994651e-05,
+        "new_com_m": [
+          -0.012067735620893064,
+          -0.023186330675307888,
+          -0.012000989782710466
+        ],
+        "new_inertia_at_com_kg_m2": [
+          [
+            1.9309129505231925e-05,
+            9.096618098743819e-06,
+            6.632878796538889e-09
+          ],
+          [
+            9.096618098743819e-06,
+            8.512242713265067e-06,
+            1.3636078032474365e-08
+          ],
+          [
+            6.632878796538889e-09,
+            1.3636078032474365e-08,
+            2.2789269349802656e-05
+          ]
+        ],
+        "new_inertia_eigenvalues_kg_m2": [
+          3.3327972955408997e-06,
+          2.278918101444088e-05,
+          2.448866325831786e-05
+        ],
+        "new_mass_kg": 0.0569972873660585,
+        "old_closed_union_volume_m3": 1.68131183012272e-05,
+        "old_mass_kg": 0.057879,
+        "old_urdf_com_m": [
+          -0.012481,
+          -0.023727,
+          -0.012001
+        ],
+        "old_urdf_inertia_at_com_kg_m2": [
+          [
+            2.0429e-05,
+            8.2585e-06,
+            6.6195e-09
+          ],
+          [
+            8.2585e-06,
+            9.1773e-06,
+            1.3619e-08
+          ],
+          [
+            6.6195e-09,
+            1.3619e-08,
+            2.4528e-05
+          ]
+        ],
+        "removed_nail_assembly_mass_kg": 0.0008817126339415007,
+        "removed_shape_com_m": [
+          -0.03919599496249328,
+          -0.05867793943673018,
+          -0.012001660484794263
+        ],
+        "removed_shape_inertia_at_com_kg_m2": [
+          [
+            2.613677166552989e-08,
+            -2.115079555946215e-09,
+            2.419556553423489e-12
+          ],
+          [
+            -2.115079555946215e-09,
+            2.6052532647729296e-08,
+            3.5907822875425266e-12
+          ],
+          [
+            2.419556553423489e-12,
+            3.5907822875425266e-12,
+            5.9921737887769664e-09
+          ]
+        ],
+        "removed_shape_volume_m3": 2.8805532572080813e-07,
+        "runtime_binding_accepted": false
+      },
+      "mounting_identity_tolerance_m": 2e-05,
+      "mounting_post_to_shell_minimum_distances_m": [
+        5.8068695715918025e-06,
+        1.552427468763888e-05
+      ],
+      "prior_tip_semantic_covers_tool_shell_only": true,
+      "removed_area_m2": 0.0004894287418832962,
+      "removed_component_count": 3,
+      "removed_components": [
+        {
+          "area_rank_zero_based": 4,
+          "bounds_m": [
+            [
+              -0.04216170683503151,
+              -0.0633334293961525,
+              -0.020999999716877937
+            ],
+            [
+              -0.03557123988866806,
+              -0.05668039992451668,
+              -0.0030000004917383194
+            ]
+          ],
+          "centroid_m": [
+            -0.039457981631889974,
+            -0.05919182693596748,
+            -0.011999997056240549
+          ],
+          "role": "TOOL_SHELL",
+          "source_component_tuple_index": 155,
+          "source_face_count": 1076,
+          "source_face_index_range_inclusive": [
+            11836,
+            12911
+          ],
+          "source_vertex_count": 534
+        },
+        {
+          "area_rank_zero_based": 7,
+          "bounds_m": [
+            [
+              -0.03909868746995926,
+              -0.058729980140924454,
+              -0.01854623854160309
+            ],
+            [
+              -0.03563450276851654,
+              -0.054220832884311676,
+              -0.015453760512173176
+            ]
+          ],
+          "centroid_m": [
+            -0.037215494321524246,
+            -0.056847809615455804,
+            -0.01699999754979869
+          ],
+          "role": "MOUNTING_POST",
+          "source_component_tuple_index": 156,
+          "source_face_count": 640,
+          "source_face_index_range_inclusive": [
+            12912,
+            13551
+          ],
+          "source_vertex_count": 329
+        },
+        {
+          "area_rank_zero_based": 6,
+          "bounds_m": [
+            [
+              -0.03910050541162491,
+              -0.05873045325279236,
+              -0.00854811817407608
+            ],
+            [
+              -0.035640351474285126,
+              -0.05422234535217285,
+              -0.005451882258057594
+            ]
+          ],
+          "centroid_m": [
+            -0.03721549240296887,
+            -0.05684780798741161,
+            -0.007000001365384884
+          ],
+          "role": "MOUNTING_POST",
+          "source_component_tuple_index": 157,
+          "source_face_count": 640,
+          "source_face_index_range_inclusive": [
+            13552,
+            14191
+          ],
+          "source_vertex_count": 330
+        }
+      ],
+      "removed_effective_volume_m3": 2.179402886688141e-07,
+      "removed_source_face_count": 2356,
+      "removed_source_vertex_count": 1193,
+      "removed_surface_sample_count": 3549,
+      "removed_surface_samples_inside_closed_physical": 332,
+      "retained_face_count": 11836,
+      "source_component_count": 158,
+      "source_face_count": 14192,
+      "source_is_watertight": false,
+      "source_path": "src/iiwa_description/meshes/hand/f2Link2.STL",
+      "source_sha256": "1758619f7ef1369fc3342c7032edee07222f9bdccc187c33830f9fa59bd508b3",
+      "tip_prior_semantic_npz": "artifacts/agent_control/tasks/D38999-AUTONOMOUS-DYNAMIC-CLOSEOUT-V2/DYN-B-V5-PAD-FORCE-CLOSURE-MULTI-GRASP/BLUE_PAD_SDF_SOURCE_ASSET_V2/f2Link2_TIP_exact_source_local_m.npz",
+      "tip_prior_semantic_npz_sha256": "90a7051e40368f4b463f2b5a158a36055aa6ac955344f7432bc11cd297026af4",
+      "visual_output": "src/iiwa_description/meshes/hand/connector_no_nail/f2Link2_nailfree.stl",
+      "visual_output_sha256": "3d11ab9797c2ed6e4c622c3ba6c63b2c9fb8258dbf968326828046efc788e893"
+    },
+    {
+      "closed_physical_face_count": 56538,
+      "closed_physical_output": "artifacts/carts_v2/nailfree_height_projected/hand_model_audit/volume_estimate_sources/f3Link3_nailfree_closed.stl",
+      "closed_physical_output_sha256": "7f8cd81cf61647a07c3bb5f4e294693e3f1714c8e6dbf4b7e653dd491c5b1289",
+      "closed_physical_surface_deviation": {
+        "closed_to_raw": {
+          "maximum_m": 0.00032706316637451036,
+          "p95_m": 0.0002555991320241943,
+          "rms_m": 0.00017764006206568095
+        },
+        "raw_to_closed": {
+          "maximum_m": 0.0017022447986394784,
+          "p95_m": 0.00112603459429393,
+          "rms_m": 0.00040443983351654754
+        }
+      },
+      "closed_physical_watertight": true,
+      "closed_union_method": {
+        "interpretation": "NUMERICAL_CLOSED_VOLUME_ESTIMATE_NOT_COLLISION_ACCEPTANCE",
+        "manifold3d_version": "3.5.2",
+        "manifold_simplify_tolerance_m": 5e-05,
+        "trimesh_version": "5.0.0",
+        "voxel_pitch_m": 0.00025
+      },
+      "inside_removed_sample_distance_to_retained_raw_max_m": 0.00026149208779688055,
+      "mass_properties": {
+        "hardware_calibration_claimed": false,
+        "method": "SIMULATION_ESTIMATE_SUBTRACT_REMOVED_ASSEMBLY_FROM_BOUND_OLD_URDF_INERTIA_USING_MATCHED_VOXEL_UNION_MASS_RATIO_NOT_HARDWARE_CALIBRATION",
+        "new_closed_union_volume_m3": 1.6590102781713515e-05,
+        "new_com_m": [
+          -0.01628615393284205,
+          -0.020433286736678404,
+          0.011998981529948431
+        ],
+        "new_inertia_at_com_kg_m2": [
+          [
+            1.610527542600085e-05,
+            1.0644246429017959e-05,
+            9.073734763352293e-09
+          ],
+          [
+            1.0644246429017959e-05,
+            1.1690129186866294e-05,
+            1.206423252882566e-08
+          ],
+          [
+            9.073734763352293e-09,
+            1.206423252882566e-08,
+            2.2763352718985488e-05
+          ]
+        ],
+        "new_inertia_eigenvalues_kg_m2": [
+          3.0269444842318467e-06,
+          2.2763246311726114e-05,
+          2.4768566535894668e-05
+        ],
+        "new_mass_kg": 0.0569850585010327,
+        "old_closed_union_volume_m3": 1.6850356640160248e-05,
+        "old_mass_kg": 0.057879,
+        "old_urdf_com_m": [
+          -0.016803,
+          -0.020891,
+          0.011999
+        ],
+        "old_urdf_inertia_at_com_kg_m2": [
+          [
+            1.6904e-05,
+            9.7694e-06,
+            9.1101e-09
+          ],
+          [
+            9.7694e-06,
+            1.2703e-05,
+            1.2096e-08
+          ],
+          [
+            9.1101e-09,
+            1.2096e-08,
+            2.4528e-05
+          ]
+        ],
+        "removed_nail_assembly_mass_kg": 0.0008939414989672999,
+        "removed_shape_com_m": [
+          -0.0497497905976493,
+          -0.05006831989980465,
+          0.012000177389091253
+        ],
+        "removed_shape_inertia_at_com_kg_m2": [
+          [
+            2.5759423377120507e-08,
+            -2.0205148212906917e-09,
+            1.1441912094997068e-12
+          ],
+          [
+            -2.0205148212906917e-09,
+            2.728294013113823e-08,
+            5.760958895167288e-13
+          ],
+          [
+            1.1441912094997068e-12,
+            5.760958895167288e-13,
+            6.094259907233645e-09
+          ]
+        ],
+        "removed_shape_volume_m3": 2.926653796299372e-07,
+        "runtime_binding_accepted": false
+      },
+      "mounting_identity_tolerance_m": 2e-05,
+      "mounting_post_to_shell_minimum_distances_m": [
+        5.805639359014492e-06,
+        1.552265404891601e-05
+      ],
+      "prior_tip_semantic_covers_tool_shell_only": true,
+      "removed_area_m2": 0.00048942874212073,
+      "removed_component_count": 3,
+      "removed_components": [
+        {
+          "area_rank_zero_based": 4,
+          "bounds_m": [
+            [
+              -0.05350880324840546,
+              -0.054157454520463943,
+              0.0030000004917383194
+            ],
+            [
+              -0.045979805290699005,
+              -0.04805669188499451,
+              0.020999999716877937
+            ]
+          ],
+          "centroid_m": [
+            -0.05008446653624259,
+            -0.050518818059198896,
+            0.012000002957698076
+          ],
+          "role": "TOOL_SHELL",
+          "source_component_tuple_index": 155,
+          "source_face_count": 1076,
+          "source_face_index_range_inclusive": [
+            11836,
+            12911
+          ],
+          "source_vertex_count": 534
+        },
+        {
+          "area_rank_zero_based": 7,
+          "bounds_m": [
+            [
+              -0.049494918435811996,
+              -0.05070918798446655,
+              0.005453760735690594
+            ],
+            [
+              -0.04547387361526489,
+              -0.04600265249609947,
+              0.008546238765120506
+            ]
+          ],
+          "centroid_m": [
+            -0.04743380575944459,
+            -0.048648746410620794,
+            0.007000002454744265
+          ],
+          "role": "MOUNTING_POST",
+          "source_component_tuple_index": 156,
+          "source_face_count": 640,
+          "source_face_index_range_inclusive": [
+            12912,
+            13551
+          ],
+          "source_vertex_count": 330
+        },
+        {
+          "area_rank_zero_based": 6,
+          "bounds_m": [
+            [
+              -0.0494966134428978,
+              -0.05071000009775162,
+              0.015451882034540176
+            ],
+            [
+              -0.04547932371497154,
+              -0.046005260199308395,
+              0.018548117950558662
+            ]
+          ],
+          "centroid_m": [
+            -0.04743380380331294,
+            -0.048648745315529936,
+            0.01699999851117071
+          ],
+          "role": "MOUNTING_POST",
+          "source_component_tuple_index": 157,
+          "source_face_count": 640,
+          "source_face_index_range_inclusive": [
+            13552,
+            14191
+          ],
+          "source_vertex_count": 329
+        }
+      ],
+      "removed_effective_volume_m3": 2.1794025998872898e-07,
+      "removed_source_face_count": 2356,
+      "removed_source_vertex_count": 1193,
+      "removed_surface_sample_count": 3549,
+      "removed_surface_samples_inside_closed_physical": 350,
+      "retained_face_count": 11836,
+      "source_component_count": 158,
+      "source_face_count": 14192,
+      "source_is_watertight": false,
+      "source_path": "src/iiwa_description/meshes/hand/f3Link3.STL",
+      "source_sha256": "93645443cff113b8c6e5a0280e3270192831d04246233cc45d9745c6e3c7d16e",
+      "tip_prior_semantic_npz": "artifacts/agent_control/tasks/D38999-AUTONOMOUS-DYNAMIC-CLOSEOUT-V2/DYN-B-V5-PAD-FORCE-CLOSURE-MULTI-GRASP/BLUE_PAD_SDF_SOURCE_ASSET_V2/f3Link3_TIP_exact_source_local_m.npz",
+      "tip_prior_semantic_npz_sha256": "2cc23d2ae5982e322414dca9befe2f15e18d2752b2701caa20078b130241a1a6",
+      "visual_output": "src/iiwa_description/meshes/hand/connector_no_nail/f3Link3_nailfree.stl",
+      "visual_output_sha256": "62d7aa934e7516f83d884adfe6f518e446d3db612d41bd81edfee96ed2f7e27b"
+    }
+  ],
+  "mass_property_interpretation": "SIMULATION_ESTIMATE_SUBTRACT_REMOVED_ASSEMBLY_FROM_BOUND_OLD_URDF_INERTIA_USING_MATCHED_VOXEL_UNION_MASS_RATIO_NOT_HARDWARE_CALIBRATION",
+  "removed_role": "USER_CONFIRMED_REMOVABLE_TOOL_SHELL_AND_MOUNTING_POSTS",
+  "schema_version": "carts_nailfree_hand_model_audit_v2",
+  "source_assets_modified": false,
+  "status": "STATIC_VISUAL_COMPLETE_PHYSICAL_ESTIMATE_PROVISIONAL_NOT_RUNTIME_BOUND",
+  "xacro_modified": false
+}
