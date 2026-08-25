@@ -173,8 +173,12 @@ def select_diverse_predictions(
     """Keep at most the formal budget after closure and full-sweep rejection."""
 
     filter_by_id = {row.candidate_id: row for row in filters}
-    thresholds = inputs.config.section("candidate_generation")["deduplication"]
-    limit = int(inputs.config.section("candidate_generation")["candidate_count"])
+    generation = inputs.config.section("candidate_generation")
+    thresholds = generation["deduplication"]
+    limit = int(generation["candidate_count"])
+    if generation.get("backend") == "GRASPGENX_FULL_PALM":
+        palm = generation["palm_configuration"]
+        limit = int(palm["grid_count"]) * int(palm["precise_closure_per_angle"])
     accepted: list[ClosurePrediction] = []
     rejected: dict[str, str] = {}
     for prediction in predictions:

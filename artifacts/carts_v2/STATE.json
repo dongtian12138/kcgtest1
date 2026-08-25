@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T10:35:40Z",
+  "updated_at_utc": "2026-08-25T11:38:50Z",
   "started_at_utc": "2026-08-25T09:11:20Z",
   "hard_deadline_utc": "2026-08-25T21:11:20Z",
   "branch": "carts-grasp-full-palm-search-20260825",
@@ -1080,7 +1080,7 @@
     "pregrasp_combination_count": 27,
     "refinement_seed_budget_per_object": 64,
     "refinement_evaluation_budget_per_seed": 300,
-    "budget_semantics": "CASCADE_LIMITS_NOT_CARTESIAN_PRODUCT; refinement Stage A plus Stage B share the 300 evaluation limit",
+    "budget_semantics": "DIRECT_CASCADE_27_PREGRASP_PLUS_1_PRECISE_CANDIDATE_CALLS; INTERNAL_CONTROL_STATES_EXCLUDED; RESCUE_REFINEMENT_ALONE_HAS_300_GEOMETRY_EVALUATIONS",
     "direct_candidate_before_refinement": true,
     "contact_normal_source": "CERTIFICATE_ORIENTED_MATERIAL_SURFACE_TRIANGLE",
     "empty_eligible_contact_policy": "FAIL_CLOSED_NO_PAD_ELIGIBLE_CONTACT",
@@ -1088,7 +1088,7 @@
     "old_five_descriptor_results_preserved_as_baseline": true,
     "old_axisymmetric_results_preserved_as_baseline": true,
     "supervisor_review": "APPROVE_WITH_CASCADE_BUDGETS_AND_RESCUE_ONLY_REFINEMENT",
-    "implementation_status": "AB_91_CONFIGURATION_PROPOSALS_OFFLINE_PASS_PHYSICS_CASCADE_IN_PROGRESS",
+    "implementation_status": "AB_91_CONFIGURATION_PROPOSALS_OFFLINE_PASS_PREGRASP_GATE_BOUND_OBJECT_A_FULL_CASCADE_NEXT",
     "descriptor_audit": {
       "status": "OFFLINE_PASS",
       "schema_version": "kcg_graspgenx_descriptors_v2",
@@ -1125,6 +1125,41 @@
       "object_b_sha256": "0086d1be25fb3f74ef292a43676da5900c0bab881923e38eddcfcedf235caeea",
       "object_b_size_bytes": 4337528,
       "claim_scope": "SIX_D_GENERATOR_PROPOSALS_NOT_COLLISION_CONTACT_TASK_IK_OR_DYNAMIC_EVIDENCE"
+    },
+    "proposal_distance_diagnostic": {
+      "status": "DIAGNOSTIC_ONLY_NOT_A_HARD_REJECT",
+      "object_a_descriptor_aabb_sphere_disjoint_count": 4614,
+      "object_a_descriptor_aabb_sphere_disjoint_fraction": 0.7922,
+      "object_b_descriptor_aabb_sphere_disjoint_count": 4714,
+      "object_b_descriptor_aabb_sphere_disjoint_fraction": 0.8094,
+      "obb_branch_disjoint_fraction_both_objects": 0.0,
+      "reason_not_a_gate": "DESCRIPTOR_OPEN_HALF_AABB_DOES_NOT_CERTIFY_COMPLETE_PHYSICAL_PAD_REACHABLE_VOLUME"
+    },
+    "pregrasp_path_gate": {
+      "status": "OFFLINE_PUBLIC_GATE_BOUND_ZERO_DEGREE_SMOKE_PASS_COMMON_PALM_PATH_DEDUPED",
+      "required_checks": [
+        "FIXED_FAR_HANDBASE_PALM_THEN_PRESHAPE_MOTION",
+        "SAMPLED_APPROACH_TABLE",
+        "NONPAD_OBJECT",
+        "NONADJACENT_SELF_COLLISION",
+        "PAD_OBJECT_PRECONTACT",
+        "REMAINING_CLOSURE"
+      ],
+      "runner_private_import_or_collision_copy_allowed": false,
+      "common_palm_path_collision_and_fk_queries_reused_per_candidate": true,
+      "phase_zero_budget_probe_scope": "ONE_REAL_MESH_PREGRASP_SNAPSHOT_NOT_PATH_SAFETY",
+      "isaac_home_to_far_arm_hand_synchronization_verified": false,
+      "candidate_level_call_limit": 28,
+      "internal_control_states_count_as_candidate_calls": false,
+      "zero_degree_smoke": {
+        "candidate_count": 8,
+        "pregrasp_variant_count": 216,
+        "checked_control_state_count": 30645,
+        "fast_survive_variant_count": 84,
+        "table_reject_variant_count": 132,
+        "elapsed_s": 63.8122,
+        "claim_scope": "SAMPLED_PREGRASP_PATH_GATE_NOT_THREE_PAD_CONTACT_OR_GRASP_SUCCESS"
+      }
     },
     "visual_truth_audit": {
       "status": "OFFLINE_VISUAL_AUDIT_PASS_B_REAL_SWEEP_A_OLD_DESCRIPTOR_CONTACT_DEFICIT_CONFIRMED",
@@ -1207,7 +1242,7 @@
     "full_palm_descriptor_and_contact_supervisor": "APPROVE_WITH_EVIDENCE_BOUNDARY"
   },
   "blockers": [
-    "FULL_PALM_CASCADE_NOT_YET_BOUND_TO_ACTUAL_PROPOSALS",
+    "OBJECT_A_FULL_POOL_PREGRASP_AND_CLOSURE_CASCADE_NOT_YET_RUN",
     "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_A_ROI_256_THREE_CLOSURE_PREDICTIONS_ZERO_TABLE_SAFE_PATHS",
     "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_B_ROI_256_ZERO_THREE_PAD_CLOSURE_PREDICTION_SURVIVORS",
     "FUTURE_DYNAMIC_2MM_TABLE_PENETRATION_ACCEPTANCE_BOUND_HAS_NO_VALIDATED_PROVENANCE",

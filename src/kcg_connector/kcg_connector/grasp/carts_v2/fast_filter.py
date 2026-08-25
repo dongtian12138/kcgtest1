@@ -1,7 +1,5 @@
 """Cheap hard rejection for all V2 candidates; never a safety certificate."""
-
 from __future__ import annotations
-
 import itertools
 import json
 import math
@@ -14,6 +12,7 @@ except ImportError:  # The fast gate must reject, never silently skip.
     fcl = None
 
 from kcg_connector.grasp.carts_v2.models import (
+    CandidateSeed,
     ClosurePrediction,
     FastFilterResult,
     V2Inputs,
@@ -22,8 +21,6 @@ from kcg_connector.grasp.carts_v2.models import (
 from kcg_connector.grasp.robust.object_model import load_stl_mesh
 
 _NONPAD_POLICY = "FCL_EXACT_NONPAD_AND_SELF_CONTROL_STATES_SAMPLED"
-
-
 def _exact_nonpad_surfaces(inputs: V2Inputs) -> dict[str, np.ndarray]:
     manifest_path = inputs.hand_contract.source_manifest.absolute_path
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -72,8 +69,6 @@ def _exact_nonpad_surfaces(inputs: V2Inputs) -> dict[str, np.ndarray]:
         keep[indices] = False
         result[link_name] = np.asarray(mesh.face_vertices_m[keep], dtype=np.float64)
     return result
-
-
 def build_fcl_bvh_model(vertices: np.ndarray, faces: np.ndarray | None = None):
     """Build the one shared python-fcl triangle BVH representation."""
 
@@ -88,8 +83,6 @@ def build_fcl_bvh_model(vertices: np.ndarray, faces: np.ndarray | None = None):
                       np.ascontiguousarray(faces, dtype=np.int32))
     model.endModel()
     return model
-
-
 def _prepare_fcl_scene(inputs: V2Inputs):
     if fcl is None:
         return None
@@ -114,8 +107,6 @@ def _prepare_fcl_scene(inputs: V2Inputs):
     object_collision = fcl.CollisionObject(build_fcl_bvh_model(mesh.vertices_m, mesh.faces),
         fcl.Transform(world_from_object[:3, :3], world_from_object[:3, 3]))
     return self_objects, nonpad_objects, object_collision, pairs
-
-
 def _first_state_collision(inputs: V2Inputs, states, scene) -> str:
     if scene is None:
         return "FCL_MESH_COLLISION_BACKEND_UNAVAILABLE"
@@ -137,8 +128,6 @@ def _first_state_collision(inputs: V2Inputs, states, scene) -> str:
                            fcl.CollisionResult()):
                 return f"NONPAD_HAND_OBJECT_COLLISION:{stage}:{link_name}"
     return ""
-
-
 def _hard_reasons(inputs: V2Inputs, prediction: ClosurePrediction) -> list[str]:
     if prediction.status != "CLOSURE_SURVIVE":
         return [prediction.reason or "CLOSURE_REJECT"]
@@ -172,18 +161,15 @@ def _hard_reasons(inputs: V2Inputs, prediction: ClosurePrediction) -> list[str]:
     if not np.all(np.isfinite(prediction.seed.object_from_hand_matrix())):
         reasons.append("NONFINITE_PALM_POSE")
     return reasons
-
-
-def _sampled_hand_states(
-    inputs: V2Inputs, prediction: ClosurePrediction
+def _approach_states(
+    inputs: V2Inputs, seed: CandidateSeed, joints: np.ndarray
 ) -> tuple[tuple[str, np.ndarray, np.ndarray], ...]:
     settings = inputs.config.section("fast_filter")
     dynamic = inputs.config.section("dynamic")
-    base = inputs.frozen_world_from_object @ prediction.seed.object_from_hand_matrix()
-    pregrasp = np.asarray(prediction.seed.pregrasp_joint_positions_rad)
+    base = inputs.frozen_world_from_object @ seed.object_from_hand_matrix()
     height = float(dynamic["approach_clearance_height_m"])
     sample_count = int(settings["approach_path_sample_count"])
-    direction_object = prediction.seed.approach_direction_object
+    direction_object = seed.approach_direction_object
     if direction_object is None:
         direction_world = np.asarray((0.0, 0.0, -1.0), dtype=np.float64)
     else:
@@ -200,20 +186,26 @@ def _sampled_hand_states(
         or abs(direction_norm - 1.0) > 1.0e-6
     ):
         raise ValueError("approach direction must be one finite unit vector")
-    states: list[tuple[str, np.ndarray, np.ndarray]] = []
+    states = []
     for index, fraction in enumerate(np.linspace(1.0, 0.0, sample_count)):
         shifted = np.array(base, copy=True)
         shifted[:3, 3] -= direction_world * height * float(fraction)
         stage = "PREGRASP" if index == sample_count - 1 else f"APPROACH_{index:02d}"
-        states.append((stage, shifted, pregrasp))
+        states.append((stage, shifted, joints))
+    return tuple(states)
+def _sampled_hand_states(
+    inputs: V2Inputs, prediction: ClosurePrediction
+) -> tuple[tuple[str, np.ndarray, np.ndarray], ...]:
+    dynamic = inputs.config.section("dynamic")
+    pregrasp = np.asarray(prediction.seed.pregrasp_joint_positions_rad)
+    approach = _approach_states(inputs, prediction.seed, pregrasp)
+    base = approach[-1][1]
+    states = list(approach)
     phases = list(prediction.seed.pregrasp_closure_phases)
     phase_by_pad = {
         pad.name: index for index, pad in enumerate(inputs.hand_contract.pads)
     }
-    maximum_increment = (
-        float(dynamic["finger_maximum_speed_rad_s"])
-        * float(dynamic["physics_dt_s"])
-    )
+    maximum_increment = _control_increment(inputs)
     for stop_index, pad_name in enumerate(
         inputs.config.section("closure_prediction")["closing_order"], start=1
     ):
@@ -248,8 +240,6 @@ def _sampled_hand_states(
             )
             states.append((stage, base, joints))
     return tuple(states)
-
-
 def _state_table_clearance(
     inputs: V2Inputs, base: np.ndarray, joints: np.ndarray
 ) -> tuple[float | None, str]:
@@ -275,8 +265,6 @@ def _state_table_clearance(
         if minimum is None or gap < minimum[0]:
             minimum = (gap, link_name)
     return (None, "") if minimum is None else minimum
-
-
 def _state_clearance_summary(
     inputs: V2Inputs,
     states: tuple[tuple[str, np.ndarray, np.ndarray], ...],
@@ -305,20 +293,170 @@ def _state_clearance_summary(
         ):
             first_violation = (gap, link_name, stage)
     return minimum, first_violation
-
-
 def _maximum_joint_increment(
     states: tuple[tuple[str, np.ndarray, np.ndarray], ...],
 ) -> float:
-    return max(
-        (
-            float(np.max(np.abs(right[2] - left[2])))
-            for left, right in zip(states, states[1:])
-        ),
-        default=0.0,
-    )
-
-
+    return max((float(np.max(np.abs(right[2] - left[2])))
+                for left, right in zip(states, states[1:])), default=0.0)
+def _control_increment(inputs: V2Inputs) -> float:
+    dynamic = inputs.config.section("dynamic")
+    return float(dynamic["finger_maximum_speed_rad_s"]) * float(dynamic["physics_dt_s"])
+def _bounded_pregrasp_states(inputs: V2Inputs, seed: CandidateSeed,
+    phases: tuple[float, float, float]
+) -> tuple[tuple[str, np.ndarray, np.ndarray], ...]:
+    reference = np.asarray(seed.pregrasp_joint_positions_rad, dtype=np.float64)
+    opened = joint_positions_for_phases(
+        inputs, (0.0, 0.0, 0.0), reference_joint_positions_rad=reference)
+    home = joint_positions_for_phases(inputs, (0.0, 0.0, 0.0),
+        reference_joint_positions_rad=np.zeros_like(reference))
+    target = joint_positions_for_phases(
+        inputs, phases, reference_joint_positions_rad=reference)
+    approach = _approach_states(inputs, seed, target)
+    maximum_increment = _control_increment(inputs)
+    if not np.isfinite(maximum_increment) or maximum_increment <= 0.0:
+        raise ValueError("pregrasp control-step bound must be positive")
+    palm_steps = max(1, int(math.ceil(float(np.max(
+        np.abs(opened - home))) / maximum_increment)))
+    step_count = max(1, int(math.ceil(float(np.max(
+        np.abs(target - opened))) / maximum_increment)))
+    states = [(f"PALM_FAR_{index:04d}", approach[0][1],
+              home + (index / palm_steps) * (opened - home))
+              for index in range(palm_steps + 1)]
+    for index in range(1, step_count + 1):
+        fraction = index / step_count
+        sample = tuple(fraction * float(value) for value in phases)
+        joints = joint_positions_for_phases(
+            inputs, sample, reference_joint_positions_rad=reference)
+        states.append((f"PRESHAPE_FAR_{index:04d}", approach[0][1], joints))
+    states.extend(approach)
+    return tuple(states)
+def _precontact_mesh_report(inputs: V2Inputs, state, scene, pad_objects, pad_clearance):
+    collision_reason = _first_state_collision(inputs, (state,), scene)
+    if scene is None or collision_reason:
+        return collision_reason, None
+    _self_objects, _nonpad_objects, object_collision, _pairs = scene
+    stage, base, joints = state
+    transforms = inputs.hand_model.forward_kinematics(joints, base_transform=base)
+    collision_request = fcl.CollisionRequest(num_max_contacts=1, enable_contact=False)
+    distances = []
+    too_close = None
+    for pad_name, (link_name, collision_object) in pad_objects.items():
+        transform = transforms[link_name]
+        collision_object.setTransform(fcl.Transform(transform[:3, :3],
+                                                     transform[:3, 3]))
+        intersects = bool(fcl.collide(collision_object, object_collision,
+            collision_request, fcl.CollisionResult()))
+        if intersects:
+            return f"PAD_OBJECT_PRECONTACT_INTERSECTION:{stage}:{pad_name}", None
+        if stage == "PREGRASP":
+            distance = float(fcl.distance(collision_object, object_collision,
+                fcl.DistanceRequest(enable_nearest_points=False), fcl.DistanceResult()))
+            distances.append(distance)
+            if too_close is None and distance <= pad_clearance:
+                too_close = pad_name
+    reason = "" if too_close is None else f"PAD_OBJECT_PRECONTACT_DISTANCE:{stage}:{too_close}"
+    return reason, None if not distances else tuple(distances)
+def fast_filter_pregrasp_paths(
+    inputs: V2Inputs,
+    variants: tuple[tuple[CandidateSeed, tuple[float, float, float]], ...],
+    *, budget_probe_only: bool = False,
+) -> tuple[dict[str, object], ...]:
+    """Check bounded preshape and sampled approach paths with one shared FCL scene."""
+    settings = inputs.config.section("fast_filter")
+    if settings["nonpad_collision_policy"] != _NONPAD_POLICY:
+        raise ValueError("fast-filter non-PAD collision policy changed")
+    scene = _prepare_fcl_scene(inputs)
+    pad_objects = {} if scene is None else {pad.name: (pad.link_name,
+        fcl.CollisionObject(build_fcl_bvh_model(pad.points_local_m, pad.faces)))
+        for pad in inputs.hand_contract.pads}
+    configured_maximum = float(inputs.config.section(
+        "candidate_generation")["maximum_closure_phase"])
+    control_increment = _control_increment(inputs)
+    tolerance = float(settings["table_penetration_tolerance_m"])
+    pad_clearance = float(inputs.config.section(
+        "closure_prediction")["initial_clearance_m"])
+    results = []
+    shared_state_reports = {}
+    for seed, raw_phases in variants:
+        phases = tuple(float(value) for value in raw_phases)
+        maximum = (configured_maximum if seed.maximum_closure_phase is None
+                   else float(seed.maximum_closure_phase))
+        remaining = tuple(maximum - value for value in phases)
+        reasons = []
+        if (maximum <= 0.0 or maximum > configured_maximum
+                or any(value <= 0.0 for value in remaining)):
+            reasons.append("NO_POSITIVE_THREE_FINGER_REMAINING_CLOSURE")
+        if seed.palm_configuration_rad is not None:
+            palm_index = inputs.hand_model.independent_joint_names.index("f1j1")
+            if not np.isclose(seed.pregrasp_joint_positions_rad[palm_index],
+                              seed.palm_configuration_rad, atol=1.0e-12):
+                reasons.append("PALM_CONFIGURATION_LOST_IN_PIPELINE")
+        if budget_probe_only and phases != (0.0, 0.0, 0.0):
+            reasons.append("BUDGET_PROBE_REQUIRES_PHASE_ZERO")
+        if reasons:
+            states = ()
+        elif budget_probe_only:
+            reference = np.asarray(seed.pregrasp_joint_positions_rad)
+            target = joint_positions_for_phases(
+                inputs, phases, reference_joint_positions_rad=reference)
+            states = _approach_states(inputs, seed, target)[-1:]
+        else:
+            states = _bounded_pregrasp_states(inputs, seed, phases)
+        maximum_increment = _maximum_joint_increment(states)
+        if maximum_increment > control_increment + 1.0e-12:
+            reasons.append("PREGRASP_CONTROL_STEP_INCREMENT_EXCEEDED")
+        minimum_table = None
+        minimum_link = minimum_stage = ""
+        pad_clearances = None
+        checked = computed = reused = 0
+        for state in states:
+            checked += 1
+            cache_key = ((seed, state[0])
+                         if state[0].startswith("PALM_FAR_") else None)
+            if cache_key is not None and cache_key in shared_state_reports:
+                reused += 1
+                gap, link_name, reason, distances = shared_state_reports[cache_key]
+            else:
+                computed += 1
+                gap, link_name = _state_table_clearance(inputs, state[1], state[2])
+                reason = (f"HAND_TABLE_PENETRATION:{state[0]}:{link_name}"
+                          if gap is not None and gap < -tolerance else "")
+                distances = None
+                if not reason:
+                    reason, distances = _precontact_mesh_report(
+                        inputs, state, scene, pad_objects, pad_clearance)
+                if cache_key is not None:
+                    shared_state_reports[cache_key] = (
+                        gap, link_name, reason, distances)
+            if gap is not None and (minimum_table is None or gap < minimum_table):
+                minimum_table, minimum_link, minimum_stage = gap, link_name, state[0]
+            if distances is not None:
+                pad_clearances = distances
+            if reason:
+                reasons.append(reason)
+                break
+        results.append({
+            "candidate_id": seed.candidate_id,
+            "pregrasp_closure_phases": phases,
+            "accepted": not reasons,
+            "reasons": tuple(reasons),
+            "unresolved_checks": (("BUDGET_PROBE_PREGRASP_SNAPSHOT_ONLY",
+                "PALM_AND_APPROACH_PATH_NOT_CHECKED_BY_BUDGET_PROBE")
+                if budget_probe_only else
+                ("FCL_SURFACE_QUERY_CANNOT_PROVE_CONTAINMENT",
+                 "HAND_APPROACH_SAMPLED_NOT_CONTINUOUS")),
+            "minimum_table_clearance_m": minimum_table,
+            "minimum_clearance_link": minimum_link,
+            "minimum_clearance_stage": minimum_stage,
+            "pregrasp_pad_clearance_by_name_m": None if pad_clearances is None else dict(
+                zip(pad_objects, pad_clearances)),
+            "checked_state_count": checked,
+            "physical_query_state_count": computed,
+            "reused_identical_state_count": reused,
+            "maximum_joint_increment_rad": maximum_increment,
+            "remaining_closure_phase": remaining,
+        })
+    return tuple(results)
 def fast_filter_predictions(
     inputs: V2Inputs, predictions: tuple[ClosurePrediction, ...]
 ) -> tuple[FastFilterResult, ...]:
@@ -409,5 +547,4 @@ def fast_filter_predictions(
         )
     return tuple(results)
 
-
-__all__ = ["fast_filter_predictions"]
+__all__ = ["fast_filter_predictions", "fast_filter_pregrasp_paths"]

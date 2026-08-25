@@ -12,6 +12,12 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 from kcg_connector.grasp.carts_v2.candidate_generator import generate_raw_candidates
+from kcg_connector.grasp.carts_v2.closure_predictor import SequentialClosurePredictor
+from kcg_connector.grasp.carts_v2.fast_filter import (
+    fast_filter_predictions,
+    fast_filter_pregrasp_paths,
+)
+from kcg_connector.grasp.carts_v2.full_palm_search import run_full_palm_cascade
 from kcg_connector.grasp.carts_v2.graspgenx_adapter import (
     AdaptedCandidate,
     load_graspgenx_candidates,
@@ -22,18 +28,14 @@ from kcg_connector.grasp.carts_v2.reporting import write_offline_report
 from kcg_connector.grasp.robust.object_model import file_sha256
 
 
-def summarize_six_d_coverage(
-    inputs: V2Inputs, candidates: tuple[AdaptedCandidate, ...]
-) -> dict[str, object]:
+def summarize_six_d_coverage(inputs: V2Inputs,
+                             candidates: tuple[AdaptedCandidate, ...]) -> dict[str, object]:
     """Diagnose proposal coverage without treating it as grasp evidence."""
-
     if len(candidates) < 2:
         raise ValueError("at least two candidates are required for coverage")
     poses = np.asarray([row.seed.object_from_hand_matrix() for row in candidates])
-    generator_poses = np.asarray([
-        np.asarray(row.evidence["object_from_graspgenx_row_major"]).reshape(4, 4)
-        for row in candidates
-    ])
+    generator_poses = np.asarray([np.asarray(
+        row.evidence["object_from_graspgenx_row_major"]).reshape(4, 4) for row in candidates])
     positions = poses[:, :3, 3]
     origin = inputs.object_contract.model.assembly_axis_origin_m
     basis = inputs.object_contract.task_frame_rotation_object
@@ -44,40 +46,25 @@ def summarize_six_d_coverage(
     approach_elevation = np.arcsin(np.clip(approach[:, 2], -1.0, 1.0))
     rotations = Rotation.from_matrix(poses[:, :3, :3])
     rpy = rotations.as_euler("xyz")
-    radius_scale = max(
-        float(inputs.object_contract.characteristic_radius_m), 1.0e-9
-    )
-    features = np.column_stack((
-        positions / radius_scale, rotations.as_rotvec() / np.pi,
-    ))
+    radius_scale = max(float(inputs.object_contract.characteristic_radius_m), 1.0e-9)
+    features = np.column_stack((positions / radius_scale, rotations.as_rotvec() / np.pi))
     covariance = np.cov(features, rowvar=False)
     eigenvalues = np.maximum(np.linalg.eigvalsh(covariance), 0.0)
-    effective_dimension = float(
-        np.sum(eigenvalues) ** 2 / max(np.sum(eigenvalues ** 2), 1.0e-18)
-    )
+    effective_dimension = float(np.sum(eigenvalues) ** 2
+                                / max(np.sum(eigenvalues ** 2), 1.0e-18))
     dedup = inputs.config.section("candidate_generation")["deduplication"]
-    descriptor_counts = {
-        descriptor_id: sum(
-            row.seed.descriptor_id == descriptor_id for row in candidates
-        )
-        for descriptor_id in sorted({row.seed.descriptor_id for row in candidates})
-    }
-    palm_azimuth = np.mod(
-        np.arctan2(task_positions[:, 1], task_positions[:, 0]), 2 * np.pi
-    )
-    occupied_quadrants = len(np.unique(
-        np.floor(palm_azimuth / (0.5 * np.pi)).astype(int)
-    ))
+    descriptor_ids = sorted({row.seed.descriptor_id for row in candidates})
+    descriptor_counts = {key: sum(row.seed.descriptor_id == key for row in candidates)
+                         for key in descriptor_ids}
+    palm_azimuth = np.mod(np.arctan2(task_positions[:, 1], task_positions[:, 0]), 2 * np.pi)
+    occupied_quadrants = len(np.unique(np.floor(palm_azimuth / (0.5 * np.pi)).astype(int)))
     checks = {
         "at_least_100_candidates": len(candidates) >= 100,
         "multiple_descriptors": len(descriptor_counts) > 1,
         "multiple_palm_sides": occupied_quadrants >= 2,
-        "radial_distance_not_constant": float(np.ptp(radial))
-        > float(dedup["palm_position_m"]),
-        "roll_not_constant": float(np.ptp(rpy[:, 0]))
-        > float(dedup["palm_orientation_rad"]),
-        "pitch_not_constant": float(np.ptp(rpy[:, 1]))
-        > float(dedup["palm_orientation_rad"]),
+        "radial_distance_not_constant": float(np.ptp(radial)) > float(dedup["palm_position_m"]),
+        "roll_not_constant": float(np.ptp(rpy[:, 0])) > float(dedup["palm_orientation_rad"]),
+        "pitch_not_constant": float(np.ptp(rpy[:, 1])) > float(dedup["palm_orientation_rad"]),
     }
     return {
         "schema_version": "graspgenx_carts_6d_coverage_v1",
@@ -87,12 +74,8 @@ def summarize_six_d_coverage(
         "position_min_object_m": np.min(positions, axis=0).tolist(),
         "position_max_object_m": np.max(positions, axis=0).tolist(),
         "radial_distance_range_m": [float(np.min(radial)), float(np.max(radial))],
-        "approach_azimuth_range_rad": [
-            float(np.min(approach_azimuth)), float(np.max(approach_azimuth))
-        ],
-        "approach_elevation_range_rad": [
-            float(np.min(approach_elevation)), float(np.max(approach_elevation))
-        ],
+        "approach_azimuth_range_rad": [float(np.min(approach_azimuth)), float(np.max(approach_azimuth))],
+        "approach_elevation_range_rad": [float(np.min(approach_elevation)), float(np.max(approach_elevation))],
         "roll_pitch_yaw_range_rad": np.ptp(rpy, axis=0).tolist(),
         "descriptor_counts": descriptor_counts,
         "palm_azimuth_quadrant_count": occupied_quadrants,
@@ -126,6 +109,13 @@ def _read(path: Path) -> dict:
     return value
 
 
+def _write_json(path: Path, value: object) -> None:
+    path.write_text(
+        json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+
+
 def _resolve(root: Path, value: str) -> Path:
     path = Path(value)
     return path.resolve() if path.is_absolute() else (root / path).resolve()
@@ -150,8 +140,68 @@ def _object_mesh_path(manifest: dict, object_id: str) -> Path:
     return Path(rows[0]["standardized_mesh_npz"]).resolve()
 
 
+def _route_bindings(root: Path, args, manifest: dict) -> tuple[Path, str, str, str]:
+    if manifest.get("schema_version") != "carts_full_palm_search_manifest_v1":
+        raise ValueError("search manifest schema changed")
+    generator = manifest.get("generator", {})
+    descriptors = manifest.get("descriptor_manifest", {})
+    proposals = manifest.get("proposals", {})
+    budgets = manifest.get("cascade_budgets", {})
+    expected_budgets = {
+        "raw_proposals_per_angle": 128, "score_keep_per_angle": 64,
+        "precise_closure_per_angle": 8,
+        "pregrasp_phase_values_per_finger": [0, 0.1, 0.2],
+        "pregrasp_combination_count": 27,
+        "maximum_candidate_level_calls_per_seed": 28,
+        "internal_control_states_count_as_candidate_calls": False,
+        "cartesian_product_forbidden": True,
+    }
+    if budgets != expected_budgets:
+        raise ValueError("search manifest cascade budget identity changed")
+    expected_proposals = {
+        "schema_version": "graspgenx_carts_full_palm_proposals_v2",
+        "model_load_count": 1, "descriptor_count_per_object": 91,
+        "kept_per_descriptor": 64, "kept_count_per_object": 5824,
+        "palm_configuration_bound_per_proposal": True,
+    }
+    if any(proposals.get(key) != value for key, value in expected_proposals.items()):
+        raise ValueError("search manifest proposal identity changed")
+    if (descriptors.get("schema_version") != "kcg_graspgenx_descriptors_v2"
+            or descriptors.get("descriptor_count") != 91):
+        raise ValueError("search manifest descriptor identity changed")
+    if manifest.get("rescue_refinement_budget", {}).get(
+        "maximum_geometry_evaluations_per_seed"
+    ) != 300:
+        raise ValueError("future rescue budget identity changed")
+    _require_bound_file(root, args.object_manifest, *(
+        manifest.get("object_manifest", {}).get(key) for key in ("path", "sha256")
+    ), "object manifest")
+    proposal = proposals.get(args.object_id, {})
+    _require_bound_file(root, args.proposal, proposal.get("path"),
+                        proposal.get("sha256"), "proposal")
+    descriptor_path = _resolve(root, descriptors["path"])
+    _require_bound_file(root, descriptor_path, descriptors.get("path"),
+                        descriptors.get("sha256"), "descriptor manifest")
+    return (descriptor_path, str(generator.get("commit", "")),
+            str(generator.get("checkpoint_tree_sha256", "")),
+            str(descriptors.get("sha256", "")))
+
+
+def _palm_grid(descriptor_document: dict, search_manifest: dict) -> tuple[float, ...]:
+    rows = descriptor_document.get("descriptors", ())
+    values = sorted(float(row["palm_configuration_rad"]) for row in rows)
+    palm = search_manifest.get("palm_configuration", {})
+    expected = np.linspace(float(palm.get("lower_rad", np.nan)),
+                           float(palm.get("upper_rad", np.nan)),
+                           int(palm.get("grid_count", -1)))
+    if (len(rows) != 91 or len({str(row.get("descriptor_id")) for row in rows}) != 91
+            or not np.allclose(values, expected, atol=1.0e-12, rtol=0.0)):
+        raise ValueError("descriptor palm grid differs from search manifest")
+    return tuple(values)
+
+
 def _filter_open_hand_from_table(inputs, candidates):
-    """Official coarse scene-PC rejection; target object is deliberately absent."""
+    """Return official coarse scene-PC preference; never a physical rejection."""
     import graspgenx.utils.collision_filter as official
     import trimesh
 
@@ -166,7 +216,7 @@ def _filter_open_hand_from_table(inputs, candidates):
     ny = max(2, maximum // nx)
     xx, yy = np.meshgrid(np.linspace(*bounds[0], nx), np.linspace(*bounds[1], ny))
     table = np.column_stack((xx.ravel(), yy.ravel(), np.full(xx.size, inputs.table_top_z_m)))
-    kept_ids, per_descriptor, rejected = set(), [], []
+    preferred_ids, per_descriptor, not_preferred = set(), [], []
     for descriptor_id in sorted({row.seed.descriptor_id for row in candidates}):
         rows = [row for row in candidates if row.seed.descriptor_id == descriptor_id]
         first = rows[0]
@@ -185,14 +235,14 @@ def _filter_open_hand_from_table(inputs, candidates):
             for row in rows
         ])
         mask = official.filter_colliding_grasps(table, poses, collision_threshold=threshold, num_collision_samples=sample_count, gripper_surface_points=surface)
-        kept_ids.update(row.seed.candidate_id for row, keep in zip(rows, mask) if keep)
-        rejected.extend({"candidate_id": row.seed.candidate_id, "descriptor_id": descriptor_id, "raw_index": row.seed.source_sample_index} for row, keep in zip(rows, mask) if not keep)
-        per_descriptor.append({"descriptor_id": descriptor_id, "input_count": len(rows), "retained_count": int(mask.sum()), "rejected_count": int(len(rows) - mask.sum()), "canonical_surface_sha256": hashlib.sha256(np.asarray(surface, dtype="<f4").tobytes()).hexdigest()})
-    filtered = tuple(row for row in candidates if row.seed.candidate_id in kept_ids)
+        preferred_ids.update(row.seed.candidate_id for row, keep in zip(rows, mask) if keep)
+        not_preferred.extend({"candidate_id": row.seed.candidate_id, "descriptor_id": descriptor_id, "raw_index": row.seed.source_sample_index} for row, keep in zip(rows, mask) if not keep)
+        per_descriptor.append({"descriptor_id": descriptor_id, "input_count": len(rows), "preferred_count": int(mask.sum()), "not_preferred_count": int(len(rows) - mask.sum()), "canonical_surface_sha256": hashlib.sha256(np.asarray(surface, dtype="<f4").tobytes()).hexdigest()})
+    preferred = tuple(row for row in candidates if row.seed.candidate_id in preferred_ids)
     evidence = candidates[0].evidence
     audit = {
-        "schema_version": "graspgenx_carts_scene_pc_filter_v1", "object_id": inputs.object_contract.object_id,
-        "method": "OFFICIAL_COARSE_OPEN_HAND_SCENE_PC_REJECT_ONLY",
+        "schema_version": "graspgenx_carts_scene_pc_preference_v2", "object_id": inputs.object_contract.object_id,
+        "method": "OFFICIAL_COARSE_OPEN_HAND_SCENE_PC_BUDGET_PRIORITY_DIAGNOSTIC",
         "official_function": "graspgenx.utils.collision_filter.filter_colliding_grasps",
         "official_source_sha256": file_sha256(Path(official.__file__)), "generator_commit": evidence["generator_commit"],
         "input_proposal_sha256": evidence["proposal_file_sha256"], "descriptor_manifest_sha256": evidence["descriptor_manifest_sha256"],
@@ -202,11 +252,113 @@ def _filter_open_hand_from_table(inputs, candidates):
         "scene_components": ["FINITE_TABLE_TOP"], "target_object_points_included": False,
         "table_xy_bounds_m": bounds.tolist(), "table_top_z_m": inputs.table_top_z_m,
         "table_point_count": len(table), "table_point_cloud_sha256": hashlib.sha256(np.asarray(table, dtype="<f4").tobytes()).hexdigest(),
-        "input_count": len(candidates), "retained_count": len(filtered), "rejected_count": len(candidates) - len(filtered),
-        "per_descriptor": per_descriptor, "rejected": rejected,
-        "claim_scope": "EARLY_PROXIMITY_REJECT_NOT_MESH_OR_PATH_SAFETY_PROOF",
+        "input_count": len(candidates), "preferred_count": len(preferred),
+        "not_preferred_count": len(candidates) - len(preferred),
+        "per_descriptor": per_descriptor, "not_preferred": not_preferred,
+        "claim_scope": "BUDGET_PRIORITY_ONLY_NOT_REJECTION_OR_PATH_SAFETY_PROOF",
     }
-    return filtered, audit
+    return preferred, audit
+
+
+def _hand_reach_radius(inputs, seed) -> float:
+    transforms = inputs.hand_model.forward_kinematics(
+        seed.pregrasp_joint_positions_rad
+    )
+    maximum = 0.0
+    for link_name, triangles in inputs.hand_collision_triangles_by_link.items():
+        transform = transforms[link_name]
+        points = triangles.reshape(-1, 3) @ transform[:3, :3].T + transform[:3, 3]
+        maximum = max(maximum, float(np.max(np.linalg.norm(points, axis=1))))
+    if not np.isfinite(maximum) or maximum <= 0.0:
+        raise ValueError("registered hand reach radius is invalid")
+    return maximum
+
+
+def _budget_diagnostics(inputs, adapted, scene_preferred, probe_reports) -> dict[str, dict]:
+    vertices = inputs.object_contract.model.mesh.vertices_m
+    lower, upper = np.min(vertices, axis=0), np.max(vertices, axis=0)
+    preferred_ids = {row.seed.candidate_id for row in scene_preferred}
+    if len(probe_reports) != len(adapted):
+        raise ValueError("phase-zero real-mesh probe count changed")
+    probes = {}
+    for row, report in zip(adapted, probe_reports):
+        candidate_id = row.seed.candidate_id
+        if (str(report.get("candidate_id")) != candidate_id
+                or tuple(report.get("pregrasp_closure_phases", ())) != (0.0, 0.0, 0.0)
+                or type(report.get("accepted")) is not bool):
+            raise ValueError("phase-zero real-mesh probe identity changed")
+        probes[candidate_id] = dict(report)
+    reach_by_descriptor = {}
+    result = {}
+    for row in adapted:
+        seed = row.seed
+        if seed.descriptor_id not in reach_by_descriptor:
+            reach_by_descriptor[seed.descriptor_id] = _hand_reach_radius(inputs, seed)
+        reach = reach_by_descriptor[seed.descriptor_id]
+        handbase = seed.object_from_hand_matrix()[:3, 3]
+        displacement = np.maximum(np.maximum(lower - handbase, handbase - upper), 0.0)
+        base_aabb_gap = float(np.linalg.norm(displacement))
+        reach_gap = max(0.0, base_aabb_gap - reach)
+        probe = probes[seed.candidate_id]
+        pad_map = probe.get("pregrasp_pad_clearance_by_name_m")
+        pad_values = () if not isinstance(pad_map, dict) else tuple(
+            float(value) for value in pad_map.values())
+        if pad_values and (len(pad_values) != 3
+                           or any(not np.isfinite(value) for value in pad_values)):
+            raise ValueError("phase-zero real-mesh PAD distances are invalid")
+        result[seed.candidate_id] = {
+            "branch": str(row.evidence["graspgenx_branch"]),
+            "generator_score": float(row.evidence["graspgenx_score"]),
+            "physical_selection_key": [
+                0.0 if probe["accepted"] else 1.0,
+                0.0 if pad_values else 1.0,
+                max(pad_values, default=0.0),
+                0.0 if seed.candidate_id in preferred_ids else 1.0,
+                reach_gap, base_aabb_gap,
+            ],
+            "phase_zero_real_mesh_probe_accepted": probe["accepted"],
+            "phase_zero_real_mesh_probe_reasons": list(probe.get("reasons", ())),
+            "phase_zero_pregrasp_pad_clearance_by_name_m": pad_map,
+            "real_mesh_probe_role": "DIAGNOSTIC_ONLY_NOT_HARD_REJECT",
+            "official_scene_pc_preferred": seed.candidate_id in preferred_ids,
+            "hand_reach_sphere_radius_m": reach,
+            "handbase_to_object_aabb_gap_m": base_aabb_gap,
+            "aabb_reach_gap_m": reach_gap,
+            "aabb_selection_role": "DIAGNOSTIC_ONLY_NOT_HARD_REJECT",
+        }
+    return result
+
+
+def _precise_result(predictor, inputs, seed) -> dict[str, object]:
+    prediction = predictor.predict(seed)
+    filtered = fast_filter_predictions(inputs, (prediction,))[0]
+    closure_pass = prediction.status == "CLOSURE_SURVIVE" and len(prediction.contacts) == 3
+    fast_pass = (
+        filtered.status == "FAST_SURVIVE"
+        and filtered.sequential_closure_sweep_pass
+        and (filtered.minimum_table_clearance_m is None
+             or np.isfinite(filtered.minimum_table_clearance_m))
+    )
+    accepted = bool(closure_pass and fast_pass)
+    clearance = filtered.minimum_table_clearance_m
+    reason = ""
+    if not closure_pass:
+        reason = prediction.reason or "NO_THREE_PAD_CONTACT"
+    elif not fast_pass:
+        reason = ";".join(filtered.reasons) or "PRECISE_FAST_FILTER_REJECT"
+    return {
+        "accepted": accepted, "closure_pass": bool(closure_pass),
+        "fast_filter_pass": bool(fast_pass), "reason": reason,
+        "closure_status": prediction.status, "closure_reason": prediction.reason,
+        "contact_count": len(prediction.contacts),
+        "fast_filter_status": filtered.status,
+        "fast_filter_reasons": list(filtered.reasons),
+        "minimum_table_clearance_m": clearance,
+        "selection_key": ([0.0, 0.0] if clearance is None else
+                          [1.0, -float(clearance)]) + [
+            -float(prediction.minimum_initial_pad_clearance_m)
+        ] if accepted else [0.0],
+    }
 
 
 def _render_coverage(inputs, adapted, baseline, destination: Path) -> None:
@@ -245,38 +397,18 @@ def _render_coverage(inputs, adapted, baseline, destination: Path) -> None:
     plt.close(figure)
 
 
-def main() -> int:
-    args = _arguments()
-    root = args.repository_root.resolve()
-    integration = _read(args.integration_manifest.resolve())
-    object_inputs = integration.get("object_inputs", {})
-    _require_bound_file(
-        root,
-        args.object_manifest,
-        object_inputs.get("manifest"),
-        object_inputs.get("sha256"),
-        "object manifest",
-    )
-    _require_bound_file(
-        root,
-        args.proposal,
-        object_inputs.get("proposal_path_by_object", {}).get(args.object_id),
-        object_inputs.get("proposal_sha256_by_object", {}).get(args.object_id),
-        "proposal",
+def _load_bound_candidates(root: Path, args, search_manifest: dict):
+    descriptor_path, commit, checkpoint_sha, descriptor_sha = _route_bindings(
+        root, args, search_manifest
     )
     object_manifest = _read(args.object_manifest.resolve())
-    checkpoint_sha = integration.get("checkpoint", {}).get("sha256")
-    descriptor_sha = integration.get("descriptors", {}).get("sha256")
-    if not checkpoint_sha or not descriptor_sha:
-        raise ValueError("integration manifest has no frozen model/descriptor identity")
-    descriptor_path = _resolve(root, integration["descriptors"]["manifest"])
     mesh_path = _object_mesh_path(object_manifest, args.object_id)
     inputs = load_v2_inputs(root, config_path=args.config, object_id=args.object_id)
     settings = inputs.config.section("candidate_generation")
     dedup = settings["deduplication"]
     adapted = load_graspgenx_candidates(
         inputs, args.proposal, descriptor_path, mesh_path,
-        expected_generator_commit=integration["generator"]["commit"],
+        expected_generator_commit=commit,
         expected_checkpoint_sha256=checkpoint_sha,
         expected_random_seed=int(settings["random_seed"]),
         expected_descriptor_manifest_sha256=descriptor_sha,
@@ -284,17 +416,22 @@ def main() -> int:
         rotation_tolerance_rad=float(dedup["palm_orientation_rad"]),
         maximum_candidates=int(settings["graspgenx"]["merged_max_per_object"]),
     )
+    descriptor_document = _read(descriptor_path)
+    return inputs, adapted, descriptor_document
+
+
+def main() -> int:
+    args = _arguments()
+    root = args.repository_root.resolve()
+    search_manifest = _read(args.integration_manifest.resolve())
+    inputs, adapted, descriptor_document = _load_bound_candidates(
+        root, args, search_manifest
+    )
     coverage = summarize_six_d_coverage(inputs, adapted)
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    (args.output_dir / "candidate_coverage.json").write_text(
-        json.dumps(coverage, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
-    physics_candidates, scene_audit = _filter_open_hand_from_table(inputs, adapted)
-    (args.output_dir / "scene_pc_filter_audit.json").write_text(
-        json.dumps(scene_audit, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
+    _write_json(args.output_dir / "candidate_coverage.json", coverage)
+    scene_preferred, scene_audit = _filter_open_hand_from_table(inputs, adapted)
+    _write_json(args.output_dir / "scene_pc_filter_audit.json", scene_audit)
     if not args.skip_coverage_render:
         baseline_inputs = load_v2_inputs(
             root, config_path=args.baseline_config, object_id=args.object_id
@@ -304,23 +441,40 @@ def main() -> int:
             args.output_dir / "old_vs_graspgenx_coverage.png",
         )
     evidence = [dict(row.evidence) for row in adapted]
-    (args.output_dir / "generator_binding.json").write_text(
-        json.dumps(evidence, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
+    _write_json(args.output_dir / "generator_binding.json", evidence)
     if coverage["coverage_pass"] is not True:
         print("six-dimensional coverage diagnostic failed closed")
         return 2
-    if not physics_candidates:
-        print("official open-hand scene-PC filter rejected every proposal")
-        return 3
+    predictor = SequentialClosurePredictor(inputs)
+    probe_reports = fast_filter_pregrasp_paths(
+        inputs, tuple((row.seed, (0.0, 0.0, 0.0)) for row in adapted),
+        budget_probe_only=True)
+    _write_json(args.output_dir / "phase0_real_mesh_budget_probe.json", {
+        "schema_version": "carts_full_palm_phase0_budget_probe_v1",
+        "claim_scope": "REAL_MESH_PREGRASP_SNAPSHOT_DIAGNOSTIC_ONLY_NOT_PATH_PROOF",
+        "reports": probe_reports,
+    })
+    selected_seeds, cascade_audit = run_full_palm_cascade(
+        inputs, tuple(row.seed for row in adapted),
+        _palm_grid(descriptor_document, search_manifest),
+        budget_diagnostics=_budget_diagnostics(
+            inputs, adapted, scene_preferred, probe_reports),
+        pregrasp_evaluator=lambda variants: fast_filter_pregrasp_paths(
+            inputs, variants
+        ),
+        precise_evaluator=lambda seed: _precise_result(predictor, inputs, seed),
+    )
+    _write_json(args.output_dir / "full_palm_cascade_audit.json", cascade_audit)
+    if not selected_seeds:
+        print("full-palm cascade found no path/contact candidate")
+        return 4
     result = run_offline_pipeline(
         root, config_path=args.config, object_id=args.object_id,
-        candidate_seeds=tuple(row.seed for row in physics_candidates),
+        candidate_seeds=selected_seeds,
     )
     write_offline_report(result, args.output_dir)
     print(
-        f"{args.object_id}: {len(physics_candidates)} scene-filtered 6D candidates, "
+        f"{args.object_id}: {len(selected_seeds)} per-angle path/contact candidates, "
         f"{len(result.research_task_candidates)} nominal-task eligible, "
         "0 executable before arm IK/path"
     )

@@ -15,7 +15,6 @@ from kcg_connector.grasp.carts_v2.models import (
     CandidateSeed,
     V2Inputs,
     allowed_face_domain_sha256,
-    rotation_distance,
 )
 from kcg_connector.grasp.robust.object_model import file_sha256
 
@@ -323,17 +322,28 @@ def _convert_and_deduplicate(
         converted.append((score, descriptor_id, raw_index, row, descriptor, object_from_generator, object_from_hand, fingertip))
     converted.sort(key=lambda item: (-item[0], item[1], item[2]))
 
-    unique = []
+    by_descriptor: dict[str, list[tuple[Any, ...]]] = {}
     for item in converted:
-        pose = item[6]
-        if any(
-            item[1] == old[1]
-            and np.linalg.norm(pose[:3, 3] - old[6][:3, 3]) <= translation_tolerance_m
-            and rotation_distance(pose[:3, :3], old[6][:3, :3]) <= rotation_tolerance_rad
-            for old in unique
-        ):
-            continue
-        unique.append(item)
+        by_descriptor.setdefault(item[1], []).append(item)
+    accepted_sources: set[tuple[str, int]] = set()
+    for rows in by_descriptor.values():
+        accepted_poses: list[np.ndarray] = []
+        for item in rows:
+            pose = item[6]
+            duplicate = False
+            if accepted_poses:
+                previous = np.asarray(accepted_poses)
+                translation = np.linalg.norm(previous[:, :3, 3] - pose[:3, 3], axis=1)
+                traces = np.einsum(
+                    "nij,ij->n", previous[:, :3, :3], pose[:3, :3]
+                )
+                rotation = np.arccos(np.clip((traces - 1.0) * 0.5, -1.0, 1.0))
+                duplicate = bool(np.any((translation <= translation_tolerance_m)
+                                        & (rotation <= rotation_tolerance_rad)))
+            if not duplicate:
+                accepted_poses.append(pose)
+                accepted_sources.add((item[1], item[2]))
+    unique = [item for item in converted if (item[1], item[2]) in accepted_sources]
     inference_from_object = _rigid(
         payload["inference_from_object_row_major"], "inference_from_object"
     )

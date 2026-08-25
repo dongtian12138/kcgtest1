@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_full_palm_search_manifest_v1",
-  "updated_at_utc": "2026-08-25T10:35:40Z",
+  "updated_at_utc": "2026-08-25T11:38:50Z",
   "execution_window_id": "FULL_PALM_6D_SEARCH_12H",
   "branch": "carts-grasp-full-palm-search-20260825",
   "start_commit": "18bb79343e305b0f31cc99cd47594ac01ad095d0",
@@ -15,6 +15,10 @@
     "current_d38999_26kj61sn_public_spec",
     "te_deutsch_d38999_26fj35pn_step"
   ],
+  "object_manifest": {
+    "path": "artifacts/carts_v2/graspgenx/objects/object_manifest.json",
+    "sha256": "968e14c890692d9bc53a488b16a640150528dc93b33bdd9043f8c44064779fb3"
+  },
   "palm_configuration": {
     "active_joint": "f1j1",
     "mimic_joint": "f3j1",
@@ -52,15 +56,27 @@
     },
     "claim_scope": "GENERATOR_OUTPUT_ONLY_NOT_GRASP_OR_DYNAMIC_EVIDENCE"
   },
+  "proposal_distance_diagnostic": {
+    "object_a_descriptor_aabb_sphere_disjoint_count": 4614,
+    "object_b_descriptor_aabb_sphere_disjoint_count": 4714,
+    "selection_role": "DIAGNOSTIC_ONLY",
+    "hard_reject_allowed": false,
+    "reason": "OPEN_HALF_CONDITIONING_AABB_DOES_NOT_COVER_COMPLETE_PHYSICAL_PAD_CLOSURE_REACHABLE_VOLUME"
+  },
   "cascade_budgets": {
     "raw_proposals_per_angle": 128,
     "score_keep_per_angle": 64,
     "precise_closure_per_angle": 8,
     "pregrasp_phase_values_per_finger": [0.0, 0.1, 0.2],
     "pregrasp_combination_count": 27,
-    "refinement_seeds_per_object": 64,
-    "refinement_stage_a_plus_b_evaluations_per_seed": 300,
+    "maximum_candidate_level_calls_per_seed": 28,
+    "internal_control_states_count_as_candidate_calls": false,
     "cartesian_product_forbidden": true
+  },
+  "rescue_refinement_budget": {
+    "activation": "ONLY_IF_DIRECT_CANDIDATES_ARE_INSUFFICIENT",
+    "maximum_seeds_per_object": 64,
+    "maximum_geometry_evaluations_per_seed": 300
   },
   "fixed_physical_limits": {
     "normal_force_operation_cap_n": 12.0,
@@ -84,6 +100,7 @@
     "visual_collision_identity_audit": "OFFLINE_PASS_B_REAL_SWEEP_AND_A_OLD_DESCRIPTOR_CONTACT_DEFICIT",
     "full_palm_descriptor_audit": "OFFLINE_PASS_91_QP_BOUND_DESCRIPTORS",
     "full_palm_proposal_generation": "OFFLINE_PASS_A_AND_B_91_TIMES_64",
+    "pregrasp_path_gate": "OFFLINE_BOUND_ZERO_DEGREE_8_BY_27_SMOKE_PASS",
     "exact_pad_surface_contact": "OFFLINE_PASS_CERTIFICATE_ORIENTED_FULL_PAD_FCL_WITH_DENSE_COMPATIBILITY_FALLBACK",
     "complete_sequential_closure": "NOT_STARTED",
     "nominal_12n_task": "NOT_STARTED",
