@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T22:17:59Z",
+  "updated_at_utc": "2026-08-25T23:55:10Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T10:17:59Z",
   "branch": "carts-grasp-opposition60-isaac-20260826",
@@ -8,7 +8,7 @@
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "OPPOSITION60_COMPOUND_COLLIDER_AND_POSITIVE_CONTROL",
+  "current_milestone": "OPPOSITION60_QP60_EXACT27_CHECKPOINTED_STATIC_CONTROL",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -103,7 +103,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "LOCAL_HAND_OBJECT_ONLY_AFTER_ASSET_AND_STATIC_POSITIVE_CONTROL",
-    "reason": "AWAITING_VALIDATED_COMPOUND_CONVEX_ASSET_AND_QP60_STATIC_POSITIVE_CONTROL"
+    "reason": "THREE_COLLISION_ASSETS_REJECTED_AND_QP60_EXACT27_TIMED_OUT_BEFORE_RESULT"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1344,7 +1344,7 @@
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
   "opposition60_isaac": {
-    "route_status": "OPENED_NO_NEW_PHYSICAL_RESULT_YET",
+    "route_status": "QP60_SINGLE_PRESHAPE_NEGATIVE_AND_EXACT27_QUERY_PERFORMANCE_REVIEW",
     "primary_object": "te_deutsch_d38999_26fj35pn_step",
     "transfer_object": "current_d38999_26kj61sn_public_spec",
     "opposition_palm_range_deg": [45.0, 75.0],
@@ -1354,12 +1354,52 @@
     "research_collision_representation": "VALIDATED_COMPOUND_CONVEX",
     "postrun_exact_mesh_replay_required": true,
     "compound_convex_accepted": false,
+    "compound_convex_attempts": {
+      "coacd_removed_nail_occupied_fraction_f1_f2_f3": [0.5184, 0.5535, 0.5184],
+      "physx_shrinkwrap_removed_nail_occupied_fraction_f1_f2_f3": [0.0741, 0.1128, 0.0780],
+      "pruned_removed_nail_occupied_fraction_f1_f2_f3": [0.0, 0.0, 0.0],
+      "pruned_runtime_binding_accepted": false,
+      "pruned_rejection_reason": "F2_F3_RELATIVE_P95_DEGRADATION_EXCEEDED_PREREGISTERED_0P25MM_BOUND"
+    },
+    "method_fix_targeted_tests_passed": 33,
+    "method_fix_targeted_test_duration_s": 28.25,
+    "registered_witness_patches_per_finger": 33,
+    "selected_witnesses_per_finger": 16,
+    "contact_height_negative_evidence_policy": "SAMPLED_NO_WITNESS_IS_UNRESOLVED_NOT_EMPTY_SET_PROOF",
+    "retained_qp60_anchor_axial_counts_low_mid_high": [4, 4, 4],
+    "qp60_exact27_attempt": {
+      "elapsed_s_before_interrupt": 1500,
+      "result_available": false,
+      "claim": "COMPUTE_TIMEOUT_NOT_GEOMETRIC_REJECTION",
+      "interrupt_stack": "EXACT_CONTACT_FORBIDDEN_SURFACE_FCL_DISTANCE"
+    },
+    "qp60_single_preshape_profile": {
+      "phases": [0.2, 0.2, 0.2],
+      "elapsed_s": 214.01718114499818,
+      "height_probe_count": 129,
+      "closure_phase_query_count": 52745,
+      "survivor_count": 0,
+      "status": "SAMPLED_NO_THREE_CONTACT_WITNESS_UNRESOLVED",
+      "no_effective_finger1_probe_count": 38,
+      "forbidden_first_contact_probe_count": 91,
+      "isaac_started": false
+    },
+    "qp60_far_field_contact_gate": {
+      "supervisor_status": "APPROVE",
+      "old_elapsed_s": 214.01718114499818,
+      "new_elapsed_s": 136.484317800001,
+      "elapsed_reduction_fraction": 0.362268287,
+      "height_search_json_identical": true,
+      "patch_query_calls_old_new": [52754, 122],
+      "forbidden_query_calls_old_new": [52754, 122],
+      "evidence_scope": "DISCRETE_CONTROL_STEPS_NOT_CONTINUOUS_COLLISION_PROOF"
+    },
     "qp60_static_positive_control_pass": false,
     "local_hand_dynamic_status": "NOT_STARTED",
     "full_arm_dynamic_status": "NOT_STARTED",
     "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
   },
-  "evidence_level": "ROUTE_OPENED_BASELINE_TWO_OBJECT_OFFLINE_ONLY_NO_OPPOSITION_OR_NEW_DYNAMIC_RESULT",
+  "evidence_level": "ONE_QP60_PRESHAPE_OFFLINE_NEGATIVE_PLUS_QUERY_PROFILE_NO_DYNAMIC_RESULT",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1415,11 +1455,14 @@
     "nailfree_height_projected_targeted_passed": 29,
     "nailfree_height_projected_targeted_duration_s": 17.26,
     "nailfree_height_projected_complexity_supervisor": "ACCEPT_2186_ADDED_438_DELETED_1748_NET_NLOC",
-    "nailfree_height_projected_academic_supervisor": "APPROVE_WITH_EVIDENCE_LIMITS"
+    "nailfree_height_projected_academic_supervisor": "APPROVE_WITH_EVIDENCE_LIMITS",
+    "opposition60_method_fix_targeted_passed": 35,
+    "opposition60_method_fix_targeted_duration_s": 28.38,
+    "opposition60_second_supervisor_review": "APPROVE_NO_MUST_FIX"
   },
   "blockers": [
     "NAILFREE_DYNAMIC_COLLISION_AND_INERTIA_RUNTIME_BINDING_NOT_ACCEPTED",
-    "TWO_OBJECT_FULL_POOL_HEIGHT_AND_TASK_RANKING_NOT_COMPLETE",
+    "QP60_ALL27_STATIC_CONTROL_BLOCKED_BY_REPEATED_EXACT_QUERY_COST",
     "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND"
   ]
 }

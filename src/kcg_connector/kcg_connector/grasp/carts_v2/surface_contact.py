@@ -362,6 +362,16 @@ class ExactContactSurfaceQuery:
         from kcg_connector.grasp.carts_v2.task_grip_surface import (
             motion_compatible_with_object_witness,
         )
+        full_nearest, _full_pad_point, full_normal = self.query_pad(
+            pad_name, current)
+        full_distance = float(np.min(full_nearest.distance_m))
+        tolerance = 64.0 * np.finfo(np.float64).eps
+        if (full_nearest.intersecting
+                or (np.isfinite(full_distance)
+                    and full_distance > contact_distance_m + tolerance)):
+            return (-1, full_nearest,
+                    np.asarray(full_normal, dtype=np.float64)[None, :],
+                    np.asarray((-np.inf,), dtype=np.float64))
         nearest, pad_points, object_normals = self.query_task_surface_witnesses(
             pad_name, current, 16)
         pad_local = (pad_points - current[:3, 3]) @ current[:3, :3]
@@ -377,7 +387,6 @@ class ExactContactSurfaceQuery:
             nearest.distance_m, np.where(compatible, inward, -np.inf),
             minimum_motion_m_per_phase)
         forbidden = nearest.forbidden_distance_m
-        tolerance = 64.0 * np.finfo(np.float64).eps
         forbidden_first = bool(
             forbidden is not None and forbidden <= contact_distance_m
             and (selected < 0 or forbidden <= nearest.distance_m[selected] + tolerance)

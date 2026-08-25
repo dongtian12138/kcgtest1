@@ -201,7 +201,100 @@ def test_task_surface_query_returns_one_witness_per_registered_patch() -> None:
     assert nearest.registered_patch_count == nearest.finite_patch_witness_count == 2
 
 
-def test_forbidden_object_surface_blocks_farther_allowed_witness() -> None:
+def test_full_surface_far_gate_skips_patch_queries_and_preserves_distance(
+    monkeypatch,
+) -> None:
+    query = object.__new__(ExactPadSurfaceQuery)
+    full = NearestSurface(
+        point_m=np.asarray(((0.0, 0.0, 0.0),)),
+        distance_m=np.asarray((1.0e-2,)),
+        face_index=np.asarray((3,), dtype=np.int64),
+        surface_face_index=np.asarray((7,), dtype=np.int64),
+        surface_normal_m=np.asarray(((0.0, 0.0, -1.0),)),
+    )
+    responses = [full]
+    calls = {"full": 0, "patch": 0}
+
+    def query_pad(_pad_name, _transform):
+        calls["full"] += 1
+        return responses[0], np.zeros(3), np.asarray((0.0, 0.0, 1.0))
+
+    def query_patches(*_args, **_kwargs):
+        calls["patch"] += 1
+        pytest.fail("far or intersecting full-surface states must skip patch queries")
+
+    monkeypatch.setattr(query, "query_pad", query_pad)
+    monkeypatch.setattr(query, "query_task_surface_witnesses", query_patches)
+    selected, nearest, _normals, _inward = query.select_task_surface_contact(
+        "finger_1_pad", np.eye(4), np.eye(4), np.zeros(3),
+        1.0e-5, 0.1, 7.5e-4,
+    )
+    assert selected == -1
+    assert nearest is full
+    assert nearest.distance_m[0] == pytest.approx(1.0e-2)
+    assert calls == {"full": 1, "patch": 0}
+
+    responses[0] = NearestSurface(
+        point_m=full.point_m,
+        distance_m=np.asarray((0.0,)),
+        face_index=full.face_index,
+        intersecting=True,
+    )
+    selected, nearest, _normals, _inward = query.select_task_surface_contact(
+        "finger_1_pad", np.eye(4), np.eye(4), np.zeros(3),
+        1.0e-5, 0.1, 7.5e-4,
+    )
+    assert selected == -1
+    assert nearest.intersecting is True
+    assert calls == {"full": 2, "patch": 0}
+
+
+def test_full_surface_boundary_still_runs_multi_witness_query(monkeypatch) -> None:
+    query = object.__new__(ExactPadSurfaceQuery)
+    contact_distance = 7.5e-4
+    tolerance = 64.0 * np.finfo(np.float64).eps
+    full = NearestSurface(
+        point_m=np.asarray(((0.0, 0.0, 0.0),)),
+        distance_m=np.asarray((contact_distance + tolerance,)),
+        face_index=np.asarray((0,), dtype=np.int64),
+    )
+    witness = NearestSurface(
+        point_m=np.asarray(((0.0, 0.0, -5.0e-4),)),
+        distance_m=np.asarray((5.0e-4,)),
+        face_index=np.asarray((0,), dtype=np.int64),
+        surface_normal_m=np.asarray(((0.0, 0.0, -1.0),)),
+        forbidden_distance_m=1.0e-2,
+    )
+    calls = {"patch": 0}
+
+    monkeypatch.setattr(
+        query, "query_pad",
+        lambda *_args: (full, np.zeros(3), np.asarray((0.0, 0.0, 1.0))),
+    )
+
+    def query_patches(*_args, **_kwargs):
+        calls["patch"] += 1
+        return witness, np.zeros((1, 3)), np.asarray(((0.0, 0.0, 1.0),))
+
+    monkeypatch.setattr(query, "query_task_surface_witnesses", query_patches)
+    monkeypatch.setattr(
+        "kcg_connector.grasp.carts_v2.task_grip_surface."
+        "motion_compatible_with_object_witness",
+        lambda *_args: np.asarray((True,)),
+    )
+    moved = np.eye(4)
+    moved[2, 3] = -1.0e-3
+    selected, nearest, _normals, _inward = query.select_task_surface_contact(
+        "finger_1_pad", np.eye(4), moved, np.zeros(3),
+        1.0e-5, 0.1, contact_distance,
+    )
+    assert selected == 0
+    assert nearest.distance_m[0] == pytest.approx(5.0e-4)
+    assert nearest.forbidden_first_contact is False
+    assert calls["patch"] == 1
+
+
+def test_forbidden_object_surface_blocks_farther_allowed_witness(monkeypatch) -> None:
     pytest.importorskip("fcl")
     vertices = np.asarray(((0, 0, 0), (1, 0, 0), (0, 1, 0),
                            (0, 0, 5e-4), (1, 0, 5e-4), (0, 1, 5e-4)), dtype=float)
@@ -231,14 +324,25 @@ def test_forbidden_object_surface_blocks_farther_allowed_witness() -> None:
     )
     current, moved = np.eye(4), np.eye(4)
     current[2, 3], moved[2, 3] = 1e-3, 9e-4
-    selected, nearest, _normals, _inward = ExactPadSurfaceQuery(
-        inputs).select_task_surface_contact(
+    query = ExactPadSurfaceQuery(inputs)
+    forbidden_calls = 0
+    original_forbidden_distance = query._forbidden_surface_distance
+
+    def counted_forbidden_distance(*args):
+        nonlocal forbidden_calls
+        forbidden_calls += 1
+        return original_forbidden_distance(*args)
+
+    monkeypatch.setattr(
+        query, "_forbidden_surface_distance", counted_forbidden_distance)
+    selected, nearest, _normals, _inward = query.select_task_surface_contact(
             "finger_1_pad", current, moved, np.asarray((0.2, 0.2, 0.0)),
             1e-5, 0.1, 7.5e-4)
     assert selected == 0
     assert nearest.forbidden_first_contact is True
     assert nearest.forbidden_face_index == 1
     assert nearest.forbidden_distance_m == pytest.approx(5e-4)
+    assert forbidden_calls == 1
 
 
 def test_empty_motion_compatible_contact_fails_closed(monkeypatch) -> None:

@@ -1,6 +1,6 @@
 {
   "schema_version": "opposition60_isaac_manifest_v1",
-  "updated_at_utc": "2026-08-25T22:29:00Z",
+  "updated_at_utc": "2026-08-25T23:55:10Z",
   "execution_window": {
     "id": "OPPOSITION60_ISAAC_12H",
     "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
@@ -51,7 +51,13 @@
     "exact_sdf_required_for_research_dynamic": false,
     "exact_sdf_required_for_formal_dynamic": true,
     "removed_nail_volume_must_remain_empty": true,
-    "postrun_exact_mesh_trajectory_replay_required": true
+    "postrun_exact_mesh_trajectory_replay_required": true,
+    "attempts": {
+      "coacd": "REJECTED_REMOVED_NAIL_OCCUPANCY_51P84_55P35_51P84_PERCENT",
+      "physx_vhacd_shrink_wrap": "REJECTED_REMOVED_NAIL_OCCUPANCY_7P41_11P28_7P80_PERCENT",
+      "physx_vhacd_pruned": "REJECTED_F2_F3_RELATIVE_P95_DEGRADATION_OVER_0P25MM",
+      "isaac_object_or_grasp_started": false
+    }
   },
   "supervisor_decision": {
     "status": "APPROVE_WITH_3_CHANGES",
@@ -65,10 +71,10 @@
   "gates": {
     "initial_supervisor_review": "APPROVE_WITH_3_CHANGES",
     "compound_convex_collision_asset": "NOT_ACCEPTED",
-    "qp60_static_positive_control": "NOT_RUN",
-    "all_27_opposition_preshapes": "NOT_RUN",
-    "multi_witness_contact": "NOT_RUN",
-    "contact_conditioned_height": "NOT_RUN",
+    "qp60_static_positive_control": "ONE_PRESHAPE_COMPLETE_NO_SURVIVOR_NOT_FAMILY_RESULT",
+    "all_27_opposition_preshapes": "1500S_COMPUTE_TIMEOUT_NO_RESULT",
+    "multi_witness_contact": "ALL33_QUERY_TOP16_AND_FORBIDDEN_FIRST_GUARD_TARGETED_PASS",
+    "contact_conditioned_height": "CONTACT_STOP_ITERATION_AND_STATE_BOUNDARY_SEARCH_TARGETED_PASS",
     "object_b_task_top3": "NOT_RUN",
     "object_b_local_dynamic": "NOT_STARTED",
     "object_b_full_arm_dynamic": "NOT_STARTED",
@@ -79,5 +85,37 @@
     "graspgenx_process_active": false,
     "offline_cascade_process_active": false
   },
-  "claim_scope": "NEW_AUTONOMOUS_RESEARCH_ROUTE_OPENED; NO_NEW_GEOMETRY_OR_DYNAMIC RESULT YET"
+  "validation": {
+    "targeted_passed": 35,
+    "targeted_duration_s": 28.38,
+    "second_supervisor_review": "APPROVE_NO_MUST_FIX",
+    "qp60_exact27_attempt": {
+      "elapsed_s_before_interrupt": 1500,
+      "result_available": false,
+      "stderr_sha256": "a51e279b21f03d42c5ef67ed25cf9971a765b6c462601198f15a80f791bec924",
+      "claim": "COMPUTE_TIMEOUT_NOT_GEOMETRIC_REJECTION"
+    },
+    "qp60_single_preshape_profile": {
+      "phases": [0.2, 0.2, 0.2],
+      "elapsed_s": 214.01718114499818,
+      "height_probe_count": 129,
+      "closure_phase_query_count": 52745,
+      "survivor_count": 0,
+      "result_sha256": "484475e9d72a728699aee6fb4c3e20bb8a9fe4a63cc131314ada729d3668eecd",
+      "profile_sha256": "8dbaa4ac9110c7cf17ac6bfe9b50eb27a0957541b92c8431012ece2295ba3228",
+      "isaac_started": false
+    },
+    "far_field_exact_surface_gate": {
+      "supervisor_status": "APPROVE",
+      "old_elapsed_s": 214.01718114499818,
+      "new_elapsed_s": 136.484317800001,
+      "height_search_json_identical": true,
+      "patch_query_calls_old_new": [52754, 122],
+      "forbidden_query_calls_old_new": [52754, 122],
+      "evidence_scope": "DISCRETE_CONTROL_STEPS_NOT_CONTINUOUS_COLLISION_PROOF",
+      "new_result_sha256": "aebdc45a60af1a27f93798e39527fc3e48747e483c6a9d04af3cb93504bd77b4",
+      "new_profile_sha256": "db98d7c3bd049bc4b42fb98c5917fb11ab2ceaf77a98ee18ffea58bbb488e785"
+    }
+  },
+  "claim_scope": "ONE_QP60_PRESHAPE_OFFLINE_NEGATIVE_AND_QUERY_PROFILE_ONLY; NO_QP60_FAMILY_OR_DYNAMIC RESULT"
 }
