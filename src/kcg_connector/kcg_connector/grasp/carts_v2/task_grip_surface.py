@@ -287,10 +287,64 @@ def motion_faces_current_workspace(
     )
 
 
+def allowed_object_grasp_center_m(inputs) -> np.ndarray:
+    """Area-weighted center of the currently registered allowed grasp band."""
+
+    mesh = inputs.object_contract.model.mesh
+    allowed = np.asarray(inputs.face_roles.face_is_allowed, dtype=np.bool_)
+    triangles = np.asarray(mesh.face_vertices_m, dtype=np.float64)[allowed]
+    areas = np.asarray(mesh.face_areas_m2, dtype=np.float64)[allowed]
+    if (len(triangles) == 0 or not np.all(np.isfinite(areas))
+            or float(np.sum(areas)) <= 0.0):
+        raise ValueError("allowed object grasp band has no finite area")
+    center = np.average(np.mean(triangles, axis=1), axis=0, weights=areas)
+    center.setflags(write=False)
+    return center
+
+
+def motion_compatible_with_object_witness(
+    surface_points_m: np.ndarray,
+    object_points_m: np.ndarray,
+    hand_normals_m: np.ndarray,
+    object_normals_m: np.ndarray,
+    closing_motion_m_per_phase: np.ndarray,
+    object_grasp_center_m: np.ndarray,
+    minimum_motion_m_per_phase: float,
+) -> np.ndarray:
+    """Check real face normals and closing motion against the current object band."""
+
+    arrays = [np.asarray(value, dtype=np.float64) for value in (
+        surface_points_m, object_points_m, hand_normals_m,
+        object_normals_m, closing_motion_m_per_phase)]
+    if (any(value.ndim != 2 or value.shape[1:] != (3,) for value in arrays)
+            or len({len(value) for value in arrays}) != 1
+            or not all(np.all(np.isfinite(value)) for value in arrays)):
+        raise ValueError("contact witnesses must be equal finite (N,3) arrays")
+    center = np.asarray(object_grasp_center_m, dtype=np.float64)
+    if center.shape != (3,) or not np.all(np.isfinite(center)):
+        raise ValueError("object grasp center must be one finite 3-vector")
+    hand_points, object_points, hand_normals, object_normals, motion = arrays
+    gap = object_points - hand_points
+    toward_center = center[None, :] - hand_points
+    scale = np.maximum(1.0, np.linalg.norm(toward_center, axis=1)
+                       * np.linalg.norm(motion, axis=1))
+    tolerance = 64.0 * np.finfo(np.float64).eps * scale
+    inward_motion = -np.einsum("ij,ij->i", motion, object_normals)
+    return (
+        (np.einsum("ij,ij->i", hand_normals, toward_center) > tolerance)
+        & (np.einsum("ij,ij->i", motion, toward_center) > tolerance)
+        & (np.einsum("ij,ij->i", hand_normals, object_normals) < -tolerance)
+        & (np.einsum("ij,ij->i", motion, gap) > tolerance)
+        & (inward_motion >= float(minimum_motion_m_per_phase))
+    )
+
+
 __all__ = [
     "TaskGripSurface",
+    "allowed_object_grasp_center_m",
     "bind_task_hand_variant",
     "load_task_grip_surfaces",
     "motion_faces_current_workspace",
+    "motion_compatible_with_object_witness",
     "task_noncontact_triangles",
 ]

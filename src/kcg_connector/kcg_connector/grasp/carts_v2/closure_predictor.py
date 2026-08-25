@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-from scipy.spatial import cKDTree
 
 from kcg_connector.grasp.carts_v2.models import (
     ClosurePrediction,
@@ -14,110 +13,17 @@ from kcg_connector.grasp.carts_v2.models import (
 )
 from kcg_connector.grasp.carts_v2.surface_contact import (
     ExactPadSurfaceQuery,
+    LegacyMeshProximityIndex,
     NearestSurface,
     nearest_motion_compatible_index,
 )
 from kcg_connector.grasp.carts_v2.task_grip_surface import (
-    motion_faces_current_workspace,
+    allowed_object_grasp_center_m,
 )
 from kcg_connector.grasp.robust.grasp_optimizer import (
     GraspCandidate,
     PlannedPadContact,
 )
-
-
-def _closest_points_on_triangles(
-    triangles: np.ndarray, points: np.ndarray
-) -> np.ndarray:
-    """Vectorized closest points for one point paired with one triangle."""
-
-    a, b, c = triangles[:, 0], triangles[:, 1], triangles[:, 2]
-    ab, ac = b - a, c - a
-    ap = points - a
-    d1, d2 = np.einsum("ij,ij->i", ab, ap), np.einsum("ij,ij->i", ac, ap)
-    result = np.empty_like(points)
-    assigned = (d1 <= 0.0) & (d2 <= 0.0)
-    result[assigned] = a[assigned]
-
-    bp = points - b
-    d3, d4 = np.einsum("ij,ij->i", ab, bp), np.einsum("ij,ij->i", ac, bp)
-    mask = (~assigned) & (d3 >= 0.0) & (d4 <= d3)
-    result[mask] = b[mask]
-    assigned |= mask
-    vc = d1 * d4 - d3 * d2
-    mask = (~assigned) & (vc <= 0.0) & (d1 >= 0.0) & (d3 <= 0.0)
-    fraction = np.divide(d1, d1 - d3, out=np.zeros_like(d1), where=(d1 != d3))
-    result[mask] = a[mask] + fraction[mask, None] * ab[mask]
-    assigned |= mask
-
-    cp = points - c
-    d5, d6 = np.einsum("ij,ij->i", ab, cp), np.einsum("ij,ij->i", ac, cp)
-    mask = (~assigned) & (d6 >= 0.0) & (d5 <= d6)
-    result[mask] = c[mask]
-    assigned |= mask
-    vb = d5 * d2 - d1 * d6
-    mask = (~assigned) & (vb <= 0.0) & (d2 >= 0.0) & (d6 <= 0.0)
-    fraction = np.divide(d2, d2 - d6, out=np.zeros_like(d2), where=(d2 != d6))
-    result[mask] = a[mask] + fraction[mask, None] * ac[mask]
-    assigned |= mask
-
-    va = d3 * d6 - d5 * d4
-    edge = (d4 - d3) + (d5 - d6)
-    mask = (~assigned) & (va <= 0.0) & ((d4 - d3) >= 0.0) & ((d5 - d6) >= 0.0)
-    fraction = np.divide(
-        d4 - d3, edge, out=np.zeros_like(edge), where=(edge != 0.0)
-    )
-    result[mask] = b[mask] + fraction[mask, None] * (c - b)[mask]
-    assigned |= mask
-
-    denominator = va + vb + vc
-    inverse = np.divide(
-        1.0, denominator, out=np.zeros_like(denominator), where=(denominator != 0.0)
-    )
-    v, w = vb * inverse, vc * inverse
-    result[~assigned] = (
-        a[~assigned]
-        + v[~assigned, None] * ab[~assigned]
-        + w[~assigned, None] * ac[~assigned]
-    )
-    return result
-
-
-class _MeshProximityIndex:
-    """Legacy centroid-neighborhood surface query retained for the baseline."""
-
-    def __init__(self, inputs: V2Inputs) -> None:
-        triangles = np.asarray(inputs.object_contract.model.mesh.face_vertices_m)
-        self._triangles = triangles
-        self._centroids = np.mean(triangles, axis=1)
-        self._tree = cKDTree(self._centroids)
-        self._neighbor_count = int(
-            inputs.config.section("closure_prediction")[
-                "nearest_face_candidate_count"
-            ]
-        )
-
-    def query(self, points_m: np.ndarray) -> NearestSurface:
-        count = min(self._neighbor_count, len(self._triangles))
-        _distance, face_ids = self._tree.query(points_m, k=count)
-        if count == 1:
-            face_ids = np.asarray(face_ids)[:, None]
-        face_ids = np.asarray(face_ids, dtype=np.int64)
-        repeated_points = np.repeat(points_m, count, axis=0)
-        local_triangles = self._triangles[face_ids.reshape(-1)]
-        local_closest = _closest_points_on_triangles(
-            local_triangles, repeated_points
-        )
-        local_distance = np.linalg.norm(local_closest - repeated_points, axis=1)
-        local_distance = local_distance.reshape(len(points_m), count)
-        local_closest = local_closest.reshape(len(points_m), count, 3)
-        selected = np.argmin(local_distance, axis=1)
-        rows = np.arange(len(points_m))
-        return NearestSurface(
-            point_m=local_closest[rows, selected],
-            distance_m=local_distance[rows, selected],
-            face_index=face_ids[rows, selected],
-        )
 
 
 def _farthest_surface_points(points: np.ndarray, count: int) -> np.ndarray:
@@ -189,7 +95,7 @@ class SequentialClosurePredictor:
             raise ValueError("TASK_GRIP_SURFACE backend and hand variant must be bound together")
         self._surface_query_backend = backend
         self._proximity = (
-            _MeshProximityIndex(inputs)
+            LegacyMeshProximityIndex(inputs)
             if backend == "LOCAL_CENTROID_BASELINE"
             else None
         )
@@ -199,6 +105,10 @@ class SequentialClosurePredictor:
             else None
         )
         self._task_surface_mode = inputs.task_grip_surfaces is not None
+        self._object_grasp_center_m = (
+            allowed_object_grasp_center_m(inputs)
+            if self._task_surface_mode else None
+        )
         count = int(
             inputs.config.section("closure_prediction")["pad_surface_sample_count"]
         )
@@ -310,7 +220,10 @@ class SequentialClosurePredictor:
         current = self._pad_transform(
             pad_name, phases, base, reference_joint_positions_rad
         )
-        nearest, pad_point, normal = self._exact_pad_mesh.query_pad(pad_name, current)
+        if self._task_surface_mode:
+            nearest = None
+        else:
+            nearest, pad_point, normal = self._exact_pad_mesh.query_pad(pad_name, current)
         phase_index = self._pad_to_phase[pad_name]
         delta = min(
             float(self.inputs.config.section("closure_prediction")[
@@ -318,45 +231,37 @@ class SequentialClosurePredictor:
             ]),
             1.0 - phases[phase_index],
         )
-        if nearest.intersecting or delta <= 0.0:
-            return -1, nearest, normal[None, :], np.asarray((-np.inf,))
+        if delta <= 0.0:
+            if nearest is None:
+                nearest, _points, normals = self._exact_pad_mesh.query_task_surface_witnesses(
+                    pad_name, current, 16)
+            else:
+                normals = np.asarray(normal, dtype=np.float64)[None, :]
+            return -1, nearest, normals, np.full(len(normals), -np.inf)
         moved_phases = list(phases)
         moved_phases[phase_index] += delta
         moved = self._pad_transform(
             pad_name, tuple(moved_phases), base, reference_joint_positions_rad
         )
-        pad_local = (pad_point - current[:3, 3]) @ current[:3, :3]
-        moved_point = pad_local @ moved[:3, :3].T + moved[:3, 3]
-        motion = (moved_point - pad_point) / delta
-        inward = -float(np.dot(motion, normal))
         minimum = float(self.inputs.config.section("closure_prediction")[
             "minimum_inward_motion_m_per_phase"
         ])
-        compatible = inward >= minimum
         if self._task_surface_mode:
-            if (nearest.surface_normal_m is None
-                    or nearest.surface_legacy_blue_pad is None):
-                raise RuntimeError("TASK_GRIP_SURFACE witness has no hand-side normal")
-            hand_normal = nearest.surface_normal_m[0]
-            tolerance = 64.0 * np.finfo(np.float64).eps
-            compatible = (
-                compatible
-                and motion_faces_current_workspace(
-                    self.inputs.task_grip_surfaces, self.inputs.hand_model,
-                    joint_positions_for_phases(
-                        self.inputs, phases,
-                        reference_joint_positions_rad=reference_joint_positions_rad,
-                    ), base, pad_name, pad_point, hand_normal, motion, minimum,
-                )
-                and float(np.dot(hand_normal, normal)) < -tolerance
+            assert self._object_grasp_center_m is not None
+            return self._exact_pad_mesh.select_task_surface_contact(
+                pad_name, current, moved, self._object_grasp_center_m, minimum,
+                delta, float(self.inputs.config.section("closure_prediction")[
+                    "contact_distance_m"]),
             )
-        if compatible or nearest.distance_m[0] > float(
-            self.inputs.config.section("closure_prediction")["contact_distance_m"]
-        ):
-            selected = 0 if compatible else -1
-            return selected, nearest, normal[None, :], np.asarray((inward,))
-        if self._task_surface_mode:
-            return -1, nearest, normal[None, :], np.asarray((inward,))
+        pad_points = np.asarray(pad_point, dtype=np.float64)[None, :]
+        normals = np.asarray(normal, dtype=np.float64)[None, :]
+        pad_local = (pad_points - current[:3, 3]) @ current[:3, :3]
+        moved_points = pad_local @ moved[:3, :3].T + moved[:3, 3]
+        inward = -np.einsum("ij,ij->i", (moved_points - pad_points) / delta, normals)
+        compatible = inward >= minimum
+        if compatible[0] or nearest.distance_m[0] > float(
+                self.inputs.config.section("closure_prediction")["contact_distance_m"]):
+            return (0 if compatible[0] else -1), nearest, normals, inward
         local = self._pad_points[pad_name]
         current_points = local @ current[:3, :3].T + current[:3, 3]
         moved_points = local @ moved[:3, :3].T + moved[:3, 3]
@@ -451,6 +356,12 @@ class SequentialClosurePredictor:
                         initial_clearance,
                         f"PAD_OBJECT_INTERSECTION_BEFORE_VALID_CONTACT_{pad_name}",
                         contacts,
+                    )
+                if nearest.forbidden_first_contact:
+                    face = nearest.forbidden_face_index
+                    return self._failure(
+                        seed, phases, initial_clearance,
+                        f"FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_{face}", contacts,
                     )
                 if selected < 0:
                     if float(np.min(nearest.distance_m)) <= contact_distance:

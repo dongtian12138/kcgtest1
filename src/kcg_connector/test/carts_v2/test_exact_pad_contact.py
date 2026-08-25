@@ -16,6 +16,9 @@ from kcg_connector.grasp.carts_v2.surface_contact import (
     NearestSurface,
     nearest_motion_compatible_index,
 )
+from kcg_connector.grasp.carts_v2.task_grip_surface import (
+    motion_compatible_with_object_witness,
+)
 from kcg_connector.grasp.robust.object_model import TriangleMesh
 
 
@@ -99,6 +102,7 @@ def test_task_grip_query_returns_hand_face_identity_and_real_normal() -> None:
         face_normals_local=np.asarray(((0.0, 0.0, 1.0),)),
         source_face_indices=np.asarray((7,), dtype=np.int64),
         legacy_blue_pad_face_mask=np.asarray((False,), dtype=np.bool_),
+        patch_indices=np.asarray((0,), dtype=np.int64),
     )
     inputs = SimpleNamespace(
         object_contract=SimpleNamespace(
@@ -139,6 +143,102 @@ def test_second_nearest_motion_compatible_witness_is_not_lost() -> None:
         np.asarray((-1.0e-3, 0.0)),
         1.0e-5,
     ) == -1
+
+
+def test_task_surface_second_patch_witness_reaches_production_selector() -> None:
+    hand_points = np.asarray(((0.0, 0.0, 0.1), (0.1, 0.0, 0.1)))
+    object_points = hand_points - np.asarray((0.0, 0.0, 0.1))
+    hand_normals = np.asarray(((0.0, 0.0, 1.0), (0.0, 0.0, -1.0)))
+    object_normals = np.asarray(((0.0, 0.0, 1.0), (0.0, 0.0, 1.0)))
+    motion = np.asarray(((0.0, 0.0, -0.01), (0.0, 0.0, -0.01)))
+    compatible = motion_compatible_with_object_witness(
+        hand_points, object_points, hand_normals, object_normals, motion,
+        np.asarray((0.05, 0.0, 0.0)), 1.0e-5,
+    )
+    selected = nearest_motion_compatible_index(
+        np.asarray((1.0e-4, 2.0e-4)),
+        np.where(compatible, 0.01, -np.inf), 1.0e-5,
+    )
+    assert compatible.tolist() == [False, True]
+    assert selected == 1
+
+
+def test_task_surface_query_returns_one_witness_per_registered_patch() -> None:
+    pytest.importorskip("fcl")
+    vertices = np.asarray(((0, 0, 0), (1, 0, 0), (0, 1, 0),
+                           (2, 0, 0), (3, 0, 0), (2, 1, 0)), dtype=float)
+    faces = np.asarray(((0, 1, 2), (3, 4, 5)), dtype=np.int64)
+    mesh = TriangleMesh(vertices, faces, ("allowed", "allowed"))
+    orientation_sha = "d" * 64
+    surface = SimpleNamespace(
+        points_local_m=vertices, faces=faces,
+        face_normals_local=np.asarray(((0.0, 0.0, -1.0),) * 2),
+        source_face_indices=np.asarray((7, 8), dtype=np.int64),
+        legacy_blue_pad_face_mask=np.asarray((False, False), dtype=np.bool_),
+        patch_indices=np.asarray((0, 1), dtype=np.int64),
+    )
+    inputs = SimpleNamespace(
+        object_contract=SimpleNamespace(
+            model=SimpleNamespace(mesh=mesh),
+            orientation_certificate=SimpleNamespace(
+                positive_volume_winding_sign_by_source_face=(1, 1),
+                canonical_sha256=orientation_sha),
+            material_boundary_evidence=SimpleNamespace(
+                formal_material_boundary_eligible=True,
+                certificate=SimpleNamespace(
+                    orientation_certificate_sha256=orientation_sha))),
+        face_roles=SimpleNamespace(face_is_allowed=np.asarray((True, True))),
+        hand_contract=SimpleNamespace(pads=()),
+        task_grip_surfaces={"finger_1_pad": surface},
+    )
+    transform = np.eye(4)
+    transform[2, 3] = 0.1
+    nearest, hand_points, normals = ExactPadSurfaceQuery(
+        inputs).query_task_surface_witnesses("finger_1_pad", transform, 2)
+    assert len(nearest.distance_m) == len(hand_points) == len(normals) == 2
+    assert set(nearest.surface_face_index.tolist()) == {7, 8}
+    assert np.allclose(nearest.distance_m, (0.1, 0.1))
+    assert nearest.registered_patch_count == nearest.finite_patch_witness_count == 2
+
+
+def test_forbidden_object_surface_blocks_farther_allowed_witness() -> None:
+    pytest.importorskip("fcl")
+    vertices = np.asarray(((0, 0, 0), (1, 0, 0), (0, 1, 0),
+                           (0, 0, 5e-4), (1, 0, 5e-4), (0, 1, 5e-4)), dtype=float)
+    faces = np.asarray(((0, 1, 2), (3, 4, 5)), dtype=np.int64)
+    mesh = TriangleMesh(vertices, faces, ("allowed", "forbidden"))
+    orientation_sha = "e" * 64
+    surface = SimpleNamespace(
+        points_local_m=vertices[:3], faces=np.asarray(((0, 1, 2),)),
+        face_normals_local=np.asarray(((0.0, 0.0, -1.0),)),
+        source_face_indices=np.asarray((7,), dtype=np.int64),
+        legacy_blue_pad_face_mask=np.asarray((False,), dtype=np.bool_),
+        patch_indices=np.asarray((0,), dtype=np.int64),
+    )
+    inputs = SimpleNamespace(
+        object_contract=SimpleNamespace(
+            model=SimpleNamespace(mesh=mesh),
+            orientation_certificate=SimpleNamespace(
+                positive_volume_winding_sign_by_source_face=(1, 1),
+                canonical_sha256=orientation_sha),
+            material_boundary_evidence=SimpleNamespace(
+                formal_material_boundary_eligible=True,
+                certificate=SimpleNamespace(
+                    orientation_certificate_sha256=orientation_sha))),
+        face_roles=SimpleNamespace(face_is_allowed=np.asarray((True, False))),
+        hand_contract=SimpleNamespace(pads=()),
+        task_grip_surfaces={"finger_1_pad": surface},
+    )
+    current, moved = np.eye(4), np.eye(4)
+    current[2, 3], moved[2, 3] = 1e-3, 9e-4
+    selected, nearest, _normals, _inward = ExactPadSurfaceQuery(
+        inputs).select_task_surface_contact(
+            "finger_1_pad", current, moved, np.asarray((0.2, 0.2, 0.0)),
+            1e-5, 0.1, 7.5e-4)
+    assert selected == 0
+    assert nearest.forbidden_first_contact is True
+    assert nearest.forbidden_face_index == 1
+    assert nearest.forbidden_distance_m == pytest.approx(5e-4)
 
 
 def test_empty_motion_compatible_contact_fails_closed(monkeypatch) -> None:
