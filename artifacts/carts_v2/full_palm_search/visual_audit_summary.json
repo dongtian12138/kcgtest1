@@ -1,0 +1,610 @@
+{
+  "artifacts": {
+    "anchor_0_30_45_60_90.png": {
+      "bytes": 147008,
+      "sha256": "9a785889cf1068f8fd4949549c2dbc59950fe7f600fe6afa35d778462d5f5e58"
+    },
+    "object_A_near_contact_candidates.json": {
+      "bytes": 11536,
+      "sha256": "2b194169678ff85bbe1997c09d7b2603af3aadbb17446de56b9f8a3cc023a3b8"
+    },
+    "object_A_near_contact_overview.png": {
+      "bytes": 214114,
+      "sha256": "195bc7d8c8c0c1bc8a37185c15014b2d4b941d69393d6421b1b0f95414f5553a"
+    },
+    "old_B_131_replay.mp4": {
+      "bytes": 693420,
+      "sha256": "7b5b4dc23e546b5c696a9fb8717a8fb717e00102381febbedfe2f2a98f4396d1"
+    },
+    "old_B_133_replay.mp4": {
+      "bytes": 778178,
+      "sha256": "f4885e3739e47f88c1757565a95109ab972b384b7ff3e2f2883d4573634da30b"
+    },
+    "palm_angle_sweep_0_90.mp4": {
+      "bytes": 431627,
+      "sha256": "58c95907ca54839bda4969591d25087f5e883aa1bb51682411f01a867c39286d"
+    }
+  },
+  "candidate_ids": [
+    "graspgenx_131",
+    "graspgenx_133"
+  ],
+  "candidates": {
+    "graspgenx_131": {
+      "checked_state_count": 1216,
+      "deepest_collision_table_penetration": {
+        "clearance_delta_m": 0.0,
+        "collision_convex": {
+          "clearance_m": -0.0044599482137958335,
+          "link_name": "f3Link3",
+          "witness_world_m": [
+            0.45404407020426063,
+            -0.18443792927312877,
+            0.19554005178620418
+          ],
+          "witness_xy_inside_table": true
+        },
+        "f1j1_rad": 0.15700000000000003,
+        "f3j1_rad": 0.15700000000000003,
+        "stage": "FINGER_3_CLOSURE_0267",
+        "state_index": 1054,
+        "visible_raw": {
+          "clearance_m": -0.0044599482137958335,
+          "link_name": "f3Link3",
+          "witness_world_m": [
+            0.45404407020426063,
+            -0.18443792927312877,
+            0.19554005178620418
+          ],
+          "witness_xy_inside_table": true
+        }
+      },
+      "descriptor_id": "kcg_3f_preshape_02",
+      "f1j1_f3j1_preserved_all_states": true,
+      "first_collision_table_violation": {
+        "clearance_delta_m": 0.0,
+        "collision_convex": {
+          "clearance_m": -3.245474413618443e-05,
+          "link_name": "f1Link3",
+          "witness_world_m": [
+            0.48823726791597977,
+            -0.1133223621002388,
+            0.19996754525586383
+          ],
+          "witness_xy_inside_table": true
+        },
+        "f1j1_rad": 0.15700000000000003,
+        "f3j1_rad": 0.15700000000000003,
+        "stage": "FINGER_1_CLOSURE_0164",
+        "state_index": 168,
+        "visible_raw": {
+          "clearance_m": -3.245474413618443e-05,
+          "link_name": "f1Link3",
+          "witness_world_m": [
+            0.48823726791597977,
+            -0.1133223621002388,
+            0.19996754525586383
+          ],
+          "witness_xy_inside_table": true
+        }
+      },
+      "graspgenx_score": 0.9666614532470703,
+      "key_states": {
+        "contact_stop_1": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": 0.003639022894577848,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.5280675853254886,
+              -0.18073790370178405,
+              0.20363902289457786
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "CONTACT_STOP_1",
+          "state_index": 413,
+          "visible_raw": {
+            "clearance_m": 0.003639022894577848,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.5280675853254886,
+              -0.18073790370178405,
+              0.20363902289457786
+            ],
+            "witness_xy_inside_table": true
+          }
+        },
+        "contact_stop_2": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": 0.003639022894577848,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.5280675853254886,
+              -0.18073790370178405,
+              0.20363902289457786
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "CONTACT_STOP_2",
+          "state_index": 787,
+          "visible_raw": {
+            "clearance_m": 0.003639022894577848,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.5280675853254886,
+              -0.18073790370178405,
+              0.20363902289457786
+            ],
+            "witness_xy_inside_table": true
+          }
+        },
+        "contact_stop_3": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": 0.003639022894577848,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.5280675853254886,
+              -0.18073790370178405,
+              0.20363902289457786
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "CONTACT_STOP_3",
+          "state_index": 1215,
+          "visible_raw": {
+            "clearance_m": 0.003639022894577848,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.5280675853254886,
+              -0.18073790370178405,
+              0.20363902289457786
+            ],
+            "witness_xy_inside_table": true
+          }
+        },
+        "deepest_table_penetration": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": -0.0044599482137958335,
+            "link_name": "f3Link3",
+            "witness_world_m": [
+              0.45404407020426063,
+              -0.18443792927312877,
+              0.19554005178620418
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "FINGER_3_CLOSURE_0267",
+          "state_index": 1054,
+          "visible_raw": {
+            "clearance_m": -0.0044599482137958335,
+            "link_name": "f3Link3",
+            "witness_world_m": [
+              0.45404407020426063,
+              -0.18443792927312877,
+              0.19554005178620418
+            ],
+            "witness_xy_inside_table": true
+          }
+        },
+        "first_table_violation": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": -3.245474413618443e-05,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.48823726791597977,
+              -0.1133223621002388,
+              0.19996754525586383
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "FINGER_1_CLOSURE_0164",
+          "state_index": 168,
+          "visible_raw": {
+            "clearance_m": -3.245474413618443e-05,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.48823726791597977,
+              -0.1133223621002388,
+              0.19996754525586383
+            ],
+            "witness_xy_inside_table": true
+          }
+        },
+        "pregrasp": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": 0.024206414946209454,
+            "link_name": "f3Link3",
+            "witness_world_m": [
+              0.3935947146509356,
+              -0.1303008612981818,
+              0.22420641494620946
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "PREGRASP",
+          "state_index": 4,
+          "visible_raw": {
+            "clearance_m": 0.024206414946209454,
+            "link_name": "f3Link3",
+            "witness_world_m": [
+              0.3935947146509356,
+              -0.1303008612981818,
+              0.22420641494620946
+            ],
+            "witness_xy_inside_table": true
+          }
+        }
+      },
+      "minimum_collision_table_clearance_m": -0.0044599482137958335,
+      "minimum_collision_table_link": "f3Link3",
+      "palm_angle_nominal_deg": 8.995437383553925,
+      "palm_angle_rad": 0.157
+    },
+    "graspgenx_133": {
+      "checked_state_count": 1212,
+      "deepest_collision_table_penetration": {
+        "clearance_delta_m": 0.0,
+        "collision_convex": {
+          "clearance_m": -0.004459948213795806,
+          "link_name": "f3Link3",
+          "witness_world_m": [
+            0.45925115723993937,
+            -0.2079745111862051,
+            0.1955400517862042
+          ],
+          "witness_xy_inside_table": true
+        },
+        "f1j1_rad": 0.15700000000000003,
+        "f3j1_rad": 0.15700000000000003,
+        "stage": "FINGER_3_CLOSURE_0267",
+        "state_index": 1112,
+        "visible_raw": {
+          "clearance_m": -0.004459948213795806,
+          "link_name": "f3Link3",
+          "witness_world_m": [
+            0.45925115723993937,
+            -0.2079745111862051,
+            0.1955400517862042
+          ],
+          "witness_xy_inside_table": true
+        }
+      },
+      "descriptor_id": "kcg_3f_preshape_02",
+      "f1j1_f3j1_preserved_all_states": true,
+      "first_collision_table_violation": {
+        "clearance_delta_m": 0.0,
+        "collision_convex": {
+          "clearance_m": -3.245474413615668e-05,
+          "link_name": "f1Link3",
+          "witness_world_m": [
+            0.46705929409435065,
+            -0.12945297488604518,
+            0.19996754525586385
+          ],
+          "witness_xy_inside_table": true
+        },
+        "f1j1_rad": 0.15700000000000003,
+        "f3j1_rad": 0.15700000000000003,
+        "stage": "FINGER_1_CLOSURE_0164",
+        "state_index": 168,
+        "visible_raw": {
+          "clearance_m": -3.245474413615668e-05,
+          "link_name": "f1Link3",
+          "witness_world_m": [
+            0.46705929409435065,
+            -0.12945297488604518,
+            0.19996754525586385
+          ],
+          "witness_xy_inside_table": true
+        }
+      },
+      "graspgenx_score": 0.9661548733711243,
+      "key_states": {
+        "contact_stop_1": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": 0.006155733855879697,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.5322964943668712,
+              -0.18313649062006573,
+              0.2061557338558797
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "CONTACT_STOP_1",
+          "state_index": 434,
+          "visible_raw": {
+            "clearance_m": 0.006155733855879697,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.5322964943668712,
+              -0.18313649062006573,
+              0.2061557338558797
+            ],
+            "witness_xy_inside_table": true
+          }
+        },
+        "contact_stop_2": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": 0.006155733855879697,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.5322964943668712,
+              -0.18313649062006573,
+              0.2061557338558797
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "CONTACT_STOP_2",
+          "state_index": 845,
+          "visible_raw": {
+            "clearance_m": 0.006155733855879697,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.5322964943668712,
+              -0.18313649062006573,
+              0.2061557338558797
+            ],
+            "witness_xy_inside_table": true
+          }
+        },
+        "contact_stop_3": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": -0.0004929846584594555,
+            "link_name": "f3Link3",
+            "witness_world_m": [
+              0.48881261307554097,
+              -0.2195435565426238,
+              0.19950701534154056
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "CONTACT_STOP_3",
+          "state_index": 1211,
+          "visible_raw": {
+            "clearance_m": -0.0004929846584594555,
+            "link_name": "f3Link3",
+            "witness_world_m": [
+              0.48881261307554097,
+              -0.2195435565426238,
+              0.19950701534154056
+            ],
+            "witness_xy_inside_table": true
+          }
+        },
+        "deepest_table_penetration": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": -0.004459948213795806,
+            "link_name": "f3Link3",
+            "witness_world_m": [
+              0.45925115723993937,
+              -0.2079745111862051,
+              0.1955400517862042
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "FINGER_3_CLOSURE_0267",
+          "state_index": 1112,
+          "visible_raw": {
+            "clearance_m": -0.004459948213795806,
+            "link_name": "f3Link3",
+            "witness_world_m": [
+              0.45925115723993937,
+              -0.2079745111862051,
+              0.1955400517862042
+            ],
+            "witness_xy_inside_table": true
+          }
+        },
+        "first_table_violation": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": -3.245474413615668e-05,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.46705929409435065,
+              -0.12945297488604518,
+              0.19996754525586385
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "FINGER_1_CLOSURE_0164",
+          "state_index": 168,
+          "visible_raw": {
+            "clearance_m": -3.245474413615668e-05,
+            "link_name": "f1Link3",
+            "witness_world_m": [
+              0.46705929409435065,
+              -0.12945297488604518,
+              0.19996754525586385
+            ],
+            "witness_xy_inside_table": true
+          }
+        },
+        "pregrasp": {
+          "clearance_delta_m": 0.0,
+          "collision_convex": {
+            "clearance_m": 0.024206414946209454,
+            "link_name": "f3Link3",
+            "witness_world_m": [
+              0.38393137528605364,
+              -0.1777772072973569,
+              0.22420641494620946
+            ],
+            "witness_xy_inside_table": true
+          },
+          "f1j1_rad": 0.15700000000000003,
+          "f3j1_rad": 0.15700000000000003,
+          "stage": "PREGRASP",
+          "state_index": 4,
+          "visible_raw": {
+            "clearance_m": 0.024206414946209454,
+            "link_name": "f3Link3",
+            "witness_world_m": [
+              0.38393137528605364,
+              -0.1777772072973569,
+              0.22420641494620946
+            ],
+            "witness_xy_inside_table": true
+          }
+        }
+      },
+      "minimum_collision_table_clearance_m": -0.004459948213795806,
+      "minimum_collision_table_link": "f3Link3",
+      "palm_angle_nominal_deg": 8.995437383553925,
+      "palm_angle_rad": 0.157
+    }
+  },
+  "conclusion": "B_131_AND_B_133_RAW_VISIBLE_MESHES_PENETRATE_TABLE_AT_THE_SAME_WITNESSES_AS_REGISTERED_CONVEX_COLLISION_MESHES",
+  "distance_geometry_scope": "FULL_RAW_VISIBLE_AND_REGISTERED_COLLISION_TRIANGLES",
+  "dynamic_claim": false,
+  "evidence_scope": "OFFLINE_VISUAL_AND_GEOMETRIC_AUDIT_NOT_ISAAC_OR_GRASP_SUCCESS",
+  "generator_commit": "b9429097728cb1c430dd78b92edf17ba318aad03",
+  "hand_meshes": {
+    "f1Link1": {
+      "collision_triangle_count": 300,
+      "visible_path": "src/iiwa_description/meshes/hand/f1Link1.STL",
+      "visible_sha256": "9098621ee6d1f11486c72bfcc8f547e5eb6bf9d21d6497f2fec2ca95bb8df124",
+      "visible_triangle_count": 128942
+    },
+    "f1Link2": {
+      "collision_triangle_count": 1032,
+      "visible_path": "src/iiwa_description/meshes/hand/f1Link2.STL",
+      "visible_sha256": "79e3b1b09d604cfd539b22e7aa15c06383aee5814b559cfc5414644827734e34",
+      "visible_triangle_count": 20266
+    },
+    "f1Link3": {
+      "collision_triangle_count": 1100,
+      "visible_path": "src/iiwa_description/meshes/hand/f1Link3.STL",
+      "visible_sha256": "7a33a6ab46729a2237dd13d99be3bcefb92bb3d4b77bbf9e69d884509cffcdb0",
+      "visible_triangle_count": 14192
+    },
+    "f2Link1": {
+      "collision_triangle_count": 1032,
+      "visible_path": "src/iiwa_description/meshes/hand/f2Link1.STL",
+      "visible_sha256": "be2e500b73c255090b899e7b5ac7cdbc4f991ee4773278804816442f59e1fd96",
+      "visible_triangle_count": 20266
+    },
+    "f2Link2": {
+      "collision_triangle_count": 1100,
+      "visible_path": "src/iiwa_description/meshes/hand/f2Link2.STL",
+      "visible_sha256": "1758619f7ef1369fc3342c7032edee07222f9bdccc187c33830f9fa59bd508b3",
+      "visible_triangle_count": 14192
+    },
+    "f3Link1": {
+      "collision_triangle_count": 300,
+      "visible_path": "src/iiwa_description/meshes/hand/f3Link1.STL",
+      "visible_sha256": "7efae5b5ccb049f82d1f8d041a4f14eb0a3eac524327d305aad0165f754cab7b",
+      "visible_triangle_count": 128942
+    },
+    "f3Link2": {
+      "collision_triangle_count": 1032,
+      "visible_path": "src/iiwa_description/meshes/hand/f3Link2.STL",
+      "visible_sha256": "480cd9fe3cfe5e3848a00b3aaf83cd8cfd9bd70af9dfc9a00d5dd44552f2e6d6",
+      "visible_triangle_count": 20266
+    },
+    "f3Link3": {
+      "collision_triangle_count": 1100,
+      "visible_path": "src/iiwa_description/meshes/hand/f3Link3.STL",
+      "visible_sha256": "93645443cff113b8c6e5a0280e3270192831d04246233cc45d9745c6e3c7d16e",
+      "visible_triangle_count": 14192
+    },
+    "handbase_link": {
+      "collision_triangle_count": 702,
+      "visible_path": "src/iiwa_description/meshes/hand/handbase_link.STL",
+      "visible_sha256": "ffa358ea840fccf3a5dea0096ba96aa35714530f96573e45c2774f726cba1e5a",
+      "visible_triangle_count": 732478
+    }
+  },
+  "hardware_authorized": false,
+  "isaac_started": false,
+  "object_id": "te_deutsch_d38999_26fj35pn_step",
+  "palm_anchor_states": [
+    {
+      "f1j1_rad": 0.0,
+      "f3j1_rad": 0.0,
+      "palm_angle_nominal_deg": 0,
+      "palm_angle_rad": 0.0
+    },
+    {
+      "f1j1_rad": 0.5233333333333333,
+      "f3j1_rad": 0.5233333333333333,
+      "palm_angle_nominal_deg": 30,
+      "palm_angle_rad": 0.5233333333333333
+    },
+    {
+      "f1j1_rad": 0.785,
+      "f3j1_rad": 0.785,
+      "palm_angle_nominal_deg": 45,
+      "palm_angle_rad": 0.785
+    },
+    {
+      "f1j1_rad": 1.0466666666666666,
+      "f3j1_rad": 1.0466666666666666,
+      "palm_angle_nominal_deg": 60,
+      "palm_angle_rad": 1.0466666666666666
+    },
+    {
+      "f1j1_rad": 1.57,
+      "f3j1_rad": 1.57,
+      "palm_angle_nominal_deg": 90,
+      "palm_angle_rad": 1.57
+    }
+  ],
+  "render_geometry_scope": "DETERMINISTIC_SAMPLES_OF_FULL_RAW_AND_REGISTERED_COLLISION_MESHES",
+  "schema_version": "full_palm_visual_root_cause_audit_v1",
+  "source_integration_manifest": "artifacts/carts_v2/graspgenx/INTEGRATION_MANIFEST.json",
+  "source_integration_manifest_sha256": "a2b604f766235fc0d4ac04e56b7877e0447d3e9a882e92c804b95577aface853",
+  "table_frame_audit": {
+    "environment_scene_config": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/scene.yaml",
+    "evidence_scope": "CONFIG_AND_AUTHORING_CODE_AUDIT_NOT_LIVE_ISAAC_QUERY",
+    "isaac_collision_table_top_z_m": 0.2,
+    "offline_table_top_z_m": 0.2,
+    "schema_version": "full_palm_table_frame_audit_v1",
+    "table_xy_bounds_m": [
+      [
+        0.15000000000000002,
+        0.9500000000000001
+      ],
+      [
+        -0.45,
+        0.45
+      ]
+    ],
+    "top_values_identical": true,
+    "usd_semantics": "ONE_STATIC_CUBE_PRIM_CARRIES_DISPLAY_AND_COLLISION_API",
+    "visible_table_top_z_m": 0.2
+  }
+}

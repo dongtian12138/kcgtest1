@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_full_palm_search_manifest_v1",
-  "updated_at_utc": "2026-08-25T09:11:20Z",
+  "updated_at_utc": "2026-08-25T09:58:00Z",
   "execution_window_id": "FULL_PALM_6D_SEARCH_12H",
   "branch": "carts-grasp-full-palm-search-20260825",
   "start_commit": "18bb79343e305b0f31cc99cd47594ac01ad095d0",
@@ -54,7 +54,7 @@
     "object_pose_writes_allowed": false
   },
   "gates": {
-    "visual_collision_identity_audit": "IN_PROGRESS",
+    "visual_collision_identity_audit": "OFFLINE_PASS_B_REAL_SWEEP_AND_A_OLD_DESCRIPTOR_CONTACT_DEFICIT",
     "full_palm_descriptor_audit": "NOT_STARTED",
     "exact_pad_surface_contact": "NOT_STARTED",
     "complete_sequential_closure": "NOT_STARTED",

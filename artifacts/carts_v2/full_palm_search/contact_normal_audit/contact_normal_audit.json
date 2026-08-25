@@ -1,0 +1,78 @@
+{
+  "graspgenx_131": [
+    {
+      "exact_selected_sample_distance_m": 0.000643446742022567,
+      "exact_selected_sample_face_index": 20975,
+      "full_pad_maximum_penetration_m": 0.00024371864329123666,
+      "full_pad_object_collision_count": 6,
+      "full_pad_object_distance_m": 0.0,
+      "old_radial_inward_motion_m_per_phase": 0.16562017484378688,
+      "old_radial_vs_true_normal_angle_deg": 0.22938879083459673,
+      "old_sample_object_face_index": 20975,
+      "pad_name": "finger_1_pad",
+      "true_normal_inward_motion_m_per_phase": 0.16629277837307074
+    },
+    {
+      "exact_selected_sample_distance_m": 0.0006247484208876809,
+      "exact_selected_sample_face_index": 33181,
+      "full_pad_maximum_penetration_m": 0.0,
+      "full_pad_object_collision_count": 0,
+      "full_pad_object_distance_m": 0.000600089640168593,
+      "old_radial_inward_motion_m_per_phase": 0.23707738423753438,
+      "old_radial_vs_true_normal_angle_deg": 0.8626093020980081,
+      "old_sample_object_face_index": 33181,
+      "pad_name": "finger_2_pad",
+      "true_normal_inward_motion_m_per_phase": 0.23704245839786547
+    },
+    {
+      "exact_selected_sample_distance_m": 0.0006386410851266008,
+      "exact_selected_sample_face_index": 19667,
+      "full_pad_maximum_penetration_m": 0.00025699440580015387,
+      "full_pad_object_collision_count": 12,
+      "full_pad_object_distance_m": 0.0,
+      "old_radial_inward_motion_m_per_phase": 0.14484012042360656,
+      "old_radial_vs_true_normal_angle_deg": 0.9638020388189861,
+      "old_sample_object_face_index": 19667,
+      "pad_name": "finger_3_pad",
+      "true_normal_inward_motion_m_per_phase": 0.14795232634140196
+    }
+  ],
+  "graspgenx_133": [
+    {
+      "exact_selected_sample_distance_m": 0.0006686822738777908,
+      "exact_selected_sample_face_index": 20972,
+      "full_pad_maximum_penetration_m": 0.0,
+      "full_pad_object_collision_count": 0,
+      "full_pad_object_distance_m": 0.00043138951951699893,
+      "old_radial_inward_motion_m_per_phase": 0.06757550060737408,
+      "old_radial_vs_true_normal_angle_deg": 1.8134356457128347,
+      "old_sample_object_face_index": 20972,
+      "pad_name": "finger_1_pad",
+      "true_normal_inward_motion_m_per_phase": 0.06043142831176526
+    },
+    {
+      "exact_selected_sample_distance_m": 0.0007339064086398588,
+      "exact_selected_sample_face_index": 33285,
+      "full_pad_maximum_penetration_m": 0.0,
+      "full_pad_object_collision_count": 0,
+      "full_pad_object_distance_m": 0.00028548422556359294,
+      "old_radial_inward_motion_m_per_phase": 0.23228917623403494,
+      "old_radial_vs_true_normal_angle_deg": 8.682365954739014,
+      "old_sample_object_face_index": 33285,
+      "pad_name": "finger_2_pad",
+      "true_normal_inward_motion_m_per_phase": 0.2154580209755411
+    },
+    {
+      "exact_selected_sample_distance_m": 0.0006649244193587759,
+      "exact_selected_sample_face_index": 19670,
+      "full_pad_maximum_penetration_m": 0.0,
+      "full_pad_object_collision_count": 0,
+      "full_pad_object_distance_m": 3.087333690231639e-05,
+      "old_radial_inward_motion_m_per_phase": 0.18635727679050962,
+      "old_radial_vs_true_normal_angle_deg": 1.4240897869350215,
+      "old_sample_object_face_index": 19670,
+      "pad_name": "finger_3_pad",
+      "true_normal_inward_motion_m_per_phase": 0.18987128362397018
+    }
+  ]
+}
