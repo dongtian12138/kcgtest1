@@ -24,7 +24,7 @@ from kcg_connector.grasp.carts_v2.graspgenx_adapter import (
 )
 from kcg_connector.grasp.carts_v2.models import V2Inputs, load_v2_inputs
 from kcg_connector.grasp.carts_v2.height_projected_search import (
-    SampledPathEnvelope, sampled_height_path_states,
+    SampledPathEnvelope, contact_height_bounds, sampled_height_path_states,
     search_height_projected_pregrasps,
 )
 from kcg_connector.grasp.carts_v2.pipeline import run_offline_pipeline
@@ -267,20 +267,6 @@ def _filter_open_hand_from_table(inputs, candidates):
     return preferred, audit
 
 
-def _hand_reach_radius(inputs, seed) -> float:
-    transforms = inputs.hand_model.forward_kinematics(
-        seed.pregrasp_joint_positions_rad
-    )
-    maximum = 0.0
-    for link_name, triangles in inputs.hand_collision_triangles_by_link.items():
-        transform = transforms[link_name]
-        points = triangles.reshape(-1, 3) @ transform[:3, :3].T + transform[:3, 3]
-        maximum = max(maximum, float(np.max(np.linalg.norm(points, axis=1))))
-    if not np.isfinite(maximum) or maximum <= 0.0:
-        raise ValueError("registered hand reach radius is invalid")
-    return maximum
-
-
 def _candidate_sequence_sha256(adapted) -> str:
     rows = []
     for row in adapted:
@@ -314,16 +300,6 @@ def _pregrasp_contact_key(inputs, query, seed, cache=None) -> tuple[float, ...]:
     if len(distances) != 3 or any(not np.isfinite(value) for value in distances):
         raise ValueError("pregrasp task-surface distances are invalid")
     return max(distances), sum(distances), *seed.pregrasp_closure_phases
-
-
-def _contact_height_bounds(inputs, seed, reach_cache) -> tuple[float, float]:
-    if seed.descriptor_id not in reach_cache:
-        reach_cache[seed.descriptor_id] = _hand_reach_radius(inputs, seed)
-    vertices = inputs.object_contract.model.mesh.vertices_m
-    world = (vertices @ inputs.frozen_world_from_object[:3, :3].T
-             + inputs.frozen_world_from_object[:3, 3])
-    reach = float(reach_cache[seed.descriptor_id])
-    return float(np.min(world[:, 2]) - reach), float(np.max(world[:, 2]) + reach)
 
 
 def _render_coverage(inputs, adapted, baseline, destination: Path) -> None:
@@ -416,14 +392,13 @@ def main() -> int:
     fast_settings = inputs.config.section("fast_filter")
     pregrasp_settings = inputs.config.section(
         "candidate_generation")["pregrasp_search"]
-    reach_cache: dict[str, float] = {}
 
     def height_evaluator(seed):
         contact_cache = {}
         return search_height_projected_pregrasps(
             inputs, seed, predictor,
-            sampled_path_envelope=lambda bound: SampledPathEnvelope(
-                tuple(sampled_height_path_states(inputs, bound)),
+            sampled_path_envelope=lambda bound, final_phases: SampledPathEnvelope(
+                tuple(sampled_height_path_states(inputs, bound, final_phases)),
                 "REGISTERED_CONTROL_STEPS_PALM_PRESHAPE_APPROACH_"
                 "SEQUENTIAL_CLOSURE_PRELOAD_LIFT_START",
             ),
@@ -433,14 +408,19 @@ def main() -> int:
                 inputs, ((bound, bound.pregrasp_closure_phases),))[0],
             fast_filter_callback=lambda prediction: fast_filter_predictions(
                 inputs, (prediction,))[0],
-            contact_height_bounds_m=_contact_height_bounds(
-                inputs, seed, reach_cache),
+            contact_height_bounds_m=contact_height_bounds(inputs, seed),
             table_numerical_tolerance_m=float(
                 fast_settings["table_penetration_tolerance_m"]),
             required_table_clearance_m=float(
                 height_settings["table_operation_clearance_m"]),
-            maximum_exact_variants=int(
-                pregrasp_settings["maximum_exact_preclosures_per_seed"]),
+            maximum_exact_variants=(
+                int(pregrasp_settings["opposition_exact_preclosures_per_seed"])
+                if seed.palm_configuration_rad is not None
+                and float(pregrasp_settings["opposition_lower_rad"])
+                <= float(seed.palm_configuration_rad)
+                <= float(pregrasp_settings["opposition_upper_rad"])
+                else int(pregrasp_settings["maximum_exact_preclosures_per_seed"])
+            ),
         )
     checkpoint_path = args.output_dir / "full_palm_cascade_checkpoint.json"
     resume_audit = _read(checkpoint_path) if checkpoint_path.exists() else None

@@ -99,8 +99,9 @@ def _evaluate_seed(seed: CandidateSeed, evaluator: HeightEvaluator):
         raise ValueError("height evaluator candidate identity changed")
     survivors = tuple(raw_survivors)
     exact_count = int(audit.get("exact_variant_evaluated_count", -1))
-    if not 0 <= len(survivors) <= exact_count <= 2:
-        raise ValueError("height evaluator exceeded the two-variant budget")
+    if not 0 <= len(survivors) <= exact_count <= len(
+            fixed_pregrasp_phase_combinations()):
+        raise ValueError("height evaluator exceeded the registered pregrasp budget")
     evaluated = tuple(audit.get("evaluated", ()))
     ranked = []
     for survivor in survivors:
