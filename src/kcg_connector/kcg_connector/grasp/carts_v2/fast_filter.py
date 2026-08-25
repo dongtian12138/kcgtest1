@@ -15,6 +15,9 @@ from kcg_connector.grasp.carts_v2.models import (
     CandidateSeed, ClosurePrediction, FastFilterResult, V2Inputs,
     joint_positions_for_phases,
 )
+from kcg_connector.grasp.carts_v2.height_projection import (
+    minimum_z_over_finite_table_top,
+)
 from kcg_connector.grasp.robust.object_model import load_stl_mesh
 from kcg_connector.grasp.carts_v2.task_grip_surface import task_noncontact_triangles
 
@@ -261,22 +264,15 @@ def _state_table_clearance(
     transforms = inputs.hand_model.forward_kinematics(
         joints, base_transform=base
     )
-    bounds = inputs.table_xy_bounds_m
     minimum: tuple[float, str] | None = None
     for link_name, triangles in inputs.hand_collision_triangles_by_link.items():
         transform = transforms[link_name]
         world = triangles @ transform[:3, :3].T + transform[:3, 3]
-        triangle_min = np.min(world[:, :, :2], axis=1)
-        triangle_max = np.max(world[:, :, :2], axis=1)
-        overlaps = (
-            (triangle_max[:, 0] >= bounds[0, 0])
-            & (triangle_min[:, 0] <= bounds[0, 1])
-            & (triangle_max[:, 1] >= bounds[1, 0])
-            & (triangle_min[:, 1] <= bounds[1, 1])
-        )
-        if not np.any(overlaps):
+        minimum_z, _triangle_index = minimum_z_over_finite_table_top(
+            world, inputs.table_xy_bounds_m)
+        if minimum_z is None:
             continue
-        gap = float(np.min(world[overlaps, :, 2]) - inputs.table_top_z_m)
+        gap = float(minimum_z - inputs.table_top_z_m)
         if minimum is None or gap < minimum[0]:
             minimum = (gap, link_name)
     return (None, "") if minimum is None else minimum

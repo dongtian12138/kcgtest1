@@ -6,6 +6,7 @@ import pytest
 from kcg_connector.grasp.carts_v2.height_projection import (
     intersect_contact_with_table,
     minimum_handbase_z_for_finite_table,
+    minimum_z_over_finite_table_top,
     project_height_to_intervals,
     translate_transform_world_z,
 )
@@ -58,6 +59,26 @@ def test_discrete_points_outside_finite_table_impose_no_height() -> None:
     assert result.minimum_handbase_z_m is None
     assert result.overlapping_primitive_count == 0
     assert result.geometry_kind == "POINT_DISCRETE"
+
+
+def test_exact_triangle_query_rejects_aabb_only_table_overlap() -> None:
+    triangles = np.asarray((
+        ((-2.0, 0.4, -4.0), (0.4, 2.0, -3.0), (2.0, 2.0, -2.0)),
+    ))
+    minimum, index = minimum_z_over_finite_table_top(
+        triangles, np.asarray(((-0.1, 0.1), (-0.1, 0.1))))
+    assert minimum is None
+    assert index is None
+
+
+def test_exact_triangle_query_uses_clipped_table_crossing_height() -> None:
+    triangles = np.asarray((
+        ((-1.0, 0.0, -1.0), (1.0, 0.0, 1.0), (0.0, 1.0, 1.0)),
+    ))
+    minimum, index = minimum_z_over_finite_table_top(
+        triangles, np.asarray(((-0.1, 0.1), (-0.1, 0.1))))
+    assert minimum == pytest.approx(-0.1)
+    assert index == 0
 
 
 def test_table_intersection_and_nearest_projection_prefer_higher_tie() -> None:

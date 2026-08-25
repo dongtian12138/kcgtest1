@@ -85,6 +85,60 @@ def _world_oriented_geometry(
     return oriented, "TRIANGLE_AABB_CONSERVATIVE" if values.ndim == 4 else "POINT_DISCRETE"
 
 
+def _clip_polygon_axis(
+    polygon: list[np.ndarray], axis: int, boundary: float, keep_above: bool,
+) -> list[np.ndarray]:
+    if not polygon:
+        return []
+    output: list[np.ndarray] = []
+    previous = polygon[-1]
+    previous_inside = ((previous[axis] >= boundary) if keep_above
+                       else (previous[axis] <= boundary))
+    for current in polygon:
+        current_inside = ((current[axis] >= boundary) if keep_above
+                          else (current[axis] <= boundary))
+        if current_inside != previous_inside:
+            denominator = float(current[axis] - previous[axis])
+            if denominator != 0.0:
+                fraction = float((boundary - previous[axis]) / denominator)
+                output.append(previous + fraction * (current - previous))
+        if current_inside:
+            output.append(current)
+        previous, previous_inside = current, current_inside
+    return output
+
+
+def minimum_z_over_finite_table_top(
+    triangles_world_m: np.ndarray, table_xy_bounds_m: np.ndarray,
+) -> tuple[float | None, int | None]:
+    """Exact minimum triangle Z whose XY projection intersects the finite top."""
+
+    triangles = np.asarray(triangles_world_m, dtype=np.float64)
+    bounds = np.asarray(table_xy_bounds_m, dtype=np.float64)
+    if (triangles.ndim != 3 or triangles.shape[1:] != (3, 3)
+            or not np.all(np.isfinite(triangles)) or bounds.shape != (2, 2)
+            or not np.all(np.isfinite(bounds)) or np.any(bounds[:, 0] >= bounds[:, 1])):
+        raise ValueError("finite-table triangle query inputs are malformed")
+    lower, upper = np.min(triangles[:, :, :2], axis=1), np.max(
+        triangles[:, :, :2], axis=1)
+    active = np.flatnonzero(
+        (upper[:, 0] >= bounds[0, 0]) & (lower[:, 0] <= bounds[0, 1])
+        & (upper[:, 1] >= bounds[1, 0]) & (lower[:, 1] <= bounds[1, 1]))
+    best: tuple[float, int] | None = None
+    for index in active:
+        polygon = [point.copy() for point in triangles[int(index)]]
+        for axis, boundary, above in (
+            (0, bounds[0, 0], True), (0, bounds[0, 1], False),
+            (1, bounds[1, 0], True), (1, bounds[1, 1], False),
+        ):
+            polygon = _clip_polygon_axis(polygon, axis, float(boundary), above)
+        if polygon:
+            value = min(float(point[2]) for point in polygon)
+            if best is None or value < best[0]:
+                best = (value, int(index))
+    return (None, None) if best is None else best
+
+
 def minimum_handbase_z_for_finite_table(
     sampled_geometry_handbase_m: np.ndarray,
     world_from_handbase_rotation: np.ndarray,
@@ -196,6 +250,7 @@ __all__ = [
     "HeightProjection",
     "TableHeightRequirement",
     "intersect_contact_with_table",
+    "minimum_z_over_finite_table_top",
     "minimum_handbase_z_for_finite_table",
     "project_height_to_intervals",
     "translate_transform_world_z",

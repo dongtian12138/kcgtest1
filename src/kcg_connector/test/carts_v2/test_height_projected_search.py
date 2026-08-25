@@ -41,6 +41,11 @@ class _Config:
                 "phase_sampling_rule": "DYNAMIC_CONTROL_STEP_BOUNDED"},
             "dynamic": {"finger_maximum_speed_rad_s": 12.0,
                         "physics_dt_s": 1.0 / 120.0},
+            "height_projection": {
+                "contact_search_coarse_sample_count": 33,
+                "contact_boundary_tolerance_m": 0.0001,
+                "maximum_bisection_iterations": 32,
+            },
         }[name]
 
 
@@ -76,7 +81,7 @@ def _seed() -> CandidateSeed:
     )
 
 
-def _prediction(seed, passed):
+def _prediction(seed, passed, reason="NO_THREE_CONTACT"):
     contacts = tuple(SimpleNamespace(
         pad_name=f"pad_{index}", object_face_index=index,
         hand_surface_face_index=10 + index, hand_surface_legacy_blue_pad=False,
@@ -86,7 +91,7 @@ def _prediction(seed, passed):
         contacts=contacts if passed else (), final_joint_positions_rad=(0.7, 0, 0, 0),
         final_closure_phases=(0.5, 0.5, 0.5),
         minimum_initial_pad_clearance_m=0.01,
-        reason="" if passed else "NO_THREE_CONTACT",
+        reason="" if passed else reason,
     )
 
 
@@ -97,10 +102,15 @@ class _Predictor:
 
     def predict(self, seed):
         height = seed.object_from_hand_matrix()[2, 3]
-        return _prediction(seed, self.interval[0] <= height <= self.interval[1])
+        if height < self.interval[0]:
+            return _prediction(seed, False, "BELOW_CONTACT_HEIGHT")
+        if height > self.interval[1]:
+            return _prediction(seed, False, "ABOVE_CONTACT_HEIGHT")
+        return _prediction(seed, True)
 
 
-def _envelope(seed):
+def _envelope(seed, final_phases):
+    assert tuple(final_phases) == (0.5, 0.5, 0.5)
     base = INPUTS.frozen_world_from_object @ seed.object_from_hand_matrix()
     joints = np.asarray(seed.pregrasp_joint_positions_rad)
     stages = (
@@ -144,7 +154,7 @@ def _search(predictor, fast, **overrides):
         INPUTS, _seed(), predictor, **arguments)
 
 
-def test_all_27_are_ranked_before_one_bounded_variant_is_projected() -> None:
+def test_all_27_are_ranked_before_two_bounded_variants_are_projected() -> None:
     contact_calls, fast_calls = [], []
 
     def contact_key(bound):
@@ -156,13 +166,42 @@ def test_all_27_are_ranked_before_one_bounded_variant_is_projected() -> None:
         pregrasp_contact_key=contact_key,
     )
     assert len(contact_calls) == 27
-    assert len(audit["deferred"]) == 26
-    assert len(survivors) == audit["exact_variant_evaluated_count"] == 1
-    assert len(fast_calls) == 1
+    assert len(audit["deferred"]) == 25
+    assert len(survivors) == audit["exact_variant_evaluated_count"] == 2
+    assert len(fast_calls) == 2
     assert survivors[0].object_from_hand_matrix()[2, 3] == pytest.approx(0.15, abs=2e-6)
     row = audit["evaluated"][0]
-    assert row["minimum_table_handbase_z_m"] == pytest.approx(0.101)
+    assert row["contact_conditioned_iterations"][0][
+        "minimum_table_handbase_z_m"] == pytest.approx(0.101)
     assert row["fresh_checked_state_count"] == 9
+    assert row["contact_conditioned_iterations"][0]["contact_stop_phases"] == [0.5] * 3
+
+
+def test_opposition_budget_evaluates_all_27_preshapes_exactly() -> None:
+    survivors, audit = _search(
+        _Predictor(), _fast, maximum_exact_variants=27)
+    assert len(audit["deferred"]) == 0
+    assert audit["exact_variant_evaluated_count"] == 27
+    assert len(survivors) == 27
+
+
+def test_state_boundary_bisection_recovers_narrow_contact_height() -> None:
+    survivors, audit = _search(
+        _Predictor(interval=(0.15150, 0.15170)), _fast,
+        maximum_exact_variants=1)
+    assert len(survivors) == 1
+    probes = audit["evaluated"][0]["contact_height_probes"]
+    assert any(row["probe_kind"] == "STATE_BOUNDARY_BISECTION" for row in probes)
+    assert 0.15150 <= survivors[0].object_from_hand_matrix()[2, 3] <= 0.15170
+
+
+def test_sampled_no_contact_is_unresolved_not_hard_geometry_reject() -> None:
+    survivors, audit = _search(
+        _Predictor(interval=(0.5, 0.6)), _fast, maximum_exact_variants=1)
+    assert survivors == ()
+    assert audit["evaluated"][0]["status"] == "UNRESOLVED"
+    assert audit["evaluated"][0]["reason"] == (
+        "SAMPLED_NO_THREE_CONTACT_WITNESS_UNRESOLVED")
 
 
 def test_empty_contact_table_intersection_is_hard_reject() -> None:
@@ -171,10 +210,9 @@ def test_empty_contact_table_intersection_is_hard_reject() -> None:
                                required_table_clearance_m=0.4)
     assert survivors == ()
     assert audit["evaluated"][0]["reason"] == (
-        "EMPTY_TABLE_AND_CONTACT_HEIGHT_INTERSECTION_CONSERVATIVE_GATE")
-    assert audit["evaluated"][0]["table_path_checked_state_count"] == 1
-    assert audit["evaluated"][0]["table_path_scan_complete"] is False
-    assert audit["evaluated"][0]["table_path_early_empty_intersection"] is True
+        "EMPTY_TABLE_AND_CONTACT_HEIGHT_INTERSECTION")
+    assert audit["evaluated"][0]["contact_conditioned_iterations"][0][
+        "table_path_checked_state_count"] == 9
 
 
 def test_projected_candidate_requires_fresh_complete_sequential_sweep() -> None:
@@ -192,7 +230,7 @@ def test_projected_candidate_requires_fresh_complete_sequential_sweep() -> None:
 
 def test_incomplete_path_envelope_fails_closed() -> None:
     base = np.eye(4)
-    incomplete = lambda seed: SampledPathEnvelope((
+    incomplete = lambda seed, final_phases: SampledPathEnvelope((
         ("PREGRASP", base, np.asarray(seed.pregrasp_joint_positions_rad)),
     ), "INCOMPLETE")
     with pytest.raises(ValueError, match="complete registered path"):
