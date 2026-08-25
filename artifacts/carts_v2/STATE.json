@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T11:38:50Z",
+  "updated_at_utc": "2026-08-25T15:07:33Z",
   "started_at_utc": "2026-08-25T09:11:20Z",
   "hard_deadline_utc": "2026-08-25T21:11:20Z",
   "branch": "carts-grasp-full-palm-search-20260825",
-  "config_sha256": "61d203080025524b1f559b8fcab289abe11c813375a083a3b6d8597e3e21a627",
+  "config_sha256": "e3789927e6527609c9850ebe85affd3b4326f081e8585d7173295c01dc56c579",
   "start_commit": "18bb79343e305b0f31cc99cd47594ac01ad095d0",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "IMPLEMENTING",
-  "current_milestone": "FULL_PALM_AB_GENERATION_AND_CASCADE",
+  "status": "PARKED",
+  "current_milestone": "SAFE_PAUSE_FOR_TASK_MODEL_REVISION",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -38,7 +38,10 @@
     "maximum_duration_s": 43200,
     "automatic_extension_allowed": false,
     "unattended_execution": true,
-    "stop_condition_reached": false,
+    "stop_condition_reached": true,
+    "stopped_at_utc": "2026-08-25T15:04:55Z",
+    "stop_reason": "TASK_MODEL_SUPERSEDED_BY_USER_CONFIRMED_NAIL_FREE_HEIGHT_FIRST_GRASP_DEFINITION",
+    "safe_pause_requested_by_user": true,
     "supersedes_old_five_configuration_search_as_current_method": true
   },
   "git_delivery": {
@@ -86,7 +89,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "NONE",
-    "reason": "full-palm method is implementing; no candidate has yet passed visible/collision truth, exact PAD contact, complete sequential closure, 12 N nominal task, IK, and arm-path gates"
+    "reason": "SAFE_PAUSE_FOR_TASK_MODEL_REVISION; current nail-present blue-PAD select-before-height task model is superseded and Isaac was not launched"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1088,7 +1091,7 @@
     "old_five_descriptor_results_preserved_as_baseline": true,
     "old_axisymmetric_results_preserved_as_baseline": true,
     "supervisor_review": "APPROVE_WITH_CASCADE_BUDGETS_AND_RESCUE_ONLY_REFINEMENT",
-    "implementation_status": "AB_91_CONFIGURATION_PROPOSALS_OFFLINE_PASS_PREGRASP_GATE_BOUND_OBJECT_A_FULL_CASCADE_NEXT",
+    "implementation_status": "SAFE_PAUSED_OLD_TASK_MODEL_OFFLINE_CONTROL_89_OF_91_ATOMIC_PALM_BUCKETS",
     "descriptor_audit": {
       "status": "OFFLINE_PASS",
       "schema_version": "kcg_graspgenx_descriptors_v2",
@@ -1161,12 +1164,21 @@
         "claim_scope": "SAMPLED_PREGRASP_PATH_GATE_NOT_THREE_PAD_CONTACT_OR_GRASP_SUCCESS"
       },
       "object_a_full_pool_attempt": {
-        "status": "STARTED_COMMAND_TIME_LIMIT_REACHED_NOT_A_PHYSICAL_FAILURE",
-        "wall_time_s": 1490.24,
+        "status": "SAFE_PAUSED_BY_USER_AFTER_89_OF_91_ATOMIC_BUCKETS_OLD_TASK_MODEL_CONTROL_ONLY",
+        "wall_time_s_last_command": 705.61,
         "phase_zero_snapshot_count": 5824,
         "phase_zero_snapshot_accepted_count": 1709,
         "phase_zero_snapshot_table_reject_count": 4115,
         "complete_cascade_audit_written": false,
+        "completed_palm_bucket_count": 89,
+        "planned_palm_bucket_count": 91,
+        "last_complete_palm_configuration_rad": 1.5351111111111113,
+        "precise_budget_candidate_count": 712,
+        "task_evaluation_candidate_count": 0,
+        "checkpoint_path": "artifacts/carts_v2/full_palm_search/offline_A/full_palm_cascade_checkpoint.json",
+        "checkpoint_sha256": "b7a1c2df12e0d7729831fee613ada3f9c2afb1c5653ed55e79665d40d26d642d",
+        "stop_reason": "TASK_MODEL_SUPERSEDED_BY_USER_CONFIRMED_NAIL_FREE_HEIGHT_FIRST_GRASP_DEFINITION",
+        "claim_scope": "OLD_TASK_MODEL_OFFLINE_CONTROL_NOT_GRASP_FAILURE_OR_THREE_FINGER_MECHANICAL_INFEASIBILITY",
         "resume_method": "ATOMIC_PER_PALM_BUCKET_SOURCE_AND_CANDIDATE_BOUND_CHECKPOINT"
       }
     },
@@ -1196,7 +1208,7 @@
       "evidence_scope": "OFFLINE_GEOMETRY_REPLAY_NOT_TASK_OR_DYNAMIC_SUCCESS"
     }
   },
-  "evidence_level": "FULL_PALM_AB_PROPOSAL_GENERATION_OFFLINE_PASS_PHYSICS_TASK_IK_DYNAMIC_NOT_REACHED",
+  "evidence_level": "OLD_TASK_MODEL_OFFLINE_CONTROL_SAFE_PAUSED_AT_89_OF_91_ISAAC_NOT_STARTED",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1251,7 +1263,8 @@
     "full_palm_descriptor_and_contact_supervisor": "APPROVE_WITH_EVIDENCE_BOUNDARY"
   },
   "blockers": [
-    "OBJECT_A_FULL_POOL_PREGRASP_AND_CLOSURE_CASCADE_STARTED_NOT_YET_COMPLETED",
+    "TASK_MODEL_SUPERSEDED_BY_USER_CONFIRMED_NAIL_FREE_HEIGHT_FIRST_GRASP_DEFINITION",
+    "SAFE_PAUSE_WAITING_FOR_NEW_MASTER_PROMPT",
     "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_A_ROI_256_THREE_CLOSURE_PREDICTIONS_ZERO_TABLE_SAFE_PATHS",
     "LEGACY_MIXED_PARAMETER_DIAGNOSTIC_OBJECT_B_ROI_256_ZERO_THREE_PAD_CLOSURE_PREDICTION_SURVIVORS",
     "FUTURE_DYNAMIC_2MM_TABLE_PENETRATION_ACCEPTANCE_BOUND_HAS_NO_VALIDATED_PROVENANCE",
