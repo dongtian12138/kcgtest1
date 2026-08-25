@@ -1,28 +1,28 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-25T21:36:07Z
-> 当前分支：`carts-grasp-nailfree-heightprojected-20260825`
+> 快照时间：2026-08-25T22:17:59Z
+> 当前分支：`carts-grasp-opposition60-isaac-20260826`
 > 原始运行产物、源码和哈希优先于本摘要。
 
 ## 一句话状态
 
-两对象已用同一参数完成 91/91 角离线链：A 为 `40→32→12` 且 Top-3 IK 3/3，B 为 `1→1→1` 且 IK 1/1；Isaac 动态仍因无指甲碰撞资产与完整全臂路径未闭合而失败关闭。
+新窗口已重开约60°一指对两指抓取族：先完整检查45°～75°的27预构型和首次接触即停路径，再以经审计复合凸做对象B局部Isaac；当前尚无新60°或动态结果。
 
 ## 六行恢复摘要
 
 - 最初目标：A/B 用同一无指甲手型、同一方法和主要参数，由三根真实内侧抓持面接触后离桌、抬升至少 50 mm、保持至少 2 s，且无未授权穿透。
 - 当前已完成：旧任务模型只读封存；三末节无指甲精确可见网格和三指内侧任务抓持面已审查；A/B 均完成全 91 角高度/接触/闭合、12 N 任务评价和同一 bounded IK。
 - 当前真实物理结果：新无指甲手已导入 Isaac 并只对第一末节做固定参数资产诊断；没有加载连接器或执行抓取，连接器未移动；研究动态、正式动态和硬件验证均未通过。
-- 当前唯一主要阻塞：需要 CAD/更早源拓扑中的闭合无指甲外壳；现有 STL 不能唯一生成可信运行碰撞体，继续只能降低碰撞保真。
-- 最近用户指令：`TASK_MODEL_CORRECTION`；它修正手型、接触语义和高度门顺序，不降低碰撞、速度、力量、50 mm、2 s 或真值隔离。
-- 下一步：未来取得可追溯闭合源拓扑后，从运行时碰撞资产门恢复，再做完整全臂路径和对象 A Top-3；当前不再自主启动运行。
+- 当前唯一主要任务：并行复核已有复合凸产物与旧接触/高度代码，先完成60°静态正对照和研究碰撞资产门。
+- 最近用户指令：`ROOT_CAUSE_METHOD_CORRECTION`；它授权研究型复合凸和局部Isaac，但不降低12 N、3 rad/s、50 mm、2 s或真值隔离。
+- 下一步：完成初始监督审查，优先复用已有凸分解和FK/FCL，在对象B上生成60°静态几何正对照。
 
 ## 当前窗口和边界
 
-- 执行窗口：`NAILFREE_HEIGHT_PROJECTED_12H`；开始 2026-08-25T15:15:34Z；硬截止 2026-08-26T03:15:34Z。
-- 状态：`PARKED`；里程碑：`NAILFREE_HEIGHT_PROJECTED_CLOSEOUT_COMPLETE_SOURCE_COLLISION_BLOCKED`。
+- 执行窗口：`OPPOSITION60_ISAAC_12H`；开始 2026-08-25T22:17:59Z；硬截止 2026-08-26T10:17:59Z。
+- 状态：`IMPLEMENTING`；里程碑：`OPPOSITION60_COMPOUND_COLLIDER_AND_POSITIVE_CONTROL`。
 - `hardware_authorized=false`；旧正式动态门关闭；`formal_dynamic_pass=false`。
-- 研究动态门关闭：离线任务和离散 IK 已完成，但无指甲运行碰撞资产与完整全臂路径尚未闭合。
+- 局部研究动态门暂时关闭，直到复合凸资产和60°静态正对照通过；完整机械臂门继续独立关闭。
 - 不覆盖旧带指甲模型，不修改对象物理参数，不降低已登记安全门。
 
 ## 已冻结的旧对照
@@ -42,6 +42,14 @@
 5. 求交集并投影高度；投影点用完整对象/手网格重新计算接触点、停止角、预构型、接近和逐指闭合碰撞。
 6. 只有高度可投影且三指允许面接触预测/完整采样路径安全的候选竞争每角 Top-8。
 7. 再做 12 N 任务受力、bounded IK、全路径与 Top-3 Isaac。
+
+## 本轮覆盖旧方法的修正
+
+- `q_p∈[45°,75°]` 每1°完整精查全部27种预构型；约4°的 `graspgenx_659` 只作对照。
+- 高度与闭合路径由首次接触停止角条件化，最多迭代5次；最大闭合和AABB不再作最终硬拒绝。
+- 接触查询采用16～32面片、每指最多16个运动兼容见证点，并以对象允许抓持带中心定义当前“向内”。
+- 60°锚点与GraspGenX共同进入x/y/z、姿态、掌面角和预构型的有界精修。
+- 复合凸只用于研究型PhysX；精确无指甲网格用于离线检查和运行后轨迹重放。
 
 ## 监督简化
 
@@ -71,11 +79,11 @@
 
 1. `AGENTS.md`
 2. `docs/carts_v2/NORTH_STAR_CN.md`
-3. `docs/carts_v2/NAILFREE_HEIGHT_PROJECTED_PLAN_CN.md`
+3. `docs/carts_v2/OPPOSITION60_ISAAC_PLAN_CN.md`
 4. 本文件
 5. `docs/carts_v2/DECISIONS_CN.md` 最新部分
 6. `artifacts/carts_v2/STATE.json`
-7. `artifacts/carts_v2/nailfree_height_projected/MANIFEST.json`
+7. `artifacts/carts_v2/opposition60_isaac/MANIFEST.json`
 8. `git status`
 9. `git log -8`
 10. 当前唯一阻塞相关源码和产物

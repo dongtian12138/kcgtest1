@@ -1,0 +1,83 @@
+{
+  "schema_version": "opposition60_isaac_manifest_v1",
+  "updated_at_utc": "2026-08-25T22:29:00Z",
+  "execution_window": {
+    "id": "OPPOSITION60_ISAAC_12H",
+    "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
+    "started_at_utc": "2026-08-25T22:17:59Z",
+    "hard_deadline_utc": "2026-08-26T10:17:59Z",
+    "maximum_wall_time_s": 43200,
+    "unattended_execution": true,
+    "automatic_extension_allowed": false
+  },
+  "git": {
+    "branch": "carts-grasp-opposition60-isaac-20260826",
+    "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
+    "baseline_branch": "carts-grasp-nailfree-heightprojected-20260825"
+  },
+  "task_identity": {
+    "hand_variant": "CONNECTOR_GRASP_NO_NAIL",
+    "contact_semantics": "TASK_GRIP_SURFACE",
+    "primary_object": "te_deutsch_d38999_26fj35pn_step",
+    "transfer_object": "current_d38999_26kj61sn_public_spec",
+    "hardware_authorized": false,
+    "research_dynamic_pass": false,
+    "formal_dynamic_pass": false
+  },
+  "fixed_parameters": {
+    "opposition_palm_range_deg": [45.0, 75.0],
+    "required_anchor_angles_deg": [50.0, 55.0, 60.0, 65.0, 70.0],
+    "palm_step_deg": 1.0,
+    "preshape_phase_values": [0.0, 0.1, 0.2],
+    "opposition_exact_preshape_count": 27,
+    "circumferential_anchor_count": 12,
+    "axial_anchor_count": 3,
+    "maximum_anchors_per_angle_for_refinement": 12,
+    "contact_witness_patch_count_range": [16, 32],
+    "maximum_contact_witness_count_per_finger": 16,
+    "contact_height_iteration_limit": 5,
+    "normal_force_operation_cap_n": 12.0,
+    "joint_speed_abort_rad_s": 3.0,
+    "finger_target_speed_rad_s": 0.18,
+    "physics_dt_s": 0.008333333333333333,
+    "maximum_target_increment_rad": 0.0015,
+    "lift_distance_m": 0.05,
+    "minimum_hold_s": 2.0
+  },
+  "research_collision_policy": {
+    "runtime_representation": "VALIDATED_COMPOUND_CONVEX",
+    "offline_and_postrun_truth_representation": "EXACT_NAILFREE_TRIANGLE_MESH",
+    "compound_convex_accepted": false,
+    "exact_sdf_required_for_research_dynamic": false,
+    "exact_sdf_required_for_formal_dynamic": true,
+    "removed_nail_volume_must_remain_empty": true,
+    "postrun_exact_mesh_trajectory_replay_required": true
+  },
+  "supervisor_decision": {
+    "status": "APPROVE_WITH_3_CHANGES",
+    "qp60_paired_27_preshape_control_first": true,
+    "reuse_registered_surface_patches": true,
+    "registered_patch_count_per_finger": 33,
+    "selected_witness_patch_count_per_finger": 16,
+    "legacy_convex_assets_runtime_accepted": false,
+    "single_deterministic_rebuild_from_11836_face_source_required": true
+  },
+  "gates": {
+    "initial_supervisor_review": "APPROVE_WITH_3_CHANGES",
+    "compound_convex_collision_asset": "NOT_ACCEPTED",
+    "qp60_static_positive_control": "NOT_RUN",
+    "all_27_opposition_preshapes": "NOT_RUN",
+    "multi_witness_contact": "NOT_RUN",
+    "contact_conditioned_height": "NOT_RUN",
+    "object_b_task_top3": "NOT_RUN",
+    "object_b_local_dynamic": "NOT_STARTED",
+    "object_b_full_arm_dynamic": "NOT_STARTED",
+    "object_a_frozen_parameter_dynamic": "NOT_STARTED"
+  },
+  "process_state_at_start": {
+    "isaac_process_active": false,
+    "graspgenx_process_active": false,
+    "offline_cascade_process_active": false
+  },
+  "claim_scope": "NEW_AUTONOMOUS_RESEARCH_ROUTE_OPENED; NO_NEW_GEOMETRY_OR_DYNAMIC RESULT YET"
+}

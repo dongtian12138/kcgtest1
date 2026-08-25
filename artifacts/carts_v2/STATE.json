@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-25T21:36:07Z",
-  "started_at_utc": "2026-08-25T15:15:34Z",
-  "hard_deadline_utc": "2026-08-26T03:15:34Z",
-  "branch": "carts-grasp-nailfree-heightprojected-20260825",
+  "updated_at_utc": "2026-08-25T22:17:59Z",
+  "started_at_utc": "2026-08-25T22:17:59Z",
+  "hard_deadline_utc": "2026-08-26T10:17:59Z",
+  "branch": "carts-grasp-opposition60-isaac-20260826",
   "config_sha256": "87fdda414ccd8571526e7dae9e379880c6122762ec623b9adc153e4b77cc3350",
-  "start_commit": "6a356bdfd2f579b79e53ec7e01e0880fe9f75a59",
+  "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
-  "status": "PARKED",
-  "current_milestone": "NAILFREE_HEIGHT_PROJECTED_CLOSEOUT_COMPLETE_SOURCE_COLLISION_BLOCKED",
+  "status": "IMPLEMENTING",
+  "current_milestone": "OPPOSITION60_COMPOUND_COLLIDER_AND_POSITIVE_CONTROL",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -30,7 +30,7 @@
     "stop_reason": "TWELVE_HOUR_WALL_DEADLINE_REACHED_WITH_NO_RESEARCH_EXECUTABLE_CANDIDATE",
     "old_narrow_generator_park_superseded": true
   },
-  "execution_window": {
+  "nailfree_height_projected_execution_window": {
     "id": "NAILFREE_HEIGHT_PROJECTED_12H",
     "classification": "TASK_MODEL_CORRECTION_PLUS_NAIL_FREE_HAND_VARIANT_PLUS_HEIGHT_FEASIBILITY_BEFORE_TOPK_PLUS_CONTACT_SEMANTICS_REVISION_PLUS_AUTONOMOUS_ISAAC_VALIDATION",
     "started_at_utc": "2026-08-25T15:15:34Z",
@@ -42,6 +42,19 @@
     "stopped_at_utc": "2026-08-25T21:36:07Z",
     "stop_reason": "SOURCE_TOPOLOGY_CANNOT_SUPPORT_TRACEABLE_NAILFREE_RUNTIME_COLLISION_WITHOUT_UNAUTHORIZED_FIDELITY_REDUCTION",
     "supersedes_full_palm_nail_present_method_as_current_method": true
+  },
+  "execution_window": {
+    "id": "OPPOSITION60_ISAAC_12H",
+    "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
+    "started_at_utc": "2026-08-25T22:17:59Z",
+    "hard_deadline_utc": "2026-08-26T10:17:59Z",
+    "maximum_duration_s": 43200,
+    "automatic_extension_allowed": false,
+    "unattended_execution": true,
+    "stop_condition_reached": false,
+    "stopped_at_utc": null,
+    "stop_reason": null,
+    "previous_sdf_only_park_reclassified_as": "RESEARCH_COLLISION_ASSET_ROUTE_REOPENED"
   },
   "git_delivery": {
     "workspace_git_directory_writable": true,
@@ -89,8 +102,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": false,
-    "scope": "NONE",
-    "reason": "NAILFREE_RUNTIME_COLLISION_ASSET_NOT_ACCEPTED_AND_COMPLETE_FULL_ARM_PATH_COLLISION_NOT_CLOSED"
+    "scope": "LOCAL_HAND_OBJECT_ONLY_AFTER_ASSET_AND_STATIC_POSITIVE_CONTROL",
+    "reason": "AWAITING_VALIDATED_COMPOUND_CONVEX_ASSET_AND_QP60_STATIC_POSITIVE_CONTROL"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1330,7 +1343,23 @@
     "mechanical_infeasibility_claimed": false,
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
-  "evidence_level": "TWO_OBJECT_OFFLINE_TASK_AND_DISCRETE_IK_COMPLETE_ISAAC_ASSET_DIAGNOSTIC_FAILED_CLOSED",
+  "opposition60_isaac": {
+    "route_status": "OPENED_NO_NEW_PHYSICAL_RESULT_YET",
+    "primary_object": "te_deutsch_d38999_26fj35pn_step",
+    "transfer_object": "current_d38999_26kj61sn_public_spec",
+    "opposition_palm_range_deg": [45.0, 75.0],
+    "all_27_preshapes_required": true,
+    "contact_conditioned_closure_required": true,
+    "multi_witness_contact_required": true,
+    "research_collision_representation": "VALIDATED_COMPOUND_CONVEX",
+    "postrun_exact_mesh_replay_required": true,
+    "compound_convex_accepted": false,
+    "qp60_static_positive_control_pass": false,
+    "local_hand_dynamic_status": "NOT_STARTED",
+    "full_arm_dynamic_status": "NOT_STARTED",
+    "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
+  },
+  "evidence_level": "ROUTE_OPENED_BASELINE_TWO_OBJECT_OFFLINE_ONLY_NO_OPPOSITION_OR_NEW_DYNAMIC_RESULT",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
