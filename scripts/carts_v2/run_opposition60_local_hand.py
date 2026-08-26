@@ -94,6 +94,60 @@ def _under(path: str, root: str) -> bool:
     return path == root or path.startswith(root + "/")
 
 
+def _candidate_inputs(task: dict, paths: dict[str, Path]):
+    schema = task.get("schema_version")
+    if schema == "carts_contactopt_b0_recheck_v1":
+        rows = task.get("candidates"); _require(isinstance(rows, list), "B0 candidate rows are missing")
+        ready = [row for row in rows if isinstance(row, dict) and row.get("local_isaac_input_ready") is True]
+        row = ready[0] if len(ready) == 1 else {}
+        seed, quality = row.get("input_seed") or {}, row.get("task_quality") or {}
+        audit, source = task.get("b0_surface_audit") or {}, task.get("source") or {}
+        _require(all((task.get("hardware_authorized") is False,
+            task.get("formal_dynamic_pass") is False, task.get("research_dynamic_pass") is False,
+            task.get("local_isaac_input_count") == len(ready) == 1,
+            task.get("object_id") == seed.get("object_id") == "te_deutsch_d38999_26fj35pn_step",
+            row.get("candidate_id") == seed.get("candidate_id"),
+            row.get("sampled_raw_mesh_geometry_pass") is True,
+            row.get("sampled_table_operation_clearance_pass") is True,
+            row.get("nominal_12n_task_pass") is True,
+            quality.get("nominal_gravity_lift_balance_pass") is True,
+            float(quality.get("nominal_operation_force_cap_n", math.nan)) == 12.0,
+            (row.get("bounded_ik") or {}).get("status") == "BOUNDED_IK_PASS_NOT_PATH_COLLISION",
+            row.get("full_arm_path_collision_checked") is False,
+            audit.get("method") == "EXTERNAL_LOAD_BEARING_SURFACE_B0",
+            audit.get("legacy_primary_secondary_are_hard_gates") is False,
+            audit.get("normal_alignment_is_object_semantic_hard_gate") is False)),
+            "B0 local Isaac candidate gate changed")
+        producer = _bound(source.get("path", ""), source.get("sha256", ""), "B0 recheck producer")
+        base = _bound(task.get("base_physical_config", ""), task.get("base_physical_config_sha256", ""), "B0 base config")
+        _bound(task.get("method_config", ""), task.get("method_config_sha256", ""), "B0 method config")
+        _bound(task.get("seed_manifest", ""), task.get("seed_manifest_sha256", ""), "B0 seed manifest")
+        expected = (ROOT / "scripts/carts_v2/run_contactopt_b0_recheck.py").resolve()
+        _require(producer == expected and base == paths["config"], "B0 source or supplied config changed")
+        return row, task["object_id"], seed["pregrasp_joint_positions_rad"], row["target_world_from_handbase_row_major"], schema
+
+    palm_angle_deg = float(task.get("requested_palm_angle_deg", math.nan))
+    _require(isinstance(task.get("selected_geometric_anchor_index"), int)
+             and 0 <= task["selected_geometric_anchor_index"] < 12 and 45.0 <= palm_angle_deg <= 75.0
+             and abs(palm_angle_deg - round(palm_angle_deg)) < 1e-9
+             and task.get("survivor_count") == 1 and len(task.get("survivor_candidates") or []) == 1
+             and len(task.get("task_and_bounded_ik") or []) == 1
+             and task.get("hardware_authorized") is False and task.get("isaac_started") is False,
+             "task/IK document is not one bounded opposition-60 survivor")
+    anchor = task["selected_geometric_anchor"]
+    survivor, row = task["survivor_candidates"][0], task["task_and_bounded_ik"][0]
+    object_id = anchor["object_id"]
+    _require(anchor["candidate_id"] == survivor["candidate_id"] == row["candidate_id"]
+             and survivor["object_id"] == object_id
+             and abs(float(anchor["palm_configuration_deg"]) - palm_angle_deg) < 1e-9
+             and row["bounded_ik"]["status"] == "BOUNDED_IK_PASS_NOT_PATH_COLLISION"
+             and row["task_quality"]["nominal_gravity_lift_balance_pass"] is True,
+             "opposition-60 task/IK candidate identity changed")
+    _bound(ROOT / "scripts/carts_v2/run_opposition60_static_control.py", task["script_sha256"], "task/IK producer")
+    _require(_sha256(paths["config"]) == task["config_sha256"], "task/IK configuration hash changed")
+    return row, object_id, anchor["pregrasp_joint_positions_rad"], row["target_world_from_handbase_row_major"], schema
+
+
 def _verify_inputs(args: argparse.Namespace) -> dict:
     paths = {key: _resolve(getattr(args, key)) for key in
              ("runtime_binding", "import_readback", "task_ik", "config",
@@ -145,41 +199,17 @@ def _verify_inputs(args: argparse.Namespace) -> dict:
     for row in layers["payload_layers"]:
         _bound(paths["hand_asset"].parent / row["path"], row["sha256"],
                f"USD payload {row['path']}")
-    palm_angle_deg = float(task.get("requested_palm_angle_deg", math.nan))
-    _require(isinstance(task.get("selected_geometric_anchor_index"), int)
-             and 0 <= task["selected_geometric_anchor_index"] < 12
-             and 45.0 <= palm_angle_deg <= 75.0
-             and abs(palm_angle_deg - round(palm_angle_deg)) < 1e-9
-             and task.get("survivor_count") == 1
-             and len(task.get("survivor_candidates") or []) == 1
-             and len(task.get("task_and_bounded_ik") or []) == 1
-             and task.get("hardware_authorized") is False
-             and task.get("isaac_started") is False,
-             "task/IK document is not one bounded opposition-60 survivor")
-    anchor = task["selected_geometric_anchor"]
-    survivor, task_row = task["survivor_candidates"][0], task["task_and_bounded_ik"][0]
-    object_id = anchor["object_id"]
-    _require(anchor["candidate_id"] == survivor["candidate_id"] == task_row["candidate_id"]
-             and survivor["object_id"] == object_id
-             and abs(float(anchor["palm_configuration_deg"]) - palm_angle_deg) < 1e-9
-             and task_row["bounded_ik"]["status"] == "BOUNDED_IK_PASS_NOT_PATH_COLLISION"
-             and task_row["task_quality"]["nominal_gravity_lift_balance_pass"] is True,
-             "opposition-60 task/IK candidate identity changed")
-    _bound(ROOT / "scripts/carts_v2/run_opposition60_static_control.py",
-           task["script_sha256"], "task/IK producer")
-    _require(_sha256(paths["config"]) == task["config_sha256"],
-             "task/IK configuration hash changed")
-    q = anchor["pregrasp_joint_positions_rad"]
+    task_row, object_id, q, target_values, source_schema = _candidate_inputs(task, paths)
     _require(len(q) == 4, "active pregrasp joint vector changed")
     initial = {"f1j1": q[0], "f1j2": q[1], "f2j1": q[2], "f3j2": q[3]}
     initial.update({follower: initial[source] for follower, source in MIMIC.items()})
-    target = np.asarray(task_row["target_world_from_handbase_row_major"],
-                        dtype=np.float64).reshape(4, 4)
+    target = np.asarray(target_values, dtype=np.float64).reshape(4, 4)
     _require(np.isfinite(target).all() and np.allclose(target[3], (0, 0, 0, 1)),
              "opposition handbase transform is invalid")
     return {"paths": paths, "binding": binding, "readback": readback,
             "task": task, "task_row": task_row, "object_id": object_id,
-            "initial": initial, "target": target}
+            "initial": initial, "target": target,
+            "candidate_source_schema": source_schema}
 
 
 def _world_matrix(Usd, UsdGeom, prim) -> np.ndarray:
@@ -492,6 +522,7 @@ def main() -> int:
     try:
         verified = _verify_inputs(args)
         report["object_id"] = verified["object_id"]
+        report["candidate_source_schema"] = verified["candidate_source_schema"]
         report["evidence_binding"] = {name: {"path": str(path), "sha256": _sha256(path)}
             for name, path in verified["paths"].items()}
         report["evidence_binding"]["runner_source"] = {

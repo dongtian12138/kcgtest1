@@ -11,6 +11,7 @@ from scipy.spatial.transform import Rotation
 from kcg_connector.grasp.carts_v2.models import (
     V2Inputs, farthest_point_indices, joint_positions_for_phases,
 )
+from kcg_connector.grasp.carts_v2.task_grip_surface import task_noncontact_triangles
 
 
 _QP_ENDPOINT_LABEL_RAD, _QP_ENDPOINT_ROUNDING_TOLERANCE_RAD = math.pi / 2.0, math.radians(0.1)
@@ -89,15 +90,15 @@ def contact_coordinates(points: np.ndarray, approach: np.ndarray):
 
 
 def _finger_reference(inputs, surface, finger_index, preshape, reference,
-                      work_center, approach, target_radius, sample_count):
+                      work_center, approach, target_radius, sample_count,
+                      non_task_triangles):
     maximum = float(inputs.config.section("candidate_generation")["maximum_closure_phase"])
     start = float(preshape[finger_index])
     if not 0.0 <= start < maximum <= 1.0:
         raise ValueError(f"INVALID_PRESHAPE_RANGE:{surface.pad_name}")
     local_points, local_normals, face_indices = _surface_samples(surface)
-    collision = np.unique(inputs.hand_collision_triangles_by_link[
-        surface.link_name].reshape(-1, 3), axis=0)
-    collision = collision[ConvexHull(collision).vertices]
+    non_task = np.unique(np.asarray(non_task_triangles).reshape(-1, 3), axis=0)
+    non_task = non_task[ConvexHull(non_task).vertices]
     phases_grid = np.linspace(start, maximum, int(sample_count))
     derivative = float(inputs.config.section("closure_prediction")[
         "motion_derivative_phase_step"])
@@ -134,8 +135,13 @@ def _finger_reference(inputs, surface, finger_index, preshape, reference,
         radius_error = np.abs(np.linalg.norm(inward, axis=1) - target_radius)
         contact_distance = float(inputs.config.section("closure_prediction")[
             "contact_distance_m"])
-        collision_hand = collision @ transform[:3, :3].T + transform[:3, 3]
-        overhang = float(np.max(collision_hand @ approach)) - points @ approach
+        non_task_hand = non_task @ transform[:3, :3].T + transform[:3, 3]
+        overhang = np.max(non_task_hand @ normals.T, axis=0) - np.einsum(
+            "ij,ij->i", points, normals)
+        scale = max(1.0, float(np.max(np.abs(non_task_hand))),
+                    float(np.max(np.abs(points))))
+        support_tolerance = 64.0 * np.finfo(np.float64).eps * scale
+        compatible &= overhang <= support_tolerance
         for index in range(len(points)):
             rows.append((not bool(compatible[index]),
                          max(0.0, float(radius_error[index]) - contact_distance),
@@ -163,6 +169,8 @@ def hand_contact_references(
             or not 8 <= int(coarse_sample_count) <= 12):
         raise ValueError("HAND_REFERENCE_INPUT_INVALID")
     ordered = tuple(sorted(inputs.task_grip_surfaces.items()))
+    non_task = task_noncontact_triangles(
+        inputs.hand_collision_triangles_by_link, inputs.task_grip_surfaces)
     if tuple(name for name, _surface in ordered) != (
             "finger_1_pad", "finger_2_pad", "finger_3_pad"):
         raise ValueError("FINGER_IDENTITY_CHANGED")
@@ -181,7 +189,8 @@ def hand_contact_references(
     approach = _unit(work_center, "pregrasp workspace approach direction")
     selected = [_finger_reference(
         inputs, surface, index, preshape, reference, work_center, approach, radius,
-        coarse_sample_count) for index, (_name, surface) in enumerate(ordered)]
+        coarse_sample_count, non_task[surface.link_name])
+        for index, (_name, surface) in enumerate(ordered)]
     points = np.asarray([row[7] for row in selected])
     normals = np.asarray([row[8] for row in selected])
     alpha, axial_offsets = contact_coordinates(points, approach)
@@ -197,6 +206,7 @@ def hand_contact_references(
         "approach_direction_handbase": approach,
         "radius_errors_m": tuple(float(row[3]) for row in selected),
         "terminal_overhang_m": tuple(float(row[2]) for row in selected),
+        "terminal_overhang_definition": "NON_TASK_CONVEX_SUPPORT_ALONG_TASK_FACE_NORMAL",
         "task_surface_face_indices": tuple(int(row[5]) for row in selected),
     }
 

@@ -68,7 +68,7 @@ def _role_trees(inputs: V2Inputs) -> tuple[dict[int, tuple], np.ndarray]:
     for role in (PRIMARY_GRIP, SECONDARY_GRIP, HARD_FORBIDDEN):
         faces = inputs.face_roles.indices_for_role(role)
         if len(faces) == 0:
-            raise ValueError(f"object role {FACE_ROLE_NAMES[role]} is empty")
+            continue
         points = np.asarray(mesh.face_centroids_m[faces], dtype=np.float64)
         result[role] = (cKDTree(points), faces, points, normals[faces])
     return result, allowed_object_grasp_center_m(inputs)
@@ -207,6 +207,8 @@ def _finger_metrics(context, seed, phases, finger):
     motion = np.zeros_like(points) if abs(delta) <= 1.0e-12 else (moved - points) / delta
     candidates = []
     for role in (PRIMARY_GRIP, SECONDARY_GRIP):
+        if role not in context["trees"]:
+            continue
         distance, witness, object_normal, face = _query_role(context, role, points)
         compatible = motion_compatible_with_object_witness(
             points, witness, normals, object_normal, motion, context["object_center"],
@@ -214,7 +216,8 @@ def _finger_metrics(context, seed, phases, finger):
         for index in np.flatnonzero(compatible):
             candidates.append((float(distance[index]), role, int(index), int(face[index])))
     best = min(candidates, default=(math.inf, HARD_FORBIDDEN, -1, -1))
-    hard = _query_role(context, HARD_FORBIDDEN, points)[0]
+    hard = (_query_role(context, HARD_FORBIDDEN, points)[0]
+            if HARD_FORBIDDEN in context["trees"] else np.full(len(points), math.inf))
     table, self_margin = _state_margins(context, seed, transforms)
     hard_distance = float(np.min(hard))
     hard_margin = hard_distance - context["contact_distance"]
@@ -230,6 +233,7 @@ def _finger_metrics(context, seed, phases, finger):
             "hard_margin_m": hard_margin,
             "hard_before_allowed_margin_m": hard_before_allowed,
             "table_margin_m": table, "self_margin_m": self_margin,
+            "protected_surface_clearance_pass": hard_distance > context["contact_distance"],
             "safe": safe, "contact": safe and best[0] <= context["contact_distance"]}
 
 
@@ -267,6 +271,7 @@ def _cheap_seed(context, seed, spec):
             "axial_key": _axial(spec), "azimuth_key": _azimuth_bin(spec),
             "maximum_positive_gap_m": max(gaps),
             "gap_imbalance_m": float(np.ptp(gaps)), "hard_margin_m": hard,
+            "protected_surface_clearance_pass": hard > 0.0,
             "table_margin_m": path_table, "self_margin_m": path_self,
             "remaining_closure_phase": max(row["remaining_closure_phase"] for row in fingers),
             "finger_proxies": fingers, "_seed": seed}
@@ -524,7 +529,10 @@ def solve_proxy_contact_intervals(
              "coarse_phase_sample_count": _COARSE_PHASE_COUNT,
              "maximum_joint_increment_rad": _MAXIMUM_INCREMENT_RAD,
              "table_operation_clearance_m": context["table_operation_clearance_m"],
-             "hard_margin_definition": "HARD_ABSOLUTE_DISTANCE_MINUS_CONTACT_DISTANCE",
+             "hard_margin_definition": (
+                 "FUNCTIONAL_PROTECTED_ABSOLUTE_DISTANCE_MINUS_CONTACT_DISTANCE"
+                 if HARD_FORBIDDEN in context["trees"] else
+                 "NO_REGISTERED_FUNCTIONAL_PROTECTED_FACE_POSITIVE_INFINITY"),
              "hardware_authorized": False, "formal_dynamic_pass": False}
     return selected, audit
 

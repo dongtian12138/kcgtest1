@@ -97,8 +97,8 @@ def _feasibility(cheap: Mapping, interval: Mapping,
     if len(fingers) != 3 or not all(
             bool(row.get("closing_direction_reasonable")) for row in fingers):
         reasons.append("CHEAP_CLOSING_DIRECTION_REJECT")
-    if _finite(cheap.get("hard_margin_m")) <= 0.0:
-        reasons.append("HARD_SURFACE_MARGIN_REJECT")
+    if cheap.get("protected_surface_clearance_pass") is not True:
+        reasons.append("FUNCTIONAL_PROTECTED_SURFACE_MARGIN_REJECT")
     if _finite(cheap.get("table_margin_m")) < table_clearance_m:
         reasons.append("TABLE_OPERATION_CLEARANCE_REJECT")
     if _finite(cheap.get("self_margin_m")) <= 0.0:
@@ -117,8 +117,8 @@ def _constraint_values(row: Mapping, table_clearance_m: float) -> np.ndarray:
     direction = 1.0 if len(fingers) == 3 and all(
         bool(item.get("closing_direction_reasonable")) for item in fingers) else -1.0
     interval_gate = 1.0 if interval.get("status") == "PROXY_INTERVAL_SURVIVE" else -1.0
-    return np.asarray((direction,
-        _finite(cheap.get("hard_margin_m")) / _CONSTRAINT_SCALE_M,
+    protected = (1.0 if cheap.get("protected_surface_clearance_pass") is True else -1.0)
+    return np.asarray((direction, protected,
         (_finite(cheap.get("table_margin_m")) - table_clearance_m) /
         _CONSTRAINT_SCALE_M,
         _finite(cheap.get("self_margin_m")) / _CONSTRAINT_SCALE_M,

@@ -5,7 +5,7 @@
   "branch": "carts-grasp-contactopt-1488-fast6h-20260826",
   "start_commit": "ea56c5798104b3a80094b290273e2c79a967e314",
   "method_config_path": "src/kcg_connector/config/carts_contactopt_1488_fast6h.yaml",
-  "method_config_sha256": "f9b39644943c2f41e3c4d8fb34254e3d8fff0513ff92591e1552ba9eaca8d76f",
+  "method_config_sha256": "3d8a7bace11ebcb223c22083fa4b266d98aaa07ee078d38df75609af21e6ddab",
   "base_physical_config_path": "src/kcg_connector/config/carts_surface_v2_fast6h.yaml",
   "base_physical_config_sha256": "fa04db98c2a59b40ce823ff271876652cc0fb32184bdbf6a734107e152c3101c",
   "started_at_utc": "2026-08-26T14:16:36Z",
@@ -14,7 +14,7 @@
   "automatic_extension_allowed": false,
   "unattended_execution": true,
   "status": "IMPLEMENTING",
-  "current_milestone": "CONTACTOPT_1488_GENERATOR_HARD_CONTACT_PATH_REDESIGN",
+  "current_milestone": "CONTACTOPT_1488_B0_LOCAL_ISAAC_INPUT_BINDING",
   "hardware_authorized": false,
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
@@ -81,6 +81,25 @@
       "diagnostic_output_count": 0,
       "elapsed_s": 199.29554606199963,
       "claim_scope": "OFFLINE_PROXY_DIAGNOSTIC_ONLY_NOT_EXACT_CONTACT_TASK_OR_DYNAMIC_SUCCESS"
+    },
+    "b0_pickup_first_object_b": {
+      "completed_at_utc": "2026-08-26T17:41:45Z",
+      "superseded_stage_stop_reason": "OBJECT_SURFACE_PREFERENCE_WAS_PREMATURELY_USED_AS_B0_HARD_GATE",
+      "pose_generated_count": 7,
+      "table_projected_count": 7,
+      "near_contact_seed_count": 6,
+      "proxy_interval_survivor_count": 2,
+      "sampled_raw_mesh_geometry_survivor_count": 1,
+      "sampled_table_operation_clearance_survivor_count": 1,
+      "required_table_operation_clearance_m": 0.001,
+      "table_clearance_numerical_tolerance_m": 0.00001,
+      "nominal_12n_pickup_survivor_count": 1,
+      "bounded_ik_survivor_count": 1,
+      "selected_candidate_id": "contactopt_g_q08_a03_z1_p0",
+      "full_arm_path_collision_checked": false,
+      "result_path": "artifacts/carts_v2/contactopt_1488_fast6h/b0_radial_support_table_projection_run04/result.json",
+      "result_sha256": "00ba8513e66ae80d48b08548c634c29e41adeb5f14bfc464dbbf9eaff7d2dae4",
+      "claim_scope": "OFFLINE_B0_PICKUP_AND_BOUNDED_IK_NOT_DYNAMIC_OR_ROBUST_SUCCESS"
     }
   },
   "stop_reason": null

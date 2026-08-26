@@ -15,6 +15,9 @@ import time
 
 import yaml
 
+from kcg_connector.grasp.carts_v2.b0_surface_semantics import (
+    b0_surface_audit, bind_b0_external_load_bearing_surfaces,
+)
 from kcg_connector.grasp.carts_v2.contact_interval_solver import (
     solve_proxy_contact_intervals,
 )
@@ -111,7 +114,7 @@ def _load_and_verify(root: Path, manifest_path: Path):
     _require(file_sha256(producer) == manifest["source"]["sha256"],
              "seed producer source hash changed")
     implementations = manifest.get("implementation_sources", [])
-    _require(len(implementations) == 2, "seed implementation source binding is incomplete")
+    _require(len(implementations) == 3, "B0 seed implementation source binding is incomplete")
     for source in implementations:
         path = _resolve(root, source["path"])
         _require(file_sha256(path) == source["sha256"],
@@ -122,7 +125,10 @@ def _load_and_verify(root: Path, manifest_path: Path):
     _require(method_values.get("hardware_authorized") is False
              and method_values["structured_seeds"]["total_count_per_object"] == 1488,
              "CONTACTOPT method identity changed")
-    inputs = load_v2_inputs(root, config_path=base, object_id=manifest["object_id"])
+    _require(method_values.get("b0_object_surface", {}).get("contact_set")
+             == "EXTERNAL_LOAD_BEARING_SURFACE", "B0 object semantics changed")
+    inputs = bind_b0_external_load_bearing_surfaces(
+        load_v2_inputs(root, config_path=base, object_id=manifest["object_id"]))
     _require(inputs.object_contract.model.provenance.source_sha256
              == manifest["object_mesh_sha256"], "object mesh hash changed")
     rows = manifest.get("audit", {}).get("specifications", [])
@@ -294,6 +300,7 @@ def main() -> int:
               "base_physical_config": str(base), "base_physical_config_sha256": file_sha256(base),
               "object_mesh_sha256": inputs.object_contract.model.provenance.source_sha256,
               "configured_input_hashes": input_hashes,
+              "b0_surface_audit": b0_surface_audit(inputs),
               "seed_producer": manifest["source"],
               "solver_source": {"path": str(Path(solve_proxy_contact_intervals.__code__.co_filename).resolve()),
                                 "sha256": file_sha256(Path(solve_proxy_contact_intervals.__code__.co_filename))},

@@ -4,6 +4,14 @@ claim_scope: SIMULATION_ONLY_HIERARCHICAL_CONTACT_SEARCH
 hardware_authorized: false
 base_physical_config: src/kcg_connector/config/carts_surface_v2_fast6h.yaml
 
+b0_object_surface:
+  contact_set: EXTERNAL_LOAD_BEARING_SURFACE
+  functional_protection_source: OBJECT_MODEL_EXPLICIT_FORBIDDEN_CONTACT_SEMANTICS
+  primary_secondary_role: DIAGNOSTIC_TIE_BREAK_ONLY
+  radial_and_axial_normal_hard_gate: false
+  legacy_forbidden_proximity_hard_gate: false
+  boundary_erosion_hard_gate: false
+
 structured_seeds:
   total_count_per_object: 1488
   global:

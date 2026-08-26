@@ -16,9 +16,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import yaml
 
+from kcg_connector.grasp.carts_v2.b0_surface_semantics import (
+    b0_surface_audit, bind_b0_external_load_bearing_surfaces,
+)
 from kcg_connector.grasp.carts_v2.models import file_sha256, load_v2_inputs
 from kcg_connector.grasp.carts_v2.structured_seed_generator import (
     generate_structured_contact_seeds,
+    structured_seed_specifications,
 )
 from kcg_connector.grasp.carts_v2.three_contact_pose_initializer import (
     hand_contact_references,
@@ -36,6 +40,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--method-config", type=Path, default=METHOD_CONFIG)
     parser.add_argument("--object-id", default=OBJECT_B)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--candidate-id", action="append", default=[])
     return parser.parse_args()
 
 
@@ -47,10 +52,17 @@ def _method_identity(root: Path, path: Path) -> tuple[dict, Path]:
     method = yaml.safe_load(path.read_text(encoding="utf-8"))
     base = _resolve(root, Path(method["base_physical_config"]))
     design = method["structured_seeds"]
+    b0 = method.get("b0_object_surface", {})
     if (method.get("hardware_authorized") is not False
             or design["global"]["expected_count"] != 1040
             or design["dense_opposition"]["expected_count"] != 448
-            or design["total_count_per_object"] != 1488):
+            or design["total_count_per_object"] != 1488
+            or b0.get("contact_set") != "EXTERNAL_LOAD_BEARING_SURFACE"
+            or b0.get("primary_secondary_role") != "DIAGNOSTIC_TIE_BREAK_ONLY"
+            or any(b0.get(key) is not False for key in (
+                "radial_and_axial_normal_hard_gate",
+                "legacy_forbidden_proximity_hard_gate",
+                "boundary_erosion_hard_gate"))):
         raise ValueError("CONTACTOPT_METHOD_IDENTITY_INVALID")
     return method, base
 
@@ -97,13 +109,20 @@ def main() -> int:
     if any(path.exists() for path in targets):
         raise ValueError("refusing to overwrite CONTACTOPT seed evidence")
     _method, base = _method_identity(root, config)
-    inputs = load_v2_inputs(root, config_path=base, object_id=args.object_id)
-    seeds, audit = generate_structured_contact_seeds(inputs)
+    inputs = bind_b0_external_load_bearing_surfaces(
+        load_v2_inputs(root, config_path=base, object_id=args.object_id))
+    all_specs = structured_seed_specifications()
+    requested = tuple(dict.fromkeys(str(value) for value in args.candidate_id))
+    specifications = (None if not requested else tuple(
+        row for row in all_specs if row.candidate_id in set(requested)))
+    if requested and ({row.candidate_id for row in specifications} != set(requested)):
+        raise ValueError("unknown or duplicate CONTACTOPT candidate identifier")
+    seeds, audit = generate_structured_contact_seeds(inputs, specifications)
     rows = list(audit["specifications"])
     counts = Counter(row["preshape_id"] for row in rows)
     report = {
         "schema_version": "carts_contactopt_seed_run_v1",
-        "claim_scope": "STRUCTURED_CONTACT_ALIGNED_POSES_NOT_COLLISION_TASK_OR_DYNAMIC_SUCCESS",
+        "claim_scope": "B0_EXTERNAL_SURFACE_CONTACT_ALIGNED_POSES_NOT_COLLISION_TASK_OR_DYNAMIC_SUCCESS",
         "hardware_authorized": False,
         "formal_dynamic_pass": False,
         "research_dynamic_pass": False,
@@ -111,6 +130,7 @@ def main() -> int:
         "method_config": str(config), "method_config_sha256": file_sha256(config),
         "base_physical_config": str(base), "base_physical_config_sha256": file_sha256(base),
         "object_mesh_sha256": inputs.object_contract.model.provenance.source_sha256,
+        "b0_surface_audit": b0_surface_audit(inputs),
         "audit": audit, "generated_candidates": [asdict(seed) for seed in seeds],
         "elapsed_s": time.perf_counter() - started,
         "source": {"path": str(Path(__file__).resolve()),
@@ -118,7 +138,9 @@ def main() -> int:
         "implementation_sources": [
             {"path": str(Path(function.__code__.co_filename).resolve()),
              "sha256": file_sha256(Path(function.__code__.co_filename))}
-            for function in (generate_structured_contact_seeds, hand_contact_references)
+            for function in (bind_b0_external_load_bearing_surfaces,
+                             generate_structured_contact_seeds,
+                             hand_contact_references)
         ],
     }
     output.mkdir(parents=True, exist_ok=True)
