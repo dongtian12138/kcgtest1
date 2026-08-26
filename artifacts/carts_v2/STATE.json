@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T17:50:30Z",
+  "updated_at_utc": "2026-08-26T20:02:30Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T20:16:36Z",
   "branch": "carts-grasp-contactopt-1488-fast6h-20260826",
@@ -12,7 +12,7 @@
   "start_commit": "ea56c5798104b3a80094b290273e2c79a967e314",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "CONTACTOPT_1488_B0_FIRST_FINGER_CONTACT_BINDING",
+  "current_milestone": "CONTACTOPT_1488_FUNNEL_REPAIRED_TOP3_FIRST_FINGER_EVALUATED",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -158,6 +158,74 @@
       "initial_exact_b0_replay_path": "artifacts/carts_v2/contactopt_1488_fast6h/object_b_b0_top1_initial_run01/exact_mesh_replay_run01.json",
       "initial_exact_b0_replay_sha256": "e6918df35348020e97e1ed759000f4713b5d1cf0a95d0d9deb89318c6312e85e",
       "claim_scope": "OFFLINE_B0_PICKUP_AND_BOUNDED_IK_NOT_DYNAMIC_OR_ROBUST_SUCCESS"
+    },
+    "generator_funnel_review": {
+      "baseline_registered_specification_count": 1488,
+      "baseline_pose_generated_count": 7,
+      "baseline_rejection_counts": {
+        "OBJECT_TARGET_AXIAL_OFFSET_OUTSIDE_GRASP_BAND": 664,
+        "NO_EDGE_COMPATIBLE_TARGET_TRIPLET": 567,
+        "NO_USABLE_OBJECT_REGION_IN_TARGET_WINDOW": 194,
+        "INSUFFICIENT_25_DEG_FEATURE_DIRECTIONS": 52,
+        "POINT_NORMAL_ALIGNMENT_OPPOSED_NORMAL_FAILED": 4
+      },
+      "sparse_radial_support_face_count": 1543,
+      "full_b0_external_load_bearing_face_count": 687036,
+      "sparse_fraction": 0.0022458794007883137,
+      "sampled_edge_rejections_recovered_without_threshold_change": [10, 24],
+      "axial_rejections_projectable_by_common_shift": [541, 664],
+      "median_common_axial_shift_m": 0.002788644162213114,
+      "diagnosis_path": "artifacts/carts_v2/contactopt_1488_fast6h/generator_funnel_diagnosis_run01/diagnosis.json",
+      "diagnosis_sha256": "d73b7926f48fb40b75ee6fc60ba594da9458d94b30f000f0e321da34e449235f",
+      "claim_scope": "GENERATOR_FALSE_REJECTION_DIAGNOSIS_NOT_GRASP_SUCCESS"
+    },
+    "object_b_normal_first_reselection": {
+      "registered_specification_count": 1488,
+      "pose_generated_count": 236,
+      "pose_rejected_count": 1252,
+      "triplet_selection_policy": "EDGE_COMPATIBLE_TOP64_THEN_MIN_MAX_NORMAL_THEN_MIN_MAX_POINT_RESIDUAL",
+      "seed_generation_elapsed_s": 193.64169269401464,
+      "cheap_near_contact_count": 25,
+      "cheap_top120_count": 15,
+      "proxy_interval_survivor_count": 4,
+      "exact_completed_count": 220,
+      "nominal_12n_local_research_input_count": 5,
+      "robust_task_survivor_count": 0,
+      "full_arm_path_collision_checked_count": 0,
+      "seed_manifest_path": "artifacts/carts_v2/contactopt_1488_fast6h/funnel_normal_first_full1488_run02/seed_manifest.json",
+      "seed_manifest_sha256": "c8a421a13c949dafdc7eb3d84662fc75784b3129da6866452907a7f09889196b",
+      "exact_result_path": "artifacts/carts_v2/contactopt_1488_fast6h/funnel_normal_first_b0_exact_run02/result.json",
+      "exact_result_sha256": "6c233dcfe8804a204a25943292afa43fcd729a64b5169a4eedd995287075836b",
+      "claim_scope": "OFFLINE_B0_NOMINAL_12N_AND_BOUNDED_IK_NOT_ROBUST_OR_DYNAMIC_SUCCESS"
+    },
+    "object_b_normal_first_top3_dynamic": {
+      "attempted_candidate_ids": [
+        "contactopt_g_q09_a13_z3_p0",
+        "contactopt_g_q05_a13_z0_p0",
+        "contactopt_g_q09_a08_z3_p0"
+      ],
+      "endpoint_plan_reject_count": 2,
+      "isaac_first_finger_attempt_count": 1,
+      "isaac_candidate_id": "contactopt_g_q09_a13_z3_p0",
+      "physics_time_advanced_s": 4.2,
+      "physics_step_count": 504,
+      "maximum_first_finger_speed_rad_s": 0.17910325527191162,
+      "maximum_absolute_joint_effort_nm": 0.05273403599858284,
+      "maximum_target_increment_rad": 0.0015000000000000013,
+      "physx_hand_object_contact_count": 0,
+      "object_maximum_translation_m": 1.3493575361575808e-07,
+      "non_task_0p75mm_band_is_diagnostic_only": true,
+      "raw_mesh_non_task_intersection_became_nonexecutable_boundary": true,
+      "second_third_preload_lift_command_counts": [0, 0, 0, 0],
+      "three_finger_contact": false,
+      "object_left_table": false,
+      "lift_height_m": 0.0,
+      "hold_duration_s": 0.0,
+      "trace_path": "artifacts/carts_v2/contactopt_1488_fast6h/object_b_normalfirst_top1_first_finger_run01/first_finger.json",
+      "trace_sha256": "ac9558424c0118caef1791b747c4789aacbba50ad252aa3229b5a4f1ef9c234a",
+      "evaluation_path": "artifacts/carts_v2/contactopt_1488_fast6h/object_b_normalfirst_top1_first_finger_run01/evaluation.json",
+      "evaluation_sha256": "24ca0c17c0be4abf6af0f67d54f518040bd8c1c8fe43bcc346e75f16b77e5ff2",
+      "claim_scope": "RESEARCH_FIRST_FINGER_DYNAMIC_FAILURE_NOT_THREE_FINGER_GRASP_OR_LIFT"
     },
     "object_priority": [
       "te_deutsch_d38999_26fj35pn_step",
@@ -1828,7 +1896,7 @@
     "full_arm_dynamic_status": "NOT_STARTED",
     "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
   },
-  "evidence_level": "SURFACE_V2_OBJECT_B_FIXED_DESIGN_PLUS_STRATIFIED_EXACT_AND_REGISTERED_REFINEMENT_ZERO_GEOMETRY_PASS_NO_NEW_ISAAC_NO_THREE_FINGER_LIFT_OR_HOLD",
+  "evidence_level": "CONTACTOPT_1488_GENERATOR_FUNNEL_REPAIRED_PLUS_OFFLINE_B0_NOMINAL_AND_ONE_FIRST_FINGER_DYNAMIC_FAILURE_NO_THREE_FINGER_LIFT_OR_HOLD",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1896,12 +1964,18 @@
     "surface_v2_closeout_targeted_surface_tests_passed": 13,
     "surface_v2_closeout_targeted_surface_test_duration_s": 54.58,
     "surface_v2_full_regression_rerun": false,
-    "surface_v2_full_regression_not_rerun_reason": "NO_SHARED_LEGACY_PUBLIC_MODULE_MODIFIED_AND_USER_RESERVED_WINDOW_FOR_DIRECT_DYNAMIC_OR_CURRENT_METHOD_EVIDENCE"
+    "surface_v2_full_regression_not_rerun_reason": "NO_SHARED_LEGACY_PUBLIC_MODULE_MODIFIED_AND_USER_RESERVED_WINDOW_FOR_DIRECT_DYNAMIC_OR_CURRENT_METHOD_EVIDENCE",
+    "contactopt_generator_targeted_tests_passed": 7,
+    "contactopt_generator_python_compile_passed": true,
+    "contactopt_normal_first_reproduction_numerically_identical": true,
+    "contactopt_full_regression_rerun": false,
+    "contactopt_full_regression_not_rerun_reason": "CURRENT_METHOD_ONLY_FILES_CHANGED_AND_WINDOW_RESERVED_FOR_FUNNEL_REPRODUCTION_AND_DYNAMIC_EVIDENCE"
   },
   "blockers": [
-    "SURFACE_V2_FIXED_GLOBAL_AND_SINGLE_STRATIFIED_RANK_WITH_REGISTERED_REFINEMENTS_PRODUCED_ZERO_GEOMETRY_SURVIVORS",
-    "BEST_THREE_CONTACT_EXACT_REPLAY_TABLE_CLEARANCE_0P634889MM_BELOW_REQUIRED_1MM",
-    "SECONDARY_GRIP_DYNAMIC_VALUE_NOT_YET_OBSERVED",
-    "NO_THREE_FINGER_LIFT_OR_HOLD_EVIDENCE"
+    "FIRST_FINGER_HAS_ZERO_PHYSX_CONTACT_BEFORE_RAW_NON_TASK_HAND_SURFACE_INTERSECTION_BOUNDARY",
+    "TWO_OF_NEW_TOP3_HAVE_NO_MOTION_COMPATIBLE_TASK_CONTACT_BEFORE_NONEXECUTABLE_ENDPOINT",
+    "FULL_ARM_APPROACH_AND_CARRIED_OBJECT_LIFT_PATH_NOT_CHECKED",
+    "NO_THREE_FINGER_CONTACT_LIFT_OR_HOLD_EVIDENCE",
+    "OBJECT_A_NOT_EVALUATED_WITH_CURRENT_GENERATOR"
   ]
 }

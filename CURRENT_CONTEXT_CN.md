@@ -1,70 +1,80 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-26T18:32:45Z
+> 快照时间：2026-08-26T19:44:00Z
 > 当前分支：`carts-grasp-contactopt-1488-fast6h-20260826`
 > 原始源码、配置、产物、Git、进程和时间戳优先于本摘要。
 
 ## 当前唯一优先级
 
-用户最新要求是清理活动工程包，移除旧版本代码、旧阶段 Markdown 和过时 Python，
-并防止历史要求覆盖新要求。清理状态为 `STATIC_PASS`；这里只表示清理后的静态结构与
-当前入口已验证，不表示抓取或动态通过。
+用户已停止对单个坏候选做局部位姿补救，主线回到对象 B 的固定 1488 个结构化规格，解释并
+修正“1488 个规格只有 7 个生成六维姿态”的漏斗。旧动态候选保留为失败样本：第一指指腹
+进入近邻后，`f1Link3` 非任务面先发生原始网格干涉，PhysX 指腹接触始终为 0；这不是力不够，
+也不是三指手机械结构无解。
 
-清理过程未启动 Isaac、未继续第一指实验、未改变物理配置。清理前已建立恢复标签：
-`pre-clean-project-20260826`。
+## 漏斗复盘的已验证事实
 
-## 清理结果
+- 旧 1488 个规格：664 个轴向目标越界、567 个三点边长不兼容、194 个目标窗口无面、
+  52 个特征方向不足、4 个点/法向对齐失败，只生成 7 个姿态。
+- 旧生成器把 72×24 外轮廓的 1,543 个代表面继续当作三点目标搜索域；它只占 B0 外部
+  承载面 687,036 个面的 0.2246%。这会制造“窗口无面”和边长假拒绝。
+- 24 个分层边长失败样本在完整 B0 表面重评后有 10 个无需改变 1.5 mm 门限即可通过。
+- 664 个轴向拒绝中有 541 个只需共同平移三指目标中心即可进入原抓持带；中位平移量
+  2.79 mm。真正手形轴向跨度超出对象抓持带的为 123 个。
+- 诊断产物：`artifacts/carts_v2/contactopt_1488_fast6h/generator_funnel_diagnosis_run01/`。
 
-- 58 个退役路径已从活动树移除，共减少 13,896 行旧方法、旧入口、旧测试和旧文档。
-- 跟踪文件由 934 减为 876，Python 由 334 减为 301，Markdown 由 58 减为 36；
-  `docs/carts_v2/` 只保留 3 份当前文档。
-- 提交为 `42f6c1a`、`bd430d2`、`0e899fc`；未推送远端。
-- 当前 8 个跟踪执行入口的帮助/导入检查通过；全仓成功收集 1,588 个测试。
-- 不依赖 FCL 的当前 CARTS 回归为 63 passed、10 skipped。完整当前 CARTS 回归另有
-  4 个失败，原因是本机缺少 `python-fcl`，不是本轮删除造成的断链；不得写成全项目测试全绿。
-- 仓库活动源码区的 `__pycache__/.pytest_cache` 已清为 0；`.venv`、`artifacts` 和
-  `third_party` 未删除。
+## 已实施的最小生成修正
 
-## 受保护的当前工作
+- 1488 规格、手型、B0 对象语义、1.5 mm 边长门、碰撞门、12 N 和随机性约束均未改变。
+- 三点目标改在完整 B0 外部承载面、完整 ±12.5° 窗口内搜索，每指固定 64 个确定性
+  点/法向代表；72×24 外轮廓只保留为旧基线。
+- 三指轴向偏移先保持相对关系，只对共同中心做有界投影；只有真实手形跨度超过对象抓持带
+  才拒绝。
+- 三边相容的三点组先按局部表面法向残差、再按点位残差选择，避免“点很近但闭合方向不对”。
 
-以下未提交文件属于当前/并行 WIP，清理不得修改、暂存或删除：
+## 同一 1488 规格重跑结果
 
-- `scripts/carts_v2/evaluate_opposition60_first_finger_trace.py`
-- `scripts/carts_v2/plan_opposition60_physical_contact_endpoint.py`
-- `scripts/carts_v2/run_contactopt_seed_generation.py`
-- `scripts/carts_v2/run_opposition60_local_contact.py`
-- `src/kcg_connector/kcg_connector/grasp/carts_v2/structured_seed_generator.py`
-- `scripts/carts_v2/audit_nailfree_graspgenx_seed_reuse.py`
+- 完整表面 + 轴向投影：7 → 209 个六维姿态，耗时 183.80 s。
+- 再采用法向优先选择：209 → 236 个姿态，耗时 194.11 s。
+- 最大法向残差中位数从 1.1958 rad 降至 1.0214 rad，最小值从 0.7007 rad 降至
+  0.2527 rad；这是生成覆盖改善，不是抓取成功。
+- 236 个姿态经过便宜层级后有 4 个代理区间幸存；220 个完成原始网格/桌面/任务/有界 IK
+  复核，得到 5 个 12 N 名义研究输入。五者全部未通过完整误差/六方向鲁棒门，也没有完成
+  整臂路径碰撞检查。
 
-## 清理前保留的物理事实
+## Top-3 与 Isaac 实际结果
 
-- 对象 B 候选 `contactopt_g_q08_a03_z1_p0` 只完成了 0.5 s 初始状态动态检查；
-  该次运行未发闭指或抬升指令，手—物接触数为 0。
-- 第一指真实接触、三指接触、离桌、50 mm 抬升、2 s 保持、整臂路径和额外扰动均尚未验证。
-- `hardware_authorized=false`、`formal_dynamic_pass=false`、
-  `research_dynamic_pass=false`。
-- 清理前未发现活动的 pytest、Isaac Sim 或 `/kit/kit` 进程。
+- `q05_a13` 和 `q09_a08` 在第一指端点规划时失败：任务指腹没有在非任务几何边界前形成
+  运动相容接触，因此未启动 Isaac。
+- `q09_a13` 通过端点、0.5 s 初始状态和预构型检查；随后第一指以 0.18 rad/s 上限闭合，
+  Isaac 物理推进 4.2 s，共 504 步。
+- 第一指最大速度 0.17910 rad/s、最大等效关节力矩 0.05273 N·m、最大单周期目标变化
+  0.0015 rad；未触发 3 rad/s、受力或跟随误差安全门。
+- 原始网格评价在第 489 步开始出现运动相容 TASK 面近邻，但到最后安全端点仍有
+  `hand_object=0` 个 PhysX 接触；第 503 步非任务手面进入不可执行边界。
+- 第二、第三指、共同预紧和抬升命令均为 0；连接器最大位移仅 0.135 µm，离桌、50 mm
+  抬升和 2 s 保持都没有发生。
 
-## 清理保留边界
+## 证据边界和授权
 
-- 保留当前 CONTACTOPT-1488 入口、第一指诊断入口及它们的传递依赖。
-- 保留冻结模型、对象/手身份、物性、安全门限和全部证据数据。
-- 历史方法的源码与文档只由 Git 标签恢复，不在活动树保存第二份。
-- `artifacts/` 是证据区，不是默认源码或指令入口；不得从旧产物恢复运行授权。
+- 当前证据：生成器漏斗诊断、离线原始网格/任务评价、有界 IK、第一指研究型动态失败。
+- `research_dynamic_pass=false`、`formal_dynamic_pass=false`、`hardware_authorized=false`。
+- 本轮没有磁吸、隐藏固定、物体位姿写入或在线对象/接触真值控制。
+- 当前主要问题已从“1488→7 人为误杀”推进到“原始网格 TASK 面与 Isaac 复合凸接触资产
+  在第一指最后安全端点不产生物理接触”；不能通过继续闭合穿过非任务面来解决。
+
+## 验证、进程与 Git
+
+- 结构化生成器定向回归：7 passed；8 个相关 Python 文件编译通过。
+- 当前没有 Isaac、GraspGenX 或 CONTACTOPT 活动进程。
+- `scripts/carts_v2/audit_nailfree_graspgenx_seed_reuse.py` 是无关未跟踪资产，不得暂存。
+- 当前工作树修改尚待本里程碑提交；推送前只暂存本任务文件和本摘要/状态。
 
 ## 最小读取路线
 
-普通源码或清理工作只读：
-
 1. `AGENTS.md`
 2. 本文件
-3. 待改源码及其直接配置/测试
-
-只有明确恢复 CONTACTOPT 研究时再读：
-
-1. `docs/carts_v2/NORTH_STAR_CN.md`
-2. `docs/carts_v2/CONTACTOPT_1488_FAST6H_PLAN_CN.md`
-3. `artifacts/carts_v2/contactopt_1488_fast6h/MANIFEST.json`
-4. 当前 Git 状态、进程和最新产物
-
-旧动态不会在清理完成后自动续跑；需要用户新的直接指令。
+3. `docs/carts_v2/CONTACTOPT_1488_FAST6H_PLAN_CN.md`
+4. `docs/carts_v2/DECISIONS_CN.md`
+5. `artifacts/carts_v2/STATE.json`
+6. `artifacts/carts_v2/contactopt_1488_fast6h/MANIFEST.json`
+7. 当前 Git 状态、进程和上面列出的原始产物
