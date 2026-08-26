@@ -1,18 +1,24 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-26T21:52:17Z
+> 快照时间：2026-08-26T23:46:00Z
 > 当前分支：`carts-grasp-contactopt-1488-fast6h-20260826`
 > 原始源码、配置、产物、Git、进程和时间戳优先于本摘要。
 
 ## 当前唯一优先级
 
-q09_a13 的同状态 A/B/C 离线差分已分类为 `PHYSX_CONTACT_REPORTING_OR_FILTERING_ERROR`。
-最后精确非相交状态是 step 502 / 4.1916667 s：TASK 0.507426 mm、实际凸碰撞体
-0.0007897 mm、原始非 TASK 0.0002452 mm，三者均未相交；B 已进入 2.7250005 mm 合并 contactOffset。
-GPU 后端读回的 130 个 shape 各自 contactOffset 为 1.3625002 mm、restOffset 为 0；66/64 个 collider 均 enabled、`convexHull`。
-active USD 无 pair filter/group，按 USD 规则此外部 pair 允许；后端无 pair getter，旧运行 `hand_object=0`。
-最近凸块见证点属于原始非 TASK；step 503 中非 TASK/凸体相交而 TASK 尚余 0.493614 mm，是次级安全证据。
-唯一下一步只检查 collision/filter/contact report/刚体绑定/offset/prim 路径；不改位姿、生成器或 1488，等待用户决定。
+当前任务 `CONTACT_TELEMETRY_POSITIVE_CONTROL + REMAINING_CANDIDATE_TASK_FIRST_SELECTION`
+已按用户要求停止。两项结论彼此独立冻结：
+
+- `q09_a13 = REJECTED_NON_TASK_GEOMETRY_PRECEDES_TASK_CONTACT`，接触报告修复不得使它重新晋级。
+- `CONTACT_TELEMETRY_UNVERIFIED`。A/B/C 最终正对照中，A 位于 offset 外；B 的 TASK 凸块正间隙
+  0.156720 mm；C 第一步 TASK raw/凸块均相交，raw 非 TASK 仍有 0.477629 mm、非 TASK 凸块
+  仍有 2.803126 mm。128/128 shape enabled、无 pair filter/group，两端动态刚体的
+  `ContactReportAPI.threshold=0`，但 full event、basic event、full poll、ContactSensor raw 和项目
+  `hand_object` 仍全部为 0；filtered reading 有效但 `in_contact=false`。该失败停留在 PhysX 原始
+  报告导出层，不能把下游 0 单独解释成无接触。
+- 因接触链未通过，q09 step 503 负对照没有运行。剩余 4 个输入已完成 raw 与复合凸资产几何
+  粗采样+二分表；真实 `q_*_contact_physx` 保持 null，当前决策为 `PARKED_NO_DYNAMIC_SELECTION`。
+- 当前只允许汇报和只读复核；不重跑 1488、不增加候选、不改 Surface V2、不启动第一指动态。
 
 ## 漏斗复盘的已验证事实
 
@@ -62,15 +68,17 @@ active USD 无 pair filter/group，按 USD 规则此外部 pair 允许；后端�
 - 当前证据：生成器漏斗诊断、离线原始网格/任务评价、有界 IK、第一指研究型动态失败。
 - `research_dynamic_pass=false`、`formal_dynamic_pass=false`、`hardware_authorized=false`。
 - 本轮没有磁吸、隐藏固定、物体位姿写入或在线对象/接触真值控制。
-- q09_a13 当前主分类是接触报告或过滤错误；step 503 的非 TASK 先相交仍禁止继续闭合或自动修补，
-  本次 metadata reset/离线查询不证明接触、抓取、抬升、保持或正式动态成功。
+- q09_a13 的永久主分类是非 TASK 几何先于 TASK 接触；接触基础设施故障是独立结论。
+  本次正对照失败、离线表和生成文件都不证明抓取、抬升、保持或正式动态成功。
 
 ## 验证、进程与 Git
 
-- 结构化生成器定向回归：7 passed；8 个相关 Python 文件编译通过。
+- 本任务两个小脚本编译通过；最终正对照记录 6 个物理步，4 候选离线表已生成；未运行完整测试套件。
 - 当前没有 Isaac、GraspGenX 或 CONTACTOPT 活动进程。
 - `scripts/carts_v2/audit_nailfree_graspgenx_seed_reuse.py` 是无关未跟踪资产，不得暂存。
-- 本轮生成器、第一指证据接线和状态提交已普通推送；当前工作树只剩上面的无关未跟踪资产。
+- 本任务结果：`artifacts/carts_v2/contactopt_1488_fast6h/contact_telemetry_positive_control/result.json`
+  和 `artifacts/carts_v2/contactopt_1488_fast6h/remaining_candidate_task_first/result.json`。
+- 本任务尚未推送；只允许暂存本任务两个脚本和本上下文，禁止包含上面的无关未跟踪资产。
 
 ## 最小读取路线
 
