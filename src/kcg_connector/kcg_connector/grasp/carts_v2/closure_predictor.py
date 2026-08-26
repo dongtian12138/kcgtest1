@@ -1,11 +1,9 @@
 """Predict registered sequential finger closure with first PAD contact stopping."""
-
 from __future__ import annotations
-
 import numpy as np
-
 from kcg_connector.grasp.carts_v2.models import (
     ClosurePrediction,
+    FACE_ROLE_NAMES,
     PredictedContact,
     V2Inputs,
     farthest_point_indices,
@@ -342,6 +340,7 @@ class SequentialClosurePredictor:
             previous = start
             contact: PredictedContact | None = None
             motion_incompatible_contact_seen = False
+            contact_region_incomplete_seen = False
             for phase in closure_phase_samples(
                 self.inputs, tuple(phases), phase_index, maximum, reference
             ):
@@ -364,6 +363,8 @@ class SequentialClosurePredictor:
                         f"FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_{face}", contacts,
                     )
                 if selected < 0:
+                    if nearest.contact_region_witness_count > 0:
+                        contact_region_incomplete_seen = True
                     if float(np.min(nearest.distance_m)) <= contact_distance:
                         motion_incompatible_contact_seen = True
                     previous = float(phase)
@@ -409,19 +410,31 @@ class SequentialClosurePredictor:
                             None if nearest.surface_legacy_blue_pad is None
                             else bool(nearest.surface_legacy_blue_pad[selected])
                         ),
+                        object_surface_role=(
+                            None if nearest.object_role_code is None else
+                            FACE_ROLE_NAMES[int(nearest.object_role_code[selected])]
+                        ),
+                        region_witness_count=nearest.contact_region_witness_count,
+                        region_triangle_area_m2=nearest.contact_region_triangle_area_m2,
+                        region_primary_sampled_hand_patch_area_fraction=(
+                            nearest.region_primary_sampled_hand_patch_area_fraction),
+                        region_secondary_sampled_hand_patch_area_fraction=(
+                            nearest.region_secondary_sampled_hand_patch_area_fraction),
+                        region_composite_normal_object=(None
+                            if nearest.region_composite_normal_m is None else tuple(
+                                float(value) for value in nearest.region_composite_normal_m)),
+                        region_normal_dispersion_rad=nearest.region_normal_dispersion_rad,
                     )
                     break
                 previous = float(phase)
             if contact is None:
-                reason = (
-                    (
-                        f"NO_MOTION_COMPATIBLE_TASK_GRIP_SURFACE_{pad_name}"
-                        if self._task_surface_mode
-                        else f"NO_MOTION_COMPATIBLE_PAD_POINT_{pad_name}"
-                    )
-                    if motion_incompatible_contact_seen
-                    else f"NO_EFFECTIVE_CONTACT_{pad_name}"
-                )
+                if contact_region_incomplete_seen:
+                    reason = f"INCOMPLETE_CONTACT_REGION_{pad_name}"
+                elif motion_incompatible_contact_seen:
+                    kind = "TASK_GRIP_SURFACE" if self._task_surface_mode else "PAD_POINT"
+                    reason = f"NO_MOTION_COMPATIBLE_{kind}_{pad_name}"
+                else:
+                    reason = f"NO_EFFECTIVE_CONTACT_{pad_name}"
                 return self._failure(
                     seed,
                     phases,

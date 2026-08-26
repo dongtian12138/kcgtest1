@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T09:13:32Z",
+  "updated_at_utc": "2026-08-26T10:14:10Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
-  "hard_deadline_utc": "2026-08-26T10:17:59Z",
-  "branch": "carts-grasp-opposition60-isaac-20260826",
-  "config_sha256": "09f1213c573ebde1c6c7a3b96932f661e9c4956c26ce165d7d08eee47714a41f",
+  "hard_deadline_utc": "2026-08-26T15:16:26Z",
+  "branch": "carts-grasp-surface-v2-fast6h-20260826",
+  "config_sha256": "fa04db98c2a59b40ce823ff271876652cc0fb32184bdbf6a734107e152c3101c",
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "CHECKPOINT_BEFORE_SURFACE_V2_FAST6H_BRANCH",
+  "current_milestone": "SURFACE_V2_OBJECT_B_TOP1_FIRST_FINGER_ISAAC",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -43,7 +43,7 @@
     "stop_reason": "SOURCE_TOPOLOGY_CANNOT_SUPPORT_TRACEABLE_NAILFREE_RUNTIME_COLLISION_WITHOUT_UNAUTHORIZED_FIDELITY_REDUCTION",
     "supersedes_full_palm_nail_present_method_as_current_method": true
   },
-  "execution_window": {
+  "opposition60_isaac_execution_window": {
     "id": "OPPOSITION60_ISAAC_12H",
     "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
     "started_at_utc": "2026-08-25T22:17:59Z",
@@ -55,6 +55,40 @@
     "stopped_at_utc": null,
     "stop_reason": null,
     "previous_sdf_only_park_reclassified_as": "RESEARCH_COLLISION_ASSET_ROUTE_REOPENED"
+  },
+  "execution_window": {
+    "id": "SURFACE_V2_FAST6H",
+    "classification": "SURFACE_SEMANTICS_METHOD_CORRECTION_PLUS_FEATURE_AWARE_FAST_SEARCH_PLUS_REGION_CONTACT_PLUS_SIX_HOUR_ISAAC_CLOSURE",
+    "started_at_utc": "2026-08-26T09:16:26Z",
+    "hard_deadline_utc": "2026-08-26T15:16:26Z",
+    "maximum_duration_s": 21600,
+    "automatic_extension_allowed": false,
+    "unattended_execution": true,
+    "stop_condition_reached": false,
+    "stopped_at_utc": null,
+    "stop_reason": null
+  },
+  "surface_v2_fast6h": {
+    "object_b_surface_role_face_counts_primary_secondary_hard": [7269, 132, 679635],
+    "fixed_candidate_count": 8,
+    "nominal_research_candidate_count": 7,
+    "robust_task_survivor_count": 6,
+    "canonical_reevaluation_path": "artifacts/carts_v2/surface_v2_fast6h/fixed_candidate_reevaluation_run04.json",
+    "canonical_reevaluation_sha256": "5a1b325f47cf1d32d2adfa9e817d0610bb15ecd336e5bd64040c04177601a5d0",
+    "canonical_reevaluation_elapsed_s": 223.23830224899575,
+    "top3_candidate_ids": [
+      "opposition_p1047198_a07_z1__surface_v2_r03_05",
+      "opposition_p1047198_a07_z1__surface_v2_r02_02",
+      "opposition_p1047198_a07_z1__surface_v2_r04_06"
+    ],
+    "top3_first_finger_geometry_equivalent": true,
+    "top3_first_finger_primary_before_hard_margin_m": 5.559244836716472e-9,
+    "top3_region_roles": "PRIMARY_ONLY_SECONDARY_VALUE_NOT_YET_OBSERVED",
+    "isaac_started_in_current_window": false,
+    "three_finger_contact": false,
+    "object_left_table": false,
+    "lift_height_m": 0.0,
+    "hold_duration_s": 0.0
   },
   "git_delivery": {
     "workspace_git_directory_writable": true,
@@ -1601,7 +1635,7 @@
     "full_arm_dynamic_status": "NOT_STARTED",
     "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
   },
-  "evidence_level": "OBJECT_B_ANCHOR2_FIRST_FINGER_ISAAC_ATTEMPT_REJECTED_NO_PHYSX_CONTACT_AND_FORBIDDEN_FIRST_AT_FINAL_SAMPLE_NO_THREE_FINGER_LIFT_OR_HOLD",
+  "evidence_level": "SURFACE_V2_OBJECT_B_FIXED_POSE_OFFLINE_TOP3_BOUND_PENDING_FIRST_FINGER_ISAAC_NO_LIFT_OR_HOLD",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1666,8 +1700,8 @@
     "opposition60_anchor2_dynamic_supervisor": "INVALIDATE_CANDIDATE_AND_RETURN_TO_REMAINING_PREDECLARED_60DEG_FAMILY"
   },
   "blockers": [
-    "OBJECT_B_ANCHOR2_INVALIDATED_NO_PHYSICAL_CONTACT_BEFORE_SEMANTIC_LIMIT",
-    "QP60_ANCHOR_A01_THREE_CONTACT_STATE_CONFLICTS_WITH_TABLE_SAFE_HEIGHT",
-    "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND"
+    "SURFACE_V2_TOP3_FIRST_FINGER_PHYSX_CONTACT_PENDING",
+    "SECONDARY_GRIP_DYNAMIC_VALUE_NOT_YET_OBSERVED",
+    "NO_THREE_FINGER_LIFT_OR_HOLD_EVIDENCE"
   ]
 }

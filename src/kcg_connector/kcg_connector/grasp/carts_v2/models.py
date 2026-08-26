@@ -37,7 +37,10 @@ from kcg_connector.grasp.carts_v2.task_grip_surface import (
 
 
 _SCHEMA = "carts_grasp_v2"
-_ROLE_METHOD = "TASK_AXIS_OUTER_ENVELOPE_V1"
+_LEGACY_ROLE_METHOD = "TASK_AXIS_OUTER_ENVELOPE_V1"
+_ROLE_METHOD = "TASK_AXIS_OUTER_ENVELOPE_THREE_ROLE_V2"
+PRIMARY_GRIP, SECONDARY_GRIP, HARD_FORBIDDEN = range(3)
+FACE_ROLE_NAMES = ("PRIMARY_GRIP", "SECONDARY_GRIP", "HARD_FORBIDDEN")
 
 
 def rotation_distance(left: np.ndarray, right: np.ndarray) -> float:
@@ -95,6 +98,8 @@ class CARTSV2Config:
 class FaceRoleMap:
     object_id: str
     face_is_allowed: np.ndarray
+    face_role: np.ndarray
+    legacy_radial_only_face_is_allowed: np.ndarray
     reason_code: np.ndarray
     method: str
     allowed_area_m2: float
@@ -102,19 +107,34 @@ class FaceRoleMap:
 
     def __post_init__(self) -> None:
         allowed = _readonly(self.face_is_allowed, np.bool_, ndim=1)
+        roles = _readonly(self.face_role, np.uint8, ndim=1)
+        legacy = _readonly(
+            self.legacy_radial_only_face_is_allowed, np.bool_, ndim=1
+        )
         reasons = _readonly(self.reason_code, np.uint8, ndim=1)
-        if len(allowed) != len(reasons) or len(allowed) == 0:
+        if not (len(allowed) == len(roles) == len(legacy) == len(reasons)) or not len(allowed):
             raise ValueError("face role arrays must have the same non-zero length")
+        if np.any(~np.isin(roles, range(len(FACE_ROLE_NAMES)))):
+            raise ValueError("face role code is outside the registered three-role domain")
+        if np.any(allowed != (roles != HARD_FORBIDDEN)) or np.any(legacy != (roles == PRIMARY_GRIP)):
+            raise ValueError("three-role and compatibility views disagree")
         if np.any(allowed != (reasons == 0)):
-            raise ValueError("reason code zero must uniquely mean allowed")
+            raise ValueError("reason code zero must uniquely mean grip-eligible")
         if not np.any(allowed):
             raise ValueError(f"{self.object_id} has no V2 allowed grip face")
         object.__setattr__(self, "face_is_allowed", allowed)
+        object.__setattr__(self, "face_role", roles)
+        object.__setattr__(self, "legacy_radial_only_face_is_allowed", legacy)
         object.__setattr__(self, "reason_code", reasons)
 
     @property
     def allowed_face_indices(self) -> np.ndarray:
         result = np.flatnonzero(self.face_is_allowed)
+        result.setflags(write=False)
+        return result
+
+    def indices_for_role(self, role: int) -> np.ndarray:
+        result = np.flatnonzero(self.face_role == int(role))
         result.setflags(write=False)
         return result
 
@@ -170,6 +190,13 @@ class PredictedContact:
     hand_surface_face_index: int | None = None
     hand_surface_normal_object: tuple[float, float, float] | None = None
     hand_surface_legacy_blue_pad: bool | None = None
+    object_surface_role: str | None = None
+    region_witness_count: int = 0
+    region_triangle_area_m2: float = 0.0
+    region_primary_sampled_hand_patch_area_fraction: float | None = None
+    region_secondary_sampled_hand_patch_area_fraction: float | None = None
+    region_composite_normal_object: tuple[float, float, float] | None = None
+    region_normal_dispersion_rad: float | None = None
 
 
 @dataclass(frozen=True)
@@ -355,7 +382,8 @@ def build_face_role_map(
     """Partition every source face once using shared task-axis geometry rules."""
 
     settings = config.section("surface_roles")
-    if settings.get("method") != _ROLE_METHOD:
+    method = settings.get("method")
+    if method not in {_LEGACY_ROLE_METHOD, _ROLE_METHOD}:
         raise ValueError("unsupported V2 face-role method")
     model = loaded.model
     mesh = model.mesh
@@ -397,21 +425,36 @@ def build_face_role_map(
         dtype=np.bool_,
         count=len(mesh.faces),
     )
-    lateral = (
+    legacy_lateral = (
         radial_alignment >= float(settings["minimum_radial_normal_component"])
     ) & (axial_alignment <= float(settings["maximum_axial_normal_component"]))
-    allowed = semantic_allowed & non_axis & lateral & on_outer_envelope
+    primary = semantic_allowed & non_axis & legacy_lateral & on_outer_envelope
+    hard = (~semantic_allowed | ~non_axis | ~on_outer_envelope
+            | (axial_alignment > float(settings["maximum_axial_normal_component"])))
+    secondary = ~hard & ~primary
+    if method == _LEGACY_ROLE_METHOD:
+        hard, secondary = ~primary, np.zeros_like(primary)
+    roles = np.full(len(primary), HARD_FORBIDDEN, dtype=np.uint8)
+    roles[primary], roles[secondary] = PRIMARY_GRIP, SECONDARY_GRIP
+    allowed = ~hard
     reason = np.zeros(len(allowed), dtype=np.uint8)
     reason[~semantic_allowed] = 1
     reason[semantic_allowed & ~non_axis] = 2
-    reason[semantic_allowed & non_axis & ~lateral] = 3
-    reason[semantic_allowed & non_axis & lateral & ~on_outer_envelope] = 4
+    if method == _LEGACY_ROLE_METHOD:
+        reason[semantic_allowed & non_axis & ~legacy_lateral] = 3
+        reason[semantic_allowed & non_axis & legacy_lateral & ~on_outer_envelope] = 4
+    else:
+        reason[semantic_allowed & non_axis & ~on_outer_envelope] = 4
+        reason[semantic_allowed & non_axis & on_outer_envelope
+               & (axial_alignment > float(settings["maximum_axial_normal_component"]))] = 5
     area = mesh.face_areas_m2
     return FaceRoleMap(
         object_id=loaded.object_id,
         face_is_allowed=allowed,
+        face_role=roles,
+        legacy_radial_only_face_is_allowed=primary,
         reason_code=reason,
-        method=_ROLE_METHOD,
+        method=str(method),
         allowed_area_m2=float(np.sum(area[allowed])),
         total_area_m2=float(np.sum(area)),
     )

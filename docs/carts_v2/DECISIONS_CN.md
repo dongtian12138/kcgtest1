@@ -648,3 +648,26 @@
 - 旧路线最后原子任务为59°/anchor2/p222：离线三指几何、12 N名义任务和bounded IK通过，第一指Isaac运行396步但PhysX接触为0；第二/三指和抬升未启动。
 - 用户提供的表面审计指出外包络切向侧壁不应继续被旧“非PRIMARY即禁抓”二分类视为硬禁抓；旧结果保留为`LEGACY_RADIAL_ONLY_BASELINE`。
 - 本分支在该原子任务后停止继续anchor扫描；提交后新建`carts-grasp-surface-v2-fast6h-20260826`，新窗口从新分支第一条实际命令计时。
+
+## 2026-08-26T09:24:00Z — Surface V2六小时窗口与最小实现边界
+
+- 分类：`SURFACE_SEMANTICS_METHOD_CORRECTION + FEATURE_AWARE_FAST_SEARCH + REGION_CONTACT + SIX_HOUR_ISAAC_CLOSURE`；新窗口为`SURFACE_V2_FAST6H`，从09:16:26Z到15:16:26Z，不自动延长。
+- 用户提供审计包与登记对象网格、当前源码/配置身份一致；四张关键图确认`face21232`及另外15组面为外包络周期性切向侧壁，不是端面。当前Isaac尚未启动，`hardware_authorized=false`、`formal_dynamic_pass=false`、`research_dynamic_pass=false`。
+- 学术与复杂度监督有条件批准：用一个`uint8`三角色数组扩展现有`FaceRoleMap`，PRIMARY与SECONDARY组成兼容的可用面集合，只有HARD建立失败关闭守卫；旧径向二分类mask保留为消融，不建立新语义框架。
+- 区域接触复用现有33个手面片和真实对象局部法向，要求至少三个非共线有限见证并报告PRIMARY/SECONDARY面积占比；六小时内不新增多点接触力求解器。
+- 先只改变对象面角色，重评原anchor7六个幸存预构型、anchor2和anchor10；任一精确几何与12 N通过即停止旧候选搜索并进入对象B局部Isaac。若都失败，后备快速搜索只作FAST_RANK，近边界无保守界时不作硬拒绝。
+- 当前逐面`semantic_allowed`对两对象实际均为全真，因此三角色仍是研究型几何语义，不能声称厂商功能面已逐面确认。
+
+## 2026-08-26T10:08:00Z — Surface V2既有超限文件冻结例外
+
+- `models.py`进入本轮前已有597行；三角色向后兼容数据、区域代理字段和综合法向报告使其增至640行，超过500行硬目标。
+- 这些字段由现有模型适配、闭合预测、报告和测试共同使用；此时拆文件会增加包装层并推迟第一次Isaac，监督结论为保留并立即冻结。
+- `surface_contact.py`为499行、`closure_predictor.py`为500行；不得继续增长。区域综合法向只作报告，12 N计算使用所选源三角面的真实对象法向。
+- PRIMARY/SECONDARY面积占比明确是33个登记手面片的采样面积代理，不是对象真实接触压力面积。
+
+## 2026-08-26T10:14:10Z — 固定姿态重评完成后先做等价第一指诊断
+
+- canonical重评8个固定姿态，7个通过名义研究门、6个通过完整误差任务；Top-3最差余量`2.1043～2.1109`、最大单指需求`6.493～6.508 N`且bounded IK通过。
+- Top-3全部只使用PRIMARY区域，不能据此宣称SECONDARY已提高抓取成功；anchor2仅名义可行，最差误差余量`0.1060`。
+- Top-3第一指几何等价，PRIMARY领先HARD只有约`5.56 nm`；只运行一次Top-1第一指有界诊断，HARD首接触是绝对上界，不额外硬压。
+- 只有关节侧代理、PhysX实际接触和事后PRIMARY/SECONDARY原始网格语义同时通过，才允许增加三指与stage-local物理滑台。

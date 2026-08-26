@@ -1,9 +1,6 @@
 """Hash-bound outward normals and mature-mesh PAD/object proximity queries."""
-
 from __future__ import annotations
-
 from dataclasses import dataclass, replace
-
 import numpy as np
 from scipy.spatial import cKDTree
 
@@ -15,8 +12,10 @@ try:
     import trimesh
 except (ImportError, TypeError):
     trimesh = None
-
 from kcg_connector.grasp.carts_v2.fast_filter import build_fcl_bvh_model
+from kcg_connector.grasp.carts_v2.models import (
+    HARD_FORBIDDEN, PRIMARY_GRIP, SECONDARY_GRIP,
+)
 @dataclass(frozen=True)
 class NearestSurface:
     point_m: np.ndarray
@@ -26,12 +25,21 @@ class NearestSurface:
     surface_face_index: np.ndarray | None = None
     surface_normal_m: np.ndarray | None = None
     surface_legacy_blue_pad: np.ndarray | None = None
+    surface_patch_index: np.ndarray | None = None
+    surface_patch_area_m2: np.ndarray | None = None
+    object_role_code: np.ndarray | None = None
     forbidden_first_contact: bool = False
     forbidden_face_index: int | None = None
     forbidden_distance_m: float | None = None
     registered_patch_count: int | None = None
     finite_patch_witness_count: int | None = None
-
+    contact_region_pass: bool = False
+    contact_region_witness_count: int = 0
+    contact_region_triangle_area_m2: float = 0.0
+    region_primary_sampled_hand_patch_area_fraction: float | None = None
+    region_secondary_sampled_hand_patch_area_fraction: float | None = None
+    region_composite_normal_m: np.ndarray | None = None
+    region_normal_dispersion_rad: float | None = None
 
 def _closest_points_on_triangles(triangles: np.ndarray, points: np.ndarray) -> np.ndarray:
     """Vectorized closest points for one point paired with one triangle."""
@@ -113,6 +121,46 @@ def nearest_motion_compatible_index(
     return int(np.argmin(np.where(eligible, distance, np.inf)))
 
 
+def _contact_region(nearest, normals, compatible, distance_limit, minimum_area):
+    patches, areas, roles = (nearest.surface_patch_index,
+                             nearest.surface_patch_area_m2,
+                             nearest.object_role_code)
+    if patches is None or areas is None or roles is None:
+        return {}
+    eligible = (np.asarray(compatible, dtype=np.bool_)
+                & np.isfinite(nearest.distance_m)
+                & (nearest.distance_m <= float(distance_limit)
+                   + 64.0 * np.finfo(np.float64).eps))
+    indices = np.flatnonzero(eligible)
+    if len(indices) < 3 or len(np.unique(patches[indices])) < 3:
+        return {"contact_region_witness_count": int(len(indices))}
+    points = nearest.point_m[indices]
+    triangle_area = max(
+        (0.5 * float(np.linalg.norm(np.cross(points[j] - points[i],
+                                             points[k] - points[i])))
+         for i in range(len(points) - 2) for j in range(i + 1, len(points) - 1)
+         for k in range(j + 1, len(points))), default=0.0)
+    weights = np.asarray(areas[indices], dtype=np.float64)
+    vector = np.sum(normals[indices] * weights[:, None], axis=0)
+    norm = float(np.linalg.norm(vector))
+    if triangle_area < float(minimum_area) or norm <= np.finfo(np.float64).eps:
+        return {"contact_region_witness_count": int(len(indices)),
+                "contact_region_triangle_area_m2": triangle_area}
+    composite = vector / norm
+    angles = np.arccos(np.clip(normals[indices] @ composite, -1.0, 1.0))
+    total = float(np.sum(weights))
+    return {"contact_region_pass": True,
+            "contact_region_witness_count": int(len(indices)),
+            "contact_region_triangle_area_m2": triangle_area,
+            "region_primary_sampled_hand_patch_area_fraction": float(np.sum(
+                weights[roles[indices] == PRIMARY_GRIP]) / total),
+            "region_secondary_sampled_hand_patch_area_fraction": float(np.sum(
+                weights[roles[indices] == SECONDARY_GRIP]) / total),
+            "region_composite_normal_m": composite,
+            "region_normal_dispersion_rad": float(np.sqrt(
+                np.sum(weights * angles * angles) / total))}
+
+
 class ExactContactSurfaceQuery:
     """FCL witness between the full object and one registered hand surface."""
 
@@ -142,11 +190,17 @@ class ExactContactSurfaceQuery:
         )
         task_surfaces = getattr(inputs, "task_grip_surfaces", None)
         allowed = np.ones(self._face_count, dtype=np.bool_)
+        self._face_roles = np.full(self._face_count, PRIMARY_GRIP, dtype=np.uint8)
         roles = getattr(inputs, "face_roles", None)
         if roles is not None:
             allowed = np.asarray(roles.face_is_allowed, dtype=np.bool_)
             if allowed.shape != (self._face_count,) or not np.any(allowed):
                 raise ValueError("allowed object contact surface is empty or malformed")
+            self._face_roles = np.asarray(getattr(
+                roles, "face_role",
+                np.where(allowed, PRIMARY_GRIP, HARD_FORBIDDEN)), dtype=np.uint8)
+            if self._face_roles.shape != (self._face_count,):
+                raise ValueError("object surface role domain is malformed")
         self._allowed_object_faces = np.flatnonzero(allowed)
         self._allowed_object = fcl.CollisionObject(build_fcl_bvh_model(
             mesh.vertices_m, mesh.faces[self._allowed_object_faces]))
@@ -200,6 +254,9 @@ class ExactContactSurfaceQuery:
             name: self._build_patch_objects(*row[:2], np.asarray(row[5]))
             for name, row in geometry.items()
         }
+        self._minimum_region_area_m2 = (None if not self._task_surface_mode else
+            float(inputs.config.section(
+                "fast_filter")["minimum_three_contact_triangle_area_m2"]))
         self._proximity = None
         if trimesh is not None:
             object_mesh = trimesh.Trimesh(
@@ -221,8 +278,12 @@ class ExactContactSurfaceQuery:
         result = []
         for identifier in identifiers:
             indices = np.flatnonzero(patches == identifier)
+            triangles = np.asarray(points)[faces[indices]]
+            area = 0.5 * np.linalg.norm(np.cross(
+                triangles[:, 1] - triangles[:, 0],
+                triangles[:, 2] - triangles[:, 0]), axis=1).sum()
             result.append((int(identifier), fcl.CollisionObject(
-                build_fcl_bvh_model(points, faces[indices])), indices))
+                build_fcl_bvh_model(points, faces[indices])), indices, float(area)))
         return tuple(result)
 
     def _forbidden_surface_distance(self, pad, transform):
@@ -284,6 +345,7 @@ class ExactContactSurfaceQuery:
             surface_legacy_blue_pad=np.asarray((
                 self._surface_legacy_blue[pad_name][surface_face_index],
             ), dtype=np.bool_),
+            object_role_code=np.asarray((self._face_roles[face_index],), dtype=np.uint8),
         )
         return nearest, pad_point, self.normal(face_index)
 
@@ -305,7 +367,7 @@ class ExactContactSurfaceQuery:
         forbidden_distance, forbidden_face = self._forbidden_surface_distance(
             full, fcl_transform)
         rows = []
-        for patch_id, patch, surface_indices in self._patches[pad_name]:
+        for patch_id, patch, surface_indices, patch_area in self._patches[pad_name]:
             patch.setTransform(fcl_transform)
             result = fcl.DistanceResult()
             distance = float(fcl.distance(
@@ -320,7 +382,7 @@ class ExactContactSurfaceQuery:
             ):
                 continue
             surface_index = int(surface_indices[patch_local])
-            rows.append((distance, patch_id, object_local, surface_index,
+            rows.append((distance, patch_id, object_local, surface_index, patch_area,
                          np.asarray(result.nearest_points[0], dtype=np.float64),
                          np.asarray(result.nearest_points[1], dtype=np.float64)))
         if not rows:
@@ -332,7 +394,7 @@ class ExactContactSurfaceQuery:
             [self._allowed_object_faces[row[2]] for row in rows], dtype=np.int64)
         surface_indices = np.asarray([row[3] for row in rows], dtype=np.int64)
         nearest = NearestSurface(
-            point_m=np.asarray([row[4] for row in rows]),
+            point_m=np.asarray([row[5] for row in rows]),
             distance_m=np.asarray([row[0] for row in rows]),
             face_index=object_faces,
             intersecting=intersects,
@@ -344,12 +406,15 @@ class ExactContactSurfaceQuery:
             surface_legacy_blue_pad=(
                 self._surface_legacy_blue[pad_name][surface_indices]
             ),
+            surface_patch_index=np.asarray([row[1] for row in rows], dtype=np.int64),
+            surface_patch_area_m2=np.asarray([row[4] for row in rows]),
+            object_role_code=self._face_roles[object_faces],
             forbidden_face_index=forbidden_face,
             forbidden_distance_m=forbidden_distance,
             registered_patch_count=len(self._patches[pad_name]),
             finite_patch_witness_count=finite_count,
         )
-        return (nearest, np.asarray([row[5] for row in rows]),
+        return (nearest, np.asarray([row[6] for row in rows]),
                 self._normals[object_faces])
 
     def select_task_surface_contact(
@@ -383,16 +448,21 @@ class ExactContactSurfaceQuery:
             pad_points, nearest.point_m, nearest.surface_normal_m,
             object_normals, motion, object_grasp_center_m,
             minimum_motion_m_per_phase)
-        selected = nearest_motion_compatible_index(
+        region = _contact_region(
+            nearest, object_normals, compatible, contact_distance_m,
+            self._minimum_region_area_m2)
+        usable_selected = nearest_motion_compatible_index(
             nearest.distance_m, np.where(compatible, inward, -np.inf),
             minimum_motion_m_per_phase)
+        selected = usable_selected if region.get("contact_region_pass") else -1
         forbidden = nearest.forbidden_distance_m
         forbidden_first = bool(
             forbidden is not None and forbidden <= contact_distance_m
-            and (selected < 0 or forbidden <= nearest.distance_m[selected] + tolerance)
+            and (usable_selected < 0
+                 or forbidden <= nearest.distance_m[usable_selected] + tolerance)
         )
-        return selected, replace(nearest, forbidden_first_contact=forbidden_first), \
-            object_normals, inward
+        nearest = replace(nearest, forbidden_first_contact=forbidden_first, **region)
+        return selected, nearest, object_normals, inward
 
     def query_points(self, points_object_m: np.ndarray) -> tuple[NearestSurface, np.ndarray]:
         if self._proximity is None:
