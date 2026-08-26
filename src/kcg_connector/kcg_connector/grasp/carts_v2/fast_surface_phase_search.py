@@ -25,6 +25,8 @@ from kcg_connector.grasp.carts_v2.task_grip_surface import (
 _EXPECTED_GRID_COUNT = 7 * 72 * 3 * 27
 _MAXIMUM_EXACT = 24
 _PATCH_POOL = 96
+_AXIAL_LEVEL_COUNT = 3
+_AXIAL_SELECTION_POLICY = "FIXED_AXIAL_STRATA_EXISTING_RANK_WITH_DETERMINISTIC_FILL_V1"
 # Method-fixed tie band: values this close need exact triangles, never FAST-safe.
 _SURFACE_ROLE_TIE_M = 1.0e-8
 _TIE_SOURCE = "METHOD_FIXED_10_NM_SURFACE_ROLE_DISTANCE_TIE_BAND"
@@ -244,6 +246,29 @@ def _rank_key(row):
             row["candidate_id"])
 
 
+def _stratified_rank(rows, total):
+    """Keep fixed axial coverage, then preserve the existing rank within it."""
+
+    ranked = sorted(rows, key=_rank_key)
+    base, remainder = divmod(int(total), _AXIAL_LEVEL_COUNT)
+    chosen = []
+    for axial_index in range(_AXIAL_LEVEL_COUNT):
+        quota = base + int(axial_index < remainder)
+        layer = [row for row in ranked if row.get("axial_index") == axial_index]
+        chosen.extend(layer[:quota])
+    selected_ids = {row["candidate_id"] for row in chosen}
+    chosen.extend(row for row in ranked if row["candidate_id"] not in selected_ids
+                  and len(chosen) < total)
+    if len(chosen) != total or len({row["candidate_id"] for row in chosen}) != total:
+        raise RuntimeError("axial-stratified ranking cannot fill its fixed budget")
+    return sorted(chosen, key=_rank_key)
+
+
+def _axial_counts(rows):
+    return {str(index): sum(row["axial_index"] == index for row in rows)
+            for index in range(_AXIAL_LEVEL_COUNT)}
+
+
 def _audit_row(row):
     return {
         key: (None if isinstance(value, (float, np.floating))
@@ -265,7 +290,8 @@ def search_feature_aware_opposition(
         raise ValueError("exact shortlist budget must lie in [1, 24]")
     seeds, grid_audit = generate_feature_opposition_grid(inputs)
     if (len(seeds) != _EXPECTED_GRID_COUNT
-            or len({seed.candidate_id for seed in seeds}) != _EXPECTED_GRID_COUNT):
+            or len({seed.candidate_id for seed in seeds}) != _EXPECTED_GRID_COUNT
+            or len(grid_audit.get("axial_fractions", ())) != _AXIAL_LEVEL_COUNT):
         raise RuntimeError("fixed feature-opposition grid is incomplete")
     indexes, object_center = _role_indexes(inputs)
     representatives = {name: _surface_representatives(surface)
@@ -274,24 +300,28 @@ def search_feature_aware_opposition(
     caches, rows, classification = {}, [], hashlib.sha256()
     counts = Counter()
     for seed in seeds:
+        axial_index = int(seed.source_sample_index) % _AXIAL_LEVEL_COUNT
+        if f"_z{axial_index}__" not in seed.candidate_id:
+            raise RuntimeError("feature-grid axial identity changed")
         key = (float(seed.palm_configuration_rad), seed.pregrasp_closure_phases)
         if key not in caches:
             caches[key] = _kinematic_cache(inputs, seed, representatives, boxes, pairs)
         score = _score(inputs, indexes, object_center, caches[key], seed, patches=False)
         row = {"candidate_id": seed.candidate_id, "_seed": seed, "_cache_key": key,
                "source_sample_index": seed.source_sample_index,
+               "axial_index": axial_index,
                "palm_configuration_rad": seed.palm_configuration_rad,
                "pregrasp_closure_phases": list(seed.pregrasp_closure_phases), **score}
         rows.append(row)
         counts[score["status"]] += 1
         classification.update(f"{seed.candidate_id}\0{score['status']}\n".encode())
-    patch_pool = sorted(rows, key=_rank_key)[:max(_PATCH_POOL, limit * 4)]
+    patch_pool = _stratified_rank(rows, max(_PATCH_POOL, limit * 4))
     patch_rows = []
     for row in patch_pool:
         score = _score(inputs, indexes, object_center, caches[row["_cache_key"]],
                        row["_seed"], patches=True)
         patch_rows.append({**row, **score})
-    exact_rows = sorted(patch_rows, key=_rank_key)[:limit]
+    exact_rows = _stratified_rank(patch_rows, limit)
     shortlist = tuple(row["_seed"] for row in exact_rows)
     audit = {
         "schema_version": "carts_surface_v2_feature_search_v1",
@@ -303,6 +333,9 @@ def search_feature_aware_opposition(
         "patch_ranked_count": len(patch_rows), "exact_shortlist_count": len(shortlist),
         "exact_shortlist_limit": limit, "surface_role_tie_m": _SURFACE_ROLE_TIE_M,
         "surface_role_tie_source": _TIE_SOURCE,
+        "axial_selection_policy": _AXIAL_SELECTION_POLICY,
+        "patch_axial_counts": _axial_counts(patch_rows),
+        "exact_axial_counts": _axial_counts(exact_rows),
         "distance_backend": "SCIPY_CKDTREE_REGISTERED_FACE_CENTROID_PROXY",
         "patch_candidates": [_audit_row(row) for row in patch_rows],
         "exact_shortlist": [row["candidate_id"] for row in exact_rows],

@@ -32,7 +32,7 @@ def _fake_seeds():
             for azimuth in range(72):
                 for axial in range(3):
                     rows.append(SimpleNamespace(
-                        candidate_id=(f"q{palm:03d}_a{azimuth:03d}_z{axial}_"
+                        candidate_id=(f"q{palm:03d}_a{azimuth:03d}_z{axial}__"
                                       f"p{phase_index:02d}"),
                         palm_configuration_rad=math.radians(palm),
                         pregrasp_closure_phases=phase, source_sample_index=source))
@@ -48,7 +48,8 @@ def test_public_search_registers_full_grid_and_caps_exact(monkeypatch) -> None:
         object_contract=SimpleNamespace(object_id=OBJECT_B),
     )
     monkeypatch.setattr(search, "generate_feature_opposition_grid",
-                        lambda _inputs: (seeds, {"candidate_count": len(seeds)}))
+                        lambda _inputs: (seeds, {"candidate_count": len(seeds),
+                                                "axial_fractions": [0.25, 0.5, 0.75]}))
     monkeypatch.setattr(search, "_role_indexes", lambda _inputs: ({}, np.zeros(3)))
     monkeypatch.setattr(search, "_surface_representatives", lambda _surface: {})
     monkeypatch.setattr(search, "_geometry_support", lambda _inputs: ({}, ()))
@@ -71,9 +72,27 @@ def test_public_search_registers_full_grid_and_caps_exact(monkeypatch) -> None:
     assert audit["fk_cache_count"] == 7 * 27 == 189
     assert audit["patch_ranked_count"] == 96
     assert len(shortlist) == audit["exact_shortlist_count"] == 24
+    assert audit["patch_axial_counts"] == {"0": 32, "1": 32, "2": 32}
+    assert audit["exact_axial_counts"] == {"0": 8, "1": 8, "2": 8}
     assert len({row.candidate_id for row in shortlist}) == 24
     assert "all_candidates" not in audit
     json.dumps(audit, allow_nan=False)
+
+
+def test_axial_strata_override_single_layer_global_rank_without_reordering_layers() -> None:
+    rows = []
+    for axial in range(3):
+        for rank in range(12):
+            rows.append({"candidate_id": f"z{axial}_{rank:02d}", "axial_index": axial,
+                         "three_contact_regions": True,
+                         "hard_margin_m": 1.0 - axial - rank * 1.0e-3,
+                         "primary_fraction": 1.0, "effective_area_m2": 1.0,
+                         "table_clearance_proxy_m": 0.01,
+                         "closure_balance_phase": 0.0})
+    selected = search._stratified_rank(rows, 24)
+    assert search._axial_counts(selected) == {"0": 8, "1": 8, "2": 8}
+    assert {row["candidate_id"] for row in selected if row["axial_index"] == 2} == {
+        f"z2_{rank:02d}" for rank in range(8)}
 
 
 def test_cached_task_surface_center_matches_direct_real_fk() -> None:
