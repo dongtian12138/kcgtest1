@@ -17,7 +17,6 @@ ROOT = Path(__file__).resolve().parents[2]
 ISAAC_V2 = ROOT / "src/kcg_connector/isaac/carts_v2"
 sys.path[:0] = [str(ROOT / "src/kcg_connector"), str(ISAAC_V2)]
 
-OBJECT_ID = "te_deutsch_d38999_26fj35pn_step"
 HAND_ROOT = "/World/Opposition60LocalHand"
 ACTIVE = ("f1j1", "f1j2", "f2j1", "f3j2")
 MIMIC = {"f1j3": "f1j2", "f2j2": "f2j1", "f3j1": "f1j1", "f3j3": "f3j2"}
@@ -146,34 +145,39 @@ def _verify_inputs(args: argparse.Namespace) -> dict:
     for row in layers["payload_layers"]:
         _bound(paths["hand_asset"].parent / row["path"], row["sha256"],
                f"USD payload {row['path']}")
-    _require(task.get("selected_geometric_anchor_index") == 2
+    _require(isinstance(task.get("selected_geometric_anchor_index"), int)
+             and 0 <= task["selected_geometric_anchor_index"] < 12
              and task.get("requested_palm_angle_deg") == 60
              and task.get("survivor_count") == 1
+             and len(task.get("survivor_candidates") or []) == 1
+             and len(task.get("task_and_bounded_ik") or []) == 1
              and task.get("hardware_authorized") is False
              and task.get("isaac_started") is False,
-             "task/IK document is not object-B opposition anchor2")
-    anchor, task_row = task["selected_geometric_anchor"], task["task_and_bounded_ik"][0]
-    _require(anchor["object_id"] == OBJECT_ID
-             and anchor["candidate_id"] == task_row["candidate_id"]
-             and anchor["pregrasp_closure_phases"] == [0.2, 0.2, 0.2]
+             "task/IK document is not one bounded opposition-60 survivor")
+    anchor = task["selected_geometric_anchor"]
+    survivor, task_row = task["survivor_candidates"][0], task["task_and_bounded_ik"][0]
+    object_id = anchor["object_id"]
+    _require(anchor["candidate_id"] == survivor["candidate_id"] == task_row["candidate_id"]
+             and survivor["object_id"] == object_id
              and abs(float(anchor["palm_configuration_deg"]) - 60.0) < 1e-9
              and task_row["bounded_ik"]["status"] == "BOUNDED_IK_PASS_NOT_PATH_COLLISION"
              and task_row["task_quality"]["nominal_gravity_lift_balance_pass"] is True,
-             "anchor2 task/IK identity changed")
+             "opposition-60 task/IK candidate identity changed")
     _bound(ROOT / "scripts/carts_v2/run_opposition60_static_control.py",
            task["script_sha256"], "task/IK producer")
     _require(_sha256(paths["config"]) == task["config_sha256"],
              "task/IK configuration hash changed")
     q = anchor["pregrasp_joint_positions_rad"]
-    _require(len(q) == 4, "anchor2 active pregrasp joint vector changed")
+    _require(len(q) == 4, "active pregrasp joint vector changed")
     initial = {"f1j1": q[0], "f1j2": q[1], "f2j1": q[2], "f3j2": q[3]}
     initial.update({follower: initial[source] for follower, source in MIMIC.items()})
     target = np.asarray(task_row["target_world_from_handbase_row_major"],
                         dtype=np.float64).reshape(4, 4)
     _require(np.isfinite(target).all() and np.allclose(target[3], (0, 0, 0, 1)),
-             "anchor2 handbase transform is invalid")
+             "opposition handbase transform is invalid")
     return {"paths": paths, "binding": binding, "readback": readback,
-            "task": task, "task_row": task_row, "initial": initial, "target": target}
+            "task": task, "task_row": task_row, "object_id": object_id,
+            "initial": initial, "target": target}
 
 
 def _world_matrix(Usd, UsdGeom, prim) -> np.ndarray:
@@ -226,7 +230,8 @@ def _run(verified: dict, report: dict) -> None:
     from kcg_connector.grasp.carts_v2.models import load_v2_inputs
 
     paths = verified["paths"]
-    inputs = load_v2_inputs(ROOT, config_path=paths["config"], object_id=OBJECT_ID)
+    object_id = verified["object_id"]
+    inputs = load_v2_inputs(ROOT, config_path=paths["config"], object_id=object_id)
     dynamic = inputs.config.section("dynamic")
     _require(float(dynamic["physics_dt_s"]) == DT_S
              and float(dynamic["maximum_joint_speed_rad_s"]) == 3.0
@@ -241,7 +246,7 @@ def _run(verified: dict, report: dict) -> None:
     world = World(stage_units_in_meters=1.0, physics_dt=DT_S,
                   rendering_dt=1.0 / 60.0, **world_parameters)
     context, stage = world.get_physics_context(), get_current_stage()
-    entry = dynamic["object_scenes"][OBJECT_ID]
+    entry = dynamic["object_scenes"][object_id]
     scene = prepare_dynamic_scene(ROOT, stage, entry, add_reference_to_stage)
     report["scene_binding"] = {
         "environment_scope": scene["environment_scope"],
@@ -472,7 +477,7 @@ def main() -> int:
     output = output_dir / "initial_penetration.json"
     _require(not output.exists(), f"refusing to overwrite evidence: {output}")
     report = {"schema_version": "carts_opposition60_initial_penetration_v1",
-        "status": "INITIAL_PENETRATION_FAILED", "object_id": OBJECT_ID,
+        "status": "INITIAL_PENETRATION_FAILED", "object_id": None,
         "mode": "initial-penetration", "hardware_authorized": False,
         "formal_dynamic_pass": False, "research_dynamic_pass": False,
         "runtime_binding_accepted": False, "online_truth_used_for_control": False,
@@ -484,6 +489,7 @@ def main() -> int:
     app = None
     try:
         verified = _verify_inputs(args)
+        report["object_id"] = verified["object_id"]
         report["evidence_binding"] = {name: {"path": str(path), "sha256": _sha256(path)}
             for name, path in verified["paths"].items()}
         report["evidence_binding"]["runner_source"] = {

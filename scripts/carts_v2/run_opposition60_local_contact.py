@@ -9,12 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 ISAAC_V2 = ROOT / "src/kcg_connector/isaac/carts_v2"
 CONTROLLER_SOURCE = ISAAC_V2 / "controller.py"
 sys.path[:0] = [str(ROOT / "src/kcg_connector"), str(ISAAC_V2)]
-BASE = ROOT / "artifacts/carts_v2/opposition60_isaac"
-TASK = BASE / "qp60_anchor_a02_task_ik/opposition60_anchor_a02_exact_offset_00_count_01_static_control.json"
-RUN06 = BASE / "object_b_anchor2_initial_penetration_run06/initial_penetration.json"
-RUN06_EXACT = BASE / "object_b_anchor2_initial_penetration_run06/exact_mesh_replay_run03.json"
 CONFIG = ROOT / "src/kcg_connector/config/carts_nailfree_height_projected.yaml"
-OBJECT_ID = "te_deutsch_d38999_26fj35pn_step"
 HAND_ROOT = "/World/Opposition60LocalHand"
 ACTIVE = ("f1j1", "f1j2", "f2j1", "f3j2")
 MIMIC = {"f1j3": "f1j2", "f2j2": "f2j1", "f3j1": "f1j1", "f3j3": "f3j2"}
@@ -23,6 +18,9 @@ DT_S, MAXIMUM_INCREMENT_RAD = 1.0 / 120.0, 0.0015
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", required=True, choices=("preshape-replay", "first-finger-diagnostic"))
+    parser.add_argument("--task-ik", required=True, type=Path)
+    parser.add_argument("--initial-trace", required=True, type=Path)
+    parser.add_argument("--initial-exact-replay", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path); parser.add_argument("--preshape-trace", type=Path)
     parser.add_argument("--contact-endpoint-plan", type=Path)
     args = parser.parse_args()
@@ -57,7 +55,9 @@ def _world_matrix(Usd, UsdGeom, prim) -> np.ndarray:
 def _verify(args: argparse.Namespace) -> dict:
     from kcg_connector.d38999_tabletop_scene import load_d38999_tabletop_scene
     from kcg_connector.grasp.carts_v2.models import joint_positions_for_phases, load_v2_inputs
-    paths = {"task_ik": TASK.resolve(), "initial_trace": RUN06.resolve(), "initial_exact_replay": RUN06_EXACT.resolve(), "config": CONFIG.resolve(), "controller_source": CONTROLLER_SOURCE.resolve()}
+    paths = {"task_ik": _resolve(args.task_ik), "initial_trace": _resolve(args.initial_trace),
+             "initial_exact_replay": _resolve(args.initial_exact_replay),
+             "config": CONFIG.resolve(), "controller_source": CONTROLLER_SOURCE.resolve()}
     _require(all(path.is_file() for path in paths.values()), "fixed evidence input is missing")
     task, initial, exact = map(_load, (paths["task_ik"], paths["initial_trace"], paths["initial_exact_replay"]))
     gates = initial.get("runtime_gates") or {}
@@ -67,31 +67,34 @@ def _verify(args: argparse.Namespace) -> dict:
              initial.get("closure_command_count") == initial.get("lift_command_count") == 0,
              initial.get("hardware_authorized") is False, initial.get("formal_dynamic_pass") is False,
              initial.get("research_dynamic_pass") is False)),
-             "run06 initial-penetration boundary changed")
+             "candidate initial-penetration boundary changed")
     trace_row = (exact.get("evidence_binding") or {}).get("trace") or {}
     _require(all((exact.get("status") == "OFFLINE_EXACT_REPLAY_ACCEPTED",
              exact.get("accepted_initial_penetration_pass") is True,
              _resolve(trace_row.get("path", "")) == paths["initial_trace"],
              trace_row.get("sha256") == _sha256(paths["initial_trace"]))),
-             "run06 exact-mesh replay no longer binds the initial trace")
+             "exact-mesh replay no longer binds the candidate initial trace")
     evidence = initial.get("evidence_binding") or {}
-    bound = {name: _bound(row, f"run06 {name}") for name, row in evidence.items()}
+    bound = {name: _bound(row, f"initial trace {name}") for name, row in evidence.items()}
     _require(bound["task_ik"] == paths["task_ik"] and bound["config"] == paths["config"],
-             "run06 does not bind the fixed task/configuration")
+             "initial trace does not bind the supplied task/configuration")
     anchor, survivor = task["selected_geometric_anchor"], task["survivor_candidates"][0]
     row = task["task_and_bounded_ik"][0]
     height = task["height_search"]
-    _require(all((task.get("selected_geometric_anchor_index") == 2, task.get("requested_palm_angle_deg") == 60,
+    object_id = anchor["object_id"]
+    _require(all((isinstance(task.get("selected_geometric_anchor_index"), int),
+             0 <= task["selected_geometric_anchor_index"] < 12,
+             task.get("requested_palm_angle_deg") == 60,
              task.get("survivor_count") == height.get("survivor_count") == 1,
-             anchor["candidate_id"] == survivor["candidate_id"] == row["candidate_id"], anchor["object_id"] == OBJECT_ID,
-             anchor["pregrasp_closure_phases"] == [0.2, 0.2, 0.2], row.get("fresh_contact_count") == 3,
+             anchor["candidate_id"] == survivor["candidate_id"] == row["candidate_id"],
+             survivor["object_id"] == object_id, row.get("fresh_contact_count") == 3,
              row.get("research_task_eligible_not_executable") is True,
              row["bounded_ik"]["status"] == "BOUNDED_IK_PASS_NOT_PATH_COLLISION",
              row["task_quality"]["nominal_gravity_lift_balance_pass"] is True)),
-             "height-projected anchor2 survivor identity changed")
+             "height-projected opposition survivor identity changed")
     _require(task.get("config_sha256") == _sha256(paths["config"]),
              "height-projected survivor configuration hash changed")
-    inputs = load_v2_inputs(ROOT, config_path=paths["config"], object_id=OBJECT_ID)
+    inputs = load_v2_inputs(ROOT, config_path=paths["config"], object_id=object_id)
     dynamic = inputs.config.section("dynamic")
     _require(all((float(dynamic["physics_dt_s"]) == DT_S,
              float(dynamic["finger_maximum_speed_rad_s"]) * DT_S == MAXIMUM_INCREMENT_RAD,
@@ -113,7 +116,8 @@ def _verify(args: argparse.Namespace) -> dict:
         anchor["approach_direction_object"], np.float64)
     far = target.copy()
     far[:3, 3] -= direction * float(dynamic["approach_clearance_height_m"])
-    environment = load_d38999_tabletop_scene(ROOT / dynamic["object_scenes"][OBJECT_ID]["environment_scene_config"])
+    environment = load_d38999_tabletop_scene(
+        ROOT / dynamic["object_scenes"][object_id]["environment_scene_config"])
     endpoint_plan = None
     if args.contact_endpoint_plan is not None:
         plan_path = _resolve(args.contact_endpoint_plan); endpoint_plan = _load(plan_path)
@@ -123,14 +127,14 @@ def _verify(args: argparse.Namespace) -> dict:
         execution = float(endpoint_plan.get("execution_target_rad", math.nan))
         invalid = float(endpoint_plan.get("first_semantically_invalid_target_rad", math.nan))
         _require(all((endpoint_plan.get("status") == "OFFLINE_LAST_SEMANTICALLY_VALID_ENDPOINT_ACCEPTED",
-            endpoint_plan.get("candidate_id") == row["candidate_id"], endpoint_plan.get("object_id") == OBJECT_ID,
+            endpoint_plan.get("candidate_id") == row["candidate_id"], endpoint_plan.get("object_id") == object_id,
             endpoint_plan.get("online_truth_used") is False, endpoint_plan.get("hardware_authorized") is False,
             endpoint_plan.get("formal_dynamic_pass") is False, endpoint_plan.get("research_dynamic_pass") is False,
             endpoint_plan.get("maximum_joint_increment_rad") == MAXIMUM_INCREMENT_RAD,
             endpoint_plan.get("endpoint_definition") == "LAST_SEMANTIC_VALID_NONINTERSECTING_CONTROL_STEP",
             endpoint_plan.get("selection_rule") == "SEMANTIC_VALIDITY_PRECEDES_RAW_FREE_SPACE",
             set(bound_plan) == {"task_ik", "config", "builder_source", "evaluator_source", "runner_source"},
-            np.isfinite(execution), np.isfinite(invalid), stop[1] < execution < invalid,
+            np.isfinite(execution), np.isfinite(invalid), stop[1] <= execution < invalid,
             invalid - execution <= MAXIMUM_INCREMENT_RAD + 1e-12,
             bound_plan.get("task_ik") == paths["task_ik"], bound_plan.get("config") == paths["config"],
             bound_plan.get("runner_source") == Path(__file__).resolve(),
@@ -173,7 +177,8 @@ def _verify(args: argparse.Namespace) -> dict:
                              .reshape(4, 4), far, atol=1e-7, rtol=0.0), bound_preshape)),
                  "first-finger mode lacks one matching accepted preshape trace")
         paths["preshape_trace"] = preshape_path
-    return {"paths": paths, "bound": bound, "task": task, "row": row, "inputs": inputs,
+    return {"paths": paths, "bound": bound, "task": task, "row": row,
+            "object_id": object_id, "inputs": inputs,
             "dynamic": dynamic, "pre": pre, "stop": stop,
             "target": target, "far": far, "gravity": environment.physics.gravity_m_s2,
             "endpoint_plan": endpoint_plan}
@@ -219,7 +224,7 @@ def _run(verified: dict, mode: str, report: dict) -> None:
     context, stage = world.get_physics_context(), get_current_stage()
     scene, objects = None, []
     if mode == "first-finger-diagnostic":
-        scene = prepare_dynamic_scene(ROOT, stage, dynamic["object_scenes"][OBJECT_ID],
+        scene = prepare_dynamic_scene(ROOT, stage, dynamic["object_scenes"][verified["object_id"]],
                                       add_reference_to_stage)
         objects = [world.scene.add(SingleRigidPrim(prim_path=path, name=f"opposition60_contact_object_{index}"))
             for index, path in enumerate(scene["part_prim_paths"])]
@@ -485,7 +490,7 @@ def main() -> int:
     _require(not output.exists(), f"refusing to overwrite evidence: {output}")
     output.parent.mkdir(parents=True, exist_ok=True)
     report = {"schema_version": "carts_opposition60_local_contact_v1",
-        "status": "FAILED_CLOSED", "mode": args.mode, "object_id": OBJECT_ID,
+        "status": "FAILED_CLOSED", "mode": args.mode, "object_id": None,
         "hardware_authorized": False, "formal_dynamic_pass": False,
         "research_dynamic_pass": False, "runtime_binding_accepted": False,
         "online_truth_used_for_control": False,
@@ -495,6 +500,7 @@ def main() -> int:
     app = None
     try:
         verified = _verify(args)
+        report["object_id"] = verified["object_id"]
         report["candidate_id"] = verified["row"]["candidate_id"]
         report["evidence_binding"] = {name: {"path": str(path), "sha256": _sha256(path)}
             for name, path in verified["paths"].items()}

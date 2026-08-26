@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T06:18:57Z",
+  "updated_at_utc": "2026-08-26T07:38:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T10:17:59Z",
   "branch": "carts-grasp-opposition60-isaac-20260826",
@@ -8,7 +8,7 @@
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "OBJECT_B_OPPOSITION_CANDIDATE_RESELECTION_AFTER_ANCHOR2_INVALIDATION",
+  "current_milestone": "OBJECT_B_ANCHOR7_FULL_PRESHAPE_RESELECTION_AFTER_BOUNDARY_CONTACT",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -102,8 +102,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": false,
-    "scope": "OFFLINE_RESELECTION_ONLY_UNTIL_ONE_NEW_CANDIDATE_PASSES_SEMANTIC_ENDPOINT_GATE",
-    "reason": "ANCHOR2_PRODUCED_NO_PHYSX_CONTACT_BEFORE_FORBIDDEN_FIRST_SEMANTIC_LIMIT"
+    "scope": "OFFLINE_ANCHOR7_PRESHAPE_RESELECTION_UNTIL_ONE_CANDIDATE_HAS_NONBOUNDARY_TASK_CONTACT",
+    "reason": "ANCHOR7_P222_REACHED_MOTION_COMPATIBLE_PROXIMITY_WITHOUT_PHYSX_CONTACT_AT_ALLOWED_FORBIDDEN_FACE_BOUNDARY"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1344,7 +1344,7 @@
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
   "opposition60_isaac": {
-    "route_status": "ANCHOR_A02_PRESHAPE_REPLAY_PASS_PENDING_FIRST_FINGER_CONTACT",
+    "route_status": "ANCHOR_A07_P222_BOUNDARY_CONTACT_REJECTED_SEARCHING_REMAINING_PRESHAPES",
     "primary_object": "te_deutsch_d38999_26fj35pn_step",
     "transfer_object": "current_d38999_26kj61sn_public_spec",
     "opposition_palm_range_deg": [45.0, 75.0],
@@ -1431,7 +1431,26 @@
       "object_b_anchor2_first_finger_object_maximum_translation_m": 1.3493575361575808e-07,
       "object_b_anchor2_first_finger_second_third_preload_lift_commands": [0, 0, 0, 0],
       "object_b_anchor2_first_finger_research_dynamic_pass": false,
-      "object_b_anchor2_first_finger_formal_dynamic_pass": false
+      "object_b_anchor2_first_finger_formal_dynamic_pass": false,
+      "object_b_anchor5_exact27_completed": true,
+      "object_b_anchor5_exact27_variant_and_survivor_count": [27, 0],
+      "object_b_anchor5_exact27_all_post_projection_contact_lost_and_forbidden_first": true,
+      "object_b_anchor5_exact27_elapsed_s": 1987.070,
+      "object_b_anchor7_task_ik_path": "artifacts/carts_v2/opposition60_isaac/qp60_anchor_a07_task_ik/opposition60_anchor_a07_exact_offset_00_count_01_static_control.json",
+      "object_b_anchor7_task_ik_sha256": "fede87becf40e0ef6b3cfe4a03ab832444dcf864d5cc179afdf0265dd6d94e30",
+      "object_b_anchor7_nominal_worst_tail_margin_and_peak_force_n": [2.6439063271352445, 1.9872154368643884, 2.045004715207389, 5.9713831514576015],
+      "object_b_anchor7_initial_trace_sha256": "28876d51719464abee63c64f5d338da15ee91653cfd5537fc0c2582b52ed9ef4",
+      "object_b_anchor7_initial_exact_replay_sha256": "35bb2408b433e3e9f3455548376af47446b279abc6eea42bc183f18ade33ecab",
+      "object_b_anchor7_preshape_trace_sha256": "5ea1b5c4b6c72826e54bc5e7b69187a0eb991be0cdab7db44b69a30eabca4a15",
+      "object_b_anchor7_endpoint_plan_sha256": "8bdea836c33d950bfe1ce7562ac849b9e0c10b95e3e125f3f718dd06b8058800",
+      "object_b_anchor7_first_finger_trace_sha256": "bdf25af85f693d2621e94404882c0cba7d5377d1c8bf4e349c4a4f40194124bb",
+      "object_b_anchor7_first_finger_evaluation_sha256": "4661d0bd5e13b88c81e8a4c7605248772ce1801cbcae9e2975546c880efea619",
+      "object_b_anchor7_first_finger_status": "NO_PHYSX_CONTACT_AT_ALLOWED_FORBIDDEN_OBJECT_FACE_BOUNDARY",
+      "object_b_anchor7_first_finger_steps_time_speed_effort": [397, 3.308333333333333, 0.16485655307769775, 0.03716887906193733],
+      "object_b_anchor7_first_finger_physx_contact_count": 0,
+      "object_b_anchor7_first_finger_second_third_preload_lift_commands": [0, 0, 0, 0],
+      "object_b_anchor7_first_finger_research_dynamic_pass": false,
+      "object_b_anchor7_first_finger_formal_dynamic_pass": false
     },
     "method_fix_targeted_tests_passed": 33,
     "method_fix_targeted_test_duration_s": 28.25,
