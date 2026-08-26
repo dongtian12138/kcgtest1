@@ -1,0 +1,45 @@
+{
+  "schema_version": "carts_contactopt_1488_fast6h_manifest_v1",
+  "execution_window_id": "CONTACTOPT_1488_FAST6H",
+  "classification": "METHOD_REBUILD_PLUS_1488_STRUCTURED_SEEDS_PLUS_TRI_FINGER_CONTACT_CONSTRAINED_OPTIMIZATION_PLUS_HIERARCHICAL_VALIDATION_PLUS_SIX_HOUR_ISAAC_CLOSURE",
+  "branch": "carts-grasp-contactopt-1488-fast6h-20260826",
+  "start_commit": "ea56c5798104b3a80094b290273e2c79a967e314",
+  "started_at_utc": "2026-08-26T14:16:36Z",
+  "hard_deadline_utc": "2026-08-26T20:16:36Z",
+  "maximum_duration_s": 21600,
+  "automatic_extension_allowed": false,
+  "unattended_execution": true,
+  "status": "IMPLEMENTING",
+  "current_milestone": "CONTACTOPT_1488_STRUCTURED_SEED_GENERATION",
+  "hardware_authorized": false,
+  "formal_dynamic_pass": false,
+  "research_dynamic_pass": false,
+  "object_priority": [
+    "te_deutsch_d38999_26fj35pn_step",
+    "current_d38999_26kj61sn_public_spec"
+  ],
+  "fixed_seed_design": {
+    "global_count": 1040,
+    "dense_opposition_count": 448,
+    "total_count_per_object": 1488,
+    "global_shape": [13, 16, 5, 1],
+    "dense_shape": [7, 8, 4, 2],
+    "random_pose_generation_allowed": false
+  },
+  "hierarchy": [1488, 120, 48, 12, 3],
+  "dynamic_targets": {
+    "lift_distance_m": 0.05,
+    "minimum_hold_duration_s": 2.0,
+    "online_object_or_contact_truth_allowed": false
+  },
+  "baseline": {
+    "branch": "carts-grasp-surface-v2-fast6h-20260826",
+    "commit": "ea56c5798104b3a80094b290273e2c79a967e314",
+    "classification": "OFFLINE_AND_PARTIAL_DYNAMIC_CONTROL",
+    "three_finger_contact": false,
+    "lift_height_m": 0.0,
+    "hold_duration_s": 0.0
+  },
+  "milestones": {},
+  "stop_reason": null
+}

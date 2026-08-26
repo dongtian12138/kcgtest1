@@ -1,66 +1,73 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-26T12:40:00Z
-> 当前分支：`carts-grasp-surface-v2-fast6h-20260826`
-> 原始运行产物、源码、哈希和进程事实优先于本摘要。
+> 快照时间：2026-08-26T14:18:00Z  
+> 当前分支：`carts-grasp-contactopt-1488-fast6h-20260826`  
+> 原始产物、源码、哈希、Git 与进程事实优先于本摘要。
 
 ## 一句话状态
 
-Surface V2 对象 B 的固定设计、原始网格精查、唯一轴向分层复查和两轮登记边界精修均未产生满足 1 mm 桌面余量的三指几何候选；当前停止算法修改和新 Isaac，只做六小时窗口证据收口，不能据此声称三指手机械结构无解。
+已从 Surface V2 固定枚举负结果切换到严格 1488 个三点—法向配准初值的新方法；当前正在生成结构化规格，Isaac 尚未在本窗口启动，不能声称三指接触或抓取成功。
 
 ## 六行恢复摘要
 
-- 最初目标：A/B 使用同一无指甲手型、同一方法和主要参数，由三根真实内侧抓持面接触后离桌、抬升至少 50 mm、保持至少 2 s，且无未授权穿透。
-- 当前已完成：对象表面 PRIMARY/SECONDARY/HARD 三角色、区域接触、对象 B 固定候选第一指 Isaac 区分、`7×72×3×27=40,824` 完整便宜搜索、两组各 24 项精查和两组登记的各 8 项精修。
-- 当前真实物理结果：固定 Top-1 在 Isaac 运行 398 步/3.317 s；f1j2 峰值速度 0.164896 rad/s、最大绝对受力 0.037169 N·m，但 PhysX 手—物接触为 0，第二/三指及抬升未启动。
-- 当前唯一主要阻塞：分层精修最佳三指精确重放的桌面间隙为 0.634889 mm，距冻结的 1 mm 操作余量仍差 0.365111 mm。
-- 最近用户指令：`SURFACE_SEMANTICS_METHOD_CORRECTION + FEATURE_AWARE_FAST_SEARCH + REGION_CONTACT + SIX_HOUR_ISAAC_CLOSURE`；不降低 12 N、3 rad/s、50 mm、2 s 或真值隔离。
-- 下一步：不再改变排序、扩大 24/8 预算或启动新 Isaac；保存全部负结果、完成定向回归、监督复核、提交和普通 push，到窗口截止后只交付事实。
+- 最初目标：同一无指甲三指手、同一方法和主要参数用于 A/B，使三块真实任务抓持面接触，连接器离桌、抬升至少 50 mm、保持至少 2 s，且无未授权穿透。
+- 当前已完成：旧 Surface V2 40,824 项固定设计及分层补搜已完整收口并推送；新分支、六小时计划、监督审查和清单已建立。
+- 当前真实物理结果：上一窗口对象 B 第一指 Isaac 真实推进 3.317 s，但手—物接触为 0；第二/三指未启动，抬升 0 mm、保持 0 s。本窗口尚未启动 Isaac。
+- 当前唯一主要任务：严格生成 `1040+448=1488` 个结构化规格和三点—材料绑定法向六维位姿，再完成全量便宜评价与多样性 Top120。
+- 最近用户指令：`METHOD_REBUILD + 1488_STRUCTURED_SEEDS + TRI_FINGER_CONTACT_CONSTRAINED_OPTIMIZATION + HIERARCHICAL_VALIDATION + SIX_HOUR_ISAAC_CLOSURE`；不是硬件授权。
+- 下一步：实现材料绑定对象外法向、121 组 FK 缓存和严格规格；60 分钟前完成计数/覆盖门，90 分钟前完成便宜评价与 Top120。
 
-## 当前窗口和边界
+## 当前窗口和冻结边界
 
-- 窗口：`SURFACE_V2_FAST6H`；开始 `2026-08-26T09:16:26Z`；硬截止 `2026-08-26T15:16:26Z`。
-- 状态：`IMPLEMENTING`；里程碑：`SURFACE_V2_EVIDENCE_CLOSEOUT`。
+- 窗口：`CONTACTOPT_1488_FAST6H`；开始 `2026-08-26T14:16:36Z`；硬截止 `2026-08-26T20:16:36Z`；不自动延长。
+- 状态：`IMPLEMENTING`；里程碑：`CONTACTOPT_1488_STRUCTURED_SEED_GENERATION`。
 - `hardware_authorized=false`、`formal_dynamic_pass=false`、`research_dynamic_pass=false`。
-- 研究动态门失败关闭：当前没有通过采样原始网格几何的候选，故不能进入 12 N、IK、全路径或新 Isaac。
-- 不覆盖旧带指甲模型，不修改对象物性，不缩小 1 mm 桌面余量，不降低速度/力量/50 mm/2 s 标准。
+- 固定层级：1488→Top120→Top48→Top12→Top3；第 3 小时前应有安全候选进入对象 B 局部 Isaac。
+- 保持 12 N 仿真操作上限、3 rad/s 急停、0.18 rad/s 手指目标速度、0.0015 rad/控制步、50 mm、2 s、无指甲手型、对象物性和在线真值隔离。
+- 不回到 H102，不运行旧 GraspGenX 主链，不重建已通过导入的无指甲 Isaac 碰撞资产。
 
-## Surface V2 当前有效数据
+## 固定 1488 设计
 
-- 对象 B 面角色：PRIMARY `7269` 面/`31.440%`面积，SECONDARY `132` 面/`1.614%`，HARD `679635` 面/`66.946%`；`face21232` 为 SECONDARY。
-- 固定姿态重评：8 个输入；旧 run04 在任务门修正前写出 7 个 `research_candidate`，按当前载荷放大余量必须 `≥1` 的门重新解释后为 6 个研究任务合格、6 个误差任务幸存。anchor2 余量仅 `0.336150`，只能作诊断候选；Top-3 第一指几何等价，PRIMARY 领先 HARD 仅约 `5.56 nm`。
-- 固定 Top-1 第一指 Isaac：398 步/3.317 s，f1j2 峰值 `0.164896 rad/s`，峰值绝对受力 `0.037169 N·m`，对象最大移动 `0.135 µm`，PhysX 手—物接触 0；同第一指几何的固定 Top-3 因语义边界且无物理接触被淘汰。
-- canonical 快搜：40,824 个组合、189 组 FK 缓存、85.072 s；中心代理为 4 个可能三指接触、58 个 HARD 先到、40,762 个缺少三指中心接触。
-- 原全局排序：Patch 轴向层 `0/78/18`、精查 `0/20/4`；24/24 精查中 20 个低位三指见证投影后丢失接触，4 个最多只有 1/2 指，几何幸存为 0。
-- 原登记精修：8 个候选、41 次三指精确重放、几何幸存为 0；最佳仍差 1 mm 桌面余量 `7.050 mm`。更早的±20 mm/±12°运行是接线错误后的诊断，不计作登记精修，也没有用来修改物理门。
-- 唯一分层复查使用相同 40,824 ID 和层内排序；Patch 固定 `32/32/32`、精查固定 `8/8/8`，快搜 84.850 s。
-- 分层精查：24/24 完成，低/中/高层三指见证分别 `3/3/7`，其余 `5/5/1`；几何幸存为 0，13 个桌面—接触冲突为 `2.892–19.112 mm`，中位 `8.766 mm`。
-- 分层精修：8 个固定名额中 3 个与原登记种子/见证完全相同并复用有效结果，5 个新跑；8/8 几何幸存为 0。最佳候选 `opposition_p0959931_a46_z1__p212` 的三指精确重放桌面间隙 `0.634889 mm`，仍差 `0.365111 mm`。
-- 没有可执行 Top-3，任务受力、IK和全路径没有对失败几何候选继续计算；新一轮 Isaac 没有启动。
-- 当前三指真实接触、离桌、50 mm和2 s均为 false；对象 B 抬升 `0 mm`、保持 `0 s`，对象 A 本窗口未运行。
+- 全局 1040：13 个掌面角 × 16 个 22.5°圆周方向 × 5 个轴向层 × `P0=[0.10,0.10,0.10]`。
+- 加密 448：45°～75°共 7 个掌面角 × 每组 8 个特征感知方向 × 4 个轴向层 × `P1/P2` 两种对向预构型。
+- 六维抓取姿态必须由真实手侧三点/法向与对象允许区域三点/材料绑定外法向经 Kabsch/SVD 和小型法向精修得到；不得随机、Sobol 或手填对象坐标。
+- 1488 项均需留下 `POSE_GENERATED` 或唯一 `SEED_GEOMETRY_REJECT`；生成完整和优化收敛均不是抓取成功。
 
-## 证据入口
+## 监督约束
 
-- 快搜：`artifacts/carts_v2/surface_v2_fast6h/feature_search_B_run03.json`
-- 分层快搜：`artifacts/carts_v2/surface_v2_fast6h/feature_search_B_stratified_run04.json`
-- 分层精查：`exact_B_stratified_run08/09/10_*.json`
-- 分层精修清单：`refinement_rescue_selection_B_stratified_run02.json`
-- 新精修结果：`refinement15mm8deg_B_stratified_index00/04/05/06/07_run01.json`
-- 固定候选动态评价：`object_b_top1_first_finger_run01/evaluation_run02.json`
+- 前级只用缓存 FK、64～128 个代表点和对象 KDTree；Top12 才绑定原始无指甲网格与 Isaac 复合凸双几何。
+- 每指输出 `q_expected` 和 `q_safe_max`；前级必须标为代理区间，最终角只可由 Top12 双几何确定。`q_safe_max` 是首个几何失败边界前一个不超过 0.0015 rad 的控制步。
+- 只使用一条优化路线；不轮试多套求解器。冻结现有临界大文件，新代码保持四个数值模块和薄入口。
+- 第 3 小时只有双几何、三指语义、安全区间和 12 N 名义余量通过的候选才能进 Isaac；否则失败关闭为没有安全动态输入。
+
+## 旧基线事实
+
+- Surface V2 40,824 个组合、189 组 FK 缓存，快搜约 85 s；两轮各 24 项原始网格精查和两轮各 8 项固定精修均为 0 个完整几何幸存者。
+- 旧最佳三指精确重放桌面间隙 0.634889 mm，距冻结 1 mm 操作余量差 0.365111 mm。
+- 这些只否定固定离散设计和登记邻域，不证明三指手机械结构或完整连续空间无解。
+- 旧分支最终提交：`ea56c5798104b3a80094b290273e2c79a967e314`，已推送；旧证据不覆盖、不改写。
+
+## 当前证据入口
+
+- 新计划：`docs/carts_v2/CONTACTOPT_1488_FAST6H_PLAN_CN.md`
+- 新清单：`artifacts/carts_v2/contactopt_1488_fast6h/MANIFEST.json`
+- 旧最终报告：`docs/carts_v2/SURFACE_V2_FAST6H_FINAL_REPORT_CN.md`
+- 旧第一指动态评价：`artifacts/carts_v2/surface_v2_fast6h/object_b_top1_first_finger_run01/evaluation_run02.json`
 
 ## 恢复读取顺序
 
 1. `AGENTS.md`
 2. `docs/carts_v2/NORTH_STAR_CN.md`
-3. 本文件
-4. `docs/carts_v2/DECISIONS_CN.md` 最新部分
-5. `artifacts/carts_v2/STATE.json`
-6. `git status` 与 `git log -8`
-7. 上述 Surface V2 原始产物和当前唯一相关源码
+3. `docs/carts_v2/CONTACTOPT_1488_FAST6H_PLAN_CN.md`
+4. 本文件
+5. `docs/carts_v2/DECISIONS_CN.md` 最新部分
+6. `artifacts/carts_v2/STATE.json`
+7. `artifacts/carts_v2/contactopt_1488_fast6h/MANIFEST.json`
+8. `git status`、`git log -8`
+9. 当前唯一阻塞相关源码和新产物
 
 ## 证据边界
 
-- 快搜是排序代理；登记控制步上的原始网格精查不是连续路径数学证明。
-- 离线三指见证不是 PhysX 接触，更不是抓取或抬升。
-- 程序退出码、测试、文件或哈希不能替代三指接触、离桌、50 mm、2 s、滑移和穿透证据。
-- 当前负结果只覆盖本轮固定离散设计与登记精修邻域，不能证明完整连续构型空间无解。
+- 便宜近邻、代理区间、离线三指见证、FCL、IK、图片、测试和退出码都不是 Isaac 真实接触或抬升。
+- Isaac 研究动态只有在物理时间真实推进、三指允许面接触、离桌、50 mm、2 s、无未授权穿透且在线未读真值时才可通过。
+- 正式动态与硬件均保持否；用户未授权任何真实硬件动作。
