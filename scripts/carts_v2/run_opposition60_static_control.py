@@ -40,6 +40,11 @@ def _exact_variant_offset(value: str) -> int:
     if not 0 <= offset < 27:
         raise argparse.ArgumentTypeError("exact variant offset must lie in [0, 26]")
     return offset
+def _anchor_index(value: str) -> int:
+    index = int(value)
+    if not 0 <= index < 12:
+        raise argparse.ArgumentTypeError("anchor index must lie in [0, 11]")
+    return index
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repository-root", type=Path, default=Path.cwd())
@@ -50,6 +55,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--maximum-exact-variants", type=_exact_variant_budget,
                         default=27)
     parser.add_argument("--exact-variant-offset", type=_exact_variant_offset, default=0)
+    parser.add_argument("--anchor-index", type=_anchor_index, default=0)
     parser.add_argument("--profile-output", type=Path)
     return parser.parse_args()
 def _world(points: np.ndarray, transform: np.ndarray) -> np.ndarray:
@@ -299,9 +305,9 @@ def main() -> int:
     angle = math.radians(float(args.palm_angle_deg))
     inputs = load_v2_inputs(root, config_path=config, object_id=args.object_id)
     seeds, anchor_audit = generate_opposition_anchors(inputs, (angle,))
-    if len(seeds) == 0:
+    if len(seeds) <= args.anchor_index:
         raise RuntimeError("the static opposition control produced no anchor")
-    anchor = seeds[0]
+    anchor = seeds[args.anchor_index]
     predictor = SequentialClosurePredictor(inputs)
     query = ExactContactSurfaceQuery(inputs)
     contact_cache = {}
@@ -345,7 +351,8 @@ def main() -> int:
         phases = "".join(str(int(round(value * 10.0)))
                          for value in survivor.pregrasp_closure_phases)
         image = output / (
-            f"survivor_o{args.exact_variant_offset:02d}_{index:02d}_"
+            f"survivor_a{args.anchor_index:02d}_"
+            f"o{args.exact_variant_offset:02d}_{index:02d}_"
             f"p{phases}_four_views.png")
         _render_four_views(image, inputs, survivor, anchor_audit, prediction)
         record["four_view_image"] = image.name
@@ -353,12 +360,15 @@ def main() -> int:
     result = {
         "schema_version": "carts_opposition60_static_control_v2",
         "claim_scope": (
-            f"OFFLINE_PRESHAPE_SHARD_OFFSET_{args.exact_variant_offset}_"
+            f"OFFLINE_ANCHOR_INDEX_{args.anchor_index}_"
+            f"PRESHAPE_SHARD_OFFSET_{args.exact_variant_offset}_"
             f"COUNT_{args.maximum_exact_variants}_"
             "EXACT_STATIC_NOT_DYNAMIC_SUCCESS"
         ),
         "requested_palm_angle_deg": float(args.palm_angle_deg),
         "requested_palm_angle_rad": angle,
+        "selected_geometric_anchor_index": args.anchor_index,
+        "available_geometric_anchor_count": len(seeds),
         "selected_geometric_anchor": _candidate_record(anchor),
         "anchor_generation": anchor_audit,
         "contact_height_bounds_world_z_m": list(height_bounds),
@@ -394,7 +404,8 @@ def main() -> int:
         "elapsed_s": time.perf_counter() - started,
     }
     destination = output / (
-        f"opposition60_exact_offset_{args.exact_variant_offset:02d}_"
+        f"opposition60_anchor_a{args.anchor_index:02d}_"
+        f"exact_offset_{args.exact_variant_offset:02d}_"
         f"count_{args.maximum_exact_variants:02d}_static_control.json"
     )
     destination.write_text(
@@ -406,6 +417,8 @@ def main() -> int:
         "exact_variant_evaluated_count": result["exact_variant_evaluated_count"],
         "maximum_exact_variants": result["maximum_exact_variants"],
         "exact_variant_offset": result["exact_variant_offset"],
+        "selected_geometric_anchor_index": result[
+            "selected_geometric_anchor_index"],
         "survivor_count": result["survivor_count"],
         "elapsed_s": result["elapsed_s"],
         "isaac_started": False,

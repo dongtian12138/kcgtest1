@@ -88,3 +88,13 @@ def test_anchor_identity_and_pose_are_deterministic(inputs) -> None:
             np.eye(3), abs=1.0e-12
         )
         assert np.linalg.det(left_pose[:3, :3]) == pytest.approx(1.0, abs=1.0e-12)
+
+
+def test_preregistered_thirty_degree_mid_anchor_identity(inputs) -> None:
+    seeds, audit = generate_opposition_anchors(inputs, (EXACT_SIXTY_RAD,))
+    seed = seeds[1]
+    selected = audit["selected"][1]
+    assert seed.candidate_id == "opposition_p1047198_a01_z1"
+    assert seed.pregrasp_closure_phases == (0.2, 0.2, 0.2)
+    assert selected["azimuth_index"] == 1
+    assert selected["axial_index"] == 1
