@@ -20,6 +20,9 @@ from kcg_connector.grasp.carts_v2.models import file_sha256, load_v2_inputs
 from kcg_connector.grasp.carts_v2.structured_seed_generator import (
     generate_structured_contact_seeds,
 )
+from kcg_connector.grasp.carts_v2.three_contact_pose_initializer import (
+    hand_contact_references,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -112,6 +115,11 @@ def main() -> int:
         "elapsed_s": time.perf_counter() - started,
         "source": {"path": str(Path(__file__).resolve()),
                    "sha256": file_sha256(Path(__file__).resolve())},
+        "implementation_sources": [
+            {"path": str(Path(function.__code__.co_filename).resolve()),
+             "sha256": file_sha256(Path(function.__code__.co_filename))}
+            for function in (generate_structured_contact_seeds, hand_contact_references)
+        ],
     }
     output.mkdir(parents=True, exist_ok=True)
     targets[0].write_text(json.dumps(report, indent=2, sort_keys=True,

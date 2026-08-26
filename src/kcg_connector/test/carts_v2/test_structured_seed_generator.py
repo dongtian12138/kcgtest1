@@ -14,6 +14,7 @@ from kcg_connector.grasp.carts_v2.structured_seed_generator import (
     structured_seed_specifications,
 )
 from kcg_connector.grasp.carts_v2.three_contact_pose_initializer import (
+    contact_coordinates,
     initialize_three_contact_pose,
     kabsch_rigid_alignment,
     resolve_palm_configuration_rad,
@@ -57,6 +58,14 @@ def test_kabsch_then_normal_alignment_recovers_known_pose() -> None:
     assert pose[:3, 3] == pytest.approx(translation, abs=1.0e-12)
     assert result["maximum_point_residual_m"] < 1.0e-12
     assert result["maximum_normal_residual_rad"] < 1.0e-7
+    alpha, axial = contact_coordinates(
+        np.asarray(((0.03, 0.0, 0.37), (-0.01, 0.025, 0.39),
+                    (-0.01, -0.025, 0.38))),
+        np.asarray((0.0, 0.0, 1.0)),
+    )
+    assert len(alpha) == 3
+    assert sum(axial) == pytest.approx(0.0, abs=1.0e-15)
+    assert np.ptp(axial) > 1.0e-3
 
 
 def test_geometry_reject_record_preserves_spec_without_fabricating_pose() -> None:

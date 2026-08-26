@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T14:38:00Z",
+  "updated_at_utc": "2026-08-26T15:45:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T20:16:36Z",
   "branch": "carts-grasp-contactopt-1488-fast6h-20260826",
@@ -12,7 +12,7 @@
   "start_commit": "ea56c5798104b3a80094b290273e2c79a967e314",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "CONTACTOPT_1488_BATCHED_CHEAP_GEOMETRY",
+  "current_milestone": "CONTACTOPT_1488_DIAGNOSTIC_CONTACT_CONSTRAINT_RECOVERY",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -93,6 +93,21 @@
       "seed_manifest_sha256": "05625171b873069117813f3f033110e20cee79aa96dcd80fa09ebb5734cae996",
       "specification_status_sha256": "ca1a23d443a500a6bf3d7df06ef050a513cdfe42ad9107e42e1d087033cee8c0",
       "claim_scope": "OFFLINE_POSE_GENERATION_NOT_COLLISION_CONTACT_TASK_OR_DYNAMIC_SUCCESS"
+    },
+    "object_b_latest_cheap_geometry": {
+      "registered_specification_count": 1488,
+      "pose_generated_count": 163,
+      "seed_geometry_reject_count": 1325,
+      "direction_reasonable_count": 163,
+      "table_positive_count": 24,
+      "table_one_millimeter_pass_count": 19,
+      "hard_surface_positive_count": 3,
+      "self_collision_positive_count": 163,
+      "joint_hard_table_self_pass_count": 0,
+      "top120_count": 0,
+      "proxy_interval_survivor_count": 0,
+      "isaac_authorized_from_this_result": false,
+      "claim_scope": "OFFLINE_PROXY_DIAGNOSTIC_ONLY_NOT_EXACT_CONTACT_TASK_OR_DYNAMIC_SUCCESS"
     },
     "object_priority": [
       "te_deutsch_d38999_26fj35pn_step",

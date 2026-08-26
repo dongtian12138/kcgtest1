@@ -14,7 +14,7 @@
   "automatic_extension_allowed": false,
   "unattended_execution": true,
   "status": "IMPLEMENTING",
-  "current_milestone": "CONTACTOPT_1488_BATCHED_CHEAP_GEOMETRY",
+  "current_milestone": "CONTACTOPT_1488_DIAGNOSTIC_CONTACT_CONSTRAINT_RECOVERY",
   "hardware_authorized": false,
   "formal_dynamic_pass": false,
   "research_dynamic_pass": false,
@@ -57,6 +57,19 @@
       "seed_manifest_sha256": "05625171b873069117813f3f033110e20cee79aa96dcd80fa09ebb5734cae996",
       "specification_status_sha256": "ca1a23d443a500a6bf3d7df06ef050a513cdfe42ad9107e42e1d087033cee8c0",
       "claim_scope": "STRUCTURED_CONTACT_ALIGNED_POSES_NOT_COLLISION_TASK_OR_DYNAMIC_SUCCESS"
+    },
+    "latest_cheap_geometry_object_b": {
+      "completed_at_utc": "2026-08-26T15:45:00Z",
+      "registered_specification_count": 1488,
+      "pose_generated_count": 163,
+      "seed_geometry_reject_count": 1325,
+      "table_one_millimeter_pass_count": 19,
+      "hard_surface_positive_count": 3,
+      "self_collision_positive_count": 163,
+      "joint_hard_table_self_pass_count": 0,
+      "top120_count": 0,
+      "proxy_interval_survivor_count": 0,
+      "claim_scope": "OFFLINE_PROXY_DIAGNOSTIC_ONLY_NOT_EXACT_CONTACT_TASK_OR_DYNAMIC_SUCCESS"
     }
   },
   "stop_reason": null

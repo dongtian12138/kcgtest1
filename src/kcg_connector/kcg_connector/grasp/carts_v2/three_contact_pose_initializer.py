@@ -5,9 +5,12 @@ from typing import Mapping, Sequence
 
 import numpy as np
 from scipy.optimize import least_squares
+from scipy.spatial import ConvexHull
 from scipy.spatial.transform import Rotation
 
-from kcg_connector.grasp.carts_v2.models import V2Inputs, joint_positions_for_phases
+from kcg_connector.grasp.carts_v2.models import (
+    V2Inputs, farthest_point_indices, joint_positions_for_phases,
+)
 
 
 _QP_ENDPOINT_LABEL_RAD, _QP_ENDPOINT_ROUNDING_TOLERANCE_RAD = math.pi / 2.0, math.radians(0.1)
@@ -31,6 +34,16 @@ def _surface_reference(surface) -> tuple[np.ndarray, np.ndarray]:
     normal = _unit(np.sum(surface.face_normals_local * areas[:, None], axis=0),
                    f"TASK surface normal {surface.pad_name}")
     return center, normal
+
+
+def _surface_samples(surface, count=64):
+    triangles = np.asarray(surface.triangles_local_m, dtype=np.float64)
+    centers = np.mean(triangles, axis=1)
+    span = np.ptp(centers, axis=0)
+    scaled = (centers - np.min(centers, axis=0)) / np.where(span > 0.0, span, 1.0)
+    features = np.column_stack((scaled, np.asarray(surface.face_normals_local)))
+    selected = farthest_point_indices(features, min(int(count), len(features)))
+    return centers[selected], np.asarray(surface.face_normals_local)[selected], selected
 
 
 def resolve_palm_configuration_rad(inputs: V2Inputs,
@@ -61,22 +74,30 @@ def _reference_joint_vector(inputs: V2Inputs, palm_configuration_rad: float) -> 
     return vector
 
 
-def _surface_state(inputs, surface, reference, phases, local_point, local_normal):
-    joints = joint_positions_for_phases(
-        inputs, tuple(phases), reference_joint_positions_rad=reference)
-    transform = np.asarray(inputs.hand_model.forward_kinematics(joints)[surface.link_name])
-    point = local_point @ transform[:3, :3].T + transform[:3, 3]
-    normal = local_normal @ transform[:3, :3].T
-    return joints, point, _unit(normal, f"FK normal {surface.pad_name}")
+def contact_coordinates(points: np.ndarray, approach: np.ndarray):
+    center = np.mean(points, axis=0)
+    axis = _unit(approach, "hand approach direction")
+    first = points[0] - center
+    first -= axis * float(first @ axis)
+    x_axis = _unit(first, "finger-1 angular reference")
+    y_axis = _unit(np.cross(axis, x_axis), "hand angular transverse axis")
+    relative = points - center
+    alpha = tuple(float(math.atan2(row @ y_axis, row @ x_axis) %
+                        (2.0 * math.pi)) for row in relative)
+    offsets = tuple(float(row @ axis) for row in relative)
+    return alpha, offsets
 
 
 def _finger_reference(inputs, surface, finger_index, preshape, reference,
-                      work_center, target_radius, sample_count):
+                      work_center, approach, target_radius, sample_count):
     maximum = float(inputs.config.section("candidate_generation")["maximum_closure_phase"])
     start = float(preshape[finger_index])
     if not 0.0 <= start < maximum <= 1.0:
         raise ValueError(f"INVALID_PRESHAPE_RANGE:{surface.pad_name}")
-    local_point, local_normal = _surface_reference(surface)
+    local_points, local_normals, face_indices = _surface_samples(surface)
+    collision = np.unique(inputs.hand_collision_triangles_by_link[
+        surface.link_name].reshape(-1, 3), axis=0)
+    collision = collision[ConvexHull(collision).vertices]
     phases_grid = np.linspace(start, maximum, int(sample_count))
     derivative = float(inputs.config.section("closure_prediction")[
         "motion_derivative_phase_step"])
@@ -86,25 +107,42 @@ def _finger_reference(inputs, surface, finger_index, preshape, reference,
     for phase in phases_grid:
         phases = list(preshape)
         phases[finger_index] = float(phase)
-        joints, point, normal = _surface_state(
-            inputs, surface, reference, phases, local_point, local_normal)
+        joints = joint_positions_for_phases(
+            inputs, tuple(phases), reference_joint_positions_rad=reference)
+        transform = np.asarray(inputs.hand_model.forward_kinematics(joints)[surface.link_name])
+        points = local_points @ transform[:3, :3].T + transform[:3, 3]
+        normals = local_normals @ transform[:3, :3].T
         moved_phase = min(maximum, float(phase) + derivative)
         if moved_phase == phase:
             moved_phase = max(start, float(phase) - derivative)
         moved = list(phases)
         moved[finger_index] = moved_phase
-        _moved_joints, moved_point, _normal = _surface_state(
-            inputs, surface, reference, moved, local_point, local_normal)
+        moved_joints = joint_positions_for_phases(
+            inputs, tuple(moved), reference_joint_positions_rad=reference)
+        moved_transform = np.asarray(inputs.hand_model.forward_kinematics(
+            moved_joints)[surface.link_name])
+        moved_points = local_points @ moved_transform[:3, :3].T + moved_transform[:3, 3]
         delta = moved_phase - float(phase)
-        motion = (moved_point - point) / delta if delta != 0.0 else np.zeros(3)
-        inward = np.asarray(work_center) - point
+        motion = ((moved_points - points) / delta if delta != 0.0
+                  else np.zeros_like(points))
+        inward = np.asarray(work_center) - points
+        inward -= np.outer(inward @ approach, approach)
         tolerance = 64.0 * np.finfo(np.float64).eps
-        compatible = (float(normal @ inward) > tolerance
-                      and float(motion @ inward) > tolerance
-                      and float(normal @ motion) >= minimum_motion)
-        rows.append((not compatible, abs(float(np.linalg.norm(inward)) - target_radius),
-                     float(phase), joints, point, normal, motion))
-    selected = min(rows, key=lambda row: row[:3])
+        compatible = ((np.einsum("ij,ij->i", normals, inward) > tolerance)
+                      & (np.einsum("ij,ij->i", motion, inward) > tolerance)
+                      & (np.einsum("ij,ij->i", normals, motion) >= minimum_motion))
+        radius_error = np.abs(np.linalg.norm(inward, axis=1) - target_radius)
+        contact_distance = float(inputs.config.section("closure_prediction")[
+            "contact_distance_m"])
+        collision_hand = collision @ transform[:3, :3].T + transform[:3, 3]
+        overhang = float(np.max(collision_hand @ approach)) - points @ approach
+        for index in range(len(points)):
+            rows.append((not bool(compatible[index]),
+                         max(0.0, float(radius_error[index]) - contact_distance),
+                         float(overhang[index]), float(radius_error[index]), float(phase),
+                         int(face_indices[index]), joints, points[index], normals[index],
+                         motion[index]))
+    selected = min(rows, key=lambda row: row[:6])
     if selected[0]:
         raise ValueError(f"NO_MOTION_COMPATIBLE_HAND_REFERENCE:{surface.pad_name}")
     return selected
@@ -140,31 +178,26 @@ def hand_contact_references(
         transform = transforms[surface.link_name]
         base_centers.append(local @ transform[:3, :3].T + transform[:3, 3])
     work_center = np.mean(base_centers, axis=0)
+    approach = _unit(work_center, "pregrasp workspace approach direction")
     selected = [_finger_reference(
-        inputs, surface, index, preshape, reference, work_center, radius,
+        inputs, surface, index, preshape, reference, work_center, approach, radius,
         coarse_sample_count) for index, (_name, surface) in enumerate(ordered)]
-    points = np.asarray([row[4] for row in selected])
-    normals = np.asarray([row[5] for row in selected])
-    center = np.mean(points, axis=0)
-    plane = _unit(np.cross(points[2] - points[0], points[1] - points[0]),
-                  "three-contact hand plane")
-    if float(plane @ center) < 0.0:
-        plane = -plane
-    first = points[0] - center - plane * float((points[0] - center) @ plane)
-    x_axis = _unit(first, "finger-1 angular reference")
-    y_axis = _unit(np.cross(plane, x_axis), "hand angular transverse axis")
-    alpha = tuple(float(math.atan2((point - center) @ y_axis,
-                                   (point - center) @ x_axis) % (2.0 * math.pi))
-                  for point in points)
+    points = np.asarray([row[7] for row in selected])
+    normals = np.asarray([row[8] for row in selected])
+    alpha, axial_offsets = contact_coordinates(points, approach)
     return {
         "points_handbase_m": points, "normals_handbase": normals,
-        "reference_closure_phases": tuple(float(row[2]) for row in selected),
+        "reference_closure_phases": tuple(float(row[4]) for row in selected),
         "reference_joint_positions_rad": tuple(
-            tuple(float(value) for value in row[3]) for row in selected),
+            tuple(float(value) for value in row[6]) for row in selected),
         "pregrasp_joint_positions_rad": tuple(float(value) for value in pregrasp),
         "effective_palm_configuration_rad": effective_palm,
-        "relative_azimuths_rad": alpha, "approach_direction_handbase": plane,
-        "radius_errors_m": tuple(float(row[1]) for row in selected),
+        "relative_azimuths_rad": alpha,
+        "relative_axial_offsets_m": axial_offsets,
+        "approach_direction_handbase": approach,
+        "radius_errors_m": tuple(float(row[3]) for row in selected),
+        "terminal_overhang_m": tuple(float(row[2]) for row in selected),
+        "task_surface_face_indices": tuple(int(row[5]) for row in selected),
     }
 
 
@@ -244,6 +277,6 @@ def initialize_three_contact_pose(
 
 
 __all__ = [
-    "hand_contact_references", "initialize_three_contact_pose",
+    "contact_coordinates", "hand_contact_references", "initialize_three_contact_pose",
     "kabsch_rigid_alignment", "resolve_palm_configuration_rad",
 ]

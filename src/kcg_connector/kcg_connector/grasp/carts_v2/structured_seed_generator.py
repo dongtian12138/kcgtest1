@@ -97,9 +97,12 @@ def _object_index(inputs: V2Inputs) -> dict[str, object]:
             "axial_bin_count": int(inputs.config.section("surface_roles")["axial_bin_count"])}
 
 
-def _axial_rows(index: Mapping[str, object], ratio: float, *, allowed: bool) -> np.ndarray:
+def _axial_rows(index: Mapping[str, object], ratio: float, *, allowed: bool,
+                offset_m: float = 0.0) -> np.ndarray:
     low, high = index["axial_range_m"]
-    target, span = low + ratio * (high - low), high - low
+    target, span = low + ratio * (high - low) + float(offset_m), high - low
+    if target < low or target > high:
+        raise ValueError("OBJECT_TARGET_AXIAL_OFFSET_OUTSIDE_GRASP_BAND")
     axial = np.asarray(index["axial"])
     mask = np.ones(len(axial), dtype=np.bool_)
     if allowed:
@@ -169,8 +172,9 @@ def _feature_directions(profile: Mapping[str, np.ndarray], alphas) -> tuple[floa
     return tuple(chosen)
 
 
-def _target_region(index: Mapping[str, object], ratio: float, angle: float):
-    rows = _axial_rows(index, ratio, allowed=True)
+def _target_region(index: Mapping[str, object], ratio: float, angle: float,
+                   axial_offset_m: float = 0.0):
+    rows = _axial_rows(index, ratio, allowed=True, offset_m=axial_offset_m)
     delta = _cyclic_delta(np.asarray(index["angle"])[rows], angle)
     eligible = rows[delta <= _TARGET_WINDOW_RAD]
     if len(eligible) == 0:
@@ -180,8 +184,10 @@ def _target_region(index: Mapping[str, object], ratio: float, angle: float):
     areas, points = np.asarray(index["areas"])[near], np.asarray(index["points"])[near]
     center = np.average(points, axis=0, weights=areas)
     face = int(near[np.argmin(np.sum((points - center) ** 2, axis=1))])
-    return face, np.asarray(index["points"])[face], np.asarray(index["normals"])[face], float(
-        np.sum(areas))
+    low, high = index["axial_range_m"]
+    target_axial = low + ratio * (high - low) + float(axial_offset_m)
+    return (face, np.asarray(index["points"])[face], np.asarray(index["normals"])[face],
+            float(np.sum(areas)), float(target_axial))
 
 
 def _base_record(spec: StructuredSeedSpec, azimuth_deg=None,
@@ -222,12 +228,17 @@ def _generate_one(inputs, index, spec, effective_qp, references, profiles, direc
             raise ValueError("INSUFFICIENT_25_DEG_FEATURE_DIRECTIONS")
         azimuth_deg = directions[key][spec.direction_index]
     angles = math.radians(azimuth_deg) + np.asarray(hand["relative_azimuths_rad"])
-    targets = [_target_region(index, spec.axial_ratio, float(angle)) for angle in angles]
+    targets = [_target_region(index, spec.axial_ratio, float(angle), float(offset))
+               for angle, offset in zip(angles, hand["relative_axial_offsets_m"])]
     alignment = initialize_three_contact_pose(
         hand["points_handbase_m"], hand["normals_handbase"],
         np.asarray([row[1] for row in targets]), np.asarray([row[2] for row in targets]))
     pose = np.asarray(alignment["object_from_hand"])
     approach = pose[:3, :3] @ np.asarray(hand["approach_direction_handbase"])
+    approach_distance = float(inputs.config.section("dynamic")[
+        "approach_clearance_height_m"])
+    pregrasp_pose = np.array(pose, copy=True)
+    pregrasp_pose[:3, 3] -= approach * approach_distance
     seed = CandidateSeed(
         candidate_id=spec.candidate_id, object_id=inputs.object_contract.object_id,
         anchor_face_index=int(targets[0][0]), anchor_position_object_m=tuple(
@@ -245,7 +256,12 @@ def _generate_one(inputs, index, spec, effective_qp, references, profiles, direc
            "status": "POSE_GENERATED", "reason": "",
            "target_object_face_indices": [int(value[0]) for value in targets],
            "target_region_areas_m2": [float(value[3]) for value in targets],
+           "target_axial_centers_m": [float(value[4]) for value in targets],
+           "hand_relative_axial_offsets_m": list(hand["relative_axial_offsets_m"]),
            "reference_closure_phases": list(hand["reference_closure_phases"]),
+           "grasp_pose_object_from_hand": [float(value) for value in pose.ravel()],
+           "pregrasp_pose_object_from_hand": [float(value) for value in pregrasp_pose.ravel()],
+           "approach_distance_m": approach_distance,
            "maximum_point_residual_m": alignment["maximum_point_residual_m"],
            "maximum_normal_residual_rad": alignment["maximum_normal_residual_rad"],
            "pose_method": alignment["method"]}
