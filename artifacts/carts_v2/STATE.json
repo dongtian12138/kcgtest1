@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T00:37:58Z",
+  "updated_at_utc": "2026-08-26T01:13:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T10:17:59Z",
   "branch": "carts-grasp-opposition60-isaac-20260826",
@@ -8,7 +8,7 @@
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "OPPOSITION60_QP60_ANCHOR_PHASE_ROOT_CAUSE",
+  "current_milestone": "OPPOSITION60_ANCHOR_A01_BOUNDED_LOCAL_REFINEMENT",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -1391,6 +1391,24 @@
       "isaac_started": false,
       "family_infeasibility_claimed": false
     },
+    "qp60_anchor_a01_probe1": {
+      "candidate_id": "opposition_p1047198_a01_z1",
+      "pregrasp_closure_phases": [0.2, 0.2, 0.2],
+      "height_probe_count": 85,
+      "three_contact_witness_count": 1,
+      "three_contact_handbase_world_z_m": 0.6289375477103004,
+      "contact_stop_phases": [0.47177734375, 0.37832031250000003, 0.47070312500000006],
+      "minimum_table_clearance_at_contact_m": -0.001718519523129979,
+      "required_handbase_world_z_for_1mm_margin_m": 0.6316560672334304,
+      "required_upward_projection_m": 0.002718519523129979,
+      "post_projection_status": "CONTACT_LOST_AFTER_TABLE_PROJECTION_FACE_19702",
+      "geometry_three_contact_witness_found": true,
+      "path_safe_three_contact_witness_found": false,
+      "research_executable_candidate": false,
+      "elapsed_s": 558.949458550982,
+      "summary_path": "artifacts/carts_v2/opposition60_isaac/qp60_anchor_a01_probe1/ANCHOR_A01_THREE_CONTACT_TABLE_CONFLICT_SUMMARY.json",
+      "isaac_started": false
+    },
     "qp60_single_preshape_profile": {
       "phases": [0.2, 0.2, 0.2],
       "elapsed_s": 214.01718114499818,
@@ -1417,7 +1435,7 @@
     "full_arm_dynamic_status": "NOT_STARTED",
     "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
   },
-  "evidence_level": "ONE_QP60_SPATIAL_ANCHOR_ALL27_PRESHAPES_OFFLINE_SAMPLED_UNRESOLVED_NO_DYNAMIC_RESULT",
+  "evidence_level": "QP60_THREE_CONTACT_GEOMETRY_WITNESS_WITH_TABLE_CONFLICT_OFFLINE_NO_DYNAMIC_RESULT",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1480,7 +1498,7 @@
   },
   "blockers": [
     "NAILFREE_DYNAMIC_COLLISION_AND_INERTIA_RUNTIME_BINDING_NOT_ACCEPTED",
-    "QP60_ANCHOR_A00_DISCRETE_PROBES_NEVER_REACH_TWO_VALID_CONTACTS",
+    "QP60_ANCHOR_A01_THREE_CONTACT_STATE_CONFLICTS_WITH_TABLE_SAFE_HEIGHT",
     "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND"
   ]
 }

@@ -1,0 +1,59 @@
+{
+  "schema_version": "carts_opposition60_anchor_table_conflict_v1",
+  "created_at_utc": "2026-08-26T01:13:00Z",
+  "claim_scope": "OFFLINE_THREE_CONTACT_WITNESS_AT_TABLE_UNSAFE_HEIGHT_NOT_PATH_SAFE_TASK_FEASIBLE_OR_DYNAMIC",
+  "object_id": "te_deutsch_d38999_26fj35pn_step",
+  "candidate_id": "opposition_p1047198_a01_z1",
+  "palm_configuration_deg": 60.0,
+  "anchor_index": 1,
+  "azimuth_deg": 30.0,
+  "axial_level": "MID",
+  "pregrasp_closure_phases": [0.2, 0.2, 0.2],
+  "height_probe_count": 85,
+  "contact_count_histogram_zero_one_two_three": [77, 7, 0, 1],
+  "three_contact_witness": {
+    "handbase_world_z_m": 0.6289375477103004,
+    "contact_stop_phases": [
+      0.47177734375,
+      0.37832031250000003,
+      0.47070312500000006
+    ],
+    "object_face_indices": [19701, 19645, 20951],
+    "hand_surface_face_indices": [7528, 7596, 7620],
+    "legacy_blue_pad_by_finger": [true, true, true],
+    "contact_clearance_m": [
+      0.0005691336313615465,
+      0.0005900184955910952,
+      0.0005959224936249463
+    ],
+    "inward_motion_m_per_phase": [
+      0.22133851646912114,
+      0.2356719998349728,
+      0.22485527312677117
+    ]
+  },
+  "table_path_conflict": {
+    "minimum_contributing_stage": "FINGER_1_CLOSURE_0127",
+    "checked_state_count": 1565,
+    "required_handbase_world_z_m_for_1mm_margin": 0.6316560672334304,
+    "required_upward_projection_m": 0.002718519523129979,
+    "minimum_table_clearance_at_three_contact_height_m": -0.001718519523129979,
+    "post_projection_status": "CONTACT_LOST_AFTER_TABLE_PROJECTION",
+    "post_projection_first_forbidden_object_face": 19702,
+    "post_projection_face_geometry": "LOWER_AXIAL_CHAMFER_ABS_AXIS_NORMAL_0P70485"
+  },
+  "local_refinement_required": true,
+  "research_executable_candidate": false,
+  "isaac_started": false,
+  "connector_moved": false,
+  "dynamic_success": false,
+  "raw_result": "opposition60_anchor_a01_exact_offset_00_count_01_static_control.json",
+  "raw_result_sha256": "a922248e72543ca6bb3781e84cc351b1fe6d7723801cdda5c3ea5b667b7b3199",
+  "stdout_sha256": "cebd5c4519ef5ff7ae10b3bb18f739801fae03e587f84baf3fba48a924ccb297",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "run_script_sha256": "ace35ac40df39aee84c1158091f5765d5e50bd7fa3a41bb2ca89e25dd7a00ba3",
+  "config_sha256": "20ba9c0c51e42a5eb54fcd805a2f4b761d953d97f91777ba216fad60714af92c",
+  "four_view_image": "three_contact_unsafe_table_four_views.png",
+  "four_view_image_sha256": "c57b17bf6ad77e1d6fbcb15f2886102b90f81123e0c804680c73aaebddbc3cf3",
+  "four_view_renderer_script_sha256": "d1ca2974b877be2ace5d3a9985deef80c2790ac28f0b0d316c41535cd6092586"
+}

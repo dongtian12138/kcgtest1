@@ -1,0 +1,1743 @@
+{
+  "anchor_generation": {
+    "axial_fractions": [
+      0.25,
+      0.5,
+      0.75
+    ],
+    "azimuth_count": 12,
+    "claim_scope": "STRUCTURED_FK_ANCHORS_NOT_CONTACT_OR_DYNAMIC_SUCCESS",
+    "hand_variant": "CONNECTOR_GRASP_NO_NAIL",
+    "object_grasp_band": {
+      "allowed_area_m2": 0.0047896435659013255,
+      "allowed_face_count": 7269,
+      "axial_range_m": [
+        -0.030683200836181642,
+        0.0
+      ],
+      "axis_object": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center_object_m": [
+        2.048808468997162e-05,
+        -7.243266698026117e-05,
+        -0.012297830899587777
+      ],
+      "mean_radius_m": 0.021068797868943136
+    },
+    "object_id": "te_deutsch_d38999_26fj35pn_step",
+    "per_angle": [
+      {
+        "evaluated_pregrasp_closure_phases": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.1
+          ],
+          [
+            0.0,
+            0.0,
+            0.2
+          ],
+          [
+            0.0,
+            0.1,
+            0.0
+          ],
+          [
+            0.0,
+            0.1,
+            0.1
+          ],
+          [
+            0.0,
+            0.1,
+            0.2
+          ],
+          [
+            0.0,
+            0.2,
+            0.0
+          ],
+          [
+            0.0,
+            0.2,
+            0.1
+          ],
+          [
+            0.0,
+            0.2,
+            0.2
+          ],
+          [
+            0.1,
+            0.0,
+            0.0
+          ],
+          [
+            0.1,
+            0.0,
+            0.1
+          ],
+          [
+            0.1,
+            0.0,
+            0.2
+          ],
+          [
+            0.1,
+            0.1,
+            0.0
+          ],
+          [
+            0.1,
+            0.1,
+            0.1
+          ],
+          [
+            0.1,
+            0.1,
+            0.2
+          ],
+          [
+            0.1,
+            0.2,
+            0.0
+          ],
+          [
+            0.1,
+            0.2,
+            0.1
+          ],
+          [
+            0.1,
+            0.2,
+            0.2
+          ],
+          [
+            0.2,
+            0.0,
+            0.0
+          ],
+          [
+            0.2,
+            0.0,
+            0.1
+          ],
+          [
+            0.2,
+            0.0,
+            0.2
+          ],
+          [
+            0.2,
+            0.1,
+            0.0
+          ],
+          [
+            0.2,
+            0.1,
+            0.1
+          ],
+          [
+            0.2,
+            0.1,
+            0.2
+          ],
+          [
+            0.2,
+            0.2,
+            0.0
+          ],
+          [
+            0.2,
+            0.2,
+            0.1
+          ],
+          [
+            0.2,
+            0.2,
+            0.2
+          ]
+        ],
+        "palm_configuration_deg": 59.99999999999999,
+        "palm_configuration_rad": 1.0471975511965976,
+        "preshape_count": 27,
+        "raw_anchor_count": 972,
+        "retained_anchor_count": 12,
+        "retained_axial_counts": {
+          "0": 4,
+          "1": 4,
+          "2": 4
+        },
+        "retained_candidate_ids": [
+          "opposition_p1047198_a00_z0",
+          "opposition_p1047198_a01_z1",
+          "opposition_p1047198_a02_z2",
+          "opposition_p1047198_a03_z0",
+          "opposition_p1047198_a04_z1",
+          "opposition_p1047198_a05_z2",
+          "opposition_p1047198_a06_z0",
+          "opposition_p1047198_a07_z1",
+          "opposition_p1047198_a08_z2",
+          "opposition_p1047198_a09_z0",
+          "opposition_p1047198_a10_z1",
+          "opposition_p1047198_a11_z2"
+        ]
+      }
+    ],
+    "preshape_count": 27,
+    "raw_anchor_count": 972,
+    "retained_anchor_count": 12,
+    "schema_version": "carts_opposition_anchor_v1",
+    "selected": [
+      {
+        "axial_fraction": 0.25,
+        "axial_index": 0,
+        "azimuth_index": 0,
+        "azimuth_rad": 0.0,
+        "candidate_id": "opposition_p1047198_a00_z0",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          0.002924665564892549,
+          -2.335317748037865e-05,
+          -0.42487057494462865
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          0.0,
+          0.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.02301240062713623
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.0408607756049776e-17
+      },
+      {
+        "axial_fraction": 0.5,
+        "axial_index": 1,
+        "azimuth_index": 1,
+        "azimuth_rad": 0.5235987755982988,
+        "candidate_id": "opposition_p1047198_a01_z1",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          0.00251103981489414,
+          0.0014221601578326964,
+          -0.41719977473558323
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          1.0,
+          1.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.015341600418090821
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 2.6021131835486686e-17
+      },
+      {
+        "axial_fraction": 0.75,
+        "axial_index": 2,
+        "azimuth_index": 2,
+        "azimuth_rad": 1.0471975511965976,
+        "candidate_id": "opposition_p1047198_a02_z2",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          0.0014300727400795897,
+          0.0024671985527237894,
+          -0.40952897452653786
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          2.0,
+          2.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.007670800209045411
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.387831223041421e-17
+      },
+      {
+        "axial_fraction": 0.25,
+        "axial_index": 0,
+        "azimuth_index": 3,
+        "azimuth_rad": 1.5707963267948966,
+        "candidate_id": "opposition_p1047198_a03_z0",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -2.8591404809910464e-05,
+          0.002831744813222316,
+          -0.42487057494462865
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          3.0,
+          0.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.02301240062713623
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.0408773186615486e-17
+      },
+      {
+        "axial_fraction": 0.5,
+        "axial_index": 1,
+        "azimuth_index": 4,
+        "azimuth_rad": 2.0943951023931953,
+        "candidate_id": "opposition_p1047198_a04_z1",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -0.0014741047401229859,
+          0.0024181190632239094,
+          -0.41719977473558323
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          4.0,
+          1.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.015341600418090821
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 2.6021131835486686e-17
+      },
+      {
+        "axial_fraction": 0.75,
+        "axial_index": 2,
+        "azimuth_index": 5,
+        "azimuth_rad": 2.6179938779914944,
+        "candidate_id": "opposition_p1047198_a05_z2",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -0.00251914313501408,
+          0.001337151988409357,
+          -0.40952897452653786
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          5.0,
+          2.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.007670800209045411
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.387831223041421e-17
+      },
+      {
+        "axial_fraction": 0.25,
+        "axial_index": 0,
+        "azimuth_index": 6,
+        "azimuth_rad": 3.141592653589793,
+        "candidate_id": "opposition_p1047198_a06_z0",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -0.0028836893955126053,
+          -0.00012151215648014369,
+          -0.42487057494462865
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          6.0,
+          0.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.02301240062713623
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.0408607756049776e-17
+      },
+      {
+        "axial_fraction": 0.5,
+        "axial_index": 1,
+        "azimuth_index": 7,
+        "azimuth_rad": 3.665191429188092,
+        "candidate_id": "opposition_p1047198_a07_z1",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -0.002470063645514198,
+          -0.0015670254917932178,
+          -0.41719977473558323
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          7.0,
+          1.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.015341600418090821
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 2.6021131835486686e-17
+      },
+      {
+        "axial_fraction": 0.75,
+        "axial_index": 2,
+        "azimuth_index": 8,
+        "azimuth_rad": 4.1887902047863905,
+        "candidate_id": "opposition_p1047198_a08_z2",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -0.0013890965706996484,
+          -0.0026120638866843114,
+          -0.40952897452653786
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          8.0,
+          2.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.007670800209045411
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.387831223041421e-17
+      },
+      {
+        "axial_fraction": 0.25,
+        "axial_index": 0,
+        "azimuth_index": 9,
+        "azimuth_rad": 4.71238898038469,
+        "candidate_id": "opposition_p1047198_a09_z0",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          6.956757418985371e-05,
+          -0.0029766101471828386,
+          -0.42487057494462865
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          9.0,
+          0.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.02301240062713623
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.04087753923386e-17
+      },
+      {
+        "axial_fraction": 0.5,
+        "axial_index": 1,
+        "azimuth_index": 10,
+        "azimuth_rad": 5.235987755982989,
+        "candidate_id": "opposition_p1047198_a10_z1",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          0.0015150809095029294,
+          -0.00256298439718443,
+          -0.41719977473558323
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          10.0,
+          1.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.015341600418090821
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 2.6021131835486686e-17
+      },
+      {
+        "axial_fraction": 0.75,
+        "axial_index": 2,
+        "azimuth_index": 11,
+        "azimuth_rad": 5.759586531581287,
+        "candidate_id": "opposition_p1047198_a11_z2",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          0.0025601193043940217,
+          -0.0014820173223698812,
+          -0.40952897452653786
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.07177400384478572,
+        "selection_key": [
+          0.07177400384478572,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          11.0,
+          2.0
+        ],
+        "target_band_center_object_m": [
+          2.048808468997162e-05,
+          -7.243266698026117e-05,
+          -0.007670800209045411
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.387831223041421e-17
+      }
+    ]
+  },
+  "available_geometric_anchor_count": 12,
+  "claim_scope": "OFFLINE_ANCHOR_INDEX_1_PRESHAPE_SHARD_OFFSET_0_COUNT_1_EXACT_STATIC_NOT_DYNAMIC_SUCCESS",
+  "config": "src/kcg_connector/config/carts_nailfree_height_projected.yaml",
+  "config_sha256": "20ba9c0c51e42a5eb54fcd805a2f4b761d953d97f91777ba216fad60714af92c",
+  "connector_moved": false,
+  "contact_height_bounds_world_z_m": [
+    -0.23800649630240162,
+    0.6690198954265472
+  ],
+  "controller_executed": false,
+  "dynamic_success": false,
+  "elapsed_s": 558.949458550982,
+  "exact_variant_evaluated_count": 1,
+  "exact_variant_evaluation_interval": {
+    "start_inclusive": 0,
+    "stop_exclusive": 1
+  },
+  "exact_variant_offset": 0,
+  "forbidden_object_first_contact_guard": "ENABLED_FAIL_CLOSED",
+  "hardware_authorized": false,
+  "height_search": {
+    "candidate_id": "opposition_p1047198_a01_z1",
+    "claim_scope": "OFFLINE_CONTACT_CONDITIONED_HEIGHT_NOT_DYNAMIC_SUCCESS",
+    "deferred": [
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.0,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.0,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.1,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.1,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.1,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.2,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.2,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.2,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.0,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.0,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.0,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.1,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.1,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.1,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.2,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.2,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.2,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.0,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.0,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.0,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.1,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.1,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.1,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      }
+    ],
+    "evaluated": [
+      {
+        "contact_conditioned_iterations": [
+          {
+            "contact_stop_phases": [
+              0.47177734375,
+              0.37832031250000003,
+              0.47070312500000006
+            ],
+            "handbase_world_z_m": 0.6289375477103004,
+            "iteration": 0,
+            "minimum_table_contributing_stage": "FINGER_1_CLOSURE_0127",
+            "minimum_table_handbase_z_m": 0.6316560672334304,
+            "projected_handbase_world_z_m": 0.6316560672334304,
+            "table_path_checked_state_count": 1565
+          }
+        ],
+        "contact_height_probes": [
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.23800649630240156,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.20966192156087193,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.1813173468193423,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.15297277207781268,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.12462819733628305,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.09628362259475343,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.0679390478532238,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.03959447311169406,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.011249898370164435,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.01709467637136519,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.04543925111289493,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.07378382585442456,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.10212840059595418,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.1304729753374838,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.15881755007901344,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.18716212482054312,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.21550669956207275,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.24385127430360237,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.272195849045132,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.30054042378666174,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.32888499852819136,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.357229573269721,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.3855741480112506,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.41391872275278024,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.44226329749430987,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.4706078722358396,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.49895244697736924,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5272970217188988,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5556415964604284,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5839861712019581,
+            "probe_kind": "COARSE",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 1,
+            "handbase_world_z_m": 0.6123307459434879,
+            "probe_kind": "COARSE",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18360"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6171997747355833,
+            "probe_kind": "COARSE",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_19617"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 1,
+            "handbase_world_z_m": 0.6406753206850175,
+            "probe_kind": "COARSE",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_30883"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6690198954265472,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5698138838311932,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5627277401458108,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5591846683031196,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_9740"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.557413132381774,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_9740"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5609562042244652,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5565273644211013,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_9740"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5600704362637925,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_9740"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5560844804407649,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_9740"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5605133202441288,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5558630384505967,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5602918782539607,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_9740"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5559737594456808,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5604025992490447,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5560291199432228,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5603472387515027,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_9740"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.598158458572723,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18267"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5910723148873405,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18267"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6052446022581055,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18267"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5875292430446493,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6087876741007967,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18267"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5893007789659949,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6105592100221423,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5901865469266676,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6096734420614696,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18271"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.611444977982815,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.590629430907004,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6092305580811331,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6101163260418059,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6118878619631515,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5908508728971722,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18267"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.609009116090965,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6094520000713013,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6098948840516377,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 1,
+            "handbase_world_z_m": 0.6121093039533196,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18360"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5907401519020881,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6088983950958808,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6095627210663854,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6097841630565537,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6119985829582355,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5907955123996301,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18267"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6088430345983388,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18267"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6096180815639275,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6097288025590116,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18267"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6120539434557776,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18270"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6147652603395356,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_19617"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6135480031415117,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_19617"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 1,
+            "handbase_world_z_m": 0.6129393745424998,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18360"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 1,
+            "handbase_world_z_m": 0.6132436888420058,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18360"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 1,
+            "handbase_world_z_m": 0.6133958459917588,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18360"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 1,
+            "handbase_world_z_m": 0.6134719245666352,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18360"
+          },
+          {
+            "closure_status": "CLOSURE_SURVIVE",
+            "contact_count": 3,
+            "handbase_world_z_m": 0.6289375477103004,
+            "probe_kind": "STATE_BOUNDARY_BISECTION",
+            "reason": ""
+          }
+        ],
+        "fresh_closure_reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_19702",
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "reason": "CONTACT_LOST_AFTER_TABLE_PROJECTION",
+        "status": "POST_PROJECTION_REVALIDATION_REJECT"
+      }
+    ],
+    "exact_variant_budget": 1,
+    "exact_variant_evaluated_count": 1,
+    "exact_variant_evaluation_interval": {
+      "start_inclusive": 0,
+      "stop_exclusive": 1
+    },
+    "exact_variant_offset": 0,
+    "pregrasp_variant_count": 27,
+    "schema_version": "carts_contact_conditioned_height_search_v2",
+    "survivor_count": 0
+  },
+  "isaac_started": false,
+  "maximum_exact_variants": 1,
+  "pending_gate": "ISAAC_RESEARCH_DYNAMIC_VALIDATION",
+  "predictor_executed": true,
+  "pregrasp_variant_count": 27,
+  "profile": null,
+  "registered_patch_count_by_pad": {
+    "finger_1_pad": 33,
+    "finger_2_pad": 33,
+    "finger_3_pad": 33
+  },
+  "requested_palm_angle_deg": 60.0,
+  "requested_palm_angle_rad": 1.0471975511965976,
+  "schema_version": "carts_opposition60_static_control_v2",
+  "script_sha256": "ace35ac40df39aee84c1158091f5765d5e50bd7fa3a41bb2ca89e25dd7a00ba3",
+  "selected_geometric_anchor": {
+    "anchor_face_index": 17240,
+    "anchor_position_object_m": [
+      0.015785162925720214,
+      -0.007312721570332845,
+      -0.014772157986958823
+    ],
+    "approach_direction_object": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "candidate_id": "opposition_p1047198_a01_z1",
+    "object_from_hand_row_major": [
+      -0.500638522617222,
+      0.8654202347255249,
+      -0.02022095445974159,
+      0.00251103981489414,
+      -0.8654203836510004,
+      -0.500910912049634,
+      -0.01165408730699845,
+      0.0014221601578326964,
+      -0.02021457971367763,
+      0.011665141114511153,
+      0.9997276105268764,
+      -0.41719977473558323,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "object_id": "te_deutsch_d38999_26fj35pn_step",
+    "palm_configuration_deg": 59.99999999999999,
+    "palm_configuration_rad": 1.0471975511965976,
+    "pregrasp_closure_phases": [
+      0.2,
+      0.2,
+      0.2
+    ],
+    "pregrasp_joint_positions_rad": [
+      1.0471975511965976,
+      0.27926,
+      0.27926,
+      0.27926
+    ]
+  },
+  "selected_geometric_anchor_index": 1,
+  "survivor_candidates": [],
+  "survivor_count": 0,
+  "survivor_four_views": [],
+  "variant_results": [
+    {
+      "complete_sequential_path_state_count": 1565,
+      "contact_reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_19702",
+      "contact_status": "CLOSURE_SURVIVE",
+      "contacts": [],
+      "fast_filter_reasons": [],
+      "fast_filter_status": null,
+      "final_contact_stop_phases": [
+        0.47177734375,
+        0.37832031250000003,
+        0.47070312500000006
+      ],
+      "forbidden_first_contact_guard_triggered": true,
+      "four_view_image": null,
+      "height_search_reason": "CONTACT_LOST_AFTER_TABLE_PROJECTION",
+      "height_search_status": "POST_PROJECTION_REVALIDATION_REJECT",
+      "minimum_nonallowed_surface_clearance_m": null,
+      "minimum_table_clearance_link": "",
+      "minimum_table_clearance_m": 0.0,
+      "minimum_table_clearance_stage": "FINGER_1_CLOSURE_0127",
+      "nonallowed_surface_gate": "NOT_REACHED_OR_BINARY_ONLY",
+      "pregrasp_closure_phases": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "projected_handbase_world_z_m": 0.6316560672334304,
+      "three_contact_count": 0
+    }
+  ]
+}

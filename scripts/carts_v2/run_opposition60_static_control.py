@@ -77,7 +77,7 @@ def _equal_axes(axis, rows: list[np.ndarray]) -> None:
     axis.set_box_aspect((1, 1, 1))
 def _render_four_views(path: Path, inputs, seed, audit: dict, prediction) -> None:
     pose = seed.object_from_hand_matrix()
-    joints = np.asarray(seed.pregrasp_joint_positions_rad, dtype=np.float64)
+    joints = np.asarray(prediction.final_joint_positions_rad, dtype=np.float64)
     transforms = inputs.hand_model.forward_kinematics(joints, base_transform=pose)
     mesh = inputs.object_contract.model.mesh
     allowed_ids = inputs.face_roles.allowed_face_indices
@@ -92,7 +92,11 @@ def _render_four_views(path: Path, inputs, seed, audit: dict, prediction) -> Non
         transform = transforms[surface.link_name]
         centers = np.mean(surface.triangles_local_m, axis=1)
         task_rows.append((name, _sample(_world(centers, transform), 700)))
-    selected = audit["selected"][0]
+    matches = [row for row in audit["selected"]
+               if row["candidate_id"] == seed.candidate_id]
+    if len(matches) != 1:
+        raise ValueError("render anchor identity is missing or ambiguous")
+    selected = matches[0]
     target = np.asarray(selected["target_band_center_object_m"], dtype=np.float64)
     axis_vector = np.asarray(audit["object_grasp_band"]["axis_object"], dtype=np.float64)
     work = np.asarray(task_surface_triangle_geometry(
