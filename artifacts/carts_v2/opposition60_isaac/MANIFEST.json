@@ -1,6 +1,6 @@
 {
   "schema_version": "opposition60_isaac_manifest_v1",
-  "updated_at_utc": "2026-08-26T07:38:00Z",
+  "updated_at_utc": "2026-08-26T08:28:00Z",
   "execution_window": {
     "id": "OPPOSITION60_ISAAC_12H",
     "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
@@ -156,7 +156,16 @@
       "object_b_anchor7_first_finger_status": "NO_PHYSX_CONTACT_AT_ALLOWED_FORBIDDEN_OBJECT_FACE_BOUNDARY",
       "object_b_anchor7_first_finger_steps_time_speed_effort": [397, 3.308333333333333, 0.16485655307769775, 0.03716887906193733],
       "object_b_anchor7_first_finger_physx_contact_count": 0,
-      "object_b_anchor7_first_finger_second_third_preload_lift_commands": [0, 0, 0, 0]
+      "object_b_anchor7_first_finger_second_third_preload_lift_commands": [0, 0, 0, 0],
+      "object_b_anchor7_exact27_variant_and_survivor_count": [27, 6],
+      "object_b_anchor7_exact27_elapsed_s": 2403.5595533059386,
+      "object_b_anchor7_survivor_first_finger_semantic_margin_um": [0.005559244836716472, 1.9021369132257888],
+      "object_b_anchor7_remaining_shard_sha256": [
+        "ab03e86b85e1b6c6043611cb5d50f7e68ca753e2674103f6300e1502f8388cbe",
+        "e982dced51fee853a44a873e84a7028e03a4c8c982dfaf01c2131d03f8abd81e",
+        "dd65d2d97ce95e3ef82f92f99ba2f416fac9ab440e0be6199599f0db4fc21e51",
+        "9912c0340d42f531c35e2e8924314a1b7507afc04bd5e5efa9763815ab9609b3"
+      ]
     }
   },
   "supervisor_decision": {
@@ -181,7 +190,7 @@
     "multi_witness_contact": "ALL33_QUERY_TOP16_AND_FORBIDDEN_FIRST_GUARD_TARGETED_PASS",
     "contact_conditioned_height": "CONTACT_STOP_ITERATION_AND_STATE_BOUNDARY_SEARCH_TARGETED_PASS",
     "object_b_task_top3": "NOT_RUN",
-    "object_b_local_dynamic": "ANCHOR7_P222_FIRST_FINGER_NO_PHYSX_CONTACT_AT_SEMANTIC_BOUNDARY_RESELECT_PRESHAPE_NO_LIFT",
+    "object_b_local_dynamic": "ANCHOR7_ALL27_PRESHAPES_EXHAUSTED_SIX_BOUNDARY_SURVIVORS_RESELECT_AZIMUTH_NO_LIFT",
     "object_b_full_arm_dynamic": "NOT_STARTED",
     "object_a_frozen_parameter_dynamic": "NOT_STARTED"
   },

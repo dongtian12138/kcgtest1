@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T07:38:00Z",
+  "updated_at_utc": "2026-08-26T08:28:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T10:17:59Z",
   "branch": "carts-grasp-opposition60-isaac-20260826",
@@ -8,7 +8,7 @@
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "OBJECT_B_ANCHOR7_FULL_PRESHAPE_RESELECTION_AFTER_BOUNDARY_CONTACT",
+  "current_milestone": "OBJECT_B_NEXT_AZIMUTH_RESELECTION_AFTER_ANCHOR7_BOUNDARY_FAMILY",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -102,8 +102,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": false,
-    "scope": "OFFLINE_ANCHOR7_PRESHAPE_RESELECTION_UNTIL_ONE_CANDIDATE_HAS_NONBOUNDARY_TASK_CONTACT",
-    "reason": "ANCHOR7_P222_REACHED_MOTION_COMPATIBLE_PROXIMITY_WITHOUT_PHYSX_CONTACT_AT_ALLOWED_FORBIDDEN_FACE_BOUNDARY"
+    "scope": "OFFLINE_NEXT_PREDECLARED_AZIMUTH_RESELECTION_UNTIL_ONE_CANDIDATE_HAS_NONBOUNDARY_TASK_CONTACT",
+    "reason": "ANCHOR7_ALL27_PRESHAPES_EXHAUSTED_WITH_SIX_SURVIVORS_SHARING_ALLOWED_FORBIDDEN_FACE_BOUNDARY"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1344,7 +1344,7 @@
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
   "opposition60_isaac": {
-    "route_status": "ANCHOR_A07_P222_BOUNDARY_CONTACT_REJECTED_SEARCHING_REMAINING_PRESHAPES",
+    "route_status": "ANCHOR_A07_ALL27_BOUNDARY_FAMILY_REJECTED_SELECTING_NEXT_PREDECLARED_AZIMUTH",
     "primary_object": "te_deutsch_d38999_26fj35pn_step",
     "transfer_object": "current_d38999_26kj61sn_public_spec",
     "opposition_palm_range_deg": [45.0, 75.0],
@@ -1450,7 +1450,17 @@
       "object_b_anchor7_first_finger_physx_contact_count": 0,
       "object_b_anchor7_first_finger_second_third_preload_lift_commands": [0, 0, 0, 0],
       "object_b_anchor7_first_finger_research_dynamic_pass": false,
-      "object_b_anchor7_first_finger_formal_dynamic_pass": false
+      "object_b_anchor7_first_finger_formal_dynamic_pass": false,
+      "object_b_anchor7_exact27_completed": true,
+      "object_b_anchor7_exact27_variant_and_survivor_count": [27, 6],
+      "object_b_anchor7_exact27_elapsed_s": 2403.5595533059386,
+      "object_b_anchor7_survivor_first_finger_semantic_margin_um": [0.005559244836716472, 1.9021369132257888],
+      "object_b_anchor7_remaining_shard_sha256": [
+        "ab03e86b85e1b6c6043611cb5d50f7e68ca753e2674103f6300e1502f8388cbe",
+        "e982dced51fee853a44a873e84a7028e03a4c8c982dfaf01c2131d03f8abd81e",
+        "dd65d2d97ce95e3ef82f92f99ba2f416fac9ab440e0be6199599f0db4fc21e51",
+        "9912c0340d42f531c35e2e8924314a1b7507afc04bd5e5efa9763815ab9609b3"
+      ]
     },
     "method_fix_targeted_tests_passed": 33,
     "method_fix_targeted_test_duration_s": 28.25,
