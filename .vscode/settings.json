@@ -3,9 +3,11 @@
     "**/.pytest_cache": true,
     "**/.venv": true,
     "**/__pycache__": true,
+    "**/artifacts": true,
     "**/build": true,
     "**/install": true,
-    "**/log": true
+    "**/log": true,
+    "**/third_party": true
   },
   "files.watcherExclude": {
     "**/.git/objects/**": true,
@@ -13,13 +15,15 @@
     "**/artifacts/**": true,
     "**/build/**": true,
     "**/install/**": true,
-    "**/log/**": true
+    "**/log/**": true,
+    "**/third_party/**": true
   },
   "search.exclude": {
     "**/.venv/**": true,
     "**/artifacts/**": true,
     "**/build/**": true,
     "**/install/**": true,
-    "**/log/**": true
+    "**/log/**": true,
+    "**/third_party/**": true
   }
 }
