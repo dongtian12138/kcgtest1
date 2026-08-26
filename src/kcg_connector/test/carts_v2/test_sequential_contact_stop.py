@@ -35,21 +35,33 @@ def test_run17_confirmation_is_bumpless_and_bounded() -> None:
     assert controller.active_finger == 0
 
 
+def test_run01_assistive_free_motion_effort_does_not_confirm_contact() -> None:
+    controller = _controller()
+    for _ in range(6):
+        controller.step(
+            measured_position=[0.0, 0.516658068, 0.0, 0.0],
+            measured_effort_delta=[0.0, 0.020641096, 0.0, 0.0],
+            maximum_increment_rad=0.0015,
+        )
+    assert controller.state == "APPROACH"
+    assert controller.contact_targets_rad == ()
+
+
 def test_settle_uses_bounded_effort_correction_before_next_finger() -> None:
     controller = _controller()
     measured = [0.0, 0.372807622, 0.0, 0.0]
     controller.step(measured, [0.0, -0.094812326, 0.0, 0.0], 0.0015)
     confirmed = controller.target.copy()
     controller.step(measured, [0.0] * 4, 0.0015)
-    low = controller.step(measured, [0.0, 0.002, 0.0, 0.0], 0.0015)
+    low = controller.step(measured, [0.0, -0.002, 0.0, 0.0], 0.0015)
     assert controller.state == "CONTACT_SETTLE"
     assert 0.0 <= low[1] - confirmed[1] <= 0.0015 + 1.0e-12
-    settled = controller.step(measured, [0.0, 0.10, 0.0, 0.0], 0.0015)
+    settled = controller.step(measured, [0.0, -0.10, 0.0, 0.0], 0.0015)
     assert abs(settled[1] - confirmed[1]) <= 1.0e-12
     assert controller.state == "CONTACT_SETTLE"
-    held = controller.step(measured, [0.0, 0.02, 0.0, 0.0], 0.0015)
+    held = controller.step(measured, [0.0, -0.02, 0.0, 0.0], 0.0015)
     assert controller.state == "HOLD"
-    held = controller.step(measured, [0.0, 0.02, 0.0, 0.0], 0.0015)
+    held = controller.step(measured, [0.0, -0.02, 0.0, 0.0], 0.0015)
     assert controller.active_finger == 1
     assert held[1] == settled[1]
     next_target = controller.step(measured, [0.0] * 4, 0.0015)
@@ -66,7 +78,7 @@ def test_hold_can_be_kept_on_first_finger_without_advancing() -> None:
     rows = []
     for _ in range(3):
         rows.append(controller.step(
-            [0.0, -0.01, 0.0, 0.0], [0.0, 0.02, 0.0, 0.0], 0.0015,
+            [0.0, -0.01, 0.0, 0.0], [0.0, -0.02, 0.0, 0.0], 0.0015,
             advance_after_hold=False,
         ))
     assert controller.state == "HOLD"

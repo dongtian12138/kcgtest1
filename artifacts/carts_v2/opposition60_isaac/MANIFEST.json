@@ -1,6 +1,6 @@
 {
   "schema_version": "opposition60_isaac_manifest_v1",
-  "updated_at_utc": "2026-08-26T05:33:00Z",
+  "updated_at_utc": "2026-08-26T06:18:57Z",
   "execution_window": {
     "id": "OPPOSITION60_ISAAC_12H",
     "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
@@ -123,7 +123,24 @@
       "object_b_preshape_physx_warning_and_error_counts": [0, 0],
       "object_b_preshape_contact_observation_count": 0,
       "object_b_preshape_object_and_table_loaded": false,
-      "object_b_preshape_prior_runs_preserved": ["run01_wrong_contact_proxy_precision_gate", "run02_intermediate_acceptance_gate", "run03_pre_precommand_and_task_surface_safety_fix"]
+      "object_b_preshape_prior_runs_preserved": ["run01_wrong_contact_proxy_precision_gate", "run02_intermediate_acceptance_gate", "run03_pre_precommand_and_task_surface_safety_fix"],
+      "object_b_preshape_current_trace_path": "artifacts/carts_v2/opposition60_isaac/object_b_anchor2_preshape_replay_run06/preshape_replay.json",
+      "object_b_preshape_current_trace_sha256": "59ae43791e7f9e3762d5067e6bd09061c2a7c5941a917f928e12aa6ed45da5c5",
+      "object_b_anchor2_endpoint_plan_path": "artifacts/carts_v2/opposition60_isaac/object_b_anchor2_first_finger_endpoint_plan_run02/endpoint_plan.json",
+      "object_b_anchor2_endpoint_plan_sha256": "c5267ce98b53672471388b4644e8d4673d17d9eb02177a287a360ac1a206fc9c",
+      "object_b_anchor2_first_finger_trace_path": "artifacts/carts_v2/opposition60_isaac/object_b_anchor2_first_finger_run03/first_finger.json",
+      "object_b_anchor2_first_finger_trace_sha256": "7c9cbf147e8a528938a92adb4bd96fb54bce867456b104df0186797e678cd885",
+      "object_b_anchor2_first_finger_evaluation_path": "artifacts/carts_v2/opposition60_isaac/object_b_anchor2_first_finger_run03/evaluation.json",
+      "object_b_anchor2_first_finger_evaluation_sha256": "3c8e8d1d55f59064132f30ef79b9d0d4003c870eeda259a2a212b1074916c0dd",
+      "object_b_anchor2_dynamic_status": "INVALIDATED_BY_NO_PHYSICAL_CONTACT_BEFORE_FORBIDDEN_FIRST_SEMANTIC_LIMIT",
+      "object_b_anchor2_endpoint_predicted_execute_semantic_invalid_last_free_first_intersect_rad": [0.6947410644531251, 0.6962410644531251, 0.6977410644531251, 0.6992410644531251, 0.7007410644531251],
+      "object_b_anchor2_endpoint_allowed_before_forbidden_margin_m": 7.428427029850578e-07,
+      "object_b_anchor2_first_finger_steps_and_time_s": [397, 3.308333333333333],
+      "object_b_anchor2_first_finger_target_and_actual_max_rad": [0.6962410644531251, 0.6966358423233032],
+      "object_b_anchor2_first_finger_max_speed_and_effort_nm": [0.16485658288002014, 0.037168871611356735],
+      "object_b_anchor2_first_finger_physx_contact_count": 0,
+      "object_b_anchor2_first_finger_object_maximum_translation_m": 1.3493575361575808e-07,
+      "object_b_anchor2_first_finger_second_third_preload_lift_commands": [0, 0, 0, 0]
     }
   },
   "supervisor_decision": {
@@ -137,7 +154,7 @@
   },
   "gates": {
     "initial_supervisor_review": "APPROVE_WITH_3_CHANGES",
-    "compound_convex_collision_asset": "STATIC_IMPORT_INITIAL_DOUBLE_GEOMETRY_AND_PRESHAPE_REPLAY_PASS_FIRST_FINGER_PENDING",
+    "compound_convex_collision_asset": "STATIC_IMPORT_AND_ENGINE_HEALTH_PASS_ANCHOR2_NO_PHYSX_CONTACT_BEFORE_SEMANTIC_LIMIT",
     "qp60_static_positive_control": "PASS_ANCHOR_A02_THREE_CONTACT_PATH_SAFE_OFFLINE_GEOMETRY",
     "all_27_opposition_preshapes": "COMPLETE_FOR_ANCHOR_A00_IN_FOUR_DETERMINISTIC_SHARDS",
     "next_anchor_phase_diagnostic": "COMPLETE_ANCHOR_INDEX_1_A01_Z1_SAME_PRESHAPE_0P2_0P2_0P2",
@@ -148,7 +165,7 @@
     "multi_witness_contact": "ALL33_QUERY_TOP16_AND_FORBIDDEN_FIRST_GUARD_TARGETED_PASS",
     "contact_conditioned_height": "CONTACT_STOP_ITERATION_AND_STATE_BOUNDARY_SEARCH_TARGETED_PASS",
     "object_b_task_top3": "NOT_RUN",
-    "object_b_local_dynamic": "PRESHAPE_REPLAY_PASS_PENDING_FIRST_FINGER_CONTACT_NO_LIFT",
+    "object_b_local_dynamic": "ANCHOR2_FIRST_FINGER_REJECTED_RETURN_TO_OFFLINE_CANDIDATE_RESELECTION_NO_LIFT",
     "object_b_full_arm_dynamic": "NOT_STARTED",
     "object_a_frozen_parameter_dynamic": "NOT_STARTED"
   },
@@ -295,5 +312,5 @@
       "isaac_started": false
     }
   },
-  "claim_scope": "OBJECT_B_ANCHOR_A02_INITIAL_DOUBLE_GEOMETRY_AND_NO_OBJECT_BOUNDED_PRESHAPE_REPLAY_PASS; NO_CONTACT_CLOSURE_LIFT_HOLD_OR_RESEARCH_DYNAMIC_PASS"
+  "claim_scope": "OBJECT_B_ANCHOR_A02_FIRST_FINGER_ISAAC_ATTEMPT_REJECTED; NO_VALID_CONTACT_THREE_FINGER_CLOSURE_LIFT_HOLD_OR_RESEARCH_DYNAMIC_PASS"
 }

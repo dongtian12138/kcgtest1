@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T05:33:00Z",
+  "updated_at_utc": "2026-08-26T06:18:57Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T10:17:59Z",
   "branch": "carts-grasp-opposition60-isaac-20260826",
@@ -8,7 +8,7 @@
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "OBJECT_B_FIRST_FINGER_CONTACT_DIAGNOSTIC",
+  "current_milestone": "OBJECT_B_OPPOSITION_CANDIDATE_RESELECTION_AFTER_ANCHOR2_INVALIDATION",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -101,9 +101,9 @@
   "hardware_authorized": false,
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
-    "allowed": true,
-    "scope": "OBJECT_B_LOCAL_HAND_FIRST_FINGER_DIAGNOSTIC_ONLY_NO_SECOND_FINGER_THIRD_FINGER_OR_LIFT",
-    "reason": "OBJECT_B_INITIAL_DOUBLE_GEOMETRY_GATE_AND_NO_OBJECT_BOUNDED_PRESHAPE_REPLAY_PASS; FIRST_FINGER_CONTACT_TRUTH_PENDING"
+    "allowed": false,
+    "scope": "OFFLINE_RESELECTION_ONLY_UNTIL_ONE_NEW_CANDIDATE_PASSES_SEMANTIC_ENDPOINT_GATE",
+    "reason": "ANCHOR2_PRODUCED_NO_PHYSX_CONTACT_BEFORE_FORBIDDEN_FIRST_SEMANTIC_LIMIT"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1412,7 +1412,26 @@
       "object_b_preshape_physx_warning_and_error_counts": [0, 0],
       "object_b_preshape_contact_observation_count": 0,
       "object_b_preshape_object_and_table_loaded": false,
-      "object_b_preshape_prior_runs_preserved": ["run01_wrong_contact_proxy_precision_gate", "run02_intermediate_acceptance_gate", "run03_pre_precommand_and_task_surface_safety_fix"]
+      "object_b_preshape_prior_runs_preserved": ["run01_wrong_contact_proxy_precision_gate", "run02_intermediate_acceptance_gate", "run03_pre_precommand_and_task_surface_safety_fix"],
+      "object_b_anchor2_dynamic_status": "INVALIDATED_BY_NO_PHYSICAL_CONTACT_BEFORE_FORBIDDEN_FIRST_SEMANTIC_LIMIT",
+      "object_b_anchor2_endpoint_plan_path": "artifacts/carts_v2/opposition60_isaac/object_b_anchor2_first_finger_endpoint_plan_run02/endpoint_plan.json",
+      "object_b_anchor2_endpoint_plan_sha256": "c5267ce98b53672471388b4644e8d4673d17d9eb02177a287a360ac1a206fc9c",
+      "object_b_anchor2_endpoint_predicted_execute_semantic_invalid_last_free_first_intersect_rad": [0.6947410644531251, 0.6962410644531251, 0.6977410644531251, 0.6992410644531251, 0.7007410644531251],
+      "object_b_anchor2_endpoint_allowed_before_forbidden_margin_m": 7.428427029850578e-07,
+      "object_b_preshape_current_trace_path": "artifacts/carts_v2/opposition60_isaac/object_b_anchor2_preshape_replay_run06/preshape_replay.json",
+      "object_b_preshape_current_trace_sha256": "59ae43791e7f9e3762d5067e6bd09061c2a7c5941a917f928e12aa6ed45da5c5",
+      "object_b_anchor2_first_finger_trace_path": "artifacts/carts_v2/opposition60_isaac/object_b_anchor2_first_finger_run03/first_finger.json",
+      "object_b_anchor2_first_finger_trace_sha256": "7c9cbf147e8a528938a92adb4bd96fb54bce867456b104df0186797e678cd885",
+      "object_b_anchor2_first_finger_evaluation_path": "artifacts/carts_v2/opposition60_isaac/object_b_anchor2_first_finger_run03/evaluation.json",
+      "object_b_anchor2_first_finger_evaluation_sha256": "3c8e8d1d55f59064132f30ef79b9d0d4003c870eeda259a2a212b1074916c0dd",
+      "object_b_anchor2_first_finger_steps_and_time_s": [397, 3.308333333333333],
+      "object_b_anchor2_first_finger_target_and_actual_max_rad": [0.6962410644531251, 0.6966358423233032],
+      "object_b_anchor2_first_finger_max_speed_and_effort": [0.16485658288002014, 0.037168871611356735],
+      "object_b_anchor2_first_finger_physx_contact_count": 0,
+      "object_b_anchor2_first_finger_object_maximum_translation_m": 1.3493575361575808e-07,
+      "object_b_anchor2_first_finger_second_third_preload_lift_commands": [0, 0, 0, 0],
+      "object_b_anchor2_first_finger_research_dynamic_pass": false,
+      "object_b_anchor2_first_finger_formal_dynamic_pass": false
     },
     "method_fix_targeted_tests_passed": 33,
     "method_fix_targeted_test_duration_s": 28.25,
@@ -1542,7 +1561,7 @@
     "full_arm_dynamic_status": "NOT_STARTED",
     "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
   },
-  "evidence_level": "OBJECT_B_INITIAL_DOUBLE_GEOMETRY_AND_NO_OBJECT_PRESHAPE_REPLAY_PASS_NO_CONTACT_CLOSURE_LIFT_OR_HOLD",
+  "evidence_level": "OBJECT_B_ANCHOR2_FIRST_FINGER_ISAAC_ATTEMPT_REJECTED_NO_PHYSX_CONTACT_AND_FORBIDDEN_FIRST_AT_FINAL_SAMPLE_NO_THREE_FINGER_LIFT_OR_HOLD",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1601,10 +1620,13 @@
     "nailfree_height_projected_academic_supervisor": "APPROVE_WITH_EVIDENCE_LIMITS",
     "opposition60_method_fix_targeted_passed": 35,
     "opposition60_method_fix_targeted_duration_s": 28.38,
-    "opposition60_second_supervisor_review": "APPROVE_NO_MUST_FIX"
+    "opposition60_second_supervisor_review": "APPROVE_NO_MUST_FIX",
+    "opposition60_contact_endpoint_targeted_tests_passed": 9,
+    "opposition60_contact_endpoint_targeted_duration_s": 29.83,
+    "opposition60_anchor2_dynamic_supervisor": "INVALIDATE_CANDIDATE_AND_RETURN_TO_REMAINING_PREDECLARED_60DEG_FAMILY"
   },
   "blockers": [
-    "OBJECT_B_OPPOSITION60_REPLAY_AND_SEQUENTIAL_CONTACT_NOT_ACCEPTED",
+    "OBJECT_B_ANCHOR2_INVALIDATED_NO_PHYSICAL_CONTACT_BEFORE_SEMANTIC_LIMIT",
     "QP60_ANCHOR_A01_THREE_CONTACT_STATE_CONFLICTS_WITH_TABLE_SAFE_HEIGHT",
     "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND"
   ]

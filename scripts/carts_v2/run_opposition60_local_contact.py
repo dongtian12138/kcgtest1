@@ -7,6 +7,7 @@ import sys, traceback
 import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 ISAAC_V2 = ROOT / "src/kcg_connector/isaac/carts_v2"
+CONTROLLER_SOURCE = ISAAC_V2 / "controller.py"
 sys.path[:0] = [str(ROOT / "src/kcg_connector"), str(ISAAC_V2)]
 BASE = ROOT / "artifacts/carts_v2/opposition60_isaac"
 TASK = BASE / "qp60_anchor_a02_task_ik/opposition60_anchor_a02_exact_offset_00_count_01_static_control.json"
@@ -23,8 +24,10 @@ def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", required=True, choices=("preshape-replay", "first-finger-diagnostic"))
     parser.add_argument("--output", required=True, type=Path); parser.add_argument("--preshape-trace", type=Path)
+    parser.add_argument("--contact-endpoint-plan", type=Path)
     args = parser.parse_args()
     if args.mode == "first-finger-diagnostic" and args.preshape_trace is None: parser.error("first-finger-diagnostic requires --preshape-trace")
+    if args.mode == "first-finger-diagnostic" and args.contact_endpoint_plan is None: parser.error("first-finger-diagnostic requires --contact-endpoint-plan")
     return args
 def _sha256(path: Path) -> str: return hashlib.sha256(path.read_bytes()).hexdigest()
 def _load(path: Path) -> dict: return json.loads(path.read_text(encoding="utf-8"))
@@ -54,7 +57,7 @@ def _world_matrix(Usd, UsdGeom, prim) -> np.ndarray:
 def _verify(args: argparse.Namespace) -> dict:
     from kcg_connector.d38999_tabletop_scene import load_d38999_tabletop_scene
     from kcg_connector.grasp.carts_v2.models import joint_positions_for_phases, load_v2_inputs
-    paths = {"task_ik": TASK.resolve(), "initial_trace": RUN06.resolve(), "initial_exact_replay": RUN06_EXACT.resolve(), "config": CONFIG.resolve()}
+    paths = {"task_ik": TASK.resolve(), "initial_trace": RUN06.resolve(), "initial_exact_replay": RUN06_EXACT.resolve(), "config": CONFIG.resolve(), "controller_source": CONTROLLER_SOURCE.resolve()}
     _require(all(path.is_file() for path in paths.values()), "fixed evidence input is missing")
     task, initial, exact = map(_load, (paths["task_ik"], paths["initial_trace"], paths["initial_exact_replay"]))
     gates = initial.get("runtime_gates") or {}
@@ -111,12 +114,37 @@ def _verify(args: argparse.Namespace) -> dict:
     far = target.copy()
     far[:3, 3] -= direction * float(dynamic["approach_clearance_height_m"])
     environment = load_d38999_tabletop_scene(ROOT / dynamic["object_scenes"][OBJECT_ID]["environment_scene_config"])
+    endpoint_plan = None
+    if args.contact_endpoint_plan is not None:
+        plan_path = _resolve(args.contact_endpoint_plan); endpoint_plan = _load(plan_path)
+        binding = endpoint_plan.get("evidence_binding") or {}
+        bound_plan = {name: _bound(value, f"endpoint {name}")
+                      for name, value in binding.items()}
+        execution = float(endpoint_plan.get("execution_target_rad", math.nan))
+        invalid = float(endpoint_plan.get("first_semantically_invalid_target_rad", math.nan))
+        _require(all((endpoint_plan.get("status") == "OFFLINE_LAST_SEMANTICALLY_VALID_ENDPOINT_ACCEPTED",
+            endpoint_plan.get("candidate_id") == row["candidate_id"], endpoint_plan.get("object_id") == OBJECT_ID,
+            endpoint_plan.get("online_truth_used") is False, endpoint_plan.get("hardware_authorized") is False,
+            endpoint_plan.get("formal_dynamic_pass") is False, endpoint_plan.get("research_dynamic_pass") is False,
+            endpoint_plan.get("maximum_joint_increment_rad") == MAXIMUM_INCREMENT_RAD,
+            endpoint_plan.get("endpoint_definition") == "LAST_SEMANTIC_VALID_NONINTERSECTING_CONTROL_STEP",
+            endpoint_plan.get("selection_rule") == "SEMANTIC_VALIDITY_PRECEDES_RAW_FREE_SPACE",
+            set(bound_plan) == {"task_ik", "config", "builder_source", "evaluator_source", "runner_source"},
+            np.isfinite(execution), np.isfinite(invalid), stop[1] < execution < invalid,
+            invalid - execution <= MAXIMUM_INCREMENT_RAD + 1e-12,
+            bound_plan.get("task_ik") == paths["task_ik"], bound_plan.get("config") == paths["config"],
+            bound_plan.get("runner_source") == Path(__file__).resolve(),
+            np.allclose(np.asarray(endpoint_plan.get("fixed_world_from_handbase_row_major"), np.float64)
+                        .reshape(4, 4), target, atol=1e-12, rtol=0.0))),
+            "contact endpoint plan is not the bound last semantic-valid state")
+        stop = stop.copy(); stop[1] = execution; paths["contact_endpoint_plan"] = plan_path
     if args.preshape_trace is not None:
         preshape_path = _resolve(args.preshape_trace)
         preshape = _load(preshape_path)
         binding = preshape.get("evidence_binding") or {}
         expected = {"task_ik": paths["task_ik"], "initial_trace": paths["initial_trace"],
             "initial_exact_replay": paths["initial_exact_replay"], "config": paths["config"],
+            "controller_source": paths["controller_source"],
             "runner_source": Path(__file__).resolve(), "runtime_hand_asset": bound["hand_asset"],
             "runtime_binding": bound["runtime_binding"], "runtime_resources": bound["runtime_resources"]}
         bound_preshape = all(name in binding and _resolve(binding[name].get("path", "")) == path
@@ -147,7 +175,8 @@ def _verify(args: argparse.Namespace) -> dict:
         paths["preshape_trace"] = preshape_path
     return {"paths": paths, "bound": bound, "task": task, "row": row, "inputs": inputs,
             "dynamic": dynamic, "pre": pre, "stop": stop,
-            "target": target, "far": far, "gravity": environment.physics.gravity_m_s2}
+            "target": target, "far": far, "gravity": environment.physics.gravity_m_s2,
+            "endpoint_plan": endpoint_plan}
 def _contacts(interface, decoder, roots: dict[str, str]) -> dict:
     headers, _, _ = interface.get_full_contact_report()
     counts = {name: 0 for name in ("hand_object", "hand_table", "hand_fixture", "hand_self", "hand_unclassified", "object_table")}
@@ -290,6 +319,10 @@ def _run(verified: dict, mode: str, report: dict) -> None:
         if not finite: abort = abort or "NONFINITE_JOINT_SIGNAL_ABORT"
         elif speed > 3.0: abort = abort or "JOINT_SPEED_ABORT"
         elif effort > 0.9: abort = abort or "HAND_MEASURED_EFFORT_ABORT"
+        elif (verified["endpoint_plan"] is not None and
+              positions[name_to_index["f1j2"]] >= verified["endpoint_plan"][
+                  "first_semantically_invalid_target_rad"]):
+            abort = abort or "SEMANTIC_ENDPOINT_OVERSHOOT_ABORT"
         samples.append({"step": len(samples), "simulation_time_s": (len(samples)+1)*DT_S,
             "phase": phase, "controller_state": state, "active_finger": active_finger,
             "joint_positions_rad": dict(zip(dof_names, _values(positions))),
@@ -434,7 +467,13 @@ def _run(verified: dict, mode: str, report: dict) -> None:
             "preshape_hold_error_reduced_and_hold_speed_bounded": hold_converged,
             "contact_targets_rad": [] if contact is None else list(contact.contact_targets_rad),
             "final_contact_state": None if contact is None else contact.state,
-            "first_finger_hold_steps": hold_steps},
+            "first_finger_hold_steps": hold_steps,
+            "predicted_proximity_target_rad": None if verified["endpoint_plan"] is None else
+                verified["endpoint_plan"]["predicted_proximity_target_rad"],
+            "bound_execution_target_rad": None if verified["endpoint_plan"] is None else
+                verified["endpoint_plan"]["execution_target_rad"],
+            "first_semantically_invalid_target_rad": None if verified["endpoint_plan"] is None else
+                verified["endpoint_plan"]["first_semantically_invalid_target_rad"]},
         "contact_totals": totals, "forbidden_contact_record_count": forbidden,
         "fixed_world_from_handbase_row_major": pose.ravel().tolist(),
         "maximum_handbase_readback_error": root_error, "samples": samples,

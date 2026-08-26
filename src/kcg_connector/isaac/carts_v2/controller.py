@@ -336,9 +336,13 @@ class SequentialEffortContactController:
     def contact_targets_rad(self) -> tuple[float, ...]:
         return tuple(self._contact_targets)
 
+    def _resistive_effort(self, index, measured_effort) -> float:
+        direction = float(np.sign(self.goal[index] - self.start[index]))
+        return -direction * float(measured_effort[index])
+
     def _effort_adjust(self, index, measured_effort, maximum_increment):
         direction = float(np.sign(self.goal[index] - self.start[index]))
-        measured = abs(float(measured_effort[index]))
+        measured = self._resistive_effort(index, measured_effort)
         effort_error = self.effort_rise_nm - measured
         raw_change = direction * effort_error / self.hand_stiffness
         change = np.clip(raw_change, -maximum_increment, maximum_increment)
@@ -366,7 +370,8 @@ class SequentialEffortContactController:
         output_state, output_finger = self.state, self.active_finger + 1
         if self.state == "APPROACH":
             error = abs(self.target[index] - float(measured_position[index]))
-            loaded = abs(float(measured_effort_delta[index])) >= self.effort_rise_nm
+            loaded = (self._resistive_effort(index, measured_effort_delta)
+                      >= self.effort_rise_nm)
             self._evidence_count = self._evidence_count + 1 if loaded and error >= self.position_error_rad else 0
             if self._evidence_count >= self.consecutive_samples:
                 self._contact_targets.append(float(measured_position[index]))
