@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T12:47:24Z",
+  "updated_at_utc": "2026-08-26T13:00:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T15:16:26Z",
   "branch": "carts-grasp-surface-v2-fast6h-20260826",
@@ -71,7 +71,10 @@
   "surface_v2_fast6h": {
     "object_b_surface_role_face_counts_primary_secondary_hard": [7269, 132, 679635],
     "fixed_candidate_count": 8,
-    "nominal_research_candidate_count": 7,
+    "nominal_research_candidate_count": 6,
+    "canonical_raw_research_candidate_count_before_margin_gate_fix": 7,
+    "current_nominal_task_margin_gate_minimum": 1.0,
+    "anchor2_current_classification": "DIAGNOSTIC_ONLY_TASK_REJECT_MARGIN_0P3361505488662746",
     "robust_task_survivor_count": 6,
     "canonical_reevaluation_path": "artifacts/carts_v2/surface_v2_fast6h/fixed_candidate_reevaluation_run04.json",
     "canonical_reevaluation_sha256": "5a1b325f47cf1d32d2adfa9e817d0610bb15ecd336e5bd64040c04177601a5d0",
@@ -150,12 +153,25 @@
       "stratified_three_contact_counts_z0_z1_z2": [3, 3, 7],
       "stratified_unresolved_counts_z0_z1_z2": [5, 5, 1],
       "stratified_contact_table_conflict_count": 13,
-      "stratified_contact_table_conflict_min_median_max_m": [0.002892244476156658, 0.008765728225561764, 0.019112],
+      "stratified_contact_table_conflict_min_median_max_m": [0.002892244476156658, 0.008765728225561764, 0.019111777907244054],
+      "stratified_exact_shard_sha256": [
+        "771e5bb522c71d5c00ce4698b7b4eae607f09b21fb80a9a78de564c866a3e3f3",
+        "83a796aa01134ab60de2ed29d6b5fbd307d38068037dd15c1079334221d06706",
+        "083e906836447e98d54b74625a3018ad7046aba4de0fdda639eab0514d74b8ce"
+      ],
       "stratified_refinement_selected_count": 8,
       "stratified_refinement_reused_registered_count": 3,
       "stratified_refinement_new_run_count": 5,
       "stratified_refinement_b_full_pass_count": 0,
       "stratified_refinement_new_exact_replay_count": 40,
+      "stratified_refinement_selection_sha256": "a97e823cd1f34dbdbbb27f792b2b966ce1dba325144eeefecd5b64a171e4bf62",
+      "stratified_refinement_new_result_sha256": [
+        "41a957f55b1e772b1a1cf1147d30f62a4898dfcd4e5699512cd5908278883d63",
+        "be77120845f0dfa5cf656ff702e3843f641cebc53904c03985db6989833f3587",
+        "a24b5a16138f659bc2fe84797c1ad5280ae141ab0a23c82a8dc848f868d07f2a",
+        "046bd6c3326a70e5c81b3b32bd315e99ad89cf795aa8b882de0708ce258e0302",
+        "bb3ad31d5d68e5480e6a462b64aec691e489eab25a21651e74a6082457fc8ee8"
+      ],
       "stratified_refinement_best_candidate_id": "opposition_p0959931_a46_z1__p212",
       "stratified_refinement_best_exact_table_clearance_m": 0.0006348888959779864,
       "stratified_refinement_best_exact_table_deficit_m": 0.00036511110402201365,
