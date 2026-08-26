@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T15:45:00Z",
+  "updated_at_utc": "2026-08-26T16:08:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T20:16:36Z",
   "branch": "carts-grasp-contactopt-1488-fast6h-20260826",
@@ -12,7 +12,7 @@
   "start_commit": "ea56c5798104b3a80094b290273e2c79a967e314",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "CONTACTOPT_1488_DIAGNOSTIC_CONTACT_CONSTRAINT_RECOVERY",
+  "current_milestone": "CONTACTOPT_1488_GENERATOR_HARD_CONTACT_PATH_REDESIGN",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -106,6 +106,18 @@
       "joint_hard_table_self_pass_count": 0,
       "top120_count": 0,
       "proxy_interval_survivor_count": 0,
+      "isaac_authorized_from_this_result": false,
+      "claim_scope": "OFFLINE_PROXY_DIAGNOSTIC_ONLY_NOT_EXACT_CONTACT_TASK_OR_DYNAMIC_SUCCESS"
+    },
+    "object_b_corrected_hard_contact_diagnostic": {
+      "hard_margin_definition": "HARD_ABSOLUTE_DISTANCE_MINUS_0P75MM_CONTACT_DISTANCE",
+      "diagnostic_input_count": 24,
+      "unique_evaluation_count": 2393,
+      "direction_hard_table_self_joint_pass_evaluation_count": 14,
+      "three_safe_proxy_interval_pass_evaluation_count": 0,
+      "diagnostic_output_count": 0,
+      "elapsed_s": 199.29554606199963,
+      "local_10d_refinement_stopped": true,
       "isaac_authorized_from_this_result": false,
       "claim_scope": "OFFLINE_PROXY_DIAGNOSTIC_ONLY_NOT_EXACT_CONTACT_TASK_OR_DYNAMIC_SUCCESS"
     },

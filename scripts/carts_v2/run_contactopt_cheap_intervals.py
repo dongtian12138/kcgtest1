@@ -18,6 +18,9 @@ import yaml
 from kcg_connector.grasp.carts_v2.contact_interval_solver import (
     solve_proxy_contact_intervals,
 )
+from kcg_connector.grasp.carts_v2.contact_constrained_optimizer import (
+    optimize_contact_constrained_top48,
+)
 from kcg_connector.grasp.carts_v2.models import (
     CandidateSeed, file_sha256, load_v2_inputs,
 )
@@ -34,6 +37,9 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--repository-root", type=Path, default=ROOT)
     parser.add_argument("--seed-manifest", type=Path, default=SEED_MANIFEST)
     parser.add_argument("--output-root", type=Path, default=OUTPUT_ROOT)
+    parser.add_argument("--diagnostic-optimize", action="store_true")
+    parser.add_argument("--diagnostic-cheap-report", type=Path)
+    parser.add_argument("--diagnostic-wall-time-s", type=float, default=1800.0)
     return parser.parse_args()
 
 
@@ -162,8 +168,9 @@ def _top120_csv(audit: dict) -> str | None:
     return stream.getvalue()
 
 
-def _atomic_outputs(targets: dict[Path, str]) -> None:
-    _require(all(not path.exists() for path in targets), "refusing to overwrite cheap evidence")
+def _atomic_outputs(targets: dict[Path, str], *, replace_existing=False) -> None:
+    _require(replace_existing or all(not path.exists() for path in targets),
+             "refusing to overwrite cheap evidence")
     staged = {}
     try:
         for path, text in targets.items():
@@ -179,6 +186,80 @@ def _atomic_outputs(targets: dict[Path, str]) -> None:
             temporary.unlink(missing_ok=True)
 
 
+def _diagnostic_candidates(cheap_report: dict, seeds) -> tuple[CandidateSeed, ...]:
+    rows = cheap_report.get("audit", {}).get("cheap_rows", [])
+    identifiers = [row["candidate_id"] for row in rows
+                   if len(row.get("finger_proxies", ())) == 3
+                   and all(finger.get("closing_direction_reasonable")
+                           for finger in row["finger_proxies"])
+                   and float(row["table_margin_m"]) > 0.0
+                   and float(row["self_margin_m"]) > 0.0]
+    _require(len(identifiers) == 24 and len(set(identifiers)) == 24,
+             "fixed diagnostic input is not the reviewed 24-candidate set")
+    by_id = {seed.candidate_id: seed for seed in seeds}
+    _require(all(identifier in by_id for identifier in identifiers),
+             "diagnostic candidate is absent from bound seed manifest")
+    return tuple(by_id[identifier] for identifier in identifiers)
+
+
+def _diagnostic_report(root, output_root, manifest_path, cheap_path,
+                       method_path, inputs, rows, seeds, started, wall_time_s):
+    cheap = _read_json(cheap_path)
+    _require(cheap.get("seed_manifest_sha256") == file_sha256(manifest_path),
+             "diagnostic cheap report is not bound to the seed manifest")
+    selected = _diagnostic_candidates(cheap, seeds)
+    optimization_config = yaml.safe_load(
+        method_path.read_text(encoding="utf-8"))["contact_optimization"]
+    records, survivors = [], []
+    checkpoint = output_root / "diagnostic_contact_optimization_B/checkpoint.json"
+    for seed in selected:
+        if time.perf_counter() - started >= wall_time_s:
+            break
+        result, audit = optimize_contact_constrained_top48(
+            inputs, (seed,), rows, optimization_config)
+        records.extend(audit["candidate_records"])
+        survivors.extend(result)
+        partial = _diagnostic_document(
+            manifest_path, cheap_path, selected, records, survivors,
+            started, wall_time_s, completed=False)
+        _atomic_outputs({checkpoint: json.dumps(
+            partial, indent=2, sort_keys=True, allow_nan=False) + "\n"},
+            replace_existing=True)
+    completed = len(records) == len(selected)
+    return _diagnostic_document(
+        manifest_path, cheap_path, selected, records, survivors,
+        started, wall_time_s, completed=completed)
+
+
+def _diagnostic_document(manifest_path, cheap_path, selected, records,
+                         survivors, started, wall_time_s, *, completed):
+    elapsed = time.perf_counter() - started
+    return {
+        "schema_version": "carts_contactopt_diagnostic_refinement_v1",
+        "claim_scope": "GENERATOR_REFINEMENT_DIAGNOSTIC_ONLY_NOT_TOP120_EXACT_TASK_OR_DYNAMIC",
+        "diagnostic_policy": "FIXED_24_SINGLE_COBYLA_MAX120_PER_SEED_THEN_REENTER_FULL_HIERARCHY",
+        "seed_manifest": str(manifest_path),
+        "seed_manifest_sha256": file_sha256(manifest_path),
+        "cheap_report": str(cheap_path),
+        "cheap_report_sha256": file_sha256(cheap_path),
+        "input_candidate_ids": [seed.candidate_id for seed in selected],
+        "input_candidate_count": len(selected),
+        "completed_candidate_count": len(records),
+        "all_inputs_completed": completed,
+        "time_budget_exhausted": not completed and elapsed >= wall_time_s,
+        "wall_time_budget_s": wall_time_s,
+        "elapsed_s": elapsed,
+        "generator_refinement_diagnostic_outputs": [asdict(seed) for seed in survivors],
+        "diagnostic_output_count": len(survivors),
+        "candidate_records": records,
+        "requires_full_hierarchy_reentry": True,
+        "isaac_authorized_from_this_report": False,
+        "hardware_authorized": False,
+        "formal_dynamic_pass": False,
+        "research_dynamic_pass": False,
+    }
+
+
 def main() -> int:
     args, started = _arguments(), time.perf_counter()
     root = args.repository_root.resolve()
@@ -186,6 +267,22 @@ def main() -> int:
     output_root = _resolve(root, args.output_root)
     manifest, method, base, inputs, rows, seeds, input_hashes = _load_and_verify(
         root, manifest_path)
+    if args.diagnostic_optimize:
+        _require(args.diagnostic_cheap_report is not None,
+                 "--diagnostic-cheap-report is required")
+        cheap_path = _resolve(root, args.diagnostic_cheap_report)
+        report = _diagnostic_report(
+            root, output_root, manifest_path, cheap_path, method,
+            inputs, rows, seeds,
+            started, float(args.diagnostic_wall_time_s))
+        target = output_root / "diagnostic_contact_optimization_B/result.json"
+        _atomic_outputs({target: json.dumps(
+            report, indent=2, sort_keys=True, allow_nan=False) + "\n"})
+        print(json.dumps({"output": str(target),
+                          "completed": report["completed_candidate_count"],
+                          "diagnostic_outputs": report["diagnostic_output_count"],
+                          "elapsed_s": report["elapsed_s"]}, sort_keys=True))
+        return 0
     selected, audit = solve_proxy_contact_intervals(inputs, seeds, rows)
     report = {"schema_version": "carts_contactopt_cheap_intervals_run_v1",
               "claim_scope": "CKDTREE_CONTACT_CONVEX_HULL_TABLE_FCL_SELF_SAMPLED_NOT_EXACT_OBJECT_CONTACT_OR_DYNAMIC_SUCCESS",

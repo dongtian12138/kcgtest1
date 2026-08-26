@@ -33,8 +33,8 @@ def _finite(value, fallback=-1.0):
     return result if math.isfinite(result) else fallback
 
 
-def _physical_bounds(inputs: V2Inputs, anchor: CandidateSeed) -> np.ndarray:
-    config = inputs.config.section("contact_optimization")
+def _physical_bounds(inputs: V2Inputs, anchor: CandidateSeed,
+                     config: Mapping[str, object]) -> np.ndarray:
     translation = float(config["translation_bound_m"])
     rotation = math.radians(float(config["rotation_bound_deg"]))
     palm_bound = math.radians(float(config["palm_configuration_bound_deg"]))
@@ -152,12 +152,13 @@ def _json_value(value):
 
 
 class _SeedProbe:
-    def __init__(self, inputs, evaluator, anchor, specification):
+    def __init__(self, inputs, evaluator, anchor, specification,
+                 optimization_config):
         self.inputs, self.evaluator, self.anchor = inputs, evaluator, anchor
         self.specification = dict(specification)
         self.table_clearance_m = float(inputs.config.section("height_projection")[
             "table_operation_clearance_m"])
-        self.bounds = _physical_bounds(inputs, anchor)
+        self.bounds = _physical_bounds(inputs, anchor, optimization_config)
         self.cache: dict[bytes, dict[str, object]] = {}
         start = np.zeros(10); start[7:10] = anchor.pregrasp_closure_phases
         self.start = _normalize(start, self.bounds)
@@ -221,8 +222,9 @@ def _public_evaluation(row: Mapping) -> dict[str, object]:
     return _json_value(result)
 
 
-def _optimize_one(inputs, evaluator, anchor, specification):
-    probe = _SeedProbe(inputs, evaluator, anchor, specification)
+def _optimize_one(inputs, evaluator, anchor, specification, optimization_config):
+    probe = _SeedProbe(
+        inputs, evaluator, anchor, specification, optimization_config)
     probe.evaluate(probe.start)
     error = ""
     try:
@@ -254,6 +256,7 @@ def _optimize_one(inputs, evaluator, anchor, specification):
 def optimize_contact_constrained_top48(
     inputs: V2Inputs, candidates: Sequence[CandidateSeed],
     specification_rows: Sequence[Mapping[str, object]],
+    optimization_config: Mapping[str, object],
 ) -> tuple[tuple[CandidateSeed, ...], dict[str, object]]:
     """Run one fixed COBYLA route for each preregistered proxy Top candidate."""
 
@@ -271,7 +274,8 @@ def optimize_contact_constrained_top48(
     survivors, records = [], []
     for anchor in anchors:
         candidate, record = _optimize_one(
-            inputs, evaluator, anchor, specifications[anchor.candidate_id])
+            inputs, evaluator, anchor, specifications[anchor.candidate_id],
+            optimization_config)
         records.append(record)
         if candidate is not None:
             survivors.append(candidate)

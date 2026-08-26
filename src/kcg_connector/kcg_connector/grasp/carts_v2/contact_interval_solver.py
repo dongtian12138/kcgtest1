@@ -177,6 +177,14 @@ def _query_role(context, role, points):
     return np.asarray(distance), witnesses[index], normals[index], faces[index]
 
 
+def _proxy_state_safe(allowed_distance, hard_distance, table_distance,
+                      self_distance, contact_distance, table_clearance):
+    return bool(math.isfinite(allowed_distance)
+                and hard_distance > contact_distance
+                and table_distance >= table_clearance
+                and self_distance > 0.0)
+
+
 def _finger_metrics(context, seed, phases, finger):
     joints, transforms = _joints_and_fk(context, seed, phases)
     name = f"finger_{finger + 1}_pad"
@@ -208,14 +216,19 @@ def _finger_metrics(context, seed, phases, finger):
     best = min(candidates, default=(math.inf, HARD_FORBIDDEN, -1, -1))
     hard = _query_role(context, HARD_FORBIDDEN, points)[0]
     table, self_margin = _state_margins(context, seed, transforms)
-    hard_margin = float(np.min(hard) - best[0]) if math.isfinite(best[0]) else -math.inf
+    hard_distance = float(np.min(hard))
+    hard_margin = hard_distance - context["contact_distance"]
+    hard_before_allowed = (hard_distance - best[0]
+                           if math.isfinite(best[0]) else -math.inf)
     q_index = context["active"][finger][0]
-    safe = bool(math.isfinite(best[0]) and hard_margin > 0.0
-                and table >= context["table_operation_clearance_m"]
-                and self_margin > 0.0)
+    safe = _proxy_state_safe(
+        best[0], hard_distance, table, self_margin,
+        context["contact_distance"], context["table_operation_clearance_m"])
     return {"phase": float(phases[finger]), "q_rad": float(joints[q_index]),
             "gap_m": best[0], "region": FACE_ROLE_NAMES[best[1]],
-            "object_face_index": best[3], "hard_margin_m": hard_margin,
+            "object_face_index": best[3], "hard_distance_m": hard_distance,
+            "hard_margin_m": hard_margin,
+            "hard_before_allowed_margin_m": hard_before_allowed,
             "table_margin_m": table, "self_margin_m": self_margin,
             "safe": safe, "contact": safe and best[0] <= context["contact_distance"]}
 
@@ -511,6 +524,7 @@ def solve_proxy_contact_intervals(
              "coarse_phase_sample_count": _COARSE_PHASE_COUNT,
              "maximum_joint_increment_rad": _MAXIMUM_INCREMENT_RAD,
              "table_operation_clearance_m": context["table_operation_clearance_m"],
+             "hard_margin_definition": "HARD_ABSOLUTE_DISTANCE_MINUS_CONTACT_DISTANCE",
              "hardware_authorized": False, "formal_dynamic_pass": False}
     return selected, audit
 

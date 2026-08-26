@@ -85,6 +85,12 @@ def test_sequential_solver_freezes_previous_fingers_at_expected_phase(monkeypatc
 
 
 def test_bisection_leaves_safe_state_within_one_control_increment() -> None:
+    assert solver._proxy_state_safe(
+        0.096913, 0.095546, 0.011, 0.0013, 0.00075, 0.001)
+    assert not solver._proxy_state_safe(
+        0.000174, 0.000406, 0.011, 0.0013, 0.00075, 0.001)
+    assert not solver._proxy_state_safe(
+        0.000174, 0.00075, 0.011, 0.0013, 0.00075, 0.001)
     def state(phase):
         return {"phase": phase, "q_rad": phase, "safe": phase < 0.503}
     low, high = solver._bisect_pair(state(0.4), state(0.6), state,
