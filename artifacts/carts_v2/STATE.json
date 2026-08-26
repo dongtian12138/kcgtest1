@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T11:25:00Z",
+  "updated_at_utc": "2026-08-26T12:08:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T15:16:26Z",
   "branch": "carts-grasp-surface-v2-fast6h-20260826",
@@ -8,7 +8,7 @@
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "SURFACE_V2_BOUNDED_REFINEMENT_RESCUE",
+  "current_milestone": "SURFACE_V2_SINGLE_AXIAL_STRATIFIED_RERANK",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -127,7 +127,18 @@
         "b1325a0d9d71e8453155173454e98c6b058864fd7098ac4bc22cd1a4aae7393e",
         "ec6086fed1cabec6edccc90fe69bbf43ee2562c58f7162dc4a1549d3665f0e27",
         "507a4b1872ec04b20b8f31d6e04a52ec4e279ff6dce3938387f90f43887cf20a"
-      ]
+      ],
+      "refinement_20mm_12deg_diagnostic_only_count": 8,
+      "refinement_20mm_12deg_b_full_pass_count": 0,
+      "refinement_15mm_8deg_registered_count": 8,
+      "refinement_15mm_8deg_b_full_pass_count": 0,
+      "refinement_15mm_8deg_exact_three_contact_replay_count": 41,
+      "refinement_15mm_8deg_best_exact_table_deficit_m": 0.007050181242639979,
+      "legacy_global_rank_patch_axial_counts_z0_z1_z2": [0, 78, 18],
+      "legacy_global_rank_exact_axial_counts_z0_z1_z2": [0, 20, 4],
+      "single_axial_stratified_rerank_authorized": true,
+      "single_axial_stratified_patch_quota_z0_z1_z2": [32, 32, 32],
+      "single_axial_stratified_exact_quota_z0_z1_z2": [8, 8, 8]
     },
     "three_finger_contact": false,
     "object_left_table": false,
@@ -1679,7 +1690,7 @@
     "full_arm_dynamic_status": "NOT_STARTED",
     "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
   },
-  "evidence_level": "SURFACE_V2_OBJECT_B_EXACT_SHORTLIST_ZERO_DIRECT_GEOMETRY_PASS_BOUNDED_REFINEMENT_PENDING_NO_THREE_FINGER_LIFT_OR_HOLD",
+  "evidence_level": "SURFACE_V2_OBJECT_B_GLOBAL_RANK_EXACT_AND_REGISTERED_REFINEMENT_ZERO_GEOMETRY_PASS_SINGLE_STRATIFIED_RERANK_PENDING_NO_THREE_FINGER_LIFT_OR_HOLD",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1744,7 +1755,7 @@
     "opposition60_anchor2_dynamic_supervisor": "INVALIDATE_CANDIDATE_AND_RETURN_TO_REMAINING_PREDECLARED_60DEG_FAMILY"
   },
   "blockers": [
-    "SURFACE_V2_BOUNDED_REFINEMENT_HAS_NOT_YET_PRODUCED_A_GEOMETRY_SURVIVOR",
+    "SURFACE_V2_GLOBAL_RANK_AND_REGISTERED_REFINEMENT_HAVE_NOT_PRODUCED_A_GEOMETRY_SURVIVOR",
     "SECONDARY_GRIP_DYNAMIC_VALUE_NOT_YET_OBSERVED",
     "NO_THREE_FINGER_LIFT_OR_HOLD_EVIDENCE"
   ]
