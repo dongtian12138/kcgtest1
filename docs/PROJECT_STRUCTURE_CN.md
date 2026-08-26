@@ -1,56 +1,43 @@
 # 工程结构与责任边界
 
-## 主线
-
-`src/kcg_connector/` 是电连接器任务主包；`src/iiwa_description/` 和
-`src/kcg_moveit1/` 提供机器人描述、ROS 2 与 MoveIt 支撑。当前抓取研究入口是
-`kcg_connector/grasp/robust/`、`isaac/robust_grasp/` 和四份 `carts_*.yaml`
-配置；具体任务和动态授权仍必须从 `CURRENT_CONTEXT_CN.md` 与控制面反查。
-
-旧 V2/B 单体运行器、B-V2/H1-H25 控制器、R12 multilayer 控制栈和 residual RL
-已退出活动源码；需要历史审计时从 `pre-active-route-prune-20260823` 按路径读取。
-冻结模型生成器和合同仍保留在活动树，用于复核模型来源，不能据此重新授权旧路线。
-
-主线的数据流应保持为：
+## 当前活动链
 
 ```text
-公开规格/冻结合同
-  → 确定性模型生成
-  → 相机与腕部力觉观测
-  → 三指抓取/对准/插入/锁紧控制
-  → 原始硬门
-  → 运行后独立评估与证据
+公开规格与冻结模型
+  → CONTACTOPT-1488 结构化接触初值
+  → 代理筛选与原始网格复核
+  → 局部手 Isaac 接触诊断
+  → 完整机械臂路径与抓举验证（尚未完成）
+  → 运行后独立评价
 ```
 
-## 支撑包
+- `src/kcg_connector/kcg_connector/grasp/carts_v2/`：当前抓取方法。
+- `src/kcg_connector/kcg_connector/grasp/robust/`：当前方法复用的几何、区间、碰撞和
+  受力安全内核；它是依赖层，不是另一条自动运行路线。
+- `src/kcg_connector/isaac/carts_v2/`：通用 Isaac 控制与事后评价。
+- `scripts/carts_v2/`：当前 CONTACTOPT、初始状态和第一指诊断的薄入口。
+- `src/iiwa_description/`、`src/kcg_moveit1/`：机器人描述与 ROS 2 / MoveIt 支撑。
 
-- `src/kcg_grasping/`：早期圆柱抓取回归，用于防止机器人与三指手基础能力退化。
+## 配置与冻结来源
 
-## 历史与数据
+- 当前方法入口配置是 `carts_contactopt_1488_fast6h.yaml`。
+- `carts_surface_v2_fast6h.yaml` 和 `carts_nailfree_height_projected.yaml` 仍由当前
+  依赖/受保护 WIP 读取，不能因名称看起来像旧阶段而删除。
+- D38999 keyed-v2/R12 等生成器和合同保留用于冻结模型来源复核；历史任务名属于证据谱系，
+  不是活动运行授权。
 
-- `artifacts/agent_control/`：当前任务、状态、队列、门和不可覆盖历史。
-- `artifacts/kcg_connector/`：模型、轨迹、图像、运行日志、报告和交付包。
-- `legacy_archive/`：统一保存退出主线的源码、旧文档、旧实验脚本和 ROS 1 迁移来源；
-  整棵目录不参加当前构建、默认测试或运行。
-- `j599_25_35_standard_interface_v1/`：独立的 J599 25-35 公共标准接口模型、生成
-  资产、渲染和接受证据。大体积原始接触/轨迹已进入带逐文件哈希的可恢复压缩归档；
-  该模型不等于厂商原始 CAD，也不构成真实硬件验收。
+## 文档与证据
 
-## 工具
+- 根目录只保留 `AGENTS.md`、`CURRENT_CONTEXT_CN.md` 和 `README.md` 三个入口。
+- `docs/carts_v2/` 只保留当前北极星、当前方法和精简决策。
+- `artifacts/` 保存不可替代的成功/失败证据与冻结资产，不参加默认源码搜索和测试。
+- 旧源码、旧阶段文档和旧入口由 Git 标签 `pre-clean-project-20260826` 恢复；活动树
+  不再维护 `legacy_archive/` 或源码 ZIP。
 
-- `tools/deepseek_consult.py`：授权时使用的外部模型协作入口。
-- `scripts/bootstrap.sh`：工作空间环境引导；它不构成动态运行授权。
+## 新增文件规则
 
-## 新代码放置规则
-
-1. 可复用控制/评估逻辑放在 `src/kcg_connector/kcg_connector/`，同时提供定向测试。
-2. Isaac 专用世界、渲染或 PhysX 入口放在 `src/kcg_connector/isaac/`。
-3. 参数放在 `src/kcg_connector/config/`，禁止把正式门限散落在脚本常量中。
-4. 一次性分析放在 `tools/experiments/`；完成后要么提升为受测模块，要么保留为历史，
-   不再堆回包根目录。
-5. 运行输出只进入唯一的新 `artifacts/` 子目录，禁止覆盖旧 run_id。
-
-## 退役路线恢复
-
-活动树不再为旧执行路线保留兼容调用链。需要复核旧实现时使用 Git 标签读取单个文件
-或导出限定路径，不要把整条历史路线恢复到当前 `PYTHONPATH`。
+1. 可复用逻辑放入 `src/kcg_connector/kcg_connector/` 并配套测试。
+2. Isaac 专用入口放入 `src/kcg_connector/isaac/` 或当前薄脚本目录。
+3. 参数只放配置文件，不在脚本中复制物理门限。
+4. 一次性实验完成后删除，由 Git 历史恢复；不要把新版本继续堆入活动树。
+5. 运行输出只进入新的 `artifacts/` run_id，禁止覆盖旧证据。

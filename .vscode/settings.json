@@ -13,7 +13,6 @@
     "**/artifacts/**": true,
     "**/build/**": true,
     "**/install/**": true,
-    "**/legacy_archive/**": true,
     "**/log/**": true
   },
   "search.exclude": {
@@ -21,7 +20,6 @@
     "**/artifacts/**": true,
     "**/build/**": true,
     "**/install/**": true,
-    "**/legacy_archive/**": true,
     "**/log/**": true
   }
 }
