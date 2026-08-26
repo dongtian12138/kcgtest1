@@ -193,6 +193,14 @@ class ObservedHandStateEvaluator:
             "allowed_task_faces_subtracted_from_terminal_links": True,
         }
 
+    def _task_surface_intersections(self, links_object) -> dict[str, bool]:
+        """Check full registered grip surfaces for penetration, without witnesses."""
+        return {
+            pad_name: bool(self._surface_query.query_pad(
+                pad_name, links_object[surface.link_name])[0].intersecting)
+            for pad_name, surface in sorted(self.inputs.task_grip_surfaces.items())
+        }
+
     def _phase_delta(self, pad_name, previous_resolved, current_resolved) -> float:
         pad_names = tuple(pad.name for pad in self.inputs.hand_contract.pads)
         row = self.inputs.closing_directions[pad_names.index(pad_name)]
@@ -285,6 +293,49 @@ class ObservedHandStateEvaluator:
             ambiguous = ambiguous or bool(nearest.intersecting)
         return rows, ambiguous
 
+    def _geometry_safety(self, current) -> dict[str, object]:
+        table = self._table(current[4])
+        self_collision = self._self_collision(current[4])
+        non_task = self._non_task_object(current[4], current[1])
+        task_intersections = self._task_surface_intersections(current[5])
+        fail_closed = bool(
+            table["top_intersection_beyond_numerical_tolerance"]
+            or self_collision["intersecting_pairs"]
+            or non_task["intersecting_links"]
+            or any(task_intersections.values())
+        )
+        return {
+            "mimic_error_rad_by_joint": {
+                follower: float(current[2][follower] - current[3][follower])
+                for follower in MIMIC_HAND_JOINTS
+            },
+            "table_top": table,
+            "self_collision": self_collision,
+            "non_task_hand_object": non_task,
+            "task_surface_intersecting_by_finger": task_intersections,
+            "fail_closed": fail_closed,
+        }
+
+    def evaluate_safety(
+        self, world_from_handbase, joint_positions_by_name, world_from_object
+    ) -> dict[str, object]:
+        """Replay collision safety only, omitting expensive contact witnesses."""
+        current = self._state(
+            world_from_handbase, joint_positions_by_name, world_from_object)
+        result = self._geometry_safety(current)
+        result.update({
+            "status": ("OBSERVED_STATE_GEOMETRY_REJECT" if result["fail_closed"]
+                       else "OBSERVED_STATE_GEOMETRY_REPLAYED"),
+            "offline_post_run_only": True,
+            "online_control_use_allowed": False,
+            "hand_variant": self.inputs.hand_variant,
+            "task_grip_surface_by_finger": None,
+            "fail_closed_reason": (
+                "MESH_INTERSECTION_OUTSIDE_TASK_SURFACE_WITNESS_SCOPE"
+                if result["fail_closed"] else ""),
+        })
+        return result
+
     def evaluate(
         self,
         world_from_handbase,
@@ -303,29 +354,21 @@ class ObservedHandStateEvaluator:
                 previous_state["joint_positions_by_name"],
                 previous_state["world_from_object"],
             )
-        table = self._table(current[4])
-        self_collision = self._self_collision(current[4])
-        non_task = self._non_task_object(current[4], current[1])
+        safety = self._geometry_safety(current)
         task_contacts, ambiguous = self._task_contacts(current, previous)
-        fail_closed = bool(
-            table["top_intersection_beyond_numerical_tolerance"]
-            or self_collision["intersecting_pairs"]
-            or non_task["intersecting_links"]
-            or ambiguous)
-        mimic_errors = {
-            follower: float(current[2][follower] - current[3][follower])
-            for follower in MIMIC_HAND_JOINTS
-        }
+        fail_closed = bool(safety["fail_closed"] or ambiguous)
         return {
             "status": ("OBSERVED_STATE_GEOMETRY_REJECT" if fail_closed
                        else "OBSERVED_STATE_GEOMETRY_REPLAYED"),
             "offline_post_run_only": True,
             "online_control_use_allowed": False,
             "hand_variant": self.inputs.hand_variant,
-            "mimic_error_rad_by_joint": mimic_errors,
-            "table_top": table,
-            "self_collision": self_collision,
-            "non_task_hand_object": non_task,
+            "mimic_error_rad_by_joint": safety["mimic_error_rad_by_joint"],
+            "table_top": safety["table_top"],
+            "self_collision": safety["self_collision"],
+            "non_task_hand_object": safety["non_task_hand_object"],
+            "task_surface_intersecting_by_finger": safety[
+                "task_surface_intersecting_by_finger"],
             "task_grip_surface_by_finger": task_contacts,
             "fail_closed": fail_closed,
             "fail_closed_reason": (

@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -48,6 +49,8 @@ def test_observed_replay_preserves_measured_mimic_error(replay_context) -> None:
 def test_anchor2_pregrasp_replays_original_mesh_clearance(replay_context) -> None:
     inputs, evaluator, target, joints = replay_context
     result = evaluator.evaluate(target, joints, inputs.frozen_world_from_object)
+    safety = evaluator.evaluate_safety(
+        target, joints, inputs.frozen_world_from_object)
     assert result["table_top"]["minimum_clearance_m"] == pytest.approx(
         0.014650263, abs=5.0e-7)
     assert result["table_top"]["minimum_clearance_m"] > 0.010
@@ -57,6 +60,29 @@ def test_anchor2_pregrasp_replays_original_mesh_clearance(replay_context) -> Non
     assert all(not row["full_object_intersecting"]
                for row in result["task_grip_surface_by_finger"].values())
     assert result["fail_closed"] is False
+    assert safety["task_grip_surface_by_finger"] is None
+    assert safety["table_top"] == result["table_top"]
+    assert safety["self_collision"] == result["self_collision"]
+    assert safety["non_task_hand_object"] == result["non_task_hand_object"]
+    assert not any(safety["task_surface_intersecting_by_finger"].values())
+    assert safety["fail_closed"] is False
+
+
+def test_safety_replay_rejects_task_surface_penetration(
+    replay_context, monkeypatch,
+) -> None:
+    inputs, evaluator, target, joints = replay_context
+    monkeypatch.setattr(
+        evaluator._surface_query,
+        "query_pad",
+        lambda _name, _transform: (SimpleNamespace(intersecting=True), None, None),
+    )
+    result = evaluator.evaluate_safety(
+        target, joints, inputs.frozen_world_from_object)
+    assert result["non_task_hand_object"]["intersecting_links"] == []
+    assert all(result["task_surface_intersecting_by_finger"].values())
+    assert result["fail_closed"] is True
+    assert result["status"] == "OBSERVED_STATE_GEOMETRY_REJECT"
 
 
 def test_observed_object_pose_changes_exact_mesh_distances(replay_context) -> None:

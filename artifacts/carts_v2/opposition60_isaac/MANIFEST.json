@@ -1,6 +1,6 @@
 {
   "schema_version": "opposition60_isaac_manifest_v1",
-  "updated_at_utc": "2026-08-26T04:32:54Z",
+  "updated_at_utc": "2026-08-26T05:33:00Z",
   "execution_window": {
     "id": "OPPOSITION60_ISAAC_12H",
     "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
@@ -105,7 +105,25 @@
       "object_b_initial_max_speed_rad_s_and_effort_nm": [0.06530869752168655, 0.037168871611356735],
       "object_b_initial_capacity_peak_found_lost_and_total": [121, 58],
       "object_b_initial_exact_minimum_table_self_nontask_m": [0.014653490319405937, 0.0018874391676346946, 0.0464417055309109],
-      "object_b_initial_task_contact_observation_count": 0
+      "object_b_initial_task_contact_observation_count": 0,
+      "object_b_preshape_replay_gate_pass": true,
+      "object_b_preshape_trace_path": "artifacts/carts_v2/opposition60_isaac/object_b_anchor2_preshape_replay_run04/preshape_replay.json",
+      "object_b_preshape_trace_sha256": "95fc59c1f8a8f80ce15c071515317963f92651ace647f02ccde57603d25b3d02",
+      "object_b_preshape_runner_sha256": "066e6923c1a6c01c505294bb8df065ba4c1cd6b85d37bc2a6bd196ee9b3fdbf5",
+      "object_b_preshape_steps_and_time_s": [946, 7.883333333333334],
+      "object_b_preshape_target_maximum_increment_rad": 0.0014981366969910592,
+      "object_b_preshape_maximum_actual_speed_rad_s": 0.19027534127235413,
+      "object_b_preshape_hold_maximum_actual_speed_rad_s": 0.16095766425132751,
+      "object_b_preshape_final_maximum_actual_speed_rad_s": 0.03923346474766731,
+      "object_b_preshape_maximum_actual_effort_nm": 0.05513472482562065,
+      "object_b_preshape_maximum_mimic_position_error_rad": 0.0005110930651426315,
+      "object_b_preshape_active_error_start_rad": [0.00174198, 0.01895537, 0.02039271, 0.0189284],
+      "object_b_preshape_active_error_end_rad": [0.00029156, 0.00590061, 0.00531023, 0.00588559],
+      "object_b_preshape_capacity_peak_found_lost_and_total": [121, 0],
+      "object_b_preshape_physx_warning_and_error_counts": [0, 0],
+      "object_b_preshape_contact_observation_count": 0,
+      "object_b_preshape_object_and_table_loaded": false,
+      "object_b_preshape_prior_runs_preserved": ["run01_wrong_contact_proxy_precision_gate", "run02_intermediate_acceptance_gate", "run03_pre_precommand_and_task_surface_safety_fix"]
     }
   },
   "supervisor_decision": {
@@ -119,7 +137,7 @@
   },
   "gates": {
     "initial_supervisor_review": "APPROVE_WITH_3_CHANGES",
-    "compound_convex_collision_asset": "STATIC_IMPORT_AND_INITIAL_DOUBLE_GEOMETRY_PASS_OPPOSITION60_REPLAY_PENDING",
+    "compound_convex_collision_asset": "STATIC_IMPORT_INITIAL_DOUBLE_GEOMETRY_AND_PRESHAPE_REPLAY_PASS_FIRST_FINGER_PENDING",
     "qp60_static_positive_control": "PASS_ANCHOR_A02_THREE_CONTACT_PATH_SAFE_OFFLINE_GEOMETRY",
     "all_27_opposition_preshapes": "COMPLETE_FOR_ANCHOR_A00_IN_FOUR_DETERMINISTIC_SHARDS",
     "next_anchor_phase_diagnostic": "COMPLETE_ANCHOR_INDEX_1_A01_Z1_SAME_PRESHAPE_0P2_0P2_0P2",
@@ -130,7 +148,7 @@
     "multi_witness_contact": "ALL33_QUERY_TOP16_AND_FORBIDDEN_FIRST_GUARD_TARGETED_PASS",
     "contact_conditioned_height": "CONTACT_STOP_ITERATION_AND_STATE_BOUNDARY_SEARCH_TARGETED_PASS",
     "object_b_task_top3": "NOT_RUN",
-    "object_b_local_dynamic": "INITIAL_PENETRATION_PASS_NO_CONTACT_CLOSURE_OR_LIFT",
+    "object_b_local_dynamic": "PRESHAPE_REPLAY_PASS_PENDING_FIRST_FINGER_CONTACT_NO_LIFT",
     "object_b_full_arm_dynamic": "NOT_STARTED",
     "object_a_frozen_parameter_dynamic": "NOT_STARTED"
   },
@@ -277,5 +295,5 @@
       "isaac_started": false
     }
   },
-  "claim_scope": "OBJECT_B_ANCHOR_A02_INITIAL_GPU_PHYSICS_AND_EXACT_MESH_REPLAY_PASS; NO_CONTACT_CLOSURE_LIFT_HOLD_OR_RESEARCH_DYNAMIC_PASS"
+  "claim_scope": "OBJECT_B_ANCHOR_A02_INITIAL_DOUBLE_GEOMETRY_AND_NO_OBJECT_BOUNDED_PRESHAPE_REPLAY_PASS; NO_CONTACT_CLOSURE_LIFT_HOLD_OR_RESEARCH_DYNAMIC_PASS"
 }
