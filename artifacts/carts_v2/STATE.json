@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T11:02:00Z",
+  "updated_at_utc": "2026-08-26T11:25:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T15:16:26Z",
   "branch": "carts-grasp-surface-v2-fast6h-20260826",
@@ -8,7 +8,7 @@
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "SURFACE_V2_FEATURE_AWARE_FAST_SEARCH",
+  "current_milestone": "SURFACE_V2_BOUNDED_REFINEMENT_RESCUE",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -112,7 +112,22 @@
       "exact_shortlist_count": 24,
       "report_path": "artifacts/carts_v2/surface_v2_fast6h/feature_search_B_run03.json",
       "report_sha256": "fb820d88914957adcf919419305075ee28a04201dae5db7221aee21304ca845f",
-      "exact_shards_in_progress": true
+      "exact_shards_in_progress": false,
+      "exact_shortlist_completed_count": 24,
+      "sampled_exact_geometry_pass_count": 0,
+      "contact_lost_after_table_projection_count": 20,
+      "sampled_no_three_contact_witness_count": 4,
+      "bounded_refinement_selected_count": 8,
+      "exact_shard_paths": [
+        "artifacts/carts_v2/surface_v2_fast6h/exact_B_run05_offset00_count08.json",
+        "artifacts/carts_v2/surface_v2_fast6h/exact_B_run06_offset08_count08.json",
+        "artifacts/carts_v2/surface_v2_fast6h/exact_B_run07_offset16_count08.json"
+      ],
+      "exact_shard_sha256": [
+        "b1325a0d9d71e8453155173454e98c6b058864fd7098ac4bc22cd1a4aae7393e",
+        "ec6086fed1cabec6edccc90fe69bbf43ee2562c58f7162dc4a1549d3665f0e27",
+        "507a4b1872ec04b20b8f31d6e04a52ec4e279ff6dce3938387f90f43887cf20a"
+      ]
     },
     "three_finger_contact": false,
     "object_left_table": false,
@@ -1664,7 +1679,7 @@
     "full_arm_dynamic_status": "NOT_STARTED",
     "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
   },
-  "evidence_level": "SURFACE_V2_OBJECT_B_FIXED_POSE_OFFLINE_TOP3_BOUND_PENDING_FIRST_FINGER_ISAAC_NO_LIFT_OR_HOLD",
+  "evidence_level": "SURFACE_V2_OBJECT_B_EXACT_SHORTLIST_ZERO_DIRECT_GEOMETRY_PASS_BOUNDED_REFINEMENT_PENDING_NO_THREE_FINGER_LIFT_OR_HOLD",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1729,7 +1744,7 @@
     "opposition60_anchor2_dynamic_supervisor": "INVALIDATE_CANDIDATE_AND_RETURN_TO_REMAINING_PREDECLARED_60DEG_FAMILY"
   },
   "blockers": [
-    "SURFACE_V2_TOP3_FIRST_FINGER_PHYSX_CONTACT_PENDING",
+    "SURFACE_V2_BOUNDED_REFINEMENT_HAS_NOT_YET_PRODUCED_A_GEOMETRY_SURVIVOR",
     "SECONDARY_GRIP_DYNAMIC_VALUE_NOT_YET_OBSERVED",
     "NO_THREE_FINGER_LIFT_OR_HOLD_EVIDENCE"
   ]
