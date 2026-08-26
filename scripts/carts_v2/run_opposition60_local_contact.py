@@ -17,7 +17,7 @@ TERMINALS = ("f1Link3", "f2Link2", "f3Link3")
 DT_S, MAXIMUM_INCREMENT_RAD = 1.0 / 120.0, 0.0015
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", required=True, choices=("preshape-replay", "first-finger-diagnostic"))
+    parser.add_argument("--config", type=Path, default=CONFIG); parser.add_argument("--mode", required=True, choices=("preshape-replay", "first-finger-diagnostic"))
     parser.add_argument("--task-ik", required=True, type=Path)
     parser.add_argument("--initial-trace", required=True, type=Path)
     parser.add_argument("--initial-exact-replay", required=True, type=Path)
@@ -57,7 +57,7 @@ def _verify(args: argparse.Namespace) -> dict:
     from kcg_connector.grasp.carts_v2.models import joint_positions_for_phases, load_v2_inputs
     paths = {"task_ik": _resolve(args.task_ik), "initial_trace": _resolve(args.initial_trace),
              "initial_exact_replay": _resolve(args.initial_exact_replay),
-             "config": CONFIG.resolve(), "controller_source": CONTROLLER_SOURCE.resolve()}
+             "config": _resolve(args.config), "controller_source": CONTROLLER_SOURCE.resolve()}
     _require(all(path.is_file() for path in paths.values()), "fixed evidence input is missing")
     task, initial, exact = map(_load, (paths["task_ik"], paths["initial_trace"], paths["initial_exact_replay"]))
     gates = initial.get("runtime_gates") or {}

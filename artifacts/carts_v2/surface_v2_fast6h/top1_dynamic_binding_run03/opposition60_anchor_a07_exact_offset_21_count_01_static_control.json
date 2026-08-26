@@ -1,0 +1,1668 @@
+{
+  "anchor_generation": {
+    "axial_fractions": [
+      0.25,
+      0.5,
+      0.75
+    ],
+    "azimuth_count": 12,
+    "claim_scope": "STRUCTURED_FK_ANCHORS_NOT_CONTACT_OR_DYNAMIC_SUCCESS",
+    "hand_variant": "CONNECTOR_GRASP_NO_NAIL",
+    "object_grasp_band": {
+      "allowed_area_m2": 0.005035533887355427,
+      "allowed_face_count": 7401,
+      "axial_range_m": [
+        -0.030683200836181642,
+        0.0
+      ],
+      "axis_object": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center_object_m": [
+        1.9487630463610668e-05,
+        -6.889570538839172e-05,
+        -0.012362853841782252
+      ],
+      "mean_radius_m": 0.021168438997633963
+    },
+    "object_id": "te_deutsch_d38999_26fj35pn_step",
+    "per_angle": [
+      {
+        "evaluated_pregrasp_closure_phases": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.1
+          ],
+          [
+            0.0,
+            0.0,
+            0.2
+          ],
+          [
+            0.0,
+            0.1,
+            0.0
+          ],
+          [
+            0.0,
+            0.1,
+            0.1
+          ],
+          [
+            0.0,
+            0.1,
+            0.2
+          ],
+          [
+            0.0,
+            0.2,
+            0.0
+          ],
+          [
+            0.0,
+            0.2,
+            0.1
+          ],
+          [
+            0.0,
+            0.2,
+            0.2
+          ],
+          [
+            0.1,
+            0.0,
+            0.0
+          ],
+          [
+            0.1,
+            0.0,
+            0.1
+          ],
+          [
+            0.1,
+            0.0,
+            0.2
+          ],
+          [
+            0.1,
+            0.1,
+            0.0
+          ],
+          [
+            0.1,
+            0.1,
+            0.1
+          ],
+          [
+            0.1,
+            0.1,
+            0.2
+          ],
+          [
+            0.1,
+            0.2,
+            0.0
+          ],
+          [
+            0.1,
+            0.2,
+            0.1
+          ],
+          [
+            0.1,
+            0.2,
+            0.2
+          ],
+          [
+            0.2,
+            0.0,
+            0.0
+          ],
+          [
+            0.2,
+            0.0,
+            0.1
+          ],
+          [
+            0.2,
+            0.0,
+            0.2
+          ],
+          [
+            0.2,
+            0.1,
+            0.0
+          ],
+          [
+            0.2,
+            0.1,
+            0.1
+          ],
+          [
+            0.2,
+            0.1,
+            0.2
+          ],
+          [
+            0.2,
+            0.2,
+            0.0
+          ],
+          [
+            0.2,
+            0.2,
+            0.1
+          ],
+          [
+            0.2,
+            0.2,
+            0.2
+          ]
+        ],
+        "palm_configuration_deg": 59.99999999999999,
+        "palm_configuration_rad": 1.0471975511965976,
+        "preshape_count": 27,
+        "raw_anchor_count": 972,
+        "retained_anchor_count": 12,
+        "retained_axial_counts": {
+          "0": 4,
+          "1": 4,
+          "2": 4
+        },
+        "retained_candidate_ids": [
+          "opposition_p1047198_a00_z0",
+          "opposition_p1047198_a01_z1",
+          "opposition_p1047198_a02_z2",
+          "opposition_p1047198_a03_z0",
+          "opposition_p1047198_a04_z1",
+          "opposition_p1047198_a05_z2",
+          "opposition_p1047198_a06_z0",
+          "opposition_p1047198_a07_z1",
+          "opposition_p1047198_a08_z2",
+          "opposition_p1047198_a09_z0",
+          "opposition_p1047198_a10_z1",
+          "opposition_p1047198_a11_z2"
+        ]
+      }
+    ],
+    "preshape_count": 27,
+    "raw_anchor_count": 972,
+    "retained_anchor_count": 12,
+    "schema_version": "carts_opposition_anchor_v1",
+    "selected": [
+      {
+        "axial_fraction": 0.25,
+        "axial_index": 0,
+        "azimuth_index": 0,
+        "azimuth_rad": 0.0,
+        "candidate_id": "opposition_p1047198_a00_z0",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          0.002923665110666188,
+          -1.9816215888509206e-05,
+          -0.42487057494462865
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          0.0,
+          0.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.02301240062713623
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.0410392613006125e-17
+      },
+      {
+        "axial_fraction": 0.5,
+        "axial_index": 1,
+        "azimuth_index": 1,
+        "azimuth_rad": 0.5235987755982988,
+        "candidate_id": "opposition_p1047198_a01_z1",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          0.002510039360667779,
+          0.0014256971194245658,
+          -0.41719977473558323
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          1.0,
+          1.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.015341600418090821
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 2.6021845840320622e-17
+      },
+      {
+        "axial_fraction": 0.75,
+        "axial_index": 2,
+        "azimuth_index": 2,
+        "azimuth_rad": 1.0471975511965976,
+        "candidate_id": "opposition_p1047198_a02_z2",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          0.0014290722858532289,
+          0.002470735514315659,
+          -0.40952897452653786
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          2.0,
+          2.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.007670800209045411
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.3878327532668852e-17
+      },
+      {
+        "axial_fraction": 0.25,
+        "axial_index": 0,
+        "azimuth_index": 3,
+        "azimuth_rad": 1.5707963267948966,
+        "candidate_id": "opposition_p1047198_a03_z0",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -2.9591859036271416e-05,
+          0.0028352817748141857,
+          -0.42487057494462865
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          3.0,
+          0.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.02301240062713623
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.0409055515375043e-17
+      },
+      {
+        "axial_fraction": 0.5,
+        "axial_index": 1,
+        "azimuth_index": 4,
+        "azimuth_rad": 2.0943951023931953,
+        "candidate_id": "opposition_p1047198_a04_z1",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -0.0014751051943493467,
+          0.002421656024815779,
+          -0.41719977473558323
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          4.0,
+          1.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.015341600418090821
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 2.6021139996913055e-17
+      },
+      {
+        "axial_fraction": 0.75,
+        "axial_index": 2,
+        "azimuth_index": 5,
+        "azimuth_rad": 2.6179938779914944,
+        "candidate_id": "opposition_p1047198_a05_z2",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -0.002520143589240441,
+          0.0013406889500012264,
+          -0.40952897452653786
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          5.0,
+          2.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.007670800209045411
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.3879650907083275e-17
+      },
+      {
+        "axial_fraction": 0.25,
+        "axial_index": 0,
+        "azimuth_index": 6,
+        "azimuth_rad": 3.141592653589793,
+        "candidate_id": "opposition_p1047198_a06_z0",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -0.0028846898497389664,
+          -0.00011797519488827424,
+          -0.42487057494462865
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          6.0,
+          0.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.02301240062713623
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.0410392613006125e-17
+      },
+      {
+        "axial_fraction": 0.5,
+        "axial_index": 1,
+        "azimuth_index": 7,
+        "azimuth_rad": 3.665191429188092,
+        "candidate_id": "opposition_p1047198_a07_z1",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -0.002471064099740559,
+          -0.0015634885302013484,
+          -0.41719977473558323
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          7.0,
+          1.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.015341600418090821
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 2.6021845840320622e-17
+      },
+      {
+        "axial_fraction": 0.75,
+        "axial_index": 2,
+        "azimuth_index": 8,
+        "azimuth_rad": 4.1887902047863905,
+        "candidate_id": "opposition_p1047198_a08_z2",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          -0.0013900970249260093,
+          -0.002608526925092442,
+          -0.40952897452653786
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          8.0,
+          2.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.007670800209045411
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.3878327532668852e-17
+      },
+      {
+        "axial_fraction": 0.25,
+        "axial_index": 0,
+        "azimuth_index": 9,
+        "azimuth_rad": 4.71238898038469,
+        "candidate_id": "opposition_p1047198_a09_z0",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          6.856711996349275e-05,
+          -0.002973073185590969,
+          -0.42487057494462865
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          9.0,
+          0.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.02301240062713623
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.040905606679091e-17
+      },
+      {
+        "axial_fraction": 0.5,
+        "axial_index": 1,
+        "azimuth_index": 10,
+        "azimuth_rad": 5.235987755982989,
+        "candidate_id": "opposition_p1047198_a10_z1",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          0.0015140804552765685,
+          -0.00255944743559256,
+          -0.41719977473558323
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          10.0,
+          1.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.015341600418090821
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 2.6021139996913055e-17
+      },
+      {
+        "axial_fraction": 0.75,
+        "axial_index": 2,
+        "azimuth_index": 11,
+        "azimuth_rad": 5.759586531581287,
+        "candidate_id": "opposition_p1047198_a11_z2",
+        "candidate_id_excludes_rebindable_pregrasp": true,
+        "handbase_object_m": [
+          0.0025591188501676606,
+          -0.0014784803607780117,
+          -0.40952897452653786
+        ],
+        "palm_configuration_rad": 1.0471975511965976,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "radius_imbalance_m": 0.020289077279649945,
+        "radius_mismatch_m": 0.0716743627160949,
+        "selection_key": [
+          0.0716743627160949,
+          0.020289077279649945,
+          -0.8564398796128625,
+          0.2,
+          0.2,
+          0.2,
+          11.0,
+          2.0
+        ],
+        "target_band_center_object_m": [
+          1.9487630463610668e-05,
+          -6.889570538839172e-05,
+          -0.007670800209045411
+        ],
+        "triangle_center_radii_m": [
+          0.09284280171372886,
+          0.07255372443407891,
+          0.09275050177569175
+        ],
+        "triangle_quality": 0.8564398796128625,
+        "triangle_side_lengths_m": [
+          0.14143818726546525,
+          0.16514666193428512,
+          0.14154191476568562
+        ],
+        "work_center_alignment_error_m": 1.3879650907083275e-17
+      }
+    ]
+  },
+  "available_geometric_anchor_count": 12,
+  "claim_scope": "OFFLINE_ANCHOR_INDEX_7_PRESHAPE_SHARD_OFFSET_21_COUNT_1_EXACT_STATIC_NOT_DYNAMIC_SUCCESS",
+  "config": "src/kcg_connector/config/carts_surface_v2_fast6h.yaml",
+  "config_sha256": "fa04db98c2a59b40ce823ff271876652cc0fb32184bdbf6a734107e152c3101c",
+  "connector_moved": false,
+  "contact_height_bounds_world_z_m": [
+    -0.23800649630240162,
+    0.6690198954265472
+  ],
+  "controller_executed": false,
+  "dynamic_success": false,
+  "elapsed_s": 129.64998532700702,
+  "exact_variant_evaluated_count": 1,
+  "exact_variant_evaluation_interval": {
+    "start_inclusive": 21,
+    "stop_exclusive": 22
+  },
+  "exact_variant_offset": 21,
+  "forbidden_object_first_contact_guard": "ENABLED_FAIL_CLOSED",
+  "hardware_authorized": false,
+  "height_search": {
+    "candidate_id": "opposition_p1047198_a07_z1",
+    "claim_scope": "OFFLINE_CONTACT_CONDITIONED_HEIGHT_NOT_DYNAMIC_SUCCESS",
+    "deferred": [
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.0,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.0,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.1,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.1,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.1,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.2,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.0,
+          0.2,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.0,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.0,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.0,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.1,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.1,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.1,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.2,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.2,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.1,
+          0.2,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.0,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.0,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.0,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.1,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.1,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.1,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.0
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.1
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      },
+      {
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "status": "BUDGET_NOT_EVALUATED"
+      }
+    ],
+    "evaluated": [
+      {
+        "contact_conditioned_iterations": [
+          {
+            "contact_stop_phases": [
+              0.4989270386266094,
+              0.40410156250000007,
+              0.49755859375000006
+            ],
+            "handbase_world_z_m": 0.6406753206850175,
+            "iteration": 0,
+            "minimum_table_contributing_stage": "FINGER_1_CLOSURE_0313",
+            "minimum_table_handbase_z_m": 0.6316560377674945,
+            "projected_handbase_world_z_m": 0.6406753206850175,
+            "table_path_checked_state_count": 1826
+          }
+        ],
+        "contact_height_probes": [
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.23800649630240156,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.20966192156087193,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.1813173468193423,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.15297277207781268,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.12462819733628305,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.09628362259475343,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.0679390478532238,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.03959447311169406,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": -0.011249898370164435,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.01709467637136519,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.04543925111289493,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.07378382585442456,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.10212840059595418,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.1304729753374838,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.15881755007901344,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.18716212482054312,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.21550669956207275,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.24385127430360237,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.272195849045132,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.30054042378666174,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.32888499852819136,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.357229573269721,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.3855741480112506,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.41391872275278024,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.44226329749430987,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.4706078722358396,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.49895244697736924,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5272970217188988,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5556415964604284,
+            "probe_kind": "COARSE",
+            "reason": "NO_EFFECTIVE_CONTACT_finger_1_pad"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.5839861712019581,
+            "probe_kind": "COARSE",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18337"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 1,
+            "handbase_world_z_m": 0.6123307459434879,
+            "probe_kind": "COARSE",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_18245"
+          },
+          {
+            "closure_status": "CLOSURE_REJECT",
+            "contact_count": 0,
+            "handbase_world_z_m": 0.6171997747355833,
+            "probe_kind": "COARSE",
+            "reason": "FORBIDDEN_OBJECT_FIRST_CONTACT_FACE_20887"
+          },
+          {
+            "closure_status": "CLOSURE_SURVIVE",
+            "contact_count": 3,
+            "handbase_world_z_m": 0.6406753206850175,
+            "probe_kind": "COARSE",
+            "reason": ""
+          }
+        ],
+        "fresh_checked_state_count": 937,
+        "fresh_closure_status": "CLOSURE_SURVIVE",
+        "fresh_fast_filter_status": "FAST_SURVIVE",
+        "fresh_final_closure_phases": [
+          0.4989270386266094,
+          0.40410156250000007,
+          0.49755859375000006
+        ],
+        "fresh_hand_surface_face_indices": [
+          7556,
+          7596,
+          7621
+        ],
+        "fresh_hand_surface_legacy_blue_pad": [
+          true,
+          true,
+          true
+        ],
+        "fresh_minimum_table_clearance_m": 0.010019282917523076,
+        "fresh_object_contact_face_indices": [
+          33375,
+          33189,
+          33328
+        ],
+        "fresh_sequential_closure_sweep_pass": true,
+        "height_evidence_scope": "CONTACT_STOP_CONDITIONED_EXACT_MESH_ITERATION",
+        "minimum_nonallowed_surface_clearance_m": null,
+        "nonallowed_surface_gate": "COLLISION_FREE_BINARY_DISTANCE_NOT_YET_REPORTED",
+        "original_handbase_world_z_m": 0.6171997747355833,
+        "pregrasp_closure_phases": [
+          0.0,
+          0.2,
+          0.2
+        ],
+        "projected_handbase_world_z_m": 0.6406753206850175,
+        "projected_pregrasp_path": {
+          "accepted": true,
+          "candidate_id": "opposition_p1047198_a07_z1",
+          "checked_state_count": 892,
+          "maximum_joint_increment_rad": 0.0014981366969910592,
+          "minimum_clearance_link": "f2Link2",
+          "minimum_clearance_stage": "PREGRASP",
+          "minimum_table_clearance_m": 0.01465026344887943,
+          "physical_query_state_count": 892,
+          "pregrasp_closure_phases": [
+            0.0,
+            0.2,
+            0.2
+          ],
+          "pregrasp_pad_clearance_by_name_m": {
+            "finger_1_pad": 0.10488474084239097,
+            "finger_2_pad": 0.04465728329024248,
+            "finger_3_pad": 0.06707120103191261
+          },
+          "reasons": [],
+          "remaining_closure_phase": [
+            0.75,
+            0.55,
+            0.55
+          ],
+          "reused_identical_state_count": 0,
+          "unresolved_checks": [
+            "FCL_SURFACE_QUERY_CANNOT_PROVE_CONTAINMENT",
+            "HAND_APPROACH_SAMPLED_NOT_CONTINUOUS"
+          ]
+        },
+        "reason": "",
+        "remaining_closure_imbalance": 0.29482547612660936,
+        "revalidation_detail": "",
+        "selection_key": [
+          0.0,
+          1.0,
+          -0.010019282917523076,
+          0.0,
+          0.29482547612660936,
+          0.02347554594943424
+        ],
+        "status": "OFFLINE_SAMPLED_HAND_HEIGHT_FEASIBLE_AT_PROJECTED_Z",
+        "translation_world_z_m": 0.02347554594943424
+      }
+    ],
+    "exact_variant_budget": 1,
+    "exact_variant_evaluated_count": 1,
+    "exact_variant_evaluation_interval": {
+      "start_inclusive": 21,
+      "stop_exclusive": 22
+    },
+    "exact_variant_offset": 21,
+    "pregrasp_variant_count": 27,
+    "schema_version": "carts_contact_conditioned_height_search_v2",
+    "survivor_count": 1
+  },
+  "isaac_started": false,
+  "maximum_exact_variants": 1,
+  "pending_gate": "RESEARCH_COLLISION_ASSET_FULL_ARM_PATH_AND_ISAAC",
+  "predictor_executed": true,
+  "pregrasp_variant_count": 27,
+  "profile": null,
+  "registered_patch_count_by_pad": {
+    "finger_1_pad": 33,
+    "finger_2_pad": 33,
+    "finger_3_pad": 33
+  },
+  "requested_palm_angle_deg": 60.0,
+  "requested_palm_angle_rad": 1.0471975511965976,
+  "schema_version": "carts_opposition60_static_control_v2",
+  "script_sha256": "4a936cf315450a2821b2b1f3d66ca6191924bdffafa5ebd346f5407e0aca07d5",
+  "selected_geometric_anchor": {
+    "anchor_face_index": 17240,
+    "anchor_position_object_m": [
+      0.015785162925720214,
+      -0.007312721570332845,
+      -0.014772157986958823
+    ],
+    "approach_direction_object": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "candidate_id": "opposition_p1047198_a07_z1",
+    "object_from_hand_row_major": [
+      0.5006385226172222,
+      -0.8654202347255247,
+      0.020220954459741595,
+      -0.002471064099740559,
+      0.8654203836510004,
+      0.5009109120496342,
+      0.011654087306998445,
+      -0.0015634885302013484,
+      -0.02021457971367763,
+      0.011665141114511153,
+      0.9997276105268764,
+      -0.41719977473558323,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "object_id": "te_deutsch_d38999_26fj35pn_step",
+    "palm_configuration_deg": 59.99999999999999,
+    "palm_configuration_rad": 1.0471975511965976,
+    "pregrasp_closure_phases": [
+      0.2,
+      0.2,
+      0.2
+    ],
+    "pregrasp_joint_positions_rad": [
+      1.0471975511965976,
+      0.27926,
+      0.27926,
+      0.27926
+    ]
+  },
+  "selected_geometric_anchor_index": 7,
+  "survivor_candidates": [
+    {
+      "anchor_face_index": 17240,
+      "anchor_position_object_m": [
+        0.015785162925720214,
+        -0.007312721570332845,
+        -0.014772157986958823
+      ],
+      "approach_direction_object": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "candidate_id": "opposition_p1047198_a07_z1",
+      "object_from_hand_row_major": [
+        0.5006385226172222,
+        -0.8654202347255247,
+        0.020220954459741595,
+        -0.0024710640997405164,
+        0.8654203836510004,
+        0.5009109120496342,
+        0.011654087306998445,
+        -0.0015634885302013568,
+        -0.02021457971367763,
+        0.011665141114511153,
+        0.9997276105268764,
+        -0.4406753206850175,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "object_id": "te_deutsch_d38999_26fj35pn_step",
+      "palm_configuration_deg": 59.99999999999999,
+      "palm_configuration_rad": 1.0471975511965976,
+      "pregrasp_closure_phases": [
+        0.0,
+        0.2,
+        0.2
+      ],
+      "pregrasp_joint_positions_rad": [
+        1.0471975511965976,
+        0.0,
+        0.27926,
+        0.27926
+      ]
+    }
+  ],
+  "survivor_count": 1,
+  "survivor_four_views": [
+    {
+      "path": "survivor_a07_o21_00_p022_four_views.png",
+      "sha256": "9de382865b873d28c741a61e20b94e1436e05a71e0a02469833ca30b945443d4"
+    }
+  ],
+  "task_and_bounded_ik": [
+    {
+      "bounded_ik": {
+        "arm_joint_positions_rad": [
+          -0.7111982832985188,
+          0.4124776811152652,
+          0.5133057109223916,
+          -1.1508266000805516,
+          -0.2048448041540102,
+          1.6030391966177766,
+          -2.3411333540370456
+        ],
+        "orientation_error_rad": 3.1405814809341913e-12,
+        "position_error_m": 4.508074783689232e-13,
+        "selected_seed_index": 0,
+        "status": "BOUNDED_IK_PASS_NOT_PATH_COLLISION"
+      },
+      "candidate_id": "opposition_p1047198_a07_z1",
+      "diagnostic_only": false,
+      "formal_task_eligible_not_executable": true,
+      "fresh_contact_count": 3,
+      "fresh_contact_stop_phases": [
+        0.4989270386266094,
+        0.40410156250000007,
+        0.49755859375000006
+      ],
+      "fresh_hand_surface_face_indices": [
+        7556,
+        7596,
+        7621
+      ],
+      "fresh_object_contact_face_indices": [
+        33375,
+        33189,
+        33328
+      ],
+      "full_arm_path_collision_checked": false,
+      "isaac_started": false,
+      "path_minimum_table_clearance_m": 0.010019282917523076,
+      "research_task_eligible_not_executable": true,
+      "scenario_design_sha256": "a16d44f33f7d39e70db0b4c3c76f587acaa933449b8134d1de5ee4c00f74c973",
+      "scenario_design_shape": [
+        16,
+        26
+      ],
+      "target_world_from_handbase_row_major": [
+        0.5006385226172222,
+        -0.8654202347255247,
+        0.020220954459741595,
+        0.5175289359002595,
+        -0.8654203836510004,
+        -0.5009109120496342,
+        -0.011654087306998445,
+        -0.20843651146979864,
+        0.02021457971367763,
+        -0.011665141114511153,
+        -0.9997276105268764,
+        0.6406753206850175,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "task_quality": {
+        "candidate_id": "opposition_p1047198_a07_z1",
+        "evidence_scope": "RESEARCH_OFFLINE_QMC_NOT_FORMAL",
+        "failure_reason": "",
+        "lower_tail_mean_margin": 2.1534728861316026,
+        "maximum_generalized_joint_torque_nm": 0.8843429960584306,
+        "maximum_joint_load_utilization": null,
+        "nominal_balance_failure_reason": "",
+        "nominal_balance_infeasible_count": 0,
+        "nominal_gravity_lift_balance_pass": true,
+        "nominal_operation_force_cap_n": 12.0,
+        "nominal_parameter_task_margin": 2.6546770681637333,
+        "required_peak_normal_force_n": 6.508330115719344,
+        "scenario_margins": [
+          2.3640555351949692,
+          2.808056786120053,
+          2.317073240138827,
+          2.3392237602791113,
+          2.3584222186437875,
+          2.4682136995739254,
+          2.12247490343538,
+          3.1840280658281332,
+          2.6045469255081426,
+          2.7945410840087286,
+          2.1113752050778265,
+          2.6473580526170366,
+          2.2087614437618073,
+          2.3147659953986817,
+          2.242508416730577,
+          2.8681535312363757
+        ],
+        "sensitivity": 1.0726528607503067,
+        "status": "TASK_SURVIVE",
+        "worst_task_margin": 2.1113752050778265,
+        "wrist_load_utilization": null
+      }
+    }
+  ],
+  "task_and_bounded_ik_requested": true,
+  "variant_results": [
+    {
+      "complete_sequential_path_state_count": 1826,
+      "contact_reason": "",
+      "contact_status": "CLOSURE_SURVIVE",
+      "contacts": [
+        {
+          "clearance_m": 0.0005632663193381774,
+          "finite_patch_witness_count": 33,
+          "forbidden_first_contact_guard_triggered": false,
+          "forbidden_surface_distance_m": 0.0005632697555271113,
+          "forbidden_surface_face_index": 33484,
+          "hand_surface_face_index": 7556,
+          "inward_motion_m_per_phase": 0.19922400723898037,
+          "legacy_blue_pad": true,
+          "object_face_index": 33375,
+          "object_position_m": [
+            0.0,
+            -0.017626997945921832,
+            -0.030681254581390684
+          ],
+          "pad_name": "finger_1_pad",
+          "phase_lower": 0.4978540772532189,
+          "phase_upper": 0.4989270386266094,
+          "registered_patch_count": 33,
+          "returned_witness_count": 16
+        },
+        {
+          "clearance_m": 0.0005681443973698817,
+          "finite_patch_witness_count": 33,
+          "forbidden_first_contact_guard_triggered": false,
+          "forbidden_surface_distance_m": 0.0005831167035635858,
+          "forbidden_surface_face_index": 29383,
+          "hand_surface_face_index": 7596,
+          "inward_motion_m_per_phase": 0.22869454174951043,
+          "legacy_blue_pad": true,
+          "object_face_index": 33189,
+          "object_position_m": [
+            0.015030234003442746,
+            0.009375450185536139,
+            -0.029997400283813477
+          ],
+          "pad_name": "finger_2_pad",
+          "phase_lower": 0.40302734375000004,
+          "phase_upper": 0.40410156250000007,
+          "registered_patch_count": 33,
+          "returned_witness_count": 16
+        },
+        {
+          "clearance_m": 0.00063841706975214,
+          "finite_patch_witness_count": 33,
+          "forbidden_first_contact_guard_triggered": false,
+          "forbidden_surface_distance_m": 0.0006574732894670499,
+          "forbidden_surface_face_index": 33457,
+          "hand_surface_face_index": 7621,
+          "inward_motion_m_per_phase": 0.20014664538436205,
+          "legacy_blue_pad": true,
+          "object_face_index": 33328,
+          "object_position_m": [
+            -0.015544556582960263,
+            0.008371391152868727,
+            -0.030489440409770377
+          ],
+          "pad_name": "finger_3_pad",
+          "phase_lower": 0.49648437500000003,
+          "phase_upper": 0.49755859375000006,
+          "registered_patch_count": 33,
+          "returned_witness_count": 16
+        }
+      ],
+      "fast_filter_reasons": [],
+      "fast_filter_status": "FAST_SURVIVE",
+      "final_contact_stop_phases": [
+        0.4989270386266094,
+        0.40410156250000007,
+        0.49755859375000006
+      ],
+      "forbidden_first_contact_guard_triggered": false,
+      "four_view_image": "survivor_a07_o21_00_p022_four_views.png",
+      "height_search_reason": "",
+      "height_search_status": "OFFLINE_SAMPLED_HAND_HEIGHT_FEASIBLE_AT_PROJECTED_Z",
+      "minimum_nonallowed_surface_clearance_m": null,
+      "minimum_table_clearance_link": "f1Link3",
+      "minimum_table_clearance_m": 0.010019282917523076,
+      "minimum_table_clearance_stage": "FINGER_1_CLOSURE_0313",
+      "nonallowed_surface_gate": "COLLISION_FREE_BINARY_DISTANCE_NOT_YET_REPORTED",
+      "pregrasp_closure_phases": [
+        0.0,
+        0.2,
+        0.2
+      ],
+      "projected_handbase_world_z_m": 0.6406753206850175,
+      "three_contact_count": 3
+    }
+  ]
+}

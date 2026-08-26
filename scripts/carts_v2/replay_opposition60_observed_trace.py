@@ -16,7 +16,8 @@ from kcg_connector.grasp.carts_v2.observed_state_replay import (
 )
 ROOT = Path(__file__).resolve().parents[2]
 OBJECT_B = "te_deutsch_d38999_26fj35pn_step"
-EXPECTED_CONFIG = ROOT / "src/kcg_connector/config/carts_nailfree_height_projected.yaml"
+EXPECTED_CONFIGS = {ROOT / "src/kcg_connector/config/carts_nailfree_height_projected.yaml",
+                    ROOT / "src/kcg_connector/config/carts_surface_v2_fast6h.yaml"}
 EVALUATOR_SOURCE = (ROOT / "src/kcg_connector/kcg_connector/grasp/carts_v2/"
                     "observed_state_replay.py")
 def _arguments() -> argparse.Namespace:
@@ -85,7 +86,7 @@ def _replay(trace_path: Path, report: dict) -> None:
              "trace identity or authorization boundary changed")
     config_row = (trace.get("evidence_binding") or {}).get("config") or {}
     config_path = _resolve(config_row.get("path", ""))
-    _require(config_path == EXPECTED_CONFIG.resolve() and config_path.is_file()
+    _require(config_path in {path.resolve() for path in EXPECTED_CONFIGS} and config_path.is_file()
              and _sha256(config_path) == config_row.get("sha256"),
              "trace-bound configuration hash changed")
     report["evidence_binding"]["config"] = {

@@ -20,6 +20,7 @@ EVALUATOR = (ROOT / "src/kcg_connector/kcg_connector/grasp/carts_v2/"
              "observed_state_replay.py")
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--config", type=Path, default=CONFIG)
     parser.add_argument("--trace", required=True, type=Path)
     parser.add_argument("--initial-trace", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
@@ -61,7 +62,7 @@ def _bound(binding: dict, name: str, expected: Path) -> None:
     _require(_resolve(row.get("path", "")) == expected.resolve()
              and expected.is_file() and row.get("sha256") == _sha256(expected),
              f"trace-bound {name} path or hash changed")
-def _verify(trace: dict, initial_path: Path) -> tuple[list[dict], dict, Path]:
+def _verify(trace: dict, initial_path: Path, config: Path) -> tuple[list[dict], dict, Path]:
     controller = trace.get("controller") or {}
     controller_complete = bool(
         trace.get("status") == "FIRST_FINGER_CONTROLLER_TRACE_COMPLETE"
@@ -84,7 +85,7 @@ def _verify(trace: dict, initial_path: Path) -> tuple[list[dict], dict, Path]:
                   trace.get("runtime_binding_accepted") is False)),
              "first-finger trace identity or evidence boundary changed")
     binding = trace.get("evidence_binding") or {}
-    for name, path in (("runner_source", RUNNER), ("config", CONFIG),
+    for name, path in (("runner_source", RUNNER), ("config", config),
                        ("initial_trace", initial_path)):
         _bound(binding, name, path)
     plan_row = binding.get("contact_endpoint_plan") or {}
@@ -93,7 +94,7 @@ def _verify(trace: dict, initial_path: Path) -> tuple[list[dict], dict, Path]:
              "trace-bound contact endpoint plan changed")
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     plan_binding = plan.get("evidence_binding") or {}
-    for name, path in (("runner_source", RUNNER), ("config", CONFIG),
+    for name, path in (("runner_source", RUNNER), ("config", config),
                        ("evaluator_source", EVALUATOR)):
         _bound(plan_binding, name, path)
     execution = float(plan.get("execution_target_rad", math.nan))
@@ -119,14 +120,14 @@ def _verify(trace: dict, initial_path: Path) -> tuple[list[dict], dict, Path]:
     return samples, plan, plan_path
 def _minimum(current, value):
     return value if current is None else min(current, value)
-def _evaluate(trace: dict, report: dict, initial_path: Path) -> None:
-    samples, plan, plan_path = _verify(trace, initial_path)
+def _evaluate(trace: dict, report: dict, initial_path: Path, config: Path) -> None:
+    samples, plan, plan_path = _verify(trace, initial_path, config)
     report["evidence_binding"].update({name: {"path": str(path), "sha256": _sha256(path)}
-        for name, path in (("runner", RUNNER), ("config", CONFIG),
+        for name, path in (("runner", RUNNER), ("config", config),
                           ("initial_trace", initial_path))})
     report["evidence_binding"]["contact_endpoint_plan"] = {
         "path": str(plan_path), "sha256": _sha256(plan_path)}
-    inputs = load_v2_inputs(ROOT, config_path=CONFIG, object_id=OBJECT_B)
+    inputs = load_v2_inputs(ROOT, config_path=config, object_id=OBJECT_B)
     evaluator, states = ObservedHandStateEvaluator(inputs), [_state(row) for row in samples]
     minima = {"table_m": None, "self_m": None, "non_task_m": None}
     safety_failures = []
@@ -207,7 +208,9 @@ def _evaluate(trace: dict, report: dict, initial_path: Path) -> None:
     false_proxy = bool(trace.get("controller", {}).get("contact_targets_rad")
                        and (physx_count == 0 or not contacts["finger_1_pad"]))
     proximity_only = bool(endpoint_timeout and endpoint_proximity and physx_count == 0)
-    status = ("SEMANTICALLY_INVALID_FORBIDDEN_FIRST_CONTACT" if forbidden_first else
+    unresolved_boundary = bool(forbidden_first and not full_failures and physx_count == 0)
+    status = ("SEMANTIC_PROXIMITY_BOUNDARY_UNRESOLVED" if unresolved_boundary else
+              "SEMANTICALLY_INVALID_FORBIDDEN_FIRST_CONTACT" if forbidden_first else
               "NONEXECUTABLE_ENDPOINT_OVERSHOOT" if endpoint_overshoot else
               "FALSE_CONTACT_PROXY" if false_proxy else
               "NO_PHYSX_CONTACT_AT_LAST_SEMANTIC_VALID_ENDPOINT" if proximity_only else
@@ -237,7 +240,9 @@ def _evaluate(trace: dict, report: dict, initial_path: Path) -> None:
                                  "observed_position_range_rad": actual_ranges,
                                  "not_commanded_pass": other_idle},
         "truth_boundary_pass": truth,
-        "classification_reason": ("forbidden surface became first or the nonexecutable bound was crossed"
+        "classification_reason": ("HARD entered the offline proximity band without mesh intersection or PhysX contact"
+                                  if unresolved_boundary else
+                                  "forbidden surface became first or the nonexecutable bound was crossed"
                                   if forbidden_first or endpoint_overshoot else
                                   "joint-side contact proxy had no PhysX/exact TASK contact"
                                   if false_proxy else "all offline gates passed" if accepted
@@ -247,6 +252,7 @@ def main() -> int:
     args = _arguments()
     trace_path, initial_path, output = map(
         _resolve, (args.trace, args.initial_trace, args.output))
+    config = _resolve(args.config)
     _require(not output.exists(), f"refusing to overwrite evidence: {output}")
     output.parent.mkdir(parents=True, exist_ok=True)
     report = {"schema_version": "carts_opposition60_first_finger_evaluation_v1",
@@ -262,7 +268,7 @@ def main() -> int:
         "errors": []}
     try:
         trace = json.loads(trace_path.read_text(encoding="utf-8"))
-        _evaluate(trace, report, initial_path)
+        _evaluate(trace, report, initial_path, config)
     except Exception as error:
         report["errors"].append({"type": type(error).__name__, "message": str(error),
                                  "traceback": traceback.format_exc()})

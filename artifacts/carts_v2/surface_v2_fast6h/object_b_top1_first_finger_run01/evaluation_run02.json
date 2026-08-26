@@ -1,0 +1,247 @@
+{
+  "accepted_first_finger_contact_pass": false,
+  "classification_reason": "HARD entered the offline proximity band without mesh intersection or PhysX contact",
+  "contact_confirmed_indices": [],
+  "contact_settle_indices": [],
+  "endpoint_indices": [
+    338,
+    339,
+    340,
+    341,
+    342,
+    343,
+    344,
+    345,
+    346,
+    347,
+    348,
+    349,
+    350,
+    351,
+    352,
+    353,
+    354,
+    355,
+    356,
+    357,
+    358,
+    359,
+    360,
+    361,
+    362,
+    363,
+    364,
+    365,
+    366,
+    367,
+    368,
+    369,
+    370,
+    371,
+    372,
+    373,
+    374,
+    375,
+    376,
+    377,
+    378,
+    379,
+    380,
+    381,
+    382,
+    383,
+    384,
+    385,
+    386,
+    387,
+    388,
+    389,
+    390,
+    391,
+    392,
+    393,
+    394,
+    395,
+    396,
+    397
+  ],
+  "errors": [],
+  "evidence_binding": {
+    "config": {
+      "path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/config/carts_surface_v2_fast6h.yaml",
+      "sha256": "fa04db98c2a59b40ce823ff271876652cc0fb32184bdbf6a734107e152c3101c"
+    },
+    "contact_endpoint_plan": {
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/object_b_top1_endpoint_run02/endpoint_plan.json",
+      "sha256": "4864fc6eec4275a8d7315e650b76512039bc6eba8aa6040dd74568f790b3b22f"
+    },
+    "evaluation_source": {
+      "path": "/home/noob/WorkPlace/kcgtest1/scripts/carts_v2/evaluate_opposition60_first_finger_trace.py",
+      "sha256": "26a74424f0b4aa264759cb53286cd375633859ee6ad7c43ee855ec20f8b652dd"
+    },
+    "evaluator_source": {
+      "path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/kcg_connector/grasp/carts_v2/observed_state_replay.py",
+      "sha256": "316af0e7d882a6f284067d3387a8f05f55fd81196f1ff9262f93a4819dfd8d45"
+    },
+    "initial_trace": {
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/object_b_top1_initial_run01/initial_penetration.json",
+      "sha256": "04b3603c4da3f7b8fb92e9a599023997bcd562a2a3eaa6b686944d5e436ccd2e"
+    },
+    "runner": {
+      "path": "/home/noob/WorkPlace/kcgtest1/scripts/carts_v2/run_opposition60_local_contact.py",
+      "sha256": "1f1cef1366930b15fbf8905dfce720e6b8a936146127bf3cc25c2f9ab3952fdf"
+    },
+    "trace": {
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/object_b_top1_first_finger_run01/first_finger.json",
+      "sha256": "87ead4b8d8bf63bb4afcae8c257a6f577208068346ea5d287da57074c3ea5312"
+    }
+  },
+  "formal_dynamic_pass": false,
+  "full_contact_evaluation_indices": [
+    337,
+    338,
+    339,
+    340,
+    341,
+    342,
+    343,
+    344,
+    345,
+    346,
+    347,
+    348,
+    349,
+    350,
+    351,
+    352,
+    353,
+    354,
+    355,
+    356,
+    357,
+    358,
+    359,
+    360,
+    361,
+    362,
+    363,
+    364,
+    365,
+    366,
+    367,
+    368,
+    369,
+    370,
+    371,
+    372,
+    373,
+    374,
+    375,
+    376,
+    377,
+    378,
+    379,
+    380,
+    381,
+    382,
+    383,
+    384,
+    385,
+    386,
+    387,
+    388,
+    389,
+    390,
+    391,
+    392,
+    393,
+    394,
+    395,
+    396,
+    397
+  ],
+  "geometry": {
+    "all_cycles_safe": false,
+    "full_evaluation_failure_indices": [],
+    "minimum_clearances": {
+      "non_task_m": 0.0011120218420376082,
+      "self_m": 0.0018872995606855362,
+      "table_m": 0.010016151927865008
+    },
+    "safety_failure_indices": []
+  },
+  "hardware_authorized": false,
+  "hold_indices": [],
+  "object_maximum_translation_from_initial_m": 1.3493575361575808e-07,
+  "object_motion_at_most_1mm": true,
+  "offline_post_run_only": true,
+  "online_control_use_allowed": false,
+  "physx": {
+    "engine_health_pass": true,
+    "hand_object_record_count": 0,
+    "trace_contact_total": 0
+  },
+  "research_dynamic_pass": false,
+  "runtime_binding_accepted": false,
+  "safety_evaluation_count": 398,
+  "sample_count": 398,
+  "schema_version": "carts_opposition60_first_finger_evaluation_v1",
+  "second_third_fingers": {
+    "not_commanded_pass": true,
+    "observed_position_range_rad": {
+      "f2j1": 0.005709946155548096,
+      "f2j2": 0.005722939968109131,
+      "f3j2": 0.0059635937213897705,
+      "f3j3": 0.005957365036010742
+    },
+    "target_range_rad": {
+      "f2j1": 0.0,
+      "f3j2": 0.0
+    }
+  },
+  "status": "SEMANTIC_PROXIMITY_BOUNDARY_UNRESOLVED",
+  "task_contact": {
+    "all_60_hold_samples_have_finger_1_contact": false,
+    "contact_indices_by_finger": {
+      "finger_1_pad": [
+        387,
+        388,
+        389,
+        390,
+        391,
+        392,
+        393,
+        394
+      ],
+      "finger_2_pad": [],
+      "finger_3_pad": []
+    },
+    "endpoint_has_predicted_contact_proximity": true,
+    "first_contacts": [
+      {
+        "finger": "finger_1_pad",
+        "motion_compatible": true,
+        "sample_index": 387
+      }
+    ],
+    "forbidden_first_rows": [
+      {
+        "finger": "finger_1_pad",
+        "sample_index": 395
+      },
+      {
+        "finger": "finger_1_pad",
+        "sample_index": 396
+      },
+      {
+        "finger": "finger_1_pad",
+        "sample_index": 397
+      }
+    ],
+    "motion_compatible_first_contact_indices": [
+      387
+    ],
+    "nonexecutable_endpoint_overshoot_indices": []
+  },
+  "truth_boundary_pass": true
+}

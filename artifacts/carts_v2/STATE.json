@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T10:14:10Z",
+  "updated_at_utc": "2026-08-26T10:38:25Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T15:16:26Z",
   "branch": "carts-grasp-surface-v2-fast6h-20260826",
@@ -8,7 +8,7 @@
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "SURFACE_V2_OBJECT_B_TOP1_FIRST_FINGER_ISAAC",
+  "current_milestone": "SURFACE_V2_FEATURE_AWARE_FAST_SEARCH",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -84,7 +84,20 @@
     "top3_first_finger_geometry_equivalent": true,
     "top3_first_finger_primary_before_hard_margin_m": 5.559244836716472e-9,
     "top3_region_roles": "PRIMARY_ONLY_SECONDARY_VALUE_NOT_YET_OBSERVED",
-    "isaac_started_in_current_window": false,
+    "isaac_started_in_current_window": true,
+    "fixed_top3_invalidated_as_equivalent_first_finger_boundary_family": true,
+    "fixed_top1_first_finger_dynamic": {
+      "physics_time_s": 3.3166666666666664,
+      "physics_step_count": 398,
+      "maximum_f1j2_speed_rad_s": 0.164896041,
+      "maximum_absolute_effort_nm": 0.037168879,
+      "maximum_mimic_position_error_rad": 0.000370443,
+      "physx_hand_object_contact_count": 0,
+      "object_maximum_translation_m": 1.3493575361575808e-07,
+      "offline_status": "UNRESOLVED_PRIMARY_HARD_BOUNDARY_WITH_NO_PHYSX_CONTACT",
+      "trace_path": "artifacts/carts_v2/surface_v2_fast6h/object_b_top1_first_finger_run01/first_finger.json",
+      "evaluation_path": "artifacts/carts_v2/surface_v2_fast6h/object_b_top1_first_finger_run01/evaluation_run02.json"
+    },
     "three_finger_contact": false,
     "object_left_table": false,
     "lift_height_m": 0.0,
@@ -136,8 +149,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": false,
-    "scope": "CLOSED_UNTIL_SURFACE_V2_THREE_ROLE_SEMANTICS_AUDIT_AND_CANDIDATE_REEVALUATION",
-    "reason": "OLD_BINARY_OBJECT_SURFACE_SEMANTICS_SUPERSEDED_BY_USER_CONFIRMED_PRIMARY_SECONDARY_HARD_ROLES"
+    "scope": "CLOSED_UNTIL_FEATURE_AWARE_SEARCH_RETURNS_A_NON_BOUNDARY_EXACT_CANDIDATE",
+    "reason": "FIXED_TOP3_SHARE_ONE_FIRST_FINGER_BOUNDARY_GEOMETRY_AND_TOP1_PRODUCED_NO_PHYSX_CONTACT"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,

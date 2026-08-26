@@ -68,14 +68,14 @@ def _binding(path: Path) -> dict[str, str]:
     return {"path": str(path.resolve()), "sha256": _sha256(path)}
 
 
-def plan_endpoint(task_path: Path) -> dict:
+def plan_endpoint(task_path: Path, config_path: Path = CONFIG) -> dict:
     task = _load(task_path)
     anchor = task["selected_geometric_anchor"]
     row = task["task_and_bounded_ik"][0]
     survivor = task["survivor_candidates"][0]
     object_id = anchor["object_id"]
     palm_angle_deg = float(task["requested_palm_angle_deg"])
-    inputs = load_v2_inputs(ROOT, config_path=CONFIG, object_id=object_id)
+    inputs = load_v2_inputs(ROOT, config_path=config_path, object_id=object_id)
     _require(
         anchor["candidate_id"] == row["candidate_id"] == survivor["candidate_id"]
         and anchor["object_id"] == survivor["object_id"] == object_id
@@ -84,7 +84,7 @@ def plan_endpoint(task_path: Path) -> dict:
         and abs(float(anchor["palm_configuration_deg"]) - palm_angle_deg) < 1e-9
         and task["survivor_count"] == 1
         and len(task["task_and_bounded_ik"]) == 1
-        and task["config_sha256"] == _sha256(CONFIG),
+        and task["config_sha256"] == _sha256(config_path),
         "opposition 45-to-75-degree survivor task identity changed",
     )
     dynamic = inputs.config.section("dynamic")
@@ -197,8 +197,11 @@ def plan_endpoint(task_path: Path) -> dict:
     ), "a forbidden object surface became first before the execution endpoint")
     endpoint_exact = endpoint["exact"]
     witness = endpoint_exact["task_grip_surface_by_finger"][PAD_NAME]
-    predicted_witness = semantic_rows[0]["exact"][
-        "task_grip_surface_by_finger"][PAD_NAME]
+    entry = next((state for state in states[:endpoint_index + 1]
+                  if state["exact"]["task_grip_surface_by_finger"][PAD_NAME][
+                      "first_contact_from_previous_state"] is True
+                  and state["exact"]["task_grip_surface_by_finger"][PAD_NAME][
+                      "first_contact_motion_compatible"] is True), None)
     _require(
         endpoint_exact["fail_closed"] is False
         and witness["task_grip_surface_contact"] is True
@@ -206,11 +209,8 @@ def plan_endpoint(task_path: Path) -> dict:
         and witness["full_object_intersecting"] is False,
         "selected endpoint lacks an unambiguous finger-1 TASK witness",
     )
-    _require(
-        predicted_witness["first_contact_from_previous_state"] is True
-        and predicted_witness["first_contact_motion_compatible"] is True,
-        "predicted contact entry is not motion compatible",
-    )
+    _require(entry is not None, "no motion-compatible contact entry precedes endpoint")
+    entry_witness = entry["exact"]["task_grip_surface_by_finger"][PAD_NAME]
     safe_prefix = states[:first_intersection]
     grid_bytes = np.asarray([row["q_rad"] for row in states], dtype="<f8").tobytes()
     surfaces = {
@@ -267,14 +267,14 @@ def plan_endpoint(task_path: Path) -> dict:
         "execution_mimic_error_rad_by_joint": endpoint_exact[
             "mimic_error_rad_by_joint"],
         "motion_compatible_entry_witness": {
-            "q_rad": float(semantic_rows[0]["q_rad"]),
-            "first_contact_from_previous_state": predicted_witness[
+            "q_rad": float(entry["q_rad"]),
+            "first_contact_from_previous_state": entry_witness[
                 "first_contact_from_previous_state"],
-            "first_contact_motion_compatible": predicted_witness[
+            "first_contact_motion_compatible": entry_witness[
                 "first_contact_motion_compatible"],
-            "object_allowed_face_index": predicted_witness[
+            "object_allowed_face_index": entry_witness[
                 "object_allowed_face_index"],
-            "hand_source_face_index": predicted_witness[
+            "hand_source_face_index": entry_witness[
                 "hand_source_face_index"],
         },
         "path_minimum_table_clearance_m": _minimum(
@@ -306,7 +306,7 @@ def plan_endpoint(task_path: Path) -> dict:
             "sha256": inputs.object_contract.model.provenance.source_sha256,
         },
         "evidence_binding": {
-            "task_ik": _binding(task_path), "config": _binding(CONFIG),
+            "task_ik": _binding(task_path), "config": _binding(config_path),
             "builder_source": _binding(Path(__file__)),
             "evaluator_source": _binding(EVALUATOR), "runner_source": _binding(RUNNER),
         },
@@ -315,6 +315,7 @@ def plan_endpoint(task_path: Path) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--config", type=Path, default=CONFIG)
     parser.add_argument("--task-report", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
@@ -322,7 +323,7 @@ def main() -> int:
     _require(task_path.is_file(), f"task report is missing: {task_path}")
     output = args.output.resolve()
     _require(not output.exists(), f"refusing to overwrite evidence: {output}")
-    report = plan_endpoint(task_path)
+    report = plan_endpoint(task_path, args.config.resolve())
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({"output": str(output), "status": report["status"],

@@ -671,3 +671,11 @@
 - Top-3全部只使用PRIMARY区域，不能据此宣称SECONDARY已提高抓取成功；anchor2仅名义可行，最差误差余量`0.1060`。
 - Top-3第一指几何等价，PRIMARY领先HARD只有约`5.56 nm`；只运行一次Top-1第一指有界诊断，HARD首接触是绝对上界，不额外硬压。
 - 只有关节侧代理、PhysX实际接触和事后PRIMARY/SECONDARY原始网格语义同时通过，才允许增加三指与stage-local物理滑台。
+
+## 2026-08-26T10:38:25Z — 固定Top-3边界族淘汰并进入特征感知快搜
+
+- 分类：`ROOT_CAUSE_REVIEW + ROLLBACK_TO_FEATURE_AWARE_FAST_SEARCH`；不改变Surface V2语义、对象物性、12 N、3 rad/s、50 mm、2 s或真值隔离。
+- 固定Top-1第一指在Isaac真实推进398步/3.317 s；最大速度0.164896 rad/s、最大绝对受力0.037169 N·m，手—桌与手—物PhysX接触均为0，对象仅移动0.135 µm。
+- 事后原始网格在安全端点附近先出现PRIMARY运动相容近接，随后因对象微小自由漂移落入PRIMARY/HARD纳米级边界；该离线语义失败关闭不等于真实禁抓碰撞，真实PhysX也没有发生接触。
+- canonical Top-3共用相同第一指位姿、预构型与约5.56 nm边界余量，因此一次动态区分足以淘汰这一等价第一指族；不逐个重复Isaac，也不靠更深闭合跨越HARD边界。
+- 下一步按用户预登记的7×72×3×27完整便宜覆盖进行FAST_RANK，边界结果保留为`UNRESOLVED_BOUNDARY`，最多24个非边界候选进入精查。
