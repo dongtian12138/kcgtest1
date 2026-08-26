@@ -1,6 +1,6 @@
 {
   "schema_version": "opposition60_isaac_manifest_v1",
-  "updated_at_utc": "2026-08-26T03:03:44Z",
+  "updated_at_utc": "2026-08-26T03:41:35Z",
   "execution_window": {
     "id": "OPPOSITION60_ISAAC_12H",
     "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
@@ -61,6 +61,25 @@
       "residual_vertex64": "STATIC_GEOMETRY_ASSET_CANDIDATE_ZERO_REMOVED_NAIL_OCCUPANCY_ALL_P95_GATES_PASS",
       "residual_vertex64_manifest_sha256": "a6e50285c52b60818c3f1bb1f04829ce96382d01d2cc06fc4b124a2e266eafc0",
       "residual_vertex64_runtime_binding_accepted": false,
+      "full_handarm_isaac_import_gate_pass": true,
+      "runtime_urdf_binding_sha256": "dea7256f4385b2fc67fc904554cd557f000d83fcecb4241ea3efc66fb021d92b",
+      "full_handarm_runtime_urdf_sha256": "f3def94b7b215387dc718838e0c63d2d24936409bd00169aaba4dac953359fae",
+      "local_hand_runtime_urdf_sha256": "c7e67c5fc66d74834d83c1bcaba7ae8df768746f7e12d5e1a71910c421cfc015",
+      "full_handarm_root_usd_sha256": "ca9fb12f62b2a19423278d898205ade81cf2203fdb662e7cf9e5d6600486be68",
+      "runtime_import_readback_path": "artifacts/carts_v2/opposition60_isaac/runtime_import_readback_run05.json",
+      "runtime_import_readback_sha256": "861787bc8fe11786cb4ea86eb075c90fbbf3cab440279a7af75a7d7c004e4576",
+      "runtime_import_gate_counts": {
+        "runtime_dof": 15,
+        "usd_mimic": 4,
+        "terminal_compound_hulls": 192,
+        "scene_rigid_bodies": 17,
+        "scene_articulations": 1,
+        "scene_collision_shapes": 206,
+        "capacity_warning_count": 0,
+        "physx_error_count": 0
+      },
+      "runtime_import_configured_capacity_found_lost_and_total": [8192, 16384],
+      "runtime_import_observed_peak_found_lost_and_total": [128, 0],
       "isaac_object_or_grasp_started": false
     }
   },
@@ -233,5 +252,5 @@
       "isaac_started": false
     }
   },
-  "claim_scope": "QP60_ANCHOR_A02_PATH_SAFE_THREE_CONTACT_NOMINAL_TASK_BOUNDED_IK_AND_STATIC_COLLISION_ASSET_PASS; NO_RUNTIME_IMPORT_OR_DYNAMIC RESULT"
+  "claim_scope": "QP60_ANCHOR_A02_PATH_SAFE_THREE_CONTACT_NOMINAL_TASK_BOUNDED_IK_AND_FULL_HANDARM_ISAAC_IMPORT_PASS; NO_OBJECT_CONTACT_CLOSURE_LIFT_OR_DYNAMIC_RESULT"
 }

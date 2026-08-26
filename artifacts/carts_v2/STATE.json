@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T03:03:44Z",
+  "updated_at_utc": "2026-08-26T03:41:35Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T10:17:59Z",
   "branch": "carts-grasp-opposition60-isaac-20260826",
@@ -8,7 +8,7 @@
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "OBJECT_B_COLLISION_RUNTIME_IMPORT_AND_LOCAL_PRECHECK",
+  "current_milestone": "OBJECT_B_LOCAL_HAND_ASSET_IMPORT_AND_INITIAL_PENETRATION",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -103,7 +103,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "LOCAL_HAND_OBJECT_ONLY_AFTER_RUNTIME_ASSET_GATES",
-    "reason": "STATIC_ASSET_AND_PATH_SAFE_THREE_CONTACT_PASS; RUNTIME_IMPORT_INITIAL_PENETRATION_OPPOSITION60_REPLAY_PHYSX_HEALTH_PENDING"
+    "reason": "FULL_HANDARM_ISAAC_IMPORT_PASS; LOCAL_HAND_ASSET_IMPORT_INITIAL_PENETRATION_OPPOSITION60_REPLAY_AND_OBJECT_LOADED_PHYSX_HEALTH_PENDING"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1344,14 +1344,14 @@
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
   "opposition60_isaac": {
-    "route_status": "ANCHOR_A02_NOMINAL_TASK_IK_AND_STATIC_COLLISION_ASSET_PASS_PENDING_RUNTIME_GATES_AND_DYNAMIC",
+    "route_status": "ANCHOR_A02_NOMINAL_TASK_IK_AND_FULL_HANDARM_ISAAC_IMPORT_PASS_PENDING_LOCAL_OBJECT_GATES_AND_DYNAMIC",
     "primary_object": "te_deutsch_d38999_26fj35pn_step",
     "transfer_object": "current_d38999_26kj61sn_public_spec",
     "opposition_palm_range_deg": [45.0, 75.0],
     "all_27_preshapes_required": true,
     "contact_conditioned_closure_required": true,
     "multi_witness_contact_required": true,
-    "research_collision_representation": "STATIC_VALIDATED_COMPOUND_CONVEX_PENDING_RUNTIME_BINDING",
+    "research_collision_representation": "STATIC_VALIDATED_COMPOUND_CONVEX_FULL_HANDARM_IMPORT_PASS_PENDING_LOCAL_OBJECT_RUNTIME_GATES",
     "postrun_exact_mesh_replay_required": true,
     "compound_convex_accepted": false,
     "compound_convex_attempts": {
@@ -1365,7 +1365,18 @@
       "residual_vertex64_removed_nail_occupied_count_f1_f2_f3": [0, 0, 0],
       "residual_vertex64_maximum_hull_vertices": 64,
       "residual_vertex64_manifest_sha256": "a6e50285c52b60818c3f1bb1f04829ce96382d01d2cc06fc4b124a2e266eafc0",
-      "residual_vertex64_runtime_binding_accepted": false
+      "residual_vertex64_runtime_binding_accepted": false,
+      "full_handarm_isaac_import_gate_pass": true,
+      "full_handarm_runtime_urdf_sha256": "f3def94b7b215387dc718838e0c63d2d24936409bd00169aaba4dac953359fae",
+      "local_hand_runtime_urdf_sha256": "c7e67c5fc66d74834d83c1bcaba7ae8df768746f7e12d5e1a71910c421cfc015",
+      "full_handarm_root_usd_sha256": "ca9fb12f62b2a19423278d898205ade81cf2203fdb662e7cf9e5d6600486be68",
+      "runtime_import_readback_sha256": "861787bc8fe11786cb4ea86eb075c90fbbf3cab440279a7af75a7d7c004e4576",
+      "runtime_import_dof_mimic_terminal_hull_counts": [15, 4, 192],
+      "runtime_import_scene_rigid_articulation_collision_shape_counts": [17, 1, 206],
+      "runtime_import_capacity_configured_found_total": [8192, 16384],
+      "runtime_import_capacity_observed_peak_found_total": [128, 0],
+      "runtime_import_capacity_warning_and_physx_error_counts": [0, 0],
+      "runtime_import_object_loaded": false
     },
     "method_fix_targeted_tests_passed": 33,
     "method_fix_targeted_test_duration_s": 28.25,
@@ -1491,11 +1502,11 @@
       "evidence_scope": "DISCRETE_CONTROL_STEPS_NOT_CONTINUOUS_COLLISION_PROOF"
     },
     "qp60_static_positive_control_pass": true,
-    "local_hand_dynamic_status": "NOT_STARTED",
+    "local_hand_dynamic_status": "ASSET_IMPORT_PENDING_INITIAL_PENETRATION_NO_OBJECT_RUN_YET",
     "full_arm_dynamic_status": "NOT_STARTED",
     "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
   },
-  "evidence_level": "QP60_PATH_SAFE_THREE_CONTACT_NOMINAL_TASK_BOUNDED_IK_AND_STATIC_COLLISION_ASSET_PASS_NO_RUNTIME_OR_DYNAMIC_RESULT",
+  "evidence_level": "QP60_PATH_SAFE_THREE_CONTACT_NOMINAL_TASK_BOUNDED_IK_AND_FULL_HANDARM_ISAAC_IMPORT_PASS_NO_OBJECT_CONTACT_OR_DYNAMIC_RESULT",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
@@ -1557,7 +1568,7 @@
     "opposition60_second_supervisor_review": "APPROVE_NO_MUST_FIX"
   },
   "blockers": [
-    "NAILFREE_DYNAMIC_COLLISION_AND_INERTIA_RUNTIME_BINDING_NOT_ACCEPTED",
+    "LOCAL_HAND_OBJECT_INITIAL_PENETRATION_AND_OPPOSITION60_REPLAY_NOT_ACCEPTED",
     "QP60_ANCHOR_A01_THREE_CONTACT_STATE_CONFLICTS_WITH_TABLE_SAFE_HEIGHT",
     "NO_RESEARCH_EXECUTABLE_CANDIDATE_BOUND"
   ]

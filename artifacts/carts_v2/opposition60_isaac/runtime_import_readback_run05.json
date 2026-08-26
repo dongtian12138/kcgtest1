@@ -1,0 +1,556 @@
+{
+  "errors": [],
+  "formal_dynamic_pass": false,
+  "hardware_authorized": false,
+  "import_process_physx": {
+    "backend": {
+      "actual_data_backend": "torch",
+      "broadphase_type": "GPU",
+      "gpu_dynamics_enabled": true,
+      "gpu_pipeline": true,
+      "gpu_sim": true,
+      "pass": true,
+      "physics_context_device": "cuda:0",
+      "requested_device": "cuda:0",
+      "world_device": "cuda:0"
+    },
+    "capacity_pass": true,
+    "log": {
+      "all_physx_warning_lines": [],
+      "audit_byte_count": 1391544,
+      "capacity_warning_count": 0,
+      "capacity_warning_lines": [],
+      "cutoff_marker_seen": true,
+      "path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260826_033722.log",
+      "physx_error_lines": [],
+      "requested_found_lost_peak": 0,
+      "requested_total_peak": 0,
+      "scan_complete": true,
+      "sha256": "0c9abfbcbff88aee15be53bbc81249be040b0635b340a01c5a5b145df9f03b2f"
+    },
+    "log_pass": true,
+    "statistics": {
+      "configured_gpu_found_lost_aggregate_pairs_capacity": 8192,
+      "configured_gpu_total_aggregate_pairs_capacity": 16384,
+      "observed_gpu_found_lost_aggregate_pairs_peak": 128,
+      "observed_gpu_total_aggregate_pairs_peak": 0,
+      "physx_statistics_read_failures": 0,
+      "physx_statistics_sample_count": 4,
+      "scene_counts": {
+        "aggregate_count": 1,
+        "articulation_count": 1,
+        "physx_collision_shape_count": 206,
+        "rigid_body_count": 17
+      }
+    }
+  },
+  "object_asset_loaded": false,
+  "readback": {
+    "default_prim": "/handarm_connector_no_nail",
+    "default_prim_pass": true,
+    "mimic": {
+      "evidence_source": "USD_SCHEMA",
+      "pass": true,
+      "usd_preserved": true,
+      "usd_rows": {
+        "f1j3": {
+          "applied_schemas": [
+            "PhysxJointAPI",
+            "NewtonMimicAPI",
+            "PhysicsDriveAPI:angular",
+            "PhysicsJointStateAPI:angular",
+            "IsaacJointAPI"
+          ],
+          "relationship_matches": true,
+          "relationship_targets": [
+            "/handarm_connector_no_nail/Physics/f1j2"
+          ],
+          "source": "f1j2"
+        },
+        "f2j2": {
+          "applied_schemas": [
+            "PhysxJointAPI",
+            "NewtonMimicAPI",
+            "PhysicsDriveAPI:angular",
+            "PhysicsJointStateAPI:angular",
+            "IsaacJointAPI"
+          ],
+          "relationship_matches": true,
+          "relationship_targets": [
+            "/handarm_connector_no_nail/Physics/f2j1"
+          ],
+          "source": "f2j1"
+        },
+        "f3j1": {
+          "applied_schemas": [
+            "PhysxJointAPI",
+            "NewtonMimicAPI",
+            "PhysicsDriveAPI:angular",
+            "PhysicsJointStateAPI:angular",
+            "IsaacJointAPI"
+          ],
+          "relationship_matches": true,
+          "relationship_targets": [
+            "/handarm_connector_no_nail/Physics/f1j1"
+          ],
+          "source": "f1j1"
+        },
+        "f3j3": {
+          "applied_schemas": [
+            "PhysxJointAPI",
+            "NewtonMimicAPI",
+            "PhysicsDriveAPI:angular",
+            "PhysicsJointStateAPI:angular",
+            "IsaacJointAPI"
+          ],
+          "relationship_matches": true,
+          "relationship_targets": [
+            "/handarm_connector_no_nail/Physics/f3j2"
+          ],
+          "source": "f3j2"
+        }
+      }
+    },
+    "nailfree_visuals": {
+      "links": {
+        "f1Link3": {
+          "expected_nailfree_visual_stem": "f1Link3_nailfree",
+          "mesh_paths": [
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_nailfree/f1Link3_nailfree"
+          ],
+          "pass": true
+        },
+        "f2Link2": {
+          "expected_nailfree_visual_stem": "f2Link2_nailfree",
+          "mesh_paths": [
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_nailfree/f2Link2_nailfree"
+          ],
+          "pass": true
+        },
+        "f3Link3": {
+          "expected_nailfree_visual_stem": "f3Link3_nailfree",
+          "mesh_paths": [
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_nailfree/f3Link3_nailfree"
+          ],
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "runtime_dof_count": 15,
+    "runtime_dof_names": [
+      "iiwa_joint_1",
+      "iiwa_joint_2",
+      "iiwa_joint_3",
+      "iiwa_joint_4",
+      "iiwa_joint_5",
+      "iiwa_joint_6",
+      "iiwa_joint_7",
+      "f1j1",
+      "f2j1",
+      "f3j1",
+      "f1j2",
+      "f2j2",
+      "f3j2",
+      "f1j3",
+      "f3j3"
+    ],
+    "runtime_dof_pass": true,
+    "terminal_collisions": {
+      "pass": true,
+      "per_terminal_link": {
+        "f1Link3": {
+          "collision_enabled_pass": true,
+          "count": 64,
+          "mesh_approximation_pass": true,
+          "names_match_bound_hulls": true,
+          "paths": [
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_00/f1Link3_compound_hull_00",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_01/f1Link3_compound_hull_01",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_02/f1Link3_compound_hull_02",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_03/f1Link3_compound_hull_03",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_04/f1Link3_compound_hull_04",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_05/f1Link3_compound_hull_05",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_06/f1Link3_compound_hull_06",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_07/f1Link3_compound_hull_07",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_08/f1Link3_compound_hull_08",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_09/f1Link3_compound_hull_09",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_10/f1Link3_compound_hull_10",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_11/f1Link3_compound_hull_11",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_12/f1Link3_compound_hull_12",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_13/f1Link3_compound_hull_13",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_14/f1Link3_compound_hull_14",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_15/f1Link3_compound_hull_15",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_16/f1Link3_compound_hull_16",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_17/f1Link3_compound_hull_17",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_18/f1Link3_compound_hull_18",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_19/f1Link3_compound_hull_19",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_20/f1Link3_compound_hull_20",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_21/f1Link3_compound_hull_21",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_22/f1Link3_compound_hull_22",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_23/f1Link3_compound_hull_23",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_24/f1Link3_compound_hull_24",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_25/f1Link3_compound_hull_25",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_26/f1Link3_compound_hull_26",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_27/f1Link3_compound_hull_27",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_28/f1Link3_compound_hull_28",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_29/f1Link3_compound_hull_29",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_30/f1Link3_compound_hull_30",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_31/f1Link3_compound_hull_31",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_32/f1Link3_compound_hull_32",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_33/f1Link3_compound_hull_33",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_34/f1Link3_compound_hull_34",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_35/f1Link3_compound_hull_35",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_36/f1Link3_compound_hull_36",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_37/f1Link3_compound_hull_37",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_38/f1Link3_compound_hull_38",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_39/f1Link3_compound_hull_39",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_40/f1Link3_compound_hull_40",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_41/f1Link3_compound_hull_41",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_42/f1Link3_compound_hull_42",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_43/f1Link3_compound_hull_43",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_44/f1Link3_compound_hull_44",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_45/f1Link3_compound_hull_45",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_46/f1Link3_compound_hull_46",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_47/f1Link3_compound_hull_47",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_48/f1Link3_compound_hull_48",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_49/f1Link3_compound_hull_49",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_50/f1Link3_compound_hull_50",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_51/f1Link3_compound_hull_51",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_52/f1Link3_compound_hull_52",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_53/f1Link3_compound_hull_53",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_54/f1Link3_compound_hull_54",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_55/f1Link3_compound_hull_55",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_56/f1Link3_compound_hull_56",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_57/f1Link3_compound_hull_57",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_58/f1Link3_compound_hull_58",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_59/f1Link3_compound_hull_59",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_60/f1Link3_compound_hull_60",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_61/f1Link3_compound_hull_61",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_62/f1Link3_compound_hull_62",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/f1Link3_compound_hull_63/f1Link3_compound_hull_63"
+          ]
+        },
+        "f2Link2": {
+          "collision_enabled_pass": true,
+          "count": 64,
+          "mesh_approximation_pass": true,
+          "names_match_bound_hulls": true,
+          "paths": [
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_00/f2Link2_compound_hull_00",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_01/f2Link2_compound_hull_01",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_02/f2Link2_compound_hull_02",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_03/f2Link2_compound_hull_03",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_04/f2Link2_compound_hull_04",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_05/f2Link2_compound_hull_05",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_06/f2Link2_compound_hull_06",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_07/f2Link2_compound_hull_07",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_08/f2Link2_compound_hull_08",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_09/f2Link2_compound_hull_09",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_10/f2Link2_compound_hull_10",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_11/f2Link2_compound_hull_11",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_12/f2Link2_compound_hull_12",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_13/f2Link2_compound_hull_13",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_14/f2Link2_compound_hull_14",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_15/f2Link2_compound_hull_15",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_16/f2Link2_compound_hull_16",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_17/f2Link2_compound_hull_17",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_18/f2Link2_compound_hull_18",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_19/f2Link2_compound_hull_19",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_20/f2Link2_compound_hull_20",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_21/f2Link2_compound_hull_21",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_22/f2Link2_compound_hull_22",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_23/f2Link2_compound_hull_23",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_24/f2Link2_compound_hull_24",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_25/f2Link2_compound_hull_25",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_26/f2Link2_compound_hull_26",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_27/f2Link2_compound_hull_27",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_28/f2Link2_compound_hull_28",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_29/f2Link2_compound_hull_29",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_30/f2Link2_compound_hull_30",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_31/f2Link2_compound_hull_31",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_32/f2Link2_compound_hull_32",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_33/f2Link2_compound_hull_33",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_34/f2Link2_compound_hull_34",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_35/f2Link2_compound_hull_35",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_36/f2Link2_compound_hull_36",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_37/f2Link2_compound_hull_37",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_38/f2Link2_compound_hull_38",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_39/f2Link2_compound_hull_39",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_40/f2Link2_compound_hull_40",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_41/f2Link2_compound_hull_41",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_42/f2Link2_compound_hull_42",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_43/f2Link2_compound_hull_43",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_44/f2Link2_compound_hull_44",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_45/f2Link2_compound_hull_45",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_46/f2Link2_compound_hull_46",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_47/f2Link2_compound_hull_47",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_48/f2Link2_compound_hull_48",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_49/f2Link2_compound_hull_49",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_50/f2Link2_compound_hull_50",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_51/f2Link2_compound_hull_51",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_52/f2Link2_compound_hull_52",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_53/f2Link2_compound_hull_53",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_54/f2Link2_compound_hull_54",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_55/f2Link2_compound_hull_55",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_56/f2Link2_compound_hull_56",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_57/f2Link2_compound_hull_57",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_58/f2Link2_compound_hull_58",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_59/f2Link2_compound_hull_59",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_60/f2Link2_compound_hull_60",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_61/f2Link2_compound_hull_61",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_62/f2Link2_compound_hull_62",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/f2Link2_compound_hull_63/f2Link2_compound_hull_63"
+          ]
+        },
+        "f3Link3": {
+          "collision_enabled_pass": true,
+          "count": 64,
+          "mesh_approximation_pass": true,
+          "names_match_bound_hulls": true,
+          "paths": [
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_00/f3Link3_compound_hull_00",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_01/f3Link3_compound_hull_01",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_02/f3Link3_compound_hull_02",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_03/f3Link3_compound_hull_03",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_04/f3Link3_compound_hull_04",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_05/f3Link3_compound_hull_05",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_06/f3Link3_compound_hull_06",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_07/f3Link3_compound_hull_07",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_08/f3Link3_compound_hull_08",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_09/f3Link3_compound_hull_09",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_10/f3Link3_compound_hull_10",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_11/f3Link3_compound_hull_11",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_12/f3Link3_compound_hull_12",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_13/f3Link3_compound_hull_13",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_14/f3Link3_compound_hull_14",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_15/f3Link3_compound_hull_15",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_16/f3Link3_compound_hull_16",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_17/f3Link3_compound_hull_17",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_18/f3Link3_compound_hull_18",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_19/f3Link3_compound_hull_19",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_20/f3Link3_compound_hull_20",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_21/f3Link3_compound_hull_21",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_22/f3Link3_compound_hull_22",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_23/f3Link3_compound_hull_23",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_24/f3Link3_compound_hull_24",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_25/f3Link3_compound_hull_25",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_26/f3Link3_compound_hull_26",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_27/f3Link3_compound_hull_27",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_28/f3Link3_compound_hull_28",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_29/f3Link3_compound_hull_29",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_30/f3Link3_compound_hull_30",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_31/f3Link3_compound_hull_31",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_32/f3Link3_compound_hull_32",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_33/f3Link3_compound_hull_33",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_34/f3Link3_compound_hull_34",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_35/f3Link3_compound_hull_35",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_36/f3Link3_compound_hull_36",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_37/f3Link3_compound_hull_37",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_38/f3Link3_compound_hull_38",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_39/f3Link3_compound_hull_39",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_40/f3Link3_compound_hull_40",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_41/f3Link3_compound_hull_41",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_42/f3Link3_compound_hull_42",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_43/f3Link3_compound_hull_43",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_44/f3Link3_compound_hull_44",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_45/f3Link3_compound_hull_45",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_46/f3Link3_compound_hull_46",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_47/f3Link3_compound_hull_47",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_48/f3Link3_compound_hull_48",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_49/f3Link3_compound_hull_49",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_50/f3Link3_compound_hull_50",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_51/f3Link3_compound_hull_51",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_52/f3Link3_compound_hull_52",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_53/f3Link3_compound_hull_53",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_54/f3Link3_compound_hull_54",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_55/f3Link3_compound_hull_55",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_56/f3Link3_compound_hull_56",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_57/f3Link3_compound_hull_57",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_58/f3Link3_compound_hull_58",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_59/f3Link3_compound_hull_59",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_60/f3Link3_compound_hull_60",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_61/f3Link3_compound_hull_61",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_62/f3Link3_compound_hull_62",
+            "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/f3Link3_compound_hull_63/f3Link3_compound_hull_63"
+          ]
+        }
+      },
+      "terminal_total": 192
+    },
+    "terminal_mass_properties": {
+      "comparison_tolerances": {
+        "com_abs_m": 1e-07,
+        "inertia_matrix_abs_kg_m2": 1e-09,
+        "mass_abs_kg": 1e-07
+      },
+      "links": {
+        "f1Link3": {
+          "center_of_mass_m": [
+            -0.016286153346300125,
+            -0.02043328620493412,
+            0.011998981237411499
+          ],
+          "com_max_error_m": 5.865419261397165e-10,
+          "diagonal_inertia_kg_m2": [
+            3.026944568773615e-06,
+            2.2763246306567453e-05,
+            2.4768565708654933e-05
+          ],
+          "inertia_matrix_max_error_kg_m2": 3.6099071052276416e-13,
+          "mass_error_kg": 6.106175079456655e-10,
+          "mass_kg": 0.05698505789041519,
+          "pass": true,
+          "path": "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3"
+        },
+        "f2Link2": {
+          "center_of_mass_m": [
+            -0.012067735195159912,
+            -0.023186329752206802,
+            -0.012000990100204945
+          ],
+          "com_max_error_m": 9.231010851540322e-10,
+          "diagonal_inertia_kg_m2": [
+            3.332797405164456e-06,
+            2.278918145748321e-05,
+            2.4488663257216103e-05
+          ],
+          "inertia_matrix_max_error_kg_m2": 7.541768384388033e-13,
+          "mass_error_kg": 6.52406545453843e-10,
+          "mass_kg": 0.05699728801846504,
+          "pass": true,
+          "path": "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2"
+        },
+        "f3Link3": {
+          "center_of_mass_m": [
+            -0.016286153346300125,
+            -0.02043328620493412,
+            0.011998981237411499
+          ],
+          "com_max_error_m": 5.865419261397165e-10,
+          "diagonal_inertia_kg_m2": [
+            3.026944568773615e-06,
+            2.2763246306567453e-05,
+            2.4768565708654933e-05
+          ],
+          "inertia_matrix_max_error_kg_m2": 3.6099071052276416e-13,
+          "mass_error_kg": 6.106175079456655e-10,
+          "mass_kg": 0.05698505789041519,
+          "pass": true,
+          "path": "/handarm_connector_no_nail/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3"
+        }
+      },
+      "pass": true
+    },
+    "usd_revolute_joint_count": 15,
+    "usd_revolute_joint_names": [
+      "f1j1",
+      "f1j2",
+      "f1j3",
+      "f2j1",
+      "f2j2",
+      "f3j1",
+      "f3j2",
+      "f3j3",
+      "iiwa_joint_1",
+      "iiwa_joint_2",
+      "iiwa_joint_3",
+      "iiwa_joint_4",
+      "iiwa_joint_5",
+      "iiwa_joint_6",
+      "iiwa_joint_7"
+    ],
+    "usd_revolute_joint_pass": true
+  },
+  "research_dynamic_pass": false,
+  "runtime_binding": {
+    "path": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/opposition60_isaac/runtime_handarm_connector_no_nail_residual_vertex64_20260826_run03/RUNTIME_URDF_BINDING.json",
+    "runtime_urdf": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/opposition60_isaac/runtime_handarm_connector_no_nail_residual_vertex64_20260826_run03/handarm_connector_no_nail.urdf",
+    "runtime_urdf_sha256": "f3def94b7b215387dc718838e0c63d2d24936409bd00169aaba4dac953359fae",
+    "sha256": "dea7256f4385b2fc67fc904554cd557f000d83fcecb4241ea3efc66fb021d92b",
+    "urdf_mimic": {
+      "f1j3": {
+        "multiplier": 1.0,
+        "offset": 0.0,
+        "source": "f1j2"
+      },
+      "f2j2": {
+        "multiplier": 1.0,
+        "offset": 0.0,
+        "source": "f2j1"
+      },
+      "f3j1": {
+        "multiplier": 1.0,
+        "offset": 0.0,
+        "source": "f1j1"
+      },
+      "f3j3": {
+        "multiplier": 1.0,
+        "offset": 0.0,
+        "source": "f3j2"
+      }
+    },
+    "urdf_mimic_pass": true,
+    "urdf_revolute_joint_count": 15
+  },
+  "runtime_binding_accepted": false,
+  "runtime_gates": {
+    "INITIAL_PENETRATION": false,
+    "ISAAC_IMPORT": true,
+    "OPPOSITION60_REPLAY": false,
+    "PHYSX_HEALTH": false
+  },
+  "schema_version": "carts_opposition60_isaac_import_readback_v1",
+  "status": "ISAAC_IMPORT_GATE_PASS",
+  "usd_layers": {
+    "layer_count": 9,
+    "payload_layers": [
+      {
+        "path": "payloads/Physics/mujoco.usda",
+        "sha256": "207f94708cd6b089bfd71f625ac2e131eb2f9237cc2615a77261865d87c636b8"
+      },
+      {
+        "path": "payloads/Physics/physics.usda",
+        "sha256": "d6fee4df0423b6b11cc40637717025446eb6cdb142729e9fe742b2d69c9b6351"
+      },
+      {
+        "path": "payloads/Physics/physx.usda",
+        "sha256": "337f91f291ac2df5c5d6485ad7cc6263b453f1c44f1148be74188c027b842e27"
+      },
+      {
+        "path": "payloads/base.usda",
+        "sha256": "b622e40bb4d842f7353a7d5bd6308a3726327a20d12c06a04d72a8760a055592"
+      },
+      {
+        "path": "payloads/geometries.usd",
+        "sha256": "157438e8e6951fa168336d77c23c6a621528d4d0a783ca7f75b02adcb641afbc"
+      },
+      {
+        "path": "payloads/instances.usda",
+        "sha256": "a0bddb8f9b43acca8d2a9bd15aec34b8ac9b9296581a2a09fc5d45234c5d96d8"
+      },
+      {
+        "path": "payloads/materials.usda",
+        "sha256": "59931f9dca45aa4487f3a1650176e597500de6c90291e6415ad2a317eca11665"
+      },
+      {
+        "path": "payloads/robot.usda",
+        "sha256": "aeabce834e474643436a12bed91bd33a73a1884a05e5e8c07e17cddbeba8a697"
+      }
+    ],
+    "root_usd": {
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/robot/handarm_connector_no_nail/handarm_connector_no_nail.usda",
+      "sha256": "ca9fb12f62b2a19423278d898205ade81cf2203fdb662e7cf9e5d6600486be68"
+    }
+  },
+  "versions": {
+    "isaac_app_version": "6.0.1",
+    "isaac_build_version": "110.1.2+production.326809.f9bf0dda.gl",
+    "urdf_importer": {
+      "extension_manifest": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/exts/isaacsim.asset.importer.urdf/config/extension.toml",
+      "extension_manifest_sha256": "1b3a308897943b7f191ef9fc52431fce5f02f4b39ae98eb1a6aca2f502a719fc",
+      "module_path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/exts/isaacsim.asset.importer.urdf/isaacsim/asset/importer/urdf/__init__.py",
+      "version": "3.11.2"
+    }
+  }
+}

@@ -575,3 +575,11 @@
 - 每删除一个命中凸块，只从它对应的保留无指甲真实表面补一个最大面积安全连通残差凸包；PhysX固定64顶点限制统一由quadric简化实现，不逐指调参。
 - 最终三末节各64块，删除区占据均为0；所有凸块凸、闭合、有限、正体积且不超过64顶点；全局、TASK_GRIP_SURFACE和60°桌面侧的9个p95门全部通过。
 - 该结果只升级为静态研究碰撞资产候选；运行时导入、初始穿透、60°重放和PhysX健康尚未执行，`runtime_binding_accepted=false`、动态与正式门继续关闭。
+
+## 2026-08-26T03:41:35Z — 复合凸资产只关闭Isaac运行时导入门
+
+- 分类：`MILESTONE_PROGRESSION + EVIDENCE_SCOPE_GUARD`；不改变无指甲几何、碰撞误差门、12 N、安全速度、50 mm、2 s或硬件授权。
+- 完整无指甲手臂USD在Isaac 6.0.1 GPU物理中推进3步；15个运行时DOF、4组USD mimic、三末节`64/64/64`个凸碰撞块和审计质量/质心/惯量均与绑定一致。
+- PhysX场景读回1个articulation、17个刚体和206个碰撞shape；found/lost与total容量为`8192/16384`，观测峰值`128/0`，容量警告和PhysX错误都为0。
+- 这只足以使`ISAAC_IMPORT=true`。对象B尚未加载，因此`INITIAL_PENETRATION=false`、`OPPOSITION60_REPLAY=false`、含对象`PHYSX_HEALTH=false`、`runtime_binding_accepted=false`；不宣称实际接触或抓举。
+- 采纳监督建议的最简单路线：从同一已替换碰撞/惯性的URDF树生成hand-only articulation，先固定handbase做初始穿透和60°逐指闭合，通过后才进行受控handbase抓举；这不证明完整机械臂路径。
