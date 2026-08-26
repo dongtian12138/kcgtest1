@@ -10,6 +10,9 @@ from pathlib import Path
 import traceback
 
 import numpy as np
+from kcg_connector.grasp.carts_v2.b0_surface_semantics import (
+    bind_b0_external_load_bearing_surfaces,
+)
 from kcg_connector.grasp.carts_v2.models import load_v2_inputs
 from kcg_connector.grasp.carts_v2.observed_state_replay import (
     ObservedHandStateEvaluator,
@@ -20,6 +23,8 @@ EXPECTED_CONFIGS = {ROOT / "src/kcg_connector/config/carts_nailfree_height_proje
                     ROOT / "src/kcg_connector/config/carts_surface_v2_fast6h.yaml"}
 EVALUATOR_SOURCE = (ROOT / "src/kcg_connector/kcg_connector/grasp/carts_v2/"
                     "observed_state_replay.py")
+B0_SOURCE = (ROOT / "src/kcg_connector/kcg_connector/grasp/carts_v2/"
+             "b0_surface_semantics.py")
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--trace", type=Path, required=True)
@@ -76,6 +81,33 @@ def _clean(value):
     return value
 
 
+def _bind_object_surface_method(inputs, trace: dict, report: dict):
+    schema = trace.get("candidate_source_schema")
+    if schema != "carts_contactopt_b0_recheck_v1":
+        return inputs
+    task_row = (trace.get("evidence_binding") or {}).get("task_ik") or {}
+    task_path = _resolve(task_row.get("path", ""))
+    _require(task_path.is_file() and _sha256(task_path) == task_row.get("sha256"),
+             "trace-bound B0 task report changed")
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    ready = [row for row in task.get("candidates", [])
+             if row.get("local_isaac_input_ready") is True]
+    audit = task.get("b0_surface_audit") or {}
+    _require(task.get("schema_version") == schema and len(ready) == 1
+             and task.get("local_isaac_input_count") == 1
+             and ready[0].get("candidate_id") == trace.get("candidate_id")
+             and audit.get("method") == "EXTERNAL_LOAD_BEARING_SURFACE_B0"
+             and audit.get("legacy_primary_secondary_are_hard_gates") is False
+             and audit.get("normal_alignment_is_object_semantic_hard_gate") is False,
+             "B0 object-surface identity changed")
+    report["evidence_binding"]["b0_task"] = {
+        "path": str(task_path), "sha256": _sha256(task_path)}
+    report["evidence_binding"]["b0_surface_source"] = {
+        "path": str(B0_SOURCE.resolve()), "sha256": _sha256(B0_SOURCE)}
+    report["object_surface_method"] = audit["method"]
+    return bind_b0_external_load_bearing_surfaces(inputs)
+
+
 def _replay(trace_path: Path, report: dict) -> None:
     trace = json.loads(trace_path.read_text(encoding="utf-8"))
     _require(trace.get("schema_version") == "carts_opposition60_initial_penetration_v1"
@@ -97,6 +129,7 @@ def _replay(trace_path: Path, report: dict) -> None:
     target = np.asarray(trace["pose_binding"][
         "world_from_handbase_target_row_major"], dtype=np.float64).reshape(4, 4)
     inputs = load_v2_inputs(ROOT, config_path=config_path, object_id=OBJECT_B)
+    inputs = _bind_object_surface_method(inputs, trace, report)
     evaluator = ObservedHandStateEvaluator(inputs)
     rows, previous = [], None
     for index, sample in enumerate(samples):
