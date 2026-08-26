@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T02:15:00Z",
+  "updated_at_utc": "2026-08-26T02:32:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T10:17:59Z",
   "branch": "carts-grasp-opposition60-isaac-20260826",
@@ -8,7 +8,7 @@
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "OPPOSITION60_ANCHOR_A02_HIGH_AXIAL_DIAGNOSTIC",
+  "current_milestone": "OBJECT_B_ANCHOR_A02_TASK_QUALITY_AND_COLLISION_ASSET",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -1344,7 +1344,7 @@
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
   "opposition60_isaac": {
-    "route_status": "ANCHOR_A01_BOUNDED_REFINEMENT_NO_FULL_PASS_NEXT_ANCHOR_A02_HIGH_AXIAL_DIAGNOSTIC",
+    "route_status": "ANCHOR_A02_PATH_SAFE_THREE_CONTACT_OFFLINE_GEOMETRY_PASS_PENDING_TASK_IK_AND_COLLISION_ASSET",
     "primary_object": "te_deutsch_d38999_26fj35pn_step",
     "transfer_object": "current_d38999_26kj61sn_public_spec",
     "opposition_palm_range_deg": [45.0, 75.0],
@@ -1427,6 +1427,24 @@
       "research_executable_candidate": false,
       "isaac_started": false
     },
+    "qp60_anchor_a02_probe1": {
+      "candidate_id": "opposition_p1047198_a02_z2",
+      "pregrasp_closure_phases": [0.2, 0.2, 0.2],
+      "projected_handbase_world_z_m": 0.6406753206850175,
+      "contact_stop_phases": [0.49755859375000006, 0.40302734375000004, 0.49755859375000006],
+      "predicted_contact_gaps_m": [0.0007041249053632332, 0.0007029450541717177, 0.0007190560141978696],
+      "three_contact_count": 3,
+      "pregrasp_checked_state_count": 892,
+      "complete_sequential_path_state_count": 1637,
+      "minimum_table_clearance_m": 0.010019253451587218,
+      "fast_filter_status": "FAST_SURVIVE",
+      "forbidden_first_contact_guard_triggered": false,
+      "offline_geometry_survivor": true,
+      "task_quality_evaluated": false,
+      "research_executable_candidate": false,
+      "result_sha256": "4da22b9f92c56f0463de2b2c0f260344c6bba23634387244505feb6dfdb6cee8",
+      "isaac_started": false
+    },
     "qp60_single_preshape_profile": {
       "phases": [0.2, 0.2, 0.2],
       "elapsed_s": 214.01718114499818,
@@ -1448,12 +1466,12 @@
       "forbidden_query_calls_old_new": [52754, 122],
       "evidence_scope": "DISCRETE_CONTROL_STEPS_NOT_CONTINUOUS_COLLISION_PROOF"
     },
-    "qp60_static_positive_control_pass": false,
+    "qp60_static_positive_control_pass": true,
     "local_hand_dynamic_status": "NOT_STARTED",
     "full_arm_dynamic_status": "NOT_STARTED",
     "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
   },
-  "evidence_level": "QP60_THREE_CONTACT_GEOMETRY_WITNESS_WITH_TABLE_CONFLICT_OFFLINE_NO_DYNAMIC_RESULT",
+  "evidence_level": "QP60_PATH_SAFE_THREE_CONTACT_OFFLINE_GEOMETRY_PASS_NO_TASK_IK_OR_DYNAMIC_RESULT",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,
