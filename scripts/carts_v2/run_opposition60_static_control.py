@@ -35,6 +35,11 @@ def _exact_variant_budget(value: str) -> int:
     if not 1 <= budget <= 27:
         raise argparse.ArgumentTypeError("maximum exact variants must lie in [1, 27]")
     return budget
+def _exact_variant_offset(value: str) -> int:
+    offset = int(value)
+    if not 0 <= offset < 27:
+        raise argparse.ArgumentTypeError("exact variant offset must lie in [0, 26]")
+    return offset
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repository-root", type=Path, default=Path.cwd())
@@ -44,6 +49,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=_DEFAULT_OUTPUT)
     parser.add_argument("--maximum-exact-variants", type=_exact_variant_budget,
                         default=27)
+    parser.add_argument("--exact-variant-offset", type=_exact_variant_offset, default=0)
     parser.add_argument("--profile-output", type=Path)
     return parser.parse_args()
 def _world(points: np.ndarray, transform: np.ndarray) -> np.ndarray:
@@ -323,7 +329,8 @@ def main() -> int:
                 fast_settings["table_penetration_tolerance_m"]),
             required_table_clearance_m=float(
                 height_settings["table_operation_clearance_m"]),
-            maximum_exact_variants=args.maximum_exact_variants)
+            maximum_exact_variants=args.maximum_exact_variants,
+            exact_variant_offset=args.exact_variant_offset)
     try:
         survivors, height_audit = (run_search() if profiler is None
                                    else profiler.runcall(run_search))
@@ -337,14 +344,17 @@ def main() -> int:
     for index, (record, survivor, prediction) in enumerate(renders):
         phases = "".join(str(int(round(value * 10.0)))
                          for value in survivor.pregrasp_closure_phases)
-        image = output / f"survivor_{index:02d}_p{phases}_four_views.png"
+        image = output / (
+            f"survivor_o{args.exact_variant_offset:02d}_{index:02d}_"
+            f"p{phases}_four_views.png")
         _render_four_views(image, inputs, survivor, anchor_audit, prediction)
         record["four_view_image"] = image.name
         image_records.append({"path": image.name, "sha256": file_sha256(image)})
     result = {
         "schema_version": "carts_opposition60_static_control_v2",
         "claim_scope": (
-            f"OFFLINE_{args.maximum_exact_variants}_PRESHAPE_"
+            f"OFFLINE_PRESHAPE_SHARD_OFFSET_{args.exact_variant_offset}_"
+            f"COUNT_{args.maximum_exact_variants}_"
             "EXACT_STATIC_NOT_DYNAMIC_SUCCESS"
         ),
         "requested_palm_angle_deg": float(args.palm_angle_deg),
@@ -365,6 +375,9 @@ def main() -> int:
         "exact_variant_evaluated_count": height_audit[
             "exact_variant_evaluated_count"],
         "maximum_exact_variants": args.maximum_exact_variants,
+        "exact_variant_offset": args.exact_variant_offset,
+        "exact_variant_evaluation_interval": height_audit[
+            "exact_variant_evaluation_interval"],
         "profile": (None if profile_path is None else {
             "path": str(profile_path), "sha256": file_sha256(profile_path)}),
         "survivor_count": len(survivors),
@@ -381,7 +394,8 @@ def main() -> int:
         "elapsed_s": time.perf_counter() - started,
     }
     destination = output / (
-        f"opposition60_exact_{args.maximum_exact_variants}_static_control.json"
+        f"opposition60_exact_offset_{args.exact_variant_offset:02d}_"
+        f"count_{args.maximum_exact_variants:02d}_static_control.json"
     )
     destination.write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -391,6 +405,7 @@ def main() -> int:
         "result_sha256": file_sha256(destination),
         "exact_variant_evaluated_count": result["exact_variant_evaluated_count"],
         "maximum_exact_variants": result["maximum_exact_variants"],
+        "exact_variant_offset": result["exact_variant_offset"],
         "survivor_count": result["survivor_count"],
         "elapsed_s": result["elapsed_s"],
         "isaac_started": False,

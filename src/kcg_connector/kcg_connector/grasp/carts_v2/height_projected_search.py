@@ -427,6 +427,7 @@ def search_height_projected_pregrasps(
     table_numerical_tolerance_m: float,
     required_table_clearance_m: float = 0.0,
     maximum_exact_variants: int = 2,
+    exact_variant_offset: int = 0,
 ) -> tuple[tuple[CandidateSeed, ...], dict[str, object]]:
     """Evaluate a bounded subset or all 27 contact-conditioned preshapes.
 
@@ -437,8 +438,11 @@ def search_height_projected_pregrasps(
 
     if predictor.inputs is not inputs:
         raise ValueError("closure predictor is bound to different V2 inputs")
-    if not 1 <= int(maximum_exact_variants) <= 27:
-        raise ValueError("maximum exact pregrasp variants must lie in [1, 27]")
+    offset, count = int(exact_variant_offset), int(maximum_exact_variants)
+    if not 0 <= offset < 27:
+        raise ValueError("exact pregrasp variant offset must lie in [0, 26]")
+    if not 1 <= count <= 27 - offset:
+        raise ValueError("maximum exact pregrasp variants exceed the remaining budget")
     prepared = []
     link_geometry = _registered_link_geometry(inputs)
     for phases in fixed_pregrasp_phase_combinations():
@@ -455,7 +459,7 @@ def search_height_projected_pregrasps(
         table_key = ((0.0, 0.0) if requirement.minimum_handbase_z_m is None
                      else (1.0, requirement.minimum_handbase_z_m))
         prepared.append((contact_key, table_key, phases, bound))
-    selected = []
+    ordered = []
     priorities = [
         min(prepared, key=lambda row: (row[0], row[2])),
         min(prepared, key=lambda row: (row[1], row[0], row[2])),
@@ -467,10 +471,13 @@ def search_height_projected_pregrasps(
         row[0], row[2])) for index in range(3))
     priorities.extend(sorted(prepared, key=lambda row: (row[0], row[1], row[2])))
     for choice in priorities:
-        if choice[2] not in {row[2] for row in selected}:
-            selected.append(choice)
-        if len(selected) == int(maximum_exact_variants):
+        if choice[2] not in {row[2] for row in ordered}:
+            ordered.append(choice)
+        if len(ordered) == len(prepared):
             break
+    if len(ordered) != 27:
+        raise RuntimeError("deterministic pregrasp priority order is incomplete")
+    selected = ordered[offset:offset + count]
     selected_phases = {row[2] for row in selected}
     deferred = [{"pregrasp_closure_phases": list(row[2]),
                  "status": "BUDGET_NOT_EVALUATED"} for row in prepared
@@ -490,7 +497,11 @@ def search_height_projected_pregrasps(
         "claim_scope": "OFFLINE_CONTACT_CONDITIONED_HEIGHT_NOT_DYNAMIC_SUCCESS",
         "candidate_id": seed.candidate_id,
         "pregrasp_variant_count": len(prepared),
-        "exact_variant_budget": int(maximum_exact_variants),
+        "exact_variant_budget": count,
+        "exact_variant_offset": offset,
+        "exact_variant_evaluation_interval": {
+            "start_inclusive": offset, "stop_exclusive": offset + count,
+        },
         "exact_variant_evaluated_count": len(evaluated),
         "survivor_count": len(survivors),
         "evaluated": evaluated,

@@ -185,6 +185,34 @@ def test_opposition_budget_evaluates_all_27_preshapes_exactly() -> None:
     assert len(survivors) == 27
 
 
+def test_three_exact_variant_shards_cover_all_27_without_overlap() -> None:
+    evaluated = []
+    for offset in (0, 9, 18):
+        _survivors, audit = _search(
+            _Predictor(), _fast, maximum_exact_variants=9,
+            exact_variant_offset=offset,
+        )
+        assert audit["exact_variant_offset"] == offset
+        assert audit["exact_variant_evaluation_interval"] == {
+            "start_inclusive": offset, "stop_exclusive": offset + 9,
+        }
+        assert len(audit["evaluated"]) == 9
+        assert len(audit["deferred"]) == 18
+        evaluated.extend(tuple(row["pregrasp_closure_phases"])
+                         for row in audit["evaluated"])
+    expected = {(a, b, c) for a in (0.0, 0.1, 0.2)
+                for b in (0.0, 0.1, 0.2) for c in (0.0, 0.1, 0.2)}
+    assert len(evaluated) == len(set(evaluated)) == 27
+    assert set(evaluated) == expected
+
+
+@pytest.mark.parametrize("offset,count", ((-1, 1), (27, 1), (26, 2)))
+def test_invalid_exact_variant_shard_fails_closed(offset, count) -> None:
+    with pytest.raises(ValueError, match="exact pregrasp variant"):
+        _search(_Predictor(), _fast, maximum_exact_variants=count,
+                exact_variant_offset=offset)
+
+
 def test_state_boundary_bisection_recovers_narrow_contact_height() -> None:
     survivors, audit = _search(
         _Predictor(interval=(0.15150, 0.15170)), _fast,
