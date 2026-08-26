@@ -17,7 +17,9 @@ from kcg_connector.grasp.carts_v2.models import (
     CandidateSeed, ClosurePrediction, FastFilterResult, TaskQualityResult,
     write_standardized_object_manifest,
 )
-from kcg_connector.grasp.carts_v2.selector import select_candidate_rankings
+from kcg_connector.grasp.carts_v2.selector import (
+    nominal_research_task_pass, select_candidate_rankings,
+)
 from kcg_connector.grasp.carts_v2.reporting import _candidate_rows, _selected_json
 from kcg_connector.grasp.robust.hand_contract import load_carts_hand_contract
 
@@ -591,11 +593,9 @@ def test_nominal_task_candidate_does_not_become_formal_or_executable() -> None:
     research, formal, diagnostic = select_candidate_rankings(
         (prediction,), (fast_filter,), (quality,), top_k=3,
     )
-    assert [row.selection_status for row in research] == [
-        "RESEARCH_TASK_ELIGIBLE_NOT_EXECUTABLE"
-    ]
-    assert research[0].offline_task_gate_passed is False
-    assert formal == () and diagnostic == ()
+    assert research == () and formal == ()
+    assert [row.selection_status for row in diagnostic] == [
+        "DIAGNOSTIC_ONLY_NOT_EXECUTABLE"]
     report_result = SimpleNamespace(
         task_quality_results=(quality,), raw_fast_filter_results=(fast_filter,),
         candidates=(seed,), raw_closure_predictions=(prediction,),
@@ -605,9 +605,21 @@ def test_nominal_task_candidate_does_not_become_formal_or_executable() -> None:
         )),
     )
     assert next(_candidate_rows(report_result))["palm_configuration_rad"] == 0.7
-    selected = _selected_json(report_result, research)[0]
+    selected = _selected_json(report_result, diagnostic)[0]
     assert selected["palm_configuration_rad"] == 0.7
     assert selected["control_plan"]["palm_configuration_rad"] == 0.7
+
+
+def test_nominal_research_gate_rejects_point_eight_and_accepts_one() -> None:
+    def quality(margin):
+        return TaskQualityResult(
+            "candidate", "TASK_REJECT", (margin,), margin, margin,
+            None, None, None, None, 0.0,
+            nominal_gravity_lift_balance_pass=True,
+            nominal_parameter_task_margin=margin,
+            nominal_operation_force_cap_n=12.0)
+    assert nominal_research_task_pass(quality(0.8)) is False
+    assert nominal_research_task_pass(quality(1.0)) is True
 
 
 def test_nonrigid_or_left_handed_pose_fails_closed(adapter_case) -> None:

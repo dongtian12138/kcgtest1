@@ -185,6 +185,18 @@ def test_opposition_budget_evaluates_all_27_preshapes_exactly() -> None:
     assert len(survivors) == 27
 
 
+def test_explicit_concrete_pregrasp_is_the_only_exact_variant() -> None:
+    requested = (0.2, 0.0, 0.1)
+    survivors, audit = _search(
+        _Predictor(), _fast, maximum_exact_variants=1,
+        selected_pregrasp_phases=requested)
+    assert len(survivors) == 1
+    assert audit["explicit_pregrasp_selection"] is True
+    assert [tuple(row["pregrasp_closure_phases"])
+            for row in audit["evaluated"]] == [requested]
+    assert len(audit["deferred"]) == 26
+
+
 def test_three_exact_variant_shards_cover_all_27_without_overlap() -> None:
     evaluated = []
     for offset in (0, 9, 18):

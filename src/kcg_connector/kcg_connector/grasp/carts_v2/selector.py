@@ -21,6 +21,14 @@ def _maximum_metric(value: float | None) -> float:
     return math.inf if value is None else -float(value)
 
 
+def nominal_research_task_pass(quality: TaskQualityResult) -> bool:
+    """Require both force-balance feasibility and unit task-load margin."""
+
+    margin = quality.nominal_parameter_task_margin
+    return bool(quality.nominal_gravity_lift_balance_pass
+                and margin is not None and math.isfinite(margin) and margin >= 1.0)
+
+
 def _selected_rows(rows, status: str, top_k: int) -> tuple[SelectedCandidate, ...]:
     rows.sort(key=lambda row: row[0])
     selected = []
@@ -91,7 +99,7 @@ def select_candidate_rankings(
             candidate_id,
         )
         row = (key, prediction, fast_filter, quality, clearance)
-        if quality.nominal_gravity_lift_balance_pass:
+        if nominal_research_task_pass(quality):
             research_task.append(row)
             if quality.status == "TASK_SURVIVE":
                 formal_task.append(row)
@@ -109,4 +117,4 @@ def select_candidate_rankings(
     )
 
 
-__all__ = ["select_candidate_rankings"]
+__all__ = ["nominal_research_task_pass", "select_candidate_rankings"]

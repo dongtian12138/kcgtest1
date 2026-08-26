@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+import hashlib
 import math
 from typing import Mapping, Sequence
 
@@ -353,8 +355,62 @@ def generate_opposition_anchors(
     return tuple(selected_seeds), audit
 
 
+def generate_feature_opposition_grid(
+    inputs: V2Inputs,
+) -> tuple[tuple[CandidateSeed, ...], dict[str, object]]:
+    """Enumerate the preregistered 7x72x3x27 cheap-search design."""
+
+    angles = tuple(math.radians(value) for value in range(45, 80, 5))
+    band = dict(extract_object_grasp_band(inputs))
+    band["azimuth_count"] = 72
+    phases_grid = fixed_pregrasp_phase_combinations()
+    seeds: list[CandidateSeed] = []
+    identity = hashlib.sha256()
+    source_index = 0
+    for angle_index, angle in enumerate(angles):
+        geometries = tuple(
+            task_surface_triangle_geometry(inputs, angle, phases)
+            for phases in phases_grid
+        )
+        for geometry in geometries:
+            phase_token = "".join(
+                str(int(round(value * 10.0)))
+                for value in geometry["pregrasp_closure_phases"]
+            )
+            for azimuth_index in range(72):
+                for axial_index, fraction in enumerate(_AXIAL_FRACTIONS):
+                    seed, _evidence, _key = _anchor_record(
+                        inputs, band, geometry, angle_index=angle_index,
+                        azimuth_index=azimuth_index, axial_index=axial_index,
+                        axial_fraction=fraction, source_index=source_index,
+                    )
+                    identifier = f"{seed.candidate_id}__p{phase_token}"
+                    seed = replace(seed, candidate_id=identifier)
+                    seeds.append(seed)
+                    identity.update(identifier.encode("utf-8") + b"\0")
+                    source_index += 1
+    expected = len(angles) * 72 * len(_AXIAL_FRACTIONS) * len(phases_grid)
+    if len(seeds) != expected or len({seed.candidate_id for seed in seeds}) != expected:
+        raise RuntimeError("feature opposition design is incomplete or non-unique")
+    audit = {
+        "schema_version": "carts_feature_opposition_grid_v1",
+        "claim_scope": "FULL_CHEAP_DESIGN_NOT_EXACT_CONTACT_OR_DYNAMIC_SUCCESS",
+        "object_id": inputs.object_contract.object_id,
+        "palm_configuration_deg": list(range(45, 80, 5)),
+        "azimuth_count": 72,
+        "azimuth_step_deg": 5,
+        "axial_fractions": list(_AXIAL_FRACTIONS),
+        "pregrasp_phase_values": [0.0, 0.1, 0.2],
+        "pregrasp_combination_count": len(phases_grid),
+        "candidate_count": len(seeds),
+        "candidate_id_order_sha256": identity.hexdigest(),
+    }
+    return tuple(seeds), audit
+
+
 __all__ = [
     "extract_object_grasp_band",
+    "generate_feature_opposition_grid",
     "generate_opposition_anchors",
     "task_surface_triangle_geometry",
 ]

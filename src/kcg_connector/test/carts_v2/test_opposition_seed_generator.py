@@ -14,6 +14,7 @@ from kcg_connector.grasp.carts_v2.full_palm_search import (
 from kcg_connector.grasp.carts_v2.models import load_v2_inputs
 from kcg_connector.grasp.carts_v2.opposition_seed_generator import (
     extract_object_grasp_band,
+    generate_feature_opposition_grid,
     generate_opposition_anchors,
     task_surface_triangle_geometry,
 )
@@ -98,3 +99,14 @@ def test_preregistered_thirty_degree_mid_anchor_identity(inputs) -> None:
     assert seed.pregrasp_closure_phases == (0.2, 0.2, 0.2)
     assert selected["azimuth_index"] == 1
     assert selected["axial_index"] == 1
+
+
+def test_feature_grid_covers_every_registered_discrete_variable(inputs) -> None:
+    seeds, audit = generate_feature_opposition_grid(inputs)
+    assert len(seeds) == audit["candidate_count"] == 7 * 72 * 3 * 27 == 40824
+    assert len({seed.candidate_id for seed in seeds}) == len(seeds)
+    assert sorted({round(math.degrees(seed.palm_configuration_rad), 8)
+                   for seed in seeds}) == list(range(45, 80, 5))
+    assert audit["azimuth_step_deg"] == 5
+    assert audit["axial_fractions"] == [0.25, 0.5, 0.75]
+    assert audit["pregrasp_combination_count"] == 27

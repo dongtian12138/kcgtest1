@@ -13,9 +13,7 @@ from kcg_connector.grasp.carts_v2.fast_filter import (
     sampled_pregrasp_path_states, sampled_sequential_closure_states,
 )
 from kcg_connector.grasp.carts_v2.full_palm_search import (
-    PhaseTriple,
-    bind_pregrasp,
-    fixed_pregrasp_phase_combinations,
+    PhaseTriple, select_pregrasp_variants,
 )
 from kcg_connector.grasp.carts_v2.height_projection import (
     TableHeightRequirement,
@@ -27,27 +25,19 @@ from kcg_connector.grasp.carts_v2.models import (
     FastFilterResult,
     V2Inputs,
 )
-
-
 PathState = tuple[str, np.ndarray, np.ndarray]
 FastFilterCallback = Callable[[object], FastFilterResult]
 PregraspPathCallback = Callable[[CandidateSeed], Mapping[str, object]]
 PregraspContactKey = Callable[[CandidateSeed], Sequence[float]]
-
-
 @dataclass(frozen=True)
 class SampledPathEnvelope:
     """Existing sampled states covering the required grasp-height path."""
 
     states: tuple[PathState, ...]
     evidence_scope: str
-
-
 PathEnvelopeCallback = Callable[
     [CandidateSeed, tuple[float, float, float]], SampledPathEnvelope
 ]
-
-
 def sampled_height_path_states(
     inputs: V2Inputs, seed: CandidateSeed,
     final_closure_phases: tuple[float, float, float],
@@ -64,8 +54,6 @@ def sampled_height_path_states(
         "dynamic")["lift_distance_m"]))
     return pregrasp + closure + (("PRELOAD_END", base, joints),
                                  ("LIFT_START", lifted, joints))
-
-
 def sampled_table_path_requirement(
     inputs: V2Inputs,
     seed: CandidateSeed,
@@ -87,8 +75,6 @@ def sampled_table_path_requirement(
         float(required_clearance_m),
     )
     return requirement, stage, checked
-
-
 def _registered_link_geometry(inputs: V2Inputs):
     geometry = []
     for link, triangles in sorted(inputs.hand_collision_triangles_by_link.items()):
@@ -99,15 +85,6 @@ def _registered_link_geometry(inputs: V2Inputs):
     if not geometry:
         raise ValueError("registered hand collision triangles are required")
     return tuple(geometry)
-
-
-def _finite_key(values: Sequence[float], label: str) -> tuple[float, ...]:
-    key = tuple(float(value) for value in values)
-    if not key or any(not math.isfinite(value) for value in key):
-        raise ValueError(f"{label} must be finite and non-empty")
-    return key
-
-
 def _validate_complete_envelope(envelope: SampledPathEnvelope) -> None:
     stages = tuple(str(row[0]) for row in envelope.states)
     required = ("PALM_FAR_", "PRESHAPE_FAR_", "APPROACH_", "PREGRASP",
@@ -451,6 +428,7 @@ def search_height_projected_pregrasps(
     required_table_clearance_m: float = 0.0,
     maximum_exact_variants: int = 2,
     exact_variant_offset: int = 0,
+    selected_pregrasp_phases: tuple[float, float, float] | None = None,
 ) -> tuple[tuple[CandidateSeed, ...], dict[str, object]]:
     """Evaluate a bounded subset or all 27 contact-conditioned preshapes.
 
@@ -466,45 +444,22 @@ def search_height_projected_pregrasps(
         raise ValueError("exact pregrasp variant offset must lie in [0, 26]")
     if not 1 <= count <= 27 - offset:
         raise ValueError("maximum exact pregrasp variants exceed the remaining budget")
-    prepared = []
     link_geometry = _registered_link_geometry(inputs)
-    for phases in fixed_pregrasp_phase_combinations():
-        bound = bind_pregrasp(inputs, seed, phases)
-        contact_key = _finite_key(pregrasp_contact_key(bound), "pregrasp contact key")
+    def pregrasp_table_key(bound):
         base = inputs.frozen_world_from_object @ bound.object_from_hand_matrix()
         snapshot = SampledPathEnvelope(
             (("PREGRASP", base, np.asarray(bound.pregrasp_joint_positions_rad)),),
-            "SINGLE_STATE_PRESELECTION_ONLY",
-        )
+            "SINGLE_STATE_PRESELECTION_ONLY")
         requirement, _stage, _checked, _early = _table_requirement(
             inputs, bound, snapshot, link_geometry, required_table_clearance_m,
             require_complete_path=False)
-        table_key = ((0.0, 0.0) if requirement.minimum_handbase_z_m is None
-                     else (1.0, requirement.minimum_handbase_z_m))
-        prepared.append((contact_key, table_key, phases, bound))
-    ordered = []
-    priorities = [
-        min(prepared, key=lambda row: (row[0], row[2])),
-        min(prepared, key=lambda row: (row[1], row[0], row[2])),
-        min(prepared, key=lambda row: (
-            max(row[2]) - min(row[2]), row[0], row[2])),
-    ]
-    priorities.extend(min(prepared, key=lambda row, index=index: (
-        -row[2][index], sum(row[2][other] for other in range(3) if other != index),
-        row[0], row[2])) for index in range(3))
-    priorities.extend(sorted(prepared, key=lambda row: (row[0], row[1], row[2])))
-    for choice in priorities:
-        if choice[2] not in {row[2] for row in ordered}:
-            ordered.append(choice)
-        if len(ordered) == len(prepared):
-            break
-    if len(ordered) != 27:
-        raise RuntimeError("deterministic pregrasp priority order is incomplete")
-    selected = ordered[offset:offset + count]
-    selected_phases = {row[2] for row in selected}
-    deferred = [{"pregrasp_closure_phases": list(row[2]),
-                 "status": "BUDGET_NOT_EVALUATED"} for row in prepared
-                if row[2] not in selected_phases]
+        return ((0.0, 0.0) if requirement.minimum_handbase_z_m is None
+                else (1.0, requirement.minimum_handbase_z_m))
+    selected, deferred_phases, offset = select_pregrasp_variants(
+        inputs, seed, pregrasp_contact_key, pregrasp_table_key,
+        offset=offset, count=count, selected_phases=selected_pregrasp_phases)
+    deferred = [{"pregrasp_closure_phases": list(phases),
+                 "status": "BUDGET_NOT_EVALUATED"} for phases in deferred_phases]
     survivors, evaluated = [], []
     for _contact_key, _table_key, _phases, bound in selected:
         survivor, row = _evaluate_variant(
@@ -519,9 +474,10 @@ def search_height_projected_pregrasps(
         "schema_version": "carts_contact_conditioned_height_search_v2",
         "claim_scope": "OFFLINE_CONTACT_CONDITIONED_HEIGHT_NOT_DYNAMIC_SUCCESS",
         "candidate_id": seed.candidate_id,
-        "pregrasp_variant_count": len(prepared),
+        "pregrasp_variant_count": len(selected) + len(deferred),
         "exact_variant_budget": count,
         "exact_variant_offset": offset,
+        "explicit_pregrasp_selection": selected_pregrasp_phases is not None,
         "exact_variant_evaluation_interval": {
             "start_inclusive": offset, "stop_exclusive": offset + count,
         },

@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T10:38:25Z",
+  "updated_at_utc": "2026-08-26T11:02:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T15:16:26Z",
   "branch": "carts-grasp-surface-v2-fast6h-20260826",
@@ -97,6 +97,22 @@
       "offline_status": "UNRESOLVED_PRIMARY_HARD_BOUNDARY_WITH_NO_PHYSX_CONTACT",
       "trace_path": "artifacts/carts_v2/surface_v2_fast6h/object_b_top1_first_finger_run01/first_finger.json",
       "evaluation_path": "artifacts/carts_v2/surface_v2_fast6h/object_b_top1_first_finger_run01/evaluation_run02.json"
+    },
+    "feature_aware_search": {
+      "registered_candidate_count": 40824,
+      "palm_angle_count": 7,
+      "azimuth_count": 72,
+      "axial_level_count": 3,
+      "pregrasp_count": 27,
+      "fk_cache_count": 189,
+      "elapsed_s": 85.07160825299798,
+      "center_fast_shortlist_eligible_count": 4,
+      "center_hard_first_proxy_count": 58,
+      "center_no_three_contact_region_count": 40762,
+      "exact_shortlist_count": 24,
+      "report_path": "artifacts/carts_v2/surface_v2_fast6h/feature_search_B_run03.json",
+      "report_sha256": "fb820d88914957adcf919419305075ee28a04201dae5db7221aee21304ca845f",
+      "exact_shards_in_progress": true
     },
     "three_finger_contact": false,
     "object_left_table": false,

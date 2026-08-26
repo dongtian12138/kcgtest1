@@ -85,6 +85,46 @@ def bind_pregrasp(inputs: V2Inputs, seed: CandidateSeed, phases: PhaseTriple):
     return bound
 
 
+def select_pregrasp_variants(
+    inputs: V2Inputs, seed: CandidateSeed,
+    contact_key: Callable[[CandidateSeed], Sequence[float]],
+    table_key: Callable[[CandidateSeed], Sequence[float]], *,
+    offset: int, count: int, selected_phases: PhaseTriple | None = None,
+):
+    """Choose deterministic concrete preshapes before expensive height checks."""
+
+    prepared = []
+    for phases in fixed_pregrasp_phase_combinations():
+        bound = bind_pregrasp(inputs, seed, phases)
+        prepared.append((_selection_key(contact_key(bound), "pregrasp contact key"),
+                         _selection_key(table_key(bound), "pregrasp table key"),
+                         phases, bound))
+    priorities = [min(prepared, key=lambda row: (row[0], row[2])),
+                  min(prepared, key=lambda row: (row[1], row[0], row[2])),
+                  min(prepared, key=lambda row: (
+                      max(row[2]) - min(row[2]), row[0], row[2]))]
+    priorities.extend(min(prepared, key=lambda row, index=index: (
+        -row[2][index], sum(row[2][other] for other in range(3) if other != index),
+        row[0], row[2])) for index in range(3))
+    priorities.extend(sorted(prepared, key=lambda row: (row[0], row[1], row[2])))
+    ordered = []
+    for choice in priorities:
+        if choice[2] not in {row[2] for row in ordered}:
+            ordered.append(choice)
+    if len(ordered) != 27:
+        raise RuntimeError("deterministic pregrasp priority order is incomplete")
+    if selected_phases is not None:
+        requested = tuple(float(value) for value in selected_phases)
+        matches = [row for row in ordered if row[2] == requested]
+        if len(matches) != 1 or count != 1:
+            raise ValueError("explicit pregrasp selection requires one registered variant")
+        offset = ordered.index(matches[0])
+    selected = ordered[offset:offset + count] if selected_phases is None else matches
+    chosen = {row[2] for row in selected}
+    deferred = tuple(row[2] for row in prepared if row[2] not in chosen)
+    return tuple(selected), deferred, offset
+
+
 def _compact_height_audit(value: Mapping[str, object]) -> dict[str, object]:
     audit = dict(value)
     deferred = tuple(audit.pop("deferred", ()))
