@@ -70,13 +70,13 @@ def _verify(trace: dict, initial_path: Path) -> tuple[list[dict], dict, Path]:
         trace.get("status") == "FAILED_CLOSED"
         and trace.get("first_finger_controller_trace_pass") is False
         and controller.get("abort_reason") == "FINGER_1_NO_CONTACT_SIGNAL")
-    semantic_overshoot = bool(
+    endpoint_overshoot_abort = bool(
         trace.get("status") == "FAILED_CLOSED"
-        and controller.get("abort_reason") == "SEMANTIC_ENDPOINT_OVERSHOOT_ABORT")
+        and controller.get("abort_reason") == "NONEXECUTABLE_ENDPOINT_OVERSHOOT_ABORT")
     _require(all((trace.get("schema_version") == "carts_opposition60_local_contact_v1",
                   trace.get("mode") == "first-finger-diagnostic",
                   trace.get("object_id") == OBJECT_B,
-                  controller_complete or endpoint_timeout or semantic_overshoot,
+                  controller_complete or endpoint_timeout or endpoint_overshoot_abort,
                   trace.get("first_finger_diagnostic_pass") is False,
                   trace.get("hardware_authorized") is False,
                   trace.get("formal_dynamic_pass") is False,
@@ -97,10 +97,10 @@ def _verify(trace: dict, initial_path: Path) -> tuple[list[dict], dict, Path]:
                        ("evaluator_source", EVALUATOR)):
         _bound(plan_binding, name, path)
     execution = float(plan.get("execution_target_rad", math.nan))
-    invalid = float(plan.get("first_semantically_invalid_target_rad", math.nan))
+    upper = float(plan.get("first_nonexecutable_target_rad", math.nan))
     _require(plan.get("status") == "OFFLINE_LAST_SEMANTICALLY_VALID_ENDPOINT_ACCEPTED"
              and plan.get("object_id") == OBJECT_B and np.isfinite(execution)
-             and execution < invalid and controller.get("bound_execution_target_rad") == execution,
+             and execution < upper and controller.get("bound_execution_target_rad") == execution,
              "trace and semantic endpoint plan disagree")
     initial = json.loads(initial_path.read_text(encoding="utf-8"))
     _require((initial.get("runtime_gates") or {}).get("INITIAL_PENETRATION") is True
@@ -198,17 +198,17 @@ def _evaluate(trace: dict, report: dict, initial_path: Path) -> None:
                          and not contacts["finger_2_pad"] and not contacts["finger_3_pad"])
     endpoint_proximity = bool(
         endpoint and any(index in contacts["finger_1_pad"] for index in endpoint))
-    semantic_limit = float(plan["first_semantically_invalid_target_rad"])
-    semantic_overshoot = [index for index, row in enumerate(samples)
-        if float(row["joint_positions_rad"]["f1j2"]) >= semantic_limit]
-    safe = not safety_failures and not full_failures and not forbidden_first and not semantic_overshoot
+    endpoint_limit = float(plan["first_nonexecutable_target_rad"])
+    endpoint_overshoot = [index for index, row in enumerate(samples)
+        if float(row["joint_positions_rad"]["f1j2"]) >= endpoint_limit]
+    safe = not safety_failures and not full_failures and not forbidden_first and not endpoint_overshoot
     accepted = bool(safe and exact_contact and motion_compatible and physx_count > 0
                     and object_motion <= 0.001 and other_idle and engine and truth)
     false_proxy = bool(trace.get("controller", {}).get("contact_targets_rad")
                        and (physx_count == 0 or not contacts["finger_1_pad"]))
     proximity_only = bool(endpoint_timeout and endpoint_proximity and physx_count == 0)
-    status = ("SEMANTICALLY_INVALID_FORBIDDEN_FIRST_CONTACT" if
-              forbidden_first or semantic_overshoot else
+    status = ("SEMANTICALLY_INVALID_FORBIDDEN_FIRST_CONTACT" if forbidden_first else
+              "NONEXECUTABLE_ENDPOINT_OVERSHOOT" if endpoint_overshoot else
               "FALSE_CONTACT_PROXY" if false_proxy else
               "NO_PHYSX_CONTACT_AT_LAST_SEMANTIC_VALID_ENDPOINT" if proximity_only else
               "FIRST_FINGER_OFFLINE_CONTACT_ACCEPTED" if accepted else
@@ -223,7 +223,7 @@ def _evaluate(trace: dict, report: dict, initial_path: Path) -> None:
                      "minimum_clearances": minima},
         "task_contact": {"contact_indices_by_finger": contacts,
                          "forbidden_first_rows": forbidden_first,
-                         "semantic_limit_overshoot_indices": semantic_overshoot,
+                         "nonexecutable_endpoint_overshoot_indices": endpoint_overshoot,
                          "first_contacts": first_contacts,
                          "motion_compatible_first_contact_indices": motion_compatible,
                          "all_60_hold_samples_have_finger_1_contact": exact_contact,
@@ -237,8 +237,8 @@ def _evaluate(trace: dict, report: dict, initial_path: Path) -> None:
                                  "observed_position_range_rad": actual_ranges,
                                  "not_commanded_pass": other_idle},
         "truth_boundary_pass": truth,
-        "classification_reason": ("forbidden surface became first or the semantic limit was crossed"
-                                  if forbidden_first or semantic_overshoot else
+        "classification_reason": ("forbidden surface became first or the nonexecutable bound was crossed"
+                                  if forbidden_first or endpoint_overshoot else
                                   "joint-side contact proxy had no PhysX/exact TASK contact"
                                   if false_proxy else "all offline gates passed" if accepted
                                   else "last semantic-valid endpoint was reached without PhysX contact"

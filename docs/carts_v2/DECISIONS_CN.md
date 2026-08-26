@@ -641,3 +641,10 @@
 - anchor7完整27种预构型中6种通过高度投影、三指接触和逐指闭合路径；其余21种被几何硬门淘汰。
 - 6种幸存者的第一指允许面领先禁抓面的最小距离只分为0.00556 µm或1.90214 µm，和已无PhysX接触的动态候选属于同一对象面边界族。
 - 因此不把其余5种重复边界候选送入Isaac；下一原子实验选择同轴向层但不同预登记方位的anchor10对称预构型，先区分问题是否来自anchor7接触扇区。
+
+## 2026-08-26T09:13:32Z — 旧二分类路线检查点与Surface V2切换
+
+- 分类：`SURFACE_SEMANTICS_METHOD_CORRECTION + FEATURE_AWARE_FAST_SEARCH + REGION_CONTACT + SIX_HOUR_ISAAC_CLOSURE`；这是方法修正，不是硬件授权或安全标准降低。
+- 旧路线最后原子任务为59°/anchor2/p222：离线三指几何、12 N名义任务和bounded IK通过，第一指Isaac运行396步但PhysX接触为0；第二/三指和抬升未启动。
+- 用户提供的表面审计指出外包络切向侧壁不应继续被旧“非PRIMARY即禁抓”二分类视为硬禁抓；旧结果保留为`LEGACY_RADIAL_ONLY_BASELINE`。
+- 本分支在该原子任务后停止继续anchor扫描；提交后新建`carts-grasp-surface-v2-fast6h-20260826`，新窗口从新分支第一条实际命令计时。

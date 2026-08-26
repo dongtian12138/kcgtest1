@@ -82,9 +82,12 @@ def _verify(args: argparse.Namespace) -> dict:
     row = task["task_and_bounded_ik"][0]
     height = task["height_search"]
     object_id = anchor["object_id"]
+    palm_angle_deg = float(task.get("requested_palm_angle_deg", math.nan))
     _require(all((isinstance(task.get("selected_geometric_anchor_index"), int),
              0 <= task["selected_geometric_anchor_index"] < 12,
-             task.get("requested_palm_angle_deg") == 60,
+             45.0 <= palm_angle_deg <= 75.0,
+             abs(palm_angle_deg - round(palm_angle_deg)) < 1e-9,
+             abs(float(anchor["palm_configuration_deg"]) - palm_angle_deg) < 1e-9,
              task.get("survivor_count") == height.get("survivor_count") == 1,
              anchor["candidate_id"] == survivor["candidate_id"] == row["candidate_id"],
              survivor["object_id"] == object_id, row.get("fresh_contact_count") == 3,
@@ -125,7 +128,8 @@ def _verify(args: argparse.Namespace) -> dict:
         bound_plan = {name: _bound(value, f"endpoint {name}")
                       for name, value in binding.items()}
         execution = float(endpoint_plan.get("execution_target_rad", math.nan))
-        invalid = float(endpoint_plan.get("first_semantically_invalid_target_rad", math.nan))
+        upper = float(endpoint_plan.get("first_nonexecutable_target_rad", math.nan))
+        bound_kind = endpoint_plan.get("endpoint_upper_bound_kind")
         _require(all((endpoint_plan.get("status") == "OFFLINE_LAST_SEMANTICALLY_VALID_ENDPOINT_ACCEPTED",
             endpoint_plan.get("candidate_id") == row["candidate_id"], endpoint_plan.get("object_id") == object_id,
             endpoint_plan.get("online_truth_used") is False, endpoint_plan.get("hardware_authorized") is False,
@@ -134,8 +138,9 @@ def _verify(args: argparse.Namespace) -> dict:
             endpoint_plan.get("endpoint_definition") == "LAST_SEMANTIC_VALID_NONINTERSECTING_CONTROL_STEP",
             endpoint_plan.get("selection_rule") == "SEMANTIC_VALIDITY_PRECEDES_RAW_FREE_SPACE",
             set(bound_plan) == {"task_ik", "config", "builder_source", "evaluator_source", "runner_source"},
-            np.isfinite(execution), np.isfinite(invalid), stop[1] <= execution < invalid,
-            invalid - execution <= MAXIMUM_INCREMENT_RAD + 1e-12,
+            np.isfinite(execution), np.isfinite(upper), stop[1] <= execution < upper,
+            upper - execution <= MAXIMUM_INCREMENT_RAD + 1e-12,
+            bound_kind in {"FORBIDDEN_OBJECT_SURFACE_FIRST", "RAW_TASK_SURFACE_INTERSECTION"},
             bound_plan.get("task_ik") == paths["task_ik"], bound_plan.get("config") == paths["config"],
             bound_plan.get("runner_source") == Path(__file__).resolve(),
             np.allclose(np.asarray(endpoint_plan.get("fixed_world_from_handbase_row_major"), np.float64)
@@ -326,8 +331,8 @@ def _run(verified: dict, mode: str, report: dict) -> None:
         elif effort > 0.9: abort = abort or "HAND_MEASURED_EFFORT_ABORT"
         elif (verified["endpoint_plan"] is not None and
               positions[name_to_index["f1j2"]] >= verified["endpoint_plan"][
-                  "first_semantically_invalid_target_rad"]):
-            abort = abort or "SEMANTIC_ENDPOINT_OVERSHOOT_ABORT"
+                  "first_nonexecutable_target_rad"]):
+            abort = abort or "NONEXECUTABLE_ENDPOINT_OVERSHOOT_ABORT"
         samples.append({"step": len(samples), "simulation_time_s": (len(samples)+1)*DT_S,
             "phase": phase, "controller_state": state, "active_finger": active_finger,
             "joint_positions_rad": dict(zip(dof_names, _values(positions))),
@@ -478,7 +483,9 @@ def _run(verified: dict, mode: str, report: dict) -> None:
             "bound_execution_target_rad": None if verified["endpoint_plan"] is None else
                 verified["endpoint_plan"]["execution_target_rad"],
             "first_semantically_invalid_target_rad": None if verified["endpoint_plan"] is None else
-                verified["endpoint_plan"]["first_semantically_invalid_target_rad"]},
+                verified["endpoint_plan"]["first_semantically_invalid_target_rad"],
+            "first_nonexecutable_target_rad": None if verified["endpoint_plan"] is None else
+                verified["endpoint_plan"]["first_nonexecutable_target_rad"]},
         "contact_totals": totals, "forbidden_contact_record_count": forbidden,
         "fixed_world_from_handbase_row_major": pose.ravel().tolist(),
         "maximum_handbase_readback_error": root_error, "samples": samples,

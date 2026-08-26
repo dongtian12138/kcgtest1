@@ -74,15 +74,18 @@ def plan_endpoint(task_path: Path) -> dict:
     row = task["task_and_bounded_ik"][0]
     survivor = task["survivor_candidates"][0]
     object_id = anchor["object_id"]
+    palm_angle_deg = float(task["requested_palm_angle_deg"])
     inputs = load_v2_inputs(ROOT, config_path=CONFIG, object_id=object_id)
     _require(
         anchor["candidate_id"] == row["candidate_id"] == survivor["candidate_id"]
         and anchor["object_id"] == survivor["object_id"] == object_id
-        and task["requested_palm_angle_deg"] == 60
+        and 45.0 <= palm_angle_deg <= 75.0
+        and abs(palm_angle_deg - round(palm_angle_deg)) < 1e-9
+        and abs(float(anchor["palm_configuration_deg"]) - palm_angle_deg) < 1e-9
         and task["survivor_count"] == 1
         and len(task["task_and_bounded_ik"]) == 1
         and task["config_sha256"] == _sha256(CONFIG),
-        "opposition-60 survivor task identity changed",
+        "opposition 45-to-75-degree survivor task identity changed",
     )
     dynamic = inputs.config.section("dynamic")
     _require(
@@ -165,22 +168,27 @@ def plan_endpoint(task_path: Path) -> dict:
         if row["exact"]["task_grip_surface_by_finger"][PAD_NAME][
             "forbidden_first"] is True
     ]
-    _require(semantic_valid and semantic_invalid, "semantic endpoint bracket is absent")
+    _require(semantic_valid, "no semantic-valid endpoint exists before TASK intersection")
     _require(not any(
         finger["forbidden_first"]
         for state in states[:predicted_index]
         for finger in state["exact"]["task_grip_surface_by_finger"].values()
     ), "forbidden object surface became first before predicted contact")
     endpoint = semantic_valid[-1]
-    first_invalid = semantic_invalid[0]
+    first_invalid = None if not semantic_invalid else semantic_invalid[0]
+    upper_bound = next_row if first_invalid is None else first_invalid
+    upper_bound_kind = ("RAW_TASK_SURFACE_INTERSECTION" if first_invalid is None
+                        else "FORBIDDEN_OBJECT_SURFACE_FIRST")
     endpoint_index = next(
         index for index, state in enumerate(states)
         if abs(state["q_rad"] - endpoint["q_rad"]) <= 1.0e-12
     )
     _require(
-        endpoint["q_rad"] < first_invalid["q_rad"] <= last_free_row["q_rad"]
-        and first_invalid["q_rad"] - endpoint["q_rad"] <= STEP_RAD + 1.0e-12,
-        "semantic-valid and semantic-invalid endpoints are not adjacent",
+        endpoint["q_rad"] < upper_bound["q_rad"]
+        and upper_bound["q_rad"] - endpoint["q_rad"] <= STEP_RAD + 1.0e-12
+        and (first_invalid is not None or
+             abs(endpoint["q_rad"] - last_free_row["q_rad"]) <= 1.0e-12),
+        "semantic-valid endpoint and first nonexecutable state are not adjacent",
     )
     _require(not any(
         finger["forbidden_first"]
@@ -238,7 +246,10 @@ def plan_endpoint(task_path: Path) -> dict:
         "maximum_joint_increment_rad": STEP_RAD,
         "predicted_proximity_target_rad": float(predicted[1]),
         "execution_target_rad": float(endpoint["q_rad"]),
-        "first_semantically_invalid_target_rad": float(first_invalid["q_rad"]),
+        "first_semantically_invalid_target_rad": (
+            None if first_invalid is None else float(first_invalid["q_rad"])),
+        "first_nonexecutable_target_rad": float(upper_bound["q_rad"]),
+        "endpoint_upper_bound_kind": upper_bound_kind,
         "last_nonintersecting_target_rad": float(last_free_row["q_rad"]),
         "first_intersecting_target_rad": float(next_row["q_rad"]),
         "execution_extension_from_predicted_rad": float(endpoint["q_rad"] - predicted[1]),
@@ -272,11 +283,11 @@ def plan_endpoint(task_path: Path) -> dict:
             safe_prefix, "exact", "self_collision", "minimum_clearance_m"),
         "path_minimum_non_task_object_clearance_m": _minimum(
             safe_prefix, "exact", "non_task_hand_object", "minimum_clearance_m"),
-        "first_semantic_invalid": {
+        "first_semantic_invalid": (None if first_invalid is None else {
             "q_rad": float(first_invalid["q_rad"]),
             "task_grip_surface_by_finger": first_invalid["exact"][
                 "task_grip_surface_by_finger"],
-        },
+        }),
         "first_intersection": {
             "task_surface_intersecting_by_finger": next_safety[
                 "task_surface_intersecting_by_finger"],
@@ -316,6 +327,7 @@ def main() -> int:
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({"output": str(output), "status": report["status"],
                       "q_execute": report["execution_target_rad"],
+                      "q_nonexecutable": report["first_nonexecutable_target_rad"],
                       "q_semantic_invalid": report[
                           "first_semantically_invalid_target_rad"],
                       "q_raw_intersect": report["first_intersecting_target_rad"]},

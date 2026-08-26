@@ -145,9 +145,11 @@ def _verify_inputs(args: argparse.Namespace) -> dict:
     for row in layers["payload_layers"]:
         _bound(paths["hand_asset"].parent / row["path"], row["sha256"],
                f"USD payload {row['path']}")
+    palm_angle_deg = float(task.get("requested_palm_angle_deg", math.nan))
     _require(isinstance(task.get("selected_geometric_anchor_index"), int)
              and 0 <= task["selected_geometric_anchor_index"] < 12
-             and task.get("requested_palm_angle_deg") == 60
+             and 45.0 <= palm_angle_deg <= 75.0
+             and abs(palm_angle_deg - round(palm_angle_deg)) < 1e-9
              and task.get("survivor_count") == 1
              and len(task.get("survivor_candidates") or []) == 1
              and len(task.get("task_and_bounded_ik") or []) == 1
@@ -159,7 +161,7 @@ def _verify_inputs(args: argparse.Namespace) -> dict:
     object_id = anchor["object_id"]
     _require(anchor["candidate_id"] == survivor["candidate_id"] == task_row["candidate_id"]
              and survivor["object_id"] == object_id
-             and abs(float(anchor["palm_configuration_deg"]) - 60.0) < 1e-9
+             and abs(float(anchor["palm_configuration_deg"]) - palm_angle_deg) < 1e-9
              and task_row["bounded_ik"]["status"] == "BOUNDED_IK_PASS_NOT_PATH_COLLISION"
              and task_row["task_quality"]["nominal_gravity_lift_balance_pass"] is True,
              "opposition-60 task/IK candidate identity changed")

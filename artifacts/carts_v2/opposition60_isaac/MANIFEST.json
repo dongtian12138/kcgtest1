@@ -1,6 +1,6 @@
 {
   "schema_version": "opposition60_isaac_manifest_v1",
-  "updated_at_utc": "2026-08-26T08:28:00Z",
+  "updated_at_utc": "2026-08-26T09:13:32Z",
   "execution_window": {
     "id": "OPPOSITION60_ISAAC_12H",
     "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
@@ -165,7 +165,18 @@
         "e982dced51fee853a44a873e84a7028e03a4c8c982dfaf01c2131d03f8abd81e",
         "dd65d2d97ce95e3ef82f92f99ba2f416fac9ab440e0be6199599f0db4fc21e51",
         "9912c0340d42f531c35e2e8924314a1b7507afc04bd5e5efa9763815ab9609b3"
-      ]
+      ],
+      "object_b_qp59_anchor2_task_ik_sha256": "206f546a083f05f45e21d7240b824da7addc8133874d19b9daca31d6184876c6",
+      "object_b_qp59_anchor2_initial_trace_sha256": "87d9e31dc9dc5ec8a42ea060d958ed08addb7736ae3d33c3efc7373475635c45",
+      "object_b_qp59_anchor2_initial_exact_replay_sha256": "3d8584996b9dfaa0393c89b10be6abfbc657d1f19e6464637b072b4eadcce237",
+      "object_b_qp59_anchor2_preshape_trace_sha256": "d69bbb8efb62e53d310c24ef7ab36614379be77def3bea43541e2bf981a27a6a",
+      "object_b_qp59_anchor2_endpoint_plan_sha256": "802ae47f41099183091c1dea463d0b5adbb84555e77fe4e19e135d2e64e56d6c",
+      "object_b_qp59_anchor2_first_finger_trace_sha256": "7e2e5ed504fd75b31a6dd97082b1c21c4907890908ad392e5d5afc7c9040d01f",
+      "object_b_qp59_anchor2_first_finger_evaluation_sha256": "5e6c3eb464cd6b56433bf567ab49cd4ff02231813bc738bd0e87d7ff942848c6",
+      "object_b_qp59_anchor2_first_finger_status": "NO_PHYSX_CONTACT_AT_LAST_SEMANTIC_VALID_ENDPOINT",
+      "object_b_qp59_anchor2_first_finger_steps_time_speed_effort": [396, 3.3, 0.1648096889257431, 0.03715331107378006],
+      "object_b_qp59_anchor2_first_finger_physx_contact_count": 0,
+      "object_b_qp59_anchor2_second_third_preload_lift_commands": [0, 0, 0, 0]
     }
   },
   "supervisor_decision": {
@@ -190,7 +201,7 @@
     "multi_witness_contact": "ALL33_QUERY_TOP16_AND_FORBIDDEN_FIRST_GUARD_TARGETED_PASS",
     "contact_conditioned_height": "CONTACT_STOP_ITERATION_AND_STATE_BOUNDARY_SEARCH_TARGETED_PASS",
     "object_b_task_top3": "NOT_RUN",
-    "object_b_local_dynamic": "ANCHOR7_ALL27_PRESHAPES_EXHAUSTED_SIX_BOUNDARY_SURVIVORS_RESELECT_AZIMUTH_NO_LIFT",
+    "object_b_local_dynamic": "QP59_ANCHOR2_FIRST_FINGER_NO_PHYSX_CONTACT_OLD_BINARY_SEMANTICS_CHECKPOINT_NO_LIFT",
     "object_b_full_arm_dynamic": "NOT_STARTED",
     "object_a_frozen_parameter_dynamic": "NOT_STARTED"
   },
