@@ -1,6 +1,6 @@
 {
   "schema_version": "opposition60_isaac_manifest_v1",
-  "updated_at_utc": "2026-08-25T23:55:10Z",
+  "updated_at_utc": "2026-08-26T00:37:58Z",
   "execution_window": {
     "id": "OPPOSITION60_ISAAC_12H",
     "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
@@ -71,8 +71,9 @@
   "gates": {
     "initial_supervisor_review": "APPROVE_WITH_3_CHANGES",
     "compound_convex_collision_asset": "NOT_ACCEPTED",
-    "qp60_static_positive_control": "ONE_PRESHAPE_COMPLETE_NO_SURVIVOR_NOT_FAMILY_RESULT",
-    "all_27_opposition_preshapes": "1500S_COMPUTE_TIMEOUT_NO_RESULT",
+    "qp60_static_positive_control": "ANCHOR_A00_ALL27_COMPLETE_NO_THREE_CONTACT_WITNESS_NOT_FAMILY_RESULT",
+    "all_27_opposition_preshapes": "COMPLETE_FOR_ANCHOR_A00_IN_FOUR_DETERMINISTIC_SHARDS",
+    "next_anchor_phase_diagnostic": "ANCHOR_INDEX_1_A01_Z1_SAME_PRESHAPE_0P2_0P2_0P2",
     "multi_witness_contact": "ALL33_QUERY_TOP16_AND_FORBIDDEN_FIRST_GUARD_TARGETED_PASS",
     "contact_conditioned_height": "CONTACT_STOP_ITERATION_AND_STATE_BOUNDARY_SEARCH_TARGETED_PASS",
     "object_b_task_top3": "NOT_RUN",
@@ -115,7 +116,27 @@
       "evidence_scope": "DISCRETE_CONTROL_STEPS_NOT_CONTINUOUS_COLLISION_PROOF",
       "new_result_sha256": "aebdc45a60af1a27f93798e39527fc3e48747e483c6a9d04af3cb93504bd77b4",
       "new_profile_sha256": "db98d7c3bd049bc4b42fb98c5917fb11ab2ceaf77a98ee18ffea58bbb488e785"
+    },
+    "qp60_anchor_a00_exact27": {
+      "completed_variant_count": 27,
+      "height_probe_count": 3477,
+      "contact_count_histogram_zero_one_two_three": [2808, 669, 0, 0],
+      "survivor_count": 0,
+      "elapsed_s_total": 2815.336555,
+      "failure_status": "SAMPLED_NO_THREE_CONTACT_WITNESS_UNRESOLVED",
+      "failure_stage_counts_first_forbidden_first_no_contact_second_forbidden": [1782, 1026, 669],
+      "primary_observed_failure": "NO_TWO_CONTACT_PROBE; FIRST_FINGER_FORBIDDEN_OR_NO_CONTACT_DOMINATES; SECOND_FINGER_FORBIDDEN_AFTER_ONE_CONTACT_IS_SECONDARY",
+      "face_21232_review": "CORRECTLY_FORBIDDEN_NARROW_TANGENTIAL_TOOTH_OR_GROOVE_SIDEWALL_NOT_SEMANTIC_BUG_VENDOR_FEATURE_NAME_UNCONFIRMED",
+      "summary_path": "artifacts/carts_v2/opposition60_isaac/preshape_27_audit/qp60_anchor_a00_exact27_summary.json",
+      "shard_result_sha256": [
+        "5caf761cb10a07d0a2e0a9624342b868a965f2fea5992d55ec9ca8deebfd9ded",
+        "41eee06ae23fcef85b59b627fad59621adf509a4292d9424572e91481b7b2dc2",
+        "3a20c38529968ca0e5b06eb30d8393a5cbca84169c7869a58d3ebce8bb2f32e6",
+        "fe718579d7469c316ca8f985116ade07f7a0aa2695815832843d384ac339cbdd"
+      ],
+      "isaac_started": false,
+      "family_infeasibility_claimed": false
     }
   },
-  "claim_scope": "ONE_QP60_PRESHAPE_OFFLINE_NEGATIVE_AND_QUERY_PROFILE_ONLY; NO_QP60_FAMILY_OR_DYNAMIC RESULT"
+  "claim_scope": "ONE_QP60_SPATIAL_ANCHOR_ALL27_PRESHAPES_OFFLINE_SAMPLED_UNRESOLVED; NO_QP60_FAMILY_OR_DYNAMIC RESULT"
 }

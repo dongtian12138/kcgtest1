@@ -1,0 +1,10 @@
+{
+  "result": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/opposition60_isaac/qp60_anchor_a00_shard_o00_c07/opposition60_exact_offset_00_count_07_static_control.json",
+  "result_sha256": "5caf761cb10a07d0a2e0a9624342b868a965f2fea5992d55ec9ca8deebfd9ded",
+  "exact_variant_evaluated_count": 7,
+  "maximum_exact_variants": 7,
+  "exact_variant_offset": 0,
+  "survivor_count": 0,
+  "elapsed_s": 747.5583422680211,
+  "isaac_started": false
+}
