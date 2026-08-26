@@ -1,0 +1,33 @@
+Traceback (most recent call last):
+  File "/home/noob/WorkPlace/kcgtest1/scripts/carts_v2/run_opposition60_local_refinement.py", line 128, in <module>
+    raise SystemExit(main())
+  File "/home/noob/WorkPlace/kcgtest1/scripts/carts_v2/run_opposition60_local_refinement.py", line 82, in main
+    survivors, refinement = refine_opposition_pose(
+  File "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/kcg_connector/grasp/carts_v2/opposition_refiner.py", line 389, in refine_opposition_pose
+    stage_b = differential_evolution(
+  File "/home/noob/WorkPlace/hamer/.conda-env/lib/python3.10/site-packages/scipy/optimize/_differentialevolution.py", line 397, in differential_evolution
+    ret = solver.solve()
+  File "/home/noob/WorkPlace/hamer/.conda-env/lib/python3.10/site-packages/scipy/optimize/_differentialevolution.py", line 989, in solve
+    self._calculate_population_energies(
+  File "/home/noob/WorkPlace/hamer/.conda-env/lib/python3.10/site-packages/scipy/optimize/_differentialevolution.py", line 1122, in _calculate_population_energies
+    calc_energies = list(
+  File "/home/noob/WorkPlace/hamer/.conda-env/lib/python3.10/site-packages/scipy/_lib/_util.py", line 372, in __call__
+    return self.f(x, *self.args)
+  File "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/kcg_connector/grasp/carts_v2/opposition_refiner.py", line 383, in table_objective
+    row = probe.evaluate(vector, with_table=True)
+  File "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/kcg_connector/grasp/carts_v2/opposition_refiner.py", line 244, in evaluate
+    self._bind_table_result(row)
+  File "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/kcg_connector/grasp/carts_v2/opposition_refiner.py", line 284, in _bind_table_result
+    requirement, stage, checked = sampled_table_path_requirement(
+  File "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/kcg_connector/grasp/carts_v2/height_projected_search.py", line 82, in sampled_table_path_requirement
+    requirement, stage, checked, _early = _table_requirement(
+  File "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/kcg_connector/grasp/carts_v2/height_projected_search.py", line 150, in _table_requirement
+    minimum_z, triangle_index = minimum_z_over_finite_table_top(
+  File "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/kcg_connector/grasp/carts_v2/height_projection.py", line 122, in minimum_z_over_finite_table_top
+    lower, upper = np.min(triangles[:, :, :2], axis=1), np.max(
+  File "<__array_function__ internals>", line 180, in amin
+  File "/home/noob/WorkPlace/hamer/.conda-env/lib/python3.10/site-packages/numpy/core/fromnumeric.py", line 2918, in amin
+    return _wrapreduction(a, np.minimum, 'min', axis, None, out,
+  File "/home/noob/WorkPlace/hamer/.conda-env/lib/python3.10/site-packages/numpy/core/fromnumeric.py", line 86, in _wrapreduction
+    return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
+KeyboardInterrupt

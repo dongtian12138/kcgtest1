@@ -51,8 +51,12 @@ candidate_generation:
     maximum_seeds_per_object: 64
     maximum_stage_a_plus_b_evaluations_per_seed: 300
     translation_bound_m: 0.020
-    rotation_bound_rad: 0.17453292519943295
-    palm_configuration_bound_rad: 0.026179938779914945
+    rotation_bound_rad: 0.20943951023931956
+    palm_configuration_bound_rad: 0.08726646259971647
+    opposition_palm_lower_rad: 0.7853981633974483
+    opposition_palm_upper_rad: 1.3089969389957472
+    optimizer_random_seed: 20260826
+    maximum_wall_time_s: 1400
     pregrasp_phase_bounds: [0.0, 0.3]
   graspgenx:
     planner: graspmoe

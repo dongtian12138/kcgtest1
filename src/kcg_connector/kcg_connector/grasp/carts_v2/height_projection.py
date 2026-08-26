@@ -125,7 +125,16 @@ def minimum_z_over_finite_table_top(
         (upper[:, 0] >= bounds[0, 0]) & (lower[:, 0] <= bounds[0, 1])
         & (upper[:, 1] >= bounds[1, 0]) & (lower[:, 1] <= bounds[1, 1]))
     best: tuple[float, int] | None = None
-    for index in active:
+    fully_inside = (
+        (lower[:, 0] >= bounds[0, 0]) & (upper[:, 0] <= bounds[0, 1])
+        & (lower[:, 1] >= bounds[1, 0]) & (upper[:, 1] <= bounds[1, 1])
+    )
+    inside = np.flatnonzero(fully_inside)
+    if len(inside):
+        values = np.min(triangles[inside, :, 2], axis=1)
+        row = int(np.argmin(values))
+        best = float(values[row]), int(inside[row])
+    for index in active[~fully_inside[active]]:
         polygon = [point.copy() for point in triangles[int(index)]]
         for axis, boundary, above in (
             (0, bounds[0, 0], True), (0, bounds[0, 1], False),

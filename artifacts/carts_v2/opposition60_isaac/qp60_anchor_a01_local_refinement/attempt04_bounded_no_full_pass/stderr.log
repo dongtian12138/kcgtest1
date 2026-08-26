@@ -1,0 +1,2 @@
+/home/noob/WorkPlace/hamer/.conda-env/lib/python3.10/site-packages/scipy/optimize/_optimize.py:3351: RuntimeWarning: invalid value encountered in subtract
+  if (fx2 - fval) > delta:

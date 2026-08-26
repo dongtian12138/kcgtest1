@@ -81,6 +81,17 @@ def test_exact_triangle_query_uses_clipped_table_crossing_height() -> None:
     assert index == 0
 
 
+def test_exact_triangle_query_fast_path_keeps_lowest_fully_inside_face() -> None:
+    triangles = np.asarray((
+        ((-0.2, 0.0, 0.0), (0.2, 0.0, 2.0), (0.0, 0.2, 2.0)),
+        ((-0.05, -0.05, -0.3), (0.05, -0.05, -0.2), (0.0, 0.05, -0.1)),
+    ))
+    minimum, index = minimum_z_over_finite_table_top(
+        triangles, np.asarray(((-0.1, 0.1), (-0.1, 0.1))))
+    assert minimum == pytest.approx(-0.3)
+    assert index == 1
+
+
 def test_table_intersection_and_nearest_projection_prefer_higher_tie() -> None:
     feasible = intersect_contact_with_table(((0.0, 1.0), (3.0, 4.0)), 0.5)
     assert feasible == ((0.5, 1.0), (3.0, 4.0))

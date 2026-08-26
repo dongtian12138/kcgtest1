@@ -66,6 +66,29 @@ def sampled_height_path_states(
                                  ("LIFT_START", lifted, joints))
 
 
+def sampled_table_path_requirement(
+    inputs: V2Inputs,
+    seed: CandidateSeed,
+    final_closure_phases: tuple[float, float, float],
+    required_clearance_m: float,
+) -> tuple[TableHeightRequirement, str | None, int]:
+    """Evaluate the registered complete sampled path against the finite table."""
+
+    envelope = SampledPathEnvelope(
+        tuple(sampled_height_path_states(inputs, seed, final_closure_phases)),
+        "REGISTERED_CONTROL_STEPS_PALM_PRESHAPE_APPROACH_"
+        "SEQUENTIAL_CLOSURE_PRELOAD_LIFT_START",
+    )
+    requirement, stage, checked, _early = _table_requirement(
+        inputs,
+        seed,
+        envelope,
+        _registered_link_geometry(inputs),
+        float(required_clearance_m),
+    )
+    return requirement, stage, checked
+
+
 def _registered_link_geometry(inputs: V2Inputs):
     geometry = []
     for link, triangles in sorted(inputs.hand_collision_triangles_by_link.items()):
@@ -511,4 +534,4 @@ def search_height_projected_pregrasps(
 
 
 __all__ = ["SampledPathEnvelope", "contact_height_bounds", "sampled_height_path_states",
-           "search_height_projected_pregrasps"]
+           "sampled_table_path_requirement", "search_height_projected_pregrasps"]

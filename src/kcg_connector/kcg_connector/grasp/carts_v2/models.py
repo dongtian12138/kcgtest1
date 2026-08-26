@@ -304,6 +304,7 @@ def load_v2_config(path: Path | str) -> CARTSV2Config:
         palm = generation.get("palm_configuration", {})
         pregrasp = generation.get("pregrasp_search", {})
         graspgenx = generation.get("graspgenx", {})
+        refinement = generation.get("refinement", {})
         if (
             int(palm.get("grid_count", 0)) != 91
             or float(palm.get("lower_rad", math.nan)) != 0.0
@@ -314,6 +315,18 @@ def load_v2_config(path: Path | str) -> CARTSV2Config:
             or int(pregrasp.get("combination_count", 0)) != 27
             or int(graspgenx.get("raw_target_per_descriptor_object", 0)) != 128
             or int(graspgenx.get("keep_per_descriptor_object", 0)) != 64
+            or int(refinement.get(
+                "maximum_stage_a_plus_b_evaluations_per_seed", 0)) != 300
+            or float(refinement.get("translation_bound_m", math.nan)) != 0.020
+            or float(refinement.get("rotation_bound_rad", math.nan)) != math.radians(12.0)
+            or float(refinement.get(
+                "palm_configuration_bound_rad", math.nan)) != math.radians(5.0)
+            or float(refinement.get(
+                "opposition_palm_lower_rad", math.nan)) != math.radians(45.0)
+            or float(refinement.get(
+                "opposition_palm_upper_rad", math.nan)) != math.radians(75.0)
+            or int(refinement.get("optimizer_random_seed", 0)) != 20260826
+            or not 0 < int(refinement.get("maximum_wall_time_s", 0)) <= 1500
         ):
             raise ValueError("full-palm search identity changed")
     dynamic = value.get("dynamic", {})

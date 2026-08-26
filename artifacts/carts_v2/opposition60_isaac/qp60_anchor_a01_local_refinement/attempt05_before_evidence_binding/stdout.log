@@ -1,0 +1,11 @@
+{
+  "result": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/opposition60_isaac/qp60_anchor_a01_local_refinement/opposition60_anchor_a01_bounded_refinement.json",
+  "result_sha256": "1bb7fa39e18b89d6f28b8ad404b99ed3a0616a797e937d57d8a50f5bd40b245d",
+  "guidance_evaluation_count": 291,
+  "exact_revalidation_count": 8,
+  "fixed_phase_gap_witness_count": 51,
+  "table_evaluated_gap_witness_count": 49,
+  "b_full_pass_count": 0,
+  "elapsed_s": 209.61732361497707,
+  "isaac_started": false
+}

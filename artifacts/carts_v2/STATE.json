@@ -1,14 +1,14 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T01:13:00Z",
+  "updated_at_utc": "2026-08-26T02:15:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T10:17:59Z",
   "branch": "carts-grasp-opposition60-isaac-20260826",
-  "config_sha256": "87fdda414ccd8571526e7dae9e379880c6122762ec623b9adc153e4b77cc3350",
+  "config_sha256": "09f1213c573ebde1c6c7a3b96932f661e9c4956c26ce165d7d08eee47714a41f",
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "OPPOSITION60_ANCHOR_A01_BOUNDED_LOCAL_REFINEMENT",
+  "current_milestone": "OPPOSITION60_ANCHOR_A02_HIGH_AXIAL_DIAGNOSTIC",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -103,7 +103,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "LOCAL_HAND_OBJECT_ONLY_AFTER_ASSET_AND_STATIC_POSITIVE_CONTROL",
-    "reason": "THREE_COLLISION_ASSETS_REJECTED_AND_QP60_EXACT27_TIMED_OUT_BEFORE_RESULT"
+    "reason": "RESEARCH_COLLISION_ASSET_NOT_ACCEPTED_AND_NO_PATH_SAFE_THREE_CONTACT_CANDIDATE"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1344,7 +1344,7 @@
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
   "opposition60_isaac": {
-    "route_status": "QP60_ANCHOR_A00_EXACT27_COMPLETE_NEXT_ANCHOR_PHASE_DIAGNOSTIC",
+    "route_status": "ANCHOR_A01_BOUNDED_REFINEMENT_NO_FULL_PASS_NEXT_ANCHOR_A02_HIGH_AXIAL_DIAGNOSTIC",
     "primary_object": "te_deutsch_d38999_26fj35pn_step",
     "transfer_object": "current_d38999_26kj61sn_public_spec",
     "opposition_palm_range_deg": [45.0, 75.0],
@@ -1407,6 +1407,24 @@
       "research_executable_candidate": false,
       "elapsed_s": 558.949458550982,
       "summary_path": "artifacts/carts_v2/opposition60_isaac/qp60_anchor_a01_probe1/ANCHOR_A01_THREE_CONTACT_TABLE_CONFLICT_SUMMARY.json",
+      "isaac_started": false
+    },
+    "qp60_anchor_a01_bounded_refinement": {
+      "fixed_pregrasp_closure_phases": [0.2, 0.2, 0.2],
+      "evaluation_budget": 300,
+      "total_evaluation_count": 300,
+      "evaluation_count_unit": "UNIQUE_CANDIDATE_POSE",
+      "fixed_phase_gap_witness_count": 51,
+      "exact_revalidation_count": 8,
+      "b_full_pass_count": 0,
+      "best_exact_contact_count": 3,
+      "best_exact_minimum_table_clearance_m": 0.00044163560556809145,
+      "best_exact_table_deficit_to_1mm_m": 0.0005583643944319086,
+      "best_exact_fast_filter_status": "FAST_SURVIVE",
+      "stop_reason": "MAXIMUM_EVALUATION_BUDGET",
+      "result_sha256": "e30aaf37076eb17244a6b21d054f7bf9c887a410d4fca06f8e71b1ec375f0215",
+      "claim_scope": "NO_PASS_FOUND_NOT_CONTINUOUS_INFEASIBILITY_PROOF_FIXED_ANCHOR1_FIXED_PRESHAPE_ONLY",
+      "research_executable_candidate": false,
       "isaac_started": false
     },
     "qp60_single_preshape_profile": {
