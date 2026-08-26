@@ -21,6 +21,9 @@ from kcg_connector.grasp.carts_v2.b0_surface_semantics import (
 )
 from kcg_connector.grasp.carts_v2.models import file_sha256, load_v2_inputs
 from kcg_connector.grasp.carts_v2.structured_seed_generator import (
+    CONTINUOUS_ALLOWED_TARGETS,
+    FULL_ALLOWED_TARGETS,
+    RADIAL_SUPPORT_TARGETS,
     generate_structured_contact_seeds,
     structured_seed_specifications,
 )
@@ -41,6 +44,9 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--object-id", default=OBJECT_B)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--candidate-id", action="append", default=[])
+    parser.add_argument("--target-surface-mode", choices=(
+        RADIAL_SUPPORT_TARGETS, FULL_ALLOWED_TARGETS, CONTINUOUS_ALLOWED_TARGETS),
+        default=RADIAL_SUPPORT_TARGETS)
     return parser.parse_args()
 
 
@@ -117,7 +123,8 @@ def main() -> int:
         row for row in all_specs if row.candidate_id in set(requested)))
     if requested and ({row.candidate_id for row in specifications} != set(requested)):
         raise ValueError("unknown or duplicate CONTACTOPT candidate identifier")
-    seeds, audit = generate_structured_contact_seeds(inputs, specifications)
+    seeds, audit = generate_structured_contact_seeds(
+        inputs, specifications, target_surface_mode=args.target_surface_mode)
     rows = list(audit["specifications"])
     counts = Counter(row["preshape_id"] for row in rows)
     report = {

@@ -9,6 +9,7 @@ import csv
 import hashlib
 import io
 import json
+import math
 import os
 from pathlib import Path
 import time
@@ -59,6 +60,16 @@ def _require(condition: bool, reason: str) -> None:
 def _read_json(path: Path) -> dict:
     value = json.loads(path.read_text(encoding="utf-8"))
     _require(isinstance(value, dict), f"JSON root is not an object: {path}")
+    return value
+
+
+def _json_ready(value):
+    if isinstance(value, dict):
+        return {str(key): _json_ready(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [_json_ready(item) for item in value]
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
     return value
 
 
@@ -310,7 +321,8 @@ def main() -> int:
               "proxy_interval_survivors": [asdict(seed) for seed in selected],
               "audit": audit}
     targets = {output_root / "cheap_evaluation/cheap_intervals_B.json":
-               json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n"}
+               json.dumps(_json_ready(report), indent=2, sort_keys=True,
+                          allow_nan=False) + "\n"}
     csv_text = _top120_csv(audit)
     if csv_text is not None:
         targets[output_root / "top120/top120.csv"] = csv_text

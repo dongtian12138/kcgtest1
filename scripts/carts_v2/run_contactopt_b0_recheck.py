@@ -43,6 +43,7 @@ def _args():
     parser.add_argument("--repository-root", type=Path, default=ROOT)
     parser.add_argument("--seed-manifest", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--candidate-id")
     parser.add_argument("--optimize", action="store_true")
     parser.add_argument("--project-table", action="store_true")
     return parser.parse_args()
@@ -195,6 +196,10 @@ def main():
     specifications = {row["candidate_id"]: row
                       for row in manifest["audit"]["specifications"]}
     seeds = tuple(_seed(row) for row in manifest["generated_candidates"])
+    if args.candidate_id is not None:
+        seeds = tuple(seed for seed in seeds
+                      if seed.candidate_id == args.candidate_id)
+        _require(len(seeds) == 1, "candidate-id must select exactly one seed")
     evaluator = ProxyContactIntervalEvaluator(inputs)
     projection = None
     if args.project_table:

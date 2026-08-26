@@ -30,6 +30,9 @@ _AZIMUTH_STEP_DEG = 2.0
 _FEATURE_SCAN_STEP_DEG = 1.0
 _TARGET_WINDOW_RAD = math.radians(12.5)
 _TARGET_REPRESENTATIVE_COUNT = 8
+RADIAL_SUPPORT_TARGETS = "RADIAL_SUPPORT_72X24_REPRESENTATIVES"
+FULL_ALLOWED_TARGETS = "B0_FULL_ALLOWED_SURFACE"
+CONTINUOUS_ALLOWED_TARGETS = "B0_CONTINUOUS_ALLOWED_PROJECTED"
 
 
 @dataclass(frozen=True)
@@ -108,7 +111,7 @@ def _radial_support_target_mask(allowed, areas, radii, angles, axial,
     return mask
 
 
-def _object_index(inputs: V2Inputs) -> dict[str, object]:
+def _object_index(inputs: V2Inputs, target_surface_mode: str) -> dict[str, object]:
     band = dict(extract_object_grasp_band(inputs))
     mesh = inputs.object_contract.model.mesh
     points = np.asarray(mesh.face_centroids_m, dtype=np.float64)
@@ -125,14 +128,25 @@ def _object_index(inputs: V2Inputs) -> dict[str, object]:
     angular_count = int(inputs.config.section("surface_roles")["angular_bin_count"])
     axial_count = int(inputs.config.section("surface_roles")["axial_bin_count"])
     radii = np.linalg.norm(radial, axis=1)
-    seed_targets = _radial_support_target_mask(
-        inputs.face_roles.face_is_allowed, areas, radii, angle, axial,
-        band["axial_range_m"], angular_count, axial_count)
+    if target_surface_mode == RADIAL_SUPPORT_TARGETS:
+        seed_targets = _radial_support_target_mask(
+            inputs.face_roles.face_is_allowed, areas, radii, angle, axial,
+            band["axial_range_m"], angular_count, axial_count)
+        target_method = "MAXIMUM_RADIAL_SUPPORT_PER_72X24_BIN_FACE_ID_TIE_BREAK"
+    elif target_surface_mode in (FULL_ALLOWED_TARGETS, CONTINUOUS_ALLOWED_TARGETS):
+        seed_targets = np.asarray(inputs.face_roles.face_is_allowed, dtype=np.bool_)
+        target_method = target_surface_mode
+    else:
+        raise ValueError("UNKNOWN_STRUCTURED_SEED_TARGET_SURFACE_MODE")
     return {**band, "points": points, "normals": material_bound_object_face_normals(inputs),
             "areas": areas, "roles": roles,
             "allowed": inputs.face_roles.face_is_allowed, "axial": axial, "angle": angle,
             "radius": radii, "seed_target": seed_targets,
-            "seed_target_method": "MAXIMUM_RADIAL_SUPPORT_PER_72X24_BIN_FACE_ID_TIE_BREAK",
+            "seed_target_method": target_method,
+            "project_axial_center": target_surface_mode == CONTINUOUS_ALLOWED_TARGETS,
+            "use_complete_target_window": target_surface_mode == CONTINUOUS_ALLOWED_TARGETS,
+            "target_representative_count": (64 if target_surface_mode ==
+                                             CONTINUOUS_ALLOWED_TARGETS else 8),
             "axial_bin_count": axial_count}
 
 
@@ -219,16 +233,26 @@ def _target_region_candidates(index: Mapping[str, object], ratio: float, angle: 
     if len(eligible) == 0:
         raise ValueError("NO_USABLE_OBJECT_REGION_IN_TARGET_WINDOW")
     local_delta = _cyclic_delta(np.asarray(index["angle"])[eligible], angle)
-    near = eligible[local_delta <= float(np.min(local_delta)) + math.radians(2.0)]
+    near = eligible
+    if not bool(index.get("use_complete_target_window", False)):
+        near = eligible[local_delta <= float(np.min(local_delta)) + math.radians(2.0)]
     areas, points = np.asarray(index["areas"])[near], np.asarray(index["points"])[near]
+    normals = np.asarray(index["normals"])[near]
     center = np.average(points, axis=0, weights=areas)
     center_face = int(near[np.argmin(np.sum((points - center) ** 2, axis=1))])
-    order = [center_face]
-    for local in farthest_point_indices(points, min(len(points), _TARGET_REPRESENTATIVE_COUNT)):
+    count = int(index.get("target_representative_count", _TARGET_REPRESENTATIVE_COUNT))
+    if bool(index.get("use_complete_target_window", False)):
+        span = np.ptp(points, axis=0)
+        features = np.column_stack(((points - np.min(points, axis=0)) /
+                                    np.where(span > 0.0, span, 1.0), normals))
+        order = []
+    else:
+        features, order = points, [center_face]
+    for local in farthest_point_indices(features, min(len(points), count)):
         face = int(near[int(local)])
         if face not in order:
             order.append(face)
-        if len(order) == _TARGET_REPRESENTATIVE_COUNT:
+        if len(order) == count:
             break
     low, high = index["axial_range_m"]
     target_axial = low + ratio * (high - low) + float(axial_offset_m)
@@ -249,20 +273,32 @@ def _edge_lengths(points):
                        np.linalg.norm(values[1] - values[2])))
 
 
+def _edge_lengths_batch(point_sets):
+    values = np.asarray(point_sets, dtype=np.float64)
+    return np.column_stack((np.linalg.norm(values[:, 0] - values[:, 1], axis=1),
+                            np.linalg.norm(values[:, 0] - values[:, 2], axis=1),
+                            np.linalg.norm(values[:, 1] - values[:, 2], axis=1)))
+
+
 def _compatible_target_triplet(hand_points, hand_normals, candidate_sets,
-                               contact_distance):
+                               contact_distance, maximum_alignment_count=None):
     sizes = tuple(len(rows) for rows in candidate_sets)
     grid = np.stack(np.meshgrid(*(np.arange(size) for size in sizes), indexing="ij"),
                     axis=-1).reshape(-1, 3)
     target_points = np.asarray([[candidate_sets[finger][choice]["point"]
                                  for finger, choice in enumerate(row)] for row in grid])
-    edge_error = np.abs(np.asarray([_edge_lengths(row) for row in target_points]) -
-                        _edge_lengths(hand_points))
+    edge_error = np.abs(_edge_lengths_batch(target_points) - _edge_lengths(hand_points))
     compatible = np.flatnonzero(np.all(edge_error <= 2.0 * contact_distance, axis=1))
     if len(compatible) == 0:
         raise ValueError("NO_EDGE_COMPATIBLE_TARGET_TRIPLET")
+    evaluated = compatible
+    if maximum_alignment_count is not None and len(evaluated) > maximum_alignment_count:
+        maxima = np.max(edge_error[evaluated], axis=1)
+        totals = np.sum(edge_error[evaluated], axis=1)
+        order = np.lexsort((evaluated, totals, maxima))
+        evaluated = evaluated[order[:int(maximum_alignment_count)]]
     best = None
-    for index in compatible:
+    for index in evaluated:
         targets = tuple(candidate_sets[finger][int(choice)]
                         for finger, choice in enumerate(grid[index]))
         points = target_points[index]
@@ -274,8 +310,8 @@ def _compatible_target_triplet(hand_points, hand_normals, candidate_sets,
             if str(error) == "POINT_NORMAL_ALIGNMENT_OPPOSED_NORMAL_FAILED":
                 continue
             raise
-        rank = (alignment["maximum_point_residual_m"],
-                alignment["maximum_normal_residual_rad"],
+        rank = (alignment["maximum_normal_residual_rad"],
+                alignment["maximum_point_residual_m"],
                 max(row["angle_error_rad"] for row in targets),
                 max(row["axial_error_m"] for row in targets),
                 -sum(row["role"] == PRIMARY_GRIP for row in targets),
@@ -287,6 +323,7 @@ def _compatible_target_triplet(hand_points, hand_normals, candidate_sets,
     rank, targets, alignment, errors = best
     audit = {"target_candidate_counts": list(sizes),
              "edge_compatible_triplet_count": int(len(compatible)),
+             "normal_alignment_triplet_count": int(len(evaluated)),
              "selected_maximum_edge_error_m": float(np.max(errors)),
              "selected_maximum_angle_error_rad": float(rank[2]),
              "selected_maximum_axial_error_m": float(rank[3]),
@@ -333,14 +370,24 @@ def _generate_one(inputs, index, spec, effective_qp, references, profiles, direc
             raise ValueError("INSUFFICIENT_25_DEG_FEATURE_DIRECTIONS")
         azimuth_deg = directions[key][spec.direction_index]
     angles = math.radians(azimuth_deg) + np.asarray(hand["relative_azimuths_rad"])
+    offsets = np.asarray(hand["relative_axial_offsets_m"], dtype=np.float64)
+    axial_shift = 0.0
+    if bool(index.get("project_axial_center", False)):
+        low, high = index["axial_range_m"]
+        center = low + spec.axial_ratio * (high - low)
+        feasible_low, feasible_high = low - float(np.min(offsets)), high - float(np.max(offsets))
+        if feasible_low > feasible_high:
+            raise ValueError("HAND_AXIAL_SPAN_EXCEEDS_OBJECT_GRASP_BAND")
+        axial_shift = float(np.clip(center, feasible_low, feasible_high) - center)
     target_sets = [_target_region_candidates(
-        index, spec.axial_ratio, float(angle), float(offset))
-        for angle, offset in zip(angles, hand["relative_axial_offsets_m"])]
+        index, spec.axial_ratio, float(angle), float(offset + axial_shift))
+        for angle, offset in zip(angles, offsets)]
     contact_distance = float(inputs.config.section("closure_prediction")[
         "contact_distance_m"])
     targets, alignment, triplet_audit = _compatible_target_triplet(
         hand["points_handbase_m"], hand["normals_handbase"], target_sets,
-        contact_distance)
+        contact_distance, maximum_alignment_count=(64 if bool(
+            index.get("use_complete_target_window", False)) else None))
     pose = np.asarray(alignment["object_from_hand"])
     approach = pose[:3, :3] @ np.asarray(hand["approach_direction_handbase"])
     approach_distance = float(inputs.config.section("dynamic")[
@@ -366,10 +413,15 @@ def _generate_one(inputs, index, spec, effective_qp, references, profiles, direc
            "target_region_areas_m2": [float(value["region_area_m2"]) for value in targets],
            "target_axial_centers_m": [float(value["target_axial_m"]) for value in targets],
            "hand_relative_axial_offsets_m": list(hand["relative_axial_offsets_m"]),
+           "projected_common_axial_shift_m": axial_shift,
            "reference_closure_phases": list(hand["reference_closure_phases"]),
            "grasp_pose_object_from_hand": [float(value) for value in pose.ravel()],
            "pregrasp_pose_object_from_hand": [float(value) for value in pregrasp_pose.ravel()],
            "approach_distance_m": approach_distance,
+           "triplet_selection_policy": (
+               "EDGE_COMPATIBLE_TOP64_THEN_MIN_MAX_NORMAL_THEN_MIN_MAX_POINT_RESIDUAL"
+               if bool(index.get("use_complete_target_window", False)) else
+               "ALL_EDGE_COMPATIBLE_THEN_MIN_MAX_NORMAL_THEN_MIN_MAX_POINT_RESIDUAL"),
            "maximum_point_residual_m": alignment["maximum_point_residual_m"],
            "maximum_normal_residual_rad": alignment["maximum_normal_residual_rad"],
            "pose_method": alignment["method"], **triplet_audit}
@@ -386,6 +438,8 @@ def _reject_record(spec: StructuredSeedSpec, reason: str,
 def generate_structured_contact_seeds(
     inputs: V2Inputs,
     specifications: Sequence[StructuredSeedSpec] | None = None,
+    *,
+    target_surface_mode: str = RADIAL_SUPPORT_TARGETS,
 ) -> tuple[tuple[CandidateSeed, ...], dict[str, object]]:
     """Generate B0 poses; the default preserves all 1,488 specification outcomes."""
 
@@ -395,7 +449,7 @@ def generate_structured_contact_seeds(
     specs = (structured_seed_specifications() if complete else tuple(specifications))
     if not specs or len({row.candidate_id for row in specs}) != len(specs):
         raise ValueError("STRUCTURED_SEED_SUBSET_INVALID")
-    index = _object_index(inputs)
+    index = _object_index(inputs, target_surface_mode)
     references, profiles, directions, seeds, records = {}, {}, {}, [], []
     identity = hashlib.sha256()
     for spec in specs:
@@ -426,6 +480,8 @@ def generate_structured_contact_seeds(
              "object_surface_semantics": B0_SURFACE_METHOD,
              "seed_target_method": index["seed_target_method"],
              "seed_target_face_count": int(np.count_nonzero(index["seed_target"])),
+             "target_representative_count_per_finger": int(
+                 index["target_representative_count"]),
              "generated_candidate_count": len(seeds),
              "status_counts": counts, "specification_status_sha256": identity.hexdigest(),
              "hand_reference_cache_count": len(references),
@@ -433,5 +489,7 @@ def generate_structured_contact_seeds(
     return tuple(seeds), audit
 
 
-__all__ = ["StructuredSeedSpec", "generate_structured_contact_seeds",
+__all__ = ["CONTINUOUS_ALLOWED_TARGETS", "FULL_ALLOWED_TARGETS",
+           "RADIAL_SUPPORT_TARGETS",
+           "StructuredSeedSpec", "generate_structured_contact_seeds",
            "structured_seed_specifications"]
