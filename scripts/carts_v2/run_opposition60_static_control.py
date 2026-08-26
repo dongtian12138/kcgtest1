@@ -3,6 +3,8 @@
 from __future__ import annotations
 import argparse
 import cProfile
+from dataclasses import asdict
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -24,6 +26,13 @@ from kcg_connector.grasp.carts_v2.opposition_seed_generator import (
     generate_opposition_anchors, task_surface_triangle_geometry,
 )
 from kcg_connector.grasp.carts_v2.surface_contact import ExactContactSurfaceQuery
+from kcg_connector.grasp.carts_v2.selector import select_candidate_rankings
+from kcg_connector.grasp.carts_v2.task_quality import (
+    common_uncertainty_design, evaluate_task_quality,
+)
+from kcg_connector.grasp.robust.bounded_hand_base_ik import (
+    CandidateJointRouteError, solve_bounded_hand_base_ik,
+)
 from kcg_connector.grasp.robust.object_model import file_sha256
 _DEFAULT_CONFIG = Path("src/kcg_connector/config/carts_nailfree_height_projected.yaml")
 _DEFAULT_OBJECT = "te_deutsch_d38999_26fj35pn_step"
@@ -57,6 +66,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--exact-variant-offset", type=_exact_variant_offset, default=0)
     parser.add_argument("--anchor-index", type=_anchor_index, default=0)
     parser.add_argument("--profile-output", type=Path)
+    parser.add_argument("--evaluate-task-ik", action="store_true")
     return parser.parse_args()
 def _world(points: np.ndarray, transform: np.ndarray) -> np.ndarray:
     values = np.asarray(points, dtype=np.float64)
@@ -300,6 +310,73 @@ def _candidate_record(seed) -> dict[str, object]:
         "anchor_face_index": seed.anchor_face_index,
         "anchor_position_object_m": list(seed.anchor_position_object_m),
     }
+def _task_and_bounded_ik(inputs, seed, predictor) -> dict[str, object]:
+    prediction = predictor.predict(seed)
+    pregrasp = fast_filter_pregrasp_paths(
+        inputs, ((seed, seed.pregrasp_closure_phases),))[0]
+    fast = fast_filter_predictions(inputs, (prediction,))[0]
+    path_values = [float(value) for value in (
+        pregrasp.get("minimum_table_clearance_m"),
+        fast.minimum_table_clearance_m,
+    ) if value is not None]
+    if (
+        prediction.status != "CLOSURE_SURVIVE"
+        or pregrasp.get("accepted") is not True
+        or fast.status != "FAST_SURVIVE"
+        or not fast.sequential_closure_sweep_pass
+        or not path_values
+    ):
+        raise RuntimeError("fresh geometry gate changed before task evaluation")
+    path_minimum = min(path_values)
+    design = common_uncertainty_design(inputs)
+    quality = evaluate_task_quality(inputs, prediction, design)
+    research, formal, diagnostic = select_candidate_rankings(
+        (prediction,), (fast,), (quality,), top_k=1,
+        path_clearance_by_id={seed.candidate_id: path_minimum})
+    ik = {"status": "NOT_RUN_TASK_INELIGIBLE"}
+    target = inputs.frozen_world_from_object @ seed.object_from_hand_matrix()
+    if research:
+        try:
+            joints, position_error, orientation_error, seed_index = (
+                solve_bounded_hand_base_ik(
+                    inputs.config.section("ik")["solver"],
+                    model=inputs.robot_model,
+                    hand_positions=seed.pregrasp_joint_positions_rad,
+                    target_world_from_hand_base=target,
+                    label=seed.candidate_id,
+                )
+            )
+            ik = {
+                "status": "BOUNDED_IK_PASS_NOT_PATH_COLLISION",
+                "arm_joint_positions_rad": list(joints),
+                "position_error_m": position_error,
+                "orientation_error_rad": orientation_error,
+                "selected_seed_index": seed_index,
+            }
+        except CandidateJointRouteError as error:
+            ik = {"status": "IK_REJECT", "code": error.code,
+                  "detail": error.detail}
+    return {
+        "candidate_id": seed.candidate_id,
+        "fresh_contact_stop_phases": list(prediction.final_closure_phases),
+        "fresh_contact_count": len(prediction.contacts),
+        "fresh_object_contact_face_indices": [
+            row.object_face_index for row in prediction.contacts],
+        "fresh_hand_surface_face_indices": [
+            row.hand_surface_face_index for row in prediction.contacts],
+        "path_minimum_table_clearance_m": path_minimum,
+        "scenario_design_shape": list(design.shape),
+        "scenario_design_sha256": hashlib.sha256(
+            np.asarray(design, dtype="<f8").tobytes()).hexdigest(),
+        "task_quality": asdict(quality),
+        "research_task_eligible_not_executable": bool(research),
+        "formal_task_eligible_not_executable": bool(formal),
+        "diagnostic_only": bool(diagnostic),
+        "target_world_from_handbase_row_major": list(target.ravel()),
+        "bounded_ik": ik,
+        "full_arm_path_collision_checked": False,
+        "isaac_started": False,
+    }
 def main() -> int:
     started = time.perf_counter()
     args = _arguments()
@@ -349,6 +426,10 @@ def main() -> int:
             profiler.dump_stats(profile_path)
     variant_records, renders = _variant_records(
         inputs, predictor, query, survivors, height_audit)
+    task_ik_records = (
+        [_task_and_bounded_ik(inputs, seed, predictor) for seed in survivors]
+        if args.evaluate_task_ik else []
+    )
     output.mkdir(parents=True, exist_ok=True)
     image_records = []
     for index, (record, survivor, prediction) in enumerate(renders):
@@ -379,6 +460,8 @@ def main() -> int:
         "height_search": height_audit,
         "variant_results": variant_records,
         "survivor_candidates": [_candidate_record(seed) for seed in survivors],
+        "task_and_bounded_ik_requested": bool(args.evaluate_task_ik),
+        "task_and_bounded_ik": task_ik_records,
         "survivor_four_views": image_records,
         "registered_patch_count_by_pad": {
             name: int(len(np.unique(surface.patch_indices)))
@@ -401,7 +484,10 @@ def main() -> int:
         "connector_moved": False,
         "hardware_authorized": False,
         "dynamic_success": False,
-        "pending_gate": "ISAAC_RESEARCH_DYNAMIC_VALIDATION",
+        "pending_gate": (
+            "RESEARCH_COLLISION_ASSET_FULL_ARM_PATH_AND_ISAAC"
+            if args.evaluate_task_ik else "TASK_QUALITY_BOUNDED_IK_AND_ISAAC"
+        ),
         "config": str(config.relative_to(root)),
         "config_sha256": file_sha256(config),
         "script_sha256": file_sha256(Path(__file__).resolve()),

@@ -560,3 +560,10 @@
 - 完整逐指路径最小桌面间隙 `10.019253 mm`，三块接触为登记内侧面与对象允许面，没有禁抓面先接触或快筛碰撞原因。
 - 该结果使60°手—物几何正对照成立，但它尚不是12 N任务候选、IK路径、Isaac接触或动态抓取成功。
 - 因anchor1到anchor2同时改变周向与轴向，只能说预登记组合消除了冲突，不把原因单独归于轴向高度。
+
+## 2026-08-26T02:42:00Z — 名义研究任务与完整扰动门分层
+
+- 分类：`EVIDENCE_SEMANTICS_CORRECTION + MILESTONE_PROGRESSION`；不改变任务集、12 N或研究/正式成功标准。
+- `nominal_gravity_lift_balance_pass=true` 表示12 N下名义重力和抬升本身有可行接触力分配；`nominal_parameter_task_margin=0.339826` 表示在此基础上只能承受0.340倍完整六方向登记扰动。
+- 因此anchor2可进入名义研究动态的后续准备，但`TASK_REJECT`、鲁棒候选与正式动态仍保持失败关闭。
+- bounded IK通过只证明冻结对象位姿下的handbase目标有数值逆解，不证明接近、全臂碰撞、携物抬升或Isaac动态。

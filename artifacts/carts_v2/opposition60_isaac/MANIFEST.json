@@ -1,6 +1,6 @@
 {
   "schema_version": "opposition60_isaac_manifest_v1",
-  "updated_at_utc": "2026-08-26T02:32:00Z",
+  "updated_at_utc": "2026-08-26T02:42:00Z",
   "execution_window": {
     "id": "OPPOSITION60_ISAAC_12H",
     "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
@@ -76,7 +76,8 @@
     "next_anchor_phase_diagnostic": "COMPLETE_ANCHOR_INDEX_1_A01_Z1_SAME_PRESHAPE_0P2_0P2_0P2",
     "bounded_local_refinement": "COMPLETE_NO_FULL_PASS_FIXED_ANCHOR1_FIXED_PRESHAPE_MAX300_EVALUATIONS",
     "next_anchor_diagnostic": "COMPLETE_ANCHOR_INDEX_2_A02_Z2_SAME_PRESHAPE_0P2_0P2_0P2",
-    "object_b_anchor_a02_task_quality": "PENDING_SINGLE_CANDIDATE_12N_EVALUATION",
+    "object_b_anchor_a02_task_quality": "NOMINAL_RESEARCH_TASK_ELIGIBLE_ROBUST_TASK_REJECT",
+    "object_b_anchor_a02_bounded_ik": "PASS_NOT_FULL_ARM_PATH_COLLISION",
     "multi_witness_contact": "ALL33_QUERY_TOP16_AND_FORBIDDEN_FIRST_GUARD_TARGETED_PASS",
     "contact_conditioned_height": "CONTACT_STOP_ITERATION_AND_STATE_BOUNDARY_SEARCH_TARGETED_PASS",
     "object_b_task_top3": "NOT_RUN",
@@ -203,6 +204,27 @@
       "result_sha256": "4da22b9f92c56f0463de2b2c0f260344c6bba23634387244505feb6dfdb6cee8",
       "four_view_path": "artifacts/carts_v2/opposition60_isaac/qp60_anchor_a02_probe1/survivor_a02_o00_00_p222_four_views.png",
       "claim_scope": "OFFLINE_PATH_SAFE_THREE_CONTACT_GEOMETRY_NOT_TASK_IK_OR_DYNAMIC_SUCCESS",
+      "isaac_started": false
+    },
+    "qp60_anchor_a02_task_and_bounded_ik": {
+      "nominal_gravity_lift_balance_pass": true,
+      "nominal_operation_force_cap_n": 12.0,
+      "nominal_parameter_task_margin": 0.33982598915095885,
+      "worst_uncertainty_margin": 0.11155602727424409,
+      "lower_tail_20_percent_mean_margin": 0.13692787914916088,
+      "sensitivity": 0.5356945525490696,
+      "task_quality_status": "TASK_REJECT",
+      "research_task_eligible_not_executable": true,
+      "formal_task_eligible_not_executable": false,
+      "bounded_ik_status": "BOUNDED_IK_PASS_NOT_PATH_COLLISION",
+      "bounded_ik_position_error_m": 3.6831000857541284e-13,
+      "bounded_ik_orientation_error_rad": 3.1577925732774556e-12,
+      "full_arm_path_collision_checked": false,
+      "result_path": "artifacts/carts_v2/opposition60_isaac/qp60_anchor_a02_task_ik/opposition60_anchor_a02_exact_offset_00_count_01_static_control.json",
+      "result_sha256": "e48e7f11ce9e967d3c924bf7312ce10bbe65657614c4cb3f593422303490fa28",
+      "runner_sha256": "4a936cf315450a2821b2b1f3d66ca6191924bdffafa5ebd346f5407e0aca07d5",
+      "claim_scope": "OFFLINE_NOMINAL_TASK_AND_BOUNDED_IK_NOT_FULL_PATH_OR_DYNAMIC_SUCCESS",
+      "research_executable_candidate": false,
       "isaac_started": false
     }
   },
