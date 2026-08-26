@@ -1,15 +1,18 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-26T19:44:00Z
+> 快照时间：2026-08-26T21:52:17Z
 > 当前分支：`carts-grasp-contactopt-1488-fast6h-20260826`
 > 原始源码、配置、产物、Git、进程和时间戳优先于本摘要。
 
 ## 当前唯一优先级
 
-用户已停止对单个坏候选做局部位姿补救，主线回到对象 B 的固定 1488 个结构化规格，解释并
-修正“1488 个规格只有 7 个生成六维姿态”的漏斗。旧动态候选保留为失败样本：第一指指腹
-进入近邻后，`f1Link3` 非任务面先发生原始网格干涉，PhysX 指腹接触始终为 0；这不是力不够，
-也不是三指手机械结构无解。
+q09_a13 的同状态 A/B/C 离线差分已分类为 `PHYSX_CONTACT_REPORTING_OR_FILTERING_ERROR`。
+最后精确非相交状态是 step 502 / 4.1916667 s：TASK 0.507426 mm、实际凸碰撞体
+0.0007897 mm、原始非 TASK 0.0002452 mm，三者均未相交；B 已进入 2.7250005 mm 合并 contactOffset。
+GPU 后端读回的 130 个 shape 各自 contactOffset 为 1.3625002 mm、restOffset 为 0；66/64 个 collider 均 enabled、`convexHull`。
+active USD 无 pair filter/group，按 USD 规则此外部 pair 允许；后端无 pair getter，旧运行 `hand_object=0`。
+最近凸块见证点属于原始非 TASK；step 503 中非 TASK/凸体相交而 TASK 尚余 0.493614 mm，是次级安全证据。
+唯一下一步只检查 collision/filter/contact report/刚体绑定/offset/prim 路径；不改位姿、生成器或 1488，等待用户决定。
 
 ## 漏斗复盘的已验证事实
 
@@ -59,8 +62,8 @@
 - 当前证据：生成器漏斗诊断、离线原始网格/任务评价、有界 IK、第一指研究型动态失败。
 - `research_dynamic_pass=false`、`formal_dynamic_pass=false`、`hardware_authorized=false`。
 - 本轮没有磁吸、隐藏固定、物体位姿写入或在线对象/接触真值控制。
-- 当前主要问题已从“1488→7 人为误杀”推进到“原始网格 TASK 面与 Isaac 复合凸接触资产
-  在第一指最后安全端点不产生物理接触”；不能通过继续闭合穿过非任务面来解决。
+- q09_a13 当前主分类是接触报告或过滤错误；step 503 的非 TASK 先相交仍禁止继续闭合或自动修补，
+  本次 metadata reset/离线查询不证明接触、抓取、抬升、保持或正式动态成功。
 
 ## 验证、进程与 Git
 
