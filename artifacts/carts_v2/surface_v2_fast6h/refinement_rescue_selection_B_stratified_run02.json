@@ -1,0 +1,567 @@
+{
+  "claim_scope": "DETERMINISTIC_OFFLINE_RESCUE_SEEDS_NOT_GEOMETRY_TASK_IK_OR_DYNAMIC_SUCCESS",
+  "config": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/config/carts_surface_v2_fast6h.yaml",
+  "config_sha256": "fa04db98c2a59b40ce823ff271876652cc0fb32184bdbf6a734107e152c3101c",
+  "eligible_contact_table_conflict_count": 13,
+  "exact_shards": [
+    {
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/exact_B_stratified_run08_offset00_count08.json",
+      "sha256": "771e5bb522c71d5c00ce4698b7b4eae607f09b21fb80a9a78de564c866a3e3f3"
+    },
+    {
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/exact_B_stratified_run09_offset08_count08.json",
+      "sha256": "83a796aa01134ab60de2ed29d6b5fbd307d38068037dd15c1079334221d06706"
+    },
+    {
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/exact_B_stratified_run10_offset16_count08.json",
+      "sha256": "083e906836447e98d54b74625a3018ad7046aba4de0fdda639eab0514d74b8ce"
+    }
+  ],
+  "feature_report": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/feature_search_B_stratified_run04.json",
+  "feature_report_sha256": "4d4768eceeade8fc36d97b9072a9b44dea45c6b8c70e6bca298bbcf9b4c5fb2d",
+  "formal_dynamic_pass": false,
+  "hardware_authorized": false,
+  "object_id": "te_deutsch_d38999_26fj35pn_step",
+  "object_mesh_sha256": "89bbf4ba3b8b5fb388276a378a820bb7547e676e97f0b9e2635b7862a86aa617",
+  "registered_candidate_count": 24,
+  "research_dynamic_pass": false,
+  "schema_version": "carts_surface_v2_refinement_rescue_selection_v1",
+  "selected": [
+    {
+      "candidate_id": "opposition_p0959931_a46_z1__p212",
+      "global_shortlist_index": 18,
+      "input_seed": {
+        "anchor_face_index": 17240,
+        "anchor_position_object_m": [
+          0.015785162925720214,
+          -0.007312721570332845,
+          -0.014772157986958823
+        ],
+        "approach_direction_object": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "candidate_id": "opposition_p0959931_a46_z1__p212",
+        "descriptor_id": "opposition_angle_002",
+        "generator_score": 0.0,
+        "maximum_closure_phase": 0.75,
+        "object_from_hand": [
+          0.17442667946421309,
+          -0.9846577802602139,
+          -0.004938548786531907,
+          0.006431369989269086,
+          0.9846477150314817,
+          0.17445437627843907,
+          -0.0058777445149209625,
+          0.007499112769806278,
+          0.00664911831527379,
+          -0.003837495319753485,
+          0.9999705309934391,
+          -0.41574907432600466,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "object_id": "te_deutsch_d38999_26fj35pn_step",
+        "palm_configuration_rad": 0.9599310885968813,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.1,
+          0.2
+        ],
+        "pregrasp_joint_positions_rad": [
+          0.9599310885968813,
+          0.27926,
+          0.13963,
+          0.27926
+        ],
+        "source_sample_index": 16771
+      },
+      "minimum_table_handbase_z_m": 0.6311129290828372,
+      "reference_contact_stop_phases": [
+        0.4685546875,
+        0.37995049504950495,
+        0.46962890625000003
+      ],
+      "selection_index": 0,
+      "source_iteration": 0,
+      "source_shard": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/exact_B_stratified_run10_offset16_count08.json",
+      "source_shard_sha256": "083e906836447e98d54b74625a3018ad7046aba4de0fdda639eab0514d74b8ce",
+      "stop_phase_range": 0.08967841120049508,
+      "table_contact_conflict_m": 0.002892244476156658,
+      "three_contact_world_z_m": 0.6282206846066806
+    },
+    {
+      "candidate_id": "opposition_p0959931_a03_z2__p222",
+      "global_shortlist_index": 5,
+      "input_seed": {
+        "anchor_face_index": 11172,
+        "anchor_position_object_m": [
+          0.004193292220433554,
+          -0.017181491851806643,
+          -0.0077739659945170085
+        ],
+        "approach_direction_object": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "candidate_id": "opposition_p0959931_a03_z2__p222",
+        "descriptor_id": "opposition_angle_002",
+        "generator_score": 0.0,
+        "maximum_closure_phase": 0.75,
+        "object_from_hand": [
+          -0.7075664235039404,
+          0.7063134382653711,
+          -0.021704452437056834,
+          -0.0015696699031652248,
+          -0.706378889505408,
+          -0.7078101737228714,
+          -0.005798485621746248,
+          -0.00044307605924789764,
+          -0.0194581805662609,
+          0.011228753276693135,
+          0.999747615305434,
+          -0.4095947324489562,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "object_id": "te_deutsch_d38999_26fj35pn_step",
+        "palm_configuration_rad": 0.9599310885968813,
+        "pregrasp_closure_phases": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "pregrasp_joint_positions_rad": [
+          0.9599310885968813,
+          0.27926,
+          0.27926,
+          0.27926
+        ],
+        "source_sample_index": 17291
+      },
+      "minimum_table_handbase_z_m": 0.6316775416229437,
+      "reference_contact_stop_phases": [
+        0.45888671875000003,
+        0.39658203125,
+        0.46318359375
+      ],
+      "selection_index": 1,
+      "source_iteration": 0,
+      "source_shard": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/exact_B_stratified_run08_offset00_count08.json",
+      "source_shard_sha256": "771e5bb522c71d5c00ce4698b7b4eae607f09b21fb80a9a78de564c866a3e3f3",
+      "stop_phase_range": 0.06660156249999999,
+      "table_contact_conflict_m": 0.005158099913096681,
+      "three_contact_world_z_m": 0.626519441709847
+    },
+    {
+      "candidate_id": "opposition_p0785398_a09_z2__p101",
+      "global_shortlist_index": 2,
+      "input_seed": {
+        "anchor_face_index": 11172,
+        "anchor_position_object_m": [
+          0.004193292220433554,
+          -0.017181491851806643,
+          -0.0077739659945170085
+        ],
+        "approach_direction_object": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "candidate_id": "opposition_p0785398_a09_z2__p101",
+        "descriptor_id": "opposition_angle_000",
+        "generator_score": 0.0,
+        "maximum_closure_phase": 0.75,
+        "object_from_hand": [
+          -0.2593702968875629,
+          0.9657259857338063,
+          0.010018461504917343,
+          -0.018592403838988164,
+          -0.9657000983769304,
+          -0.2594671465406459,
+          0.010005991247350155,
+          -0.01861228515500346,
+          0.012262507379999276,
+          -0.007079572340404602,
+          0.9998997502591109,
+          -0.4004932481034557,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "object_id": "te_deutsch_d38999_26fj35pn_step",
+        "palm_configuration_rad": 0.7853981633974483,
+        "pregrasp_closure_phases": [
+          0.1,
+          0.0,
+          0.1
+        ],
+        "pregrasp_joint_positions_rad": [
+          0.7853981633974483,
+          0.13963,
+          0.0,
+          0.13963
+        ],
+        "source_sample_index": 2189
+      },
+      "minimum_table_handbase_z_m": 0.6314655053515317,
+      "reference_contact_stop_phases": [
+        0.4367986798679868,
+        0.44206008583690987,
+        0.4367986798679868
+      ],
+      "selection_index": 2,
+      "source_iteration": 0,
+      "source_shard": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/exact_B_stratified_run08_offset00_count08.json",
+      "source_shard_sha256": "771e5bb522c71d5c00ce4698b7b4eae607f09b21fb80a9a78de564c866a3e3f3",
+      "stop_phase_range": 0.00526140596892305,
+      "table_contact_conflict_m": 0.008706621662120884,
+      "three_contact_world_z_m": 0.6227588836894108
+    },
+    {
+      "candidate_id": "opposition_p0785398_a27_z2__p101",
+      "global_shortlist_index": 9,
+      "input_seed": {
+        "anchor_face_index": 11172,
+        "anchor_position_object_m": [
+          0.004193292220433554,
+          -0.017181491851806643,
+          -0.0077739659945170085
+        ],
+        "approach_direction_object": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "candidate_id": "opposition_p0785398_a27_z2__p101",
+        "descriptor_id": "opposition_angle_000",
+        "generator_score": 0.0,
+        "maximum_closure_phase": 0.75,
+        "object_from_hand": [
+          0.9657000983769304,
+          0.2594671465406459,
+          -0.010005991247350155,
+          0.018562877080078678,
+          -0.2593702968875629,
+          0.9657259857338063,
+          0.010018461504917343,
+          -0.018680787174840167,
+          0.012262507379999276,
+          -0.007079572340404602,
+          0.9998997502591109,
+          -0.4004932481034557,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "object_id": "te_deutsch_d38999_26fj35pn_step",
+        "palm_configuration_rad": 0.7853981633974483,
+        "pregrasp_closure_phases": [
+          0.1,
+          0.0,
+          0.1
+        ],
+        "pregrasp_joint_positions_rad": [
+          0.7853981633974483,
+          0.13963,
+          0.0,
+          0.13963
+        ],
+        "source_sample_index": 2243
+      },
+      "minimum_table_handbase_z_m": 0.6314655053515317,
+      "reference_contact_stop_phases": [
+        0.4378712871287129,
+        0.44206008583690987,
+        0.4367986798679868
+      ],
+      "selection_index": 3,
+      "source_iteration": 0,
+      "source_shard": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/exact_B_stratified_run09_offset08_count08.json",
+      "source_shard_sha256": "83a796aa01134ab60de2ed29d6b5fbd307d38068037dd15c1079334221d06706",
+      "stop_phase_range": 0.00526140596892305,
+      "table_contact_conflict_m": 0.008706621662120884,
+      "three_contact_world_z_m": 0.6227588836894108
+    },
+    {
+      "candidate_id": "opposition_p1221730_a39_z2__p121",
+      "global_shortlist_index": 4,
+      "input_seed": {
+        "anchor_face_index": 11172,
+        "anchor_position_object_m": [
+          0.004193292220433554,
+          -0.017181491851806643,
+          -0.0077739659945170085
+        ],
+        "approach_direction_object": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "candidate_id": "opposition_p1221730_a39_z2__p121",
+        "descriptor_id": "opposition_angle_005",
+        "generator_score": 0.0,
+        "maximum_closure_phase": 0.75,
+        "object_from_hand": [
+          0.7047643797677603,
+          -0.7046767366750097,
+          0.08208450401642832,
+          -0.03211209526141355,
+          0.7056146335802437,
+          0.7082564727038548,
+          0.021926188690978236,
+          -0.008715995954707798,
+          -0.07358775637279996,
+          0.04246723045069996,
+          0.9963841510430926,
+          -0.4041091032900371,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "object_id": "te_deutsch_d38999_26fj35pn_step",
+        "palm_configuration_rad": 1.2217304763960306,
+        "pregrasp_closure_phases": [
+          0.1,
+          0.2,
+          0.1
+        ],
+        "pregrasp_joint_positions_rad": [
+          1.2217304763960306,
+          0.13963,
+          0.27926,
+          0.13963
+        ],
+        "source_sample_index": 32735
+      },
+      "minimum_table_handbase_z_m": 0.6326869398222486,
+      "reference_contact_stop_phases": [
+        0.4818481848184819,
+        0.35683593750000003,
+        0.4797029702970297
+      ],
+      "selection_index": 4,
+      "source_iteration": 0,
+      "source_shard": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/exact_B_stratified_run08_offset00_count08.json",
+      "source_shard_sha256": "771e5bb522c71d5c00ce4698b7b4eae607f09b21fb80a9a78de564c866a3e3f3",
+      "stop_phase_range": 0.12501224731848187,
+      "table_contact_conflict_m": 0.008765728225561764,
+      "three_contact_world_z_m": 0.6239212115966868
+    },
+    {
+      "candidate_id": "opposition_p1221730_a48_z2__p121",
+      "global_shortlist_index": 12,
+      "input_seed": {
+        "anchor_face_index": 11172,
+        "anchor_position_object_m": [
+          0.004193292220433554,
+          -0.017181491851806643,
+          -0.0077739659945170085
+        ],
+        "approach_direction_object": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "candidate_id": "opposition_p1221730_a48_z2__p121",
+        "descriptor_id": "opposition_angle_005",
+        "generator_score": 0.0,
+        "maximum_closure_phase": 0.75,
+        "object_from_hand": [
+          -0.0006012202365365815,
+          -0.999094653715467,
+          0.04253835271138436,
+          -0.016586549298746745,
+          0.9972885643815659,
+          0.0025312556208542114,
+          0.07354666612931735,
+          -0.02890377908238602,
+          -0.07358775637279996,
+          0.04246723045069996,
+          0.9963841510430926,
+          -0.4041091032900371,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "object_id": "te_deutsch_d38999_26fj35pn_step",
+        "palm_configuration_rad": 1.2217304763960306,
+        "pregrasp_closure_phases": [
+          0.1,
+          0.2,
+          0.1
+        ],
+        "pregrasp_joint_positions_rad": [
+          1.2217304763960306,
+          0.13963,
+          0.27926,
+          0.13963
+        ],
+        "source_sample_index": 32762
+      },
+      "minimum_table_handbase_z_m": 0.6326869398222486,
+      "reference_contact_stop_phases": [
+        0.4818481848184819,
+        0.35683593750000003,
+        0.4797029702970297
+      ],
+      "selection_index": 5,
+      "source_iteration": 0,
+      "source_shard": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/exact_B_stratified_run09_offset08_count08.json",
+      "source_shard_sha256": "83a796aa01134ab60de2ed29d6b5fbd307d38068037dd15c1079334221d06706",
+      "stop_phase_range": 0.12501224731848187,
+      "table_contact_conflict_m": 0.008765728225561764,
+      "three_contact_world_z_m": 0.6239212115966868
+    },
+    {
+      "candidate_id": "opposition_p1221730_a50_z2__p121",
+      "global_shortlist_index": 6,
+      "input_seed": {
+        "anchor_face_index": 11172,
+        "anchor_position_object_m": [
+          0.004193292220433554,
+          -0.017181491851806643,
+          -0.0077739659945170085
+        ],
+        "approach_direction_object": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "candidate_id": "opposition_p1221730_a50_z2__p121",
+        "descriptor_id": "opposition_angle_005",
+        "generator_score": 0.0,
+        "maximum_closure_phase": 0.75,
+        "object_from_hand": [
+          -0.17376942816313778,
+          -0.9843557088978098,
+          0.029120855003705048,
+          -0.011327141332575667,
+          0.9820331093949296,
+          -0.1709981657741914,
+          0.07981603444163714,
+          -0.03134932046328564,
+          -0.07358775637279996,
+          0.04246723045069996,
+          0.9963841510430926,
+          -0.4041091032900371,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "object_id": "te_deutsch_d38999_26fj35pn_step",
+        "palm_configuration_rad": 1.2217304763960306,
+        "pregrasp_closure_phases": [
+          0.1,
+          0.2,
+          0.1
+        ],
+        "pregrasp_joint_positions_rad": [
+          1.2217304763960306,
+          0.13963,
+          0.27926,
+          0.13963
+        ],
+        "source_sample_index": 32768
+      },
+      "minimum_table_handbase_z_m": 0.6326869398222486,
+      "reference_contact_stop_phases": [
+        0.4829207920792079,
+        0.35683593750000003,
+        0.4829207920792079
+      ],
+      "selection_index": 6,
+      "source_iteration": 0,
+      "source_shard": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/exact_B_stratified_run08_offset00_count08.json",
+      "source_shard_sha256": "771e5bb522c71d5c00ce4698b7b4eae607f09b21fb80a9a78de564c866a3e3f3",
+      "stop_phase_range": 0.12608485457920787,
+      "table_contact_conflict_m": 0.008765728225561764,
+      "three_contact_world_z_m": 0.6239212115966868
+    },
+    {
+      "candidate_id": "opposition_p1221730_a49_z2__p121",
+      "global_shortlist_index": 11,
+      "input_seed": {
+        "anchor_face_index": 11172,
+        "anchor_position_object_m": [
+          0.004193292220433554,
+          -0.017181491851806643,
+          -0.0077739659945170085
+        ],
+        "approach_direction_object": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "candidate_id": "opposition_p1221730_a49_z2__p121",
+        "descriptor_id": "opposition_angle_005",
+        "generator_score": 0.0,
+        "maximum_closure_phase": 0.75,
+        "object_from_hand": [
+          -0.08751835797444424,
+          -0.9955134103868765,
+          0.03596646712352305,
+          -0.014010232636967148,
+          0.993441180508174,
+          -0.08455521319077597,
+          0.07697426058617228,
+          -0.030241365128307614,
+          -0.07358775637279996,
+          0.04246723045069996,
+          0.9963841510430926,
+          -0.4041091032900371,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "object_id": "te_deutsch_d38999_26fj35pn_step",
+        "palm_configuration_rad": 1.2217304763960306,
+        "pregrasp_closure_phases": [
+          0.1,
+          0.2,
+          0.1
+        ],
+        "pregrasp_joint_positions_rad": [
+          1.2217304763960306,
+          0.13963,
+          0.27926,
+          0.13963
+        ],
+        "source_sample_index": 32765
+      },
+      "minimum_table_handbase_z_m": 0.6326869398222486,
+      "reference_contact_stop_phases": [
+        0.483993399339934,
+        0.35683593750000003,
+        0.4818481848184819
+      ],
+      "selection_index": 7,
+      "source_iteration": 0,
+      "source_shard": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_v2/surface_v2_fast6h/exact_B_stratified_run09_offset08_count08.json",
+      "source_shard_sha256": "83a796aa01134ab60de2ed29d6b5fbd307d38068037dd15c1079334221d06706",
+      "stop_phase_range": 0.12715746183993398,
+      "table_contact_conflict_m": 0.008765728225561764,
+      "three_contact_world_z_m": 0.6239212115966868
+    }
+  ],
+  "selected_count": 8,
+  "selection_rule": [
+    "TABLE_CONTACT_CONFLICT_M_MIN",
+    "STOP_PHASE_RANGE_MIN",
+    "SOURCE_ITERATION_MIN",
+    "GLOBAL_SHORTLIST_INDEX_MIN",
+    "CANDIDATE_ID_MIN"
+  ]
+}
