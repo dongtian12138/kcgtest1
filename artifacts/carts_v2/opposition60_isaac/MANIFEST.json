@@ -1,6 +1,6 @@
 {
   "schema_version": "opposition60_isaac_manifest_v1",
-  "updated_at_utc": "2026-08-26T03:53:00Z",
+  "updated_at_utc": "2026-08-26T04:32:54Z",
   "execution_window": {
     "id": "OPPOSITION60_ISAAC_12H",
     "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
@@ -95,7 +95,17 @@
         "physx_error_count": 0
       },
       "local_hand_import_observed_peak_found_lost_and_total": [120, 0],
-      "isaac_object_or_grasp_started": false
+      "isaac_object_or_grasp_started": true,
+      "object_b_initial_penetration_gate_pass": true,
+      "object_b_initial_trace_path": "artifacts/carts_v2/opposition60_isaac/object_b_anchor2_initial_penetration_run06/initial_penetration.json",
+      "object_b_initial_trace_sha256": "97c42be6c685ba363fe5baad3fa0e99dc40ed5d18526e0618b41a98bcdc2cca8",
+      "object_b_initial_exact_replay_path": "artifacts/carts_v2/opposition60_isaac/object_b_anchor2_initial_penetration_run06/exact_mesh_replay_run03.json",
+      "object_b_initial_exact_replay_sha256": "6383e2ec0ec96d063b8d95e79d9698ee88d4d329d5e9ee438f3ded0beb3e22da",
+      "object_b_initial_physics_steps_and_time_s": [60, 0.5],
+      "object_b_initial_max_speed_rad_s_and_effort_nm": [0.06530869752168655, 0.037168871611356735],
+      "object_b_initial_capacity_peak_found_lost_and_total": [121, 58],
+      "object_b_initial_exact_minimum_table_self_nontask_m": [0.014653490319405937, 0.0018874391676346946, 0.0464417055309109],
+      "object_b_initial_task_contact_observation_count": 0
     }
   },
   "supervisor_decision": {
@@ -109,7 +119,7 @@
   },
   "gates": {
     "initial_supervisor_review": "APPROVE_WITH_3_CHANGES",
-    "compound_convex_collision_asset": "STATIC_PASS_RUNTIME_IMPORT_INITIAL_PENETRATION_OPPOSITION60_REPLAY_PHYSX_HEALTH_PENDING",
+    "compound_convex_collision_asset": "STATIC_IMPORT_AND_INITIAL_DOUBLE_GEOMETRY_PASS_OPPOSITION60_REPLAY_PENDING",
     "qp60_static_positive_control": "PASS_ANCHOR_A02_THREE_CONTACT_PATH_SAFE_OFFLINE_GEOMETRY",
     "all_27_opposition_preshapes": "COMPLETE_FOR_ANCHOR_A00_IN_FOUR_DETERMINISTIC_SHARDS",
     "next_anchor_phase_diagnostic": "COMPLETE_ANCHOR_INDEX_1_A01_Z1_SAME_PRESHAPE_0P2_0P2_0P2",
@@ -120,7 +130,7 @@
     "multi_witness_contact": "ALL33_QUERY_TOP16_AND_FORBIDDEN_FIRST_GUARD_TARGETED_PASS",
     "contact_conditioned_height": "CONTACT_STOP_ITERATION_AND_STATE_BOUNDARY_SEARCH_TARGETED_PASS",
     "object_b_task_top3": "NOT_RUN",
-    "object_b_local_dynamic": "NOT_STARTED",
+    "object_b_local_dynamic": "INITIAL_PENETRATION_PASS_NO_CONTACT_CLOSURE_OR_LIFT",
     "object_b_full_arm_dynamic": "NOT_STARTED",
     "object_a_frozen_parameter_dynamic": "NOT_STARTED"
   },
@@ -267,5 +277,5 @@
       "isaac_started": false
     }
   },
-  "claim_scope": "QP60_ANCHOR_A02_PATH_SAFE_THREE_CONTACT_NOMINAL_TASK_BOUNDED_IK_AND_FULL_HANDARM_ISAAC_IMPORT_PASS; NO_OBJECT_CONTACT_CLOSURE_LIFT_OR_DYNAMIC_RESULT"
+  "claim_scope": "OBJECT_B_ANCHOR_A02_INITIAL_GPU_PHYSICS_AND_EXACT_MESH_REPLAY_PASS; NO_CONTACT_CLOSURE_LIFT_HOLD_OR_RESEARCH_DYNAMIC_PASS"
 }

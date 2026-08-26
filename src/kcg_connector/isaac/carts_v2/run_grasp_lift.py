@@ -124,7 +124,7 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
     return inputs, report, selected, scene_entry, motion_plan
 
 
-def _prepare_dynamic_scene(
+def prepare_dynamic_scene(
     repository: Path, stage, entry, add_reference_to_stage
 ) -> dict[str, object]:
     from omni.physx.scripts import physicsUtils
@@ -461,7 +461,7 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
     )
     context = world.get_physics_context()
     stage = get_current_stage()
-    scene = _prepare_dynamic_scene(repository, stage, scene_entry, add_reference_to_stage)
+    scene = prepare_dynamic_scene(repository, stage, scene_entry, add_reference_to_stage)
     trace["evidence_binding"] = _evidence_binding(
         repository, arguments, report, selected, scene, robot_asset)
     if arguments.mode in ("first-finger-diagnostic", "grasp-lift"):
