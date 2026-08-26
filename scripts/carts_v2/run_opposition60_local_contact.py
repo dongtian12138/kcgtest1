@@ -52,6 +52,43 @@ def _maximum_abs_mapping(row: dict) -> float:
             if values and all(value is not None for value in values) else math.inf)
 def _world_matrix(Usd, UsdGeom, prim) -> np.ndarray:
     return np.asarray(UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default()), dtype=np.float64).T
+def _candidate_data(task, paths, load_inputs, joints_for_phases):
+    schema = task.get("schema_version")
+    if schema == "carts_contactopt_b0_recheck_v1":
+        from kcg_connector.grasp.carts_v2.b0_surface_semantics import bind_b0_external_load_bearing_surfaces
+        rows = task.get("candidates"); _require(isinstance(rows, list), "B0 candidate rows are missing"); ready = [item for item in rows if isinstance(item, dict) and item.get("local_isaac_input_ready") is True]
+        row = ready[0] if len(ready) == 1 else {}; seed, closure, quality = row.get("input_seed") or {}, row.get("closure_prediction") or {}, row.get("task_quality") or {}
+        audit, prefilter, closefilter, candidate_id = task.get("b0_surface_audit") or {}, row.get("pregrasp_filter") or {}, row.get("closure_filter") or {}, row.get("candidate_id")
+        producer = _bound(task.get("source") or {}, "B0 producer"); base = _bound({"path": task.get("base_physical_config", ""), "sha256": task.get("base_physical_config_sha256")}, "B0 base config")
+        _bound({"path": task.get("method_config", ""), "sha256": task.get("method_config_sha256")}, "B0 method config"); _bound({"path": task.get("seed_manifest", ""), "sha256": task.get("seed_manifest_sha256")}, "B0 seed manifest")
+        inputs = bind_b0_external_load_bearing_surfaces(load_inputs(ROOT, config_path=base, object_id=task.get("object_id")))
+        required, tolerance = float(inputs.config.section("height_projection")["table_operation_clearance_m"]), float(inputs.config.section("fast_filter")["table_penetration_tolerance_m"])
+        table_values = (float(prefilter.get("minimum_table_clearance_m", math.nan)), float(closefilter.get("minimum_table_clearance_m", math.nan)))
+        _require(all((len(ready) == task.get("local_isaac_input_count") == 1, task.get("hardware_authorized") is False, task.get("formal_dynamic_pass") is False, task.get("research_dynamic_pass") is False,
+            task.get("object_id") == seed.get("object_id") == "te_deutsch_d38999_26fj35pn_step", candidate_id == seed.get("candidate_id") == (closure.get("seed") or {}).get("candidate_id") == quality.get("candidate_id"),
+            row.get("sampled_raw_mesh_geometry_pass") is True, row.get("sampled_table_operation_clearance_pass") is True,
+            np.isfinite(table_values).all(), min(table_values) >= required-tolerance, float(row.get("required_table_operation_clearance_m", math.nan)) == required, float(row.get("table_clearance_numerical_tolerance_m", math.nan)) == tolerance,
+            row.get("nominal_12n_task_pass") is True, quality.get("nominal_gravity_lift_balance_pass") is True, float(quality.get("nominal_operation_force_cap_n", math.nan)) == 12.0,
+            (row.get("bounded_ik") or {}).get("status") == "BOUNDED_IK_PASS_NOT_PATH_COLLISION", row.get("full_arm_path_collision_checked") is False, audit.get("method") == "EXTERNAL_LOAD_BEARING_SURFACE_B0",
+            audit.get("legacy_primary_secondary_are_hard_gates") is False, audit.get("normal_alignment_is_object_semantic_hard_gate") is False,
+            producer == (ROOT/"scripts/carts_v2/run_contactopt_b0_recheck.py").resolve(), base == paths["config"],
+            task.get("object_mesh_sha256") == inputs.object_contract.model.provenance.source_sha256)), "B0 local-contact candidate gate changed")
+        pre_values, phases, stored_stop = seed["pregrasp_joint_positions_rad"], closure["final_closure_phases"], np.asarray(closure["final_joint_positions_rad"], np.float64); object_from_hand, approach = seed["object_from_hand"], seed["approach_direction_object"]
+    else:
+        anchor, survivor = task["selected_geometric_anchor"], task["survivor_candidates"][0]
+        row, height, palm = task["task_and_bounded_ik"][0], task["height_search"], float(task.get("requested_palm_angle_deg", math.nan)); candidate_id = row["candidate_id"]
+        _require(all((isinstance(task.get("selected_geometric_anchor_index"), int), 0 <= task["selected_geometric_anchor_index"] < 12, 45.0 <= palm <= 75.0, abs(palm-round(palm)) < 1e-9, abs(float(anchor["palm_configuration_deg"])-palm) < 1e-9,
+            task.get("survivor_count") == height.get("survivor_count") == 1, anchor["candidate_id"] == survivor["candidate_id"] == candidate_id, survivor["object_id"] == anchor["object_id"],
+            row.get("fresh_contact_count") == 3, row.get("research_task_eligible_not_executable") is True, row["bounded_ik"]["status"] == "BOUNDED_IK_PASS_NOT_PATH_COLLISION", row["task_quality"]["nominal_gravity_lift_balance_pass"] is True,
+            task.get("config_sha256") == _sha256(paths["config"]))), "height-projected opposition survivor identity changed")
+        inputs = load_inputs(ROOT, config_path=paths["config"], object_id=anchor["object_id"])
+        pre_values, phases, stored_stop = anchor["pregrasp_joint_positions_rad"], row["fresh_contact_stop_phases"], None
+        object_from_hand, approach = survivor["object_from_hand_row_major"], anchor["approach_direction_object"]
+    pre = np.asarray(pre_values, np.float64); stop = joints_for_phases(inputs, tuple(phases), reference_joint_positions_rad=pre)
+    target = np.asarray(row["target_world_from_handbase_row_major"], np.float64).reshape(4, 4); projected = inputs.frozen_world_from_object @ np.asarray(object_from_hand, np.float64).reshape(4, 4)
+    _require(pre.shape == stop.shape == (4,) and (stored_stop is None or np.allclose(stop, stored_stop, atol=1e-12, rtol=0.0)), "candidate pregrasp or closure endpoint changed")
+    direction = inputs.frozen_world_from_object[:3, :3] @ np.asarray(approach, np.float64)
+    return schema, row, candidate_id, inputs, pre, stop, target, projected, direction
 def _verify(args: argparse.Namespace) -> dict:
     from kcg_connector.d38999_tabletop_scene import load_d38999_tabletop_scene
     from kcg_connector.grasp.carts_v2.models import joint_positions_for_phases, load_v2_inputs
@@ -78,26 +115,11 @@ def _verify(args: argparse.Namespace) -> dict:
     bound = {name: _bound(row, f"initial trace {name}") for name, row in evidence.items()}
     _require(bound["task_ik"] == paths["task_ik"] and bound["config"] == paths["config"],
              "initial trace does not bind the supplied task/configuration")
-    anchor, survivor = task["selected_geometric_anchor"], task["survivor_candidates"][0]
-    row = task["task_and_bounded_ik"][0]
-    height = task["height_search"]
-    object_id = anchor["object_id"]
-    palm_angle_deg = float(task.get("requested_palm_angle_deg", math.nan))
-    _require(all((isinstance(task.get("selected_geometric_anchor_index"), int),
-             0 <= task["selected_geometric_anchor_index"] < 12,
-             45.0 <= palm_angle_deg <= 75.0,
-             abs(palm_angle_deg - round(palm_angle_deg)) < 1e-9,
-             abs(float(anchor["palm_configuration_deg"]) - palm_angle_deg) < 1e-9,
-             task.get("survivor_count") == height.get("survivor_count") == 1,
-             anchor["candidate_id"] == survivor["candidate_id"] == row["candidate_id"],
-             survivor["object_id"] == object_id, row.get("fresh_contact_count") == 3,
-             row.get("research_task_eligible_not_executable") is True,
-             row["bounded_ik"]["status"] == "BOUNDED_IK_PASS_NOT_PATH_COLLISION",
-             row["task_quality"]["nominal_gravity_lift_balance_pass"] is True)),
-             "height-projected opposition survivor identity changed")
-    _require(task.get("config_sha256") == _sha256(paths["config"]),
-             "height-projected survivor configuration hash changed")
-    inputs = load_v2_inputs(ROOT, config_path=paths["config"], object_id=object_id)
+    schema, row, candidate_id, inputs, pre, stop, target, projected, direction = _candidate_data(
+        task, paths, load_v2_inputs, joint_positions_for_phases)
+    object_id = inputs.object_contract.object_id
+    _require(initial.get("candidate_id") == candidate_id and (schema != "carts_contactopt_b0_recheck_v1"
+             or initial.get("candidate_source_schema") == schema), "initial trace candidate schema changed")
     dynamic = inputs.config.section("dynamic")
     _require(all((float(dynamic["physics_dt_s"]) == DT_S,
              float(dynamic["finger_maximum_speed_rad_s"]) * DT_S == MAXIMUM_INCREMENT_RAD,
@@ -105,18 +127,10 @@ def _verify(args: argparse.Namespace) -> dict:
              round(float(dynamic["effort_tare_duration_s"]) / DT_S) == 60,
              round(float(dynamic["preload_duration_s"]) / DT_S) == 60)),
              "frozen local-contact control limits changed")
-    pre = np.asarray(anchor["pregrasp_joint_positions_rad"], np.float64)
-    stop = joint_positions_for_phases(inputs, tuple(row["fresh_contact_stop_phases"]),
-                                      reference_joint_positions_rad=pre)
-    target = np.asarray(row["target_world_from_handbase_row_major"], np.float64).reshape(4, 4)
-    projected = inputs.frozen_world_from_object @ np.asarray(
-        survivor["object_from_hand_row_major"], np.float64).reshape(4, 4)
     _require(np.allclose(target, projected, atol=1e-12, rtol=0.0)
              and np.allclose(target, np.asarray(initial["pose_binding"][
                  "world_from_handbase_target_row_major"]).reshape(4, 4), atol=1e-12),
              "runtime pose is not the height-projected survivor pose")
-    direction = inputs.frozen_world_from_object[:3, :3] @ np.asarray(
-        anchor["approach_direction_object"], np.float64)
     far = target.copy()
     far[:3, 3] -= direction * float(dynamic["approach_clearance_height_m"])
     environment = load_d38999_tabletop_scene(
@@ -130,6 +144,7 @@ def _verify(args: argparse.Namespace) -> dict:
         execution = float(endpoint_plan.get("execution_target_rad", math.nan))
         upper = float(endpoint_plan.get("first_nonexecutable_target_rad", math.nan))
         bound_kind = endpoint_plan.get("endpoint_upper_bound_kind")
+        b0_plan = schema != "carts_contactopt_b0_recheck_v1" or all((bound_plan.get("b0_recheck_source") == _resolve(task["source"]["path"]), bound_plan.get("b0_surface_source") == (ROOT/"src/kcg_connector/kcg_connector/grasp/carts_v2/b0_surface_semantics.py").resolve(), bound_plan.get("method_config") == _resolve(task["method_config"]), bound_plan.get("seed_manifest") == _resolve(task["seed_manifest"])))
         _require(all((endpoint_plan.get("status") == "OFFLINE_LAST_SEMANTICALLY_VALID_ENDPOINT_ACCEPTED",
             endpoint_plan.get("candidate_id") == row["candidate_id"], endpoint_plan.get("object_id") == object_id,
             endpoint_plan.get("online_truth_used") is False, endpoint_plan.get("hardware_authorized") is False,
@@ -137,10 +152,10 @@ def _verify(args: argparse.Namespace) -> dict:
             endpoint_plan.get("maximum_joint_increment_rad") == MAXIMUM_INCREMENT_RAD,
             endpoint_plan.get("endpoint_definition") == "LAST_SEMANTIC_VALID_NONINTERSECTING_CONTROL_STEP",
             endpoint_plan.get("selection_rule") == "SEMANTIC_VALIDITY_PRECEDES_RAW_FREE_SPACE",
-            set(bound_plan) == {"task_ik", "config", "builder_source", "evaluator_source", "runner_source"},
+            {"task_ik", "config", "builder_source", "evaluator_source", "runner_source"} <= set(bound_plan), b0_plan,
             np.isfinite(execution), np.isfinite(upper), stop[1] <= execution < upper,
             upper - execution <= MAXIMUM_INCREMENT_RAD + 1e-12,
-            bound_kind in {"FORBIDDEN_OBJECT_SURFACE_FIRST", "RAW_TASK_SURFACE_INTERSECTION"},
+            bound_kind in {"FORBIDDEN_OBJECT_SURFACE_FIRST", "RAW_TASK_SURFACE_INTERSECTION", "NON_TASK_HAND_OBJECT_INTERSECTION"}, schema != "carts_contactopt_b0_recheck_v1" or endpoint_plan.get("source_task_schema_version") == schema,
             bound_plan.get("task_ik") == paths["task_ik"], bound_plan.get("config") == paths["config"],
             bound_plan.get("runner_source") == Path(__file__).resolve(),
             np.allclose(np.asarray(endpoint_plan.get("fixed_world_from_handbase_row_major"), np.float64)
@@ -186,7 +201,7 @@ def _verify(args: argparse.Namespace) -> dict:
             "object_id": object_id, "inputs": inputs,
             "dynamic": dynamic, "pre": pre, "stop": stop,
             "target": target, "far": far, "gravity": environment.physics.gravity_m_s2,
-            "endpoint_plan": endpoint_plan}
+            "endpoint_plan": endpoint_plan, "candidate_source_schema": schema}
 def _contacts(interface, decoder, roots: dict[str, str]) -> dict:
     headers, _, _ = interface.get_full_contact_report()
     counts = {name: 0 for name in ("hand_object", "hand_table", "hand_fixture", "hand_self", "hand_unclassified", "object_table")}
@@ -507,8 +522,7 @@ def main() -> int:
     app = None
     try:
         verified = _verify(args)
-        report["object_id"] = verified["object_id"]
-        report["candidate_id"] = verified["row"]["candidate_id"]
+        report.update({"object_id": verified["object_id"], "candidate_id": verified["row"]["candidate_id"], "candidate_source_schema": verified["candidate_source_schema"], "six_axis_disturbance_margin_pass": verified["row"].get("six_axis_disturbance_margin_pass")})
         report["evidence_binding"] = {name: {"path": str(path), "sha256": _sha256(path)}
             for name, path in verified["paths"].items()}
         for name in ("hand_asset", "runtime_binding", "runtime_resources"):

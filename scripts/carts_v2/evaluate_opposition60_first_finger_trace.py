@@ -8,6 +8,9 @@ import math
 from pathlib import Path
 import traceback
 import numpy as np
+from kcg_connector.grasp.carts_v2.b0_surface_semantics import (
+    bind_b0_external_load_bearing_surfaces,
+)
 from kcg_connector.grasp.carts_v2.models import load_v2_inputs
 from kcg_connector.grasp.carts_v2.observed_state_replay import (
     ObservedHandStateEvaluator,
@@ -18,6 +21,8 @@ CONFIG = ROOT / "src/kcg_connector/config/carts_nailfree_height_projected.yaml"
 RUNNER = ROOT / "scripts/carts_v2/run_opposition60_local_contact.py"
 EVALUATOR = (ROOT / "src/kcg_connector/kcg_connector/grasp/carts_v2/"
              "observed_state_replay.py")
+B0_SOURCE = (ROOT / "src/kcg_connector/kcg_connector/grasp/carts_v2/"
+             "b0_surface_semantics.py")
 def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=CONFIG)
@@ -62,6 +67,32 @@ def _bound(binding: dict, name: str, expected: Path) -> None:
     _require(_resolve(row.get("path", "")) == expected.resolve()
              and expected.is_file() and row.get("sha256") == _sha256(expected),
              f"trace-bound {name} path or hash changed")
+
+
+def _bind_object_surface_method(inputs, trace: dict, report: dict):
+    task_row = (trace.get("evidence_binding") or {}).get("task_ik") or {}
+    task_path = _resolve(task_row.get("path", ""))
+    if not task_path.is_file():
+        return inputs, False
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    if task.get("schema_version") != "carts_contactopt_b0_recheck_v1":
+        return inputs, False
+    ready = [row for row in task.get("candidates", [])
+             if row.get("local_isaac_input_ready") is True]
+    audit = task.get("b0_surface_audit") or {}
+    _require(task_row.get("sha256") == _sha256(task_path) and len(ready) == 1
+             and task.get("local_isaac_input_count") == 1
+             and ready[0].get("candidate_id") == trace.get("candidate_id")
+             and audit.get("method") == "EXTERNAL_LOAD_BEARING_SURFACE_B0"
+             and audit.get("legacy_primary_secondary_are_hard_gates") is False
+             and audit.get("normal_alignment_is_object_semantic_hard_gate") is False,
+             "trace-bound B0 surface identity changed")
+    report["evidence_binding"]["b0_task"] = {
+        "path": str(task_path), "sha256": _sha256(task_path)}
+    report["evidence_binding"]["b0_surface_source"] = {
+        "path": str(B0_SOURCE.resolve()), "sha256": _sha256(B0_SOURCE)}
+    report["object_surface_method"] = audit["method"]
+    return bind_b0_external_load_bearing_surfaces(inputs), True
 def _verify(trace: dict, initial_path: Path, config: Path) -> tuple[list[dict], dict, Path]:
     controller = trace.get("controller") or {}
     controller_complete = bool(
@@ -128,13 +159,28 @@ def _evaluate(trace: dict, report: dict, initial_path: Path, config: Path) -> No
     report["evidence_binding"]["contact_endpoint_plan"] = {
         "path": str(plan_path), "sha256": _sha256(plan_path)}
     inputs = load_v2_inputs(ROOT, config_path=config, object_id=OBJECT_B)
+    inputs, b0_mode = _bind_object_surface_method(inputs, trace, report)
     evaluator, states = ObservedHandStateEvaluator(inputs), [_state(row) for row in samples]
     minima = {"table_m": None, "self_m": None, "non_task_m": None}
-    safety_failures = []
+    safety_failures, table_margin_failures, non_task_band_diagnostic = [], [], []
+    contact_distance = float(inputs.config.section(
+        "closure_prediction")["contact_distance_m"])
+    table_required = float(inputs.config.section(
+        "height_projection")["table_operation_clearance_m"])
+    table_tolerance = float(inputs.config.section(
+        "fast_filter")["table_penetration_tolerance_m"])
     for index, state in enumerate(states):
         result = evaluator.evaluate_safety(**state)
         if result["fail_closed"]:
             safety_failures.append(index)
+        table_value = result["table_top"]["minimum_clearance_m"]
+        non_task_value = result["non_task_hand_object"]["minimum_clearance_m"]
+        if (b0_mode and (table_value is None or float(table_value)
+                        < table_required - table_tolerance)):
+            table_margin_failures.append(index)
+        if (b0_mode and (non_task_value is None or float(non_task_value)
+                        <= contact_distance)):
+            non_task_band_diagnostic.append(index)
         for key, group in (("table_m", "table_top"), ("self_m", "self_collision"),
                            ("non_task_m", "non_task_hand_object")):
             value = result[group]["minimum_clearance_m"]
@@ -202,14 +248,17 @@ def _evaluate(trace: dict, report: dict, initial_path: Path, config: Path) -> No
     endpoint_limit = float(plan["first_nonexecutable_target_rad"])
     endpoint_overshoot = [index for index, row in enumerate(samples)
         if float(row["joint_positions_rad"]["f1j2"]) >= endpoint_limit]
-    safe = not safety_failures and not full_failures and not forbidden_first and not endpoint_overshoot
+    safe = bool(not safety_failures and not table_margin_failures
+                and not full_failures
+                and not forbidden_first and not endpoint_overshoot)
     accepted = bool(safe and exact_contact and motion_compatible and physx_count > 0
                     and object_motion <= 0.001 and other_idle and engine and truth)
     false_proxy = bool(trace.get("controller", {}).get("contact_targets_rad")
                        and (physx_count == 0 or not contacts["finger_1_pad"]))
     proximity_only = bool(endpoint_timeout and endpoint_proximity and physx_count == 0)
     unresolved_boundary = bool(forbidden_first and not full_failures and physx_count == 0)
-    status = ("SEMANTIC_PROXIMITY_BOUNDARY_UNRESOLVED" if unresolved_boundary else
+    status = ("B0_TABLE_OPERATION_MARGIN_REJECT" if table_margin_failures else
+              "SEMANTIC_PROXIMITY_BOUNDARY_UNRESOLVED" if unresolved_boundary else
               "SEMANTICALLY_INVALID_FORBIDDEN_FIRST_CONTACT" if forbidden_first else
               "NONEXECUTABLE_ENDPOINT_OVERSHOOT" if endpoint_overshoot else
               "FALSE_CONTACT_PROXY" if false_proxy else
@@ -222,6 +271,11 @@ def _evaluate(trace: dict, report: dict, initial_path: Path, config: Path) -> No
         "contact_confirmed_indices": confirmed, "contact_settle_indices": settle,
         "hold_indices": hold, "endpoint_indices": endpoint,
         "geometry": {"all_cycles_safe": safe, "safety_failure_indices": safety_failures,
+                     "table_operation_margin_failure_indices": table_margin_failures,
+                     "non_task_contact_band_diagnostic_indices": non_task_band_diagnostic,
+                     "required_table_clearance_m": table_required,
+                     "table_numerical_tolerance_m": table_tolerance,
+                     "non_task_contact_distance_m": contact_distance,
                      "full_evaluation_failure_indices": full_failures,
                      "minimum_clearances": minima},
         "task_contact": {"contact_indices_by_finger": contacts,
@@ -240,9 +294,11 @@ def _evaluate(trace: dict, report: dict, initial_path: Path, config: Path) -> No
                                  "observed_position_range_rad": actual_ranges,
                                  "not_commanded_pass": other_idle},
         "truth_boundary_pass": truth,
-        "classification_reason": ("HARD entered the offline proximity band without mesh intersection or PhysX contact"
+        "classification_reason": ("sampled table clearance fell below the registered B0 operation margin"
+                                  if table_margin_failures else
+                                  "functional-protected surface entered the offline proximity band without mesh intersection or PhysX contact"
                                   if unresolved_boundary else
-                                  "forbidden surface became first or the nonexecutable bound was crossed"
+                                  "functional-protected surface became first or the nonexecutable bound was crossed"
                                   if forbidden_first or endpoint_overshoot else
                                   "joint-side contact proxy had no PhysX/exact TASK contact"
                                   if false_proxy else "all offline gates passed" if accepted
