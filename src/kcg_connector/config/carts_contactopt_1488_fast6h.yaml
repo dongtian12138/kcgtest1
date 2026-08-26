@@ -1,0 +1,83 @@
+schema_version: carts_contactopt_1488_fast6h_v1
+method: CONTACTOPT_1488
+claim_scope: SIMULATION_ONLY_HIERARCHICAL_CONTACT_SEARCH
+hardware_authorized: false
+base_physical_config: src/kcg_connector/config/carts_surface_v2_fast6h.yaml
+
+structured_seeds:
+  total_count_per_object: 1488
+  global:
+    palm_configuration_deg: [0, 15, 30, 40, 45, 50, 55, 60, 65, 70, 75, 82.5, 90]
+    azimuth_step_deg: 22.5
+    azimuth_count: 16
+    axial_ratios: [0.10, 0.30, 0.50, 0.70, 0.90]
+    preshapes:
+      P0: [0.10, 0.10, 0.10]
+    expected_count: 1040
+  dense_opposition:
+    palm_configuration_deg: [45, 50, 55, 60, 65, 70, 75]
+    feature_azimuth_count: 8
+    feature_scan_step_deg: 1.0
+    feature_minimum_separation_deg: 25.0
+    axial_ratios: [0.20, 0.40, 0.60, 0.80]
+    preshapes:
+      P1: [0.20, 0.05, 0.20]
+      P2: [0.05, 0.20, 0.05]
+    expected_count: 448
+  pose_initializer:
+    method: THREE_TASK_SURFACE_POINT_NORMAL_KABSCH_THEN_LEAST_SQUARES
+    finger_phase_sample_count: 10
+    object_azimuth_window_deg: 12.0
+    object_axial_window_ratio: 0.10
+    maximum_least_squares_evaluations: 20
+    random_pose_generation_allowed: false
+
+cheap_geometry:
+  representative_point_count_per_finger: 64
+  finger_phase_sample_count: 10
+  object_distance_backend: SCIPY_CKDTREE_ROLE_FACE_CENTROIDS
+  evidence_scope: PROXY_ONLY_NOT_EXACT_CONTACT_OR_COLLISION
+  maximum_wall_time_s: 1800
+
+hierarchy:
+  top120:
+    total: 120
+    maximum_global: 60
+    maximum_dense_opposition: 60
+    selection: PALM_AXIAL_QUOTAS_THEN_NORMALIZED_10D_FARTHEST_POINT
+  top48:
+    total: 48
+    source: SEQUENTIAL_PROXY_CONTACT_INTERVALS
+  top12:
+    total: 12
+    geometry: RAW_NAILFREE_TRIANGLES_AND_ISAAC_COMPOUND_CONVEX
+  top3:
+    total: 3
+    dynamic_target: OBJECT_B_LOCAL_HAND_FIRST
+
+contact_intervals:
+  coarse_phase_sample_count: 10
+  boundary_method: BISECTION
+  maximum_boundary_iterations: 24
+  maximum_joint_increment_rad: 0.0015
+  output_scope: PROXY_UNTIL_TOP12_DUAL_GEOMETRY
+
+contact_optimization:
+  translation_bound_m: 0.020
+  rotation_bound_deg: 12.0
+  palm_configuration_bound_deg: 6.0
+  preclose_bounds: [0.0, 0.35]
+  maximum_local_evaluations_per_seed: 120
+  enhanced_top_count: 8
+  maximum_enhanced_evaluations_per_seed: 500
+  enhanced_random_seed: 20260826
+  optimizer_policy: ONE_BOUNDED_LOCAL_ROUTE_THEN_OPTIONAL_FIXED_DE
+
+dynamic:
+  object_order:
+    - te_deutsch_d38999_26fj35pn_step
+    - current_d38999_26kj61sn_public_spec
+  lift_distance_m: 0.050
+  hold_duration_s: 2.0
+  online_object_truth_allowed: false
+  online_contact_truth_allowed: false

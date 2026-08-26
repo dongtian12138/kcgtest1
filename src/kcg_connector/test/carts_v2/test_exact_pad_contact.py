@@ -14,6 +14,7 @@ from kcg_connector.grasp.carts_v2.models import load_v2_inputs
 from kcg_connector.grasp.carts_v2.surface_contact import (
     ExactPadSurfaceQuery,
     NearestSurface,
+    material_bound_object_face_normals,
     nearest_motion_compatible_index,
 )
 from kcg_connector.grasp.carts_v2.task_grip_surface import (
@@ -89,7 +90,10 @@ def test_outward_normal_sign_is_bound_to_material_certificate() -> None:
             pads=(SimpleNamespace(name="pad", points_local_m=vertices, faces=faces),)
         ),
     )
-    assert np.allclose(ExactPadSurfaceQuery(inputs).normal(0), (0.0, 0.0, 1.0))
+    bound = material_bound_object_face_normals(inputs)
+    assert bound.flags.writeable is False
+    assert np.allclose(bound[0], (0.0, 0.0, 1.0))
+    assert np.allclose(ExactPadSurfaceQuery(inputs).normal(0), bound[0])
 
 
 def test_task_grip_query_returns_hand_face_identity_and_real_normal() -> None:

@@ -41,6 +41,30 @@ class NearestSurface:
     region_composite_normal_m: np.ndarray | None = None
     region_normal_dispersion_rad: float | None = None
 
+
+def material_bound_object_face_normals(inputs) -> np.ndarray:
+    """Return source-face normals bound to the registered material orientation."""
+
+    loaded = inputs.object_contract
+    mesh = loaded.model.mesh
+    certificate = loaded.orientation_certificate
+    material = loaded.material_boundary_evidence
+    signs = np.asarray(
+        certificate.positive_volume_winding_sign_by_source_face,
+        dtype=np.float64,
+    )
+    if (
+        material.formal_material_boundary_eligible is not True
+        or material.certificate.orientation_certificate_sha256
+        != certificate.canonical_sha256
+        or signs.shape != (len(mesh.faces),)
+        or not np.all(np.isin(signs, (-1.0, 1.0)))
+    ):
+        raise ValueError("object outward-normal material binding is incomplete")
+    normals = np.asarray(mesh.face_normals, dtype=np.float64) * signs[:, None]
+    normals.setflags(write=False)
+    return normals
+
 def _closest_points_on_triangles(triangles: np.ndarray, points: np.ndarray) -> np.ndarray:
     """Vectorized closest points for one point paired with one triangle."""
 
@@ -169,21 +193,7 @@ class ExactContactSurfaceQuery:
             raise RuntimeError("FCL_EXACT_PAD_MESH requires python-fcl")
         loaded = inputs.object_contract
         mesh = loaded.model.mesh
-        certificate = loaded.orientation_certificate
-        material = loaded.material_boundary_evidence
-        signs = np.asarray(
-            certificate.positive_volume_winding_sign_by_source_face,
-            dtype=np.float64,
-        )
-        if (
-            material.formal_material_boundary_eligible is not True
-            or material.certificate.orientation_certificate_sha256
-            != certificate.canonical_sha256
-            or signs.shape != (len(mesh.faces),)
-            or not np.all(np.isin(signs, (-1.0, 1.0)))
-        ):
-            raise ValueError("object outward-normal material binding is incomplete")
-        self._normals = np.asarray(mesh.face_normals) * signs[:, None]
+        self._normals = material_bound_object_face_normals(inputs)
         self._face_count = len(mesh.faces)
         self._object = fcl.CollisionObject(
             build_fcl_bvh_model(mesh.vertices_m, mesh.faces)
@@ -495,5 +505,6 @@ __all__ = [
     "ExactPadSurfaceQuery",
     "LegacyMeshProximityIndex",
     "NearestSurface",
+    "material_bound_object_face_normals",
     "nearest_motion_compatible_index",
 ]
