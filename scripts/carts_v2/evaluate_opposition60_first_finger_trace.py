@@ -237,11 +237,12 @@ def _evaluate(trace: dict, report: dict) -> None:
                                  "observed_position_range_rad": actual_ranges,
                                  "not_commanded_pass": other_idle},
         "truth_boundary_pass": truth,
-        "classification_reason": ("joint-side contact proxy had no PhysX/exact TASK contact"
+        "classification_reason": ("forbidden surface became first or the semantic limit was crossed"
+                                  if forbidden_first or semantic_overshoot else
+                                  "joint-side contact proxy had no PhysX/exact TASK contact"
                                   if false_proxy else "all offline gates passed" if accepted
                                   else "last semantic-valid endpoint was reached without PhysX contact"
-                                  if proximity_only
-                                  else "one or more offline gates rejected")})
+                                  if proximity_only else "one or more offline gates rejected")})
 def main() -> int:
     args = _arguments()
     trace_path, output = _resolve(args.trace), _resolve(args.output)

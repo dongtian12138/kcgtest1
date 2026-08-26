@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plan one hash-bound last-free endpoint for the opposition-60 first finger."""
+"""Plan one hash-bound last semantic-valid opposition-60 first-finger endpoint."""
 
 from __future__ import annotations
 
@@ -26,15 +26,9 @@ from kcg_connector.grasp.carts_v2.observed_state_replay import (  # noqa: E402
 from kcg_connector.robot_model import expand_active_hand_positions  # noqa: E402
 
 
-BASE = ROOT / "artifacts/carts_v2/opposition60_isaac"
-TASK = BASE / (
-    "qp60_anchor_a02_task_ik/"
-    "opposition60_anchor_a02_exact_offset_00_count_01_static_control.json"
-)
 CONFIG = ROOT / "src/kcg_connector/config/carts_nailfree_height_projected.yaml"
 RUNNER = ROOT / "scripts/carts_v2/run_opposition60_local_contact.py"
 EVALUATOR = PACKAGE_ROOT / "kcg_connector/grasp/carts_v2/observed_state_replay.py"
-OBJECT_ID = "te_deutsch_d38999_26fj35pn_step"
 PAD_NAME = "finger_1_pad"
 STEP_RAD = 0.0015
 
@@ -74,20 +68,21 @@ def _binding(path: Path) -> dict[str, str]:
     return {"path": str(path.resolve()), "sha256": _sha256(path)}
 
 
-def plan_endpoint() -> dict:
-    task = _load(TASK)
-    inputs = load_v2_inputs(ROOT, config_path=CONFIG, object_id=OBJECT_ID)
+def plan_endpoint(task_path: Path) -> dict:
+    task = _load(task_path)
     anchor = task["selected_geometric_anchor"]
     row = task["task_and_bounded_ik"][0]
     survivor = task["survivor_candidates"][0]
+    object_id = anchor["object_id"]
+    inputs = load_v2_inputs(ROOT, config_path=CONFIG, object_id=object_id)
     _require(
         anchor["candidate_id"] == row["candidate_id"] == survivor["candidate_id"]
-        and anchor["object_id"] == OBJECT_ID
+        and anchor["object_id"] == survivor["object_id"] == object_id
         and task["requested_palm_angle_deg"] == 60
-        and task["selected_geometric_anchor_index"] == 2
-        and anchor["pregrasp_closure_phases"] == [0.2, 0.2, 0.2]
+        and task["survivor_count"] == 1
+        and len(task["task_and_bounded_ik"]) == 1
         and task["config_sha256"] == _sha256(CONFIG),
-        "frozen anchor2 task identity changed",
+        "opposition-60 survivor task identity changed",
     )
     dynamic = inputs.config.section("dynamic")
     _require(
@@ -106,9 +101,10 @@ def plan_endpoint() -> dict:
     maximum_phase = float(inputs.config.section("candidate_generation")[
         "maximum_closure_phase"
     ])
+    maximum_phases = list(anchor["pregrasp_closure_phases"])
+    maximum_phases[0] = maximum_phase
     maximum = joint_positions_for_phases(
-        inputs, (maximum_phase, 0.2, 0.2), reference_joint_positions_rad=pre
-    )
+        inputs, tuple(maximum_phases), reference_joint_positions_rad=pre)
     target = np.asarray(
         row["target_world_from_handbase_row_major"], dtype=np.float64
     ).reshape(4, 4)
@@ -231,7 +227,7 @@ def plan_endpoint() -> dict:
         "schema_version": "carts_opposition60_physical_contact_endpoint_v1",
         "status": "OFFLINE_LAST_SEMANTICALLY_VALID_ENDPOINT_ACCEPTED",
         "claim_scope": "DISCRETE_RAW_MESH_FIRST_FINGER_RESEARCH_ENDPOINT_NOT_PHYSICAL_CONTACT_SUCCESS",
-        "object_id": OBJECT_ID,
+        "object_id": object_id,
         "candidate_id": row["candidate_id"],
         "finger_index": 1,
         "pad_name": PAD_NAME,
@@ -290,7 +286,6 @@ def plan_endpoint() -> dict:
                 "intersecting_pairs"],
             "non_task_intersecting_links": next_safety["non_task_hand_object"][
                 "intersecting_links"],
-            "motion_compatible_by_registered_task_surface": True,
         },
         "fixed_world_from_handbase_row_major": target.ravel().tolist(),
         "fixed_world_from_object_row_major": inputs.frozen_world_from_object.ravel().tolist(),
@@ -300,7 +295,7 @@ def plan_endpoint() -> dict:
             "sha256": inputs.object_contract.model.provenance.source_sha256,
         },
         "evidence_binding": {
-            "task_ik": _binding(TASK), "config": _binding(CONFIG),
+            "task_ik": _binding(task_path), "config": _binding(CONFIG),
             "builder_source": _binding(Path(__file__)),
             "evaluator_source": _binding(EVALUATOR), "runner_source": _binding(RUNNER),
         },
@@ -309,11 +304,14 @@ def plan_endpoint() -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--task-report", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
+    task_path = args.task_report.resolve()
+    _require(task_path.is_file(), f"task report is missing: {task_path}")
     output = args.output.resolve()
     _require(not output.exists(), f"refusing to overwrite evidence: {output}")
-    report = plan_endpoint()
+    report = plan_endpoint(task_path)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({"output": str(output), "status": report["status"],
