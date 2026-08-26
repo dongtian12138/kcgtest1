@@ -67,7 +67,7 @@
 - 结构化生成器定向回归：7 passed；8 个相关 Python 文件编译通过。
 - 当前没有 Isaac、GraspGenX 或 CONTACTOPT 活动进程。
 - `scripts/carts_v2/audit_nailfree_graspgenx_seed_reuse.py` 是无关未跟踪资产，不得暂存。
-- 当前工作树修改尚待本里程碑提交；推送前只暂存本任务文件和本摘要/状态。
+- 本轮生成器、第一指证据接线和状态提交已普通推送；当前工作树只剩上面的无关未跟踪资产。
 
 ## 最小读取路线
 
