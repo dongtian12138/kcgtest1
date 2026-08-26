@@ -23,9 +23,10 @@ sys.path.insert(0, str(ISAAC_V2))
 
 _LINKS = ("f1Link3", "f2Link2", "f3Link3")
 _MIMIC = {"f1j3": "f1j2", "f2j2": "f2j1", "f3j1": "f1j1", "f3j3": "f3j2"}
-_DOFS = tuple(f"iiwa_joint_{index}" for index in range(1, 8)) + (
+_FULL_DOFS = tuple(f"iiwa_joint_{index}" for index in range(1, 8)) + (
     "f1j1", "f1j2", "f1j3", "f2j1", "f2j2", "f3j1", "f3j2", "f3j3",
 )
+_LOCAL_DOFS = ("f1j1", "f1j2", "f1j3", "f2j1", "f2j2", "f3j1", "f3j2", "f3j3")
 _RESOURCES = ROOT / "src/kcg_connector/config/carts_v2_isaac_runtime.json"
 
 
@@ -34,6 +35,10 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--runtime-binding", type=Path, required=True)
     parser.add_argument("--usd", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--asset-scope", choices=("full-handarm", "local-hand"),
+        default="full-handarm",
+    )
     parser.add_argument("--runtime-resources", type=Path, default=_RESOURCES)
     return parser.parse_args()
 
@@ -62,7 +67,7 @@ def _bound_file(path_value: str, sha256_value: str, label: str) -> Path:
     return path
 
 
-def _binding_audit(path: Path) -> tuple[dict, dict]:
+def _binding_audit(path: Path, asset_scope: str) -> tuple[dict, dict, dict]:
     document = json.loads(path.read_text(encoding="utf-8"))
     _require(
         document.get("schema_version") == "carts_opposition60_runtime_urdf_binding_v1"
@@ -76,9 +81,21 @@ def _binding_audit(path: Path) -> tuple[dict, dict]:
         document["collision_manifest"], document["collision_manifest_sha256"],
         "collision manifest",
     )
-    urdf_path = _bound_file(
-        document["runtime_urdf"], document["runtime_urdf_sha256"], "runtime URDF"
-    )
+    if asset_scope == "local-hand":
+        local = document.get("local_hand_urdf") or {}
+        urdf_path = _bound_file(local["path"], local["sha256"], "local hand URDF")
+        identity = {
+            "robot_name": local["robot_name"], "dof_names": _LOCAL_DOFS,
+            "urdf_kind": "LOCAL_HAND_FROM_BOUND_FULL_TREE",
+        }
+    else:
+        urdf_path = _bound_file(
+            document["runtime_urdf"], document["runtime_urdf_sha256"], "runtime URDF"
+        )
+        identity = {
+            "robot_name": document["runtime_robot_name"], "dof_names": _FULL_DOFS,
+            "urdf_kind": "FULL_HANDARM",
+        }
     terminal = document.get("terminal_links") or {}
     _require(set(terminal) == set(_LINKS), "terminal binding set changed")
     for link, row in terminal.items():
@@ -100,7 +117,7 @@ def _binding_audit(path: Path) -> tuple[dict, dict]:
                 "offset": float(node.get("offset", "0")),
             }
     urdf_mimic_pass = bool(
-        set(revolute) == set(_DOFS) and set(mimic) == set(_MIMIC)
+        set(revolute) == set(identity["dof_names"]) and set(mimic) == set(_MIMIC)
         and all(mimic[name]["source"] == source
                 and mimic[name]["multiplier"] == 1.0 and mimic[name]["offset"] == 0.0
                 for name, source in _MIMIC.items())
@@ -108,9 +125,10 @@ def _binding_audit(path: Path) -> tuple[dict, dict]:
     _require(urdf_mimic_pass, "bound runtime URDF joint or mimic identity changed")
     return document, {
         "path": str(path), "sha256": _sha256(path), "runtime_urdf": str(urdf_path),
-        "runtime_urdf_sha256": _sha256(urdf_path), "urdf_revolute_joint_count": 15,
+        "runtime_urdf_sha256": _sha256(urdf_path),
+        "urdf_revolute_joint_count": len(identity["dof_names"]),
         "urdf_mimic": mimic, "urdf_mimic_pass": True,
-    }
+    }, identity
 
 
 def _usd_layer_hashes(asset: Path) -> dict:
@@ -262,14 +280,17 @@ def main() -> int:
         "runtime_binding_accepted": False,
         "runtime_gates": {"ISAAC_IMPORT": False, "INITIAL_PENETRATION": False,
                           "OPPOSITION60_REPLAY": False, "PHYSX_HEALTH": False},
-        "object_asset_loaded": False, "errors": [],
+        "object_asset_loaded": False, "asset_scope": args.asset_scope,
+        "auditor_source": {"path": str(Path(__file__).resolve()),
+                           "sha256": _sha256(Path(__file__).resolve())},
+        "errors": [],
     }
     app = None
     log_path = None
     try:
-        binding, binding_record = _binding_audit(binding_path)
+        binding, binding_record, identity = _binding_audit(binding_path, args.asset_scope)
         _require(asset.is_file(), f"configured USD missing: {asset}")
-        _require(asset.name == f"{binding['runtime_robot_name']}.usda",
+        _require(asset.name == f"{identity['robot_name']}.usda",
                  "configured USD filename differs from bound runtime robot name")
         report.update({"runtime_binding": binding_record, "usd_layers": _usd_layer_hashes(asset)})
 
@@ -292,7 +313,7 @@ def main() -> int:
         imported = Usd.Stage.Open(str(asset), Usd.Stage.LoadAll)
         _require(imported is not None, "USD stage open failed")
         default_prim = imported.GetDefaultPrim()
-        _require(default_prim and default_prim.GetName() == binding["runtime_robot_name"],
+        _require(default_prim and default_prim.GetName() == identity["robot_name"],
                  "defaultPrim differs from runtime binding")
         unresolved = UsdUtils.ComputeAllDependencies(Sdf.AssetPath(str(asset)))[2]
         _require(not unresolved, f"unresolved USD dependencies: {list(unresolved)}")
@@ -300,7 +321,11 @@ def main() -> int:
         composed_prims = list(imported.Traverse(Usd.TraverseInstanceProxies()))
         revolute_names = sorted(prim.GetName() for prim in composed_prims
                                 if prim.IsA(UsdPhysics.RevoluteJoint))
-        stage_dof_pass = len(revolute_names) == 15 and set(revolute_names) == set(_DOFS)
+        expected_dofs = tuple(identity["dof_names"])
+        stage_dof_pass = (
+            len(revolute_names) == len(expected_dofs)
+            and set(revolute_names) == set(expected_dofs)
+        )
         mimic = _mimic_audit(imported, root_path)
         collision = _terminal_collision_audit(composed_prims, UsdPhysics)
         visual = _visual_audit(composed_prims, binding, UsdGeom, UsdPhysics)
@@ -322,7 +347,9 @@ def main() -> int:
         world.reset()
         _require(robot.handles_initialized, "articulation handles not initialized")
         runtime_dofs = list(robot.dof_names)
-        runtime_dof_pass = robot.num_dof == 15 and set(runtime_dofs) == set(_DOFS)
+        runtime_dof_pass = (
+            robot.num_dof == len(expected_dofs) and set(runtime_dofs) == set(expected_dofs)
+        )
         context = world.get_physics_context()
         monitor = PhysxStatsMonitor(context)
         for _ in range(3):

@@ -1,6 +1,6 @@
 {
   "schema_version": "opposition60_isaac_manifest_v1",
-  "updated_at_utc": "2026-08-26T03:41:35Z",
+  "updated_at_utc": "2026-08-26T03:53:00Z",
   "execution_window": {
     "id": "OPPOSITION60_ISAAC_12H",
     "classification": "ROOT_CAUSE_METHOD_CORRECTION_PLUS_OPPOSITION_GRASP_FAMILY_PLUS_MULTI_WITNESS_CONTACT_PLUS_RESEARCH_COLLISION_ASSET_PLUS_AUTONOMOUS_ISAAC_EXECUTION",
@@ -80,6 +80,21 @@
       },
       "runtime_import_configured_capacity_found_lost_and_total": [8192, 16384],
       "runtime_import_observed_peak_found_lost_and_total": [128, 0],
+      "local_hand_isaac_import_gate_pass": true,
+      "local_hand_root_usd_sha256": "1cfa27a96cbc4b4dd4e7faabeb582d962f1121cb11b6a7aed58515815a844a08",
+      "local_hand_import_readback_path": "artifacts/carts_v2/opposition60_isaac/local_hand_import_readback_run01.json",
+      "local_hand_import_readback_sha256": "39c9c96378e93cc21ba3e30c5307f371cc4a9e554a59c8dd6111c18770be0d1f",
+      "local_hand_import_gate_counts": {
+        "runtime_dof": 8,
+        "usd_mimic": 4,
+        "terminal_compound_hulls": 192,
+        "all_hand_collision_shapes": 198,
+        "scene_rigid_bodies": 9,
+        "scene_articulations": 1,
+        "capacity_warning_count": 0,
+        "physx_error_count": 0
+      },
+      "local_hand_import_observed_peak_found_lost_and_total": [120, 0],
       "isaac_object_or_grasp_started": false
     }
   },

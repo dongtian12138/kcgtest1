@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T03:41:35Z",
+  "updated_at_utc": "2026-08-26T03:53:00Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T10:17:59Z",
   "branch": "carts-grasp-opposition60-isaac-20260826",
@@ -103,7 +103,7 @@
   "research_dynamic_gate": {
     "allowed": false,
     "scope": "LOCAL_HAND_OBJECT_ONLY_AFTER_RUNTIME_ASSET_GATES",
-    "reason": "FULL_HANDARM_ISAAC_IMPORT_PASS; LOCAL_HAND_ASSET_IMPORT_INITIAL_PENETRATION_OPPOSITION60_REPLAY_AND_OBJECT_LOADED_PHYSX_HEALTH_PENDING"
+    "reason": "FULL_HANDARM_AND_LOCAL_HAND_ISAAC_IMPORT_PASS; INITIAL_PENETRATION_OPPOSITION60_REPLAY_AND_OBJECT_LOADED_PHYSX_HEALTH_PENDING"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1376,7 +1376,14 @@
       "runtime_import_capacity_configured_found_total": [8192, 16384],
       "runtime_import_capacity_observed_peak_found_total": [128, 0],
       "runtime_import_capacity_warning_and_physx_error_counts": [0, 0],
-      "runtime_import_object_loaded": false
+      "runtime_import_object_loaded": false,
+      "local_hand_root_usd_sha256": "1cfa27a96cbc4b4dd4e7faabeb582d962f1121cb11b6a7aed58515815a844a08",
+      "local_hand_import_readback_sha256": "39c9c96378e93cc21ba3e30c5307f371cc4a9e554a59c8dd6111c18770be0d1f",
+      "local_hand_import_dof_mimic_terminal_and_total_hull_counts": [8, 4, 192, 198],
+      "local_hand_import_scene_rigid_articulation_collision_shape_counts": [9, 1, 198],
+      "local_hand_import_capacity_observed_peak_found_total": [120, 0],
+      "local_hand_import_capacity_warning_and_physx_error_counts": [0, 0],
+      "local_hand_import_object_loaded": false
     },
     "method_fix_targeted_tests_passed": 33,
     "method_fix_targeted_test_duration_s": 28.25,
@@ -1502,7 +1509,7 @@
       "evidence_scope": "DISCRETE_CONTROL_STEPS_NOT_CONTINUOUS_COLLISION_PROOF"
     },
     "qp60_static_positive_control_pass": true,
-    "local_hand_dynamic_status": "ASSET_IMPORT_PENDING_INITIAL_PENETRATION_NO_OBJECT_RUN_YET",
+    "local_hand_dynamic_status": "ASSET_IMPORT_PASS_PENDING_INITIAL_PENETRATION_NO_OBJECT_RUN_YET",
     "full_arm_dynamic_status": "NOT_STARTED",
     "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
   },

@@ -583,3 +583,10 @@
 - PhysX场景读回1个articulation、17个刚体和206个碰撞shape；found/lost与total容量为`8192/16384`，观测峰值`128/0`，容量警告和PhysX错误都为0。
 - 这只足以使`ISAAC_IMPORT=true`。对象B尚未加载，因此`INITIAL_PENETRATION=false`、`OPPOSITION60_REPLAY=false`、含对象`PHYSX_HEALTH=false`、`runtime_binding_accepted=false`；不宣称实际接触或抓举。
 - 采纳监督建议的最简单路线：从同一已替换碰撞/惯性的URDF树生成hand-only articulation，先固定handbase做初始穿透和60°逐指闭合，通过后才进行受控handbase抓举；这不证明完整机械臂路径。
+
+## 2026-08-26T03:53:00Z — hand-only运行时组合必须单独读回
+
+- 分类：`EVIDENCE_IDENTITY_GUARD + MILESTONE_PROGRESSION`；不改变手指几何、对象位姿、驱动参数或成功标准。
+- 完整手臂run05不自动为hand-only组合关闭导入门；因为局部手是一个新的USD组合，必须重新读回它自己的关节、耦合、碰撞和质量属性。
+- hand-only读回通过：8个DOF、4组mimic、三末节`64/64/64`个凸块、全手198个碰撞shape；GPU峰值`120/0`，警告/错误为0。
+- 这仍只是无对象的导入门；对象B的初始穿透、对向60°轨迹和含对象PhysX健康必须在后续原子实验中单独关闭。
