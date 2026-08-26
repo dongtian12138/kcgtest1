@@ -17,7 +17,7 @@ from kcg_connector.grasp.carts_v2.models import joint_positions_for_phases, load
 from kcg_connector.grasp.robust.object_model import file_sha256, load_stl_mesh
 _HAND_AUDIT = Path("artifacts/carts_v2/nailfree_height_projected/hand_model_audit/NAILFREE_HAND_MODEL_AUDIT.json")
 _TASK_SURFACES = Path("artifacts/carts_v2/nailfree_height_projected/task_grip_surface_audit/TASK_GRIP_SURFACE_MANIFEST.json")
-_CONFIG = Path("src/kcg_connector/config/carts_full_palm_search.yaml")
+_CONFIG = Path("src/kcg_connector/config/carts_nailfree_height_projected.yaml")
 _OUTPUT = Path("artifacts/carts_v2/opposition60_isaac/research_collision_asset")
 _OBJECT = "te_deutsch_d38999_26fj35pn_step"
 _SOURCE_FACE_COUNT = 11836

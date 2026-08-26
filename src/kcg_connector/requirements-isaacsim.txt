@@ -2,3 +2,4 @@
 
 isaacsim[all,extscache]==6.0.1.0
 trimesh==5.0.0
+fast-simplification==0.2.0

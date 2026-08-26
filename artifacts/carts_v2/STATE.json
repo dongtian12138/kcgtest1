@@ -1,6 +1,6 @@
 {
   "schema_version": "carts_grasp_v2_state_v1",
-  "updated_at_utc": "2026-08-26T02:42:00Z",
+  "updated_at_utc": "2026-08-26T03:03:44Z",
   "started_at_utc": "2026-08-25T22:17:59Z",
   "hard_deadline_utc": "2026-08-26T10:17:59Z",
   "branch": "carts-grasp-opposition60-isaac-20260826",
@@ -8,7 +8,7 @@
   "start_commit": "d955e2473ecb9b28a97795aa9cef805344c52401",
   "recovery_tag": "carts-grasp-v2-start-20260823-330c54d",
   "status": "IMPLEMENTING",
-  "current_milestone": "OBJECT_B_RESEARCH_COLLISION_ASSET_AND_LOCAL_ISAAC_PRECHECK",
+  "current_milestone": "OBJECT_B_COLLISION_RUNTIME_IMPORT_AND_LOCAL_PRECHECK",
   "previous_execution_window": {
     "id": "V2_RECOVERY_2",
     "started_at_utc": "2026-08-24T08:13:09Z",
@@ -102,8 +102,8 @@
   "legacy_formal_dynamic_launch_allowed": false,
   "research_dynamic_gate": {
     "allowed": false,
-    "scope": "LOCAL_HAND_OBJECT_ONLY_AFTER_ASSET_AND_STATIC_POSITIVE_CONTROL",
-    "reason": "RESEARCH_COLLISION_ASSET_NOT_ACCEPTED_AND_NO_PATH_SAFE_THREE_CONTACT_CANDIDATE"
+    "scope": "LOCAL_HAND_OBJECT_ONLY_AFTER_RUNTIME_ASSET_GATES",
+    "reason": "STATIC_ASSET_AND_PATH_SAFE_THREE_CONTACT_PASS; RUNTIME_IMPORT_INITIAL_PENETRATION_OPPOSITION60_REPLAY_PHYSX_HEALTH_PENDING"
   },
   "future_dynamic_evaluation_boundary": {
     "configured_maximum_table_penetration_m": 0.002,
@@ -1344,14 +1344,14 @@
     "manifest_path": "artifacts/carts_v2/nailfree_height_projected/MANIFEST.json"
   },
   "opposition60_isaac": {
-    "route_status": "ANCHOR_A02_NOMINAL_RESEARCH_TASK_AND_BOUNDED_IK_PASS_PENDING_COLLISION_ASSET_AND_DYNAMIC",
+    "route_status": "ANCHOR_A02_NOMINAL_TASK_IK_AND_STATIC_COLLISION_ASSET_PASS_PENDING_RUNTIME_GATES_AND_DYNAMIC",
     "primary_object": "te_deutsch_d38999_26fj35pn_step",
     "transfer_object": "current_d38999_26kj61sn_public_spec",
     "opposition_palm_range_deg": [45.0, 75.0],
     "all_27_preshapes_required": true,
     "contact_conditioned_closure_required": true,
     "multi_witness_contact_required": true,
-    "research_collision_representation": "VALIDATED_COMPOUND_CONVEX",
+    "research_collision_representation": "STATIC_VALIDATED_COMPOUND_CONVEX_PENDING_RUNTIME_BINDING",
     "postrun_exact_mesh_replay_required": true,
     "compound_convex_accepted": false,
     "compound_convex_attempts": {
@@ -1359,7 +1359,13 @@
       "physx_shrinkwrap_removed_nail_occupied_fraction_f1_f2_f3": [0.0741, 0.1128, 0.0780],
       "pruned_removed_nail_occupied_fraction_f1_f2_f3": [0.0, 0.0, 0.0],
       "pruned_runtime_binding_accepted": false,
-      "pruned_rejection_reason": "F2_F3_RELATIVE_P95_DEGRADATION_EXCEEDED_PREREGISTERED_0P25MM_BOUND"
+      "pruned_rejection_reason": "F2_F3_RELATIVE_P95_DEGRADATION_EXCEEDED_PREREGISTERED_0P25MM_BOUND",
+      "fresh_physx_baseline_manifest_sha256": "a2d123b889f769f253fb45c5780fdf7f1ec60accf0bfa3f719f176b26f13c97e",
+      "residual_vertex64_static_candidate": true,
+      "residual_vertex64_removed_nail_occupied_count_f1_f2_f3": [0, 0, 0],
+      "residual_vertex64_maximum_hull_vertices": 64,
+      "residual_vertex64_manifest_sha256": "a6e50285c52b60818c3f1bb1f04829ce96382d01d2cc06fc4b124a2e266eafc0",
+      "residual_vertex64_runtime_binding_accepted": false
     },
     "method_fix_targeted_tests_passed": 33,
     "method_fix_targeted_test_duration_s": 28.25,
@@ -1489,7 +1495,7 @@
     "full_arm_dynamic_status": "NOT_STARTED",
     "manifest_path": "artifacts/carts_v2/opposition60_isaac/MANIFEST.json"
   },
-  "evidence_level": "QP60_PATH_SAFE_THREE_CONTACT_OFFLINE_GEOMETRY_PASS_NO_TASK_IK_OR_DYNAMIC_RESULT",
+  "evidence_level": "QP60_PATH_SAFE_THREE_CONTACT_NOMINAL_TASK_BOUNDED_IK_AND_STATIC_COLLISION_ASSET_PASS_NO_RUNTIME_OR_DYNAMIC_RESULT",
   "validation": {
     "targeted_regression_passed": 83,
     "targeted_regression_duration_s": 221.91,

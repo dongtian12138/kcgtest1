@@ -1,0 +1,74 @@
+{
+  "schema_version": "carts_opposition60_collision_static_summary_v1",
+  "generated_at_utc": "2026-08-26T03:03:44Z",
+  "status": "STATIC_GEOMETRY_ASSET_CANDIDATE",
+  "evidence_level": "STATIC_COMPOUND_CONVEX_RESEARCH_AUDIT_ONLY",
+  "hardware_authorized": false,
+  "formal_dynamic_pass": false,
+  "runtime_binding_accepted": false,
+  "runtime_binding_required_gates": [
+    "RUNTIME_IMPORT",
+    "INITIAL_PENETRATION",
+    "OPPOSITION60_REPLAY",
+    "PHYSX_HEALTH"
+  ],
+  "fresh_physx_baseline_manifest": "artifacts/carts_v2/opposition60_isaac/research_collision_asset_fresh_20260826_run01/physx_vhacd_shrinkwrap/RESEARCH_COLLISION_ASSET_MANIFEST.json",
+  "fresh_physx_baseline_manifest_sha256": "a2d123b889f769f253fb45c5780fdf7f1ec60accf0bfa3f719f176b26f13c97e",
+  "full_static_asset_manifest": "artifacts/carts_v2/opposition60_isaac/research_collision_asset_residual_vertex64_20260826_run01/RESIDUAL_REPAIRED_COLLISION_ASSET_MANIFEST.json",
+  "full_static_asset_manifest_sha256": "a6e50285c52b60818c3f1bb1f04829ce96382d01d2cc06fc4b124a2e266eafc0",
+  "builder_sha256": "511cb69df9b4266e2d04da9174a492fd8051b408d7dea104da8c211a1c9cc17e",
+  "physx_runner_sha256": "03941694ab5a21d9c725bd314543dc0fa166fbf4bdf564e82dedc0a29968e77b",
+  "postprocessor_sha256": "c2d4df08a964ff4d09dec74c16efe1dfe8939da27c3ed8123357ec1b7f1a494f",
+  "fast_simplification_version": "0.2.0",
+  "fixed_physx_parameters": {
+    "max_convex_hulls": 64,
+    "max_hull_vertices": 64,
+    "voxel_resolution": 1000000,
+    "error_percentage": 0.5,
+    "shrink_wrap": true
+  },
+  "registered_limits": {
+    "removed_nail_exclusive_occupied_sample_count": 0,
+    "raw_to_compound_p95_absolute_m": 0.002,
+    "raw_to_compound_p95_degradation_m": 0.00025
+  },
+  "links": [
+    {
+      "link": "f1Link3",
+      "hull_count": 64,
+      "replaced_source_hull_indices": [24, 31],
+      "replacement_vertex_counts": [64, 31],
+      "removed_nail_exclusive_occupied_sample_count": 0,
+      "raw_to_compound_p95_m": {
+        "global": 0.0016116751015693258,
+        "task_grip_surface": 0.0015908483608893618,
+        "table_facing_at_qp60": 0.0017088113743816257
+      }
+    },
+    {
+      "link": "f2Link2",
+      "hull_count": 64,
+      "replaced_source_hull_indices": [49],
+      "replacement_vertex_counts": [64],
+      "removed_nail_exclusive_occupied_sample_count": 0,
+      "raw_to_compound_p95_m": {
+        "global": 0.0016976293928216155,
+        "task_grip_surface": 0.0017294164350901962,
+        "table_facing_at_qp60": 0.0017132255813784374
+      }
+    },
+    {
+      "link": "f3Link3",
+      "hull_count": 64,
+      "replaced_source_hull_indices": [39, 56],
+      "replacement_vertex_counts": [64, 52],
+      "removed_nail_exclusive_occupied_sample_count": 0,
+      "raw_to_compound_p95_m": {
+        "global": 0.0016212335287454451,
+        "task_grip_surface": 0.0016285548509382514,
+        "table_facing_at_qp60": 0.0016970422993650392
+      }
+    }
+  ],
+  "claim_scope": "STATIC_RESEARCH_COLLISION_ASSET_CANDIDATE_NOT_RUNTIME_IMPORT_OR_DYNAMIC_GRASP_EVIDENCE"
+}

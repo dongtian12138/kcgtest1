@@ -567,3 +567,11 @@
 - `nominal_gravity_lift_balance_pass=true` 表示12 N下名义重力和抬升本身有可行接触力分配；`nominal_parameter_task_margin=0.339826` 表示在此基础上只能承受0.340倍完整六方向登记扰动。
 - 因此anchor2可进入名义研究动态的后续准备，但`TASK_REJECT`、鲁棒候选与正式动态仍保持失败关闭。
 - bounded IK通过只证明冻结对象位姿下的handbase目标有数值逆解，不证明接近、全臂碰撞、携物抬升或Isaac动态。
+
+## 2026-08-26T03:03:44Z — 新鲜PhysX身份纠正与残差vertex64静态资产
+
+- 分类：`ROOT_CAUSE_REVIEW + EVIDENCE_IDENTITY_CORRECTION + MILESTONE_PROGRESSION`；不改变碰撞误差门、删除区、12 N、安全速度、50 mm、2 s或硬件授权。
+- 历史与新鲜固定参数PhysX运行逐块复现相同192个凸块SHA；命中拆卸区的真实身份是f1 `[24,31]`、f2 `[49]`、f3 `[39,56]`。旧 `2/1/3` 中的3没有测量依据，纠正为两次独立观测的 `2/1/2`，不是安全门放宽。
+- 每删除一个命中凸块，只从它对应的保留无指甲真实表面补一个最大面积安全连通残差凸包；PhysX固定64顶点限制统一由quadric简化实现，不逐指调参。
+- 最终三末节各64块，删除区占据均为0；所有凸块凸、闭合、有限、正体积且不超过64顶点；全局、TASK_GRIP_SURFACE和60°桌面侧的9个p95门全部通过。
+- 该结果只升级为静态研究碰撞资产候选；运行时导入、初始穿透、60°重放和PhysX健康尚未执行，`runtime_binding_accepted=false`、动态与正式门继续关闭。
