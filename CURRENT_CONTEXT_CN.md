@@ -1,29 +1,33 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-27T07:51:42Z
+> 快照时间：2026-08-27T08:21:56Z
 > 当前分支：`carts-grasp-contactopt-1488-fast6h-20260826`
 > 原始源码、配置、产物、Git、进程和时间戳优先于本摘要。
 
 ## 当前唯一优先级
 
-当前任务 `PHYSX_PRIMITIVE_CONTACT_REPORT_ISOLATION + CONDITIONAL_REAL_ASSET_COMPARISON`
-已达到 4 次定向 Isaac 运行上限并停止。结论与边界如下：
+当前任务 `DIRECT_GPU_CONTACT_REPORT_CLASSIFICATION + GPU_NATIVE_RIGID_CONTACT_VIEW`
+已达到本轮 2 次 Isaac 运行上限并停止。结论与边界如下：
 
-- `q09_a13` 永久保持 `REJECTED / NON_TASK_GEOMETRY_FIRST`，`task_first_margin_m =
-  -0.0005071808379559516`；接触链修复不得使其重新晋级。
-- 两个 40 mm box 在 120 Hz、GPU/CUDA 正式后端中自然相撞：动态 box 从 0.2 m/s 降至约
-  0.000252 m/s，A/B/C 分别记录 59/1/9 步；两个 shape enabled、无 filter/group，实际每 shape
-  `contactOffset=0.8 mm`、`restOffset=0`，未调用 offset setter。
-- GPU 上 full callback、Isaac 6 core contact callback、physics-step 内 full poll 和 step 后 full poll
-  均为 0。将订阅从未附着的旧接口切到当前 `omni.physics.core` 后，GPU 复跑仍为 0，分类为
-  `PRIMITIVE_SOLVER_RESPONSE_WITHOUT_CONTACT_REPORT`。
-- 完全相同 CPU 对照产生正确 box pair；full/basic/step 内 poll/step 后 poll 各有 9 个 header，首个
-  header 有 4 个 contact data，路径、有限 separation 和非零 impulse 均可解码。因此最终根因层为
-  `GPU_CONTACT_REPORT_CONFIGURATION_OR_BACKEND_SPECIFIC_FAILURE`；CPU PASS 不能替代 GPU。
-- `CONTACT_TELEMETRY_UNVERIFIED` 继续保持。因 GPU primitive 未通过，ContactSensor raw、filtered
-  reading、项目聚合、独立真实 hull 和 q09 step503 全部未运行；未生成 real-hull JSON。
-- 当前不允许恢复候选筛选、q09、真实资产动态或控制器修改；不重跑 1488、不改 Surface V2、
-  候选位姿、控制器或 offset。
+- `q09_a13` 永久保持 `REJECTED_NON_TASK_GEOMETRY_PRECEDES_TASK_CONTACT`，
+  `task_first_margin_m=-0.0005071808379559516`；本轮没有运行 q09 或候选扫描。
+- 只读预检与 primitive 运行时回读一致：`/physics/suppressReadback=true`、
+  `/physics/cudaDevice=0`、physics simulation device=`cuda:0`、
+  `physxScene:enableGPUDynamics=true`、`physxScene:broadphaseType=GPU`。GPU device 与
+  suppress-readback 在 `World` 构造前启用；tensor SimulationView 按 Isaac 生命周期在
+  `world.reset()` warm-up 内创建。
+- 唯一一次 GPU box primitive 使用 native `RigidContactView`，没有 callback、CPU poll 或
+  ContactSensor：A/B/C 为 59/1/9 步，正确 sensor/filter pair 的 count 非零，position、normal、
+  force、由 `force*dt` 得到的 impulse 和 separation 均为有限值，求解器碰撞响应同时成立。
+- 当前最终分类为 `DIRECT_GPU_CPU_CONTACT_REPORT_UNAVAILABLE_EXPECTED`；这只证明当前
+  suppress-readback/DirectGPU 配置下应走 GPU-native 张量路径。CPU PASS 仍不能替代正式 GPU，
+  primitive PASS 也不证明抓取、真实资产接触、抬升或保持成功。
+- 第 2 次尝试把冻结资产的 `f1Link3_compound_hull_63` 与对象 `Hull_062` 复制为两个独立刚体；
+  进程在创建 Kit log 和 PhysX 实例前卡住，300 s 后退出 124。它没有改写结果 JSON，故分类为
+  `ISAAC_STARTUP_TIMEOUT_BEFORE_PHYSX_INSTANCE_NOT_A_HULL_CONTACT_FAILURE`；真实 hull 接触仍未验证。
+- 本轮预算 2/2 已耗尽，脚本入口已阻止第三次 GPU-native 运行。不得继续 callback/ContactSensor
+  调试，不运行 q09、候选或 1488，不改 Surface V2、候选位姿、控制器、contactOffset/restOffset
+  或物理标准。
 
 ## 漏斗复盘的已验证事实
 
@@ -78,15 +82,16 @@
 
 ## 验证、进程与 Git
 
-- primitive 主脚本 300 行并通过 `py_compile`；GPU 修复后复跑与 CPU 对照均各记录 69 个物理步；
-  未运行完整测试套件。
-- 当前没有 Isaac、GraspGenX 或 CONTACTOPT 活动进程。
+- 当前脚本 420 行；相对 `c536a83` 新增 154 行、删除 34 行，满足新增代码不超过 200 行；
+  `py_compile`、`git diff --check` 和结果 JSON 的 `jq` 解析通过，未运行完整测试套件。
+- 本轮第 1 次 Isaac 运行的 GPU-native primitive gate 通过；第 2 次在 PhysX 实例前启动超时。
+  当前没有 Isaac、GraspGenX 或 CONTACTOPT 活动进程，也不允许第三次运行。
 - `scripts/carts_v2/audit_nailfree_graspgenx_seed_reuse.py` 是无关未跟踪资产，不得暂存。
-- 已有提交 `7cb9282` 已普通推送。当前结果为
+- 当前 HEAD/远端均为 `c536a83`。结果仍只写入
   `artifacts/carts_v2/contactopt_1488_fast6h/primitive_contact_report_isolation/result.json`；该文件被
   `.gitignore` 忽略，提交时只可对这一文件使用 `git add -f`。
-- 本轮新提交尚未创建/推送；只允许暂存 primitive 脚本、本上下文和上面的单个小型结果 JSON，
-  禁止包含无关未跟踪资产或大型 Kit 日志。
+- 本轮新提交尚未创建/推送；只允许暂存本脚本、本上下文和上述单个结果 JSON，禁止包含无关
+  未跟踪资产或 Kit 日志。
 
 ## 最小读取路线
 

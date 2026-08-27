@@ -1,6 +1,6 @@
 {
-  "schema_version": "physx_primitive_contact_report_isolation_v1",
-  "generated_at_utc": "2026-08-27T07:45:21.722951+00:00",
+  "schema_version": "physx_gpu_native_contact_path_isolation_v2",
+  "generated_at_utc": "2026-08-27T08:21:56+00:00",
   "input_commit_sha": "7cb92827dee5cbd181628b06bc47c2557ccd07d6",
   "scope": "LOCAL_ISAAC_DIAGNOSTIC_ONLY_NOT_GRASP_OR_HARDWARE_EVIDENCE",
   "hardware_authorized": false,
@@ -8,13 +8,68 @@
   "research_dynamic_pass": false,
   "q09_a13": {
     "candidate_disposition": "REJECTED",
-    "candidate_failure_class": "NON_TASK_GEOMETRY_FIRST",
+    "candidate_failure_class": "REJECTED_NON_TASK_GEOMETRY_PRECEDES_TASK_CONTACT",
     "task_first_margin_m": -0.0005071808379559516
   },
-  "contact_pipeline_status": "CONTACT_TELEMETRY_UNVERIFIED",
-  "contact_root_cause": "GPU_CONTACT_REPORT_CONFIGURATION_OR_BACKEND_SPECIFIC_FAILURE",
+  "contact_pipeline_status": "GPU_NATIVE_PRIMITIVE_CONTACT_TELEMETRY_VERIFIED_REAL_HULL_UNVERIFIED_STARTUP_TIMEOUT",
+  "contact_root_cause": "DIRECT_GPU_CPU_CONTACT_REPORT_UNAVAILABLE_EXPECTED",
   "root_cause_proven": true,
-  "cpu_gpu_classification": "GPU_CONTACT_REPORT_CONFIGURATION_OR_BACKEND_SPECIFIC_FAILURE",
+  "cpu_gpu_classification": "DIRECT_GPU_CPU_CONTACT_REPORT_UNAVAILABLE_EXPECTED",
+  "prior_cpu_gpu_classification": "GPU_CONTACT_REPORT_CONFIGURATION_OR_BACKEND_SPECIFIC_FAILURE",
+  "preflight_direct_gpu_audit": {
+    "status": "CONFIRMED_BEFORE_ADDITIONAL_PHYSICS_RUN",
+    "method": "READ_ONLY_RECONSTRUCTION_FROM_COMMITTED_RUN_INPUTS_RUNTIME_SNAPSHOT_KIT_LOG_AND_LOCAL_ISAAC_6_SOURCE",
+    "settings": {
+      "/physics/suppressReadback": {
+        "value": true,
+        "basis": "set_physics_sim_device_cuda_sets_true_before_World; use_gpu_pipeline_true_sets_true_again_in_PhysicsContext"
+      },
+      "/physics/cudaDevice": {
+        "value": 0,
+        "basis": "set_physics_sim_device_cuda_sets_device_ordinal; prior_GPU_Kit_command_line_explicitly_sets_0"
+      },
+      "physics_simulation_device": {
+        "value": "cuda:0",
+        "basis": "committed_script_request_and_saved_runtime_world_and_PhysicsContext_snapshot"
+      },
+      "physxScene:enableGPUDynamics": {
+        "value": true,
+        "basis": "saved_runtime_PhysicsContext_snapshot_and_GPU_PhysicsContext_initialization"
+      },
+      "physxScene:broadphaseType": {
+        "value": "GPU",
+        "basis": "saved_runtime_PhysicsContext_snapshot_and_GPU_PhysicsContext_initialization"
+      },
+      "DirectGPU_TensorAPI_before_PhysX_instance": {
+        "gpu_mode_configuration_enabled_before_World_and_PhysX_scene": true,
+        "tensor_SimulationView_object_created_before_start_simulation": false,
+        "actual_view_creation_phase": "world_reset_warmup_after_start_simulation_and_first_internal_simulate",
+        "conclusion": "DIRECT_GPU_MODE_ENABLED_IN_TIME_AND_TENSOR_VIEW_CREATION_ORDER_IS_NORMAL_FOR_ISAAC_6"
+      }
+    }
+  },
+  "gpu_native_run_budget": {
+    "used": 2,
+    "limit": 2,
+    "primitive_limit": 1,
+    "real_independent_hull_requires_primitive_pass": true,
+    "runs": [
+      "GPU_NATIVE_PRIMITIVE_RIGID_CONTACT_VIEW_PASS",
+      "REAL_INDEPENDENT_HULL_ISAAC_STARTUP_TIMEOUT_BEFORE_PHYSX_INSTANCE"
+    ]
+  },
+  "real_independent_hull_attempt": {
+    "fixture": "f1Link3_compound_hull_63_vs_Hull_062_as_two_independent_rigid_bodies",
+    "interface": "GPU_NATIVE_RIGID_CONTACT_VIEW",
+    "process_exit_code": 124,
+    "timeout_s": 300,
+    "new_kit_log_created": false,
+    "physx_instance_created": false,
+    "tensor_contact_view_created": false,
+    "result_json_rewritten_by_attempt": false,
+    "classification": "ISAAC_STARTUP_TIMEOUT_BEFORE_PHYSX_INSTANCE_NOT_A_HULL_CONTACT_FAILURE",
+    "rerun_allowed_under_current_budget": false
+  },
   "directed_isaac_run_budget": {
     "used": 4,
     "limit": 4,
@@ -26,11 +81,11 @@
     ]
   },
   "conditional_layers": {
-    "contact_sensor_raw": "NOT_RUN_PRIMITIVE_GPU_FAIL",
-    "contact_sensor_filtered_reading": "NOT_RUN_PRIMITIVE_GPU_FAIL",
-    "project_path_aggregation": "NOT_RUN_PRIMITIVE_GPU_FAIL",
-    "real_independent_hull": "NOT_RUN_PRIMITIVE_GPU_FAIL",
-    "q09_step503_negative_regression": "NOT_RUN_PRIMITIVE_GPU_FAIL"
+    "contact_sensor_raw": "NOT_APPLICABLE_DIRECT_GPU_CPU_REPORT_PATH_UNAVAILABLE_EXPECTED",
+    "contact_sensor_filtered_reading": "NOT_APPLICABLE_DIRECT_GPU_CPU_REPORT_PATH_UNAVAILABLE_EXPECTED",
+    "project_path_aggregation": "NOT_RUN_OUT_OF_SCOPE_FOR_GPU_NATIVE_VALIDATION",
+    "real_independent_hull": "UNVERIFIED_ISAAC_STARTUP_TIMEOUT_BEFORE_PHYSX_INSTANCE",
+    "q09_step503_negative_regression": "NOT_RUN_OUT_OF_SCOPE_PER_USER"
   },
   "kit_log_audit": {
     "gpu_after_fix_log": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260827_074917.log",
@@ -12538,5 +12593,3899 @@
       "status": "PRIMITIVE_RAW_CONTACT_REPORT_PASS",
       "poll_timing": "NO_EVENT_POLL_TIMING_DIFFERENCE"
     }
-  }
+  },
+  "gpu_native_primitive": {
+    "run": {
+      "mode": "gpu_tensor",
+      "backend": "gpu",
+      "runtime": {
+        "suppress_readback_before_world": true,
+        "cuda_device_before_world": 0,
+        "physics_simulation_device_before_world": "cuda:0",
+        "requested_backend": "gpu",
+        "actual_data_backend": "torch",
+        "world_device": "cuda:0",
+        "physics_context_device": "cuda:0",
+        "gpu_sim": true,
+        "gpu_pipeline": true,
+        "gpu_dynamics_enabled": true,
+        "broadphase_type": "GPU",
+        "physics_dt_s": 0.008333333333333333,
+        "suppress_readback_after_reset": true,
+        "cuda_device_after_reset": 0,
+        "disable_contact_processing_setting": false,
+        "legacy_physx_attached_stage_id": null,
+        "isaac6_core_attached_stage_id": null,
+        "isaac_version": [
+          "6.0.1",
+          "rc.7",
+          "6",
+          "0",
+          "1",
+          "rc",
+          "7",
+          "release.42383.32955d8d.gl"
+        ],
+        "cuda_device_name": "NVIDIA GeForce RTX 5070 Ti"
+      },
+      "lifecycle": {
+        "shapes_and_bodies_created_before_reset": true,
+        "contact_report_api_before_reset": {
+          "/World/MovingBox": {
+            "applied": true,
+            "threshold": 0.0
+          },
+          "/World/FixedBox": {
+            "applied": true,
+            "threshold": 0.0
+          }
+        },
+        "subscriptions_before_reset": false,
+        "held_subscription_count": 0,
+        "first_initialization_operation": "world.reset",
+        "contact_report_api_after_reset": {
+          "/World/MovingBox": {
+            "applied": true,
+            "threshold": 0.0
+          },
+          "/World/FixedBox": {
+            "applied": true,
+            "threshold": 0.0
+          }
+        },
+        "physics_step_callback_count": 0,
+        "recorded_step_count": 69
+      },
+      "collision_and_body_audit": {
+        "/World/MovingBox": {
+          "collision_enabled": true,
+          "filtered_pairs": [],
+          "rigid_body_parent": "/World/MovingBox",
+          "rigid_body_type": "dynamic"
+        },
+        "/World/FixedBox": {
+          "collision_enabled": true,
+          "filtered_pairs": [],
+          "rigid_body_parent": "/World/FixedBox",
+          "rigid_body_type": "kinematic"
+        },
+        "collision_groups": []
+      },
+      "runtime_offsets": {
+        "/World/MovingBox": {
+          "shape_count": 1,
+          "contact_offset_m": [
+            0.0007999999797903001
+          ],
+          "rest_offset_m": [
+            0.0
+          ]
+        },
+        "/World/FixedBox": {
+          "shape_count": 1,
+          "contact_offset_m": [
+            0.0007999999797903001
+          ],
+          "rest_offset_m": [
+            0.0
+          ]
+        }
+      },
+      "motion_command": {
+        "method": "controlled_initial_velocity",
+        "set_after_reset_before_first_recorded_step": true,
+        "post_initialization_pose_writes": 0,
+        "speed_m_s": 0.2,
+        "initial_geometry_gap_m": 0.1
+      },
+      "samples": [
+        {
+          "step": 0,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.09833334386348724,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.13833333551883698,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.13833333392937977,
+          "pose_deviation_from_no_collision_m": 0.0,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 1,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.09666667878627777,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.1366666704416275,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.13666666726271312,
+          "pose_deviation_from_no_collision_m": 0.0,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 2,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.0950000137090683,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.13500000536441803,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.13500000059604644,
+          "pose_deviation_from_no_collision_m": 0.0,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 3,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.09333334863185883,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.13333334028720856,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.1333333339293798,
+          "pose_deviation_from_no_collision_m": 0.0,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 4,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.09166668355464935,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.13166667520999908,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.13166666726271312,
+          "pose_deviation_from_no_collision_m": 1.4901161193847656e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 5,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.09000001847743988,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.1300000101327896,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.13000000059604644,
+          "pose_deviation_from_no_collision_m": 1.4901161193847656e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 6,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.08833335340023041,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.12833334505558014,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.1283333339293798,
+          "pose_deviation_from_no_collision_m": 1.4901161193847656e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 7,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.08666668832302094,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.12666667997837067,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.1266666672627131,
+          "pose_deviation_from_no_collision_m": 1.4901161193847656e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 8,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.08500002324581146,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.1250000149011612,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.12500000059604643,
+          "pose_deviation_from_no_collision_m": 1.4901161193847656e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 9,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.08333335816860199,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.12333334982395172,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.12333333392937978,
+          "pose_deviation_from_no_collision_m": 1.4901161193847656e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 10,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.08166669309139252,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.12166668474674225,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.12166666726271311,
+          "pose_deviation_from_no_collision_m": 1.4901161193847656e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 11,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.08000002801418304,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.12000001966953278,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.12000000059604644,
+          "pose_deviation_from_no_collision_m": 2.2351741790771484e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 12,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.07833336293697357,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.1183333545923233,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.11833333392937978,
+          "pose_deviation_from_no_collision_m": 2.2351741790771484e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 13,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.0766666978597641,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.11666668951511383,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.11666666726271312,
+          "pose_deviation_from_no_collision_m": 2.2351741790771484e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 14,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.07500003278255463,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.11500002443790436,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.11500000059604645,
+          "pose_deviation_from_no_collision_m": 2.2351741790771484e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 15,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.07333336770534515,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.11333335936069489,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.11333333392937978,
+          "pose_deviation_from_no_collision_m": 2.2351741790771484e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 16,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.07166670262813568,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.11166669428348541,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.11166666726271311,
+          "pose_deviation_from_no_collision_m": 2.9802322387695312e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 17,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.07000003755092621,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.11000002920627594,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.11000000059604645,
+          "pose_deviation_from_no_collision_m": 2.9802322387695312e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 18,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.06833337247371674,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.10833336412906647,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.10833333392937977,
+          "pose_deviation_from_no_collision_m": 2.9802322387695312e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 19,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.06666670739650726,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.106666699051857,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.10666666726271312,
+          "pose_deviation_from_no_collision_m": 2.9802322387695312e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 20,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.06500004231929779,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.10500003397464752,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.10500000059604644,
+          "pose_deviation_from_no_collision_m": 2.9802322387695312e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 21,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.06333337724208832,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.10333336889743805,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.10333333392937978,
+          "pose_deviation_from_no_collision_m": 3.725290298461914e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 22,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.06166670843958855,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.10166670382022858,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.10166666726271312,
+          "pose_deviation_from_no_collision_m": 3.725290298461914e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 23,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.060000043362379074,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.1000000387430191,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.10000000059604644,
+          "pose_deviation_from_no_collision_m": 3.725290298461914e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 24,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.0583333782851696,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.09833337366580963,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.09833333392937978,
+          "pose_deviation_from_no_collision_m": 3.725290298461914e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 25,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.05666671320796013,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.09666670858860016,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.09666666726271311,
+          "pose_deviation_from_no_collision_m": 4.470348358154297e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 26,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.055000048130750656,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.09500004351139069,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.09500000059604644,
+          "pose_deviation_from_no_collision_m": 4.470348358154297e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 27,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.053333383053541183,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.09333337843418121,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.09333333392937979,
+          "pose_deviation_from_no_collision_m": 4.470348358154297e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 28,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.05166671797633171,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.09166671335697174,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.09166666726271311,
+          "pose_deviation_from_no_collision_m": 4.470348358154297e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 29,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.05000005289912224,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.09000004827976227,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.09000000059604644,
+          "pose_deviation_from_no_collision_m": 4.470348358154297e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 30,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.048333387821912766,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.0883333832025528,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.08833333392937978,
+          "pose_deviation_from_no_collision_m": 5.21540641784668e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 31,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.04666672274470329,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.08666671812534332,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.0866666672627131,
+          "pose_deviation_from_no_collision_m": 5.21540641784668e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 32,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.04500005766749382,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.08500005304813385,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.08500000059604645,
+          "pose_deviation_from_no_collision_m": 5.21540641784668e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 33,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.04333339259028435,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.08333338797092438,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.08333333392937978,
+          "pose_deviation_from_no_collision_m": 5.21540641784668e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 34,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.041666723787784576,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.0816667228937149,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.08166666726271311,
+          "pose_deviation_from_no_collision_m": 5.21540641784668e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 35,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.040000058710575104,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.08000005781650543,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.08000000059604645,
+          "pose_deviation_from_no_collision_m": 5.960464477539063e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 36,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.03833339363336563,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.07833339273929596,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.07833333392937977,
+          "pose_deviation_from_no_collision_m": 5.960464477539063e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 37,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.03666672855615616,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.07666672766208649,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.07666666726271311,
+          "pose_deviation_from_no_collision_m": 5.960464477539063e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 38,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.035000063478946686,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.07500006258487701,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.07500000059604645,
+          "pose_deviation_from_no_collision_m": 5.960464477539063e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 39,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.03333339840173721,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.07333339750766754,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.07333333392937978,
+          "pose_deviation_from_no_collision_m": 6.705522537231445e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 40,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.03166673332452774,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.07166673243045807,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.0716666672627131,
+          "pose_deviation_from_no_collision_m": 6.705522537231445e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 41,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.030000068247318268,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.0700000673532486,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.07000000059604644,
+          "pose_deviation_from_no_collision_m": 6.705522537231445e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 42,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.028333403170108795,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.06833340227603912,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.06833333392937978,
+          "pose_deviation_from_no_collision_m": 6.705522537231445e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 43,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.026666738092899323,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.06666673719882965,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.06666666726271311,
+          "pose_deviation_from_no_collision_m": 6.705522537231445e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 44,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.02500007301568985,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.06500007212162018,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.06500000059604644,
+          "pose_deviation_from_no_collision_m": 7.450580596923828e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 45,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.023333407938480377,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.0633334070444107,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.06333333392937977,
+          "pose_deviation_from_no_collision_m": 7.450580596923828e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 46,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.021666742861270905,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.06166674196720123,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.06166666726271311,
+          "pose_deviation_from_no_collision_m": 7.450580596923828e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 47,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.020000077784061432,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.06000007688999176,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.060000000596046446,
+          "pose_deviation_from_no_collision_m": 7.450580596923828e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 48,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.01833341270685196,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.05833341181278229,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.05833333392937978,
+          "pose_deviation_from_no_collision_m": 7.82310962677002e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 49,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.016666747629642487,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.056666746735572815,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.056666667262713105,
+          "pose_deviation_from_no_collision_m": 7.82310962677002e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 50,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.015000082552433014,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.05500008165836334,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.05500000059604644,
+          "pose_deviation_from_no_collision_m": 8.195638656616211e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 51,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.013333417475223541,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.05333341658115387,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.05333333392937978,
+          "pose_deviation_from_no_collision_m": 8.195638656616211e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 52,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.011666752398014069,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.0516667515039444,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.051666667262713115,
+          "pose_deviation_from_no_collision_m": 8.568167686462402e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 53,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.010000087320804596,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.050000086426734924,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.05000000059604644,
+          "pose_deviation_from_no_collision_m": 8.568167686462402e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 54,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.008333422243595123,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.04833342134952545,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.048333333929379774,
+          "pose_deviation_from_no_collision_m": 8.568167686462402e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 55,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.006666757166385651,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.04666675627231598,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.04666666726271311,
+          "pose_deviation_from_no_collision_m": 8.940696716308594e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 56,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.005000092089176178,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.045000091195106506,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.04500000059604645,
+          "pose_deviation_from_no_collision_m": 8.940696716308594e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 57,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.0033334270119667053,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.043333426117897034,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.04333333392937977,
+          "pose_deviation_from_no_collision_m": 9.313225746154785e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 58,
+          "phase": "A_OUTSIDE_OFFSETS",
+          "geometry_gap_m": 0.0016667619347572327,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.04166676104068756,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.041666667262713106,
+          "pose_deviation_from_no_collision_m": 9.313225746154785e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 59,
+          "phase": "B_POSITIVE_GAP_WITHIN_OFFSETS",
+          "geometry_gap_m": 9.685754776000977e-08,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.04000009596347809,
+            0.0,
+            0.0
+          ],
+          "moving_linear_velocity_m_s": [
+            0.20000000298023224,
+            0.0,
+            0.0
+          ],
+          "no_collision_predicted_x_m": -0.04000000059604644,
+          "pose_deviation_from_no_collision_m": 9.685754776000977e-08,
+          "solver_response": false,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                0
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 0,
+            "contacts": []
+          }
+        },
+        {
+          "step": 60,
+          "phase": "C_SOLVER_CONTACT",
+          "geometry_gap_m": 1.4901161193847656e-08,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.04000001400709152,
+            -7.64909827921656e-07,
+            -8.474852961626311e-07
+          ],
+          "moving_linear_velocity_m_s": [
+            0.00025196000933647156,
+            0.0002050444600172341,
+            0.00031012683757580817
+          ],
+          "no_collision_predicted_x_m": -0.03833333392937978,
+          "pose_deviation_from_no_collision_m": 0.0016666799783706665,
+          "solver_response": true,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                4
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 4,
+            "contacts": [
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019999999552965164,
+                  -0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  -0.0,
+                  -0.0
+                ],
+                "normal_force_n": 7.493505477905273,
+                "force_vector_n": [
+                  -7.493505477905273,
+                  -0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.062445878982543945,
+                "separation_m": 9.685754776000977e-08
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  -0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  -0.0,
+                  -0.0
+                ],
+                "normal_force_n": 4.507710933685303,
+                "force_vector_n": [
+                  -4.507710933685303,
+                  -0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.037564257780710854,
+                "separation_m": 9.685754776000977e-08
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  -0.0,
+                  -0.0
+                ],
+                "normal_force_n": 7.464514255523682,
+                "force_vector_n": [
+                  -7.464514255523682,
+                  -0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.062204285462697344,
+                "separation_m": 9.685754776000977e-08
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019999999552965164,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  -0.0,
+                  -0.0
+                ],
+                "normal_force_n": 4.504034996032715,
+                "force_vector_n": [
+                  -4.504034996032715,
+                  -0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.03753362496693929,
+                "separation_m": 9.685754776000977e-08
+              }
+            ]
+          }
+        },
+        {
+          "step": 61,
+          "phase": "C_SOLVER_CONTACT",
+          "geometry_gap_m": 0.0,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.03999999910593033,
+            8.572499154979596e-07,
+            1.2723430700134486e-06
+          ],
+          "moving_linear_velocity_m_s": [
+            2.647834378421976e-07,
+            0.00013486298848874867,
+            0.0002056838129647076
+          ],
+          "no_collision_predicted_x_m": -0.0366666672627131,
+          "pose_deviation_from_no_collision_m": 0.0033333301544189453,
+          "solver_response": true,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                4
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 4,
+            "contacts": [
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019999997690320015,
+                  -0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  -1.3461499293043744e-05,
+                  -1.5373805581475608e-05
+                ],
+                "normal_force_n": 0.0048793768510222435,
+                "force_vector_n": [
+                  -0.0048793768510222435,
+                  -6.568372867832295e-08,
+                  -7.50145900951793e-08
+                ],
+                "normal_impulse_ns": 4.06614737585187e-05,
+                "separation_m": -5.62518835067749e-07
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999997690320015,
+                  0.019999705255031586,
+                  -0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  -1.3461499293043744e-05,
+                  -1.5373805581475608e-05
+                ],
+                "normal_force_n": 0.006220290437340736,
+                "force_vector_n": [
+                  -0.006220290437340736,
+                  -8.373443449727347e-08,
+                  -9.562953806607766e-08
+                ],
+                "normal_impulse_ns": 5.183575364450614e-05,
+                "separation_m": -2.2355735040946456e-08
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999703392386436,
+                  0.019999662414193153
+                ],
+                "normal": [
+                  -1.0,
+                  -1.3461499293043744e-05,
+                  -1.5373805581475608e-05
+                ],
+                "normal_force_n": 0.013453476130962372,
+                "force_vector_n": [
+                  -0.013453476130962372,
+                  -1.8110395672010782e-07,
+                  -2.0683113177710766e-07
+                ],
+                "normal_impulse_ns": 0.0001121123010913531,
+                "separation_m": 5.908841558266431e-07
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.020000001415610313,
+                  -0.019999997690320015,
+                  0.019999658688902855
+                ],
+                "normal": [
+                  -1.0,
+                  -1.3461499293043744e-05,
+                  -1.5373805581475608e-05
+                ],
+                "normal_force_n": 0.005650587845593691,
+                "force_vector_n": [
+                  -0.005650587845593691,
+                  -7.606538332538548e-08,
+                  -8.687104013915814e-08
+                ],
+                "normal_impulse_ns": 4.708823204661409e-05,
+                "separation_m": 5.2148827478504245e-08
+              }
+            ]
+          }
+        },
+        {
+          "step": 62,
+          "phase": "C_SOLVER_CONTACT",
+          "geometry_gap_m": 0.0,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.03999999910593033,
+            1.980071147045237e-06,
+            2.984834736707853e-06
+          ],
+          "moving_linear_velocity_m_s": [
+            1.0565285890606901e-07,
+            0.00013481923087965697,
+            0.0002056173689197749
+          ],
+          "no_collision_predicted_x_m": -0.03500000059604644,
+          "pose_deviation_from_no_collision_m": 0.004999998956918716,
+          "solver_response": true,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                4
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 4,
+            "contacts": [
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  -0.019998935982584953
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 5.398707344284048e-06,
+                "force_vector_n": [
+                  -5.398707344284048e-06,
+                  5.531873245069596e-13,
+                  -2.107994551484027e-12
+                ],
+                "normal_impulse_ns": 4.498922786903374e-08,
+                "separation_m": -9.312829618579599e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 5.587935447692871e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019999327138066292,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 9.313163573665406e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019999360665678978,
+                  -0.019998906180262566
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 1.3696983842237387e-05,
+                "force_vector_n": [
+                  -1.3696983842237387e-05,
+                  1.4034836660903327e-12,
+                  -5.348163318458221e-12
+                ],
+                "normal_impulse_ns": 1.1414153201864489e-07,
+                "separation_m": -5.587573959076053e-09
+              }
+            ]
+          }
+        },
+        {
+          "step": 63,
+          "phase": "C_SOLVER_CONTACT",
+          "geometry_gap_m": 0.0,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.03999999910593033,
+            3.1028612283989787e-06,
+            4.6972750169516075e-06
+          ],
+          "moving_linear_velocity_m_s": [
+            1.0565296548747938e-07,
+            0.00013481921632774174,
+            0.00020561741257552058
+          ],
+          "no_collision_predicted_x_m": -0.033333333929379774,
+          "pose_deviation_from_no_collision_m": 0.006666664034128189,
+          "solver_response": true,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                4
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 4,
+            "contacts": [
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  -0.01999722234904766
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": -9.312191018295835e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 5.587935447692871e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019998205825686455,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 9.313058768611882e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.01999823749065399,
+                  -0.019997192546725273
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": -5.58702017983137e-09
+              }
+            ]
+          }
+        },
+        {
+          "step": 64,
+          "phase": "C_SOLVER_CONTACT",
+          "geometry_gap_m": 0.0,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.03999999910593033,
+            4.225651537126396e-06,
+            6.409715751942713e-06
+          ],
+          "moving_linear_velocity_m_s": [
+            1.0565320707200954e-07,
+            0.00013481920177582651,
+            0.00020561748533509672
+          ],
+          "no_collision_predicted_x_m": -0.03166666726271311,
+          "pose_deviation_from_no_collision_m": 0.00833333283662796,
+          "solver_response": true,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                4
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 4,
+            "contacts": [
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  -0.019995510578155518
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": -9.31155330619049e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 5.587935447692871e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019997086375951767,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 9.312953963558357e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019997114315629005,
+                  -0.01999548077583313
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": -5.586466844675897e-09
+              }
+            ]
+          }
+        },
+        {
+          "step": 65,
+          "phase": "C_SOLVER_CONTACT",
+          "geometry_gap_m": 0.0,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.03999999910593033,
+            5.348441845853813e-06,
+            8.122156941681169e-06
+          ],
+          "moving_linear_velocity_m_s": [
+            1.0565329944256519e-07,
+            0.00013481918722391129,
+            0.0002056175289908424
+          ],
+          "no_collision_predicted_x_m": -0.030000000596046447,
+          "pose_deviation_from_no_collision_m": 0.009999997913837433,
+          "solver_response": true,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                4
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 4,
+            "contacts": [
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.020000001415610313,
+                  -0.019993798807263374
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": -9.310914705906725e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.020000001415610313,
+                  0.019999997690320015
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 5.587935447692871e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019995959475636482,
+                  0.019999997690320015
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 9.312849158504832e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.01999599114060402,
+                  -0.019993769004940987
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": -5.585912621342004e-09
+              }
+            ]
+          }
+        },
+        {
+          "step": 66,
+          "phase": "C_SOLVER_CONTACT",
+          "geometry_gap_m": 0.0,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.03999999910593033,
+            6.47123215458123e-06,
+            9.834598131419625e-06
+          ],
+          "moving_linear_velocity_m_s": [
+            1.0564459529405212e-07,
+            0.00013481917267199606,
+            0.00020561755809467286
+          ],
+          "no_collision_predicted_x_m": -0.02833333392937977,
+          "pose_deviation_from_no_collision_m": 0.011666664853692055,
+          "solver_response": true,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                4
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 4,
+            "contacts": [
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  -0.019992085173726082
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 1.0449873188989045e-09,
+                "force_vector_n": [
+                  -1.0449873188989045e-09,
+                  1.0707632006839269e-16,
+                  -4.080287144146217e-16
+                ],
+                "normal_impulse_ns": 8.708227657490871e-12,
+                "separation_m": -9.31027699380138e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 5.587935447692871e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019994840025901794,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 9.312745241629727e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019994869828224182,
+                  -0.019992055371403694
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": -5.585359286186531e-09
+              }
+            ]
+          }
+        },
+        {
+          "step": 67,
+          "phase": "C_SOLVER_CONTACT",
+          "geometry_gap_m": 0.0,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.03999999910593033,
+            7.594022008561296e-06,
+            1.1547040230652783e-05
+          ],
+          "moving_linear_velocity_m_s": [
+            1.0563433505694775e-07,
+            0.00013481915812008083,
+            0.00020561758719850332
+          ],
+          "no_collision_predicted_x_m": -0.026666667262713106,
+          "pose_deviation_from_no_collision_m": 0.013333331793546677,
+          "solver_response": true,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                4
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 4,
+            "contacts": [
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  -0.01999037340283394
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 1.2525879222735625e-09,
+                "force_vector_n": [
+                  -1.2525879222735625e-09,
+                  1.2834845404283097e-16,
+                  -4.89089052782809e-16
+                ],
+                "normal_impulse_ns": 1.0438232685613021e-11,
+                "separation_m": -9.309639281696036e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 5.587935447692871e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019993716850876808,
+                  0.019999999552965164
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 9.312640436576203e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019993746653199196,
+                  -0.01999034360051155
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": -5.584805951031058e-09
+              }
+            ]
+          }
+        },
+        {
+          "step": 68,
+          "phase": "C_SOLVER_CONTACT",
+          "geometry_gap_m": 0.0,
+          "combined_contact_offset_m": 0.0015999999595806003,
+          "moving_position_m": [
+            -0.03999999910593033,
+            8.716811862541363e-06,
+            1.3259482329885941e-05
+          ],
+          "moving_linear_velocity_m_s": [
+            1.0562419561210845e-07,
+            0.00013481915812008083,
+            0.00020561761630233377
+          ],
+          "no_collision_predicted_x_m": -0.025000000596046443,
+          "pose_deviation_from_no_collision_m": 0.014999998733401299,
+          "solver_response": true,
+          "full_callback": [],
+          "basic_callback": [],
+          "physics_step_callback_poll": [],
+          "after_world_step_poll": null,
+          "project_aggregation": [],
+          "contact_sensor": null,
+          "gpu_native_rigid_contact_view": {
+            "sensor_count": 1,
+            "filter_count": 1,
+            "max_contact_data_count": 64,
+            "pair_contact_counts": [
+              [
+                4
+              ]
+            ],
+            "pair_start_indices": [
+              [
+                0
+              ]
+            ],
+            "contact_count": 4,
+            "contacts": [
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  -0.019988661631941795
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 1.2428773565886786e-09,
+                "force_vector_n": [
+                  -1.2428773565886786e-09,
+                  1.2735344179271339e-16,
+                  -4.852974156735435e-16
+                ],
+                "normal_impulse_ns": 1.0357311304905655e-11,
+                "separation_m": -9.309001569590691e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  0.019999999552965164,
+                  0.019999997690320015
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 5.587935447692871e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.019992591813206673,
+                  0.019999997690320015
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": 9.312535631522678e-09
+              },
+              {
+                "sensor_path": "/World/MovingBox",
+                "filter_path": "/World/FixedBox",
+                "sensor_index": 0,
+                "filter_index": 0,
+                "position_m": [
+                  -0.019999999552965164,
+                  -0.01999262347817421,
+                  -0.019988631829619408
+                ],
+                "normal": [
+                  -1.0,
+                  1.024666218540915e-07,
+                  -3.9046284427968203e-07
+                ],
+                "normal_force_n": 0.0,
+                "force_vector_n": [
+                  -0.0,
+                  0.0,
+                  -0.0
+                ],
+                "normal_impulse_ns": 0.0,
+                "separation_m": -5.584251727697165e-09
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "raw_gate": {
+      "stage_a_step_count": 59,
+      "stage_b_step_count": 1,
+      "stage_c_step_count": 9,
+      "solver_response": true,
+      "sensor_filter_pair": true,
+      "contact_count_positive": true,
+      "finite_position_normal_force_impulse_separation": true,
+      "stage_a_has_no_contact_data": true,
+      "stage_a_geometry_valid": true,
+      "stage_b_geometry_valid": true,
+      "pass": true,
+      "status": "GPU_NATIVE_PRIMITIVE_RIGID_CONTACT_VIEW_PASS"
+    }
+  },
+  "gpu_native_input_commit_sha": "c536a83ceb7048966a3c5ff736e47ac6a7609dd6"
 }
