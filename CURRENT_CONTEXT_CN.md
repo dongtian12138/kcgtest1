@@ -1,24 +1,29 @@
 # kcgtest1 当前轻量上下文
 
-> 快照时间：2026-08-26T23:46:00Z
+> 快照时间：2026-08-27T07:51:42Z
 > 当前分支：`carts-grasp-contactopt-1488-fast6h-20260826`
 > 原始源码、配置、产物、Git、进程和时间戳优先于本摘要。
 
 ## 当前唯一优先级
 
-当前任务 `CONTACT_TELEMETRY_POSITIVE_CONTROL + REMAINING_CANDIDATE_TASK_FIRST_SELECTION`
-已按用户要求停止。两项结论彼此独立冻结：
+当前任务 `PHYSX_PRIMITIVE_CONTACT_REPORT_ISOLATION + CONDITIONAL_REAL_ASSET_COMPARISON`
+已达到 4 次定向 Isaac 运行上限并停止。结论与边界如下：
 
-- `q09_a13 = REJECTED_NON_TASK_GEOMETRY_PRECEDES_TASK_CONTACT`，接触报告修复不得使它重新晋级。
-- `CONTACT_TELEMETRY_UNVERIFIED`。A/B/C 最终正对照中，A 位于 offset 外；B 的 TASK 凸块正间隙
-  0.156720 mm；C 第一步 TASK raw/凸块均相交，raw 非 TASK 仍有 0.477629 mm、非 TASK 凸块
-  仍有 2.803126 mm。128/128 shape enabled、无 pair filter/group，两端动态刚体的
-  `ContactReportAPI.threshold=0`，但 full event、basic event、full poll、ContactSensor raw 和项目
-  `hand_object` 仍全部为 0；filtered reading 有效但 `in_contact=false`。该失败停留在 PhysX 原始
-  报告导出层，不能把下游 0 单独解释成无接触。
-- 因接触链未通过，q09 step 503 负对照没有运行。剩余 4 个输入已完成 raw 与复合凸资产几何
-  粗采样+二分表；真实 `q_*_contact_physx` 保持 null，当前决策为 `PARKED_NO_DYNAMIC_SELECTION`。
-- 当前只允许汇报和只读复核；不重跑 1488、不增加候选、不改 Surface V2、不启动第一指动态。
+- `q09_a13` 永久保持 `REJECTED / NON_TASK_GEOMETRY_FIRST`，`task_first_margin_m =
+  -0.0005071808379559516`；接触链修复不得使其重新晋级。
+- 两个 40 mm box 在 120 Hz、GPU/CUDA 正式后端中自然相撞：动态 box 从 0.2 m/s 降至约
+  0.000252 m/s，A/B/C 分别记录 59/1/9 步；两个 shape enabled、无 filter/group，实际每 shape
+  `contactOffset=0.8 mm`、`restOffset=0`，未调用 offset setter。
+- GPU 上 full callback、Isaac 6 core contact callback、physics-step 内 full poll 和 step 后 full poll
+  均为 0。将订阅从未附着的旧接口切到当前 `omni.physics.core` 后，GPU 复跑仍为 0，分类为
+  `PRIMITIVE_SOLVER_RESPONSE_WITHOUT_CONTACT_REPORT`。
+- 完全相同 CPU 对照产生正确 box pair；full/basic/step 内 poll/step 后 poll 各有 9 个 header，首个
+  header 有 4 个 contact data，路径、有限 separation 和非零 impulse 均可解码。因此最终根因层为
+  `GPU_CONTACT_REPORT_CONFIGURATION_OR_BACKEND_SPECIFIC_FAILURE`；CPU PASS 不能替代 GPU。
+- `CONTACT_TELEMETRY_UNVERIFIED` 继续保持。因 GPU primitive 未通过，ContactSensor raw、filtered
+  reading、项目聚合、独立真实 hull 和 q09 step503 全部未运行；未生成 real-hull JSON。
+- 当前不允许恢复候选筛选、q09、真实资产动态或控制器修改；不重跑 1488、不改 Surface V2、
+  候选位姿、控制器或 offset。
 
 ## 漏斗复盘的已验证事实
 
@@ -73,12 +78,15 @@
 
 ## 验证、进程与 Git
 
-- 本任务两个小脚本编译通过；最终正对照记录 6 个物理步，4 候选离线表已生成；未运行完整测试套件。
+- primitive 主脚本 300 行并通过 `py_compile`；GPU 修复后复跑与 CPU 对照均各记录 69 个物理步；
+  未运行完整测试套件。
 - 当前没有 Isaac、GraspGenX 或 CONTACTOPT 活动进程。
 - `scripts/carts_v2/audit_nailfree_graspgenx_seed_reuse.py` 是无关未跟踪资产，不得暂存。
-- 本任务结果：`artifacts/carts_v2/contactopt_1488_fast6h/contact_telemetry_positive_control/result.json`
-  和 `artifacts/carts_v2/contactopt_1488_fast6h/remaining_candidate_task_first/result.json`。
-- 本任务尚未推送；只允许暂存本任务两个脚本和本上下文，禁止包含上面的无关未跟踪资产。
+- 已有提交 `7cb9282` 已普通推送。当前结果为
+  `artifacts/carts_v2/contactopt_1488_fast6h/primitive_contact_report_isolation/result.json`；该文件被
+  `.gitignore` 忽略，提交时只可对这一文件使用 `git add -f`。
+- 本轮新提交尚未创建/推送；只允许暂存 primitive 脚本、本上下文和上面的单个小型结果 JSON，
+  禁止包含无关未跟踪资产或大型 Kit 日志。
 
 ## 最小读取路线
 
