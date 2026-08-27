@@ -20,7 +20,7 @@ def _arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("raw", "sensor", "gpu_tensor"), default="raw")
     parser.add_argument("--backend", choices=("gpu", "cpu"), default="gpu")
-    parser.add_argument("--fixture", choices=("primitive", "real_hull"), default="primitive")
+    parser.add_argument("--fixture", choices=("primitive", "real_hull", "dual_fixture"), default="primitive")
     return parser.parse_args()
 
 
@@ -64,10 +64,10 @@ def _run(mode: str, backend: str, fixture: str):
     moving_path, fixed_path = (("/World/MovingHull", "/World/FixedHull") if fixture == "real_hull"
                                else (MOVING, FIXED))
 
-    def make_box(path: str, x: float, kinematic: bool) -> None:
+    def make_box(path: str, x: float, kinematic: bool, y: float = 0.0) -> None:
         cube = UsdGeom.Cube.Define(stage, path)
         cube.CreateSizeAttr(SIDE)
-        cube.AddTranslateOp().Set(Gf.Vec3d(x, 0.0, 0.0))
+        cube.AddTranslateOp().Set(Gf.Vec3d(x, y, 0.0))
         collision = UsdPhysics.CollisionAPI.Apply(cube.GetPrim())
         collision.CreateCollisionEnabledAttr().Set(True)
         body = UsdPhysics.RigidBodyAPI.Apply(cube.GetPrim())
@@ -75,6 +75,106 @@ def _run(mode: str, backend: str, fixture: str):
         body.CreateKinematicEnabledAttr().Set(kinematic)
         UsdPhysics.MassAPI.Apply(cube.GetPrim()).CreateMassAttr().Set(1.0)
         PhysxSchema.PhysxContactReportAPI.Apply(cube.GetPrim()).CreateThresholdAttr().Set(0.0)
+
+    if fixture == "dual_fixture":
+        pairs = {"box": {"moving": "/World/Dual/BoxMoving", "fixed": "/World/Dual/BoxFixed"},
+            "hull": {"moving": "/World/Dual/HullMoving", "fixed": "/World/Dual/HullFixed"}}
+        pairs["box"].update(moving_shape=pairs["box"]["moving"], fixed_shape=pairs["box"]["fixed"])
+        make_box(pairs["box"]["moving"], -(SIDE + 0.02), False, -0.25)
+        make_box(pairs["box"]["fixed"], 0.0, True, -0.25)
+        def load_hull(asset: Path, name: str):
+            source = Usd.Stage.Open(str(asset)); hits = [p for p in source.Traverse(
+                Usd.TraverseInstanceProxies()) if p.IsA(UsdGeom.Mesh) and p.GetName() == name]
+            if len(hits) != 1: raise RuntimeError(f"expected one {name}, got {len(hits)}")
+            prim = hits[0]; mesh = UsdGeom.Mesh(prim); matrix = UsdGeom.XformCache().GetLocalToWorldTransform(prim)
+            points = np.asarray([matrix.Transform(Gf.Vec3d(*p)) for p in mesh.GetPointsAttr().Get()], float)
+            points -= points.mean(axis=0)
+            return points, list(mesh.GetFaceVertexCountsAttr().Get()), list(mesh.GetFaceVertexIndicesAttr().Get()), str(prim.GetPath())
+        def add_hull(path: str, data, x: float, kinematic: bool):
+            points, counts, indices, _ = data; root = UsdGeom.Xform.Define(stage, path)
+            root.AddTranslateOp().Set(Gf.Vec3d(x, 0.25, 0.0)); prim = root.GetPrim()
+            body = UsdPhysics.RigidBodyAPI.Apply(prim); body.CreateRigidBodyEnabledAttr().Set(True)
+            body.CreateKinematicEnabledAttr().Set(kinematic); UsdPhysics.MassAPI.Apply(prim).CreateMassAttr().Set(1.0)
+            PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr().Set(0.0)
+            shape = UsdGeom.Mesh.Define(stage, path + "/Collider"); shape.CreatePointsAttr([Gf.Vec3f(*p) for p in points])
+            shape.CreateFaceVertexCountsAttr(counts); shape.CreateFaceVertexIndicesAttr(indices); shape.CreateSubdivisionSchemeAttr("none")
+            UsdPhysics.CollisionAPI.Apply(shape.GetPrim()).CreateCollisionEnabledAttr().Set(True)
+            UsdPhysics.MeshCollisionAPI.Apply(shape.GetPrim()).CreateApproximationAttr(UsdPhysics.Tokens.convexHull)
+        hand_hull = load_hull(HAND_ASSET, "f1Link3_compound_hull_63")
+        object_hull = load_hull(OBJECT_ASSET, "Hull_062"); hull_gap = 0.02
+        hull_x = float(object_hull[0][:, 0].min() - hand_hull[0][:, 0].max() - hull_gap)
+        add_hull(pairs["hull"]["moving"], hand_hull, hull_x, False); add_hull(pairs["hull"]["fixed"], object_hull, 0.0, True)
+        pairs["hull"].update(moving_shape=pairs["hull"]["moving"] + "/Collider",
+            fixed_shape=pairs["hull"]["fixed"] + "/Collider", source_moving_asset=str(HAND_ASSET),
+            source_fixed_asset=str(OBJECT_ASSET), source_moving_prim=hand_hull[3], source_fixed_prim=object_hull[3])
+        bodies = {name: {role: world.scene.add(SingleRigidPrim(pair[role], f"dual_{name}_{role}"))
+            for role in ("moving", "fixed")} for name, pair in pairs.items()}
+        world.reset(); sim_view = SimulationManager.get_physics_simulation_view()
+        contact_views = {name: sim_view.create_rigid_contact_view(pair["moving"], [pair["fixed"]], 64)
+            for name, pair in pairs.items()}
+        def tensor_row(name: str) -> dict:
+            cv, pair = contact_views[name], pairs[name]
+            forces, points, normals, gaps, counts, starts = cv.get_contact_data(DT)
+            force, point, normal, gap, count, start = map(_host, (forces, points, normals, gaps, counts, starts)); rows = []
+            raw_filters = cv.filter_paths
+            filters = list(map(str, raw_filters[0] if raw_filters and isinstance(raw_filters[0], (list, tuple)) else raw_filters))
+            sensors = list(map(str, cv.sensor_paths))
+            for i in range(cv.sensor_count):
+                for j in range(cv.filter_count):
+                    begin, size = int(start[i, j]), int(count[i, j])
+                    for k in range(begin, begin + size):
+                        scalar, n = float(force.reshape(-1)[k]), normal[k]
+                        rows.append({"sensor_body": sensors[i], "filter_body": filters[j],
+                            "sensor_shape": pair["moving_shape"], "filter_shape": pair["fixed_shape"],
+                            "position_m": point[k].tolist(), "normal": n.tolist(), "normal_force_n": scalar,
+                            "force_vector_n": (scalar*n).tolist(), "normal_impulse_ns": scalar*DT,
+                            "impulse_vector_ns": (scalar*DT*n).tolist(), "separation_m": float(gap.reshape(-1)[k])})
+            return {"matched_sensor_bodies": sensors, "matched_filter_bodies": filters,
+                "sensor_shapes": [pair["moving_shape"]], "filter_shapes": [pair["fixed_shape"]],
+                "pair_contact_counts": count.tolist(), "contact_count": len(rows), "contacts": rows}
+        zero = torch.zeros((1, 6), dtype=torch.float32, device=device)
+        velocity = torch.tensor([[SPEED, 0, 0, 0, 0, 0]], dtype=torch.float32, device=device)
+        bodies["hull"]["moving"]._rigid_prim_view.set_velocities(zero)
+        def phase(name: str):
+            active = bodies[name]["moving"]; active._rigid_prim_view.set_velocities(velocity)
+            start_x = float(_host(active.get_world_pose()[0]).reshape(-1)[0]); response_at = None; rows = []
+            for step in range(120):
+                world.step(render=False); state = {}
+                for fixture_name in ("box", "hull"):
+                    body = bodies[fixture_name]["moving"]; state[fixture_name] = {
+                        "position_m": _host(body.get_world_pose()[0]).reshape(-1).tolist(),
+                        "velocity_m_s": _host(body.get_linear_velocity()).reshape(-1).tolist(),
+                        "contacts": tensor_row(fixture_name)}
+                expected = start_x + SPEED*DT*(step+1); actual = state[name]["position_m"][0]
+                response = abs(state[name]["velocity_m_s"][0]-SPEED) > 1e-3 or expected-actual > 2e-5
+                if response_at is None and response: response_at = step
+                rows.append({"step": step, "active_fixture": name, "expected_no_collision_x_m": expected,
+                    "active_pose_deviation_m": expected-actual, "solver_response": response, "fixtures": state})
+                if response_at is not None and step >= response_at + 8: break
+            return rows, response_at is not None
+        box_rows, box_response = phase("box"); hull_rows, hull_response = phase("hull")
+        any_contacts = lambda rows, name: any(r["fixtures"][name]["contacts"]["contact_count"] for r in rows)
+        box_pass, hull_contact = box_response and any_contacts(box_rows, "box"), any_contacts(hull_rows, "hull")
+        pipeline = "GPU_NATIVE_CONTACT_PIPELINE_PASS" if box_pass and hull_response and hull_contact else \
+            "SINGLE_PROCESS_GPU_CONTACT_HARNESS_FAILURE" if not box_pass else "GPU_NATIVE_CONTACT_PIPELINE_BOX_ONLY_PASS"
+        hull_status = "REAL_HULL_GPU_CONTACT_PASS" if box_pass and hull_response and hull_contact else \
+            "REAL_COLLIDER_CONTACT_VIEW_PATTERN_OR_ASSET_BINDING_FAILURE" if box_pass and hull_response else \
+            "REAL_COLLIDER_ENABLE_FILTER_COOKING_OR_POSE_FAILURE" if box_pass else "NOT_EVALUABLE_BOX_FAILED"
+        offsets = {path: {"contact_offset_m": _host(sim_view.create_rigid_body_view([path]).get_contact_offsets()).reshape(-1).tolist(),
+            "rest_offset_m": _host(sim_view.create_rigid_body_view([path]).get_rest_offsets()).reshape(-1).tolist()}
+            for pair in pairs.values() for path in (pair["moving"], pair["fixed"])}
+        run = {"mode": mode, "backend": backend, "fixture": {"kind": fixture, "pairs": pairs,
+            "spatial_separation_y_m": 0.5}, "runtime": {**device_preflight, "world_device": str(world.device),
+            "suppress_readback_after_reset": settings.get_as_bool("/physics/suppressReadback"),
+            "gpu_dynamics_enabled": bool(context.is_gpu_dynamics_enabled()), "broadphase_type": str(context.get_broadphase_type())},
+            "lifecycle": {"simulation_app_count": 1, "physics_scene_count": sum(p.IsA(UsdPhysics.Scene) for p in stage.Traverse()),
+                "world_reset_warmup_count": 1, "contact_views_created_before_first_external_step": True,
+                "contact_view_count": 2, "cpu_callback_poll_or_contact_sensor_created": False},
+            "runtime_offsets_unmodified": offsets, "phases": {"box": box_rows, "hull": hull_rows},
+            "gate": {"box_solver_response": box_response, "box_contact_view_nonempty": any_contacts(box_rows, "box"),
+                "hull_solver_response": hull_response, "hull_contact_view_nonempty": hull_contact,
+                "pipeline_classification": pipeline, "real_hull_classification": hull_status}}
+        return run, app
 
     fixture_record = {"kind": fixture, "sensor_path": moving_path, "filter_path": fixed_path}
     moving_right, fixed_left, initial_gap = SIDE / 2.0, -SIDE / 2.0, INITIAL_GAP
@@ -361,12 +461,16 @@ def main() -> None:
     if args.mode == "sensor" and not prior.get("gpu_raw", {}).get("raw_gate", {}).get("pass"):
         raise RuntimeError("sensor layer is forbidden until the GPU primitive raw gate passes")
     budget = prior.get("gpu_native_run_budget", {})
-    if args.mode == "gpu_tensor" and budget.get("used", 0) >= budget.get("limit", 2):
+    if args.fixture == "dual_fixture" and (args.mode != "gpu_tensor" or args.backend != "gpu"):
+        raise RuntimeError("dual fixture requires gpu_tensor on GPU")
+    if args.fixture == "dual_fixture" and prior.get("single_process_dual_fixture_run_budget", {}).get("used", 0) >= 1:
+        raise RuntimeError("single-process dual-fixture run budget is exhausted")
+    if args.fixture != "dual_fixture" and args.mode == "gpu_tensor" and budget.get("used", 0) >= budget.get("limit", 2):
         raise RuntimeError("GPU-native Isaac run budget is exhausted")
     if args.fixture == "real_hull" and not prior.get("gpu_native_primitive", {}).get("raw_gate", {}).get("pass"):
         raise RuntimeError("real hull is forbidden until the GPU-native primitive gate passes")
     run, app = _run(args.mode, args.backend, args.fixture)
-    gate = _tensor_gate(run) if args.mode == "gpu_tensor" else _raw_gate(run)
+    gate = run["gate"] if args.fixture == "dual_fixture" else (_tensor_gate(run) if args.mode == "gpu_tensor" else _raw_gate(run))
     report = prior or {
         "schema_version": "physx_gpu_native_contact_path_isolation_v2",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -393,6 +497,14 @@ def main() -> None:
             classification = "GPU_CONTACT_REPORT_CONFIGURATION_OR_BACKEND_SPECIFIC_FAILURE"
             report.update(cpu_gpu_classification=classification,
                 contact_root_cause=classification, root_cause_proven=True)
+    elif args.fixture == "dual_fixture":
+        report.update(contact_pipeline_status=gate["pipeline_classification"],
+            real_hull_gpu_contact_status=gate["real_hull_classification"],
+            gpu_native_input_commit_sha=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip())
+        report["single_process_dual_fixture_run_budget"] = {"used": 1, "limit": 1,
+            "run": gate["pipeline_classification"] + "+" + gate["real_hull_classification"]}
+        report.setdefault("conditional_layers", {})["real_independent_hull"] = gate["real_hull_classification"]
+        report["real_independent_hull_attempt_superseded_by"] = "gpu_native_dual_fixture"
     elif args.backend == "gpu" and args.mode == "gpu_tensor":
         primitive_pass = report.get("gpu_native_primitive", {}).get("raw_gate", {}).get("pass", False)
         classification = ("DIRECT_GPU_CPU_CONTACT_REPORT_UNAVAILABLE_EXPECTED" if primitive_pass else
