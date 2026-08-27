@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import hashlib
-import json
 import math
 from pathlib import Path
 from types import MappingProxyType
@@ -286,10 +284,6 @@ def joint_positions_for_phases(
     lower = np.asarray([hand.joints[name].limit.lower for name in names])
     upper = np.asarray([hand.joints[name].limit.upper for name in names])
     if reference_joint_positions_rad is None:
-        if inputs.config.section("candidate_generation").get("backend") == (
-            "GRASPGENX_FULL_PALM"
-        ):
-            raise ValueError("PALM_CONFIGURATION_LOST_IN_PIPELINE")
         positions = lower.copy()
         preshape = inputs.config.section("candidate_generation")[
             "preshape_joint_positions_rad"
@@ -327,35 +321,6 @@ def load_v2_config(path: Path | str) -> CARTSV2Config:
     count = int(generation.get("candidate_count", 0))
     if count < 32 or count > 64:
         raise ValueError("candidate_count must stay in [32, 64]")
-    if generation.get("backend") == "GRASPGENX_FULL_PALM":
-        palm = generation.get("palm_configuration", {})
-        pregrasp = generation.get("pregrasp_search", {})
-        graspgenx = generation.get("graspgenx", {})
-        refinement = generation.get("refinement", {})
-        if (
-            int(palm.get("grid_count", 0)) != 91
-            or float(palm.get("lower_rad", math.nan)) != 0.0
-            or float(palm.get("upper_rad", math.nan)) != 1.57
-            or list(palm.get("anchor_indices", ())) != [0, 30, 45, 60, 90]
-            or list(pregrasp.get("phase_values_per_finger", ()))
-            != [0.0, 0.1, 0.2]
-            or int(pregrasp.get("combination_count", 0)) != 27
-            or int(graspgenx.get("raw_target_per_descriptor_object", 0)) != 128
-            or int(graspgenx.get("keep_per_descriptor_object", 0)) != 64
-            or int(refinement.get(
-                "maximum_stage_a_plus_b_evaluations_per_seed", 0)) != 300
-            or float(refinement.get("translation_bound_m", math.nan)) != 0.020
-            or float(refinement.get("rotation_bound_rad", math.nan)) != math.radians(12.0)
-            or float(refinement.get(
-                "palm_configuration_bound_rad", math.nan)) != math.radians(5.0)
-            or float(refinement.get(
-                "opposition_palm_lower_rad", math.nan)) != math.radians(45.0)
-            or float(refinement.get(
-                "opposition_palm_upper_rad", math.nan)) != math.radians(75.0)
-            or int(refinement.get("optimizer_random_seed", 0)) != 20260826
-            or not 0 < int(refinement.get("maximum_wall_time_s", 0)) <= 1500
-        ):
-            raise ValueError("full-palm search identity changed")
     dynamic = value.get("dynamic", {})
     if (
         float(dynamic.get("lift_distance_m", 0.0)) != 0.05
@@ -574,67 +539,3 @@ def load_v2_inputs(
         task_grip_surfaces=task_surfaces,
         hand_variant=hand_variant,
     )
-
-
-def allowed_face_domain_sha256(face_count: int, face_indices: Any) -> str:
-    """Digest one sorted allowed-face domain in the registered face identity."""
-
-    indices = np.asarray(face_indices, dtype="<u8")
-    if (
-        indices.ndim != 1
-        or int(face_count) <= 0
-        or len(indices) == 0
-        or np.any(indices >= int(face_count))
-        or not np.array_equal(indices, np.unique(indices))
-    ):
-        raise ValueError("allowed face domain is invalid")
-    header = np.asarray((int(face_count), len(indices)), dtype="<u8").tobytes()
-    return hashlib.sha256(header + indices.tobytes()).hexdigest()
-
-
-def write_standardized_object_manifest(
-    inputs_by_object: Mapping[str, V2Inputs], output_dir: Path | str,
-    manifest_path: Path | str, sample_point_count: int,
-) -> dict[str, Any]:
-    """Export full SI meshes plus their registered allowed-face identities."""
-
-    count = int(sample_point_count)
-    if count <= 0 or not inputs_by_object:
-        raise ValueError("a positive point count and at least one object are required")
-    destination = Path(output_dir).resolve()
-    destination.mkdir(parents=True, exist_ok=True)
-    rows = []
-    for object_id, inputs in sorted(inputs_by_object.items()):
-        if object_id != inputs.object_contract.object_id:
-            raise ValueError("object manifest key differs from object identity")
-        mesh = inputs.object_contract.model.mesh
-        allowed = inputs.face_roles.allowed_face_indices
-        path = destination / f"{object_id}.npz"
-        np.savez_compressed(
-            path, faces=np.asarray(mesh.faces), vertices_m=np.asarray(mesh.vertices_m),
-            allowed_face_indices=np.asarray(allowed, dtype=np.int64),
-        )
-        rows.append({
-            "object_id": object_id,
-            "source_mesh_sha256": inputs.object_contract.model.provenance.source_sha256,
-            "standardized_mesh_npz": str(path),
-            "standardized_mesh_sha256": file_sha256(path),
-            "sample_point_count": count, "length_unit": "m",
-            "vertex_count": int(len(mesh.vertices_m)), "face_count": int(len(mesh.faces)),
-            "allowed_face_count": int(len(allowed)),
-            "allowed_surface_area_m2": float(inputs.face_roles.allowed_area_m2),
-            "allowed_face_domain_sha256": allowed_face_domain_sha256(len(mesh.faces), allowed),
-            "face_role_method": inputs.face_roles.method,
-            "inference_frame": "FROZEN_SCENE_WORLD",
-            "inference_from_object_row_major": [
-                float(value) for value in inputs.frozen_world_from_object.ravel()
-            ],
-        })
-    payload = {"schema_version": "graspgenx_carts_objects_v1", "objects": rows}
-    manifest = Path(manifest_path).resolve()
-    manifest.parent.mkdir(parents=True, exist_ok=True)
-    manifest.write_text(
-        json.dumps(payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
-    return payload

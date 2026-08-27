@@ -230,7 +230,7 @@ def bind_task_hand_variant(
             surface.source_mesh_path, unit="m", orient_outward=False
         )
         if provenance.source_sha256 != surface.source_mesh_sha256:
-            raise ValueError(f"nail-free terminal mesh changed for {surface.link_name}")
+            raise ValueError(f"terminal mesh changed for {surface.link_name}")
         triangles = np.array(mesh.face_vertices_m, dtype=np.float64, copy=True)
         triangles.setflags(write=False)
         result[surface.link_name] = triangles
