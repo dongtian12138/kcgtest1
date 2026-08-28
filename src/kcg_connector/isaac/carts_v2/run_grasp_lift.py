@@ -39,6 +39,9 @@ else:
         evaluate_isolated_hand_trace, evaluate_trace,
     )
 from kcg_connector.grasp.carts_v2.models import load_v2_inputs
+from kcg_connector.grasp.carts_v2.task_grip_surface import (
+    generate_axial_pad_intersection_grasp,
+)
 from kcg_connector.grasp.robust.object_model import file_sha256
 from kcg_connector.robot_model import MIMIC_HAND_JOINTS
 
@@ -68,10 +71,15 @@ def _arguments(repository: Path) -> argparse.Namespace:
         repository / "src/kcg_connector/config/carts_grasp_v2.yaml"))
     parser.add_argument("--runtime-resources", default=str(
         repository / "src/kcg_connector/config/carts_v2_isaac_runtime.json"))
+    parser.add_argument(
+        "--robot-asset",
+        help="explicit simulation robot asset; defaults to dynamic.robot_asset",
+    )
     parser.add_argument("--preflight-evaluation")
     parser.add_argument("--reference-trace")
     parser.add_argument("--output-directory", required=True)
     parser.add_argument("--gui", action="store_true")
+    parser.add_argument("--initialize-at-pregrasp", action="store_true")
     parser.add_argument(
         "--capture-visual-evidence", action="store_true",
         help="save four post-step Isaac viewport frames without feeding image truth to control",
@@ -87,13 +95,50 @@ def _arguments(repository: Path) -> argparse.Namespace:
         parser.error("isolated-hand requires --reference-trace")
     if arguments.capture_visual_evidence and arguments.mode == "isolated-hand":
         parser.error("visual evidence capture is only supported in the object scene")
+    if arguments.initialize_at_pregrasp and arguments.mode not in (
+        "preflight", "first-finger-diagnostic"
+    ):
+        parser.error("pregrasp initialization is diagnostic-only")
     return arguments
 
 
 def _registered_grasp(inputs, object_id: str) -> Mapping[str, object]:
     dynamic = inputs.config.section("dynamic")
-    registrations = dynamic.get("registered_grasps")
-    grasp = registrations.get(object_id) if isinstance(registrations, Mapping) else None
+    generation = generate_axial_pad_intersection_grasp(inputs)
+    grasp = {
+        "schema_version": "carts_v2_registered_grasp_v1",
+        "grasp_id": f"axial_full_pad_first_intersection_v1__{object_id}",
+        "object_id": object_id,
+        "hardware_authorized": False,
+        "construction_method": generation["method"],
+        "control_plan": generation["control_plan"],
+        "generation_evidence": generation["evidence"],
+        "closure_control": {
+            "method": "SEQUENTIAL_LOW_SPEED_JOINT_EFFORT_CONTACT_THEN_FINITE_PRELOAD",
+            "finger_maximum_speed_rad_s": dynamic["finger_maximum_speed_rad_s"],
+            "contact_detection_effort_rise_nm": dynamic["contact_effort_rise_nm"],
+        },
+        "finite_clamp_target": {
+            "preload_increment_rad": dynamic["preload_increment_rad"],
+            "hand_drive_maximum_effort_nm": dynamic[
+                "hand_drive_maximum_effort_nm"
+            ],
+            "measured_effort_abort_nm": dynamic["measured_effort_abort_nm"],
+        },
+        "lift_trajectory": {
+            "direction_world": [0.0, 0.0, 1.0],
+            "distance_m": dynamic["lift_command_distance_m"],
+            "duration_s": dynamic["lift_duration_s"],
+            "arm_damping_nm_s_rad": dynamic["lift_arm_damping_nm_s_rad"],
+            "registered_peak_acceleration_m_s2": dynamic[
+                "registered_lift_peak_acceleration_m_s2"
+            ],
+        },
+        "hold_control": {
+            "method": "HOLD_FINAL_ARM_AND_FINITE_PRELOAD_TARGETS",
+            "duration_s": dynamic["hold_duration_s"],
+        },
+    }
     if not isinstance(grasp, Mapping):
         raise ValueError("object has no directly registered grasp")
     if (
@@ -152,6 +197,13 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
     inputs = load_v2_inputs(repository, config_path=config_path,
                             object_id=arguments.object_id)
     dynamic = inputs.config.section("dynamic")
+    registered_robot_asset = (repository / dynamic["robot_asset"]).resolve()
+    arguments.robot_asset_path = (
+        Path(arguments.robot_asset).expanduser().resolve()
+        if arguments.robot_asset
+        else registered_robot_asset
+    )
+    arguments.robot_asset_override_used = bool(arguments.robot_asset)
     grasp = _registered_grasp(inputs, arguments.object_id)
     scene_entry = dynamic["object_scenes"].get(arguments.object_id)
     if not isinstance(scene_entry, dict):
@@ -164,7 +216,12 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         arguments.preflight_document = preflight
         expected = (arguments.object_id, grasp["grasp_id"])
         observed = (preflight.get("object_id"), preflight.get("candidate_id"))
-        if observed != expected or not preflight_is_accepted(preflight):
+        if (
+            observed != expected
+            or not preflight_is_accepted(preflight)
+            or bool(preflight.get("initialized_at_pregrasp"))
+            != bool(arguments.initialize_at_pregrasp)
+        ):
             raise ValueError("matching independent preflight did not pass")
     if arguments.mode == "isolated-hand":
         arguments.reference_document = json.loads(
@@ -174,7 +231,9 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         world_from_object = np.asarray(scene_entry[
             "frozen_settled_world_from_object_row_major"], dtype=np.float64).reshape(4, 4)
         motion_plan = control.build_joint_motion_plan(
-            repository, inputs, grasp["control_plan"], world_from_object)
+            repository, inputs, grasp["control_plan"], world_from_object,
+            include_lift=arguments.mode == "grasp-lift",
+        )
     return inputs, grasp, scene_entry, motion_plan
 
 
@@ -286,6 +345,7 @@ def _initial_trace(arguments, inputs, grasp, motion_plan, dynamic):
         "schema_version": "carts_grasp_v2_dynamic_trace_v1",
         "object_id": arguments.object_id, "candidate_id": grasp["grasp_id"],
         "mode": arguments.mode,
+        "initialized_at_pregrasp": bool(arguments.initialize_at_pregrasp),
         "config_sha256": file_sha256(inputs.config.path),
         "registered_grasp": dict(grasp),
         "offline_worst_task_margin": None,
@@ -381,13 +441,13 @@ def _isolated_gravity(repository, scene_entry):
     return float(load_d38999_tabletop_scene(scene_path).physics.gravity_m_s2), scene_path
 
 
-def _create_isolated_runtime(repository, inputs, scene_entry, trace):
+def _create_isolated_runtime(repository, arguments, inputs, scene_entry, trace):
     from isaacsim.core.api import World
     from isaacsim.core.simulation_manager import SimulationManager
     from isaacsim.core.utils.stage import add_reference_to_stage, get_current_stage
 
     dynamic = inputs.config.section("dynamic")
-    robot_asset = (repository / dynamic["robot_asset"]).resolve()
+    robot_asset = arguments.robot_asset_path
     gravity, gravity_source = _isolated_gravity(repository, scene_entry)
     World.clear_instance()
     SimulationManager.set_physics_sim_device("cuda:0")
@@ -433,7 +493,9 @@ def _create_isolated_runtime(repository, inputs, scene_entry, trace):
 
 def _execute_isolated(repository, arguments, output, inputs, scene_entry, motion_plan, trace):
     dynamic = inputs.config.section("dynamic")
-    world, recorder, robot_data = _create_isolated_runtime(repository, inputs, scene_entry, trace)
+    world, recorder, robot_data = _create_isolated_runtime(
+        repository, arguments, inputs, scene_entry, trace
+    )
     robot, active_indices, arm_indices, lower, upper, drive_audit = robot_data
     stepper = control.JointSignalStepper(
         robot=robot, world=world, auditor=recorder, active_indices=active_indices,
@@ -496,7 +558,9 @@ def _evidence_binding(repository, arguments, inputs, grasp, scene, robot_asset):
     }
 
 
-def _create_runtime(repository, arguments, inputs, grasp, scene_entry, trace):
+def _create_runtime(
+    repository, arguments, inputs, grasp, scene_entry, motion_plan, trace
+):
     import carb.settings
     from isaacsim.core.api import World
     from isaacsim.core.experimental.prims import RigidPrim as TensorRigidPrim
@@ -508,9 +572,11 @@ def _create_runtime(repository, arguments, inputs, grasp, scene_entry, trace):
     from pxr import Gf, PhysxSchema, PhysicsSchemaTools, Usd, UsdGeom, UsdLux, UsdPhysics
 
     dynamic = inputs.config.section("dynamic")
-    robot_asset = (repository / dynamic["robot_asset"]).resolve()
+    robot_asset = arguments.robot_asset_path
     if not robot_asset.is_file():
-        raise ValueError("registered robot asset is missing")
+        raise ValueError("selected robot asset is missing")
+    trace["robot_asset"] = str(robot_asset)
+    trace["robot_asset_override_used"] = arguments.robot_asset_override_used
     settings = carb.settings.get_settings()
     contact_processing_before = settings.get(
         SETTING_DISABLE_CONTACT_PROCESSING
@@ -651,7 +717,23 @@ def _create_runtime(repository, arguments, inputs, grasp, scene_entry, trace):
     trace["physics_backend"] = backend
     engine_monitor = PhysxStatsMonitor(context)
     robot_data = control.create_native_gravity_compensated_robot(
-        ARTICULATION_PATH, EXPECTED_DOF_NAMES, dynamic)
+        ARTICULATION_PATH,
+        EXPECTED_DOF_NAMES,
+        dynamic,
+        initial_arm_positions=(
+            motion_plan["pregrasp_arm_positions_rad"]
+            if arguments.initialize_at_pregrasp
+            else None
+        ),
+        initial_hand_positions=(
+            motion_plan["pregrasp_hand_positions_rad"]
+            if arguments.initialize_at_pregrasp
+            else None
+        ),
+    )
+    trace["initial_joint_audit"] = audit_initial_joint_state(
+        robot_data[0], robot_data[0].dof_names
+    )
     auditor = TruthAuditRecorder(
         object_parts=object_parts,
         hand_base_prim=hand_base_prim,
@@ -782,7 +864,12 @@ def _run_controller(runtime, arguments, motion_plan, dynamic):
         arm_lower_limits=lower, arm_upper_limits=upper,
         settings=dynamic, render=arguments.gui,
     )
-    pregrasp = control.run_pregrasp_sequence(stepper, motion_plan, dynamic)
+    pregrasp = control.run_pregrasp_sequence(
+        stepper,
+        motion_plan,
+        dynamic,
+        initialized_at_pregrasp=arguments.initialize_at_pregrasp,
+    )
     grasp = (
         control.run_grasp_lift_sequence(
             stepper, motion_plan, dynamic, pregrasp,
@@ -830,6 +917,7 @@ def _runtime_record(repository, inputs, runtime):
 def _finish_run(repository, inputs, runtime, trace, outcome):
     trace["controller_outcome"] = outcome
     trace["samples"] = runtime["auditor"].samples
+    trace["audit_roots"] = {"robot": ROBOT_ROOT, **runtime["scene"]["roots"]}
     visual_capture = runtime.get("visual_capture")
     if visual_capture is not None:
         trace["visual_evidence"] = {
@@ -843,7 +931,7 @@ def _finish_run(repository, inputs, runtime, trace, outcome):
     engine_runtime = runtime["engine_monitor"].summary()
     engine_runtime["gpu_backend_pass"] = trace["physics_backend"]["pass"]
     return trace, evaluate_trace(
-        trace, robot_asset_path=runtime["robot_asset"]
+        trace, robot_asset_path=runtime["robot_asset"], inputs=inputs
     ), engine_runtime
 
 
@@ -853,7 +941,7 @@ def _execute(repository, arguments, output, inputs, grasp, scene_entry, motion_p
             repository, arguments, output, inputs, scene_entry, motion_plan, trace
         )
     runtime = _create_runtime(
-        repository, arguments, inputs, grasp, scene_entry, trace
+        repository, arguments, inputs, grasp, scene_entry, motion_plan, trace
     )
     dynamic = inputs.config.section("dynamic")
     if arguments.capture_visual_evidence:

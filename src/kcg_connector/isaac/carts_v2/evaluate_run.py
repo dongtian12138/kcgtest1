@@ -825,6 +825,37 @@ def _acceleration_metrics(samples, criteria, physics_dt_s: float) -> dict[str, o
     return {"actual": actual, "registered": registered, "passed": passed}
 
 
+def _finger_clamp_effort_metrics(samples) -> dict[str, object]:
+    """Summarize the three measured closing-joint efforts relative to tare."""
+
+    tare_rows = [
+        np.asarray(row["active_efforts_nm"], dtype=np.float64)[7:]
+        for row in samples
+        if row["phase"] == "tare"
+    ]
+    tare = np.mean(np.stack(tare_rows), axis=0) if tare_rows else np.zeros(4)
+    result = {}
+    for phase in ("preload", "lift", "hold"):
+        rows = [
+            np.asarray(row["active_efforts_nm"], dtype=np.float64)[7:] - tare
+            for row in samples
+            if row["phase"] == phase
+        ]
+        values = np.stack(rows) if rows else np.empty((0, 4))
+        result[phase] = {
+            name: {
+                "median_tare_subtracted_nm": (
+                    None if not len(values) else float(np.median(values[:, index]))
+                ),
+                "maximum_absolute_tare_subtracted_nm": (
+                    None if not len(values) else float(np.max(np.abs(values[:, index])))
+                ),
+            }
+            for name, index in (("finger_1", 1), ("finger_2", 2), ("finger_3", 3))
+        }
+    return result
+
+
 def _terminal_contact_actor_paths(samples) -> tuple[tuple[str, ...], ...]:
     observed = []
     for index, name in enumerate(TERMINAL_LINK_NAMES):
@@ -849,11 +880,15 @@ def _terminal_contact_actor_paths(samples) -> tuple[tuple[str, ...], ...]:
 
 
 def _derive_pad_surface_identity(
-    document: Mapping[str, object], samples, robot_asset_path: Path | None
+    document: Mapping[str, object], samples, robot_asset_path: Path | None,
+    inputs=None,
 ) -> dict[str, object]:
     result: dict[str, object] = {
         "verified": False,
-        "method": "CONTACT_ACTOR_PLUS_UNIQUE_ENABLED_COLLIDER_IN_BOUND_USD",
+        "method": (
+            "BOUND_TERMINAL_COLLIDER_PLUS_ALL_POSITIVE_CONTACT_POINTS_"
+            "NEAREST_TO_USER_CONFIRMED_FULL_PAD"
+        ),
         "reason": "ROBOT_ASSET_NOT_PROVIDED",
         "mappings": [],
     }
@@ -885,7 +920,7 @@ def _derive_pad_surface_identity(
 
     actor_paths = _terminal_contact_actor_paths(samples)
     if len(actor_paths) != len(TERMINAL_LINK_NAMES) or any(
-        len(paths) != 1 for paths in actor_paths
+        len(paths) > 1 for paths in actor_paths
     ):
         result["reason"] = "TERMINAL_CONTACT_ACTOR_NOT_UNIQUE"
         result["observed_terminal_actor_paths"] = [
@@ -906,6 +941,8 @@ def _derive_pad_surface_identity(
     default_path = str(default_prim.GetPath())
     mappings = []
     for name, observed_paths in zip(TERMINAL_LINK_NAMES, actor_paths):
+        if not observed_paths:
+            continue
         actor_path = observed_paths[0]
         owners = [
             prim for prim in stage.Traverse()
@@ -939,10 +976,6 @@ def _derive_pad_surface_identity(
         collider = colliders[0]
         material_role = collider.GetAttribute("kcg:materialRole").Get()
         source_mesh_uri = collider.GetAttribute("kcg:sourceMeshUri").Get()
-        if material_role != "fingertip_pad":
-            result["reason"] = "UNIQUE_COLLIDER_IS_NOT_FINGERTIP_PAD"
-            result["failed_terminal_link"] = name
-            return result
         collider_path = str(collider.GetPath())
         collider_suffix = collider_path[len(owner_path):]
         mappings.append({
@@ -956,12 +989,161 @@ def _derive_pad_surface_identity(
             "source_mesh_uri": source_mesh_uri,
         })
 
-    result.update({"verified": True, "reason": None, "mappings": mappings})
+    result["mappings"] = mappings
+    if inputs is None or inputs.task_grip_surfaces is None:
+        result["reason"] = "USER_CONFIRMED_FULL_PAD_GEOMETRY_NOT_PROVIDED"
+        return result
+    roots = document.get("audit_roots")
+    if not isinstance(roots, Mapping) or not isinstance(roots.get("object"), str):
+        result["reason"] = "OBJECT_CONTACT_ROOT_NOT_RECORDED"
+        return result
+
+    from trimesh import Trimesh
+    from trimesh.proximity import ProximityQuery
+    from kcg_connector.grasp.carts_v2.task_grip_surface import (
+        task_noncontact_triangles,
+    )
+
+    surfaces = {
+        surface.link_name: surface
+        for surface in inputs.task_grip_surfaces.values()
+    }
+    if set(surfaces) != set(TERMINAL_LINK_NAMES):
+        result["reason"] = "USER_CONFIRMED_FULL_PAD_LINKS_INCOMPLETE"
+        return result
+    noncontact = task_noncontact_triangles(
+        inputs.hand_collision_triangles_by_link, inputs.task_grip_surfaces
+    )
+    local_points: dict[str, list[np.ndarray]] = {
+        name: [] for name in TERMINAL_LINK_NAMES
+    }
+    point_metadata: dict[str, list[dict[str, object]]] = {
+        name: [] for name in TERMINAL_LINK_NAMES
+    }
+    object_root = roots["object"]
+    for row in samples:
+        world_points: dict[str, list[tuple[np.ndarray, Mapping[str, object]]]] = {
+            name: [] for name in TERMINAL_LINK_NAMES
+        }
+        for header in row["contacts"].get("tensor_headers", ()):
+            paths = tuple(map(str, header.get("paths", ())))
+            if not any(_below(path, object_root) for path in paths):
+                continue
+            links = [
+                name for name in TERMINAL_LINK_NAMES
+                if any(f"/{name}" in path for path in paths)
+            ]
+            if len(links) != 1:
+                continue
+            for contact in header.get("contacts", ()):
+                if float(contact.get("normal_impulse_n_s", 0.0)) > 0.0:
+                    point = np.asarray(contact.get("position_m"), dtype=np.float64)
+                    if point.shape != (3,) or not np.all(np.isfinite(point)):
+                        result["reason"] = "NONFINITE_TERMINAL_CONTACT_POINT"
+                        return result
+                    world_points[links[0]].append((point, contact))
+        if not any(world_points.values()):
+            continue
+        transforms = inputs.robot_model.forward_kinematics(
+            row["active_positions_rad"], enforce_limits=False
+        )
+        for name, points in world_points.items():
+            if not points:
+                continue
+            transform = np.asarray(transforms[name], dtype=np.float64)
+            points_array = np.asarray([item[0] for item in points], dtype=np.float64)
+            local_array = (
+                points_array - transform[:3, 3]
+            ) @ transform[:3, :3]
+            local_points[name].extend(local_array)
+            for local_point, (world_point, contact) in zip(local_array, points):
+                world_normal = np.asarray(contact.get("normal"), dtype=np.float64)
+                point_metadata[name].append({
+                    "step": int(row["step"]),
+                    "simulation_time_s": float(row["simulation_time_s"]),
+                    "phase": str(row["phase"]),
+                    "object_center_m": list(map(float, row["object_center_m"])),
+                    "world_position_m": world_point.tolist(),
+                    "world_normal": world_normal.tolist(),
+                    "link_local_position_m": local_point.tolist(),
+                    "link_local_normal": (world_normal @ transform[:3, :3]).tolist(),
+                    "normal_impulse_n_s": float(contact["normal_impulse_n_s"]),
+                    "separation_m": float(contact["separation_m"]),
+                })
+
+    def proximity(triangles: np.ndarray, points: np.ndarray):
+        triangles = np.asarray(triangles, dtype=np.float64)
+        vertices = triangles.reshape(-1, 3)
+        faces = np.arange(len(vertices), dtype=np.int64).reshape(-1, 3)
+        mesh = Trimesh(vertices=vertices, faces=faces, process=False)
+        return ProximityQuery(mesh).on_surface(points)
+
+    per_link = []
+    all_points_are_pad = True
+    all_links_have_points = True
+    for name in TERMINAL_LINK_NAMES:
+        points = np.asarray(local_points[name], dtype=np.float64).reshape(-1, 3)
+        if not len(points):
+            all_links_have_points = False
+            per_link.append({
+                "terminal_link": name,
+                "positive_contact_point_count": 0,
+                "all_points_nearest_to_full_pad": None,
+            })
+            continue
+        pad_surface = surfaces[name]
+        pad_closest, pad_distance, pad_face = proximity(
+            pad_surface.triangles_local_m, points
+        )
+        nonpad_closest, nonpad_distance, nonpad_face = proximity(
+            noncontact[name], points
+        )
+        margin = nonpad_distance - pad_distance
+        link_pass = bool(np.all(margin >= -1.0e-9))
+        all_points_are_pad = all_points_are_pad and link_pass
+        link_evidence = {
+            "terminal_link": name,
+            "positive_contact_point_count": len(points),
+            "all_points_nearest_to_full_pad": link_pass,
+            "maximum_pad_surface_residual_m": float(np.max(pad_distance)),
+            "minimum_nonpad_minus_pad_distance_m": float(np.min(margin)),
+            "nearest_full_pad_source_face_index_min": int(np.min(
+                pad_surface.source_face_indices[pad_face]
+            )),
+            "nearest_full_pad_source_face_index_max": int(np.max(
+                pad_surface.source_face_indices[pad_face]
+            )),
+        }
+        nonpad_indices = np.flatnonzero(margin < -1.0e-9)
+        if len(nonpad_indices):
+            index = int(nonpad_indices[0])
+            link_evidence["earliest_nonpad_contact"] = {
+                **point_metadata[name][index],
+                "pad_distance_m": float(pad_distance[index]),
+                "nonpad_distance_m": float(nonpad_distance[index]),
+                "nonpad_minus_pad_distance_m": float(margin[index]),
+                "nearest_pad_position_link_local_m": pad_closest[index].tolist(),
+                "nearest_nonpad_position_link_local_m": nonpad_closest[index].tolist(),
+                "nearest_full_pad_source_face_index": int(
+                    pad_surface.source_face_indices[pad_face[index]]
+                ),
+                "nearest_nonpad_triangle_index": int(nonpad_face[index]),
+            }
+        per_link.append(link_evidence)
+    result["contact_point_projection"] = per_link
+    if not all_points_are_pad:
+        result["reason"] = "POSITIVE_CONTACT_POINT_NEAREST_TO_NONPAD_SURFACE"
+        return result
+    if not all_links_have_points:
+        result["reason"] = "NOT_ALL_THREE_TERMINAL_LINKS_HAVE_POSITIVE_OBJECT_CONTACT"
+        return result
+    result.update({"verified": True, "reason": None})
     return result
 
 
 def evaluate_trace(
-    document: Mapping[str, object], *, robot_asset_path: Path | None = None
+    document: Mapping[str, object], *, robot_asset_path: Path | None = None,
+    inputs=None,
 ) -> dict[str, object]:
     """Apply frozen physical success criteria to an independently saved trace."""
 
@@ -974,6 +1156,7 @@ def evaluate_trace(
     contacts = _contact_metrics(samples, motion["grasped"])
     safety = _safety_metrics(samples, criteria)
     acceleration = _acceleration_metrics(samples, criteria, physics_dt_s)
+    finger_efforts = _finger_clamp_effort_metrics(samples)
     lift_pass = motion["maximum_lift_m"] >= float(criteria["lift_distance_m"])
     hold_pass = motion["hold_duration_s"] >= float(criteria["hold_duration_s"])
     contact_pass = contacts["maximum_sustained"] >= int(
@@ -1002,7 +1185,7 @@ def evaluate_trace(
         and acceleration["passed"]
     )
     pad_identity_evidence = _derive_pad_surface_identity(
-        document, samples, robot_asset_path
+        document, samples, robot_asset_path, inputs
     )
     pad_identity = bool(pad_identity_evidence["verified"])
     first_hold = [row for row in samples if row["phase"] == "finger_1_hold"]
@@ -1073,6 +1256,16 @@ def evaluate_trace(
         "finite_throughout": safety["finite"],
         "controller_completed": control_complete,
         "controller_failure_reason": document["controller_outcome"]["failure_reason"],
+        "maximum_joint_speed_rad_s": document["controller_outcome"].get(
+            "maximum_joint_speed_rad_s"
+        ),
+        "maximum_joint_speed_joint": document["controller_outcome"].get(
+            "maximum_joint_speed_joint"
+        ),
+        "maximum_absolute_hand_effort_nm": document["controller_outcome"].get(
+            "maximum_absolute_hand_effort_nm"
+        ),
+        "finger_clamp_effort_nm": finger_efforts,
         "truth_isolation_pass": truth_isolation,
         "accepted_preflight_bound": bool(document.get("accepted_preflight_bound")),
         "accepted_preflight_evaluation_sha256": document.get("accepted_preflight_evaluation_sha256"),
@@ -1087,7 +1280,7 @@ def evaluate_trace(
         "hardware_authorized": False,
         "evidence_binding": document.get("evidence_binding", {}),
         "evidence_limit": (
-            "RESEARCH_ONLY_BOUND_USD_UNIQUE_COLLIDER_PAD_IDENTITY_NOT_FORMAL_CERTIFICATION"
+            "RESEARCH_ONLY_BOUND_USD_AND_FULL_PAD_CONTACT_POINT_PROJECTION_NOT_FORMAL_CERTIFICATION"
             if pad_identity else
             "RESEARCH_ONLY_TERMINAL_LINK_CONTACT_PAD_IDENTITY_UNRESOLVED"
         ),

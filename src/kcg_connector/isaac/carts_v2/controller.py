@@ -12,7 +12,11 @@ from kcg_connector.grasp.carts_v2.models import V2Inputs
 from kcg_connector.grasp.robust.bounded_hand_base_ik import (
     solve_bounded_hand_base_ik,
 )
-from kcg_connector.robot_model import ALL_HAND_JOINT_NAMES, MIMIC_HAND_JOINTS
+from kcg_connector.robot_model import (
+    ALL_HAND_JOINT_NAMES,
+    MIMIC_HAND_JOINTS,
+    named_joint_target,
+)
 
 
 ARM_JOINT_NAMES = tuple(f"iiwa_joint_{index}" for index in range(1, 8))
@@ -35,6 +39,9 @@ def create_native_gravity_compensated_robot(
     articulation_path: str,
     expected_dof_names: Sequence[str],
     settings: Mapping[str, object],
+    *,
+    initial_arm_positions: Sequence[float] | None = None,
+    initial_hand_positions: Sequence[float] | None = None,
 ):
     """Create the only robot view and configure its bounded native drives."""
 
@@ -54,7 +61,17 @@ def create_native_gravity_compensated_robot(
         [dof_names.index(name) for name in ACTIVE_HAND_JOINT_NAMES], dtype=np.int32
     )
     active_indices = np.concatenate((arm_indices, hand_indices))
-    robot.set_dof_positions(np.zeros((1, robot.num_dofs)))
+    if (initial_arm_positions is None) != (initial_hand_positions is None):
+        raise RuntimeError("initial arm and hand positions must be provided together")
+    initial_positions = (
+        np.zeros(robot.num_dofs, dtype=np.float64)
+        if initial_arm_positions is None
+        else named_joint_target(
+            dof_names, initial_arm_positions, initial_hand_positions
+        )
+    )
+    robot.set_dof_positions(initial_positions.reshape(1, -1))
+    robot.set_dof_position_targets(initial_positions.reshape(1, -1))
     robot.set_dof_velocities(np.zeros((1, robot.num_dofs)))
     robot.set_dof_velocity_targets(np.zeros((1, robot.num_dofs)))
     stiffnesses = np.asarray(
@@ -110,6 +127,8 @@ def create_native_gravity_compensated_robot(
         "active_stiffnesses": observed_kp.numpy()[0].tolist(),
         "active_dampings": observed_kd.numpy()[0].tolist(),
         "active_maximum_efforts": observed_caps.numpy()[0].tolist(),
+        "initialized_at_pregrasp": initial_arm_positions is not None,
+        "initial_positions_rad": initial_positions.tolist(),
     }
     return robot, active_indices, arm_indices, lower_values, upper_values, audit
 
@@ -271,8 +290,10 @@ def build_joint_motion_plan(
     inputs: V2Inputs,
     control_plan: Mapping[str, object],
     world_from_object: Sequence[Sequence[float]],
+    *,
+    include_lift: bool = True,
 ) -> dict[str, object]:
-    """Solve pregrasp and +50 mm hand-base targets without simulator truth."""
+    """Solve the hand-base targets needed by the requested physical stage."""
 
     root = Path(repository_root).resolve()
     if root != inputs.repository_root:
@@ -307,8 +328,12 @@ def build_joint_motion_plan(
         )
     )
     arm = approach_rows[-1]
-    lift_rows, lift_only_errors = _solve_lift_waypoints(
-        inputs, model, solver_settings, final_hand, target, arm
+    lift_rows, lift_only_errors = (
+        _solve_lift_waypoints(
+            inputs, model, solver_settings, final_hand, target, arm
+        )
+        if include_lift
+        else ([arm], [])
     )
     lift_errors = list(approach_errors) + lift_only_errors
     return {
@@ -330,7 +355,7 @@ def build_joint_motion_plan(
         "maximum_lift_joint_step_rad": max(
             float(np.max(np.abs(np.asarray(right) - np.asarray(left))))
             for left, right in zip(lift_rows, lift_rows[1:])
-        ),
+        ) if len(lift_rows) > 1 else 0.0,
         "maximum_approach_joint_step_rad": max(
             float(np.max(np.abs(np.asarray(right) - np.asarray(left))))
             for left, right in zip(approach_rows, approach_rows[1:])
@@ -435,7 +460,10 @@ class SequentialEffortContactController:
                 at_endpoint = abs(self.goal[index] - self.target[index]) <= 1.0e-12
                 self._endpoint_count = self._endpoint_count + 1 if at_endpoint else 0
         elif self.state == "CONTACT_CONFIRMED":
-            self.state = "CONTACT_SETTLE"
+            # A free tabletop object is stabilized by the contact set, not by
+            # requiring each finger to reach force equilibrium in isolation.
+            # Keep regulating confirmed fingers while the next finger joins.
+            self.state = "HOLD"
         elif self.state == "CONTACT_SETTLE":
             settled = self._effort_adjust(index, measured_effort_delta, maximum_increment)
             self._state_samples = self._state_samples + 1 if settled else 0
@@ -666,14 +694,50 @@ def run_pregrasp_sequence(
     stepper: JointSignalStepper,
     motion_plan: Mapping[str, object],
     settings: Mapping[str, object],
+    *,
+    initialized_at_pregrasp: bool = False,
 ) -> dict[str, object]:
     dt = float(settings["physics_dt_s"])
+    pregrasp_arm = np.asarray(motion_plan["pregrasp_arm_positions_rad"])
+    pregrasp_hand = np.asarray(motion_plan["pregrasp_hand_positions_rad"])
+    if initialized_at_pregrasp:
+        settled_count = 0
+        final_error = math.inf
+        hold_duration = (
+            float(settings["settle_duration_s"])
+            + float(settings["pregrasp_hold_duration_s"])
+        )
+        for _ in stepper.active_steps(round(hold_duration / dt)):
+            latest = stepper.advance(
+                "settle", pregrasp_arm, pregrasp_hand
+            )
+            final_error = float(
+                np.max(np.abs(latest[0][:7] - pregrasp_arm))
+            )
+            settled_count = (
+                settled_count + 1
+                if final_error <= float(
+                    settings["approach_above_settle_error_rad"]
+                )
+                else 0
+            )
+        settled = (
+            stepper.abort_reason is None
+            and settled_count
+            >= int(settings["approach_above_settle_consecutive_samples"])
+        )
+        if stepper.abort_reason is None and not settled:
+            stepper.abort_reason = "INITIALIZED_PREGRASP_NOT_SETTLED"
+        return {
+            "arm": pregrasp_arm,
+            "hand": pregrasp_hand,
+            "above_settled": settled,
+            "above_final_error_rad": final_error,
+        }
     home_arm = np.zeros(7, dtype=np.float64)
     home_hand = np.zeros(4, dtype=np.float64)
     for _ in stepper.active_steps(round(float(settings["settle_duration_s"]) / dt)):
         stepper.advance("settle", home_arm, home_hand)
-    pregrasp_arm = np.asarray(motion_plan["pregrasp_arm_positions_rad"])
-    pregrasp_hand = np.asarray(motion_plan["pregrasp_hand_positions_rad"])
     approach = np.asarray(motion_plan["approach_arm_waypoints_rad"])
     above_steps = round(float(settings["approach_above_duration_s"]) / dt)
     for index in stepper.active_steps(above_steps):
@@ -770,7 +834,8 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
     dt = float(settings["physics_dt_s"])
     closure_target = contact.target.copy()
     direction = np.sign(final_hand - pregrasp["hand"])
-    preload_goal = closure_target + float(settings["preload_increment_rad"]) * direction
+    preload_increment = float(settings["preload_increment_rad"])
+    preload_goal = closure_target + preload_increment * direction
     preload_steps = round(float(settings["preload_duration_s"]) / dt)
     maximum_increment = float(settings["finger_maximum_speed_rad_s"]) * dt
     previous_target = closure_target
@@ -795,10 +860,20 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
     lift_steps = round(float(settings["lift_duration_s"]) / dt)
     for index in stepper.active_steps(lift_steps):
         blend = minimum_jerk_blend((index + 1) / lift_steps)
-        stepper.advance("lift", piecewise_waypoint(waypoints, blend), preload_goal)
+        latest = stepper.advance(
+            "lift", piecewise_waypoint(waypoints, blend), preload_goal
+        )
+        if np.max(np.abs(latest[2][8:] - tare[1:])) > float(
+            settings["measured_effort_abort_nm"]
+        ):
+            return "HAND_MEASURED_EFFORT_ABORT"
     final_arm = waypoints[-1]
     for _ in stepper.active_steps(round(float(settings["hold_duration_s"]) / dt)):
-        stepper.advance("hold", final_arm, preload_goal)
+        latest = stepper.advance("hold", final_arm, preload_goal)
+        if np.max(np.abs(latest[2][8:] - tare[1:])) > float(
+            settings["measured_effort_abort_nm"]
+        ):
+            return "HAND_MEASURED_EFFORT_ABORT"
     return stepper.abort_reason
 
 
