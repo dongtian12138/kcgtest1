@@ -5,12 +5,14 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
 from typing import Mapping, Sequence
 
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 if __package__:
     from .engine_health import pending_engine_fields
@@ -23,6 +25,14 @@ TERMINAL_LINK_NAMES = ("f1Link3", "f2Link2", "f3Link3")
 
 def _below(path: str, root: str) -> bool:
     return path == root or path.startswith(root + "/")
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _host_array(value) -> np.ndarray:
@@ -43,6 +53,11 @@ def _quaternion_rotation_matrix(quaternion: Sequence[float]) -> np.ndarray:
         ),
         dtype=np.float64,
     )
+
+
+def _rotation_matrix_quaternion(rotation: Sequence[Sequence[float]]) -> list[float]:
+    xyzw = Rotation.from_matrix(np.asarray(rotation, dtype=np.float64)).as_quat()
+    return [float(xyzw[3]), float(xyzw[0]), float(xyzw[1]), float(xyzw[2])]
 
 
 def _quaternion_distance(left: Sequence[float], right: Sequence[float]) -> float:
@@ -235,6 +250,7 @@ class TruthAuditRecorder:
         *,
         object_parts: Sequence[object],
         hand_base_prim,
+        robot_model,
         stage_modules: tuple[object, object, object],
         contact_interface,
         path_decoder,
@@ -244,14 +260,27 @@ class TruthAuditRecorder:
         table_top_z_m: float,
         physics_dt_s: float,
         engine_monitor,
+        physics_step_interface,
+        tensor_contact_prim,
+        tensor_contact_sensor_paths: Sequence[str],
+        tensor_contact_max_count: int,
     ) -> None:
         self.object_parts = tuple(object_parts)
         self.hand_base_prim = hand_base_prim
+        self.robot_model = robot_model
         self.Gf, self.Usd, self.UsdGeom = stage_modules
         self.contact_interface = contact_interface
         self.path_decoder = path_decoder
         self.roots = dict(roots)
         self.engine_monitor = engine_monitor
+        self.tensor_contact_prim = tensor_contact_prim
+        self.tensor_contact_sensor_paths = tuple(map(str, tensor_contact_sensor_paths))
+        self.tensor_contact_max_count = int(tensor_contact_max_count)
+        if (
+            not self.tensor_contact_sensor_paths
+            or self.tensor_contact_max_count <= 0
+        ):
+            raise ValueError("tensor contact audit inputs must be nonempty and bounded")
         self.masses = np.asarray([float(_host_array(part.get_mass()).reshape(-1)[0]) for part in self.object_parts])
         self.local_coms = tuple(
             _host_array(part.get_com()[0]).reshape(-1)
@@ -270,8 +299,14 @@ class TruthAuditRecorder:
         self.physics_dt_s = float(physics_dt_s)
         self.samples: list[dict[str, object]] = []
         self._event_headers: list[tuple[tuple[str, ...], int]] = []
+        self._physics_step_reports: list[list[dict[str, object]]] = []
         self._contact_report_subscription = contact_interface.subscribe_contact_report_events(
             self._on_contact_report
+        )
+        self._physics_step_subscription = (
+            physics_step_interface.subscribe_physics_step_events(
+                self._on_physics_step
+            )
         )
 
     def _decode_headers(self, headers) -> list[tuple[tuple[str, ...], int]]:
@@ -285,10 +320,135 @@ class TruthAuditRecorder:
             for header in headers
         ]
 
+    def _decode_full_report(self, headers, contact_data) -> list[dict[str, object]]:
+        decoded: list[dict[str, object]] = []
+        contact_data_count = len(contact_data)
+        for header in headers:
+            offset = int(header.contact_data_offset)
+            count = int(header.num_contact_data)
+            if offset < 0 or offset + count > contact_data_count:
+                raise RuntimeError("contact header data range is invalid")
+            paths = tuple(
+                str(self.path_decoder(value))
+                for value in (
+                    header.actor0,
+                    header.actor1,
+                    header.collider0,
+                    header.collider1,
+                )
+            )
+            contacts = []
+            for index in range(offset, offset + count):
+                record = contact_data[index]
+                contacts.append({
+                    "position_m": [float(record.position[axis]) for axis in range(3)],
+                    "normal": [float(record.normal[axis]) for axis in range(3)],
+                    "impulse_n_s": [float(record.impulse[axis]) for axis in range(3)],
+                    "separation_m": float(record.separation),
+                })
+            decoded.append({
+                "paths": paths,
+                "records": count,
+                "contact_data_offset": offset,
+                "contacts": contacts,
+            })
+        return decoded
+
     def _on_contact_report(self, headers, _contact_data) -> None:
         self._event_headers.extend(self._decode_headers(headers))
 
-    def _hand_pose(self) -> tuple[list[float], list[float]]:
+    def _on_physics_step(self, _dt) -> None:
+        headers, contact_data, _ = self.contact_interface.get_full_contact_report()
+        self._physics_step_reports.append(
+            self._decode_full_report(headers, contact_data)
+        )
+
+    def _tensor_contact_rows(self) -> list[dict[str, object]]:
+        import warp as wp
+
+        (forces, points, normals, separations, counts, start_indices,
+         other_actor_ids) = self.tensor_contact_prim.get_raw_contact_data(dt=1.0)
+        forces_array = np.asarray(forces.numpy(), dtype=np.float64).reshape(-1)
+        points_array = np.asarray(points.numpy(), dtype=np.float64).reshape(-1, 3)
+        normals_array = np.asarray(normals.numpy(), dtype=np.float64).reshape(-1, 3)
+        separations_array = np.asarray(
+            separations.numpy(), dtype=np.float64
+        ).reshape(-1)
+        counts_array = np.asarray(counts.numpy(), dtype=np.int64).reshape(-1)
+        starts_array = np.asarray(
+            start_indices.numpy(), dtype=np.int64
+        ).reshape(-1)
+        actor_ids_array = np.asarray(
+            other_actor_ids.numpy(), dtype=np.uint64
+        ).reshape(-1)
+        if not (
+            len(counts_array)
+            == len(starts_array)
+            == len(self.tensor_contact_sensor_paths)
+        ):
+            raise RuntimeError("tensor contact sensor layout does not match audited paths")
+        total_count = int(np.sum(counts_array))
+        if total_count >= self.tensor_contact_max_count:
+            raise RuntimeError("tensor contact buffer capacity was reached")
+        rows: list[dict[str, object]] = []
+        for sensor_index, sensor_path in enumerate(
+            self.tensor_contact_sensor_paths
+        ):
+            start = int(starts_array[sensor_index])
+            count = int(counts_array[sensor_index])
+            end = start + count
+            if (
+                start < 0
+                or count < 0
+                or end > len(actor_ids_array)
+                or end > len(forces_array)
+                or end > len(points_array)
+                or end > len(normals_array)
+                or end > len(separations_array)
+            ):
+                raise RuntimeError("tensor contact data range is invalid")
+            if not count:
+                continue
+            ids = np.ascontiguousarray(actor_ids_array[start:end])
+            ids_cpu = wp.array(ids, dtype=wp.uint64, device="cpu")
+            other_paths = self.tensor_contact_prim.get_actor_paths_from_ids(
+                ids_cpu
+            )
+            if len(other_paths) != count or any(not str(path) for path in other_paths):
+                raise RuntimeError("tensor contact actor ID did not resolve to a USD path")
+            grouped: dict[str, list[dict[str, object]]] = {}
+            for offset, other_path_value in enumerate(other_paths):
+                index = start + offset
+                impulse = float(forces_array[index])
+                point = points_array[index]
+                normal = normals_array[index]
+                separation = float(separations_array[index])
+                if not (
+                    math.isfinite(impulse)
+                    and math.isfinite(separation)
+                    and np.all(np.isfinite(point))
+                    and np.all(np.isfinite(normal))
+                ):
+                    raise RuntimeError("tensor contact data is not finite")
+                other_path = str(other_path_value)
+                grouped.setdefault(other_path, []).append({
+                    "other_actor_id": int(ids[offset]),
+                    "position_m": point.tolist(),
+                    "normal": normal.tolist(),
+                    "normal_impulse_n_s": impulse,
+                    "impulse_n_s": (normal * impulse).tolist(),
+                    "separation_m": separation,
+                })
+            for other_path, contacts in grouped.items():
+                rows.append({
+                    "sensor_index": sensor_index,
+                    "paths": (sensor_path, other_path),
+                    "records": len(contacts),
+                    "contacts": contacts,
+                })
+        return rows
+
+    def _usd_hand_pose(self) -> tuple[list[float], list[float]]:
         matrix = self.UsdGeom.Xformable(
             self.hand_base_prim
         ).ComputeLocalToWorldTransform(self.Usd.TimeCode.Default())
@@ -300,6 +460,22 @@ class TruthAuditRecorder:
             [float(translation[index]) for index in range(3)],
             [float(quaternion.GetReal())]
             + [float(imaginary[index]) for index in range(3)],
+        )
+
+    def _hand_pose(
+        self, active_positions: Sequence[float]
+    ) -> tuple[list[float], list[float]]:
+        transforms = self.robot_model.forward_kinematics(
+            tuple(map(float, active_positions)), enforce_limits=False
+        )
+        if "handbase_link" not in transforms:
+            raise RuntimeError("robot model FK did not return handbase_link")
+        matrix = np.asarray(transforms["handbase_link"], dtype=np.float64)
+        if matrix.shape != (4, 4) or not np.all(np.isfinite(matrix)):
+            raise RuntimeError("robot model FK hand-base transform is invalid")
+        return (
+            [float(value) for value in matrix[:3, 3]],
+            _rotation_matrix_quaternion(matrix[:3, :3]),
         )
 
     def _contact_counts(self) -> dict[str, object]:
@@ -315,27 +491,88 @@ class TruthAuditRecorder:
             "event_contact_data_count": 0,
             "poll_header_count": 0,
             "poll_contact_data_count": 0,
+            "physics_step_callback_count": 0,
+            "contact_observation_backend": "tensor_raw_contact",
+            "tensor_contact_sensor_count": len(self.tensor_contact_sensor_paths),
+            "tensor_contact_header_count": 0,
+            "tensor_contact_data_count": 0,
+            "tensor_physical_contact_data_count": 0,
+            "tensor_headers": [],
             "contact_report_channels_agree": True,
             "event_headers": [],
             "poll_headers": [],
             "examples": {},
         }
-        headers, _, _ = self.contact_interface.get_full_contact_report()
-        polled = self._decode_headers(headers)
+        if not self._physics_step_reports:
+            raise RuntimeError(
+                "native physics-step callback did not provide a contact report"
+            )
+        report_batches, self._physics_step_reports = (
+            self._physics_step_reports,
+            [],
+        )
+        report_rows = [row for batch in report_batches for row in batch]
+        polled = [
+            (row["paths"], int(row["records"])) for row in report_rows
+        ]
+        tensor_rows = self._tensor_contact_rows()
+        tensor_physical_rows = [
+            (
+                row,
+                sum(
+                    math.isfinite(float(contact["normal_impulse_n_s"]))
+                    and float(contact["normal_impulse_n_s"]) > 0.0
+                    for contact in row["contacts"]
+                ),
+            )
+            for row in tensor_rows
+        ]
         events, self._event_headers = self._event_headers, []
         result.update({
             "event_header_count": len(events),
             "event_contact_data_count": sum(row[1] for row in events),
             "poll_header_count": len(polled),
             "poll_contact_data_count": sum(row[1] for row in polled),
+            "physics_step_callback_count": len(report_batches),
+            "tensor_contact_header_count": len(tensor_rows),
+            "tensor_contact_data_count": sum(
+                int(row["records"]) for row in tensor_rows
+            ),
+            "tensor_physical_contact_data_count": sum(
+                records for _, records in tensor_physical_rows
+            ),
+            "tensor_headers": [
+                {
+                    "sensor_index": int(row["sensor_index"]),
+                    "paths": list(row["paths"]),
+                    "records": int(row["records"]),
+                    "contacts": row["contacts"],
+                }
+                for row in tensor_rows
+            ],
             "event_headers": [{"paths": list(row[0]), "records": row[1]} for row in events],
-            "poll_headers": [{"paths": list(row[0]), "records": row[1]} for row in polled],
+            "poll_headers": [
+                {
+                    "paths": list(row["paths"]),
+                    "records": int(row["records"]),
+                    "contact_data_offset": int(row["contact_data_offset"]),
+                    "contacts": row["contacts"],
+                }
+                for row in report_rows
+            ],
         })
         event_map, poll_map = dict(events), dict(polled)
         result["contact_report_channels_agree"] = event_map == poll_map
         combined = poll_map | {
             paths: max(records, poll_map.get(paths, 0)) for paths, records in events
         }
+        for row, records in tensor_physical_rows:
+            if records == 0:
+                continue
+            paths = tuple(sorted(map(str, row["paths"])))
+            combined[paths] = max(
+                records, combined.get(paths, 0)
+            )
         for paths, records in combined.items():
             has_robot = any(_below(path, self.roots["robot"]) for path in paths)
             has_object = any(_below(path, self.roots["object"]) for path in paths)
@@ -396,7 +633,8 @@ class TruthAuditRecorder:
             dtype=np.float64,
         )
         center = np.average(centers, axis=0, weights=self.masses)
-        hand_position, hand_orientation = self._hand_pose()
+        hand_position, hand_orientation = self._hand_pose(active_positions)
+        usd_hand_position, usd_hand_orientation = self._usd_hand_pose()
         bottom = min(
             float(position[2]) + offset
             for position, offset in zip(positions, self.bottom_offsets)
@@ -418,8 +656,13 @@ class TruthAuditRecorder:
                 "reference_part_orientation_wxyz": list(map(float, poses[0][1])),
                 "object_center_m": list(map(float, center)),
                 "object_bottom_clearance_m": bottom - self.table_top_z_m,
+                "hand_base_pose_source": (
+                    "MEASURED_ACTIVE_JOINTS_FROZEN_ROBOT_MODEL_FK"
+                ),
                 "hand_base_position_m": hand_position,
                 "hand_base_orientation_wxyz": hand_orientation,
+                "usd_hand_base_diagnostic_position_m": usd_hand_position,
+                "usd_hand_base_diagnostic_orientation_wxyz": usd_hand_orientation,
                 "object_center_in_hand_base_m": _relative_position(
                     center, hand_position, hand_orientation
                 ),
@@ -582,7 +825,144 @@ def _acceleration_metrics(samples, criteria, physics_dt_s: float) -> dict[str, o
     return {"actual": actual, "registered": registered, "passed": passed}
 
 
-def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
+def _terminal_contact_actor_paths(samples) -> tuple[tuple[str, ...], ...]:
+    observed = []
+    for index, name in enumerate(TERMINAL_LINK_NAMES):
+        paths = set()
+        for row in samples:
+            contacts = row["contacts"]
+            if contacts["terminal_link_object"][index] <= 0:
+                continue
+            examples = contacts.get("terminal_link_object_examples", [None] * 3)
+            example = examples[index]
+            if not example:
+                continue
+            matches = [
+                str(path) for path in example
+                if str(path).endswith("/" + name)
+            ]
+            if len(matches) != 1:
+                return tuple()
+            paths.add(matches[0])
+        observed.append(tuple(sorted(paths)))
+    return tuple(observed)
+
+
+def _derive_pad_surface_identity(
+    document: Mapping[str, object], samples, robot_asset_path: Path | None
+) -> dict[str, object]:
+    result: dict[str, object] = {
+        "verified": False,
+        "method": "CONTACT_ACTOR_PLUS_UNIQUE_ENABLED_COLLIDER_IN_BOUND_USD",
+        "reason": "ROBOT_ASSET_NOT_PROVIDED",
+        "mappings": [],
+    }
+    if robot_asset_path is None:
+        return result
+    robot_asset = Path(robot_asset_path).resolve()
+    if not robot_asset.is_file():
+        result["reason"] = "ROBOT_ASSET_MISSING"
+        result["robot_asset_path"] = str(robot_asset)
+        return result
+
+    expected_sha256 = document.get("evidence_binding", {}).get(
+        "robot_asset_sha256"
+    )
+    actual_sha256 = _file_sha256(robot_asset)
+    result.update({
+        "robot_asset_path": str(robot_asset),
+        "trace_bound_robot_asset_sha256": expected_sha256,
+        "robot_asset_sha256": actual_sha256,
+        "evaluator_source_sha256": _file_sha256(Path(__file__).resolve()),
+        "asset_binding_matches": bool(
+            isinstance(expected_sha256, str)
+            and expected_sha256 == actual_sha256
+        ),
+    })
+    if not result["asset_binding_matches"]:
+        result["reason"] = "ROBOT_ASSET_SHA256_MISMATCH"
+        return result
+
+    actor_paths = _terminal_contact_actor_paths(samples)
+    if len(actor_paths) != len(TERMINAL_LINK_NAMES) or any(
+        len(paths) != 1 for paths in actor_paths
+    ):
+        result["reason"] = "TERMINAL_CONTACT_ACTOR_NOT_UNIQUE"
+        result["observed_terminal_actor_paths"] = [
+            list(paths) for paths in actor_paths
+        ]
+        return result
+
+    from pxr import Usd, UsdPhysics
+
+    stage = Usd.Stage.Open(str(robot_asset))
+    if stage is None:
+        result["reason"] = "ROBOT_USD_OPEN_FAILED"
+        return result
+    default_prim = stage.GetDefaultPrim()
+    if not default_prim:
+        result["reason"] = "ROBOT_USD_DEFAULT_PRIM_MISSING"
+        return result
+    default_path = str(default_prim.GetPath())
+    mappings = []
+    for name, observed_paths in zip(TERMINAL_LINK_NAMES, actor_paths):
+        actor_path = observed_paths[0]
+        owners = [
+            prim for prim in stage.Traverse()
+            if prim.GetName() == name and prim.HasAPI(UsdPhysics.RigidBodyAPI)
+        ]
+        if len(owners) != 1:
+            result["reason"] = "TERMINAL_RIGID_BODY_NOT_UNIQUE"
+            result["failed_terminal_link"] = name
+            return result
+        owner = owners[0]
+        owner_path = str(owner.GetPath())
+        owner_suffix = owner_path[len(default_path):]
+        if not owner_suffix or not actor_path.endswith(owner_suffix):
+            result["reason"] = "CONTACT_ACTOR_DOES_NOT_MATCH_BOUND_USD"
+            result["failed_terminal_link"] = name
+            return result
+        colliders = []
+        for prim in Usd.PrimRange(owner):
+            if not prim.HasAPI(UsdPhysics.CollisionAPI):
+                continue
+            collision_enabled = UsdPhysics.CollisionAPI(
+                prim
+            ).GetCollisionEnabledAttr().Get()
+            if collision_enabled is True:
+                colliders.append(prim)
+        if len(colliders) != 1:
+            result["reason"] = "ENABLED_COLLIDER_NOT_UNIQUE"
+            result["failed_terminal_link"] = name
+            result["enabled_collider_count"] = len(colliders)
+            return result
+        collider = colliders[0]
+        material_role = collider.GetAttribute("kcg:materialRole").Get()
+        source_mesh_uri = collider.GetAttribute("kcg:sourceMeshUri").Get()
+        if material_role != "fingertip_pad":
+            result["reason"] = "UNIQUE_COLLIDER_IS_NOT_FINGERTIP_PAD"
+            result["failed_terminal_link"] = name
+            return result
+        collider_path = str(collider.GetPath())
+        collider_suffix = collider_path[len(owner_path):]
+        mappings.append({
+            "terminal_link": name,
+            "contact_actor_path": actor_path,
+            "asset_rigid_body_path": owner_path,
+            "inferred_contact_collider_path": actor_path + collider_suffix,
+            "asset_collider_path": collider_path,
+            "collision_enabled": True,
+            "material_role": material_role,
+            "source_mesh_uri": source_mesh_uri,
+        })
+
+    result.update({"verified": True, "reason": None, "mappings": mappings})
+    return result
+
+
+def evaluate_trace(
+    document: Mapping[str, object], *, robot_asset_path: Path | None = None
+) -> dict[str, object]:
     """Apply frozen physical success criteria to an independently saved trace."""
 
     samples = list(document["samples"])
@@ -594,9 +974,7 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
     contacts = _contact_metrics(samples, motion["grasped"])
     safety = _safety_metrics(samples, criteria)
     acceleration = _acceleration_metrics(samples, criteria, physics_dt_s)
-    lift_pass = motion["maximum_lift_m"] + float(
-        criteria["lift_tolerance_m"]
-    ) >= float(criteria["lift_distance_m"])
+    lift_pass = motion["maximum_lift_m"] >= float(criteria["lift_distance_m"])
     hold_pass = motion["hold_duration_s"] >= float(criteria["hold_duration_s"])
     contact_pass = contacts["maximum_sustained"] >= int(
         criteria["sustained_three_contact_samples"]
@@ -623,7 +1001,10 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
         and motion["table_released"]
         and acceleration["passed"]
     )
-    pad_identity = bool(document.get("pad_surface_identity_verified", False))
+    pad_identity_evidence = _derive_pad_surface_identity(
+        document, samples, robot_asset_path
+    )
+    pad_identity = bool(pad_identity_evidence["verified"])
     first_hold = [row for row in samples if row["phase"] == "finger_1_hold"]
     confirmation = next((index for index, row in enumerate(samples)
                          if row["phase"] == "finger_1_contact_confirmed"), None)
@@ -665,6 +1046,7 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
         "three_terminal_link_contacts_observed": contact_pass,
         "terminal_link_contact_records": contacts["terminal_records"],
         "pad_surface_identity_verified": pad_identity,
+        "pad_surface_identity_evidence": pad_identity_evidence,
         "maximum_consecutive_simultaneous_contact_samples": contacts["maximum_sustained"],
         "maximum_lift_m": motion["maximum_lift_m"],
         "lift_50mm_passed": lift_pass,
@@ -705,7 +1087,9 @@ def evaluate_trace(document: Mapping[str, object]) -> dict[str, object]:
         "hardware_authorized": False,
         "evidence_binding": document.get("evidence_binding", {}),
         "evidence_limit": (
-            "RESEARCH_ONLY_WHOLE_TERMINAL_LINK_CONVEX_CONTACT_NOT_FORMAL_PAD_PATCH"
+            "RESEARCH_ONLY_BOUND_USD_UNIQUE_COLLIDER_PAD_IDENTITY_NOT_FORMAL_CERTIFICATION"
+            if pad_identity else
+            "RESEARCH_ONLY_TERMINAL_LINK_CONTACT_PAD_IDENTITY_UNRESOLVED"
         ),
     }
 
@@ -714,9 +1098,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("trace_json")
     parser.add_argument("--output", required=True)
+    parser.add_argument("--robot-asset")
     arguments = parser.parse_args()
     trace = json.loads(Path(arguments.trace_json).read_text(encoding="utf-8"))
-    result = evaluate_isolated_hand_trace(trace) if trace.get("mode") == "isolated-hand" else evaluate_trace(trace)
+    if trace.get("mode") != "isolated-hand" and not arguments.robot_asset:
+        parser.error("dynamic trace evaluation requires --robot-asset")
+    result = (
+        evaluate_isolated_hand_trace(trace)
+        if trace.get("mode") == "isolated-hand"
+        else evaluate_trace(
+            trace, robot_asset_path=Path(arguments.robot_asset).resolve()
+        )
+    )
     Path(arguments.output).write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )

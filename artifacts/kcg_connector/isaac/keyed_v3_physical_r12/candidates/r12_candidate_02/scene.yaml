@@ -1,0 +1,116 @@
+schema_version: kcg_d38999_keyed_v3_tabletop_scene_r12_v1
+asset_profile:
+  profile_id: d38999_shell25j_25_61_n_keyed_physical_pair_v3_r12
+  source_config: src/kcg_connector/config/d38999_keyed_v3_physical_model_contract_r12_v1.yaml
+  loose_endpoint_orientation: MATING_FACE_UP_RX_180_FOR_REAR_DOWN
+  fixed_endpoint_orientation: MATING_FACE_UP_RX_180_FOR_DOWNWARD_INSERTION
+  loose_endpoint_rotation_degrees_xyz:
+  - 180.0
+  - 0.0
+  - 0.0
+  fixed_endpoint_rotation_degrees_xyz:
+  - 180.0
+  - 0.0
+  - 0.0
+  body_mass_kg: 0.23
+  nut_mass_kg: 0.08
+  expected_body_collider_count: 7438
+  expected_nut_collider_count: 204
+asset:
+  local_path: artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/r12_candidate_02.usda
+  proxy_id: d38999_shell25j_25_61_n_keyed_physical_pair_v3_r12
+  reference_prim_path: /World/D38999TabletopV1/D38999Pair
+  model_root_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JKeyedPhysicalV3
+  loose_plug_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JKeyedPhysicalV3/LoosePlug
+  body_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JKeyedPhysicalV3/LoosePlug/BodyAssembly
+  nut_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JKeyedPhysicalV3/LoosePlug/CouplingNut
+  joint_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JKeyedPhysicalV3/LoosePlug/CouplingNutJoint
+  fixed_receptacle_prim_path: /World/D38999TabletopV1/D38999Pair/D38999Shell25JKeyedPhysicalV3/FixedReceptacle
+world:
+  root_prim_path: /World/D38999TabletopV1
+  physics_material_prim_path: /World/D38999TabletopV1/TabletopMaterial
+table:
+  prim_path: /World/D38999TabletopV1/Table
+  center_m:
+  - 0.55
+  - 0.0
+  - 0.16
+  size_m:
+  - 0.8
+  - 0.9
+  - 0.08
+  color_rgb:
+  - 0.24
+  - 0.29
+  - 0.34
+  static_friction: 0.9
+  dynamic_friction: 0.75
+  restitution: 0.0
+fixed_endpoint:
+  fixture_prim_path: /World/D38999TabletopV1/FixedFixture
+  fixture_center_m:
+  - 0.55
+  - 0.185
+  - 0.22
+  fixture_size_m:
+  - 0.14
+  - 0.14
+  - 0.04
+  fixture_color_rgb:
+  - 0.12
+  - 0.15
+  - 0.19
+  receptacle_origin_m:
+  - 0.55
+  - 0.185
+  - 0.272
+  receptacle_bottom_offset_m: 0.032
+loose_endpoint:
+  initial_origin_m:
+  - 0.52
+  - -0.21
+  - 0.2455
+  body_bottom_offset_m: -0.0305
+  nut_bottom_offset_m: -0.0305
+  footprint_radius_m: 0.024
+  initial_clearance_above_table_m: 0.015
+  minimum_endpoint_separation_m: 0.3
+physics:
+  rate_hz: 240
+  gravity_m_s2: -9.81
+  settle_duration_s: 2.0
+  tail_duration_s: 0.5
+  minimum_vertical_drop_m: 0.01
+  maximum_vertical_drop_m: 0.02
+  maximum_transient_table_penetration_m: 0.002
+  maximum_final_surface_gap_m: 0.003
+  maximum_xy_drift_m: 0.015
+  maximum_tail_displacement_m: 0.001
+  maximum_tail_linear_speed_m_s: 0.02
+  maximum_tail_angular_speed_rad_s: 0.2
+  maximum_upright_axis_tilt_rad: 0.08726646259971647
+  maximum_fixed_translation_drift_m: 5.0e-06
+  maximum_fixed_rotation_drift_rad: 1.0e-05
+render:
+  camera_eye_m:
+  - 1.05
+  - 0.9
+  - 0.61
+  camera_target_m:
+  - 0.535
+  - 0.0
+  - 0.25
+  dome_light_intensity: 650.0
+  dome_light_color_rgb:
+  - 0.82
+  - 0.88
+  - 1.0
+  key_light_intensity: 2200.0
+  key_light_color_rgb:
+  - 1.0
+  - 0.92
+  - 0.82
+  key_light_rotation_degrees_xyz:
+  - -45.0
+  - 30.0
+  - 35.0

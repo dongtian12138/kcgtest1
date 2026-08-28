@@ -1,0 +1,144 @@
+#usda 1.0
+(
+    customLayerData = {
+        string creator = "URDF USD Converter v0.1.3"
+    }
+    defaultPrim = "handarm"
+    doc = """Generated from Composed Stage of root layer /tmp/tmpd9kq3pwq/handarm.usdc
+
+
+Generated from Composed Stage of root layer /tmp/urdf_import_handarm_fdk75yn5/usdex_handarm/handarm.usdc
+
+
+Generated from Composed Stage of root layer /tmp/urdf_import_handarm_fdk75yn5/temp_handarm/handarm.usd
+
+
+Generated from Composed Stage of root layer /tmp/kcg_handarm_r7_stage_vIkUIx/imported2/handarm/payloads/base.usd
+"""
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    subLayers = [
+        @./physics.usda@
+    ]
+    upAxis = "Z"
+)
+
+over "handarm"
+{
+    over "Physics"
+    {
+        over "iiwa_joint_1" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:maxJointVelocity = 572.9578
+        }
+
+        over "iiwa_joint_2" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:maxJointVelocity = 572.9578
+        }
+
+        over "iiwa_joint_3" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:maxJointVelocity = 572.9578
+        }
+
+        over "iiwa_joint_4" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:maxJointVelocity = 572.9578
+        }
+
+        over "iiwa_joint_5" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:maxJointVelocity = 572.9578
+        }
+
+        over "iiwa_joint_6" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:maxJointVelocity = 572.9578
+        }
+
+        over "iiwa_joint_7" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:maxJointVelocity = 572.9578
+        }
+
+        over "f1j1" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:jointFriction = 0.05
+            float physxJoint:maxJointVelocity = 229.18312
+        }
+
+        over "f1j2" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:jointFriction = 0.05
+            float physxJoint:maxJointVelocity = 229.18312
+        }
+
+        over "f1j3" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:jointFriction = 0.05
+            float physxJoint:maxJointVelocity = 229.18312
+        }
+
+        over "f2j1" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:jointFriction = 0.05
+            float physxJoint:maxJointVelocity = 229.18312
+        }
+
+        over "f2j2" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:jointFriction = 0.05
+            float physxJoint:maxJointVelocity = 229.18312
+        }
+
+        over "f3j1" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:jointFriction = 0.05
+            float physxJoint:maxJointVelocity = 229.18312
+        }
+
+        over "f3j2" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:jointFriction = 0.05
+            float physxJoint:maxJointVelocity = 229.18312
+        }
+
+        over "f3j3" (
+            prepend apiSchemas = ["PhysxJointAPI"]
+        )
+        {
+            float physxJoint:jointFriction = 0.05
+            float physxJoint:maxJointVelocity = 229.18312
+        }
+    }
+}
+

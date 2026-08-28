@@ -30,31 +30,6 @@ _CAPACITY_REQUEST = re.compile(
 )
 
 
-def select_executable_offline_candidate(
-    report: Mapping[str, object],
-) -> Mapping[str, object]:
-    if report.get("schema_version") != "carts_grasp_v2_offline_result_v2":
-        raise ValueError("offline result schema is not the executable V2 schema")
-    rows = report.get("executable_candidates")
-    if not isinstance(rows, list) or not rows or not isinstance(rows[0], Mapping):
-        raise ValueError("offline report contains no executable candidate")
-    selected = rows[0]
-    required = (
-        selected.get("selection_status") == "EXECUTABLE_CANDIDATE"
-        and selected.get("selection_scope")
-        == "OFFLINE_ELIGIBLE_FOR_BOUND_PREFLIGHT_NOT_DYNAMIC_PASS"
-        and selected.get("rank") == 1
-        and selected.get("three_effective_pad_contacts") is True
-        and selected.get("offline_task_gate_passed") is True
-        and selected.get("task_status") == "TASK_SURVIVE"
-        and selected.get("fast_filter") == "FAST_SURVIVE"
-        and selected.get("sequential_closure_sweep_pass") is True
-    )
-    if not required:
-        raise ValueError("offline Top-1 is not executable under every offline gate")
-    return selected
-
-
 def _next_power_of_two(value: int) -> int:
     return 1 if value <= 1 else 1 << (value - 1).bit_length()
 
@@ -260,8 +235,8 @@ def identity_hashes_match(trace: Mapping[str, object]) -> bool:
     return bool(
         binding.get("config_sha256") == trace.get("config_sha256")
         == runtime.get("config_sha256")
-        and binding.get("offline_result_sha256")
-        == runtime.get("offline_result_sha256")
+        and binding.get("registered_grasp_sha256")
+        == runtime.get("registered_grasp_sha256")
         and binding.get("control_plan_sha256") == runtime.get("control_plan_sha256")
         and binding.get("scene_evidence_sha256")
         == runtime.get("scene_evidence_sha256")
@@ -378,7 +353,7 @@ def preflight_is_accepted(document: Mapping[str, object]) -> bool:
         return False
     binding = document.get("evidence_binding")
     required_binding = (
-        "config_sha256", "offline_result_sha256", "control_plan_sha256",
+        "config_sha256", "registered_grasp_sha256", "control_plan_sha256",
         "runtime_resources_sha256", "capacity_audit_sha256",
         "scene_evidence_sha256", "object_asset_sha256", "robot_asset_sha256",
         "controller_source_sha256", "runner_source_sha256",

@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import subprocess
 import traceback
+from typing import Mapping
 
 import numpy as np
 
@@ -18,8 +19,7 @@ if __package__:
     from .engine_health import (
         PhysxStatsMonitor, current_engine_log_path, finalize_engine_evaluation,
         gpu_backend_record, gpu_world_parameters, identity_hashes_match,
-        load_runtime_resources, preflight_is_accepted,
-        select_executable_offline_candidate, synchronize_engine_log,
+        load_runtime_resources, preflight_is_accepted, synchronize_engine_log,
     )
     from .evaluate_run import (
         IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
@@ -31,8 +31,7 @@ else:
     from engine_health import (
         PhysxStatsMonitor, current_engine_log_path, finalize_engine_evaluation,
         gpu_backend_record, gpu_world_parameters, identity_hashes_match,
-        load_runtime_resources, preflight_is_accepted,
-        select_executable_offline_candidate, synchronize_engine_log,
+        load_runtime_resources, preflight_is_accepted, synchronize_engine_log,
     )
     from evaluate_run import (
         IsolatedHandRecorder, TruthAuditRecorder, audit_initial_joint_state,
@@ -53,6 +52,7 @@ HAND_BASE_PATH = ARTICULATION_PATH + (
 EXPECTED_DOF_NAMES = control.ARM_JOINT_NAMES + (
     "f1j1", "f1j2", "f1j3", "f2j1", "f2j2", "f3j1", "f3j2", "f3j3",
 )
+TENSOR_CONTACT_MAX_COUNT = 4096
 def _json_sha256(value: object) -> str:
     payload = json.dumps(value, ensure_ascii=True, allow_nan=False, sort_keys=True,
                          separators=(",", ":")).encode("utf-8")
@@ -66,20 +66,82 @@ def _arguments(repository: Path) -> argparse.Namespace:
     parser.add_argument("--object-id", default="current_d38999_26kj61sn_public_spec")
     parser.add_argument("--config", default=str(
         repository / "src/kcg_connector/config/carts_grasp_v2.yaml"))
-    parser.add_argument("--offline-result", default=str(
-        repository / "artifacts/carts_v2/offline/current_d38999_26kj61sn_public_spec/result.json"))
     parser.add_argument("--runtime-resources", default=str(
         repository / "src/kcg_connector/config/carts_v2_isaac_runtime.json"))
     parser.add_argument("--preflight-evaluation")
     parser.add_argument("--reference-trace")
     parser.add_argument("--output-directory", required=True)
     parser.add_argument("--gui", action="store_true")
+    parser.add_argument(
+        "--capture-visual-evidence", action="store_true",
+        help="save four post-step Isaac viewport frames without feeding image truth to control",
+    )
+    parser.add_argument(
+        "--omit-trace-json", action="store_true",
+        help="evaluate in memory but do not duplicate the large trace.json",
+    )
     arguments = parser.parse_args()
     if arguments.mode in ("first-finger-diagnostic", "grasp-lift") and not arguments.preflight_evaluation:
         parser.error("object contact execution requires --preflight-evaluation")
     if arguments.mode == "isolated-hand" and not arguments.reference_trace:
         parser.error("isolated-hand requires --reference-trace")
+    if arguments.capture_visual_evidence and arguments.mode == "isolated-hand":
+        parser.error("visual evidence capture is only supported in the object scene")
     return arguments
+
+
+def _registered_grasp(inputs, object_id: str) -> Mapping[str, object]:
+    dynamic = inputs.config.section("dynamic")
+    registrations = dynamic.get("registered_grasps")
+    grasp = registrations.get(object_id) if isinstance(registrations, Mapping) else None
+    if not isinstance(grasp, Mapping):
+        raise ValueError("object has no directly registered grasp")
+    if (
+        grasp.get("schema_version") != "carts_v2_registered_grasp_v1"
+        or grasp.get("object_id") != object_id
+        or grasp.get("hardware_authorized") is not False
+        or not isinstance(grasp.get("grasp_id"), str)
+        or not isinstance(grasp.get("control_plan"), Mapping)
+    ):
+        raise ValueError("registered grasp identity or authorization is invalid")
+    control_plan = grasp["control_plan"]
+    object_from_hand = np.asarray(
+        control_plan.get("object_from_hand_row_major"), dtype=np.float64
+    )
+    pregrasp = np.asarray(
+        control_plan.get("pregrasp_joint_positions_rad"), dtype=np.float64
+    )
+    final = np.asarray(
+        control_plan.get("final_joint_positions_rad"), dtype=np.float64
+    )
+    if (
+        object_from_hand.shape != (16,)
+        or pregrasp.shape != (4,)
+        or final.shape != (4,)
+        or not all(np.all(np.isfinite(row)) for row in (object_from_hand, pregrasp, final))
+        or not np.allclose(object_from_hand.reshape(4, 4)[3], (0.0, 0.0, 0.0, 1.0))
+    ):
+        raise ValueError("registered grasp control plan is not finite and rigid-shaped")
+    clamp = grasp.get("finite_clamp_target")
+    lift = grasp.get("lift_trajectory")
+    hold = grasp.get("hold_control")
+    if not all(isinstance(row, Mapping) for row in (clamp, lift, hold)):
+        raise ValueError("registered grasp omits finite clamp, lift, or hold control")
+    expected = (
+        (clamp["preload_increment_rad"], dynamic["preload_increment_rad"]),
+        (clamp["hand_drive_maximum_effort_nm"], dynamic["hand_drive_maximum_effort_nm"]),
+        (clamp["measured_effort_abort_nm"], dynamic["measured_effort_abort_nm"]),
+        (lift["distance_m"], dynamic["lift_command_distance_m"]),
+        (lift["duration_s"], dynamic["lift_duration_s"]),
+        (
+            lift["arm_damping_nm_s_rad"],
+            dynamic["lift_arm_damping_nm_s_rad"],
+        ),
+        (hold["duration_s"], dynamic["hold_duration_s"]),
+    )
+    if any(float(left) != float(right) for left, right in expected):
+        raise ValueError("registered grasp differs from bounded dynamic control settings")
+    return grasp
 
 
 def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
@@ -87,18 +149,10 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
     arguments.runtime_resources_path = Path(arguments.runtime_resources).resolve()
     arguments.runtime_resources_document = load_runtime_resources(
         arguments.runtime_resources_path)
-    report_path = Path(arguments.offline_result).resolve()
-    report = json.loads(report_path.read_text(encoding="utf-8"))
-    if report["object_id"] != arguments.object_id:
-        raise ValueError("offline result object does not match requested object")
-    if report.get("hardware_authorized") is not False:
-        raise ValueError("offline report changed hardware authorization")
-    if report["config_sha256"] != file_sha256(config_path):
-        raise ValueError("offline result is stale relative to V2 config")
-    selected = select_executable_offline_candidate(report)
     inputs = load_v2_inputs(repository, config_path=config_path,
                             object_id=arguments.object_id)
     dynamic = inputs.config.section("dynamic")
+    grasp = _registered_grasp(inputs, arguments.object_id)
     scene_entry = dynamic["object_scenes"].get(arguments.object_id)
     if not isinstance(scene_entry, dict):
         raise ValueError("object has no registered free tabletop dynamic scene")
@@ -108,7 +162,7 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         preflight = json.loads(arguments.preflight_evaluation_path.read_text(
             encoding="utf-8"))
         arguments.preflight_document = preflight
-        expected = (arguments.object_id, selected["candidate_id"])
+        expected = (arguments.object_id, grasp["grasp_id"])
         observed = (preflight.get("object_id"), preflight.get("candidate_id"))
         if observed != expected or not preflight_is_accepted(preflight):
             raise ValueError("matching independent preflight did not pass")
@@ -120,8 +174,8 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         world_from_object = np.asarray(scene_entry[
             "frozen_settled_world_from_object_row_major"], dtype=np.float64).reshape(4, 4)
         motion_plan = control.build_joint_motion_plan(
-            repository, inputs, selected["control_plan"], world_from_object)
-    return inputs, report, selected, scene_entry, motion_plan
+            repository, inputs, grasp["control_plan"], world_from_object)
+    return inputs, grasp, scene_entry, motion_plan
 
 
 def prepare_dynamic_scene(
@@ -160,6 +214,7 @@ def prepare_dynamic_scene(
             },
             "table_top_z_m": scene.table.top_z_m,
             "gravity_m_s2": scene.physics.gravity_m_s2,
+            "render": scene.render,
             "evidence_paths": (scene_path,),
             "environment_scope": "FULL_TABLE_FIXTURE_AND_FIXED_RECEPTACLE",
         }
@@ -202,12 +257,13 @@ def prepare_dynamic_scene(
         },
         "table_top_z_m": environment.table.top_z_m,
         "gravity_m_s2": environment.physics.gravity_m_s2,
+        "render": environment.render,
         "evidence_paths": (environment_path, manifest_path),
         "environment_scope": "SHARED_FINITE_TABLE_AND_FIXTURE_WITHOUT_FIXED_RECEPTACLE",
     }
 
 
-def _initial_trace(arguments, report, selected, motion_plan, dynamic):
+def _initial_trace(arguments, inputs, grasp, motion_plan, dynamic):
     criteria = {
         key: dynamic[key]
         for key in (
@@ -221,18 +277,19 @@ def _initial_trace(arguments, report, selected, motion_plan, dynamic):
         dynamic["contact_consecutive_samples"]
     )
     criteria["registered_lift_peak_acceleration_m_s2"] = float(
-        report["lambda_one_task_load"]["lift_peak_acceleration_m_s2"]
+        grasp["lift_trajectory"]["registered_peak_acceleration_m_s2"]
     )
     criteria["first_finger_diagnostic_duration_s"] = float(dynamic["preload_duration_s"])
     criteria["maximum_finger_target_increment_rad"] = float(dynamic[
         "finger_maximum_speed_rad_s"]) * float(dynamic["physics_dt_s"])
     return {
         "schema_version": "carts_grasp_v2_dynamic_trace_v1",
-        "object_id": arguments.object_id, "candidate_id": selected["candidate_id"],
+        "object_id": arguments.object_id, "candidate_id": grasp["grasp_id"],
         "mode": arguments.mode,
-        "config_sha256": report["config_sha256"],
-        "offline_worst_task_margin": selected["worst_task_margin"],
-        "offline_task_gate_passed": selected["offline_task_gate_passed"],
+        "config_sha256": file_sha256(inputs.config.path),
+        "registered_grasp": dict(grasp),
+        "offline_worst_task_margin": None,
+        "offline_task_gate_passed": False,
         "hardware_authorized": False, "formal_dynamic_pass": False,
         "physics_dt_s": float(dynamic["physics_dt_s"]),
         "maximum_joint_speed_limit_rad_s": float(
@@ -242,7 +299,6 @@ def _initial_trace(arguments, report, selected, motion_plan, dynamic):
         "controller_online_signals": list(motion_plan["online_signals"]),
         "online_object_or_contact_truth_used": False,
         "truth_audit_data_returned_to_controller": False,
-        "pad_surface_identity_verified": False,
         "disturbance_executed": bool(dynamic["disturbance_executed"]),
         "motion_plan": motion_plan,
         "criteria": criteria,
@@ -251,13 +307,14 @@ def _initial_trace(arguments, report, selected, motion_plan, dynamic):
     }
 
 
-def _initial_isolated_trace(arguments, report, selected, motion_plan, dynamic):
+def _initial_isolated_trace(arguments, inputs, grasp, motion_plan, dynamic):
     reference_path = Path(arguments.reference_trace).resolve()
     reference = arguments.reference_document
     observed = (reference.get("object_id"), reference.get("candidate_id"))
-    if (observed != (arguments.object_id, selected["candidate_id"])
+    config_sha256 = file_sha256(inputs.config.path)
+    if (observed != (arguments.object_id, grasp["grasp_id"])
             or reference.get("mode") not in ("preflight", "first-finger-diagnostic", "grasp-lift")
-            or reference.get("config_sha256") != report["config_sha256"]):
+            or reference.get("config_sha256") != config_sha256):
         raise ValueError("isolated diagnostic reference differs from the failed run")
     if (
         float(reference.get("physics_dt_s", -1.0)) != float(dynamic["physics_dt_s"])
@@ -266,9 +323,9 @@ def _initial_isolated_trace(arguments, report, selected, motion_plan, dynamic):
         raise ValueError("isolated diagnostic trajectory differs from the failed run")
     return {
         "schema_version": "carts_grasp_v2_isolated_hand_diagnostic_v1",
-        "object_id": arguments.object_id, "candidate_id": selected["candidate_id"],
+        "object_id": arguments.object_id, "candidate_id": grasp["grasp_id"],
         "mode": arguments.mode,
-        "config_sha256": report["config_sha256"],
+        "config_sha256": config_sha256,
         "physics_dt_s": float(dynamic["physics_dt_s"]),
         "maximum_joint_speed_limit_rad_s": float(
             dynamic["maximum_joint_speed_rad_s"]
@@ -416,13 +473,13 @@ def _execute_isolated(repository, arguments, output, inputs, scene_entry, motion
     return 0 if metrics["diagnostic_pass"] else 2
 
 
-def _evidence_binding(repository, arguments, report, selected, scene, robot_asset):
+def _evidence_binding(repository, arguments, inputs, grasp, scene, robot_asset):
     object_asset = scene["object_asset"]
     evidence_paths = tuple(scene["evidence_paths"])
     return {
-        "config_sha256": report["config_sha256"],
-        "offline_result_sha256": file_sha256(Path(arguments.offline_result).resolve()),
-        "control_plan_sha256": _json_sha256(selected["control_plan"]),
+        "config_sha256": file_sha256(inputs.config.path),
+        "registered_grasp_sha256": _json_sha256(grasp),
+        "control_plan_sha256": _json_sha256(grasp["control_plan"]),
         "runtime_resources_sha256": file_sha256(arguments.runtime_resources_path),
         "capacity_audit_sha256": arguments.runtime_resources_document[
             "capacity_audit_sha256"],
@@ -439,18 +496,37 @@ def _evidence_binding(repository, arguments, report, selected, scene, robot_asse
     }
 
 
-def _create_runtime(repository, arguments, inputs, report, selected, scene_entry, trace):
+def _create_runtime(repository, arguments, inputs, grasp, scene_entry, trace):
+    import carb.settings
     from isaacsim.core.api import World
+    from isaacsim.core.experimental.prims import RigidPrim as TensorRigidPrim
     from isaacsim.core.prims import SingleRigidPrim
     from isaacsim.core.simulation_manager import SimulationManager
     from isaacsim.core.utils.stage import add_reference_to_stage, get_current_stage
-    from omni.physx import get_physx_simulation_interface
-    from pxr import Gf, PhysxSchema, PhysicsSchemaTools, Usd, UsdGeom, UsdPhysics
+    from omni.physx import get_physx_interface, get_physx_simulation_interface
+    from omni.physx.bindings._physx import SETTING_DISABLE_CONTACT_PROCESSING
+    from pxr import Gf, PhysxSchema, PhysicsSchemaTools, Usd, UsdGeom, UsdLux, UsdPhysics
 
     dynamic = inputs.config.section("dynamic")
     robot_asset = (repository / dynamic["robot_asset"]).resolve()
     if not robot_asset.is_file():
         raise ValueError("registered robot asset is missing")
+    settings = carb.settings.get_settings()
+    contact_processing_before = settings.get(
+        SETTING_DISABLE_CONTACT_PROCESSING
+    )
+    settings.set_bool(SETTING_DISABLE_CONTACT_PROCESSING, False)
+    contact_processing_before_world = settings.get_as_bool(
+        SETTING_DISABLE_CONTACT_PROCESSING
+    )
+    trace["contact_processing_setting_audit"] = {
+        "path": SETTING_DISABLE_CONTACT_PROCESSING,
+        "before": contact_processing_before,
+        "required": False,
+        "before_world": contact_processing_before_world,
+    }
+    if contact_processing_before_world:
+        raise RuntimeError("PhysX contact processing was not enabled before World creation")
     World.clear_instance()
     SimulationManager.set_physics_sim_device("cuda:0")
     world = World(
@@ -461,9 +537,37 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
     )
     context = world.get_physics_context()
     stage = get_current_stage()
+    physics_scene_prim = stage.GetPrimAtPath(context.prim_path)
+    physics_scene_api = PhysxSchema.PhysxSceneAPI.Apply(physics_scene_prim)
+    minimum_velocity_iterations = (
+        physics_scene_api.GetMinVelocityIterationCountAttr().Get()
+    )
+    physics_scene_api.CreateMinVelocityIterationCountAttr().Set(8)
+    observed_minimum_velocity_iterations = (
+        physics_scene_api.GetMinVelocityIterationCountAttr().Get()
+    )
+    if observed_minimum_velocity_iterations != 8:
+        raise RuntimeError("physics scene minimum velocity iterations did not read back as 8")
+    trace["physics_scene_velocity_iteration_audit"] = {
+        "before": minimum_velocity_iterations,
+        "required": 8,
+        "observed": observed_minimum_velocity_iterations,
+    }
     scene = prepare_dynamic_scene(repository, stage, scene_entry, add_reference_to_stage)
+    if arguments.capture_visual_evidence:
+        render = scene["render"]
+        lighting_root = "/World/CARTSGraspVisualEvidenceLights"
+        dome = UsdLux.DomeLight.Define(stage, lighting_root + "/Fill")
+        dome.CreateIntensityAttr(float(render.dome_light_intensity))
+        dome.CreateColorAttr(Gf.Vec3f(*render.dome_light_color_rgb))
+        key = UsdLux.DistantLight.Define(stage, lighting_root + "/Key")
+        key.CreateIntensityAttr(float(render.key_light_intensity))
+        key.CreateColorAttr(Gf.Vec3f(*render.key_light_color_rgb))
+        key.AddRotateXYZOp().Set(
+            Gf.Vec3f(*render.key_light_rotation_degrees_xyz)
+        )
     trace["evidence_binding"] = _evidence_binding(
-        repository, arguments, report, selected, scene, robot_asset)
+        repository, arguments, inputs, grasp, scene, robot_asset)
     if arguments.mode in ("first-finger-diagnostic", "grasp-lift"):
         preflight = arguments.preflight_document
         if preflight.get("evidence_binding") != trace["evidence_binding"]:
@@ -491,8 +595,46 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
         )
         for index, path in enumerate(scene["part_prim_paths"])
     )
+    robot_contact_paths = tuple(
+        path for path in rigid_body_prims
+        if path == ROBOT_ROOT or path.startswith(ROBOT_ROOT + "/")
+    )
+    object_contact_paths = tuple(map(str, scene["part_prim_paths"]))
+    tensor_contact_sensor_paths = robot_contact_paths + object_contact_paths
+    if (
+        len(set(tensor_contact_sensor_paths)) != len(tensor_contact_sensor_paths)
+        or not set(object_contact_paths).issubset(rigid_body_prims)
+    ):
+        raise RuntimeError("tensor contact sensor paths do not match audited rigid bodies")
+    tensor_contact_prim = TensorRigidPrim(
+        list(tensor_contact_sensor_paths),
+        resolve_paths=False,
+        max_contact_count=TENSOR_CONTACT_MAX_COUNT,
+    )
+    trace["tensor_contact_view_audit"] = {
+        "robot_sensor_paths": list(robot_contact_paths),
+        "object_sensor_paths": list(object_contact_paths),
+        "sensor_paths": list(tensor_contact_sensor_paths),
+        "max_contact_count": TENSOR_CONTACT_MAX_COUNT,
+    }
     context.set_gravity(float(scene["gravity_m_s2"]))
     world.reset()
+    tensor_contact_view_valid = (
+        tensor_contact_prim.is_physics_tensor_entity_valid()
+    )
+    trace["tensor_contact_view_audit"]["valid_after_reset"] = (
+        tensor_contact_view_valid
+    )
+    if not tensor_contact_view_valid:
+        raise RuntimeError("tensor contact view is invalid after reset")
+    contact_processing_after_reset = settings.get_as_bool(
+        SETTING_DISABLE_CONTACT_PROCESSING
+    )
+    trace["contact_processing_setting_audit"]["after_reset"] = (
+        contact_processing_after_reset
+    )
+    if contact_processing_after_reset:
+        raise RuntimeError("PhysX contact processing was disabled during reset")
     after_rigid = [str(prim.GetPath()) for prim in stage.Traverse()
                    if prim.HasAPI(UsdPhysics.RigidBodyAPI)]
     after_reporters = [str(prim.GetPath()) for prim in stage.Traverse()
@@ -513,6 +655,7 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
     auditor = TruthAuditRecorder(
         object_parts=object_parts,
         hand_base_prim=hand_base_prim,
+        robot_model=inputs.robot_model,
         stage_modules=(Gf, Usd, UsdGeom),
         contact_interface=get_physx_simulation_interface(),
         path_decoder=PhysicsSchemaTools.intToSdfPath,
@@ -522,6 +665,10 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
         table_top_z_m=scene["table_top_z_m"],
         physics_dt_s=float(dynamic["physics_dt_s"]),
         engine_monitor=engine_monitor,
+        physics_step_interface=get_physx_interface(),
+        tensor_contact_prim=tensor_contact_prim,
+        tensor_contact_sensor_paths=tensor_contact_sensor_paths,
+        tensor_contact_max_count=TENSOR_CONTACT_MAX_COUNT,
     )
     return {
         "world": world, "scene": scene, "robot_asset": robot_asset,
@@ -530,9 +677,101 @@ def _create_runtime(repository, arguments, inputs, report, selected, scene_entry
         "runtime_resources_path": arguments.runtime_resources_path,
         "capacity_audit_sha256": arguments.runtime_resources_document[
             "capacity_audit_sha256"],
-        "offline_result_path": Path(arguments.offline_result).resolve(),
-        "control_plan": selected["control_plan"],
+        "registered_grasp": grasp,
+        "control_plan": grasp["control_plan"],
     }
+
+
+class _VisualEvidenceCapture:
+    """Capture post-step viewport frames; never return image truth to control."""
+
+    def __init__(self, *, world, auditor, output: Path, physics_dt_s: float) -> None:
+        import omni.kit.renderer_capture
+        from omni.kit.viewport.utility import get_active_viewport
+
+        self.world = world
+        self.auditor = auditor
+        self.output = output / "visuals"
+        self.output.mkdir(parents=True, exist_ok=False)
+        self.physics_dt_s = float(physics_dt_s)
+        self.viewport = get_active_viewport()
+        if self.viewport is None:
+            raise RuntimeError("visual evidence requested but no Isaac viewport is active")
+        self.viewport.resolution = (1600, 900)
+        self.renderer_capture = (
+            omni.kit.renderer_capture.acquire_renderer_capture_interface()
+        )
+        self.records: list[dict[str, object]] = []
+        self.pregrasp_object_z_m: float | None = None
+        self._captured: set[str] = set()
+        self._truth_capture = auditor.capture
+        auditor.capture = self.capture
+
+    def capture(self, **kwargs) -> None:
+        self._truth_capture(**kwargs)
+        row = self.auditor.samples[-1]
+        phase = str(row["phase"])
+        if phase == "pregrasp_hold":
+            if self.pregrasp_object_z_m is None:
+                self.pregrasp_object_z_m = float(row["object_center_m"][2])
+            self._capture_once("01_pregrasp", row)
+        elif phase == "preload":
+            self._capture_once("02_three_finger_clamp", row)
+        elif (
+            phase == "lift"
+            and self.pregrasp_object_z_m is not None
+            and float(row["object_center_m"][2]) - self.pregrasp_object_z_m >= 0.020
+            and int(row["contacts"]["object_table"]) == 0
+        ):
+            self._capture_once("03_table_released_20mm", row)
+
+    def capture_run_end(self) -> None:
+        if not self.auditor.samples:
+            return
+        row = self.auditor.samples[-1]
+        name = "04_final_hold" if row["phase"] == "hold" else "04_run_end_failure"
+        self._capture_once(name, row)
+
+    def _capture_once(self, name: str, row: Mapping[str, object]) -> None:
+        if name in self._captured:
+            return
+        from isaacsim.core.utils.viewports import set_camera_view
+        from omni.kit.viewport.utility import capture_viewport_to_file
+
+        center = np.asarray(row["object_center_m"], dtype=np.float64)
+        target = center + np.asarray((0.0, 0.0, 0.015), dtype=np.float64)
+        eye = target + np.asarray((0.38, 0.34, 0.25), dtype=np.float64)
+        set_camera_view(eye=eye, target=target, viewport_api=self.viewport)
+        for _ in range(8):
+            self.world.render()
+        image_path = self.output / f"{name}.png"
+        capture_viewport_to_file(self.viewport, file_path=str(image_path))
+        for _ in range(16):
+            self.world.render()
+        self.renderer_capture.wait_async_capture()
+        for _ in range(8):
+            if image_path.is_file() and image_path.stat().st_size > 0:
+                break
+            self.world.render()
+        if not image_path.is_file() or image_path.stat().st_size <= 0:
+            raise RuntimeError(f"Isaac viewport capture did not produce {image_path}")
+        terminal = row["contacts"]["terminal_link_object"]
+        self.records.append({
+            "file": str(image_path),
+            "step": int(row["step"]),
+            "simulation_time_s": float(row["step"]) * self.physics_dt_s,
+            "phase": str(row["phase"]),
+            "object_center_m": list(map(float, row["object_center_m"])),
+            "object_lift_from_pregrasp_m": (
+                None if self.pregrasp_object_z_m is None else
+                float(row["object_center_m"][2]) - self.pregrasp_object_z_m
+            ),
+            "object_table_contact_count": int(row["contacts"]["object_table"]),
+            "terminal_link_object_contact_counts": list(map(int, terminal)),
+            "camera_eye_m": eye.tolist(),
+            "camera_target_m": target.tolist(),
+        })
+        self._captured.add(name)
 
 
 def _run_controller(runtime, arguments, motion_plan, dynamic):
@@ -567,7 +806,7 @@ def _runtime_record(repository, inputs, runtime):
         ).stdout.strip(),
         "config_path": str(inputs.config.path),
         "config_sha256": file_sha256(inputs.config.path),
-        "offline_result_sha256": file_sha256(runtime["offline_result_path"]),
+        "registered_grasp_sha256": _json_sha256(runtime["registered_grasp"]),
         "control_plan_sha256": _json_sha256(runtime["control_plan"]),
         "runtime_resources_sha256": file_sha256(runtime["runtime_resources_path"]),
         "capacity_audit_sha256": runtime["capacity_audit_sha256"],
@@ -591,23 +830,40 @@ def _runtime_record(repository, inputs, runtime):
 def _finish_run(repository, inputs, runtime, trace, outcome):
     trace["controller_outcome"] = outcome
     trace["samples"] = runtime["auditor"].samples
+    visual_capture = runtime.get("visual_capture")
+    if visual_capture is not None:
+        trace["visual_evidence"] = {
+            "schema_version": "carts_grasp_v2_visual_evidence_v1",
+            "post_step_observation_only": True,
+            "returned_to_controller": False,
+            "records": visual_capture.records,
+        }
     trace["runtime"] = _runtime_record(repository, inputs, runtime)
     trace["identity_hash_check_pass"] = identity_hashes_match(trace)
     engine_runtime = runtime["engine_monitor"].summary()
     engine_runtime["gpu_backend_pass"] = trace["physics_backend"]["pass"]
-    return trace, evaluate_trace(trace), engine_runtime
+    return trace, evaluate_trace(
+        trace, robot_asset_path=runtime["robot_asset"]
+    ), engine_runtime
 
 
-def _execute(repository, arguments, output, inputs, report, selected, scene_entry, motion_plan, trace):
+def _execute(repository, arguments, output, inputs, grasp, scene_entry, motion_plan, trace):
     if arguments.mode == "isolated-hand":
         return _execute_isolated(
             repository, arguments, output, inputs, scene_entry, motion_plan, trace
         )
     runtime = _create_runtime(
-        repository, arguments, inputs, report, selected, scene_entry, trace
+        repository, arguments, inputs, grasp, scene_entry, trace
     )
     dynamic = inputs.config.section("dynamic")
+    if arguments.capture_visual_evidence:
+        runtime["visual_capture"] = _VisualEvidenceCapture(
+            world=runtime["world"], auditor=runtime["auditor"], output=output,
+            physics_dt_s=float(dynamic["physics_dt_s"]),
+        )
     _, outcome = _run_controller(runtime, arguments, motion_plan, dynamic)
+    if arguments.capture_visual_evidence and arguments.mode == "grasp-lift":
+        runtime["visual_capture"].capture_run_end()
     return _finish_run(repository, inputs, runtime, trace, outcome)
 
 
@@ -623,21 +879,22 @@ def main() -> int:
     arguments = _arguments(repository)
     output = Path(arguments.output_directory).resolve()
     output.mkdir(parents=True, exist_ok=False)
-    inputs, report, selected, scene_entry, motion_plan = _load_plan_inputs(
+    inputs, grasp, scene_entry, motion_plan = _load_plan_inputs(
         repository, arguments)
     dynamic = inputs.config.section("dynamic")
     from isaacsim import SimulationApp
 
     simulation_app = SimulationApp({
-        "headless": not arguments.gui, "multi_gpu": False,
+        "headless": not (arguments.gui or arguments.capture_visual_evidence),
+        "multi_gpu": False,
         "active_gpu": 0, "physics_gpu": 0, "fast_shutdown": True,
     })
     engine_log_path = current_engine_log_path()
-    trace = (_initial_isolated_trace(arguments, report, selected, motion_plan, dynamic)
+    trace = (_initial_isolated_trace(arguments, inputs, grasp, motion_plan, dynamic)
              if arguments.mode == "isolated-hand"
-             else _initial_trace(arguments, report, selected, motion_plan, dynamic))
+             else _initial_trace(arguments, inputs, grasp, motion_plan, dynamic))
     try:
-        result = _execute(repository, arguments, output, inputs, report, selected,
+        result = _execute(repository, arguments, output, inputs, grasp,
                           scene_entry, motion_plan, trace)
     except Exception as error:
         _write_failure(output, error)
@@ -651,8 +908,13 @@ def main() -> int:
         trace, evaluation, engine_runtime = result
         engine_runtime["engine_log_sync"] = synchronize_engine_log(engine_log_path)
         evaluation = finalize_engine_evaluation(evaluation, engine_runtime, engine_log_path)
-        (output / "trace.json").write_text(
-            json.dumps(trace, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if not arguments.omit_trace_json:
+            (output / "trace.json").write_text(
+                json.dumps(trace, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if "visual_evidence" in trace:
+            (output / "visual_evidence.json").write_text(
+                json.dumps(trace["visual_evidence"], ensure_ascii=False, indent=2)
+                + "\n", encoding="utf-8")
         (output / "evaluation.json").write_text(
             json.dumps(evaluation, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(json.dumps(evaluation, ensure_ascii=False, indent=2))

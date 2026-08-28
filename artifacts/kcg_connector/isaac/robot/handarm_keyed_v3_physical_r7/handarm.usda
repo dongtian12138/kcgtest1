@@ -1,0 +1,834 @@
+#usda 1.0
+(
+    customLayerData = {
+        string creator = "URDF USD Converter v0.1.3"
+        bool "kcg:hashesGenerated" = 0
+        string "kcg:sourceKind" = "FROZEN_SIMULATION_PROXY"
+        string "kcg:successorRevision" = "keyed_v3_physical_r7"
+    }
+    defaultPrim = "handarm"
+    doc = """Generated from Composed Stage of root layer /tmp/tmpd9kq3pwq/handarm.usdc
+
+
+Generated from Composed Stage of root layer /tmp/urdf_import_handarm_fdk75yn5/usdex_handarm/handarm.usdc
+
+
+Generated from Composed Stage of root layer /tmp/urdf_import_handarm_fdk75yn5/temp_handarm/handarm.usd
+
+
+Generated from Composed Stage of root layer /tmp/kcg_handarm_r7_stage_vIkUIx/imported2/handarm/payloads/base.usd
+"""
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "handarm" (
+    prepend references = @./payloads/base.usda@
+    variants = {
+        string Physics = "physx"
+    }
+    append variantSets = "Physics"
+)
+{
+    over "Geometry"
+    {
+        over "world"
+        {
+            bool newton:selfCollisionEnabled = 1
+
+            over "iiwa_link_0" (
+                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+            )
+            {
+                point3f physics:centerOfMass = (-0.1, 0, 0.07)
+                float3 physics:diagonalInertia = (0.05, 0.06, 0.03)
+                rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1>
+                bool physics:kinematicEnabled = 0
+                float physics:mass = 5
+                quatf physics:principalAxes = (1, 0, 0, 0)
+                bool physics:rigidBodyEnabled = 1
+                bool physxRigidBody:enableCCD = 1
+
+                over "iiwa_link_1" (
+                    apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                )
+                {
+                    point3f physics:centerOfMass = (0, -0.03, 0.12)
+                    float3 physics:diagonalInertia = (0.1, 0.09, 0.02)
+                    rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2>
+                    bool physics:kinematicEnabled = 0
+                    float physics:mass = 4
+                    quatf physics:principalAxes = (1, 0, 0, 0)
+                    bool physics:rigidBodyEnabled = 1
+                    bool physxRigidBody:enableCCD = 1
+
+                    over "iiwa_link_2" (
+                        apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                    )
+                    {
+                        point3f physics:centerOfMass = (0.0003, 0.059, 0.042)
+                        float3 physics:diagonalInertia = (0.05, 0.018, 0.044)
+                        rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3>
+                        bool physics:kinematicEnabled = 0
+                        float physics:mass = 4
+                        quatf physics:principalAxes = (1, 0, 0, 0)
+                        bool physics:rigidBodyEnabled = 1
+                        bool physxRigidBody:enableCCD = 1
+
+                        over "iiwa_link_3" (
+                            apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                        )
+                        {
+                            point3f physics:centerOfMass = (0, 0.03, 0.13)
+                            float3 physics:diagonalInertia = (0.08, 0.075, 0.01)
+                            rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4>
+                            bool physics:kinematicEnabled = 0
+                            float physics:mass = 3
+                            quatf physics:principalAxes = (1, 0, 0, 0)
+                            bool physics:rigidBodyEnabled = 1
+                            bool physxRigidBody:enableCCD = 1
+
+                            over "iiwa_link_4" (
+                                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                            )
+                            {
+                                point3f physics:centerOfMass = (0, 0.067, 0.034)
+                                float3 physics:diagonalInertia = (0.03, 0.01, 0.029)
+                                rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5>
+                                bool physics:kinematicEnabled = 0
+                                float physics:mass = 2.7
+                                quatf physics:principalAxes = (1, 0, 0, 0)
+                                bool physics:rigidBodyEnabled = 1
+                                bool physxRigidBody:enableCCD = 1
+
+                                over "iiwa_link_5" (
+                                    apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                                )
+                                {
+                                    point3f physics:centerOfMass = (0.0001, 0.021, 0.076)
+                                    float3 physics:diagonalInertia = (0.02, 0.018, 0.005)
+                                    rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6>
+                                    bool physics:kinematicEnabled = 0
+                                    float physics:mass = 1.7
+                                    quatf physics:principalAxes = (1, 0, 0, 0)
+                                    bool physics:rigidBodyEnabled = 1
+                                    bool physxRigidBody:enableCCD = 1
+
+                                    over "iiwa_link_6" (
+                                        apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                                    )
+                                    {
+                                        point3f physics:centerOfMass = (0, 0.0006, 0.0004)
+                                        float3 physics:diagonalInertia = (0.005, 0.0036, 0.0047)
+                                        rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7>
+                                        bool physics:kinematicEnabled = 0
+                                        float physics:mass = 1.8
+                                        quatf physics:principalAxes = (1, 0, 0, 0)
+                                        bool physics:rigidBodyEnabled = 1
+                                        bool physxRigidBody:enableCCD = 1
+
+                                        over "iiwa_link_7" (
+                                            apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                                        )
+                                        {
+                                            point3f physics:centerOfMass = (0, 0, 0.02)
+                                            float3 physics:diagonalInertia = (0.001, 0.001, 0.001)
+                                            rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link>
+                                            bool physics:kinematicEnabled = 0
+                                            float physics:mass = 0.3
+                                            quatf physics:principalAxes = (1, 0, 0, 0)
+                                            bool physics:rigidBodyEnabled = 1
+                                            bool physxRigidBody:enableCCD = 1
+
+                                            over "iiwa_link_ee"
+                                            {
+                                                over "handbase_link" (
+                                                    apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "IsaacLinkAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                                                )
+                                                {
+                                                    point3f physics:centerOfMass = (0.0068536, -0.0032827, 0.15427)
+                                                    float3 physics:diagonalInertia = (0.0017113069, 0.0017857393, 0.0031039538)
+                                                    rel physics:filteredPairs = [
+                                                        </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1>,
+                                                        </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1>,
+                                                        </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1>,
+                                                    ]
+                                                    bool physics:kinematicEnabled = 0
+                                                    float physics:mass = 1.3106
+                                                    quatf physics:principalAxes = (0.89774156, 0.0029680468, -0.0011816128, -0.44051096)
+                                                    bool physics:rigidBodyEnabled = 1
+                                                    bool physxRigidBody:enableCCD = 1
+
+                                                    over "f1Link1" (
+                                                        apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "IsaacLinkAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                                                    )
+                                                    {
+                                                        point3f physics:centerOfMass = (-0.027217, 0.015636, -0.018412)
+                                                        float3 physics:diagonalInertia = (0.00003571615, 0.000047670444, 0.000058083406)
+                                                        rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2>
+                                                        bool physics:kinematicEnabled = 0
+                                                        float physics:mass = 0.1943
+                                                        quatf physics:principalAxes = (0.6308419, -0.35721993, -0.5934312, -0.3496739)
+                                                        bool physics:rigidBodyEnabled = 1
+                                                        bool physxRigidBody:enableCCD = 1
+
+                                                        over "f1Link2" (
+                                                            apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "IsaacLinkAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                                                        )
+                                                        {
+                                                            point3f physics:centerOfMass = (-0.02357, -0.021421, 0.018942)
+                                                            float3 physics:diagonalInertia = (0.000007574816, 0.000039474155, 0.00004446703)
+                                                            rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3>
+                                                            bool physics:kinematicEnabled = 0
+                                                            float physics:mass = 0.073035
+                                                            quatf physics:principalAxes = (0.92604166, -0.016058112, 0.0066342494, -0.37702116)
+                                                            bool physics:rigidBodyEnabled = 1
+                                                            bool physxRigidBody:enableCCD = 1
+
+                                                            over "f1Link3" (
+                                                                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "IsaacLinkAPI", "PhysxRigidBodyAPI"]
+                                                            )
+                                                            {
+                                                                point3f physics:centerOfMass = (-0.016803, -0.020891, 0.011999)
+                                                                float3 physics:diagonalInertia = (0.000004810838, 0.000024527199, 0.000024796964)
+                                                                bool physics:kinematicEnabled = 0
+                                                                float physics:mass = 0.057879
+                                                                quatf physics:principalAxes = (0.31304887, 0.29630384, 0.62043536, 0.6551827)
+                                                                bool physics:rigidBodyEnabled = 1
+                                                                bool physxRigidBody:enableCCD = 1
+
+                                                                over "f1Link3" (
+                                                                    instanceable = false
+                                                                )
+                                                                {
+                                                                }
+
+                                                                over "f1Link3_convex" (
+                                                                    instanceable = false
+                                                                )
+                                                                {
+                                                                    over "f1Link3_convex" (
+                                                                        apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                                                    )
+                                                                    {
+                                                                        custom string kcg:materialRole = "fingertip_pad"
+                                                                        custom string kcg:responseRole = "hard_rigid"
+                                                                        custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/hand/collision/f1Link3_convex.stl"
+                                                                        rel material:binding:physics = </handarm/PhysicsMaterials/fingertip_pad>
+                                                                        uniform token physics:approximation = "convexHull"
+                                                                        bool physics:collisionEnabled = 1
+                                                                        float physxCollision:contactOffset = 0.00005
+                                                                        float physxCollision:restOffset = 0
+                                                                    }
+                                                                }
+                                                            }
+
+                                                            over "f1Link2" (
+                                                                instanceable = false
+                                                            )
+                                                            {
+                                                            }
+
+                                                            over "f1Link2_convex" (
+                                                                instanceable = false
+                                                            )
+                                                            {
+                                                                over "f1Link2_convex" (
+                                                                    apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                                                )
+                                                                {
+                                                                    custom string kcg:materialRole = "finger_structure"
+                                                                    custom string kcg:responseRole = "hard_rigid"
+                                                                    custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/hand/collision/f1Link2_convex.stl"
+                                                                    rel material:binding:physics = </handarm/PhysicsMaterials/finger_structure>
+                                                                    uniform token physics:approximation = "convexHull"
+                                                                    bool physics:collisionEnabled = 1
+                                                                    float physxCollision:contactOffset = 0.00005
+                                                                    float physxCollision:restOffset = 0
+                                                                }
+                                                            }
+                                                        }
+
+                                                        over "f1Link1" (
+                                                            instanceable = false
+                                                        )
+                                                        {
+                                                        }
+
+                                                        over "f1Link1_convex" (
+                                                            instanceable = false
+                                                        )
+                                                        {
+                                                            over "f1Link1_convex" (
+                                                                apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                custom string kcg:materialRole = "finger_structure"
+                                                                custom string kcg:responseRole = "hard_rigid"
+                                                                custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/hand/collision/f1Link1_convex.stl"
+                                                                rel material:binding:physics = </handarm/PhysicsMaterials/finger_structure>
+                                                                uniform token physics:approximation = "convexHull"
+                                                                bool physics:collisionEnabled = 1
+                                                                float physxCollision:contactOffset = 0.00005
+                                                                float physxCollision:restOffset = 0
+                                                            }
+                                                        }
+                                                    }
+
+                                                    over "f2Link1" (
+                                                        apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "IsaacLinkAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                                                    )
+                                                    {
+                                                        point3f physics:centerOfMass = (-0.021392, -0.023597, -0.016858)
+                                                        float3 physics:diagonalInertia = (0.000007574815, 0.000039474275, 0.00004446691)
+                                                        rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2>
+                                                        bool physics:kinematicEnabled = 0
+                                                        float physics:mass = 0.073035
+                                                        quatf physics:principalAxes = (0.0069088265, -0.42134282, -0.90673864, 0.01573177)
+                                                        bool physics:rigidBodyEnabled = 1
+                                                        bool physxRigidBody:enableCCD = 1
+
+                                                        over "f2Link2" (
+                                                            apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "IsaacLinkAPI", "PhysxRigidBodyAPI"]
+                                                        )
+                                                        {
+                                                            point3f physics:centerOfMass = (-0.012481, -0.023727, -0.012001)
+                                                            float3 physics:diagonalInertia = (0.000004810498, 0.000024527448, 0.000024796354)
+                                                            bool physics:kinematicEnabled = 0
+                                                            float physics:mass = 0.057879
+                                                            quatf physics:principalAxes = (0.37322333, 0.35634854, 0.5918399, 0.6192298)
+                                                            bool physics:rigidBodyEnabled = 1
+                                                            bool physxRigidBody:enableCCD = 1
+
+                                                            over "f2Link2" (
+                                                                instanceable = false
+                                                            )
+                                                            {
+                                                            }
+
+                                                            over "f2Link2_convex" (
+                                                                instanceable = false
+                                                            )
+                                                            {
+                                                                over "f2Link2_convex" (
+                                                                    apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                                                )
+                                                                {
+                                                                    custom string kcg:materialRole = "fingertip_pad"
+                                                                    custom string kcg:responseRole = "hard_rigid"
+                                                                    custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/hand/collision/f2Link2_convex.stl"
+                                                                    rel material:binding:physics = </handarm/PhysicsMaterials/fingertip_pad>
+                                                                    uniform token physics:approximation = "convexHull"
+                                                                    bool physics:collisionEnabled = 1
+                                                                    float physxCollision:contactOffset = 0.00005
+                                                                    float physxCollision:restOffset = 0
+                                                                }
+                                                            }
+                                                        }
+
+                                                        over "f2Link1" (
+                                                            instanceable = false
+                                                        )
+                                                        {
+                                                        }
+
+                                                        over "f2Link1_convex" (
+                                                            instanceable = false
+                                                        )
+                                                        {
+                                                            over "f2Link1_convex" (
+                                                                apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                custom string kcg:materialRole = "finger_structure"
+                                                                custom string kcg:responseRole = "hard_rigid"
+                                                                custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/hand/collision/f2Link1_convex.stl"
+                                                                rel material:binding:physics = </handarm/PhysicsMaterials/finger_structure>
+                                                                uniform token physics:approximation = "convexHull"
+                                                                bool physics:collisionEnabled = 1
+                                                                float physxCollision:contactOffset = 0.00005
+                                                                float physxCollision:restOffset = 0
+                                                            }
+                                                        }
+                                                    }
+
+                                                    over "f3Link1" (
+                                                        apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "IsaacLinkAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                                                    )
+                                                    {
+                                                        point3f physics:centerOfMass = (0.027217, 0.015636, 0.018412)
+                                                        float3 physics:diagonalInertia = (0.00003571615, 0.000047670444, 0.000058083406)
+                                                        rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2>
+                                                        bool physics:kinematicEnabled = 0
+                                                        float physics:mass = 0.1943
+                                                        quatf physics:principalAxes = (0.6308419, 0.35721993, -0.5934312, 0.3496739)
+                                                        bool physics:rigidBodyEnabled = 1
+                                                        bool physxRigidBody:enableCCD = 1
+
+                                                        over "f3Link2" (
+                                                            apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "IsaacLinkAPI", "PhysxRigidBodyAPI", "PhysicsFilteredPairsAPI"]
+                                                        )
+                                                        {
+                                                            point3f physics:centerOfMass = (-0.02357, -0.021421, 0.018942)
+                                                            float3 physics:diagonalInertia = (0.000007574816, 0.000039474155, 0.00004446703)
+                                                            rel physics:filteredPairs = </handarm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3>
+                                                            bool physics:kinematicEnabled = 0
+                                                            float physics:mass = 0.073035
+                                                            quatf physics:principalAxes = (0.92604166, -0.016058112, 0.0066342494, -0.37702116)
+                                                            bool physics:rigidBodyEnabled = 1
+                                                            bool physxRigidBody:enableCCD = 1
+
+                                                            over "f3Link3" (
+                                                                apiSchemas = ["PhysicsRigidBodyAPI", "PhysicsMassAPI", "IsaacLinkAPI", "PhysxRigidBodyAPI"]
+                                                            )
+                                                            {
+                                                                point3f physics:centerOfMass = (-0.016803, -0.020891, 0.011999)
+                                                                float3 physics:diagonalInertia = (0.000004810838, 0.000024527199, 0.000024796964)
+                                                                bool physics:kinematicEnabled = 0
+                                                                float physics:mass = 0.057879
+                                                                quatf physics:principalAxes = (0.31304887, 0.29630384, 0.62043536, 0.6551827)
+                                                                bool physics:rigidBodyEnabled = 1
+                                                                bool physxRigidBody:enableCCD = 1
+
+                                                                over "f3Link3" (
+                                                                    instanceable = false
+                                                                )
+                                                                {
+                                                                }
+
+                                                                over "f3Link3_convex" (
+                                                                    instanceable = false
+                                                                )
+                                                                {
+                                                                    over "f3Link3_convex" (
+                                                                        apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                                                    )
+                                                                    {
+                                                                        custom string kcg:materialRole = "fingertip_pad"
+                                                                        custom string kcg:responseRole = "hard_rigid"
+                                                                        custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/hand/collision/f3Link3_convex.stl"
+                                                                        rel material:binding:physics = </handarm/PhysicsMaterials/fingertip_pad>
+                                                                        uniform token physics:approximation = "convexHull"
+                                                                        bool physics:collisionEnabled = 1
+                                                                        float physxCollision:contactOffset = 0.00005
+                                                                        float physxCollision:restOffset = 0
+                                                                    }
+                                                                }
+                                                            }
+
+                                                            over "f3Link2" (
+                                                                instanceable = false
+                                                            )
+                                                            {
+                                                            }
+
+                                                            over "f3Link2_convex" (
+                                                                instanceable = false
+                                                            )
+                                                            {
+                                                                over "f3Link2_convex" (
+                                                                    apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                                                )
+                                                                {
+                                                                    custom string kcg:materialRole = "finger_structure"
+                                                                    custom string kcg:responseRole = "hard_rigid"
+                                                                    custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/hand/collision/f3Link2_convex.stl"
+                                                                    rel material:binding:physics = </handarm/PhysicsMaterials/finger_structure>
+                                                                    uniform token physics:approximation = "convexHull"
+                                                                    bool physics:collisionEnabled = 1
+                                                                    float physxCollision:contactOffset = 0.00005
+                                                                    float physxCollision:restOffset = 0
+                                                                }
+                                                            }
+                                                        }
+
+                                                        over "f3Link1" (
+                                                            instanceable = false
+                                                        )
+                                                        {
+                                                        }
+
+                                                        over "f3Link1_convex" (
+                                                            instanceable = false
+                                                        )
+                                                        {
+                                                            over "f3Link1_convex" (
+                                                                apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                                            )
+                                                            {
+                                                                custom string kcg:materialRole = "finger_structure"
+                                                                custom string kcg:responseRole = "hard_rigid"
+                                                                custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/hand/collision/f3Link1_convex.stl"
+                                                                rel material:binding:physics = </handarm/PhysicsMaterials/finger_structure>
+                                                                uniform token physics:approximation = "convexHull"
+                                                                bool physics:collisionEnabled = 1
+                                                                float physxCollision:contactOffset = 0.00005
+                                                                float physxCollision:restOffset = 0
+                                                            }
+                                                        }
+                                                    }
+
+                                                    over "handbase_link" (
+                                                        instanceable = false
+                                                    )
+                                                    {
+                                                    }
+
+                                                    over "handbase_link_convex" (
+                                                        instanceable = false
+                                                    )
+                                                    {
+                                                        over "handbase_link_convex" (
+                                                            apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                                        )
+                                                        {
+                                                            custom string kcg:materialRole = "robot_structure"
+                                                            custom string kcg:responseRole = "hard_rigid"
+                                                            custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/hand/collision/handbase_link_convex.stl"
+                                                            rel material:binding:physics = </handarm/PhysicsMaterials/robot_structure>
+                                                            uniform token physics:approximation = "convexHull"
+                                                            bool physics:collisionEnabled = 1
+                                                            float physxCollision:contactOffset = 0.00005
+                                                            float physxCollision:restOffset = 0
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            over "link_7" (
+                                                instanceable = false
+                                            )
+                                            {
+                                            }
+
+                                            over "link_7_s" (
+                                                instanceable = false
+                                            )
+                                            {
+                                                over "link_7_s" (
+                                                    apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                                )
+                                                {
+                                                    custom string kcg:materialRole = "robot_structure"
+                                                    custom string kcg:responseRole = "hard_rigid"
+                                                    custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/iiwa14/collision/link_7_s.stl"
+                                                    rel material:binding:physics = </handarm/PhysicsMaterials/robot_structure>
+                                                    uniform token physics:approximation = "convexHull"
+                                                    bool physics:collisionEnabled = 1
+                                                    float physxCollision:contactOffset = 0.00005
+                                                    float physxCollision:restOffset = 0
+                                                }
+                                            }
+                                        }
+
+                                        over "link_6" (
+                                            instanceable = false
+                                        )
+                                        {
+                                        }
+
+                                        over "link_6_s" (
+                                            instanceable = false
+                                        )
+                                        {
+                                            over "link_6_s" (
+                                                apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                            )
+                                            {
+                                                custom string kcg:materialRole = "robot_structure"
+                                                custom string kcg:responseRole = "hard_rigid"
+                                                custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/iiwa14/collision/link_6_s.stl"
+                                                rel material:binding:physics = </handarm/PhysicsMaterials/robot_structure>
+                                                uniform token physics:approximation = "convexHull"
+                                                bool physics:collisionEnabled = 1
+                                                float physxCollision:contactOffset = 0.00005
+                                                float physxCollision:restOffset = 0
+                                            }
+                                        }
+                                    }
+
+                                    over "link_5" (
+                                        instanceable = false
+                                    )
+                                    {
+                                    }
+
+                                    over "link_5_s" (
+                                        instanceable = false
+                                    )
+                                    {
+                                        over "link_5_s" (
+                                            apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                        )
+                                        {
+                                            custom string kcg:materialRole = "robot_structure"
+                                            custom string kcg:responseRole = "hard_rigid"
+                                            custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/iiwa14/collision/link_5_s.stl"
+                                            rel material:binding:physics = </handarm/PhysicsMaterials/robot_structure>
+                                            uniform token physics:approximation = "convexHull"
+                                            bool physics:collisionEnabled = 1
+                                            float physxCollision:contactOffset = 0.00005
+                                            float physxCollision:restOffset = 0
+                                        }
+                                    }
+                                }
+
+                                over "link_4" (
+                                    instanceable = false
+                                )
+                                {
+                                }
+
+                                over "link_4_s" (
+                                    instanceable = false
+                                )
+                                {
+                                    over "link_4_s" (
+                                        apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                    )
+                                    {
+                                        custom string kcg:materialRole = "robot_structure"
+                                        custom string kcg:responseRole = "hard_rigid"
+                                        custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/iiwa14/collision/link_4_s.stl"
+                                        rel material:binding:physics = </handarm/PhysicsMaterials/robot_structure>
+                                        uniform token physics:approximation = "convexHull"
+                                        bool physics:collisionEnabled = 1
+                                        float physxCollision:contactOffset = 0.00005
+                                        float physxCollision:restOffset = 0
+                                    }
+                                }
+                            }
+
+                            over "link_3" (
+                                instanceable = false
+                            )
+                            {
+                            }
+
+                            over "link_3_s" (
+                                instanceable = false
+                            )
+                            {
+                                over "link_3_s" (
+                                    apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                                )
+                                {
+                                    custom string kcg:materialRole = "robot_structure"
+                                    custom string kcg:responseRole = "hard_rigid"
+                                    custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/iiwa14/collision/link_3_s.stl"
+                                    rel material:binding:physics = </handarm/PhysicsMaterials/robot_structure>
+                                    uniform token physics:approximation = "convexHull"
+                                    bool physics:collisionEnabled = 1
+                                    float physxCollision:contactOffset = 0.00005
+                                    float physxCollision:restOffset = 0
+                                }
+                            }
+                        }
+
+                        over "link_2" (
+                            instanceable = false
+                        )
+                        {
+                        }
+
+                        over "link_2_s" (
+                            instanceable = false
+                        )
+                        {
+                            over "link_2_s" (
+                                apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                            )
+                            {
+                                custom string kcg:materialRole = "robot_structure"
+                                custom string kcg:responseRole = "hard_rigid"
+                                custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/iiwa14/collision/link_2_s.stl"
+                                rel material:binding:physics = </handarm/PhysicsMaterials/robot_structure>
+                                uniform token physics:approximation = "convexHull"
+                                bool physics:collisionEnabled = 1
+                                float physxCollision:contactOffset = 0.00005
+                                float physxCollision:restOffset = 0
+                            }
+                        }
+                    }
+
+                    over "link_1" (
+                        instanceable = false
+                    )
+                    {
+                    }
+
+                    over "link_1_s" (
+                        instanceable = false
+                    )
+                    {
+                        over "link_1_s" (
+                            apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                        )
+                        {
+                            custom string kcg:materialRole = "robot_structure"
+                            custom string kcg:responseRole = "hard_rigid"
+                            custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/iiwa14/collision/link_1_s.stl"
+                            rel material:binding:physics = </handarm/PhysicsMaterials/robot_structure>
+                            uniform token physics:approximation = "convexHull"
+                            bool physics:collisionEnabled = 1
+                            float physxCollision:contactOffset = 0.00005
+                            float physxCollision:restOffset = 0
+                        }
+                    }
+                }
+
+                over "link_0" (
+                    instanceable = false
+                )
+                {
+                }
+
+                over "link_0_s" (
+                    instanceable = false
+                )
+                {
+                    over "link_0_s" (
+                        apiSchemas = ["PhysicsCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonCollisionAPI", "NewtonMeshCollisionAPI", "PhysxCollisionAPI", "MaterialBindingAPI"]
+                    )
+                    {
+                        custom string kcg:materialRole = "robot_structure"
+                        custom string kcg:responseRole = "hard_rigid"
+                        custom string kcg:sourceMeshUri = "package://iiwa_description/meshes/iiwa14/collision/link_0_s.stl"
+                        rel material:binding:physics = </handarm/PhysicsMaterials/robot_structure>
+                        uniform token physics:approximation = "convexHull"
+                        bool physics:collisionEnabled = 1
+                        float physxCollision:contactOffset = 0.00005
+                        float physxCollision:restOffset = 0
+                    }
+                }
+            }
+        }
+    }
+
+    def "PhysicsMaterials"
+    {
+        def Material "robot_structure" (
+            apiSchemas = ["PhysicsMaterialAPI", "PhysxMaterialAPI"]
+        )
+        {
+            custom string kcg:materialRole = "robot_structure"
+            custom string kcg:responseRole = "hard_rigid"
+            float physics:dynamicFriction = 0.25
+            float physics:restitution = 0
+            float physics:staticFriction = 0.35
+            bool physxMaterial:compliantContactAccelerationSpring = 0
+            float physxMaterial:compliantContactDamping = 0
+            float physxMaterial:compliantContactStiffness = 0
+            token physxMaterial:dampingCombineMode = "max"
+            token physxMaterial:frictionCombineMode = "max"
+            token physxMaterial:restitutionCombineMode = "min"
+        }
+
+        def Material "finger_structure" (
+            apiSchemas = ["PhysicsMaterialAPI", "PhysxMaterialAPI"]
+        )
+        {
+            custom string kcg:materialRole = "finger_structure"
+            custom string kcg:responseRole = "hard_rigid"
+            float physics:dynamicFriction = 0.25
+            float physics:restitution = 0
+            float physics:staticFriction = 0.35
+            bool physxMaterial:compliantContactAccelerationSpring = 0
+            float physxMaterial:compliantContactDamping = 0
+            float physxMaterial:compliantContactStiffness = 0
+            token physxMaterial:dampingCombineMode = "max"
+            token physxMaterial:frictionCombineMode = "max"
+            token physxMaterial:restitutionCombineMode = "min"
+        }
+
+        def Material "fingertip_pad" (
+            apiSchemas = ["PhysicsMaterialAPI", "PhysxMaterialAPI"]
+        )
+        {
+            custom string kcg:materialRole = "fingertip_pad"
+            custom string kcg:responseRole = "hard_rigid"
+            float physics:dynamicFriction = 1.4
+            float physics:restitution = 0
+            float physics:staticFriction = 1.4
+            bool physxMaterial:compliantContactAccelerationSpring = 0
+            float physxMaterial:compliantContactDamping = 0
+            float physxMaterial:compliantContactStiffness = 0
+            token physxMaterial:dampingCombineMode = "max"
+            token physxMaterial:frictionCombineMode = "max"
+            token physxMaterial:restitutionCombineMode = "min"
+        }
+    }
+
+    over "Physics"
+    {
+        over "f1j3" (
+            apiSchemas = ["PhysicsDriveAPI:angular", "PhysxJointAPI", "NewtonMimicAPI", "PhysicsJointStateAPI:angular", "IsaacJointAPI"]
+        )
+        {
+            float newton:mimicCoef0 = 0
+            float newton:mimicCoef1 = 1
+            bool newton:mimicEnabled = 1
+            rel newton:mimicJoint = </handarm/Physics/f1j2>
+            custom float newton:mimicMultiplier = 1
+            custom float newton:mimicOffset = 0
+        }
+
+        over "f2j2" (
+            apiSchemas = ["PhysicsDriveAPI:angular", "PhysxJointAPI", "NewtonMimicAPI", "PhysicsJointStateAPI:angular", "IsaacJointAPI"]
+        )
+        {
+            float newton:mimicCoef0 = 0
+            float newton:mimicCoef1 = 1
+            bool newton:mimicEnabled = 1
+            rel newton:mimicJoint = </handarm/Physics/f2j1>
+            custom float newton:mimicMultiplier = 1
+            custom float newton:mimicOffset = 0
+        }
+
+        over "f3j1" (
+            apiSchemas = ["PhysicsDriveAPI:angular", "PhysxJointAPI", "NewtonMimicAPI", "PhysicsJointStateAPI:angular", "IsaacJointAPI"]
+        )
+        {
+            float newton:mimicCoef0 = 0
+            float newton:mimicCoef1 = 1
+            bool newton:mimicEnabled = 1
+            rel newton:mimicJoint = </handarm/Physics/f1j1>
+            custom float newton:mimicMultiplier = 1
+            custom float newton:mimicOffset = 0
+        }
+
+        over "f3j3" (
+            apiSchemas = ["PhysicsDriveAPI:angular", "PhysxJointAPI", "NewtonMimicAPI", "PhysicsJointStateAPI:angular", "IsaacJointAPI"]
+        )
+        {
+            float newton:mimicCoef0 = 0
+            float newton:mimicCoef1 = 1
+            bool newton:mimicEnabled = 1
+            rel newton:mimicJoint = </handarm/Physics/f3j2>
+            custom float newton:mimicMultiplier = 1
+            custom float newton:mimicOffset = 0
+        }
+    }
+    variantSet "Physics" = {
+        "mujoco" (
+            prepend payload = @./payloads/Physics/mujoco.usda@
+        ) {
+
+        }
+        "none" {
+
+        }
+        "physics" (
+            prepend payload = @./payloads/Physics/physics.usda@
+        ) {
+
+        }
+        "physx" (
+            prepend payload = @./payloads/Physics/physx.usda@
+        ) {
+
+        }
+    }
+}
+

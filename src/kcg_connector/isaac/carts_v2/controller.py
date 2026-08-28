@@ -12,6 +12,7 @@ from kcg_connector.grasp.carts_v2.models import V2Inputs
 from kcg_connector.grasp.robust.bounded_hand_base_ik import (
     solve_bounded_hand_base_ik,
 )
+from kcg_connector.robot_model import ALL_HAND_JOINT_NAMES, MIMIC_HAND_JOINTS
 
 
 ARM_JOINT_NAMES = tuple(f"iiwa_joint_{index}" for index in range(1, 8))
@@ -120,6 +121,8 @@ def gravity_biased_arm_target(
     lower_limits: np.ndarray,
     upper_limits: np.ndarray,
     settings: Mapping[str, object],
+    *,
+    arm_damping_nm_s_rad: float | None = None,
 ) -> tuple[np.ndarray, dict[str, object]]:
     """Express model gravity compensation as a native-drive target offset."""
 
@@ -134,22 +137,47 @@ def gravity_biased_arm_target(
     if not all(np.isfinite(row).all() for row in (position, velocity, gravity)):
         raise RuntimeError("arm gravity control returned a nonfinite signal")
     kp = float(settings["arm_stiffness"])
-    kd = float(settings["arm_damping"])
-    cap = float(settings["arm_drive_maximum_effort_nm"])
-    pd_effort = kp * (target - position) - kd * velocity
-    raw_effort = pd_effort + gravity
-    drive_target = target + gravity / kp
-    limit_margin = np.minimum(
-        drive_target[0] - lower_limits, upper_limits - drive_target[0]
+    kd = float(
+        settings["arm_damping"]
+        if arm_damping_nm_s_rad is None
+        else arm_damping_nm_s_rad
     )
-    if not np.isfinite(drive_target).all() or float(np.min(limit_margin)) <= 0.0:
+    cap = float(settings["arm_drive_maximum_effort_nm"])
+    if not math.isfinite(kd) or kd < 0.0:
+        raise RuntimeError("effective arm damping must be finite and nonnegative")
+    pd_effort = kp * (target - position) - kd * velocity
+    requested_drive_target = target + gravity / kp
+    nominal_limit_margin = np.minimum(
+        target[0] - lower_limits, upper_limits - target[0]
+    )
+    if (
+        not np.isfinite(requested_drive_target).all()
+        or float(np.min(nominal_limit_margin)) < 0.0
+    ):
+        raise RuntimeError("nominal arm target is nonfinite or outside limits")
+    drive_target = np.clip(requested_drive_target[0], lower_limits, upper_limits)
+    applied_gravity = kp * (drive_target.reshape(1, 7) - target)
+    raw_effort = pd_effort + applied_gravity
+    limit_margin = np.minimum(
+        drive_target - lower_limits, upper_limits - drive_target
+    )
+    if not np.isfinite(drive_target).all() or float(np.min(limit_margin)) < 0.0:
         raise RuntimeError("gravity-biased arm target is nonfinite or outside limits")
-    return drive_target[0], {
-        "drive_target_rad": drive_target[0].tolist(),
-        "target_bias_rad": (gravity / kp)[0].tolist(),
+    return drive_target, {
+        "drive_target_rad": drive_target.tolist(),
+        "target_bias_rad": (drive_target.reshape(1, 7) - target)[0].tolist(),
+        "requested_target_bias_rad": (gravity / kp)[0].tolist(),
+        "gravity_target_bias_limited_by_joint_bounds": bool(
+            not np.array_equal(drive_target.reshape(1, 7), requested_drive_target)
+        ),
+        "minimum_nominal_target_limit_margin_rad": float(
+            np.min(nominal_limit_margin)
+        ),
         "minimum_drive_target_limit_margin_rad": float(np.min(limit_margin)),
+        "effective_arm_damping_nm_s_rad": kd,
         "pd_effort_nm": pd_effort[0].tolist(),
         "gravity_compensation_nm": gravity[0].tolist(),
+        "applied_gravity_equivalent_nm": applied_gravity[0].tolist(),
         "raw_total_effort_nm": raw_effort[0].tolist(),
         "clipped_total_effort_nm": np.clip(raw_effort, -cap, cap)[0].tolist(),
         "saturated": bool(np.any(np.abs(raw_effort) >= cap)),
@@ -157,7 +185,13 @@ def gravity_biased_arm_target(
 
 
 def _solve_approach_waypoints(
-    inputs, model, settings, hand, target, approach_direction_world
+    inputs,
+    model,
+    settings,
+    hand,
+    target,
+    approach_direction_world,
+    initial_seed_arm_positions=None,
 ):
     clearance = float(
         inputs.config.section("dynamic")["approach_clearance_height_m"]
@@ -168,6 +202,15 @@ def _solve_approach_waypoints(
     previous = None
     first_seed = None
     last_seed = None
+    initial_seed = (
+        None
+        if initial_seed_arm_positions is None
+        else np.asarray(initial_seed_arm_positions, dtype=np.float64)
+    )
+    if initial_seed is not None and (
+        initial_seed.shape != (7,) or not np.all(np.isfinite(initial_seed))
+    ):
+        raise ValueError("initial approach seed must contain seven finite joints")
     direction = np.asarray(approach_direction_world, dtype=np.float64)
     norm = float(np.linalg.norm(direction))
     if direction.shape != (3,) or not np.isfinite(norm) or abs(norm - 1.0) > 1.0e-6:
@@ -175,7 +218,15 @@ def _solve_approach_waypoints(
     for index, fraction in enumerate(np.linspace(1.0, 0.0, count)):
         path_target = np.array(target, copy=True)
         path_target[:3, 3] -= direction * clearance * float(fraction)
-        keyword = {} if previous is None else {"seed_arm_positions": (previous,)}
+        keyword = (
+            {}
+            if previous is None and initial_seed is None
+            else {
+                "seed_arm_positions": (
+                    initial_seed if previous is None else previous,
+                )
+            }
+        )
         previous, position_error, orientation_error, seed_index = (
             solve_bounded_hand_base_ik(
                 settings,
@@ -194,7 +245,7 @@ def _solve_approach_waypoints(
 
 
 def _solve_lift_waypoints(inputs, model, settings, hand, target, start):
-    distance = float(inputs.config.section("dynamic")["lift_distance_m"])
+    distance = float(inputs.config.section("dynamic")["lift_command_distance_m"])
     count = int(inputs.config.section("ik")["lift_waypoint_count"])
     rows = [start]
     errors = []
@@ -252,6 +303,7 @@ def build_joint_motion_plan(
         _solve_approach_waypoints(
             inputs, model, solver_settings, pregrasp_hand, target,
             approach_direction_world,
+            control_plan.get("approach_high_seed_arm_positions_rad"),
         )
     )
     arm = approach_rows[-1]
@@ -338,7 +390,7 @@ class SequentialEffortContactController:
 
     def _resistive_effort(self, index, measured_effort) -> float:
         direction = float(np.sign(self.goal[index] - self.start[index]))
-        return -direction * float(measured_effort[index])
+        return direction * float(measured_effort[index])
 
     def _effort_adjust(self, index, measured_effort, maximum_increment):
         direction = float(np.sign(self.goal[index] - self.start[index]))
@@ -348,7 +400,7 @@ class SequentialEffortContactController:
         change = np.clip(raw_change, -maximum_increment, maximum_increment)
         lower, upper = sorted((self.start[index], self.goal[index]))
         self.target[index] = np.clip(self.target[index] + change, lower, upper)
-        return measured >= self.effort_rise_nm and abs(raw_change) <= maximum_increment
+        return abs(raw_change) <= maximum_increment
 
     def step(
         self,
@@ -435,9 +487,48 @@ class JointSignalStepper:
         self.minimum_drive_target_limit_margin = float("inf")
         self.abort_reason: str | None = None
         self.latest: tuple[np.ndarray, np.ndarray, np.ndarray] | None = None
+        self.effective_arm_damping_nm_s_rad = float(settings["arm_damping"])
+        self.lift_arm_damping_switch_audit: dict[str, object] | None = None
         self._f1_indices = tuple(robot.dof_names.index(name) for name in ("f1j2", "f1j3"))
+        self._hand_indices = {
+            name: robot.dof_names.index(name) for name in ALL_HAND_JOINT_NAMES
+        }
         limits = robot.get_dof_limits(indices=0)
         self._all_lower, self._all_upper = limits[0].numpy()[0], limits[1].numpy()[0]
+
+    def set_lift_arm_damping(self, damping_nm_s_rad: float) -> None:
+        requested = float(damping_nm_s_rad)
+        stiffness = float(self.settings["arm_stiffness"])
+        if not math.isfinite(requested) or requested < 0.0:
+            raise RuntimeError("lift arm damping must be finite and nonnegative")
+        stiffnesses = np.full(7, stiffness, dtype=np.float32)
+        dampings = np.full(7, requested, dtype=np.float32)
+        self.robot.set_dof_gains(
+            stiffnesses,
+            dampings,
+            indices=0,
+            dof_indices=self.arm_indices,
+        )
+        observed_kp, observed_kd = self.robot.get_dof_gains(
+            indices=0,
+            dof_indices=self.arm_indices,
+        )
+        observed_stiffnesses = observed_kp.numpy()[0]
+        observed_dampings = observed_kd.numpy()[0]
+        if not (
+            np.array_equal(observed_stiffnesses, stiffnesses)
+            and np.array_equal(observed_dampings, dampings)
+        ):
+            raise RuntimeError("lift arm damping did not read back exactly")
+        self.effective_arm_damping_nm_s_rad = requested
+        self.lift_arm_damping_switch_audit = {
+            "requested_nm_s_rad": requested,
+            "observed_stiffnesses_nm_rad": observed_stiffnesses.tolist(),
+            "observed_dampings_nm_s_rad": observed_dampings.tolist(),
+            "arm_drive_maximum_effort_nm": float(
+                self.settings["arm_drive_maximum_effort_nm"]
+            ),
+        }
 
     def advance(
         self, phase: str, arm_target: np.ndarray, hand_target: np.ndarray
@@ -452,6 +543,7 @@ class JointSignalStepper:
             self.arm_lower_limits,
             self.arm_upper_limits,
             self.settings,
+            arm_damping_nm_s_rad=self.effective_arm_damping_nm_s_rad,
         )
         if arm_control["saturated"]:
             self.abort_reason = "ARM_COMMAND_EFFORT_SATURATION_ABORT"
@@ -480,6 +572,30 @@ class JointSignalStepper:
         arm_control["f1_mimic_diagnostic"].update({
             "position_error_rad": float(all_positions[follower] - all_positions[first]),
             "velocity_error_rad_s": float(all_velocities[follower] - all_velocities[first])})
+        arm_control["hand_joint_diagnostic"] = {
+            "joints": {
+                name: {
+                    "position_rad": float(all_positions[index]),
+                    "velocity_rad_s": float(all_velocities[index]),
+                    "equivalent_effort_nm": float(all_efforts[index]),
+                }
+                for name, index in self._hand_indices.items()
+            },
+            "mimic_errors": {
+                mimic: {
+                    "source": source,
+                    "position_error_rad": float(
+                        all_positions[self._hand_indices[mimic]]
+                        - all_positions[self._hand_indices[source]]
+                    ),
+                    "velocity_error_rad_s": float(
+                        all_velocities[self._hand_indices[mimic]]
+                        - all_velocities[self._hand_indices[source]]
+                    ),
+                }
+                for mimic, source in MIMIC_HAND_JOINTS.items()
+            },
+        }
         self._update_metrics(positions, all_velocities, efforts, arm_target, arm_control)
         self.auditor.capture(
             step=self.step_index,
@@ -562,7 +678,10 @@ def run_pregrasp_sequence(
     above_steps = round(float(settings["approach_above_duration_s"]) / dt)
     for index in stepper.active_steps(above_steps):
         blend = minimum_jerk_blend((index + 1) / above_steps)
-        stepper.advance("approach_above", blend * approach[0], blend * pregrasp_hand)
+        stepper.advance("preshape_at_home", home_arm, blend * pregrasp_hand)
+    for index in stepper.active_steps(above_steps):
+        blend = minimum_jerk_blend((index + 1) / above_steps)
+        stepper.advance("approach_above", blend * approach[0], pregrasp_hand)
 
     settled_count = 0
     settled = False
@@ -671,6 +790,7 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
             return "HAND_MEASURED_EFFORT_ABORT"
     if not np.allclose(previous_target, preload_goal, atol=1.0e-12, rtol=0.0):
         return "PRELOAD_TARGET_RATE_LIMIT_ABORT"
+    stepper.set_lift_arm_damping(float(settings["lift_arm_damping_nm_s_rad"]))
     waypoints = np.asarray(motion_plan["lift_arm_waypoints_rad"])
     lift_steps = round(float(settings["lift_duration_s"]) / dt)
     for index in stepper.active_steps(lift_steps):
@@ -734,6 +854,7 @@ def controller_outcome(
         "maximum_gravity_target_bias_rad": stepper.maximum_target_bias,
         "minimum_drive_target_limit_margin_rad": stepper.minimum_drive_target_limit_margin,
         "native_drive_audit": dict(native_drive_audit),
+        "lift_arm_damping_switch_audit": stepper.lift_arm_damping_switch_audit,
         "approach_above_settled": pregrasp["above_settled"],
         "approach_above_final_tracking_error_rad": pregrasp["above_final_error_rad"],
         "contact_targets_rad": [] if contact is None else list(contact.contact_targets_rad),

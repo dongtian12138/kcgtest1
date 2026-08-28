@@ -102,14 +102,14 @@ ik:
     maximum_function_evaluations: 2000
 
 dynamic:
-  physics_dt_s: 0.008333333333333333
+  physics_dt_s: 0.004166666666666667
   settle_duration_s: 2.0
-  approach_clearance_height_m: 0.10
+  approach_clearance_height_m: 0.05
   approach_above_duration_s: 3.0
   approach_above_settle_error_rad: 0.020
   approach_above_settle_consecutive_samples: 30
   approach_above_settle_timeout_s: 1.0
-  approach_descent_duration_s: 2.0
+  approach_descent_duration_s: 4.0
   pregrasp_hold_duration_s: 0.5
   effort_tare_duration_s: 0.5
   finger_maximum_speed_rad_s: 0.18
@@ -117,10 +117,11 @@ dynamic:
   contact_position_error_rad: 0.004
   contact_consecutive_samples: 6
   contact_endpoint_timeout_s: 0.5
-  preload_increment_rad: 0.015
+  preload_increment_rad: 0.025
   preload_duration_s: 0.5
   arm_stiffness: 2500.0
-  arm_damping: 40.0
+  arm_damping: 60.0
+  lift_arm_damping_nm_s_rad: 160.0
   arm_control_law: NATIVE_FORCE_DRIVE_GRAVITY_EQUIVALENT_POSITION_BIAS_V1
   hand_stiffness: 12.0
   hand_damping: 2.0
@@ -130,7 +131,8 @@ dynamic:
   maximum_joint_speed_rad_s: 3.0
   maximum_arm_tracking_error_rad: 0.20
   lift_distance_m: 0.050
-  lift_duration_s: 1.5
+  lift_command_distance_m: 0.052
+  lift_duration_s: 19.0
   hold_duration_s: 2.0
   lift_tolerance_m: 0.001
   lift_acceleration_difference_window_samples: 4
@@ -141,7 +143,77 @@ dynamic:
   online_object_truth_allowed: false
   online_contact_truth_allowed: false
   object_pose_write_after_start_allowed: false
-  robot_asset: artifacts/kcg_connector/isaac/robot/handarm/handarm.usda
+  robot_asset: artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/handarm.usda
+  registered_grasps:
+    current_d38999_26kj61sn_public_spec:
+      schema_version: carts_v2_registered_grasp_v1
+      grasp_id: centered_outer_shell_tripod_v1
+      object_id: current_d38999_26kj61sn_public_spec
+      hardware_authorized: false
+      construction_method: MECHANICS_DERIVED_FROM_REGISTERED_SCENE_HAND_KINEMATICS_AND_FROZEN_PROPERTIES
+      control_plan:
+        object_from_hand_row_major:
+          - 1.0
+          - 0.0
+          - 0.0
+          - -0.00017
+          - 0.0
+          - 1.0
+          - 0.0
+          - 0.0
+          - 0.0
+          - 0.0
+          - 1.0
+          - -0.405
+          - 0.0
+          - 0.0
+          - 0.0
+          - 1.0
+        approach_direction_object: [0.0, 0.0, 1.0]
+        approach_high_seed_arm_positions_rad:
+          - 0.27259810572824394
+          - 0.7839521240485263
+          - 1.5770809252075877
+          - 1.0267783042174294
+          - -2.2818622977803105
+          - 1.9419760056473545
+          - 2.2508184091970773
+        pregrasp_joint_positions_rad: [0.70, 0.656261, 0.447734, 0.656261]
+        final_joint_positions_rad: [0.70, 0.90, 0.72, 0.90]
+      intended_contact_regions:
+        frame: object
+        region: ALLOWED_OUTER_LOAD_BEARING_SHELL_NEAR_COM
+        radial_range_m: [0.019, 0.024]
+        axial_range_m: [0.010, 0.024]
+        terminal_links: [f1Link3, f2Link2, f3Link3]
+        planned_minimum_radial_gap_m: 0.002
+        planned_gap_is_not_contact_evidence: true
+      closure_control:
+        method: SEQUENTIAL_LOW_SPEED_JOINT_EFFORT_CONTACT_THEN_FINITE_PRELOAD
+        finger_maximum_speed_rad_s: 0.18
+        contact_detection_effort_rise_nm: 0.020
+      finite_clamp_target:
+        preload_increment_rad: 0.025
+        estimated_additional_joint_torque_nm: 0.300
+        hand_drive_maximum_effort_nm: 1.0
+        measured_effort_abort_nm: 0.90
+        engineering_estimate:
+          object_mass_kg: 0.31
+          gravity_m_s2: 9.80665
+          resolved_dynamic_friction_coefficient: 1.4
+          required_equal_normal_force_per_finger_n: 0.724
+          kinematic_moment_arm_range_m: [0.0659, 0.0696]
+          estimated_additional_normal_force_per_finger_range_n: [4.310, 4.552]
+          simulation_estimate_not_hardware_calibration: true
+      lift_trajectory:
+        direction_world: [0.0, 0.0, 1.0]
+        distance_m: 0.052
+        duration_s: 19.0
+        arm_damping_nm_s_rad: 160.0
+        registered_peak_acceleration_m_s2: 0.0008316402769490454
+      hold_control:
+        method: HOLD_FINAL_ARM_AND_FINITE_PRELOAD_TARGETS
+        duration_s: 2.0
   object_scenes:
     current_d38999_26kj61sn_public_spec:
       scene_kind: D38999_PAIR_TABLETOP
