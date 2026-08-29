@@ -170,11 +170,21 @@ robustness_evaluation:
   cartesian_product_used: false
   conclusion_limit: OBSERVED_ONLY_ON_THE_LISTED_FINITE_SCENARIOS
   final_validation_protocol:
-    algorithm_and_controller_commit: 78a44af3a4e12aeb9831fcca27102055bba4d403
+    algorithm_and_controller_commit: d9a1c43
     declared_before_any_final_validation_run: true
     role: HELD_OUT_DYNAMIC_EVALUATION_AFTER_FINAL_FREEZE
     values_are_unseen_interior_research_hypotheses: true
     same_scenarios_for_both_objects_and_v4_v5: true
+    prior_final_scenarios_role: DEVELOPMENT_DATA_NOT_FINAL_EVALUATION
+    held_out_scenario_names:
+    - heldout_pose_x_minus_0p12mm
+    - heldout_yaw_plus_0p75deg
+    - heldout_friction_0p49
+    - heldout_mass_minus_2pct
+    - heldout_com_x_plus_0p4mm
+    - heldout_finger3_joint_minus_0p0015rad
+    - heldout_combo_c
+    - heldout_combo_d
   bounds:
     object_translation_x_m:
     - -0.00017
@@ -310,6 +320,53 @@ robustness_evaluation:
       object_mass_scale: 1.025
       center_of_mass_delta_object_m:
       - 0.0005
+      - 0.0
+      - 0.0
+      finger_joint_target_offset_rad:
+        finger_3: -0.002
+    heldout_pose_x_minus_0p12mm:
+      object_translation_delta_m:
+      - -0.00012
+      - 0.0
+      - 0.0
+    heldout_yaw_plus_0p75deg:
+      object_yaw_delta_rad: 0.013089969389957472
+    heldout_friction_0p49:
+      contact_friction_coefficient: 0.49
+    heldout_mass_minus_2pct:
+      object_mass_scale: 0.98
+    heldout_com_x_plus_0p4mm:
+      center_of_mass_delta_object_m:
+      - 0.0004
+      - 0.0
+      - 0.0
+    heldout_finger3_joint_minus_0p0015rad:
+      finger_joint_target_offset_rad:
+        finger_3: -0.0015
+    heldout_combo_c:
+      object_translation_delta_m:
+      - 0.00013
+      - 0.0
+      - 0.0
+      object_yaw_delta_rad: -0.010471975511965976
+      contact_friction_coefficient: 0.46
+      object_mass_scale: 1.03
+      center_of_mass_delta_object_m:
+      - -0.0006
+      - 0.0
+      - 0.0
+      finger_joint_target_offset_rad:
+        finger_3: 0.0025
+    heldout_combo_d:
+      object_translation_delta_m:
+      - -0.00014
+      - 0.0
+      - 0.0
+      object_yaw_delta_rad: 0.015707963267948967
+      contact_friction_coefficient: 0.48
+      object_mass_scale: 0.97
+      center_of_mass_delta_object_m:
+      - 0.0007
       - 0.0
       - 0.0
       finger_joint_target_offset_rad:
