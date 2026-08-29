@@ -40,8 +40,14 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--te-search", required=True)
     parser.add_argument("--current-baseline-eval", required=True)
     parser.add_argument("--current-auto-run", required=True)
+    parser.add_argument("--current-auto-eval")
+    parser.add_argument("--current-robust-search", required=True)
+    parser.add_argument("--current-robust-eval", required=True)
     parser.add_argument("--te-baseline-eval", required=True)
     parser.add_argument("--te-auto-run", required=True)
+    parser.add_argument("--te-auto-eval")
+    parser.add_argument("--te-robust-search", required=True)
+    parser.add_argument("--te-robust-eval", required=True)
     parser.add_argument("--output-directory", required=True)
     return parser.parse_args()
 
@@ -175,6 +181,7 @@ def _comparison_row(
     method: str,
     search_record: Mapping[str, Any],
     evaluation: Mapping[str, Any],
+    acceleration_tolerance_m_s2: float,
 ) -> dict[str, Any]:
     quality = search_record["quality"]
     path = search_record["path"]
@@ -205,13 +212,31 @@ def _comparison_row(
         "isaac_maximum_hand_effort_nm": float(
             evaluation["maximum_absolute_hand_effort_nm"]
         ),
+        "isaac_peak_acceleration_m_s2": float(
+            evaluation["actual_lift_peak_acceleration_m_s2"]
+        ),
+        "isaac_acceleration_limit_m_s2": float(
+            evaluation["registered_lift_peak_acceleration_m_s2"]
+            + acceleration_tolerance_m_s2
+        ),
         "isaac_unauthorized_contacts": _unauthorized_total(evaluation),
         "isaac_maximum_table_penetration_mm": 1000.0
         * float(evaluation["maximum_table_penetration_m"]),
         "isaac_post_settle_table_penetration_mm": 1000.0
         * float(evaluation["maximum_post_settle_table_penetration_m"]),
         "isaac_controller_completed": bool(evaluation["controller_completed"]),
-        "isaac_formal_dynamic_pass": bool(evaluation["formal_dynamic_pass"]),
+        "isaac_nominal_dynamic_safety_pass": bool(
+            evaluation.get("controller_nominal_physical_pass", False)
+        ),
+        "isaac_nominal_research_dynamic_pass": bool(
+            evaluation.get("nominal_research_dynamic_pass", False)
+        ),
+        "isaac_formal_dynamic_pass": bool(
+            evaluation.get(
+                "formal_dynamic_pass",
+                evaluation.get("controller_nominal_physical_pass", False),
+            )
+        ),
     }
 
 
@@ -293,7 +318,7 @@ def _render_contacts(
     cases: Sequence[Mapping[str, Any]],
     output: Path,
 ) -> None:
-    figure = plt.figure(figsize=(15, 12), constrained_layout=True)
+    figure = plt.figure(figsize=(20, 12), constrained_layout=True)
     for row_index, case in enumerate(cases):
         friction = float(
             case["inputs"].object_contract.contact_material_uncertainty
@@ -304,7 +329,7 @@ def _render_contacts(
                 "friction_cone_edge_count"
             ]
         )
-        baseline_axis = figure.add_subplot(2, 2, row_index * 2 + 1, projection="3d")
+        baseline_axis = figure.add_subplot(2, 3, row_index * 3 + 1, projection="3d")
         _draw_contact_geometry(
             baseline_axis,
             case["inputs"],
@@ -313,14 +338,23 @@ def _render_contacts(
             edge_count,
             f"{case['label']} baseline (offline reconstruction)",
         )
-        auto_axis = figure.add_subplot(2, 2, row_index * 2 + 2, projection="3d")
+        auto_axis = figure.add_subplot(2, 3, row_index * 3 + 2, projection="3d")
         _draw_contact_geometry(
             auto_axis,
             case["inputs"],
             case["auto_patches"],
             friction,
             edge_count,
-            f"{case['label']} finite-set best (stored search data)",
+            f"{case['label']} V4 nominal G_delta best",
+        )
+        robust_axis = figure.add_subplot(2, 3, row_index * 3 + 3, projection="3d")
+        _draw_contact_geometry(
+            robust_axis,
+            case["inputs"],
+            case["robust_patches"],
+            friction,
+            edge_count,
+            f"{case['label']} V5 robust selector",
         )
     figure.suptitle(
         "CAD/FCL contact witnesses: black = outward normals; colored = 8-edge unilateral friction rays",
@@ -348,11 +382,12 @@ def _quality_heatmap(search: Mapping[str, Any]) -> np.ndarray:
 
 
 def _render_quality(cases: Sequence[Mapping[str, Any]], output: Path) -> None:
-    figure, axes = plt.subplots(2, 2, figsize=(15, 10), constrained_layout=True)
+    figure, axes = plt.subplots(2, 2, figsize=(15, 10))
     for row_index, case in enumerate(cases):
         search = case["search"]
         baseline = case["baseline"]
         selected = search["selected_candidate"]
+        robust_selected = case["robust_search"]["selected_candidate"]
         values = _quality_values(search)
         histogram = axes[row_index, 0]
         histogram.hist(values, bins=45, color="#4c78a8", alpha=0.82)
@@ -367,7 +402,13 @@ def _render_quality(cases: Sequence[Mapping[str, Any]], output: Path) -> None:
             float(selected["quality"]["task_load_factor"]),
             color="#d62728",
             linestyle="-",
-            label="finite-set best",
+            label="V4 nominal best",
+        )
+        histogram.axvline(
+            float(robust_selected["quality"]["task_load_factor"]),
+            color="#2f6fbb",
+            linestyle="-.",
+            label="V5 robust selector",
         )
         histogram.set_title(f"{case['label']}: executable candidate quality")
         histogram.set_xlabel("task load factor lambda")
@@ -391,7 +432,12 @@ def _render_quality(cases: Sequence[Mapping[str, Any]], output: Path) -> None:
         )
         heatmap.scatter(
             selected_indices["yaw"], selected_indices["palm"],
-            marker="*", s=100, color="#d62728", label="finite-set best",
+            marker="*", s=100, color="#d62728", label="V4 nominal best",
+        )
+        robust_indices = robust_selected["grid_indices"]
+        heatmap.scatter(
+            robust_indices["yaw"], robust_indices["palm"],
+            marker="D", s=50, color="#2f6fbb", label="V5 robust selector",
         )
         heatmap.set_title(f"{case['label']}: max lambda over axial grid")
         heatmap.set_xlabel("yaw index (15 deg steps)")
@@ -405,8 +451,21 @@ def _render_quality(cases: Sequence[Mapping[str, Any]], output: Path) -> None:
         )
         for case in cases
     ]
-    figure.text(0.5, 0.003, " | ".join(status_lines), ha="center", fontsize=8)
-    figure.savefig(output / "gdelta_search_and_quality_distribution.png", dpi=220)
+    figure.tight_layout(rect=(0.0, 0.075, 1.0, 1.0))
+    figure.text(
+        0.5,
+        0.012,
+        "\n".join(status_lines),
+        ha="center",
+        va="bottom",
+        fontsize=8,
+    )
+    figure.savefig(
+        output / "gdelta_search_and_quality_distribution.png",
+        dpi=220,
+        bbox_inches="tight",
+        pad_inches=0.1,
+    )
     plt.close(figure)
 
 
@@ -420,8 +479,9 @@ def _render_comparison(rows: Sequence[Mapping[str, Any]], output: Path) -> None:
         ("isaac_slip_mm", "Isaac relative slip [mm]"),
         ("isaac_orientation_change_deg", "Isaac orientation change [deg]"),
         ("isaac_maximum_hand_effort_nm", "Isaac max hand effort [Nm]"),
+        ("isaac_peak_acceleration_m_s2", "Isaac peak acceleration [m/s2]"),
     )
-    figure, axes = plt.subplots(2, 4, figsize=(17, 8), constrained_layout=True)
+    figure, axes = plt.subplots(3, 3, figsize=(16, 12), constrained_layout=True)
     labels = [f"{row['object']}\n{row['method']}" for row in rows]
     colors = ["#9a9a9a" if row["method"] == "baseline" else "#2f6fbb" for row in rows]
     for axis, (field, title) in zip(axes.flat, metrics):
@@ -432,18 +492,66 @@ def _render_comparison(rows: Sequence[Mapping[str, Any]], output: Path) -> None:
         axis.grid(axis="y", alpha=0.22)
         axis.bar_label(bars, fmt="%.3g", padding=2, fontsize=7)
     figure.suptitle(
-        "Baseline versus frozen finite-set best (independent metrics; no weighted composite)",
+        "Historical baseline versus V4 nominal G_delta best (independent metrics)",
         fontsize=13,
     )
     figure.text(
         0.5,
         0.003,
-        "All four runs: three full pads, off table, hold=2.000 s, unauthorized contacts=0. "
-        "TE finite-set best raises predicted load factor but worsens observed slip and orientation.",
+        "Historical baseline used an earlier controller, so this panel is descriptive rather than a causal comparison. "
+        "All runs formed three full-pad contacts, left the table, and held for 2.000 s.",
         ha="center",
         fontsize=9,
     )
     figure.savefig(output / "baseline_vs_finite_best.png", dpi=220)
+    plt.close(figure)
+
+
+def _render_fair_comparison(
+    rows: Sequence[Mapping[str, Any]], output: Path
+) -> None:
+    metrics = (
+        ("predicted_task_load_factor", "predicted task load factor"),
+        ("predicted_forbidden_clearance_mm", "forbidden clearance [mm]"),
+        ("predicted_joint_torque_margin_nm", "joint torque margin [Nm]"),
+        ("predicted_pad_force_margin_n", "pad normal-force margin [N]"),
+        ("isaac_lift_mm", "Isaac lift [mm]"),
+        ("isaac_slip_mm", "Isaac relative slip [mm]"),
+        ("isaac_orientation_change_deg", "Isaac orientation change [deg]"),
+        ("isaac_maximum_hand_effort_nm", "Isaac max hand effort [Nm]"),
+        ("isaac_peak_acceleration_m_s2", "Isaac peak acceleration [m/s2]"),
+    )
+    figure, axes = plt.subplots(3, 3, figsize=(16, 12), constrained_layout=True)
+    labels = [f"{row['object']}\n{row['method']}" for row in rows]
+    colors = ["#777777" if row["method"].startswith("V4") else "#2f6fbb" for row in rows]
+    for axis, (field, title) in zip(axes.flat, metrics):
+        values = [float(row[field]) for row in rows]
+        bars = axis.bar(np.arange(len(rows)), values, color=colors)
+        axis.set_title(title, fontsize=10)
+        axis.set_xticks(np.arange(len(rows)), labels, rotation=25, ha="right", fontsize=8)
+        axis.grid(axis="y", alpha=0.22)
+        axis.bar_label(bars, fmt="%.3g", padding=2, fontsize=7)
+        if field == "isaac_peak_acceleration_m_s2":
+            axis.axhline(
+                float(rows[0]["isaac_acceleration_limit_m_s2"]),
+                color="#d62728",
+                linestyle=":",
+                label="frozen limit",
+            )
+            axis.legend(fontsize=8)
+    figure.suptitle(
+        "Fair dynamic comparison: V4 nominal optimum versus V5 robust selector",
+        fontsize=13,
+    )
+    figure.text(
+        0.5,
+        0.003,
+        "Same controller, object properties, full-pad semantics, and safety criteria. "
+        "V4 maximizes nominal task load in G_delta; V5 is a robust selector, not the nominal optimum.",
+        ha="center",
+        fontsize=9,
+    )
+    figure.savefig(output / "v4_nominal_vs_v5_robust_fair.png", dpi=220)
     plt.close(figure)
 
 
@@ -462,7 +570,7 @@ def _render_isaac_holds(cases: Sequence[Mapping[str, Any]], output: Path) -> Non
         image, record = _hold_image(case["auto_run"])
         axis.imshow(image)
         axis.axis("off")
-        evaluation = case["auto_evaluation"]
+        evaluation = case["visual_evaluation"]
         axis.set_title(
             f"{case['label']} | lift={1000.0 * float(evaluation['maximum_lift_m']):.3f} mm, "
             f"hold={float(evaluation['hold_duration_s']):.3f} s\n"
@@ -470,7 +578,9 @@ def _render_isaac_holds(cases: Sequence[Mapping[str, Any]], output: Path) -> Non
             f"pad contacts={record['terminal_link_object_contact_counts']}",
             fontsize=10,
         )
-    figure.suptitle("True Isaac Sim final-hold frames for the automatically selected grasps")
+    figure.suptitle(
+        "True Isaac Sim final-hold frames for the V4 automatically selected grasps"
+    )
     figure.savefig(output / "isaac_two_model_final_hold.png", dpi=220)
     plt.close(figure)
 
@@ -497,7 +607,8 @@ def _contact_rows(cases: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                 case["baseline_patches"],
                 "DETERMINISTIC_OFFLINE_RECONSTRUCTION_OF_FROZEN_BASELINE_GRID_POINT",
             ),
-            ("finite_set_best", case["auto_patches"], "STORED_FINITE_SEARCH_RESULT"),
+            ("v4_nominal_best", case["auto_patches"], "STORED_V4_FINITE_SEARCH_RESULT"),
+            ("v5_robust_selector", case["robust_patches"], "STORED_V5_ROBUST_SEARCH_RESULT"),
         ):
             for pad_index, patch in enumerate(patches, start=1):
                 points, normals, faces = _patch_arrays(patch)
@@ -530,16 +641,26 @@ def _case(
     label: str,
     search_path: Path,
     baseline_evaluation_path: Path,
+    auto_evaluation_path: Path,
     auto_run: Path,
+    robust_search_path: Path,
+    robust_evaluation_path: Path,
 ) -> dict[str, Any]:
     search = _read_json(search_path)
+    robust_search = _read_json(robust_search_path)
     inputs = load_v2_inputs(
         repository, config_path=config, object_id=str(search["object_id"])
     )
     baseline = _single_baseline(search)
-    auto_evaluation = _read_json(auto_run / "evaluation.json")
+    auto_evaluation = _read_json(auto_evaluation_path)
     if auto_evaluation["object_id"] != search["object_id"]:
         raise ValueError("automatic dynamic evaluation object does not match search")
+    robust_evaluation = _read_json(robust_evaluation_path)
+    if (
+        robust_search["object_id"] != search["object_id"]
+        or robust_evaluation["object_id"] != search["object_id"]
+    ):
+        raise ValueError("robust evidence object does not match nominal search")
     return {
         "label": label,
         "search_path": search_path,
@@ -551,6 +672,16 @@ def _case(
         "auto_patches": _selected_patches(search),
         "auto_evaluation": auto_evaluation,
         "auto_run": auto_run,
+        "visual_evaluation": _read_json(auto_run / "evaluation.json"),
+        "robust_search_path": robust_search_path,
+        "robust_search": robust_search,
+        "robust_patches": _selected_patches(robust_search),
+        "robust_evaluation": robust_evaluation,
+        "acceleration_tolerance_m_s2": float(
+            inputs.config.section("dynamic")[
+                "lift_acceleration_tolerance_m_s2"
+            ]
+        ),
     }
 
 
@@ -567,7 +698,13 @@ def main() -> int:
             "Current D38999/26KJ61SN",
             Path(arguments.current_search).resolve(),
             Path(arguments.current_baseline_eval).resolve(),
+            Path(
+                arguments.current_auto_eval
+                or Path(arguments.current_auto_run) / "evaluation.json"
+            ).resolve(),
             Path(arguments.current_auto_run).resolve(),
+            Path(arguments.current_robust_search).resolve(),
+            Path(arguments.current_robust_eval).resolve(),
         ),
         _case(
             repository,
@@ -575,10 +712,17 @@ def main() -> int:
             "TE D38999/26FJ35PN",
             Path(arguments.te_search).resolve(),
             Path(arguments.te_baseline_eval).resolve(),
+            Path(
+                arguments.te_auto_eval
+                or Path(arguments.te_auto_run) / "evaluation.json"
+            ).resolve(),
             Path(arguments.te_auto_run).resolve(),
+            Path(arguments.te_robust_search).resolve(),
+            Path(arguments.te_robust_eval).resolve(),
         ),
     )
     comparison_rows: list[dict[str, Any]] = []
+    fair_rows: list[dict[str, Any]] = []
     for case in cases:
         comparison_rows.extend(
             (
@@ -587,12 +731,32 @@ def main() -> int:
                     "baseline",
                     case["baseline"],
                     case["baseline_evaluation"],
+                    case["acceleration_tolerance_m_s2"],
                 ),
                 _comparison_row(
                     case["label"],
                     "finite_set_best",
                     case["search"]["selected_candidate"],
                     case["auto_evaluation"],
+                    case["acceleration_tolerance_m_s2"],
+                ),
+            )
+        )
+        fair_rows.extend(
+            (
+                _comparison_row(
+                    case["label"],
+                    "V4 nominal G_delta best",
+                    case["search"]["selected_candidate"],
+                    case["auto_evaluation"],
+                    case["acceleration_tolerance_m_s2"],
+                ),
+                _comparison_row(
+                    case["label"],
+                    "V5 robust selector",
+                    case["robust_search"]["selected_candidate"],
+                    case["robust_evaluation"],
+                    case["acceleration_tolerance_m_s2"],
                 ),
             )
         )
@@ -600,13 +764,15 @@ def main() -> int:
     _render_contacts(cases, output)
     _render_quality(cases, output)
     _render_comparison(comparison_rows, output)
+    _render_fair_comparison(fair_rows, output)
     _render_isaac_holds(cases, output)
     _write_csv(output / "comparison.csv", comparison_rows)
+    _write_csv(output / "v4_vs_v5_fair_comparison.csv", fair_rows)
     contact_rows = _contact_rows(cases)
     _write_csv(output / "contact_witnesses.csv", contact_rows)
     summary = {
         "schema_version": "finite_gdelta_two_model_evidence_v1",
-        "claim": "BEST_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA",
+        "claim": "V4_BEST_NOMINAL_TASK_LOAD_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA",
         "not_claimed": [
             "CONTINUOUS_SPACE_GLOBAL_OPTIMUM",
             "HARDWARE_VALIDATION",
@@ -617,14 +783,20 @@ def main() -> int:
             "finite-set-best witnesses are stored CAD/FCL predictions; baseline witnesses "
             "are deterministic offline reconstructions of the one frozen baseline grid point"
         ),
+        "dynamic_comparison_boundary": (
+            "historical baseline rows use an earlier controller and are descriptive; "
+            "V4-versus-V5 rows use the same frozen controller and safety criteria"
+        ),
         "quality_statistics": {
             case["label"]: _quality_statistics(case["search"]) for case in cases
         },
         "comparison": comparison_rows,
+        "v4_vs_v5_fair_comparison": fair_rows,
         "figures": [
             "cad_contacts_normals_friction.png",
             "gdelta_search_and_quality_distribution.png",
             "baseline_vs_finite_best.png",
+            "v4_nominal_vs_v5_robust_fair.png",
             "isaac_two_model_final_hold.png",
         ],
     }

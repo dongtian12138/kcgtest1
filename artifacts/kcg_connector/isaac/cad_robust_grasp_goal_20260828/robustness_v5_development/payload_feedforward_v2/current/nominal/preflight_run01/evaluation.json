@@ -1,0 +1,312 @@
+{
+  "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
+  "object_id": "current_d38999_26kj61sn_public_spec",
+  "candidate_id": "axial_full_pad_first_intersection_v1__current_d38999_26kj61sn_public_spec",
+  "mode": "preflight",
+  "physics_time_advanced_s": 12.625,
+  "three_terminal_link_contacts_observed": false,
+  "terminal_link_contact_records": [
+    0,
+    0,
+    0
+  ],
+  "pad_surface_identity_verified": false,
+  "pad_surface_identity_evidence": {
+    "verified": false,
+    "method": "BOUND_TERMINAL_COLLIDER_PLUS_ALL_POSITIVE_CONTACT_POINTS_NEAREST_TO_USER_CONFIRMED_FULL_PAD",
+    "reason": "NOT_ALL_THREE_TERMINAL_LINKS_HAVE_POSITIVE_OBJECT_CONTACT",
+    "mappings": [],
+    "robot_asset_path": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/nailfree_three_finger_direct_v2_shrinkwrap/handarm_nailfree_three_direct.usda",
+    "trace_bound_robot_asset_sha256": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747",
+    "robot_asset_sha256": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747",
+    "evaluator_source_sha256": "0214ed1023e17ff7930b8c148020310138d9c42e2fe90a9844a2a5c87cb3e4b5",
+    "asset_binding_matches": true,
+    "contact_point_projection": [
+      {
+        "terminal_link": "f1Link3",
+        "positive_contact_point_count": 0,
+        "all_points_nearest_to_full_pad": null
+      },
+      {
+        "terminal_link": "f2Link2",
+        "positive_contact_point_count": 0,
+        "all_points_nearest_to_full_pad": null
+      },
+      {
+        "terminal_link": "f3Link3",
+        "positive_contact_point_count": 0,
+        "all_points_nearest_to_full_pad": null
+      }
+    ]
+  },
+  "maximum_consecutive_simultaneous_contact_samples": 0,
+  "maximum_lift_m": 0.0,
+  "lift_50mm_passed": false,
+  "hold_duration_s": 0.0,
+  "hold_2s_passed": false,
+  "table_contact_released_during_hold": false,
+  "maximum_relative_slip_m": 0.0,
+  "maximum_orientation_change_rad": 0.0,
+  "actual_lift_peak_acceleration_m_s2": null,
+  "signed_lift_peak_acceleration_m_s2": null,
+  "lift_peak_acceleration_simulation_time_s": null,
+  "lift_peak_acceleration_elapsed_s": null,
+  "lift_peak_acceleration_fraction": null,
+  "lift_peak_acceleration_context": null,
+  "registered_lift_peak_acceleration_m_s2": 0.0008316402769490454,
+  "lift_acceleration_consistent": false,
+  "maximum_table_penetration_m": 1.2390613556012564e-06,
+  "maximum_post_settle_table_penetration_m": 1.0657310486883453e-07,
+  "unauthorized_contact_records": {
+    "robot_object_unauthorized": 0,
+    "robot_table": 0,
+    "robot_fixture": 0,
+    "robot_unclassified": 0
+  },
+  "first_unauthorized_contact_paths": {},
+  "first_terminal_link_object_paths": [
+    null,
+    null,
+    null
+  ],
+  "contact_report_channels_agree": true,
+  "contact_report_api_complete": true,
+  "first_finger_contact_classification": "NO_CONTACT_PROXY",
+  "first_finger_hold_duration_s": 0.0,
+  "first_finger_maximum_target_delta_rad": 0.0,
+  "only_first_finger_commanded": false,
+  "controller_first_finger_diagnostic_pass": false,
+  "first_finger_diagnostic_pass": false,
+  "finite_throughout": true,
+  "controller_completed": true,
+  "controller_failure_reason": null,
+  "maximum_joint_speed_rad_s": 1.1031265258789062,
+  "maximum_joint_speed_joint": "iiwa_joint_6",
+  "maximum_absolute_hand_effort_nm": 0.07118380069732666,
+  "finger_clamp_effort_nm": {
+    "preload": {
+      "finger_1": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_2": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_3": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      }
+    },
+    "lift": {
+      "finger_1": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_2": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_3": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      }
+    },
+    "hold": {
+      "finger_1": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_2": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_3": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      }
+    }
+  },
+  "truth_isolation_pass": true,
+  "accepted_preflight_bound": false,
+  "accepted_preflight_evaluation_sha256": null,
+  "preflight_pass": true,
+  "controller_preflight_pass": true,
+  "engine_health_pass": true,
+  "accepted_preflight_pass": true,
+  "physx_capacity_warning_count": 0,
+  "configured_gpu_found_lost_aggregate_pairs_capacity": 8192,
+  "configured_gpu_total_aggregate_pairs_capacity": 16384,
+  "observed_gpu_found_lost_aggregate_pairs_peak": 77,
+  "observed_gpu_total_aggregate_pairs_peak": 7644,
+  "engine_log_sha256": "6ccc6c1987227e309bbb2e58f97e8c448a79a542e2bce4f9ce698d3f708ebb39",
+  "engine_log_sync_marker": "CARTS_V2_ENGINE_LOG_SYNC_1788015271717437131",
+  "engine_log_marker_seen": true,
+  "engine_log_audit_byte_count": 1646755,
+  "engine_log_audit_boundary": "PROCESS_START_THROUGH_SYNC_MARKER",
+  "physx_error_lines": [],
+  "identity_hash_check_pass": true,
+  "nominal_diagnostic_pass": false,
+  "research_dynamic_pass": false,
+  "formal_dynamic_pass": false,
+  "hardware_authorized": false,
+  "evidence_binding": {
+    "config_sha256": "016f6c811975afc4f42637fe9bde2ad879efcab4d84fcd8565edf1209ba90848",
+    "registered_grasp_sha256": "bc52a81184639c6eadfc7749d23e7ac55621143e3e13c7c4f3877c4f9d9d2a57",
+    "control_plan_sha256": "755febaeab81b0c547bdcf1255413b2ca4681e7d433756ee3e7bbeed1818c19e",
+    "runtime_resources_sha256": "f47bf2c99bbcf1fe8c2dc3f19c7c18e0e9256ebca32966cadb7f468cfaec0ff3",
+    "capacity_audit_sha256": "f941c8d8d9326129a92ce0a9c0efc63336bad50e20b18895b08df021aa6045dc",
+    "scene_evidence_sha256": {
+      "artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/scene.yaml": "99b2dfec9a4b96ecacaff559e32d9605d74227cdbe13baaf9c954a0e74a3b809"
+    },
+    "environment_scope": "FULL_TABLE_FIXTURE_AND_FIXED_RECEPTACLE",
+    "robustness_scenario": "nominal",
+    "robustness_perturbation": {},
+    "effective_finger_preload_scales": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "required_closing_joint_effort_nm": [
+      0.5929274783776908,
+      0.7256508019499831,
+      0.5923064443638091
+    ],
+    "predicted_unit_task_closing_joint_effort_nm": [
+      0.5929274783776908,
+      0.7256508019499831,
+      0.5923064443638091
+    ],
+    "prelift_contact_confirmation_effort_nm": 0.02,
+    "applied_initial_object_translation_delta_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "applied_initial_object_yaw_delta_rad": 0.0,
+    "contact_friction_material_audit": {
+      "material_prim_path": "/World/HandArm/PhysicsMaterials/fingertip_pad",
+      "applied": false,
+      "requested_coefficient": null,
+      "before_static_friction": 1.399999976158142,
+      "before_dynamic_friction": 1.399999976158142,
+      "observed_static_friction": 1.399999976158142,
+      "observed_dynamic_friction": 1.399999976158142,
+      "scope": "THREE_FULL_NAILFREE_FINGERTIP_PADS_SHARED_PHYSICS_MATERIAL"
+    },
+    "object_mass_audit": {
+      "applied": false,
+      "requested_scale": null,
+      "effective_scale": 1.0,
+      "parts": [
+        {
+          "rigid_prim_path": "/World/D38999TabletopV1/D38999Pair/D38999Shell25JKeyedPhysicalV3/LoosePlug/BodyAssembly",
+          "before_mass_kg": 0.23000000417232513,
+          "observed_mass_kg": 0.23000000417232513,
+          "before_diagonal_inertia_kg_m2": [
+            4.616809019353241e-05,
+            4.616809019353241e-05,
+            5.6676599342608824e-05
+          ],
+          "observed_diagonal_inertia_kg_m2": [
+            4.616809019353241e-05,
+            4.616809019353241e-05,
+            5.6676599342608824e-05
+          ]
+        },
+        {
+          "rigid_prim_path": "/World/D38999TabletopV1/D38999Pair/D38999Shell25JKeyedPhysicalV3/LoosePlug/CouplingNut",
+          "before_mass_kg": 0.07999999821186066,
+          "observed_mass_kg": 0.07999999821186066,
+          "before_diagonal_inertia_kg_m2": [
+            2.729786683630664e-05,
+            2.729786683630664e-05,
+            4.051240102853626e-05
+          ],
+          "observed_diagonal_inertia_kg_m2": [
+            2.729786683630664e-05,
+            2.729786683630664e-05,
+            4.051240102853626e-05
+          ]
+        }
+      ]
+    },
+    "center_of_mass_audit": {
+      "applied": false,
+      "requested_delta_object_m": null,
+      "parts": [
+        {
+          "rigid_prim_path": "/World/D38999TabletopV1/D38999Pair/D38999Shell25JKeyedPhysicalV3/LoosePlug/BodyAssembly",
+          "before_center_of_mass_m": [
+            0.0,
+            0.0,
+            0.015250000171363354
+          ],
+          "observed_center_of_mass_m": [
+            0.0,
+            0.0,
+            0.015250000171363354
+          ]
+        },
+        {
+          "rigid_prim_path": "/World/D38999TabletopV1/D38999Pair/D38999Shell25JKeyedPhysicalV3/LoosePlug/CouplingNut",
+          "before_center_of_mass_m": [
+            0.0,
+            0.0,
+            0.01425000000745058
+          ],
+          "observed_center_of_mass_m": [
+            0.0,
+            0.0,
+            0.01425000000745058
+          ]
+        }
+      ]
+    },
+    "finger_joint_target_audit": {
+      "applied": false,
+      "joint_name": "f3j2",
+      "requested_offset_rad": 0.0,
+      "before_pregrasp_rad": 0.6368227157592778,
+      "observed_pregrasp_target_rad": 0.6368227157592778,
+      "before_final_rad": 0.9100303726196295,
+      "observed_final_target_rad": 0.9100303726196295
+    },
+    "object_asset_sha256": "5eb9ad82940e58a1592b6a66fd824c480ba24268cb1c20bcc84de653bb12c995",
+    "robot_asset_sha256": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747",
+    "controller_source_sha256": "be87adb24548abb088f07641b4870996ed2604625090d0997505582c80d48730",
+    "runner_source_sha256": "41b341e8190bc157866b6e5125453a8cf110c15b74faf3da1813b2928352e84b",
+    "evaluator_source_sha256": "0214ed1023e17ff7930b8c148020310138d9c42e2fe90a9844a2a5c87cb3e4b5",
+    "engine_health_source_sha256": "1fa53df0e4bb6c90f9c09ddcb496dad93d36df11a8d86edd90954fa3cb08059f"
+  },
+  "evidence_limit": "RESEARCH_ONLY_TERMINAL_LINK_CONTACT_PAD_IDENTITY_UNRESOLVED",
+  "engine_log_path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260829_145316.log",
+  "physx_capacity_warning_lines": [],
+  "all_physx_warning_lines": [
+    "2026-08-29T14:53:25Z [9,076ms] [Warning] [omni.physx.plugin] Detected a rigid at /World/D38999TabletopV1/D38999Pair/D38999Shell25JKeyedPhysicalV3/FixedReceptacle with more than 4 velocity iterations being added to a TGS scene.The related behavior changed recently, please consult the changelog. This warning will only print once.",
+    "2026-08-29T14:53:26Z [9,102ms] [Warning] [omni.physx.plugin] Detected an articulation at /World/HandArm/Geometry/world with more than 4 velocity iterations being added to a TGS scene.The related behavior changed recently, please consult the changelog. This warning will only print once."
+  ],
+  "controller_nominal_physical_pass": false,
+  "nominal_research_dynamic_pass": false,
+  "engine_runtime": {
+    "configured_gpu_found_lost_aggregate_pairs_capacity": 8192,
+    "configured_gpu_total_aggregate_pairs_capacity": 16384,
+    "observed_gpu_found_lost_aggregate_pairs_peak": 77,
+    "observed_gpu_total_aggregate_pairs_peak": 7644,
+    "physx_statistics_sample_count": 3031,
+    "physx_statistics_read_failures": 0,
+    "scene_counts": {
+      "rigid_body_count": 22,
+      "articulation_count": 1,
+      "aggregate_count": 1,
+      "physx_collision_shape_count": 14873
+    },
+    "gpu_backend_pass": true,
+    "engine_log_sync": {
+      "marker": "CARTS_V2_ENGINE_LOG_SYNC_1788015271717437131",
+      "marker_seen": true,
+      "audit_byte_count": 1646755,
+      "audit_boundary": "PROCESS_START_THROUGH_SYNC_MARKER"
+    }
+  }
+}

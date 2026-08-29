@@ -1,0 +1,3170 @@
+{
+  "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
+  "object_id": "te_deutsch_d38999_26fj35pn_step",
+  "candidate_id": "axial_full_pad_first_intersection_v1__te_deutsch_d38999_26fj35pn_step",
+  "mode": "grasp-lift",
+  "physics_time_advanced_s": 35.833333333333336,
+  "three_terminal_link_contacts_observed": true,
+  "terminal_link_contact_records": [
+    5160,
+    5160,
+    5160
+  ],
+  "pad_surface_identity_verified": true,
+  "pad_surface_identity_evidence": {
+    "verified": true,
+    "method": "BOUND_TERMINAL_COLLIDER_PLUS_ALL_POSITIVE_CONTACT_POINTS_NEAREST_TO_USER_CONFIRMED_FULL_PAD",
+    "reason": null,
+    "mappings": [
+      {
+        "terminal_link": "f1Link3",
+        "contact_actor_path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3",
+        "asset_rigid_body_path": "/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3",
+        "inferred_contact_collider_path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/nailfree_collision",
+        "asset_collider_path": "/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3/nailfree_collision",
+        "collision_enabled": true,
+        "material_role": "fingertip_pad",
+        "source_mesh_uri": "/home/noob/Downloads/指尖无指甲.STL"
+      },
+      {
+        "terminal_link": "f2Link2",
+        "contact_actor_path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2",
+        "asset_rigid_body_path": "/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2",
+        "inferred_contact_collider_path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/nailfree_collision",
+        "asset_collider_path": "/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2/nailfree_collision",
+        "collision_enabled": true,
+        "material_role": "fingertip_pad",
+        "source_mesh_uri": "/home/noob/Downloads/指尖无指甲.STL"
+      },
+      {
+        "terminal_link": "f3Link3",
+        "contact_actor_path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3",
+        "asset_rigid_body_path": "/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3",
+        "inferred_contact_collider_path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/nailfree_collision",
+        "asset_collider_path": "/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3/nailfree_collision",
+        "collision_enabled": true,
+        "material_role": "fingertip_pad",
+        "source_mesh_uri": "/home/noob/Downloads/指尖无指甲.STL"
+      }
+    ],
+    "robot_asset_path": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/nailfree_three_finger_direct_v2_shrinkwrap/handarm_nailfree_three_direct.usda",
+    "trace_bound_robot_asset_sha256": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747",
+    "robot_asset_sha256": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747",
+    "evaluator_source_sha256": "0214ed1023e17ff7930b8c148020310138d9c42e2fe90a9844a2a5c87cb3e4b5",
+    "asset_binding_matches": true,
+    "contact_point_projection": [
+      {
+        "terminal_link": "f1Link3",
+        "positive_contact_point_count": 5352,
+        "all_points_nearest_to_full_pad": true,
+        "maximum_pad_surface_residual_m": 0.00041435882714610495,
+        "minimum_nonpad_minus_pad_distance_m": 0.0015382854242215994,
+        "nearest_full_pad_source_face_index_min": 8456,
+        "nearest_full_pad_source_face_index_max": 10182
+      },
+      {
+        "terminal_link": "f2Link2",
+        "positive_contact_point_count": 5272,
+        "all_points_nearest_to_full_pad": true,
+        "maximum_pad_surface_residual_m": 0.00022864612368419946,
+        "minimum_nonpad_minus_pad_distance_m": 0.001724808246823833,
+        "nearest_full_pad_source_face_index_min": 9207,
+        "nearest_full_pad_source_face_index_max": 10137
+      },
+      {
+        "terminal_link": "f3Link3",
+        "positive_contact_point_count": 5175,
+        "all_points_nearest_to_full_pad": true,
+        "maximum_pad_surface_residual_m": 0.0003481356906706068,
+        "minimum_nonpad_minus_pad_distance_m": 0.0015466075872569538,
+        "nearest_full_pad_source_face_index_min": 9403,
+        "nearest_full_pad_source_face_index_max": 9403
+      }
+    ]
+  },
+  "maximum_consecutive_simultaneous_contact_samples": 5160,
+  "maximum_lift_m": 0.055770148033952305,
+  "lift_50mm_passed": true,
+  "hold_duration_s": 2.0,
+  "hold_2s_passed": true,
+  "table_contact_released_during_hold": true,
+  "maximum_relative_slip_m": 0.0005090818995345705,
+  "maximum_orientation_change_rad": 0.002724593477769448,
+  "actual_lift_peak_acceleration_m_s2": 0.014645038068650251,
+  "signed_lift_peak_acceleration_m_s2": 0.014645038068650251,
+  "lift_peak_acceleration_simulation_time_s": 16.954166666666666,
+  "lift_peak_acceleration_elapsed_s": 2.1166666666666667,
+  "lift_peak_acceleration_fraction": 0.11142794472472034,
+  "lift_peak_acceleration_context": {
+    "difference_window_samples": 4,
+    "stencil_simulation_times_s": [
+      16.9375,
+      16.954166666666666,
+      16.97083333333333
+    ],
+    "stencil_hand_base_z_m": [
+      0.6294762142440664,
+      0.6294839052722174,
+      0.6294956643664986
+    ],
+    "center_arm_positions_rad": [
+      0.1687437742948532,
+      0.5204126834869385,
+      2.2084715366363525,
+      1.1571165323257446,
+      0.4110940396785736,
+      -1.6503056287765503,
+      -0.13802553713321686
+    ],
+    "center_arm_velocities_rad_s": [
+      0.004153445363044739,
+      -0.02041068859398365,
+      -0.0039308685809373856,
+      -0.018218455836176872,
+      -0.001989295007660985,
+      -0.0065206196159124374,
+      0.0021415269002318382
+    ],
+    "center_arm_targets_rad": [
+      0.16893799296072218,
+      0.5192127114940194,
+      2.207560619774441,
+      1.1568291049678026,
+      0.41174870997136226,
+      -1.6499959867164833,
+      -0.13819397634353062
+    ],
+    "center_arm_control": {
+      "drive_target_rad": [
+        0.16893799187137726,
+        0.48715244250330697,
+        2.200783968216193,
+        1.1397320573162473,
+        0.41195241512075803,
+        -1.6500766845255819,
+        -0.1381939547617138
+      ],
+      "target_bias_rad": [
+        -1.0893449198245975e-09,
+        -0.032060268990712404,
+        -0.006776651558248137,
+        -0.017097047651555286,
+        0.000203705149395772,
+        -8.069780909858437e-05,
+        2.158181680589344e-08
+      ],
+      "requested_target_bias_rad": [
+        -1.089344947580173e-09,
+        -0.031164513900876045,
+        -0.006502457428723574,
+        -0.016411246731877327,
+        0.00020369906269479543,
+        -8.070438343565911e-05,
+        2.1581845643936504e-08
+      ],
+      "gravity_target_bias_limited_by_joint_bounds": false,
+      "minimum_nominal_target_limit_margin_rad": 0.44439917395856554,
+      "minimum_drive_target_limit_margin_rad": 0.44431847614946696,
+      "effective_arm_damping_nm_s_rad": 300.0,
+      "pd_effort_nm": [
+        -1.0372694947931551,
+        4.611896595421862,
+        0.06302743030109159,
+        4.94207569446389,
+        1.0028171025885964,
+        2.1260998639784106,
+        -0.803853587381792
+      ],
+      "gravity_compensation_nm": [
+        -1.3616811429528752e-06,
+        -38.95564270019531,
+        -8.128071784973145,
+        -20.51405906677246,
+        0.2546238303184509,
+        -0.10088048130273819,
+        2.6977306333719753e-05
+      ],
+      "payload_feedforward_nm": [
+        0.0,
+        -1.1196935381952031,
+        -0.34274266283710875,
+        -0.8572504976716847,
+        7.60642625482643e-06,
+        8.219929560710571e-06,
+        -3.53237745752418e-11
+      ],
+      "applied_gravity_equivalent_nm": [
+        -1.3616811497807468e-06,
+        -38.955642700195305,
+        -8.128071784973061,
+        -20.514059066772422,
+        0.2546238303184602,
+        -0.10088048130279118,
+        2.6977306331141374e-05
+      ],
+      "applied_payload_equivalent_nm": [
+        -6.827871601444713e-15,
+        -1.1196935381951931,
+        -0.3427426628370256,
+        -0.8572504976716466,
+        7.60642626407293e-06,
+        8.219929507724544e-06,
+        -3.532635295400155e-11
+      ],
+      "applied_total_compensation_nm": [
+        -1.3616811497807468e-06,
+        -40.075336238390506,
+        -8.47081444781017,
+        -21.371309564444108,
+        0.254631436744715,
+        -0.10087226137323047,
+        2.69772710073668e-05
+      ],
+      "raw_total_effort_nm": [
+        -1.037270856474305,
+        -35.463439642968645,
+        -8.40778701750908,
+        -16.429233869980216,
+        1.2574485393333115,
+        2.02522760260518,
+        -0.8038266101107847
+      ],
+      "clipped_total_effort_nm": [
+        -1.037270856474305,
+        -35.463439642968645,
+        -8.40778701750908,
+        -16.429233869980216,
+        1.2574485393333115,
+        2.02522760260518,
+        -0.8038266101107847
+      ],
+      "saturated": false,
+      "payload_compensation_fraction": 0.7714012992054733,
+      "projected_joint_force_nm": [
+        -0.05218161642551422,
+        -40.48987579345703,
+        -8.628593444824219,
+        -21.662879943847656,
+        0.23088867962360382,
+        -0.09321650862693787,
+        -0.0019437720766291022
+      ],
+      "f1_mimic_diagnostic": {
+        "f1j2": {
+          "position_rad": 0.6701728105545044,
+          "velocity_rad_s": -0.013627851381897926,
+          "equivalent_effort_nm": 0.5020315051078796,
+          "limit_margin_rad": 0.6701728105545044
+        },
+        "f1j3": {
+          "position_rad": 0.6697999238967896,
+          "velocity_rad_s": -0.015501920133829117,
+          "equivalent_effort_nm": 0.24037495255470276,
+          "limit_margin_rad": 0.6697999238967896
+        },
+        "position_error_rad": -0.00037288665771484375,
+        "velocity_error_rad_s": -0.0018740687519311905
+      },
+      "hand_joint_diagnostic": {
+        "joints": {
+          "f1j1": {
+            "position_rad": 0.5021713376045227,
+            "velocity_rad_s": -0.01011801976710558,
+            "equivalent_effort_nm": 0.006773620843887329
+          },
+          "f1j2": {
+            "position_rad": 0.6701728105545044,
+            "velocity_rad_s": -0.013627851381897926,
+            "equivalent_effort_nm": 0.5020315051078796
+          },
+          "f1j3": {
+            "position_rad": 0.6697999238967896,
+            "velocity_rad_s": -0.015501920133829117,
+            "equivalent_effort_nm": 0.24037495255470276
+          },
+          "f2j1": {
+            "position_rad": 0.4909564256668091,
+            "velocity_rad_s": -0.02563878521323204,
+            "equivalent_effort_nm": 0.5602045059204102
+          },
+          "f2j2": {
+            "position_rad": 0.4905102252960205,
+            "velocity_rad_s": -0.02220674231648445,
+            "equivalent_effort_nm": 0.2849406599998474
+          },
+          "f3j1": {
+            "position_rad": 0.5021800398826599,
+            "velocity_rad_s": -0.006486754864454269,
+            "equivalent_effort_nm": -0.00670056464150548
+          },
+          "f3j2": {
+            "position_rad": 0.6700209975242615,
+            "velocity_rad_s": -0.03124699369072914,
+            "equivalent_effort_nm": 0.6068731546401978
+          },
+          "f3j3": {
+            "position_rad": 0.6695681214332581,
+            "velocity_rad_s": -0.025711743161082268,
+            "equivalent_effort_nm": 0.2616176903247833
+          }
+        },
+        "mimic_errors": {
+          "f3j1": {
+            "source": "f1j1",
+            "position_error_rad": 8.702278137207031e-06,
+            "velocity_error_rad_s": 0.00363126490265131
+          },
+          "f1j3": {
+            "source": "f1j2",
+            "position_error_rad": -0.00037288665771484375,
+            "velocity_error_rad_s": -0.0018740687519311905
+          },
+          "f2j2": {
+            "source": "f2j1",
+            "position_error_rad": -0.0004462003707885742,
+            "velocity_error_rad_s": 0.003432042896747589
+          },
+          "f3j3": {
+            "source": "f3j2",
+            "position_error_rad": -0.00045287609100341797,
+            "velocity_error_rad_s": 0.0055352505296468735
+          }
+        }
+      }
+    },
+    "center_contact_counts": {
+      "terminal_link_object": [
+        1,
+        1,
+        1
+      ],
+      "terminal_link_object_examples": [
+        [
+          "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3",
+          "/World/TE_J35FreePlug"
+        ],
+        [
+          "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2",
+          "/World/TE_J35FreePlug"
+        ],
+        [
+          "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3",
+          "/World/TE_J35FreePlug"
+        ]
+      ],
+      "robot_object_unauthorized": 0,
+      "robot_table": 0,
+      "robot_fixture": 0,
+      "robot_unclassified": 0,
+      "object_table": 0,
+      "object_table_positive_normal_impulse_n_s": 0.0,
+      "event_header_count": 0,
+      "event_contact_data_count": 0,
+      "poll_header_count": 0,
+      "poll_contact_data_count": 0,
+      "physics_step_callback_count": 1,
+      "contact_observation_backend": "tensor_raw_contact",
+      "tensor_contact_sensor_count": 18,
+      "tensor_contact_header_count": 7,
+      "tensor_contact_data_count": 124,
+      "tensor_physical_contact_data_count": 3,
+      "tensor_headers": [
+        {
+          "sensor_index": 11,
+          "paths": [
+            "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3",
+            "/World/TE_J35FreePlug"
+          ],
+          "records": 10,
+          "contacts": [
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5058410167694092,
+                -0.1906813383102417,
+                0.21870404481887817
+              ],
+              "normal": [
+                -0.851938784122467,
+                0.4914969205856323,
+                -0.1806400567293167
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                0.0,
+                -0.0
+              ],
+              "separation_m": 3.277384894317947e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5058435201644897,
+                -0.19068020582199097,
+                0.22009965777397156
+              ],
+              "normal": [
+                -0.8543915152549744,
+                0.49885061383247375,
+                -0.1454751044511795
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                0.0,
+                -0.0
+              ],
+              "separation_m": 0.0002548354386817664
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5053715705871582,
+                -0.1918105036020279,
+                0.2189766764640808
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.0003235216427128762
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5048078298568726,
+                -0.19252252578735352,
+                0.22051763534545898
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.00030443593277595937
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5052602291107178,
+                -0.1918732076883316,
+                0.21829292178153992
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 3.551144618541002e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.505840539932251,
+                -0.1906815767288208,
+                0.21842291951179504
+              ],
+              "normal": [
+                -0.851938784122467,
+                0.4914969205856323,
+                -0.1806400567293167
+              ],
+              "normal_impulse_n_s": 0.0175845455378294,
+              "impulse_n_s": [
+                -0.014980956344844532,
+                0.008642749981740971,
+                -0.0031764733035127557
+              ],
+              "separation_m": -1.8401246052235365e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5058415532112122,
+                -0.1906810998916626,
+                0.21899661421775818
+              ],
+              "normal": [
+                -0.8543915152549744,
+                0.49885061383247375,
+                -0.1454751044511795
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                0.0,
+                -0.0
+              ],
+              "separation_m": 0.00013250329357106239
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5056031942367554,
+                -0.19156712293624878,
+                0.21896670758724213
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.0003428479831200093
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5053583383560181,
+                -0.19177135825157166,
+                0.21830454468727112
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 7.306048792088404e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5053457021713257,
+                -0.1917819380760193,
+                0.21827025711536407
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 7.360348536167294e-05
+            }
+          ]
+        },
+        {
+          "sensor_index": 13,
+          "paths": [
+            "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2",
+            "/World/TE_J35FreePlug"
+          ],
+          "records": 11,
+          "contacts": [
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5434933304786682,
+                -0.21293866634368896,
+                0.2146334946155548
+              ],
+              "normal": [
+                0.9993016719818115,
+                0.0016185061540454626,
+                0.03732962906360626
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 5.37772684765514e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5434973835945129,
+                -0.21293683350086212,
+                0.21688589453697205
+              ],
+              "normal": [
+                0.9743313789367676,
+                -0.2251129001379013,
+                -0.0015700598014518619
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 8.725837687961757e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5435382127761841,
+                -0.2065843939781189,
+                0.21688556671142578
+              ],
+              "normal": [
+                0.9557710886001587,
+                0.2941061854362488,
+                -0.0017671020468696952
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                -0.0
+              ],
+              "separation_m": 5.162611705600284e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5435321927070618,
+                -0.20658713579177856,
+                0.21351954340934753
+              ],
+              "normal": [
+                0.9997589588165283,
+                0.012316187843680382,
+                0.018169041723012924
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.00011511781485751271
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5434924364089966,
+                -0.21293996274471283,
+                0.21463324129581451
+              ],
+              "normal": [
+                0.9992647171020508,
+                0.001512532471679151,
+                0.038311880081892014
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 5.469583993544802e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5435310006141663,
+                -0.20658762753009796,
+                0.21351838111877441
+              ],
+              "normal": [
+                0.9997431039810181,
+                0.012314330786466599,
+                0.019023602828383446
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.00011630092922132462
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5431959629058838,
+                -0.21423813700675964,
+                0.21641282737255096
+              ],
+              "normal": [
+                0.9993016719818115,
+                0.0016185061540454626,
+                0.03732962906360626
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.0002857295621652156
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5435373783111572,
+                -0.20658448338508606,
+                0.21677377820014954
+              ],
+              "normal": [
+                0.9997589588165283,
+                0.012316187843680382,
+                0.018169041723012924
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 5.019426316721365e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.543491542339325,
+                -0.21294037997722626,
+                0.21412332355976105
+              ],
+              "normal": [
+                0.9992647171020508,
+                0.001512532471679151,
+                0.038311880081892014
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 7.485452806577086e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.543529212474823,
+                -0.2065885365009308,
+                0.21240241825580597
+              ],
+              "normal": [
+                0.9997431039810181,
+                0.012314330786466599,
+                0.019023602828383446
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 8.719055767869577e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5434965491294861,
+                -0.21293720602989197,
+                0.21641910076141357
+              ],
+              "normal": [
+                0.9993016719818115,
+                0.0016185061540454626,
+                0.03732962906360626
+              ],
+              "normal_impulse_n_s": 0.018665174022316933,
+              "impulse_n_s": [
+                0.018652139608332785,
+                3.0209699021449456e-05,
+                0.0006967640226607508
+              ],
+              "separation_m": -1.6824751583044417e-05
+            }
+          ]
+        },
+        {
+          "sensor_index": 16,
+          "paths": [
+            "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3",
+            "/World/TE_J35FreePlug"
+          ],
+          "records": 4,
+          "contacts": [
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5051541924476624,
+                -0.22677884995937347,
+                0.2200363576412201
+              ],
+              "normal": [
+                -0.8265293836593628,
+                -0.5628902316093445,
+                0.0019007378723472357
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.00033489865018054843
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5056015253067017,
+                -0.22834888100624084,
+                0.22013074159622192
+              ],
+              "normal": [
+                -0.8733084797859192,
+                -0.4527680277824402,
+                -0.17981500923633575
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 2.2661362891085446e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5057044625282288,
+                -0.22840933501720428,
+                0.2198798805475235
+              ],
+              "normal": [
+                -0.8733084797859192,
+                -0.4527680277824402,
+                -0.17981500923633575
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 3.985107105108909e-05
+            },
+            {
+              "other_actor_id": 169985,
+              "position_m": [
+                0.5056010484695435,
+                -0.22834908962249756,
+                0.2198782116174698
+              ],
+              "normal": [
+                -0.8733084797859192,
+                -0.4527680277824402,
+                -0.17981500923633575
+              ],
+              "normal_impulse_n_s": 0.021118851378560066,
+              "impulse_n_s": [
+                -0.018443271992235055,
+                -0.00956194068770111,
+                -0.0037974864556965804
+              ],
+              "separation_m": -2.3375003365799785e-05
+            }
+          ]
+        },
+        {
+          "sensor_index": 17,
+          "paths": [
+            "/World/TE_J35FreePlug",
+            "/World/D38999TabletopV1/Table"
+          ],
+          "records": 74,
+          "contacts": [
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5348509550094604,
+                -0.21954616904258728,
+                0.20004554092884064
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 4.5543303713202477e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5201364755630493,
+                -0.19178731739521027,
+                0.20004859566688538
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 4.8597667046124116e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5288892984390259,
+                -0.19052422046661377,
+                0.20158205926418304
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0015820541884750128
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5262864828109741,
+                -0.22632187604904175,
+                0.20006710290908813
+              ],
+              "normal": [
+                -0.00019263870490249246,
+                -0.00018898981215897948,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 6.709545414196327e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5103251934051514,
+                -0.22369356453418732,
+                0.2000931352376938
+              ],
+              "normal": [
+                -0.0002644777996465564,
+                -0.00019351625815033913,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 9.31338727241382e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5010510087013245,
+                -0.20052462816238403,
+                0.20163944363594055
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.0016394548583775759
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.4989839196205139,
+                -0.20947982370853424,
+                0.2016504555940628
+              ],
+              "normal": [
+                -0.0002644777996465564,
+                -0.00019351625815033913,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0016504575032740831
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5311850905418396,
+                -0.19446606934070587,
+                0.20079633593559265
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.0007963431999087334
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5304202437400818,
+                -0.22412078082561493,
+                0.20005640387535095
+              ],
+              "normal": [
+                -0.00017246602510567755,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 5.6395147112198174e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5040553212165833,
+                -0.20354749262332916,
+                0.20008710026741028
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 8.710615657037124e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5422077775001526,
+                -0.20975761115550995,
+                0.20157380402088165
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0015738033689558506
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5233504772186279,
+                -0.18883346021175385,
+                0.20159220695495605
+              ],
+              "normal": [
+                -0.000210241210879758,
+                -0.00020715923164971173,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0015922067686915398
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5315817594528198,
+                -0.1960485726594925,
+                0.20003145933151245
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 3.1470397516386583e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5233524441719055,
+                -0.18883515894412994,
+                0.20159097015857697
+              ],
+              "normal": [
+                -0.00013536395272240043,
+                -0.00020156163373030722,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001590967527590692
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5032778978347778,
+                -0.20354197919368744,
+                0.2000899612903595
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 8.995462849270552e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.507628858089447,
+                -0.22800639271736145,
+                0.2016499787569046
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.001649984740652144
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5360794067382812,
+                -0.201881542801857,
+                0.2000298798084259
+              ],
+              "normal": [
+                -6.592322461074218e-05,
+                -7.833037670934573e-05,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 2.9876775442971848e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5410776734352112,
+                -0.20975035429000854,
+                0.2015760987997055
+              ],
+              "normal": [
+                -0.00035712821409106255,
+                -0.00021432345965877175,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001576099544763565
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.510038435459137,
+                -0.19109728932380676,
+                0.2016156017780304
+              ],
+              "normal": [
+                -0.00014091527555137873,
+                -0.00025825927150435746,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0016155914636328816
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.4989841878414154,
+                -0.20947982370853424,
+                0.2016504555940628
+              ],
+              "normal": [
+                -6.592322461074218e-05,
+                -7.833037670934573e-05,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0016504564555361867
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5218760371208191,
+                -0.23174366354942322,
+                0.20162738859653473
+              ],
+              "normal": [
+                -0.0003582096833270043,
+                -0.00019768555648624897,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0016273841029033065
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5308837294578552,
+                -0.2237558662891388,
+                0.20005610585212708
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 5.6108252465492114e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5201317667961121,
+                -0.19251738488674164,
+                0.20004919171333313
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 4.920028004562482e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5288971662521362,
+                -0.18929587304592133,
+                0.20158104598522186
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0015810407930985093
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5199156403541565,
+                -0.2274598926305771,
+                0.20007802546024323
+              ],
+              "normal": [
+                -0.00019263870490249246,
+                -0.00018898981215897948,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 7.80167174525559e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5090795755386353,
+                -0.22368554770946503,
+                0.20009537041187286
+              ],
+              "normal": [
+                -0.0002644777996465564,
+                -0.00019351625815033913,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 9.536896686768159e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5010654926300049,
+                -0.19827325642108917,
+                0.20163759589195251
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.0016375966370105743
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5059864521026611,
+                -0.22532393038272858,
+                0.20165075361728668
+              ],
+              "normal": [
+                -0.0002644777996465564,
+                -0.00019351625815033913,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001650746911764145
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.531578540802002,
+                -0.19604748487472534,
+                0.20003147423267365
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 3.14752796839457e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5258592963218689,
+                -0.22631876170635223,
+                0.20006640255451202
+              ],
+              "normal": [
+                -0.00017246602510567755,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 6.639384082518518e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5031304955482483,
+                -0.2152979075908661,
+                0.20009972155094147
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 9.972202678909525e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.540387749671936,
+                -0.21847835183143616,
+                0.20158417522907257
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0015841713175177574
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5078644752502441,
+                -0.19108229875564575,
+                0.2016199231147766
+              ],
+              "normal": [
+                -0.000210241210879758,
+                -0.00020715923164971173,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0016199193196371198
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5343457460403442,
+                -0.19901098310947418,
+                0.2000288963317871
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 2.8907725209137425e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5233597755432129,
+                -0.18769603967666626,
+                0.20159003138542175
+              ],
+              "normal": [
+                -0.00013536395272240043,
+                -0.00020156163373030722,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0015900287544354796
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5096419453620911,
+                -0.19512706995010376,
+                0.20007166266441345
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 7.165191345848143e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5043563842773438,
+                -0.2253134548664093,
+                0.20165367424488068
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.001653681742027402
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5370276570320129,
+                -0.20422148704528809,
+                0.20003007352352142
+              ],
+              "normal": [
+                -6.592322461074218e-05,
+                -7.833037670934573e-05,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 3.007426312251482e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5395398139953613,
+                -0.1990446001291275,
+                0.20157015323638916
+              ],
+              "normal": [
+                -0.00035712821409106255,
+                -0.00021432345965877175,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001570159220136702
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5022954940795898,
+                -0.1982799470424652,
+                0.20163539052009583
+              ],
+              "normal": [
+                -0.00014091527555137873,
+                -0.00025825927150435746,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0016353654209524393
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.4992341995239258,
+                -0.2063261717557907,
+                0.20164744555950165
+              ],
+              "normal": [
+                -6.592322461074218e-05,
+                -7.833037670934573e-05,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001647442695684731
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.513992190361023,
+                -0.23098301887512207,
+                0.20164094865322113
+              ],
+              "normal": [
+                -0.0003582096833270043,
+                -0.00019768555648624897,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001640950795263052
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.536956787109375,
+                -0.2152450680732727,
+                0.20003825426101685
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 3.825342719210312e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5118499398231506,
+                -0.19379152357578278,
+                0.20006513595581055
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 6.514006236102432e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.534745454788208,
+                -0.1929997056722641,
+                0.20157353579998016
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0015735310735180974
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5090823173522949,
+                -0.22368557751178741,
+                0.20009444653987885
+              ],
+              "normal": [
+                -0.00019263870490249246,
+                -0.00018898981215897948,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 9.444151510251686e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5039106011390686,
+                -0.21530385315418243,
+                0.20009785890579224
+              ],
+              "normal": [
+                -0.0002644777996465564,
+                -0.00019351625815033913,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 9.784859139472246e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5022938847541809,
+                -0.1982811540365219,
+                0.20163539052009583
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.001635392545722425
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.50435471534729,
+                -0.2253134399652481,
+                0.20165367424488068
+              ],
+              "normal": [
+                -0.0002644777996465564,
+                -0.00019351625815033913,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0016536748735234141
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5201364755630493,
+                -0.19178858399391174,
+                0.20005005598068237
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 5.006408900953829e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5308883190155029,
+                -0.22282499074935913,
+                0.20005451142787933
+              ],
+              "normal": [
+                -0.00017246602510567755,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 5.449890886666253e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5023389458656311,
+                -0.21190418303012848,
+                0.20009838044643402
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 9.838441474130377e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5308523178100586,
+                -0.22898273169994354,
+                0.20161056518554688
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001610561041161418
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.514261782169342,
+                -0.18818597495555878,
+                0.20160605013370514
+              ],
+              "normal": [
+                -0.000210241210879758,
+                -0.00020715923164971173,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001606050063855946
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5360778570175171,
+                -0.2018815279006958,
+                0.20002904534339905
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 2.9049901058897376e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5288970470428467,
+                -0.18929433822631836,
+                0.20158137381076813
+              ],
+              "normal": [
+                -0.00013536395272240043,
+                -0.00020156163373030722,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001581367221660912
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5135632753372192,
+                -0.19380278885364532,
+                0.2000635266304016
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 6.3515872170683e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5098068118095398,
+                -0.22802039980888367,
+                0.20164607465267181
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 0.0016460769111290574
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5370397567749023,
+                -0.21495220065116882,
+                0.2000378668308258
+              ],
+              "normal": [
+                -6.592322461074218e-05,
+                -7.833037670934573e-05,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 3.786270463024266e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5404998660087585,
+                -0.20103080570697784,
+                0.2015700489282608
+              ],
+              "normal": [
+                -0.00035712821409106255,
+                -0.00021432345965877175,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001570044201798737
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5009809732437134,
+                -0.1982714980840683,
+                0.20163774490356445
+              ],
+              "normal": [
+                -0.00014091527555137873,
+                -0.00025825927150435746,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0016377272550016642
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5010654926300049,
+                -0.19827353954315186,
+                0.2016395777463913
+              ],
+              "normal": [
+                -6.592322461074218e-05,
+                -7.833037670934573e-05,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0016395715065300465
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5076299905776978,
+                -0.2280072271823883,
+                0.2016499787569046
+              ],
+              "normal": [
+                -0.0003582096833270043,
+                -0.00019768555648624897,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001649976009503007
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5395350456237793,
+                -0.19904112815856934,
+                0.2015698403120041
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0015698286006227136
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.4978552758693695,
+                -0.20947256684303284,
+                0.20165248215198517
+              ],
+              "normal": [
+                -0.0002644777996465564,
+                -0.00019351625815033913,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001652480335906148
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5026652216911316,
+                -0.20554442703723907,
+                0.20009122788906097
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 9.123285417445004e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5410783886909485,
+                -0.20975035429000854,
+                0.20157583057880402
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0015758260851725936
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5233578085899353,
+                -0.18769608438014984,
+                0.20159126818180084
+              ],
+              "normal": [
+                -0.000210241210879758,
+                -0.00020715923164971173,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0015912678791210055
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5304120182991028,
+                -0.1960410475730896,
+                0.20003356039524078
+              ],
+              "normal": [
+                1.627410289861686e-10,
+                7.0809200516941395e-12,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 3.3569180232007056e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5288891792297363,
+                -0.19052112102508545,
+                0.2015823870897293
+              ],
+              "normal": [
+                -0.00013536395272240043,
+                -0.00020156163373030722,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0015823767753317952
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.504056453704834,
+                -0.20354697108268738,
+                0.20008856058120728
+              ],
+              "normal": [
+                -0.0001724657922750339,
+                -0.00021048581402283162,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 8.856139902491122e-05
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5422072410583496,
+                -0.20975761115550995,
+                0.20157407224178314
+              ],
+              "normal": [
+                -0.00035712821409106255,
+                -0.00021432345965877175,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.001574076828546822
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5078600645065308,
+                -0.19108328223228455,
+                0.20161952078342438
+              ],
+              "normal": [
+                -0.00014091527555137873,
+                -0.00025825927150435746,
+                0.9999999403953552
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0016194992931559682
+            },
+            {
+              "other_actor_id": 168705,
+              "position_m": [
+                0.5308576822280884,
+                -0.22768893837928772,
+                0.20160989463329315
+              ],
+              "normal": [
+                -0.0003582096833270043,
+                -0.00019768555648624897,
+                0.9999998807907104
+              ],
+              "normal_impulse_n_s": 0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0016098980559036136
+            }
+          ]
+        },
+        {
+          "sensor_index": 17,
+          "paths": [
+            "/World/TE_J35FreePlug",
+            "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2"
+          ],
+          "records": 11,
+          "contacts": [
+            {
+              "other_actor_id": 46150913,
+              "position_m": [
+                0.5434933304786682,
+                -0.21293866634368896,
+                0.2146334946155548
+              ],
+              "normal": [
+                0.9993016719818115,
+                0.0016185061540454626,
+                0.03732962906360626
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 5.37772684765514e-05
+            },
+            {
+              "other_actor_id": 46150913,
+              "position_m": [
+                0.5434973835945129,
+                -0.21293683350086212,
+                0.21688589453697205
+              ],
+              "normal": [
+                0.9743313789367676,
+                -0.2251129001379013,
+                -0.0015700598014518619
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                -0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 8.725837687961757e-05
+            },
+            {
+              "other_actor_id": 46150913,
+              "position_m": [
+                0.5435382127761841,
+                -0.2065843939781189,
+                0.21688556671142578
+              ],
+              "normal": [
+                0.9557710886001587,
+                0.2941061854362488,
+                -0.0017671020468696952
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 5.162611705600284e-05
+            },
+            {
+              "other_actor_id": 46150913,
+              "position_m": [
+                0.5435321927070618,
+                -0.20658713579177856,
+                0.21351954340934753
+              ],
+              "normal": [
+                0.9997589588165283,
+                0.012316187843680382,
+                0.018169041723012924
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 0.00011511781485751271
+            },
+            {
+              "other_actor_id": 46150913,
+              "position_m": [
+                0.5434924364089966,
+                -0.21293996274471283,
+                0.21463324129581451
+              ],
+              "normal": [
+                0.9992647171020508,
+                0.001512532471679151,
+                0.038311880081892014
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 5.469583993544802e-05
+            },
+            {
+              "other_actor_id": 46150913,
+              "position_m": [
+                0.5435310006141663,
+                -0.20658762753009796,
+                0.21351838111877441
+              ],
+              "normal": [
+                0.9997431039810181,
+                0.012314330786466599,
+                0.019023602828383446
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 0.00011630092922132462
+            },
+            {
+              "other_actor_id": 46150913,
+              "position_m": [
+                0.5431959629058838,
+                -0.21423813700675964,
+                0.21641282737255096
+              ],
+              "normal": [
+                0.9993016719818115,
+                0.0016185061540454626,
+                0.03732962906360626
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 0.0002857295621652156
+            },
+            {
+              "other_actor_id": 46150913,
+              "position_m": [
+                0.5435373783111572,
+                -0.20658448338508606,
+                0.21677377820014954
+              ],
+              "normal": [
+                0.9997589588165283,
+                0.012316187843680382,
+                0.018169041723012924
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 5.019426316721365e-05
+            },
+            {
+              "other_actor_id": 46150913,
+              "position_m": [
+                0.543491542339325,
+                -0.21294037997722626,
+                0.21412332355976105
+              ],
+              "normal": [
+                0.9992647171020508,
+                0.001512532471679151,
+                0.038311880081892014
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 7.485452806577086e-05
+            },
+            {
+              "other_actor_id": 46150913,
+              "position_m": [
+                0.543529212474823,
+                -0.2065885365009308,
+                0.21240241825580597
+              ],
+              "normal": [
+                0.9997431039810181,
+                0.012314330786466599,
+                0.019023602828383446
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                -0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 8.719055767869577e-05
+            },
+            {
+              "other_actor_id": 46150913,
+              "position_m": [
+                0.5434965491294861,
+                -0.21293720602989197,
+                0.21641910076141357
+              ],
+              "normal": [
+                0.9993016719818115,
+                0.0016185061540454626,
+                0.03732962906360626
+              ],
+              "normal_impulse_n_s": -0.018665174022316933,
+              "impulse_n_s": [
+                -0.018652139608332785,
+                -3.0209699021449456e-05,
+                -0.0006967640226607508
+              ],
+              "separation_m": -1.6824751583044417e-05
+            }
+          ]
+        },
+        {
+          "sensor_index": 17,
+          "paths": [
+            "/World/TE_J35FreePlug",
+            "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3"
+          ],
+          "records": 4,
+          "contacts": [
+            {
+              "other_actor_id": 50391809,
+              "position_m": [
+                0.5051541924476624,
+                -0.22677884995937347,
+                0.2200363576412201
+              ],
+              "normal": [
+                -0.8265293836593628,
+                -0.5628902316093445,
+                0.0019007378723472357
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                -0.0
+              ],
+              "separation_m": 0.00033489865018054843
+            },
+            {
+              "other_actor_id": 50391809,
+              "position_m": [
+                0.5056015253067017,
+                -0.22834888100624084,
+                0.22013074159622192
+              ],
+              "normal": [
+                -0.8733084797859192,
+                -0.4527680277824402,
+                -0.17981500923633575
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 2.2661362891085446e-05
+            },
+            {
+              "other_actor_id": 50391809,
+              "position_m": [
+                0.5057044625282288,
+                -0.22840933501720428,
+                0.2198798805475235
+              ],
+              "normal": [
+                -0.8733084797859192,
+                -0.4527680277824402,
+                -0.17981500923633575
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "separation_m": 3.985107105108909e-05
+            },
+            {
+              "other_actor_id": 50391809,
+              "position_m": [
+                0.5056010484695435,
+                -0.22834908962249756,
+                0.2198782116174698
+              ],
+              "normal": [
+                -0.8733084797859192,
+                -0.4527680277824402,
+                -0.17981500923633575
+              ],
+              "normal_impulse_n_s": -0.021118851378560066,
+              "impulse_n_s": [
+                0.018443271992235055,
+                0.00956194068770111,
+                0.0037974864556965804
+              ],
+              "separation_m": -2.3375003365799785e-05
+            }
+          ]
+        },
+        {
+          "sensor_index": 17,
+          "paths": [
+            "/World/TE_J35FreePlug",
+            "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3"
+          ],
+          "records": 10,
+          "contacts": [
+            {
+              "other_actor_id": 46155777,
+              "position_m": [
+                0.5058410167694092,
+                -0.1906813383102417,
+                0.21870404481887817
+              ],
+              "normal": [
+                -0.851938784122467,
+                0.4914969205856323,
+                -0.1806400567293167
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 3.277384894317947e-05
+            },
+            {
+              "other_actor_id": 46155777,
+              "position_m": [
+                0.5058435201644897,
+                -0.19068020582199097,
+                0.22009965777397156
+              ],
+              "normal": [
+                -0.8543915152549744,
+                0.49885061383247375,
+                -0.1454751044511795
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.0002548354386817664
+            },
+            {
+              "other_actor_id": 46155777,
+              "position_m": [
+                0.5053715705871582,
+                -0.1918105036020279,
+                0.2189766764640808
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 0.0003235216427128762
+            },
+            {
+              "other_actor_id": 46155777,
+              "position_m": [
+                0.5048078298568726,
+                -0.19252252578735352,
+                0.22051763534545898
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 0.00030443593277595937
+            },
+            {
+              "other_actor_id": 46155777,
+              "position_m": [
+                0.5052602291107178,
+                -0.1918732076883316,
+                0.21829292178153992
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 3.551144618541002e-05
+            },
+            {
+              "other_actor_id": 46155777,
+              "position_m": [
+                0.505840539932251,
+                -0.1906815767288208,
+                0.21842291951179504
+              ],
+              "normal": [
+                -0.851938784122467,
+                0.4914969205856323,
+                -0.1806400567293167
+              ],
+              "normal_impulse_n_s": -0.0175845455378294,
+              "impulse_n_s": [
+                0.014980956344844532,
+                -0.008642749981740971,
+                0.0031764733035127557
+              ],
+              "separation_m": -1.8401246052235365e-05
+            },
+            {
+              "other_actor_id": 46155777,
+              "position_m": [
+                0.5058415532112122,
+                -0.1906810998916626,
+                0.21899661421775818
+              ],
+              "normal": [
+                -0.8543915152549744,
+                0.49885061383247375,
+                -0.1454751044511795
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                -0.0,
+                0.0
+              ],
+              "separation_m": 0.00013250329357106239
+            },
+            {
+              "other_actor_id": 46155777,
+              "position_m": [
+                0.5056031942367554,
+                -0.19156712293624878,
+                0.21896670758724213
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 0.0003428479831200093
+            },
+            {
+              "other_actor_id": 46155777,
+              "position_m": [
+                0.5053583383560181,
+                -0.19177135825157166,
+                0.21830454468727112
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 7.306048792088404e-05
+            },
+            {
+              "other_actor_id": 46155777,
+              "position_m": [
+                0.5053457021713257,
+                -0.1917819380760193,
+                0.21827025711536407
+              ],
+              "normal": [
+                -0.7222323417663574,
+                0.6895108222961426,
+                0.0543617308139801
+              ],
+              "normal_impulse_n_s": -0.0,
+              "impulse_n_s": [
+                0.0,
+                -0.0,
+                -0.0
+              ],
+              "separation_m": 7.360348536167294e-05
+            }
+          ]
+        }
+      ],
+      "contact_report_channels_agree": true,
+      "event_headers": [],
+      "poll_headers": [],
+      "examples": {}
+    },
+    "center_object_bottom_clearance_m": 6.586611270903431e-05,
+    "last_table_support_lift_elapsed_s": 2.029166666666667,
+    "peak_after_last_table_support_s": 0.0875
+  },
+  "registered_lift_peak_acceleration_m_s2": 0.0008316402769490454,
+  "lift_acceleration_consistent": true,
+  "maximum_table_penetration_m": 1.4603137971080926e-07,
+  "maximum_post_settle_table_penetration_m": 1.4603137971080926e-07,
+  "unauthorized_contact_records": {
+    "robot_object_unauthorized": 0,
+    "robot_table": 0,
+    "robot_fixture": 0,
+    "robot_unclassified": 0
+  },
+  "first_unauthorized_contact_paths": {},
+  "first_terminal_link_object_paths": [
+    [
+      "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3",
+      "/World/TE_J35FreePlug"
+    ],
+    [
+      "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2",
+      "/World/TE_J35FreePlug"
+    ],
+    [
+      "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3",
+      "/World/TE_J35FreePlug"
+    ]
+  ],
+  "contact_report_channels_agree": true,
+  "contact_report_api_complete": true,
+  "first_finger_contact_classification": "ALLOWED_PAD_CONTACT",
+  "first_finger_hold_duration_s": 0.004166666666666667,
+  "first_finger_maximum_target_delta_rad": 0.0007500000000000284,
+  "only_first_finger_commanded": false,
+  "controller_first_finger_diagnostic_pass": false,
+  "first_finger_diagnostic_pass": false,
+  "finite_throughout": true,
+  "controller_completed": true,
+  "controller_failure_reason": null,
+  "maximum_joint_speed_rad_s": 1.3820840120315552,
+  "maximum_joint_speed_joint": "iiwa_joint_3",
+  "maximum_absolute_hand_effort_nm": 0.6121869683265686,
+  "finger_clamp_effort_nm": {
+    "preload": {
+      "finger_1": {
+        "median_tare_subtracted_nm": 0.2997144117990198,
+        "maximum_absolute_tare_subtracted_nm": 0.546145404879159
+      },
+      "finger_2": {
+        "median_tare_subtracted_nm": 0.2584166177858909,
+        "maximum_absolute_tare_subtracted_nm": 0.6151918196429809
+      },
+      "finger_3": {
+        "median_tare_subtracted_nm": 0.46069007979822346,
+        "maximum_absolute_tare_subtracted_nm": 0.6053425805468577
+      }
+    },
+    "lift": {
+      "finger_1": {
+        "median_tare_subtracted_nm": 0.5045940533319178,
+        "maximum_absolute_tare_subtracted_nm": 0.5485837712922754
+      },
+      "finger_2": {
+        "median_tare_subtracted_nm": 0.5709997141112884,
+        "maximum_absolute_tare_subtracted_nm": 0.6170200133075316
+      },
+      "finger_3": {
+        "median_tare_subtracted_nm": 0.6091183559794444,
+        "maximum_absolute_tare_subtracted_nm": 0.6152389185328502
+      }
+    },
+    "hold": {
+      "finger_1": {
+        "median_tare_subtracted_nm": 0.5046999111810389,
+        "maximum_absolute_tare_subtracted_nm": 0.5050823941865625
+      },
+      "finger_2": {
+        "median_tare_subtracted_nm": 0.5710872733344634,
+        "maximum_absolute_tare_subtracted_nm": 0.5714529776324828
+      },
+      "finger_3": {
+        "median_tare_subtracted_nm": 0.609243317117216,
+        "maximum_absolute_tare_subtracted_nm": 0.6097298996348399
+      }
+    }
+  },
+  "truth_isolation_pass": true,
+  "accepted_preflight_bound": true,
+  "accepted_preflight_evaluation_sha256": "91d8f77ecd5a55c5fa1d1098044a41f6aaecda0784d76e34779ee24eaefedb22",
+  "preflight_pass": false,
+  "controller_preflight_pass": false,
+  "engine_health_pass": true,
+  "accepted_preflight_pass": false,
+  "physx_capacity_warning_count": 0,
+  "configured_gpu_found_lost_aggregate_pairs_capacity": 8192,
+  "configured_gpu_total_aggregate_pairs_capacity": 16384,
+  "observed_gpu_found_lost_aggregate_pairs_peak": 77,
+  "observed_gpu_total_aggregate_pairs_peak": 66,
+  "engine_log_sha256": "d06d817df4d9b01aec72e05e99892eeac48a273895ffc26960062e75ad3afff6",
+  "engine_log_sync_marker": "CARTS_V2_ENGINE_LOG_SYNC_1788015167089077093",
+  "engine_log_marker_seen": true,
+  "engine_log_audit_byte_count": 1645669,
+  "engine_log_audit_boundary": "PROCESS_START_THROUGH_SYNC_MARKER",
+  "physx_error_lines": [],
+  "identity_hash_check_pass": true,
+  "nominal_diagnostic_pass": true,
+  "research_dynamic_pass": false,
+  "formal_dynamic_pass": false,
+  "hardware_authorized": false,
+  "evidence_binding": {
+    "config_sha256": "2f558df6943ebc9a0cdeddc30bdaae4d4c9ece46aa22c6368b7705293ba864d4",
+    "registered_grasp_sha256": "161069a5d8be4816087251ce98b06ff01b0fc01a498fc49e1e9ca220bcb19a72",
+    "control_plan_sha256": "846a0f2816316d6c23e368360aeb2131dfa9af1e44616533115157616646b422",
+    "runtime_resources_sha256": "f47bf2c99bbcf1fe8c2dc3f19c7c18e0e9256ebca32966cadb7f468cfaec0ff3",
+    "capacity_audit_sha256": "f941c8d8d9326129a92ce0a9c0efc63336bad50e20b18895b08df021aa6045dc",
+    "scene_evidence_sha256": {
+      "artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/scene.yaml": "99b2dfec9a4b96ecacaff559e32d9605d74227cdbe13baaf9c954a0e74a3b809",
+      "artifacts/kcg_connector/isaac/te_j35_free_tabletop_v1/MANIFEST.json": "0bd657dbe46970dd27bc6402247f703aaf989d7428237cf87f8480014f2219cd"
+    },
+    "environment_scope": "SHARED_FINITE_TABLE_AND_FIXTURE_WITHOUT_FIXED_RECEPTACLE",
+    "robustness_scenario": "nominal",
+    "robustness_perturbation": {},
+    "effective_finger_preload_scales": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "required_closing_joint_effort_nm": [
+      0.5311110535906122,
+      0.8252057907617498,
+      0.5909448565034773
+    ],
+    "predicted_unit_task_closing_joint_effort_nm": [
+      0.5311110535906122,
+      0.8252057907617498,
+      0.5909448565034773
+    ],
+    "prelift_contact_confirmation_effort_nm": 0.02,
+    "applied_initial_object_translation_delta_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "applied_initial_object_yaw_delta_rad": 0.0,
+    "contact_friction_material_audit": {
+      "material_prim_path": "/World/HandArm/PhysicsMaterials/fingertip_pad",
+      "applied": false,
+      "requested_coefficient": null,
+      "before_static_friction": 1.399999976158142,
+      "before_dynamic_friction": 1.399999976158142,
+      "observed_static_friction": 1.399999976158142,
+      "observed_dynamic_friction": 1.399999976158142,
+      "scope": "THREE_FULL_NAILFREE_FINGERTIP_PADS_SHARED_PHYSICS_MATERIAL"
+    },
+    "object_mass_audit": {
+      "applied": false,
+      "requested_scale": null,
+      "effective_scale": 1.0,
+      "parts": [
+        {
+          "rigid_prim_path": "/World/TE_J35FreePlug",
+          "before_mass_kg": 0.3100000023841858,
+          "observed_mass_kg": 0.3100000023841858,
+          "before_diagonal_inertia_kg_m2": [
+            5.698805762222037e-05,
+            5.694076753570698e-05,
+            8.219210576498881e-05
+          ],
+          "observed_diagonal_inertia_kg_m2": [
+            5.698805762222037e-05,
+            5.694076753570698e-05,
+            8.219210576498881e-05
+          ]
+        }
+      ]
+    },
+    "center_of_mass_audit": {
+      "applied": false,
+      "requested_delta_object_m": null,
+      "parts": [
+        {
+          "rigid_prim_path": "/World/TE_J35FreePlug",
+          "before_center_of_mass_m": [
+            3.3654746403044555e-06,
+            1.4076390471018385e-06,
+            -0.01813548244535923
+          ],
+          "observed_center_of_mass_m": [
+            3.3654746403044555e-06,
+            1.4076390471018385e-06,
+            -0.01813548244535923
+          ]
+        }
+      ]
+    },
+    "finger_joint_target_audit": {
+      "applied": false,
+      "joint_name": "f3j2",
+      "requested_offset_rad": 0.0,
+      "before_pregrasp_rad": 0.6269354476928715,
+      "observed_pregrasp_target_rad": 0.6269354476928715,
+      "before_final_rad": 0.9023507156372076,
+      "observed_final_target_rad": 0.9023507156372076
+    },
+    "object_asset_sha256": "231d589b17ffbef9224344ec304826e5110abf0ed2d5b18a0f96e888d88d7f99",
+    "robot_asset_sha256": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747",
+    "controller_source_sha256": "be87adb24548abb088f07641b4870996ed2604625090d0997505582c80d48730",
+    "runner_source_sha256": "41b341e8190bc157866b6e5125453a8cf110c15b74faf3da1813b2928352e84b",
+    "evaluator_source_sha256": "0214ed1023e17ff7930b8c148020310138d9c42e2fe90a9844a2a5c87cb3e4b5",
+    "engine_health_source_sha256": "1fa53df0e4bb6c90f9c09ddcb496dad93d36df11a8d86edd90954fa3cb08059f"
+  },
+  "evidence_limit": "RESEARCH_ONLY_BOUND_USD_AND_FULL_PAD_CONTACT_POINT_PROJECTION_NOT_FORMAL_CERTIFICATION",
+  "engine_log_path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260829_145026.log",
+  "physx_capacity_warning_lines": [],
+  "all_physx_warning_lines": [
+    "2026-08-29T14:50:33Z [6,501ms] [Warning] [omni.physx.plugin] Detected a rigid at /World/D38999TabletopV1/FixedFixture with more than 4 velocity iterations being added to a TGS scene.The related behavior changed recently, please consult the changelog. This warning will only print once.",
+    "2026-08-29T14:50:33Z [6,503ms] [Warning] [omni.physx.plugin] Detected an articulation at /World/HandArm/Geometry/world with more than 4 velocity iterations being added to a TGS scene.The related behavior changed recently, please consult the changelog. This warning will only print once."
+  ],
+  "controller_nominal_physical_pass": true,
+  "nominal_research_dynamic_pass": true,
+  "engine_runtime": {
+    "configured_gpu_found_lost_aggregate_pairs_capacity": 8192,
+    "configured_gpu_total_aggregate_pairs_capacity": 16384,
+    "observed_gpu_found_lost_aggregate_pairs_peak": 77,
+    "observed_gpu_total_aggregate_pairs_peak": 66,
+    "physx_statistics_sample_count": 8601,
+    "physx_statistics_read_failures": 0,
+    "scene_counts": {
+      "rigid_body_count": 20,
+      "articulation_count": 1,
+      "aggregate_count": 1,
+      "physx_collision_shape_count": 176
+    },
+    "gpu_backend_pass": true,
+    "engine_log_sync": {
+      "marker": "CARTS_V2_ENGINE_LOG_SYNC_1788015167089077093",
+      "marker_seen": true,
+      "audit_byte_count": 1645669,
+      "audit_boundary": "PROCESS_START_THROUGH_SYNC_MARKER"
+    }
+  }
+}
