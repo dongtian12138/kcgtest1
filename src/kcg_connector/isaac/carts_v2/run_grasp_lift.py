@@ -77,6 +77,10 @@ def _arguments(repository: Path) -> argparse.Namespace:
     )
     parser.add_argument("--preflight-evaluation")
     parser.add_argument("--reference-trace")
+    parser.add_argument(
+        "--robustness-scenario",
+        help="named frozen physical perturbation; omitted means nominal",
+    )
     parser.add_argument("--output-directory", required=True)
     parser.add_argument("--gui", action="store_true")
     parser.add_argument("--initialize-at-pregrasp", action="store_true")
@@ -196,6 +200,18 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         arguments.runtime_resources_path)
     inputs = load_v2_inputs(repository, config_path=config_path,
                             object_id=arguments.object_id)
+    robustness = inputs.config.section("robustness_evaluation")
+    scenario_name = arguments.robustness_scenario or "nominal"
+    scenarios = robustness.get("scenarios")
+    if (
+        robustness.get("frozen_before_first_dynamic_run") is not True
+        or not isinstance(scenarios, Mapping)
+        or scenario_name not in scenarios
+        or not isinstance(scenarios[scenario_name], Mapping)
+    ):
+        raise ValueError("robustness scenario is not in the frozen finite set")
+    arguments.robustness_scenario_name = scenario_name
+    arguments.robustness_perturbation = dict(scenarios[scenario_name])
     dynamic = inputs.config.section("dynamic")
     registered_robot_asset = (repository / dynamic["robot_asset"]).resolve()
     arguments.robot_asset_path = (
@@ -238,7 +254,7 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
 
 
 def prepare_dynamic_scene(
-    repository: Path, stage, entry, add_reference_to_stage
+    repository: Path, stage, entry, add_reference_to_stage, perturbation
 ) -> dict[str, object]:
     from omni.physx.scripts import physicsUtils
     from pxr import Gf, Sdf, UsdGeom, UsdPhysics, UsdShade
@@ -250,6 +266,24 @@ def prepare_dynamic_scene(
         verify_d38999_tabletop_asset,
     )
 
+    allowed_keys = {"object_translation_delta_m", "object_yaw_delta_rad"}
+    unsupported = set(perturbation) - allowed_keys
+    if unsupported:
+        raise ValueError(
+            "selected robustness scenario is not implemented by the current "
+            f"minimal runner: {sorted(unsupported)}"
+        )
+    translation_delta = np.asarray(
+        perturbation.get("object_translation_delta_m", (0.0, 0.0, 0.0)),
+        dtype=np.float64,
+    )
+    if translation_delta.shape != (3,) or not np.all(np.isfinite(translation_delta)):
+        raise ValueError("object translation perturbation must be one finite vector")
+    yaw_delta_rad = float(perturbation.get("object_yaw_delta_rad", 0.0))
+    if not np.isfinite(yaw_delta_rad):
+        raise ValueError("object yaw perturbation must be one finite scalar")
+    yaw_delta_degrees = float(np.degrees(yaw_delta_rad))
+
     kind = str(entry["scene_kind"])
     if kind == "D38999_PAIR_TABLETOP":
         scene_path = (repository / entry["scene_config"]).resolve()
@@ -259,6 +293,30 @@ def prepare_dynamic_scene(
             stage, scene, asset, add_reference_to_stage=add_reference_to_stage,
             Gf=Gf, Sdf=Sdf, UsdGeom=UsdGeom, UsdPhysics=UsdPhysics,
             UsdShade=UsdShade, physics_utils=physicsUtils)
+        loose_root = stage.GetPrimAtPath(scene.asset.loose_plug_prim_path)
+        loose_ops = UsdGeom.Xformable(loose_root).GetOrderedXformOps()
+        translate_ops = [
+            operation for operation in loose_ops
+            if operation.GetOpType() == UsdGeom.XformOp.TypeTranslate
+        ]
+        rotate_ops = [
+            operation for operation in loose_ops
+            if operation.GetOpType() == UsdGeom.XformOp.TypeRotateXYZ
+        ]
+        if len(translate_ops) != 1 or len(rotate_ops) != 1:
+            raise RuntimeError(
+                "loose plug does not have one editable translation and rotation"
+            )
+        initial_translation = np.asarray(translate_ops[0].Get(), dtype=np.float64)
+        initial_rotation = np.asarray(rotate_ops[0].Get(), dtype=np.float64)
+        translate_ops[0].Set(Gf.Vec3d(*(initial_translation + translation_delta)))
+        rotate_ops[0].Set(
+            Gf.Vec3f(
+                float(initial_rotation[0]),
+                float(initial_rotation[1]),
+                float(initial_rotation[2] + yaw_delta_degrees),
+            )
+        )
         return {
             "object_asset": asset,
             "part_prim_paths": (scene.asset.body_prim_path, scene.asset.nut_prim_path),
@@ -276,6 +334,8 @@ def prepare_dynamic_scene(
             "render": scene.render,
             "evidence_paths": (scene_path,),
             "environment_scope": "FULL_TABLE_FIXTURE_AND_FIXED_RECEPTACLE",
+            "applied_initial_object_translation_delta_m": translation_delta.tolist(),
+            "applied_initial_object_yaw_delta_rad": yaw_delta_rad,
         }
     if kind != "FREE_SINGLE_RIGID_ON_SHARED_FINITE_TABLE":
         raise ValueError(f"unsupported dynamic scene kind: {kind}")
@@ -301,6 +361,14 @@ def prepare_dynamic_scene(
         raise RuntimeError("free object rigid body is missing")
     matrix = np.asarray(entry["frozen_settled_world_from_object_row_major"],
                         dtype=np.float64).reshape(4, 4)
+    cosine = float(np.cos(yaw_delta_rad))
+    sine = float(np.sin(yaw_delta_rad))
+    yaw_rotation = np.asarray(
+        ((cosine, -sine, 0.0), (sine, cosine, 0.0), (0.0, 0.0, 1.0)),
+        dtype=np.float64,
+    )
+    matrix[:3, :3] = yaw_rotation @ matrix[:3, :3]
+    matrix[:3, 3] += translation_delta
     xformable = UsdGeom.Xformable(object_prim)
     if xformable.GetOrderedXformOps():
         raise RuntimeError("free object root already has a transform stack")
@@ -319,6 +387,8 @@ def prepare_dynamic_scene(
         "render": environment.render,
         "evidence_paths": (environment_path, manifest_path),
         "environment_scope": "SHARED_FINITE_TABLE_AND_FIXTURE_WITHOUT_FIXED_RECEPTACLE",
+        "applied_initial_object_translation_delta_m": translation_delta.tolist(),
+        "applied_initial_object_yaw_delta_rad": yaw_delta_rad,
     }
 
 
@@ -359,7 +429,11 @@ def _initial_trace(arguments, inputs, grasp, motion_plan, dynamic):
         "controller_online_signals": list(motion_plan["online_signals"]),
         "online_object_or_contact_truth_used": False,
         "truth_audit_data_returned_to_controller": False,
-        "disturbance_executed": bool(dynamic["disturbance_executed"]),
+        "disturbance_executed": (
+            arguments.robustness_scenario_name != "nominal"
+        ),
+        "robustness_scenario": arguments.robustness_scenario_name,
+        "robustness_perturbation": arguments.robustness_perturbation,
         "motion_plan": motion_plan,
         "criteria": criteria,
         "controller_outcome": {"completed": False, "failure_reason": None},
@@ -549,6 +623,14 @@ def _evidence_binding(repository, arguments, inputs, grasp, scene, robot_asset):
             str(path.relative_to(repository)): file_sha256(path) for path in evidence_paths
         },
         "environment_scope": scene["environment_scope"],
+        "robustness_scenario": arguments.robustness_scenario_name,
+        "robustness_perturbation": arguments.robustness_perturbation,
+        "applied_initial_object_translation_delta_m": scene[
+            "applied_initial_object_translation_delta_m"
+        ],
+        "applied_initial_object_yaw_delta_rad": scene[
+            "applied_initial_object_yaw_delta_rad"
+        ],
         "object_asset_sha256": file_sha256(object_asset),
         "robot_asset_sha256": file_sha256(robot_asset),
         "controller_source_sha256": file_sha256(Path(__file__).with_name("controller.py")),
@@ -619,7 +701,13 @@ def _create_runtime(
         "required": 8,
         "observed": observed_minimum_velocity_iterations,
     }
-    scene = prepare_dynamic_scene(repository, stage, scene_entry, add_reference_to_stage)
+    scene = prepare_dynamic_scene(
+        repository,
+        stage,
+        scene_entry,
+        add_reference_to_stage,
+        arguments.robustness_perturbation,
+    )
     if arguments.capture_visual_evidence:
         render = scene["render"]
         lighting_root = "/World/CARTSGraspVisualEvidenceLights"

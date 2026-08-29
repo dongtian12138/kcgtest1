@@ -1,96 +1,68 @@
 # kcgtest1 当前上下文
 
-## 当前实际结果
+## 当前真实物理结果
 
-2026-08-28 在真实 Isaac Sim GPU physics 中，旧版带指甲三指手对
-`current_d38999_26kj61sn_public_spec` 连接器完成了一次固定场景名义抓取：
+无指甲三指手已经在 Isaac Sim 中分别对当前公开规格连接器和
+TE/DEUTSCH D38999/26FJ35PN 完成名义动态抓取。四个用于公平对比的运行如下：
 
-- 三个末节碰撞体都与连接器接触，接触记录数分别为 5160、10660、10273；
-- 连接器离开桌面，最大抬升 50.889 mm；
-- 保持 2.0 s，保持期间没有重新接触桌面；
-- 最大相对滑移 0.709 mm，最大姿态变化 0.0722 rad；
-- 手—桌、手—夹具和未授权手—物接触记录均为 0；
-- 控制器完成且没有触发安全失败。
+| 型号与抓法 | 三块完整指腹 | 离桌 | 抬升 | 保持 | 滑移 | 姿态变化 | 错误接触 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 当前 baseline | 是 | 是 | 55.732 mm | 2.000 s | 0.407 mm | 4.422° | 0 |
+| 当前有限集最佳 | 是 | 是 | 55.430 mm | 2.000 s | 0.097 mm | 5.029° | 0 |
+| TE baseline | 是 | 是 | 55.379 mm | 2.000 s | 0.430 mm | 0.078° | 0 |
+| TE 有限集最佳 | 是 | 是 | 54.660 mm | 2.000 s | 2.097 mm | 2.457° | 0 |
 
-以上是一次特定手模型、特定连接器和冻结初始条件下的 simulation-only 名义结果。
-原始评价见
-[`evaluation.json`](artifacts/kcg_connector/isaac/carts_v2_goal_20260827/visual_delivery_20260828/grasp_lift/evaluation.json)，
-四张 Isaac 过程图见
-[`visuals/`](artifacts/kcg_connector/isaac/carts_v2_goal_20260827/visual_delivery_20260828/grasp_lift/visuals/)，
-学术风格汇总图见
-[`figures/`](artifacts/kcg_connector/isaac/carts_v2_goal_20260827/visual_delivery_20260828/figures/)。
+两个自动抓法都使用用户提供的无指甲 STL 和三块完整蓝色指腹语义，没有把指腹缩成两个三角面。
+保持阶段均未重新碰桌，控制器完成且没有安全失败。全部结果都是 simulation-only；
+`formal_dynamic_pass=false`，`hardware_authorized=false`。
 
-## 必须同时保留的证据边界
+原始自动抓法评价：
 
-### 1. 这不是无指甲抓取
+- 当前：
+  `artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_nominal_comparison/current_auto/grasp_lift_generic_route_run02/evaluation.json`
+- TE：
+  `artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_nominal_comparison/te_auto/grasp_lift_safe_ik_run03/evaluation.json`
 
-本次运行使用
-`artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/handarm.usda`。
-三个末节碰撞体仍来自原始 `f1Link3_convex.stl`、`f2Link2_convex.stl`、
-`f3Link3_convex.stl`，包含原有指甲几何。此前制作的无指甲网格因非流形、非水密，
-没有成为可接受的 PhysX 运行碰撞体，也没有完成动态抓取。
+## 已冻结的名义算法
 
-因此，本次结果只能证明“三个旧版末节凸包接触并抬起”，不能证明“无指甲真实指腹抓取”。
-评价器的 `pad_surface_identity_verified=true` 只证明接触来自末节上唯一启用且被命名为
-pad 的碰撞体，不能证明接触点位于已经去掉指甲的表面。
+名义算法为 `COMPLETE_AXIS_ALIGNED_FULL_PAD_GRID_V2`。它从每个连接器自身 CAD、质量/质心、
+完整无指甲手模型和共同物理上限生成有限集合，不输入对象专用世界位姿、接触坐标或手指角度。
 
-### 2. 另一款连接器没有完成抓取
+- 手掌关节：17 点；
+- 轴向转角：24 点，15°步长；
+- CAD 轴向截面：当前 34 点、TE 33 点，约 1 mm 步长并含边界；
+- 横向偏移和倾角在本版固定为 0；
+- 摩擦锥：μ=0.45 的八边保守近似；
+- 每块指腹法向力上限：8 N；
+- 主分数：保持和竖直抬升任务承载倍率的较小值；
+- 碰撞、关节、完整指腹、错误表面、力矩和固定路径都是硬约束；
+- 最终机械臂分支由 9 个固定 IK 初值按自碰、关节余量和 home 距离的通用规则选择。
 
-TE/DEUTSCH `D38999/26FJ35PN` 只做过自由落桌稳定性和装配 smoke，没有做三指动态抓取。
-当前登记抓法也只包含本次连接器。换型号后的几何、质心和接触位置不同，不能直接复制本次
-位姿和关节目标。
+当前型号 13,872 个成员和 TE 13,464 个成员都已得到声明的离散评价。允许的结论只是在该冻结
+`G_delta` 内最佳，不覆盖连续空间、横移、倾角或连续时间碰撞证明。
 
-### 3. 当前方法不是最优算法，也没有完成鲁棒性验证
+完整公式、文献依据、图和定量表：
 
-本次只实际比较了三个固定配置；当前方案只是“本次实际比较的三种配置中最佳名义仿真抓法”，
-不是连续空间最优、全局最优或跨型号最优。
+`artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_nominal_comparison/finite_gdelta_study_v1/README_CN.md`
 
-同一冻结条件下的获胜配置有 3/3 重复成功，但这只说明确定性重复性。没有系统执行初始位姿、
-摩擦、质量/质心、关节误差、观测噪声、外部扰动或连接器型号变化。两个单变量对照还对很小的
-横向位移和较低预载表现出敏感性，因此不能宣称鲁棒。
+## 当前科学问题与最早未知量
 
-## 结论状态
+名义算法已经解决“能否自动产生可执行抓法”。当前最早未知量变为：为什么 TE 自动抓法的
+解析任务承载倍率从 1.367 提高到 2.504，但 Isaac 滑移和姿态变化反而明显变差。
 
-- `nominal_research_dynamic_pass=true`：只指上述固定场景名义物理结果；
-- `research_dynamic_pass=false`：现有评价合同中的完整研究门没有闭合；
-- `formal_dynamic_pass=false`；
-- `hardware_authorized=false`；
-- 无指甲抓取：尚未验证；
-- TE/DEUTSCH 跨型号抓取：尚未验证；
-- 最优性：尚未证明；
-- 扰动鲁棒性：尚未验证。
+算法冻结后才允许进入正式鲁棒性。首个变量按已有直接敏感性证据选择连接器横向位置误差，
+边界为 ±0.17 mm；先运行一个边界并只判断最早失败是接触不到、滑移、倾斜、碰撞、力矩不足
+还是保持失败。该次实验不改变抓法、夹力、摩擦、质量、控制器、抬升轨迹或安全判据。
 
-## 直接复现实验
+若一个方向成功，再运行另一方向完成该单变量边界；若失败，只根据第一个物理失败原因决定
+一个通用修改。不得先扩大搜索、批量盲扫或把已有探索扰动写成正式鲁棒性结论。
 
-下面两条命令会重新运行 Isaac，而不是播放已有图片。第二条会保存四个实际阶段画面，
-但图片和物体真值不会进入在线控制。
+## 仍未完成
 
-```bash
-cd /home/noob/WorkPlace/kcgtest1
-export PYTHONPATH="$PWD/src/kcg_connector${PYTHONPATH:+:$PYTHONPATH}"
-CARTS_ISAAC_PY=/home/noob/WorkPlace/isaacsim/.conda-env/bin/python
-CARTS_REPLAY_DIR=/tmp/carts_nominal_replay
+- 冻结算法后的正式单变量和少量组合扰动；
+- 区分调参数据与再次冻结后的最终评价数据；
+- 两型号共同通过的有限扰动范围、当前最坏工况和最近失败反例；
+- 鲁棒优化前后在相同工况以及未参与调参工况上的动态对比；
+- 里程碑 4 的物理余量图、公式、原始动态证据和复现命令。
 
-"$CARTS_ISAAC_PY" src/kcg_connector/isaac/carts_v2/run_grasp_lift.py \
-  --mode preflight \
-  --object-id current_d38999_26kj61sn_public_spec \
-  --output-directory "$CARTS_REPLAY_DIR/preflight" \
-  --omit-trace-json
-
-"$CARTS_ISAAC_PY" src/kcg_connector/isaac/carts_v2/run_grasp_lift.py \
-  --mode grasp-lift \
-  --object-id current_d38999_26kj61sn_public_spec \
-  --preflight-evaluation "$CARTS_REPLAY_DIR/preflight/evaluation.json" \
-  --output-directory "$CARTS_REPLAY_DIR/grasp_lift" \
-  --capture-visual-evidence \
-  --omit-trace-json
-```
-
-复现后先检查连接器是否真实离桌、是否达到 50 mm、是否保持 2 s，再看程序状态字段。
-
-## 下一项最短研究动作
-
-若用户继续授权，先从可靠的闭合 CAD 同时生成无指甲可见网格和无指甲碰撞体，保持当前控制律
-不变，只对当前连接器做一次直接复验。该步骤成功后，冻结算法和超参数，再对 TE/DEUTSCH
-型号做一次零调参留出验证；最后才进入受控扰动实验。不得在这些直接证据之前恢复批量搜索、
-新优化器、管理器或认证框架。
+在这些真实动态结果完成前，不得标记目标完成。

@@ -18,7 +18,7 @@ from scipy.stats import qmc
 
 
 EXPECTED_HAND_BASE_LINK = "handbase_link"
-EXPECTED_SOLVER_METHOD = "SCIPY_TRF_BOUNDED_POSE_LEAST_SQUARES_V1"
+EXPECTED_SOLVER_METHOD = "SCIPY_DOGBOX_BOUNDED_POSE_ANALYTIC_JACOBIAN_V3"
 EXPECTED_SEED_RULE = "HOME_THEN_UNSCRAMBLED_SOBOL_INTERIOR_JOINT_LIMITS"
 EXPECTED_FEASIBLE_CHOICE_RULE = "FIRST_FEASIBLE_IN_FIXED_SEED_ORDER"
 
@@ -129,6 +129,30 @@ def _pose_error(
     return position, orientation
 
 
+def _skew_symmetric(vector: Sequence[float]) -> np.ndarray:
+    x, y, z = (float(value) for value in vector)
+    return np.asarray(
+        ((0.0, -z, y), (z, 0.0, -x), (-y, x, 0.0)),
+        dtype=np.float64,
+    )
+
+
+def _so3_left_jacobian_inverse(rotation_vector: Sequence[float]) -> np.ndarray:
+    """Map a left SO(3) perturbation to the derivative of its log vector."""
+
+    vector = np.asarray(rotation_vector, dtype=np.float64)
+    angle = float(np.linalg.norm(vector))
+    skew = _skew_symmetric(vector)
+    skew_squared = skew @ skew
+    if angle < 1.0e-4:
+        coefficient = 1.0 / 12.0 + angle**2 / 720.0 + angle**4 / 30240.0
+    else:
+        coefficient = (
+            1.0 - angle / (2.0 * math.tan(0.5 * angle))
+        ) / angle**2
+    return np.eye(3, dtype=np.float64) - 0.5 * skew + coefficient * skew_squared
+
+
 def solve_bounded_target(
     *,
     model: object,
@@ -148,11 +172,29 @@ def solve_bounded_target(
                 "IK_SEED_INVALID", f"{label}:{seed_index}"
             )
         initial = np.clip(initial, lower, upper)
+        cached_arm_positions: np.ndarray | None = None
+        cached_position: np.ndarray | None = None
+        cached_orientation: np.ndarray | None = None
+
+        def pose_error(
+            arm_positions: np.ndarray,
+        ) -> tuple[np.ndarray, np.ndarray]:
+            nonlocal cached_arm_positions, cached_position, cached_orientation
+            if (
+                cached_arm_positions is None
+                or not np.array_equal(arm_positions, cached_arm_positions)
+            ):
+                cached_position, cached_orientation = _pose_error(
+                    model, arm_positions, hand_positions, target
+                )
+                cached_arm_positions = np.array(
+                    arm_positions, dtype=np.float64, copy=True
+                )
+            assert cached_position is not None and cached_orientation is not None
+            return cached_position, cached_orientation
 
         def residual(arm_positions: np.ndarray) -> np.ndarray:
-            position, orientation = _pose_error(
-                model, arm_positions, hand_positions, target
-            )
+            position, orientation = pose_error(arm_positions)
             return np.concatenate(
                 (
                     position,
@@ -161,12 +203,36 @@ def solve_bounded_target(
                 )
             )
 
+        def jacobian(arm_positions: np.ndarray) -> np.ndarray:
+            complete = tuple(
+                float(value) for value in (*arm_positions, *hand_positions)
+            )
+            _position, orientation = pose_error(arm_positions)
+            geometric = np.asarray(
+                model.geometric_jacobian(EXPECTED_HAND_BASE_LINK, complete),
+                dtype=np.float64,
+            )
+            if geometric.shape[0] != 6 or geometric.shape[1] < 7:
+                raise CandidateJointRouteError(
+                    "IK_JACOBIAN_INVALID", f"{label}:{geometric.shape}"
+                )
+            result = np.empty((6, 7), dtype=np.float64)
+            result[:3] = geometric[:3, :7]
+            result[3:] = (
+                settings.orientation_residual_length_scale_m_per_rad
+                * _so3_left_jacobian_inverse(orientation)
+                @ target[:3, :3].T
+                @ geometric[3:, :7]
+            )
+            return result
+
         try:
             result = least_squares(
                 residual,
                 initial,
+                jac=jacobian,
                 bounds=(lower, upper),
-                method="trf",
+                method="dogbox",
                 ftol=settings.function_tolerance,
                 xtol=settings.step_tolerance,
                 gtol=settings.gradient_tolerance,

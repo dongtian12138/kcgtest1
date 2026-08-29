@@ -1,0 +1,132 @@
+{
+  "schema_version": "finite_gdelta_two_model_evidence_v1",
+  "claim": "BEST_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA",
+  "not_claimed": [
+    "CONTINUOUS_SPACE_GLOBAL_OPTIMUM",
+    "HARDWARE_VALIDATION",
+    "FORMAL_ROBUSTNESS",
+    "ISAAC_MEASURED_CONTACT_POSITIONS_OR_NORMALS"
+  ],
+  "contact_geometry_boundary": "finite-set-best witnesses are stored CAD/FCL predictions; baseline witnesses are deterministic offline reconstructions of the one frozen baseline grid point",
+  "quality_statistics": {
+    "Current D38999/26KJ61SN": {
+      "finite_set_size": 13872,
+      "executable_count": 8808,
+      "minimum": 1.3199864500993699,
+      "median": 1.8281750775544603,
+      "p90": 2.5664322070656755,
+      "maximum": 4.325314248248339,
+      "status_counts": {
+        "GENERATION_INFEASIBLE": 2280,
+        "EXECUTABLE_OFFLINE": 8808,
+        "PATH_INFEASIBLE": 2784
+      }
+    },
+    "TE D38999/26FJ35PN": {
+      "finite_set_size": 13464,
+      "executable_count": 8384,
+      "minimum": 1.3372252468648413,
+      "median": 1.932905820095208,
+      "p90": 2.3961692733260205,
+      "maximum": 2.503798360670435,
+      "status_counts": {
+        "GENERATION_INFEASIBLE": 3192,
+        "EXECUTABLE_OFFLINE": 8384,
+        "TASK_INFEASIBLE": 48,
+        "PATH_INFEASIBLE": 1840
+      }
+    }
+  },
+  "comparison": [
+    {
+      "object": "Current D38999/26KJ61SN",
+      "method": "baseline",
+      "predicted_task_load_factor": 1.616628869737667,
+      "predicted_forbidden_clearance_mm": 0.8149361680149058,
+      "predicted_closure_reserve_rad": 0.22948104103842937,
+      "predicted_joint_torque_margin_nm": 0.3432859533517767,
+      "predicted_pad_force_margin_n": 3.051430696460238,
+      "isaac_three_full_pads": true,
+      "isaac_off_table": true,
+      "isaac_lift_mm": 55.73247660248731,
+      "isaac_hold_s": 2.0,
+      "isaac_slip_mm": 0.4073815447058956,
+      "isaac_orientation_change_deg": 4.421883336559228,
+      "isaac_maximum_hand_effort_nm": 0.6564894318580627,
+      "isaac_unauthorized_contacts": 0,
+      "isaac_maximum_table_penetration_mm": 0.0012390613556012564,
+      "isaac_post_settle_table_penetration_mm": 0.0006132125854596548,
+      "isaac_controller_completed": true,
+      "isaac_formal_dynamic_pass": false
+    },
+    {
+      "object": "Current D38999/26KJ61SN",
+      "method": "finite_set_best",
+      "predicted_task_load_factor": 4.325314248248339,
+      "predicted_forbidden_clearance_mm": 0.4233917707420496,
+      "predicted_closure_reserve_rad": 0.22970411499189725,
+      "predicted_joint_torque_margin_nm": 0.6919226330515797,
+      "predicted_pad_force_margin_n": 6.150423404902931,
+      "isaac_three_full_pads": true,
+      "isaac_off_table": true,
+      "isaac_lift_mm": 55.43014298239463,
+      "isaac_hold_s": 2.0,
+      "isaac_slip_mm": 0.0971264763658327,
+      "isaac_orientation_change_deg": 5.028951466892568,
+      "isaac_maximum_hand_effort_nm": 0.6614583730697632,
+      "isaac_unauthorized_contacts": 0,
+      "isaac_maximum_table_penetration_mm": 0.0012390613556012564,
+      "isaac_post_settle_table_penetration_mm": 0.0006430149078473502,
+      "isaac_controller_completed": true,
+      "isaac_formal_dynamic_pass": false
+    },
+    {
+      "object": "TE D38999/26FJ35PN",
+      "method": "baseline",
+      "predicted_task_load_factor": 1.36725789337269,
+      "predicted_forbidden_clearance_mm": 0.8467981567787664,
+      "predicted_closure_reserve_rad": 0.22966880756534946,
+      "predicted_joint_torque_margin_nm": 0.24174817760245604,
+      "predicted_pad_force_margin_n": 4.384196642145955,
+      "isaac_three_full_pads": true,
+      "isaac_off_table": true,
+      "isaac_lift_mm": 55.379243909435324,
+      "isaac_hold_s": 2.0,
+      "isaac_slip_mm": 0.4298817856091024,
+      "isaac_orientation_change_deg": 0.07765485097226386,
+      "isaac_maximum_hand_effort_nm": 0.6437144875526428,
+      "isaac_unauthorized_contacts": 0,
+      "isaac_maximum_table_penetration_mm": 0.00028014183045543817,
+      "isaac_post_settle_table_penetration_mm": 0.00028014183045543817,
+      "isaac_controller_completed": true,
+      "isaac_formal_dynamic_pass": false
+    },
+    {
+      "object": "TE D38999/26FJ35PN",
+      "method": "finite_set_best",
+      "predicted_task_load_factor": 2.503798360670435,
+      "predicted_forbidden_clearance_mm": 1.1085403247618335,
+      "predicted_closure_reserve_rad": 0.23720870626038593,
+      "predicted_joint_torque_margin_nm": 0.5405461341707205,
+      "predicted_pad_force_margin_n": 4.804854525961962,
+      "isaac_three_full_pads": true,
+      "isaac_off_table": true,
+      "isaac_lift_mm": 54.65977914201775,
+      "isaac_hold_s": 2.0,
+      "isaac_slip_mm": 2.097418948341982,
+      "isaac_orientation_change_deg": 2.457358779705105,
+      "isaac_maximum_hand_effort_nm": 0.6488475799560547,
+      "isaac_unauthorized_contacts": 0,
+      "isaac_maximum_table_penetration_mm": 0.0002056360244861999,
+      "isaac_post_settle_table_penetration_mm": 0.0002056360244861999,
+      "isaac_controller_completed": true,
+      "isaac_formal_dynamic_pass": false
+    }
+  ],
+  "figures": [
+    "cad_contacts_normals_friction.png",
+    "gdelta_search_and_quality_distribution.png",
+    "baseline_vs_finite_best.png",
+    "isaac_two_model_final_hold.png"
+  ]
+}

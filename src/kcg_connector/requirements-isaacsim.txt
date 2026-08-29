@@ -3,3 +3,6 @@
 isaacsim[all,extscache]==6.0.1.0
 trimesh==5.0.0
 fast-simplification==0.2.0
+manifold3d==3.5.2
+matplotlib==3.7.5
+rtree==1.4.1
