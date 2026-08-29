@@ -526,6 +526,7 @@ class JointSignalStepper:
 
     def set_lift_arm_damping(self, damping_nm_s_rad: float) -> None:
         requested = float(damping_nm_s_rad)
+        previous = float(self.effective_arm_damping_nm_s_rad)
         stiffness = float(self.settings["arm_stiffness"])
         if not math.isfinite(requested) or requested < 0.0:
             raise RuntimeError("lift arm damping must be finite and nonnegative")
@@ -549,8 +550,19 @@ class JointSignalStepper:
         ):
             raise RuntimeError("lift arm damping did not read back exactly")
         self.effective_arm_damping_nm_s_rad = requested
+        prior_audit = self.lift_arm_damping_switch_audit
         self.lift_arm_damping_switch_audit = {
+            "initial_nm_s_rad": (
+                previous
+                if prior_audit is None
+                else float(prior_audit["initial_nm_s_rad"])
+            ),
             "requested_nm_s_rad": requested,
+            "update_count": (
+                1
+                if prior_audit is None
+                else int(prior_audit["update_count"]) + 1
+            ),
             "observed_stiffnesses_nm_rad": observed_stiffnesses.tolist(),
             "observed_dampings_nm_s_rad": observed_dampings.tolist(),
             "arm_drive_maximum_effort_nm": float(
@@ -850,16 +862,27 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
     preload_limit_goal = (
         closure_target + preload_increment * direction * preload_scales
     )
-    required_effort = np.asarray(
+    predicted_task_effort = np.asarray(
         settings.get("required_closing_joint_effort_nm"), dtype=np.float64
     )
     if (
-        required_effort.shape != (3,)
-        or not np.all(np.isfinite(required_effort))
-        or np.any(required_effort <= 0.0)
-        or np.any(required_effort >= float(settings["measured_effort_abort_nm"]))
+        predicted_task_effort.shape != (3,)
+        or not np.all(np.isfinite(predicted_task_effort))
+        or np.any(predicted_task_effort <= 0.0)
+        or np.any(
+            predicted_task_effort
+            >= float(settings["measured_effort_abort_nm"])
+        )
     ):
-        return "PRELOAD_REQUIRED_EFFORT_CONFIGURATION_ABORT"
+        return "PREDICTED_TASK_EFFORT_CONFIGURATION_ABORT"
+    contact_confirmation_effort = float(settings["contact_effort_rise_nm"])
+    if (
+        not np.isfinite(contact_confirmation_effort)
+        or contact_confirmation_effort <= 0.0
+        or contact_confirmation_effort
+        >= float(settings["measured_effort_abort_nm"])
+    ):
+        return "PRELOAD_CONTACT_EFFORT_CONFIGURATION_ABORT"
     closing_direction = direction[1:]
     if np.any(closing_direction == 0.0):
         return "PRELOAD_REQUIRED_EFFORT_DIRECTION_ABORT"
@@ -875,7 +898,7 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
         resistive_effort = closing_direction * measured_effort
         hand_target = np.array(previous_target, copy=True)
         for finger_index, hand_index in enumerate((1, 2, 3)):
-            if resistive_effort[finger_index] < required_effort[finger_index]:
+            if resistive_effort[finger_index] < predicted_task_effort[finger_index]:
                 hand_target[hand_index] += float(
                     np.clip(
                         desired_limit[hand_index] - previous_target[hand_index],
@@ -900,7 +923,7 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
         resistive_effort = closing_direction * measured_effort
         hand_target = np.array(previous_target, copy=True)
         for finger_index, hand_index in enumerate((1, 2, 3)):
-            if resistive_effort[finger_index] < required_effort[finger_index]:
+            if resistive_effort[finger_index] < predicted_task_effort[finger_index]:
                 hand_target[hand_index] += float(
                     np.clip(
                         preload_limit_goal[hand_index]
@@ -921,18 +944,29 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
         resistive_effort = closing_direction * measured_effort
         effort_evidence_count = (
             effort_evidence_count + 1
-            if np.all(resistive_effort >= required_effort)
+            if np.all(resistive_effort >= contact_confirmation_effort)
             else 0
         )
         if effort_evidence_count >= int(settings["contact_consecutive_samples"]):
             break
     if effort_evidence_count < int(settings["contact_consecutive_samples"]):
-        return "PRELOAD_REQUIRED_EFFORT_NOT_REACHED"
+        return "PRELOAD_CONTACT_EFFORT_NOT_REACHED"
     preload_goal = previous_target
-    stepper.set_lift_arm_damping(float(settings["lift_arm_damping_nm_s_rad"]))
+    initial_lift_damping = float(stepper.effective_arm_damping_nm_s_rad)
+    final_lift_damping = float(settings["lift_arm_damping_nm_s_rad"])
+    damping_transition_steps = max(1, preload_steps)
     waypoints = np.asarray(motion_plan["lift_arm_waypoints_rad"])
     lift_steps = round(float(settings["lift_duration_s"]) / dt)
     for index in stepper.active_steps(lift_steps):
+        if index < damping_transition_steps:
+            damping_blend = minimum_jerk_blend(
+                (index + 1) / damping_transition_steps
+            )
+            stepper.set_lift_arm_damping(
+                initial_lift_damping
+                + damping_blend
+                * (final_lift_damping - initial_lift_damping)
+            )
         blend = minimum_jerk_blend((index + 1) / lift_steps)
         latest = stepper.advance(
             "lift", piecewise_waypoint(waypoints, blend), preload_goal

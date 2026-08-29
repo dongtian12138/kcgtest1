@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
 import math
 from pathlib import Path
@@ -95,6 +95,19 @@ class TaskQuality:
     force_closure_friction_pyramid: bool
 
 
+@dataclass(frozen=True)
+class OfflineRobustScenario:
+    name: str
+    translation_world_m: np.ndarray
+    yaw_world_rad: float
+    friction_coefficient: float | None
+    mass_scale: float
+    center_of_mass_delta_object_m: np.ndarray
+    finger_3_joint_target_offset_rad: float
+    offline_components: tuple[str, ...]
+    dynamic_only_components: tuple[str, ...]
+
+
 def _arguments() -> argparse.Namespace:
     repository = Path(__file__).resolve().parents[4]
     parser = argparse.ArgumentParser(description=__doc__)
@@ -104,6 +117,15 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         default=str(repository / "src/kcg_connector/config/carts_grasp_v2.yaml"),
+    )
+    parser.add_argument(
+        "--selection-mode",
+        choices=("nominal", "robust"),
+        default="nominal",
+        help=(
+            "Keep the frozen nominal selection by default, or replay the same "
+            "G_delta over configured offline-expressible robustness scenarios."
+        ),
     )
     parser.add_argument("--output-directory", required=True)
     return parser.parse_args()
@@ -117,6 +139,90 @@ def _rotation_about_z(angle: float) -> np.ndarray:
     )
 
 
+_OFFLINE_ROBUSTNESS_COMPONENTS = frozenset(
+    (
+        "object_translation_delta_m",
+        "object_yaw_delta_rad",
+        "contact_friction_coefficient",
+        "object_mass_scale",
+        "center_of_mass_delta_object_m",
+        "finger_joint_target_offset_rad",
+    )
+)
+_DYNAMIC_ONLY_ROBUSTNESS_COMPONENTS = frozenset(("finger_preload_scale",))
+
+
+def _load_offline_robust_scenarios(
+    inputs: V2Inputs,
+) -> tuple[OfflineRobustScenario, ...]:
+    robustness = inputs.config.section("robustness_evaluation")
+    scenarios = robustness.get("scenarios")
+    if (
+        robustness.get("frozen_before_first_dynamic_run") is not True
+        or not isinstance(scenarios, Mapping)
+        or next(iter(scenarios), None) != "nominal"
+        or scenarios.get("nominal") != {}
+    ):
+        raise ValueError("frozen robustness scenarios require nominal first")
+    known = (
+        _OFFLINE_ROBUSTNESS_COMPONENTS
+        | _DYNAMIC_ONLY_ROBUSTNESS_COMPONENTS
+    )
+    result = []
+    for raw_name, raw_value in scenarios.items():
+        name, value = str(raw_name), dict(raw_value)
+        unknown = set(value) - known
+        translation = np.asarray(
+            value.get("object_translation_delta_m", (0.0, 0.0, 0.0)),
+            dtype=np.float64,
+        )
+        com_delta = np.asarray(
+            value.get("center_of_mass_delta_object_m", (0.0, 0.0, 0.0)),
+            dtype=np.float64,
+        )
+        joint = value.get("finger_joint_target_offset_rad", {})
+        preload = value.get("finger_preload_scale", {})
+        yaw = float(value.get("object_yaw_delta_rad", 0.0))
+        friction_value = value.get("contact_friction_coefficient")
+        friction = None if friction_value is None else float(friction_value)
+        mass_scale = float(value.get("object_mass_scale", 1.0))
+        if (
+            unknown
+            or not name
+            or (name != "nominal" and not value)
+            or translation.shape != (3,)
+            or com_delta.shape != (3,)
+            or not np.all(np.isfinite(translation))
+            or not np.all(np.isfinite(com_delta))
+            or np.any(translation[1:] != 0.0)
+            or np.any(com_delta[1:] != 0.0)
+            or not isinstance(joint, Mapping)
+            or set(joint) - {"finger_3"}
+            or not isinstance(preload, Mapping)
+            or set(preload) - {"finger_3"}
+            or not math.isfinite(yaw)
+            or not math.isfinite(mass_scale)
+            or mass_scale <= 0.0
+            or friction is not None
+            and (not math.isfinite(friction) or friction < 0.0)
+        ):
+            raise ValueError(f"robustness scenario {name!r} is malformed")
+        result.append(
+            OfflineRobustScenario(
+                name=name,
+                translation_world_m=translation,
+                yaw_world_rad=yaw,
+                friction_coefficient=friction,
+                mass_scale=mass_scale,
+                center_of_mass_delta_object_m=com_delta,
+                finger_3_joint_target_offset_rad=float(
+                    joint.get("finger_3", 0.0)
+                ),
+                offline_components=tuple(key for key in value if key in _OFFLINE_ROBUSTNESS_COMPONENTS),
+                dynamic_only_components=tuple(key for key in value if key in _DYNAMIC_ONLY_ROBUSTNESS_COMPONENTS),
+            )
+        )
+    return tuple(result)
 def _anchored_grid(
     lower: float,
     upper: float,
@@ -1008,12 +1114,20 @@ def _task_quality(
     object_from_hand: np.ndarray,
     contact_joints: np.ndarray,
     patches: Sequence[PadPatch],
+    *,
+    friction_coefficient: float | None = None,
+    mass_kg: float | None = None,
+    center_of_mass_object_m: np.ndarray | None = None,
 ) -> TaskQuality | None:
     edge_count = int(settings["friction_cone_edge_count"])
     friction = float(
         inputs.object_contract.contact_material_uncertainty
         .friction_coefficient_interval[0]
+        if friction_coefficient is None
+        else friction_coefficient
     )
+    if not math.isfinite(friction) or friction < 0.0:
+        raise ValueError("task-quality friction must be finite and nonnegative")
     force_cap = float(settings["nominal_normal_force_cap_n"])
     resultants = [_single_pad_resultant(patch) for patch in patches]
     if any(resultant is None for resultant in resultants):
@@ -1041,7 +1155,14 @@ def _task_quality(
     torque = np.zeros((joint_count, coefficient_count), dtype=np.float64)
     assert inputs.task_grip_surfaces is not None
     hand_from_links = inputs.hand_model.forward_kinematics(contact_joints)
-    com = np.asarray(inputs.object_contract.model.com_m, dtype=np.float64)
+    com = np.asarray(
+        inputs.object_contract.model.com_m
+        if center_of_mass_object_m is None
+        else center_of_mass_object_m,
+        dtype=np.float64,
+    )
+    if com.shape != (3,) or not np.all(np.isfinite(com)):
+        raise ValueError("task-quality center of mass must be one finite 3-vector")
     for contact_index, (point, basis_vectors, pad_index) in enumerate(
         zip(points, bases, pad_indices)
     ):
@@ -1085,7 +1206,11 @@ def _task_quality(
     )
     object_from_world_rotation = inputs.frozen_world_from_object[:3, :3].T
     gravity_world = _scene_gravity_world_m_s2(inputs)
-    mass = float(inputs.object_contract.model.mass_kg)
+    mass = float(
+        inputs.object_contract.model.mass_kg if mass_kg is None else mass_kg
+    )
+    if not math.isfinite(mass) or mass <= 0.0:
+        raise ValueError("task-quality mass must be finite and positive")
     required_forces = (
         mass * (object_from_world_rotation @ (-gravity_world)),
         mass
@@ -1381,6 +1506,176 @@ def _solve_or_reuse_motion_plan(
     return motion
 
 
+def _robust_scenario_plan(
+    inputs: V2Inputs,
+    control_plan: Mapping[str, object],
+    scenario: OfflineRobustScenario,
+) -> tuple[V2Inputs, dict[str, object]]:
+    """Keep the nominal world hand target while perturbing the object pose."""
+
+    nominal_world_object = np.asarray(inputs.frozen_world_from_object)
+    actual_world_object = np.array(nominal_world_object, copy=True)
+    actual_world_object[:3, :3] = (
+        _rotation_about_z(scenario.yaw_world_rad)
+        @ nominal_world_object[:3, :3]
+    )
+    actual_world_object[:3, 3] += scenario.translation_world_m
+    scenario_inputs = replace(
+        inputs, frozen_world_from_object=actual_world_object
+    )
+    plan = copy.deepcopy(control_plan)
+    nominal_object_hand = np.asarray(
+        plan["object_from_hand_row_major"], dtype=np.float64
+    ).reshape(4, 4)
+    plan["object_from_hand_row_major"] = (
+        np.linalg.inv(actual_world_object)
+        @ nominal_world_object
+        @ nominal_object_hand
+    ).ravel().tolist()
+    direction_world = (
+        nominal_world_object[:3, :3]
+        @ np.asarray(plan["approach_direction_object"], dtype=np.float64)
+    )
+    plan["approach_direction_object"] = (
+        actual_world_object[:3, :3].T @ direction_world
+    ).tolist()
+    if scenario.finger_3_joint_target_offset_rad:
+        slot = inputs.hand_model.independent_joint_names.index("f3j2")
+        for key in ("pregrasp_joint_positions_rad", "final_joint_positions_rad"):
+            joints = np.asarray(plan[key], dtype=np.float64).copy()
+            joints[slot] += scenario.finger_3_joint_target_offset_rad
+            plan[key] = joints.tolist()
+    return scenario_inputs, plan
+
+
+def _robust_candidate_summary(
+    inputs: V2Inputs,
+    scene: ExactCollisionScene,
+    settings: Mapping[str, object],
+    control_plan: Mapping[str, object],
+    nominal_path: PathEvaluation,
+    nominal_quality: TaskQuality,
+    scenarios: Sequence[OfflineRobustScenario],
+) -> dict[str, object]:
+    expected = ["nominal"] + [
+        row.name for row in scenarios[1:] if row.offline_components
+    ]
+    evaluated = ["nominal"]
+    metrics = {
+        "task": [nominal_quality.task_load_factor, "nominal"],
+        "clearance": [nominal_path.minimum_forbidden_clearance_m, "nominal"],
+        "joint": [
+            nominal_path.minimum_commanded_hand_joint_limit_margin_rad,
+            "nominal",
+        ],
+        "closure": [nominal_path.minimum_closure_reserve_rad, "nominal"],
+    }
+    required_effort = np.asarray(
+        nominal_quality.required_closing_joint_effort_nm
+    )
+    nominal_pose = np.asarray(
+        control_plan["object_from_hand_row_major"], dtype=np.float64
+    ).reshape(4, 4)
+    geometry = {
+        "object_translation_delta_m",
+        "object_yaw_delta_rad",
+        "finger_joint_target_offset_rad",
+    }
+
+    def failure(
+        status: str, reason: str, scenario: str, factor: float | None = None
+    ) -> dict[str, object]:
+        result = {
+            "status": status,
+            "reason": reason,
+            "failure_scenario": scenario,
+            "offline_evaluated_scenarios": list(evaluated),
+        }
+        if factor is not None:
+            result["failure_task_load_factor"] = factor
+        return result
+
+    for scenario in scenarios[1:]:
+        if not scenario.offline_components:
+            continue
+        if geometry.intersection(scenario.offline_components):
+            scenario_inputs, plan = _robust_scenario_plan(
+                inputs, control_plan, scenario
+            )
+            scene.inputs = scenario_inputs
+            try:
+                path, reason = _evaluate_control_path(
+                    scenario_inputs, scene, plan, settings
+                )
+            finally:
+                scene.inputs = inputs
+            evaluated.append(scenario.name)
+            if path is None:
+                return failure(
+                    "ROBUST_PATH_INFEASIBLE", reason, scenario.name
+                )
+            pose = np.asarray(
+                plan["object_from_hand_row_major"], dtype=np.float64
+            ).reshape(4, 4)
+        else:
+            scenario_inputs, path, pose = inputs, nominal_path, nominal_pose
+            evaluated.append(scenario.name)
+        quality = _task_quality(
+            scenario_inputs,
+            settings,
+            pose,
+            path.contact_joint_positions_rad,
+            path.patches,
+            friction_coefficient=scenario.friction_coefficient,
+            mass_kg=inputs.object_contract.model.mass_kg * scenario.mass_scale,
+            center_of_mass_object_m=(
+                inputs.object_contract.model.com_m
+                + scenario.center_of_mass_delta_object_m
+            ),
+        )
+        if quality is None:
+            return failure(
+                "ROBUST_TASK_INFEASIBLE",
+                "TASK_LOAD_LINEAR_PROGRAM_INFEASIBLE",
+                scenario.name,
+            )
+        if quality.task_load_factor < 1.0:
+            return failure(
+                "ROBUST_TASK_INFEASIBLE",
+                "TASK_LOAD_FACTOR_BELOW_ONE",
+                scenario.name,
+                quality.task_load_factor,
+            )
+        values = {
+            "task": quality.task_load_factor,
+            "clearance": path.minimum_forbidden_clearance_m,
+            "joint": path.minimum_commanded_hand_joint_limit_margin_rad,
+            "closure": path.minimum_closure_reserve_rad,
+        }
+        for key, value in values.items():
+            if value < metrics[key][0]:
+                metrics[key] = [value, scenario.name]
+        required_effort = np.maximum(
+            required_effort, quality.required_closing_joint_effort_nm
+        )
+
+    if evaluated != expected:
+        raise RuntimeError("robust candidate evaluation is incomplete")
+    return {
+        "status": "ROBUST_EXECUTABLE_OFFLINE",
+        "offline_evaluated_scenarios": evaluated,
+        "worst_task_load_factor": metrics["task"][0],
+        "worst_task_load_factor_scenario": metrics["task"][1],
+        "worst_minimum_forbidden_clearance_m": metrics["clearance"][0],
+        "worst_minimum_forbidden_clearance_scenario": metrics["clearance"][1],
+        "worst_minimum_commanded_hand_joint_limit_margin_rad": metrics["joint"][0],
+        "worst_minimum_commanded_hand_joint_limit_margin_scenario": metrics["joint"][1],
+        "worst_minimum_closure_reserve_rad": metrics["closure"][0],
+        "worst_minimum_closure_reserve_scenario": metrics["closure"][1],
+        "required_closing_joint_effort_nm": dict(
+            zip(CLOSING_JOINTS, (float(value) for value in required_effort))
+        ),
+    }
 def main() -> int:
     started = time.monotonic()
     arguments = _arguments()
@@ -1396,6 +1691,12 @@ def main() -> int:
     if inputs.hand_variant != EXPECTED_VARIANT or inputs.task_grip_surfaces is None:
         raise ValueError("finite search requires the direct nail-free hand binding")
     settings = inputs.config.section("finite_cad_search")
+    robust_selection_enabled = arguments.selection_mode == "robust"
+    robust_scenarios = (
+        _load_offline_robust_scenarios(inputs)
+        if robust_selection_enabled
+        else ()
+    )
     if settings.get("method") != EXPECTED_METHOD:
         raise ValueError("finite search method identity changed")
     if (
@@ -1454,6 +1755,7 @@ def main() -> int:
     counts: dict[str, int] = {}
     selected = None
     selected_key = None
+    selected_robustness = None
     selected_motion_plan = None
     selected_arm_route = None
     base_cache: dict[tuple[int, int], Mapping[str, object] | Exception] = {}
@@ -1585,19 +1887,57 @@ def main() -> int:
                                     "quality": _quality_record(quality),
                                 }
                             )
-                            key = (
-                                quality.task_load_factor,
-                                path.minimum_forbidden_clearance_m,
-                                path.minimum_commanded_hand_joint_limit_margin_rad,
-                                path.minimum_closure_reserve_rad,
-                                -point.palm_index,
-                                -point.yaw_index,
-                                -point.axial_index,
-                            )
-                            if selected_key is None or key > selected_key:
+                            if robust_selection_enabled:
+                                robustness = _robust_candidate_summary(
+                                    inputs,
+                                    scene,
+                                    settings,
+                                    generation["control_plan"],
+                                    path,
+                                    quality,
+                                    robust_scenarios,
+                                )
+                                row["robustness"] = robustness
+                                key = None
+                                if robustness["status"] == "ROBUST_EXECUTABLE_OFFLINE":
+                                    key = tuple(
+                                        robustness[name]
+                                        for name in (
+                                            "worst_minimum_forbidden_clearance_m",
+                                            "worst_task_load_factor",
+                                            "worst_minimum_commanded_hand_joint_limit_margin_rad",
+                                            "worst_minimum_closure_reserve_rad",
+                                        )
+                                    ) + (
+                                        -point.palm_index,
+                                        -point.yaw_index,
+                                        -point.axial_index,
+                                    )
+                            else:
+                                key = (
+                                    quality.task_load_factor,
+                                    path.minimum_forbidden_clearance_m,
+                                    path.minimum_commanded_hand_joint_limit_margin_rad,
+                                    path.minimum_closure_reserve_rad,
+                                    -point.palm_index,
+                                    -point.yaw_index,
+                                    -point.axial_index,
+                                )
+                            if key is not None and (
+                                selected_key is None or key > selected_key
+                            ):
                                 selected_key = key
                                 selected = (point, generation, path, quality)
                                 selected_motion_plan = motion_plan
+                                if robust_selection_enabled:
+                                    selected_robustness = robustness
+        if robust_selection_enabled and "robustness" not in row:
+            row["robustness"] = {
+                "status": "ROBUST_INFEASIBLE_NOMINAL",
+                "reason": f"{row['status']}:{row['reason']}",
+                "failure_scenario": "nominal",
+                "offline_evaluated_scenarios": ["nominal"],
+            }
         counts[row["status"]] = counts.get(row["status"], 0) + 1
         rows.append(row)
         if evaluated_index % 100 == 0 or evaluated_index == declared_count:
@@ -1624,8 +1964,37 @@ def main() -> int:
             list(selected_motion_plan["approach_arm_waypoints_rad"][0])
         )
         selected_record = _selected_detail(*selected)
+        if robust_selection_enabled:
+            if selected_robustness is None:
+                raise RuntimeError("robust selected candidate lacks robustness data")
+            selected_record["robustness"] = selected_robustness
+    robust_selection_identity = (
+        "BEST_MINIMUM_FORBIDDEN_CLEARANCE_THEN_TASK_LOAD_IN_FROZEN_"
+        "AXIS_ALIGNED_FINITE_G_DELTA_OVER_OFFLINE_EXPRESSIBLE_"
+        "ROBUSTNESS_COMPONENTS"
+    )
+    search_claim = (
+        (
+            robust_selection_identity
+            if selected_record is not None
+            else (
+                "FROZEN_AXIS_ALIGNED_FINITE_G_DELTA_HAS_NO_MEMBER_"
+                "FEASIBLE_IN_ALL_OFFLINE_EXPRESSIBLE_ROBUSTNESS_COMPONENTS"
+            )
+        )
+        if robust_selection_enabled
+        else (
+            "BEST_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA"
+            if selected_record is not None
+            else "FROZEN_AXIS_ALIGNED_FINITE_G_DELTA_HAS_NO_EXECUTABLE_MEMBER"
+        )
+    )
     result = {
-        "schema_version": "finite_cad_nailfree_search_v4",
+        "schema_version": (
+            "finite_cad_nailfree_search_v4_robust_selection_v1"
+            if robust_selection_enabled
+            else "finite_cad_nailfree_search_v4"
+        ),
         "object_id": arguments.object_id,
         "hand_variant": inputs.hand_variant,
         "hardware_authorized": False,
@@ -1657,11 +2026,7 @@ def main() -> int:
                 "OF_HOLD_AND_LIFT_UNIT_TASK_LP_EFFORT"
             ),
         },
-        "search_claim": (
-            "BEST_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA"
-            if selected_record is not None
-            else "FROZEN_AXIS_ALIGNED_FINITE_G_DELTA_HAS_NO_EXECUTABLE_MEMBER"
-        ),
+        "search_claim": search_claim,
         "claim_does_not_cover_continuous_or_tilted_or_laterally_offset_grasps": True,
         "grid": {
             "palm_rad": palms.tolist(),
@@ -1680,6 +2045,40 @@ def main() -> int:
         "selected_arm_route": selected_arm_route,
         "elapsed_s": time.monotonic() - started,
     }
+    if robust_selection_enabled:
+        result["robustness_selection"] = {
+            "enabled": True,
+            "selection_rule": robust_selection_identity,
+            "selection_key_order": [
+                "MAXIMIZE_WORST_MINIMUM_FORBIDDEN_CLEARANCE_M",
+                "MAXIMIZE_WORST_TASK_LOAD_FACTOR",
+                "MAXIMIZE_WORST_MINIMUM_COMMANDED_HAND_JOINT_LIMIT_MARGIN_RAD",
+                "MAXIMIZE_WORST_MINIMUM_CLOSURE_RESERVE_RAD",
+                "FIXED_ASCENDING_PALM_YAW_AXIAL_GRID_INDEX",
+            ],
+            "offline_evaluated_scenarios": ["nominal"]
+            + [
+                scenario.name
+                for scenario in robust_scenarios[1:]
+                if scenario.offline_components
+            ],
+            "dynamic_only_not_in_offline_selection": [
+                {
+                    "scenario": scenario.name,
+                    "components": list(scenario.dynamic_only_components),
+                }
+                for scenario in robust_scenarios
+                if scenario.dynamic_only_components
+            ],
+            "finger_preload_scale_scope": (
+                "dynamic_only_not_in_offline_selection"
+            ),
+            "collision_scope": (
+                "EXISTING_SAMPLED_HAND_APPROACH_AND_SEQUENTIAL_CLOSURE_"
+                "COLLISION_MODEL; PERTURBED_FULL_ARM_ENVIRONMENT_CLEARANCE_"
+                "REQUIRES_DYNAMIC_PREFLIGHT"
+            ),
+        }
     (output / "search_result.json").write_text(
         json.dumps(result, ensure_ascii=False, allow_nan=False, indent=2) + "\n",
         encoding="utf-8",
@@ -1695,16 +2094,27 @@ def main() -> int:
         generation_settings["approach_high_seed_arm_positions_rad"] = list(
             selected_motion_plan["approach_arm_waypoints_rad"][0]
         )
-        generation_settings["selected_by"] = (
-            "BEST_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA"
-        )
-        generation_settings["required_closing_joint_effort_nm"] = dict(
-            zip(CLOSING_JOINTS, selected[3].required_closing_joint_effort_nm)
-        )
-        generation_settings["required_closing_joint_effort_source"] = (
-            "COMPONENTWISE_MAXIMUM_OF_HOLD_AND_LIFT_UNIT_TASK_LP_AT_"
-            "FROZEN_FRICTION_LOWER_BOUND"
-        )
+        if robust_selection_enabled:
+            assert selected_robustness is not None
+            generation_settings["selected_by"] = robust_selection_identity
+            generation_settings["required_closing_joint_effort_nm"] = dict(
+                selected_robustness["required_closing_joint_effort_nm"]
+            )
+            generation_settings["required_closing_joint_effort_source"] = (
+                "COMPONENTWISE_MAXIMUM_OF_HOLD_AND_LIFT_UNIT_TASK_LP_"
+                "OVER_ALL_OFFLINE_EXPRESSIBLE_ROBUSTNESS_SCENARIOS"
+            )
+        else:
+            generation_settings["selected_by"] = (
+                "BEST_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA"
+            )
+            generation_settings["required_closing_joint_effort_nm"] = dict(
+                zip(CLOSING_JOINTS, selected[3].required_closing_joint_effort_nm)
+            )
+            generation_settings["required_closing_joint_effort_source"] = (
+                "COMPONENTWISE_MAXIMUM_OF_HOLD_AND_LIFT_UNIT_TASK_LP_AT_"
+                "FROZEN_FRICTION_LOWER_BOUND"
+            )
         (output / "selected_config.yaml").write_text(
             yaml.safe_dump(derived, sort_keys=False, allow_unicode=True),
             encoding="utf-8",

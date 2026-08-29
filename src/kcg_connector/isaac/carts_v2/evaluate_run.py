@@ -815,14 +815,54 @@ def _acceleration_metrics(samples, criteria, physics_dt_s: float) -> dict[str, o
         if len(hand_z) > 2 * window
         else np.asarray([], dtype=np.float64)
     )
-    actual = float(np.max(np.abs(acceleration))) if len(acceleration) else None
+    peak_index = int(np.argmax(np.abs(acceleration))) if len(acceleration) else None
+    actual = (
+        float(abs(acceleration[peak_index]))
+        if peak_index is not None
+        else None
+    )
+    signed_peak = (
+        float(acceleration[peak_index])
+        if peak_index is not None
+        else None
+    )
+    peak_center_index = (
+        peak_index + window if peak_index is not None else None
+    )
+    peak_row = (
+        lift_rows[peak_center_index]
+        if peak_center_index is not None
+        else None
+    )
+    peak_lift_elapsed_s = (
+        peak_center_index * physics_dt_s
+        if peak_center_index is not None
+        else None
+    )
+    peak_lift_fraction = (
+        peak_center_index / (len(lift_rows) - 1)
+        if peak_center_index is not None and len(lift_rows) > 1
+        else None
+    )
     registered = float(criteria["registered_lift_peak_acceleration_m_s2"])
     passed = bool(
         actual is not None
         and actual
         <= registered + float(criteria["lift_acceleration_tolerance_m_s2"])
     )
-    return {"actual": actual, "registered": registered, "passed": passed}
+    return {
+        "actual": actual,
+        "signed_peak": signed_peak,
+        "peak_simulation_time_s": (
+            float(peak_row["simulation_time_s"])
+            if peak_row is not None
+            else None
+        ),
+        "peak_lift_elapsed_s": peak_lift_elapsed_s,
+        "peak_lift_fraction": peak_lift_fraction,
+        "registered": registered,
+        "passed": passed,
+    }
 
 
 def _finger_clamp_effort_metrics(samples) -> dict[str, object]:
@@ -1239,6 +1279,16 @@ def evaluate_trace(
         "maximum_relative_slip_m": motion["maximum_slip_m"],
         "maximum_orientation_change_rad": motion["maximum_orientation_change_rad"],
         "actual_lift_peak_acceleration_m_s2": acceleration["actual"],
+        "signed_lift_peak_acceleration_m_s2": acceleration["signed_peak"],
+        "lift_peak_acceleration_simulation_time_s": acceleration[
+            "peak_simulation_time_s"
+        ],
+        "lift_peak_acceleration_elapsed_s": acceleration[
+            "peak_lift_elapsed_s"
+        ],
+        "lift_peak_acceleration_fraction": acceleration[
+            "peak_lift_fraction"
+        ],
         "registered_lift_peak_acceleration_m_s2": acceleration["registered"],
         "lift_acceleration_consistent": acceleration["passed"],
         "maximum_table_penetration_m": safety["overall_penetration_m"],
