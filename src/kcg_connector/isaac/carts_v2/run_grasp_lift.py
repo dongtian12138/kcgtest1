@@ -1178,6 +1178,34 @@ def _create_runtime(
     _apply_contact_friction_perturbation(stage, scene, UsdPhysics)
     _apply_object_mass_perturbation(stage, scene, Gf, UsdPhysics)
     _apply_center_of_mass_perturbation(stage, scene, Gf, UsdGeom, UsdPhysics)
+    center_delta = (
+        np.zeros(3, dtype=np.float64)
+        if scene["requested_center_of_mass_delta_object_m"] is None
+        else np.asarray(
+            scene["requested_center_of_mass_delta_object_m"], dtype=np.float64
+        )
+    )
+    object_from_hand = np.asarray(
+        grasp["control_plan"]["object_from_hand_row_major"], dtype=np.float64
+    ).reshape(4, 4)
+    hand_from_object = np.linalg.inv(object_from_hand)
+    center_object = (
+        np.asarray(inputs.object_contract.model.center_of_mass_m, dtype=np.float64)
+        + center_delta
+    )
+    center_hand = (hand_from_object @ np.concatenate((center_object, (1.0,))))[:3]
+    payload_model = {
+        "method": "CAD_MASS_COM_JACOBIAN_FEEDFORWARD_RAMPED_OVER_TABLE_CLEARANCE",
+        "mass_kg": (
+            float(inputs.object_contract.model.mass_kg)
+            * float(scene["object_mass_audit"]["effective_scale"])
+        ),
+        "gravity_m_s2": abs(float(scene["gravity_m_s2"])),
+        "center_of_mass_object_m": center_object.tolist(),
+        "center_of_mass_from_hand_m": center_hand.tolist(),
+        "transfer_distance_m": float(dynamic["table_release_clearance_m"]),
+        "online_object_truth_used": False,
+    }
     if arguments.capture_visual_evidence:
         render = scene["render"]
         lighting_root = "/World/CARTSGraspVisualEvidenceLights"
@@ -1321,6 +1349,8 @@ def _create_runtime(
             "capacity_audit_sha256"],
         "registered_grasp": grasp,
         "control_plan": grasp["control_plan"],
+        "robot_model": inputs.robot_model,
+        "payload_model": payload_model,
     }
 
 
@@ -1423,6 +1453,8 @@ def _run_controller(runtime, arguments, motion_plan, dynamic):
         active_indices=active_indices, arm_indices=arm_indices,
         arm_lower_limits=lower, arm_upper_limits=upper,
         settings=dynamic, render=arguments.gui,
+        robot_model=runtime["robot_model"],
+        payload_model=runtime["payload_model"],
     )
     pregrasp = control.run_pregrasp_sequence(
         stepper,

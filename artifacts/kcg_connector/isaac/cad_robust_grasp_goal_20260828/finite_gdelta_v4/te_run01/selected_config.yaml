@@ -169,6 +169,12 @@ robustness_evaluation:
   frozen_before_first_dynamic_run: true
   cartesian_product_used: false
   conclusion_limit: OBSERVED_ONLY_ON_THE_LISTED_FINITE_SCENARIOS
+  final_validation_protocol:
+    algorithm_and_controller_commit: 78a44af3a4e12aeb9831fcca27102055bba4d403
+    declared_before_any_final_validation_run: true
+    role: HELD_OUT_DYNAMIC_EVALUATION_AFTER_FINAL_FREEZE
+    values_are_unseen_interior_research_hypotheses: true
+    same_scenarios_for_both_objects_and_v4_v5: true
   bounds:
     object_translation_x_m:
     - -0.00017
@@ -261,6 +267,53 @@ robustness_evaluation:
       - 0.0
       finger_joint_target_offset_rad:
         finger_3: -0.004
+    final_pose_x_plus_0p085mm:
+      object_translation_delta_m:
+      - 8.5e-05
+      - 0.0
+      - 0.0
+    final_yaw_minus_1deg:
+      object_yaw_delta_rad: -0.017453292519943295
+    final_friction_0p475:
+      contact_friction_coefficient: 0.475
+    final_mass_plus_2p5pct:
+      object_mass_scale: 1.025
+    final_com_x_minus_0p5mm:
+      center_of_mass_delta_object_m:
+      - -0.0005
+      - 0.0
+      - 0.0
+    final_finger3_joint_plus_0p002rad:
+      finger_joint_target_offset_rad:
+        finger_3: 0.002
+    final_combo_a:
+      object_translation_delta_m:
+      - 8.5e-05
+      - 0.0
+      - 0.0
+      object_yaw_delta_rad: -0.017453292519943295
+      contact_friction_coefficient: 0.475
+      object_mass_scale: 1.025
+      center_of_mass_delta_object_m:
+      - -0.0005
+      - 0.0
+      - 0.0
+      finger_joint_target_offset_rad:
+        finger_3: 0.002
+    final_combo_b:
+      object_translation_delta_m:
+      - -8.5e-05
+      - 0.0
+      - 0.0
+      object_yaw_delta_rad: 0.017453292519943295
+      contact_friction_coefficient: 0.475
+      object_mass_scale: 1.025
+      center_of_mass_delta_object_m:
+      - 0.0005
+      - 0.0
+      - 0.0
+      finger_joint_target_offset_rad:
+        finger_3: -0.002
   numerical_sensitivity_separate_from_physical_u_delta: true
 exact_validation:
   top_k: 3
@@ -302,9 +355,9 @@ dynamic:
   contact_endpoint_timeout_s: 0.5
   preload_increment_rad: 0.075
   preload_duration_s: 0.5
-  arm_stiffness: 2500.0
+  arm_stiffness: 1250.0
   arm_damping: 60.0
-  lift_arm_damping_nm_s_rad: 160.0
+  lift_arm_damping_nm_s_rad: 300.0
   arm_control_law: NATIVE_FORCE_DRIVE_GRAVITY_EQUIVALENT_POSITION_BIAS_V1
   hand_stiffness: 12.0
   hand_damping: 2.0

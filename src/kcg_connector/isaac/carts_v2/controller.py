@@ -142,8 +142,9 @@ def gravity_biased_arm_target(
     settings: Mapping[str, object],
     *,
     arm_damping_nm_s_rad: float | None = None,
+    payload_feedforward_nm: Sequence[float] | None = None,
 ) -> tuple[np.ndarray, dict[str, object]]:
-    """Express model gravity compensation as a native-drive target offset."""
+    """Express bounded model compensation as a native-drive target offset."""
 
     position = robot.get_dof_positions(indices=0, dof_indices=arm_indices).numpy()
     velocity = robot.get_dof_velocities(indices=0, dof_indices=arm_indices).numpy()
@@ -162,10 +163,17 @@ def gravity_biased_arm_target(
         else arm_damping_nm_s_rad
     )
     cap = float(settings["arm_drive_maximum_effort_nm"])
+    payload = (
+        np.zeros((1, 7), dtype=np.float64)
+        if payload_feedforward_nm is None
+        else np.asarray(payload_feedforward_nm, dtype=np.float64).reshape(1, 7)
+    )
     if not math.isfinite(kd) or kd < 0.0:
         raise RuntimeError("effective arm damping must be finite and nonnegative")
+    if not np.all(np.isfinite(payload)):
+        raise RuntimeError("payload feedforward must be finite")
     pd_effort = kp * (target - position) - kd * velocity
-    requested_drive_target = target + gravity / kp
+    requested_drive_target = target + (gravity + payload) / kp
     nominal_limit_margin = np.minimum(
         target[0] - lower_limits, upper_limits - target[0]
     )
@@ -175,8 +183,8 @@ def gravity_biased_arm_target(
     ):
         raise RuntimeError("nominal arm target is nonfinite or outside limits")
     drive_target = np.clip(requested_drive_target[0], lower_limits, upper_limits)
-    applied_gravity = kp * (drive_target.reshape(1, 7) - target)
-    raw_effort = pd_effort + applied_gravity
+    applied_compensation = kp * (drive_target.reshape(1, 7) - target)
+    raw_effort = pd_effort + applied_compensation
     limit_margin = np.minimum(
         drive_target - lower_limits, upper_limits - drive_target
     )
@@ -196,11 +204,68 @@ def gravity_biased_arm_target(
         "effective_arm_damping_nm_s_rad": kd,
         "pd_effort_nm": pd_effort[0].tolist(),
         "gravity_compensation_nm": gravity[0].tolist(),
-        "applied_gravity_equivalent_nm": applied_gravity[0].tolist(),
+        "payload_feedforward_nm": payload[0].tolist(),
+        "applied_gravity_equivalent_nm": (
+            applied_compensation - payload
+        )[0].tolist(),
+        "applied_payload_equivalent_nm": (
+            applied_compensation - gravity
+        )[0].tolist(),
+        "applied_total_compensation_nm": applied_compensation[0].tolist(),
         "raw_total_effort_nm": raw_effort[0].tolist(),
         "clipped_total_effort_nm": np.clip(raw_effort, -cap, cap)[0].tolist(),
         "saturated": bool(np.any(np.abs(raw_effort) >= cap)),
     }
+
+
+def payload_compensation_joint_torque(
+    robot_model,
+    active_positions: Sequence[float],
+    payload_model: Mapping[str, object],
+    fraction: float,
+) -> np.ndarray:
+    """Map the known grasped payload wrench to the seven arm joints."""
+
+    scale = float(fraction)
+    if not math.isfinite(scale) or not 0.0 <= scale <= 1.0:
+        raise RuntimeError("payload compensation fraction must be in [0, 1]")
+    if scale == 0.0:
+        return np.zeros(7, dtype=np.float64)
+    positions = np.asarray(active_positions, dtype=np.float64)
+    expected_names = ARM_JOINT_NAMES + ACTIVE_HAND_JOINT_NAMES
+    if (
+        tuple(robot_model.independent_joint_names) != expected_names
+        or positions.shape != (len(expected_names),)
+        or not np.all(np.isfinite(positions))
+    ):
+        raise RuntimeError("payload compensation joint state differs from the model")
+    mass = float(payload_model["mass_kg"])
+    gravity = float(payload_model["gravity_m_s2"])
+    com_from_hand = np.asarray(
+        payload_model["center_of_mass_from_hand_m"], dtype=np.float64
+    )
+    if (
+        not math.isfinite(mass)
+        or not math.isfinite(gravity)
+        or mass <= 0.0
+        or gravity <= 0.0
+        or com_from_hand.shape != (3,)
+        or not np.all(np.isfinite(com_from_hand))
+    ):
+        raise RuntimeError("payload compensation model is invalid")
+    hand_transform = robot_model.forward_kinematics(positions)["handbase_link"]
+    jacobian = robot_model.geometric_jacobian("handbase_link", positions)
+    force_world = np.asarray((0.0, 0.0, mass * gravity), dtype=np.float64)
+    lever_world = hand_transform[:3, :3] @ com_from_hand
+    wrench_world = np.concatenate((force_world, np.cross(lever_world, force_world)))
+    full_effort = jacobian.T @ wrench_world
+    if (
+        full_effort.shape != (len(expected_names),)
+        or not np.all(np.isfinite(full_effort))
+        or not np.allclose(full_effort[7:], 0.0, rtol=0.0, atol=1.0e-10)
+    ):
+        raise RuntimeError("payload wrench did not map only to the arm joints")
+    return scale * full_effort[:7]
 
 
 def _solve_approach_waypoints(
@@ -501,16 +566,28 @@ class JointSignalStepper:
         arm_upper_limits: np.ndarray,
         settings: Mapping[str, object],
         render: bool,
+        robot_model=None,
+        payload_model: Mapping[str, object] | None = None,
     ) -> None:
         self.robot, self.world, self.auditor = robot, world, auditor
         self.active_indices, self.arm_indices = active_indices, arm_indices
         self.arm_lower_limits, self.arm_upper_limits = arm_lower_limits, arm_upper_limits
         self.settings = settings
         self.render = bool(render)
+        if (robot_model is None) != (payload_model is None):
+            raise RuntimeError(
+                "robot and payload models must be supplied together"
+            )
+        self.robot_model = robot_model
+        self.payload_model = (
+            None if payload_model is None else dict(payload_model)
+        )
+        self.payload_compensation_fraction = 0.0
         self.step_index = 0
         self.maximum_speed = self.maximum_arm_error = 0.0
         self.maximum_speed_joint: str | None = None
         self.maximum_hand_effort = self.maximum_gravity_effort = 0.0
+        self.maximum_payload_compensation_effort = 0.0
         self.maximum_projected_arm_force = self.maximum_target_bias = 0.0
         self.minimum_drive_target_limit_margin = float("inf")
         self.abort_reason: str | None = None
@@ -523,6 +600,14 @@ class JointSignalStepper:
         }
         limits = robot.get_dof_limits(indices=0)
         self._all_lower, self._all_upper = limits[0].numpy()[0], limits[1].numpy()[0]
+
+    def set_payload_compensation_fraction(self, fraction: float) -> None:
+        value = float(fraction)
+        if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+            raise RuntimeError("payload compensation fraction must be in [0, 1]")
+        if self.payload_model is None and value != 0.0:
+            raise RuntimeError("payload compensation model is unavailable")
+        self.payload_compensation_fraction = value
 
     def set_lift_arm_damping(self, damping_nm_s_rad: float) -> None:
         requested = float(damping_nm_s_rad)
@@ -576,6 +661,16 @@ class JointSignalStepper:
         if self.abort_reason is not None:
             return self.latest
         active_target = np.concatenate((arm_target, hand_target))
+        payload_feedforward = (
+            np.zeros(7, dtype=np.float64)
+            if self.payload_model is None
+            else payload_compensation_joint_torque(
+                self.robot_model,
+                active_target,
+                self.payload_model,
+                self.payload_compensation_fraction,
+            )
+        )
         drive_arm_target, arm_control = gravity_biased_arm_target(
             self.robot,
             self.arm_indices,
@@ -584,6 +679,10 @@ class JointSignalStepper:
             self.arm_upper_limits,
             self.settings,
             arm_damping_nm_s_rad=self.effective_arm_damping_nm_s_rad,
+            payload_feedforward_nm=payload_feedforward,
+        )
+        arm_control["payload_compensation_fraction"] = (
+            self.payload_compensation_fraction
         )
         if arm_control["saturated"]:
             self.abort_reason = "ARM_COMMAND_EFFORT_SATURATION_ABORT"
@@ -668,6 +767,10 @@ class JointSignalStepper:
         self.maximum_gravity_effort = max(
             self.maximum_gravity_effort,
             float(np.max(np.abs(arm_control["gravity_compensation_nm"]))),
+        )
+        self.maximum_payload_compensation_effort = max(
+            self.maximum_payload_compensation_effort,
+            float(np.max(np.abs(arm_control["payload_feedforward_nm"]))),
         )
         self.maximum_projected_arm_force = max(
             self.maximum_projected_arm_force, float(np.max(np.abs(efforts[:7])))
@@ -887,9 +990,16 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
     if np.any(closing_direction == 0.0):
         return "PRELOAD_REQUIRED_EFFORT_DIRECTION_ABORT"
     preload_steps = round(float(settings["preload_duration_s"]) / dt)
+    initial_lift_damping = float(stepper.effective_arm_damping_nm_s_rad)
+    final_lift_damping = float(settings["lift_arm_damping_nm_s_rad"])
     maximum_increment = float(settings["finger_maximum_speed_rad_s"]) * dt
     previous_target = closure_target
     for index in stepper.active_steps(preload_steps):
+        damping_blend = minimum_jerk_blend((index + 1) / preload_steps)
+        stepper.set_lift_arm_damping(
+            initial_lift_damping
+            + damping_blend * (final_lift_damping - initial_lift_damping)
+        )
         blend = minimum_jerk_blend((index + 1) / preload_steps)
         desired_limit = closure_target + blend * (
             preload_limit_goal - closure_target
@@ -952,22 +1062,17 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
     if effort_evidence_count < int(settings["contact_consecutive_samples"]):
         return "PRELOAD_CONTACT_EFFORT_NOT_REACHED"
     preload_goal = previous_target
-    initial_lift_damping = float(stepper.effective_arm_damping_nm_s_rad)
-    final_lift_damping = float(settings["lift_arm_damping_nm_s_rad"])
-    damping_transition_steps = max(1, preload_steps)
     waypoints = np.asarray(motion_plan["lift_arm_waypoints_rad"])
     lift_steps = round(float(settings["lift_duration_s"]) / dt)
+    payload_transfer_distance = float(settings["table_release_clearance_m"])
+    if not math.isfinite(payload_transfer_distance) or payload_transfer_distance <= 0.0:
+        raise RuntimeError("payload transfer distance must be positive and finite")
     for index in stepper.active_steps(lift_steps):
-        if index < damping_transition_steps:
-            damping_blend = minimum_jerk_blend(
-                (index + 1) / damping_transition_steps
-            )
-            stepper.set_lift_arm_damping(
-                initial_lift_damping
-                + damping_blend
-                * (final_lift_damping - initial_lift_damping)
-            )
         blend = minimum_jerk_blend((index + 1) / lift_steps)
+        commanded_lift = blend * float(settings["lift_command_distance_m"])
+        stepper.set_payload_compensation_fraction(
+            minimum_jerk_blend(commanded_lift / payload_transfer_distance)
+        )
         latest = stepper.advance(
             "lift", piecewise_waypoint(waypoints, blend), preload_goal
         )
@@ -1033,6 +1138,10 @@ def controller_outcome(
         "maximum_arm_tracking_error_rad": stepper.maximum_arm_error,
         "maximum_absolute_hand_effort_nm": stepper.maximum_hand_effort,
         "maximum_gravity_compensation_nm": stepper.maximum_gravity_effort,
+        "maximum_payload_compensation_nm": (
+            stepper.maximum_payload_compensation_effort
+        ),
+        "payload_compensation_model": stepper.payload_model,
         "maximum_projected_arm_force_nm": stepper.maximum_projected_arm_force,
         "maximum_gravity_target_bias_rad": stepper.maximum_target_bias,
         "minimum_drive_target_limit_margin_rad": stepper.minimum_drive_target_limit_margin,
@@ -1049,6 +1158,7 @@ __all__ = [
     "ACTIVE_HAND_JOINT_NAMES", "ARM_JOINT_NAMES", "JointSignalStepper",
     "SequentialEffortContactController", "build_joint_motion_plan",
     "controller_outcome", "create_native_gravity_compensated_robot",
-    "gravity_biased_arm_target", "minimum_jerk_blend", "piecewise_waypoint",
+    "gravity_biased_arm_target", "minimum_jerk_blend",
+    "payload_compensation_joint_torque", "piecewise_waypoint",
     "run_grasp_lift_sequence", "run_pregrasp_sequence",
 ]

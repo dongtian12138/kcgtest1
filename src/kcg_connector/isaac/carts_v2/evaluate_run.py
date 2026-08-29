@@ -487,6 +487,7 @@ class TruthAuditRecorder:
             "robot_fixture": 0,
             "robot_unclassified": 0,
             "object_table": 0,
+            "object_table_positive_normal_impulse_n_s": 0.0,
             "event_header_count": 0,
             "event_contact_data_count": 0,
             "poll_header_count": 0,
@@ -567,9 +568,17 @@ class TruthAuditRecorder:
             paths: max(records, poll_map.get(paths, 0)) for paths, records in events
         }
         for row, records in tensor_physical_rows:
+            paths = tuple(sorted(map(str, row["paths"])))
+            if (
+                any(_below(path, self.roots["object"]) for path in paths)
+                and any(_below(path, self.roots["table"]) for path in paths)
+            ):
+                result["object_table_positive_normal_impulse_n_s"] += sum(
+                    max(0.0, float(contact["normal_impulse_n_s"]))
+                    for contact in row["contacts"]
+                )
             if records == 0:
                 continue
-            paths = tuple(sorted(map(str, row["paths"])))
             combined[paths] = max(
                 records, combined.get(paths, 0)
             )
@@ -834,6 +843,56 @@ def _acceleration_metrics(samples, criteria, physics_dt_s: float) -> dict[str, o
         if peak_center_index is not None
         else None
     )
+    table_support_indices = [
+        index
+        for index, row in enumerate(lift_rows)
+        if float(
+            row["contacts"].get(
+                "object_table_positive_normal_impulse_n_s", 0.0
+            )
+        )
+        > 0.0
+    ]
+    last_table_support_index = (
+        table_support_indices[-1] if table_support_indices else None
+    )
+    peak_context = None
+    if peak_index is not None and peak_center_index is not None:
+        stencil_indices = (peak_index, peak_center_index, peak_index + 2 * window)
+        stencil_rows = [lift_rows[index] for index in stencil_indices]
+        peak_context = {
+            "difference_window_samples": window,
+            "stencil_simulation_times_s": [
+                float(row["simulation_time_s"]) for row in stencil_rows
+            ],
+            "stencil_hand_base_z_m": [
+                float(row["hand_base_position_m"][2]) for row in stencil_rows
+            ],
+            "center_arm_positions_rad": list(map(
+                float, peak_row["active_positions_rad"][:7]
+            )),
+            "center_arm_velocities_rad_s": list(map(
+                float, peak_row["active_velocities_rad_s"][:7]
+            )),
+            "center_arm_targets_rad": list(map(
+                float, peak_row["active_targets_rad"][:7]
+            )),
+            "center_arm_control": peak_row.get("arm_control", {}),
+            "center_contact_counts": peak_row.get("contacts", {}),
+            "center_object_bottom_clearance_m": float(
+                peak_row["object_bottom_clearance_m"]
+            ),
+            "last_table_support_lift_elapsed_s": (
+                last_table_support_index * physics_dt_s
+                if last_table_support_index is not None
+                else None
+            ),
+            "peak_after_last_table_support_s": (
+                (peak_center_index - last_table_support_index) * physics_dt_s
+                if last_table_support_index is not None
+                else None
+            ),
+        }
     peak_lift_elapsed_s = (
         peak_center_index * physics_dt_s
         if peak_center_index is not None
@@ -860,6 +919,7 @@ def _acceleration_metrics(samples, criteria, physics_dt_s: float) -> dict[str, o
         ),
         "peak_lift_elapsed_s": peak_lift_elapsed_s,
         "peak_lift_fraction": peak_lift_fraction,
+        "peak_context": peak_context,
         "registered": registered,
         "passed": passed,
     }
@@ -1289,6 +1349,7 @@ def evaluate_trace(
         "lift_peak_acceleration_fraction": acceleration[
             "peak_lift_fraction"
         ],
+        "lift_peak_acceleration_context": acceleration["peak_context"],
         "registered_lift_peak_acceleration_m_s2": acceleration["registered"],
         "lift_acceleration_consistent": acceleration["passed"],
         "maximum_table_penetration_m": safety["overall_penetration_m"],
@@ -1314,6 +1375,15 @@ def evaluate_trace(
         ),
         "maximum_absolute_hand_effort_nm": document["controller_outcome"].get(
             "maximum_absolute_hand_effort_nm"
+        ),
+        "maximum_payload_compensation_nm": document["controller_outcome"].get(
+            "maximum_payload_compensation_nm"
+        ),
+        "payload_compensation_model": document["controller_outcome"].get(
+            "payload_compensation_model"
+        ),
+        "lift_arm_damping_switch_audit": document["controller_outcome"].get(
+            "lift_arm_damping_switch_audit"
         ),
         "finger_clamp_effort_nm": finger_efforts,
         "truth_isolation_pass": truth_isolation,
