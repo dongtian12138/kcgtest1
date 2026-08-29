@@ -59,8 +59,14 @@ def _single_baseline(search: Mapping[str, Any]) -> Mapping[str, Any]:
         for row in search["candidates"]
         if row.get("is_nominal_baseline_grid_point") is True
     ]
-    if len(rows) != 1 or rows[0].get("status") != "EXECUTABLE_OFFLINE":
-        raise ValueError("search must contain exactly one executable baseline grid point")
+    if (
+        len(rows) != 1
+        or not isinstance(rows[0].get("path"), Mapping)
+        or not isinstance(rows[0].get("quality"), Mapping)
+    ):
+        raise ValueError(
+            "search must contain exactly one geometrically reconstructed baseline grid point"
+        )
     return rows[0]
 
 
@@ -111,7 +117,13 @@ def _reconstruct_baseline_patches(
     )
     if path is None:
         raise RuntimeError(f"baseline reconstruction disagrees with search: {reason}")
-    expected_counts = list(baseline["path"]["contact_patch_counts"])
+    path_record = baseline["path"]
+    expected_counts = list(
+        path_record.get(
+            "collision_witness_counts",
+            path_record.get("contact_patch_counts", ()),
+        )
+    )
     observed_counts = [len(patch.points_object_m) for patch in path.patches]
     if observed_counts != expected_counts:
         raise RuntimeError(

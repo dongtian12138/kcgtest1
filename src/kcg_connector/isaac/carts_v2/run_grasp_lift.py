@@ -56,6 +56,10 @@ EXPECTED_DOF_NAMES = control.ARM_JOINT_NAMES + (
     "f1j1", "f1j2", "f1j3", "f2j1", "f2j2", "f3j1", "f3j2", "f3j3",
 )
 TENSOR_CONTACT_MAX_COUNT = 4096
+FINGERTIP_PHYSICS_MATERIAL_PATH = ROBOT_ROOT + "/PhysicsMaterials/fingertip_pad"
+CLOSING_JOINT_NAMES = ("f1j2", "f2j1", "f3j2")
+
+
 def _json_sha256(value: object) -> str:
     payload = json.dumps(value, ensure_ascii=True, allow_nan=False, sort_keys=True,
                          separators=(",", ":")).encode("utf-8")
@@ -80,6 +84,30 @@ def _arguments(repository: Path) -> argparse.Namespace:
     parser.add_argument(
         "--robustness-scenario",
         help="named frozen physical perturbation; omitted means nominal",
+    )
+    parser.add_argument(
+        "--preload-increment-rad",
+        type=float,
+        help="explicit finite all-finger preload increment for a bounded comparison",
+    )
+    parser.add_argument(
+        "--finger-preload-scales",
+        type=float,
+        nargs=3,
+        metavar=("F1", "F2", "F3"),
+        help="bounded per-finger fractions of the finite preload increment",
+    )
+    parser.add_argument(
+        "--palm-joint-position-rad",
+        type=float,
+        help="explicit finite palm joint position for an already evaluated grasp",
+    )
+    parser.add_argument(
+        "--approach-high-seed-arm-positions-rad",
+        type=float,
+        nargs=7,
+        metavar=("J1", "J2", "J3", "J4", "J5", "J6", "J7"),
+        help="explicit safe seven-joint IK branch seed for a bounded comparison",
     )
     parser.add_argument("--output-directory", required=True)
     parser.add_argument("--gui", action="store_true")
@@ -106,16 +134,25 @@ def _arguments(repository: Path) -> argparse.Namespace:
     return arguments
 
 
-def _registered_grasp(inputs, object_id: str) -> Mapping[str, object]:
-    dynamic = inputs.config.section("dynamic")
-    generation = generate_axial_pad_intersection_grasp(inputs)
+def _registered_grasp(
+    inputs, object_id: str, dynamic, palm_joint_position_rad: float,
+    approach_high_seed_arm_positions_rad: np.ndarray | None,
+) -> Mapping[str, object]:
+    generation = generate_axial_pad_intersection_grasp(
+        inputs, palm_joint_position_rad=palm_joint_position_rad
+    )
+    control_plan = dict(generation["control_plan"])
+    if approach_high_seed_arm_positions_rad is not None:
+        control_plan["approach_high_seed_arm_positions_rad"] = (
+            approach_high_seed_arm_positions_rad.tolist()
+        )
     grasp = {
         "schema_version": "carts_v2_registered_grasp_v1",
         "grasp_id": f"axial_full_pad_first_intersection_v1__{object_id}",
         "object_id": object_id,
         "hardware_authorized": False,
         "construction_method": generation["method"],
-        "control_plan": generation["control_plan"],
+        "control_plan": control_plan,
         "generation_evidence": generation["evidence"],
         "closure_control": {
             "method": "SEQUENTIAL_LOW_SPEED_JOINT_EFFORT_CONTACT_THEN_FINITE_PRELOAD",
@@ -124,6 +161,13 @@ def _registered_grasp(inputs, object_id: str) -> Mapping[str, object]:
         },
         "finite_clamp_target": {
             "preload_increment_rad": dynamic["preload_increment_rad"],
+            "finger_preload_scales": dynamic["finger_preload_scales"],
+            "required_closing_joint_effort_nm": dict(
+                zip(
+                    CLOSING_JOINT_NAMES,
+                    dynamic["required_closing_joint_effort_nm"],
+                )
+            ),
             "hand_drive_maximum_effort_nm": dynamic[
                 "hand_drive_maximum_effort_nm"
             ],
@@ -190,6 +234,18 @@ def _registered_grasp(inputs, object_id: str) -> Mapping[str, object]:
     )
     if any(float(left) != float(right) for left, right in expected):
         raise ValueError("registered grasp differs from bounded dynamic control settings")
+    observed_required_effort = clamp.get("required_closing_joint_effort_nm")
+    if (
+        not isinstance(observed_required_effort, Mapping)
+        or tuple(observed_required_effort) != CLOSING_JOINT_NAMES
+        or not np.allclose(
+            [observed_required_effort[name] for name in CLOSING_JOINT_NAMES],
+            dynamic["required_closing_joint_effort_nm"],
+            rtol=0.0,
+            atol=0.0,
+        )
+    ):
+        raise ValueError("registered grasp required effort contract changed")
     return grasp
 
 
@@ -212,7 +268,100 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         raise ValueError("robustness scenario is not in the frozen finite set")
     arguments.robustness_scenario_name = scenario_name
     arguments.robustness_perturbation = dict(scenarios[scenario_name])
-    dynamic = inputs.config.section("dynamic")
+    configured_dynamic = inputs.config.section("dynamic")
+    dynamic = dict(configured_dynamic)
+    configured_preload = float(configured_dynamic["preload_increment_rad"])
+    effective_preload = (
+        configured_preload
+        if arguments.preload_increment_rad is None
+        else float(arguments.preload_increment_rad)
+    )
+    if not np.isfinite(effective_preload) or effective_preload <= 0.0:
+        raise ValueError("preload increment must be one positive finite scalar")
+    dynamic["preload_increment_rad"] = effective_preload
+    configured_preload_scales = np.ones(3, dtype=np.float64)
+    effective_preload_scales = (
+        configured_preload_scales
+        if arguments.finger_preload_scales is None
+        else np.asarray(arguments.finger_preload_scales, dtype=np.float64)
+    )
+    if (
+        effective_preload_scales.shape != (3,)
+        or not np.all(np.isfinite(effective_preload_scales))
+        or np.any(effective_preload_scales <= 0.0)
+        or np.any(effective_preload_scales > 1.0)
+    ):
+        raise ValueError("finger preload scales must be three finite values in (0, 1]")
+    dynamic["finger_preload_scales"] = effective_preload_scales.tolist()
+    arguments.dynamic_settings = dynamic
+    arguments.configured_preload_increment_rad = configured_preload
+    arguments.effective_preload_increment_rad = effective_preload
+    arguments.configured_finger_preload_scales = (
+        configured_preload_scales.tolist()
+    )
+    arguments.effective_finger_preload_scales = effective_preload_scales.tolist()
+    generation_settings = inputs.config.section("nominal_grasp_generation")
+    required_effort_value = generation_settings.get(
+        "required_closing_joint_effort_nm"
+    )
+    if (
+        not isinstance(required_effort_value, Mapping)
+        or tuple(required_effort_value) != CLOSING_JOINT_NAMES
+    ):
+        raise ValueError(
+            "selected finite grasp lacks the three-joint pre-lift effort contract"
+        )
+    required_effort = np.asarray(
+        [required_effort_value[name] for name in CLOSING_JOINT_NAMES],
+        dtype=np.float64,
+    )
+    if (
+        required_effort.shape != (3,)
+        or not np.all(np.isfinite(required_effort))
+        or np.any(required_effort <= 0.0)
+        or np.any(required_effort >= float(dynamic["measured_effort_abort_nm"]))
+    ):
+        raise ValueError(
+            "pre-lift effort requirements must be positive and below the abort limit"
+        )
+    dynamic["required_closing_joint_effort_nm"] = required_effort.tolist()
+    arguments.required_closing_joint_effort_nm = required_effort.tolist()
+    configured_palm = float(generation_settings["palm_joint_position_rad"])
+    effective_palm = (
+        configured_palm
+        if arguments.palm_joint_position_rad is None
+        else float(arguments.palm_joint_position_rad)
+    )
+    if not np.isfinite(effective_palm):
+        raise ValueError("palm joint position must be one finite scalar")
+    arguments.configured_palm_joint_position_rad = configured_palm
+    arguments.effective_palm_joint_position_rad = effective_palm
+    configured_seed_value = generation_settings.get(
+        "approach_high_seed_arm_positions_rad"
+    )
+    configured_seed = (
+        None
+        if configured_seed_value is None
+        else np.asarray(configured_seed_value, dtype=np.float64)
+    )
+    override_seed = (
+        None
+        if arguments.approach_high_seed_arm_positions_rad is None
+        else np.asarray(
+            arguments.approach_high_seed_arm_positions_rad, dtype=np.float64
+        )
+    )
+    effective_seed = configured_seed if override_seed is None else override_seed
+    if effective_seed is not None and (
+        effective_seed.shape != (7,) or not np.all(np.isfinite(effective_seed))
+    ):
+        raise ValueError("approach IK branch seed must contain seven finite joints")
+    arguments.configured_approach_high_seed_arm_positions_rad = (
+        None if configured_seed is None else configured_seed.tolist()
+    )
+    arguments.effective_approach_high_seed_arm_positions_rad = (
+        None if effective_seed is None else effective_seed.tolist()
+    )
     registered_robot_asset = (repository / dynamic["robot_asset"]).resolve()
     arguments.robot_asset_path = (
         Path(arguments.robot_asset).expanduser().resolve()
@@ -220,7 +369,9 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         else registered_robot_asset
     )
     arguments.robot_asset_override_used = bool(arguments.robot_asset)
-    grasp = _registered_grasp(inputs, arguments.object_id)
+    grasp = _registered_grasp(
+        inputs, arguments.object_id, dynamic, effective_palm, effective_seed
+    )
     scene_entry = dynamic["object_scenes"].get(arguments.object_id)
     if not isinstance(scene_entry, dict):
         raise ValueError("object has no registered free tabletop dynamic scene")
@@ -266,7 +417,11 @@ def prepare_dynamic_scene(
         verify_d38999_tabletop_asset,
     )
 
-    allowed_keys = {"object_translation_delta_m", "object_yaw_delta_rad"}
+    allowed_keys = {
+        "object_translation_delta_m",
+        "object_yaw_delta_rad",
+        "contact_friction_coefficient",
+    }
     unsupported = set(perturbation) - allowed_keys
     if unsupported:
         raise ValueError(
@@ -283,6 +438,18 @@ def prepare_dynamic_scene(
     if not np.isfinite(yaw_delta_rad):
         raise ValueError("object yaw perturbation must be one finite scalar")
     yaw_delta_degrees = float(np.degrees(yaw_delta_rad))
+    friction_value = perturbation.get("contact_friction_coefficient")
+    contact_friction_coefficient = (
+        None if friction_value is None else float(friction_value)
+    )
+    if (
+        contact_friction_coefficient is not None
+        and (
+            not np.isfinite(contact_friction_coefficient)
+            or contact_friction_coefficient < 0.0
+        )
+    ):
+        raise ValueError("contact friction perturbation must be one nonnegative scalar")
 
     kind = str(entry["scene_kind"])
     if kind == "D38999_PAIR_TABLETOP":
@@ -336,6 +503,7 @@ def prepare_dynamic_scene(
             "environment_scope": "FULL_TABLE_FIXTURE_AND_FIXED_RECEPTACLE",
             "applied_initial_object_translation_delta_m": translation_delta.tolist(),
             "applied_initial_object_yaw_delta_rad": yaw_delta_rad,
+            "requested_contact_friction_coefficient": contact_friction_coefficient,
         }
     if kind != "FREE_SINGLE_RIGID_ON_SHARED_FINITE_TABLE":
         raise ValueError(f"unsupported dynamic scene kind: {kind}")
@@ -389,6 +557,44 @@ def prepare_dynamic_scene(
         "environment_scope": "SHARED_FINITE_TABLE_AND_FIXTURE_WITHOUT_FIXED_RECEPTACLE",
         "applied_initial_object_translation_delta_m": translation_delta.tolist(),
         "applied_initial_object_yaw_delta_rad": yaw_delta_rad,
+        "requested_contact_friction_coefficient": contact_friction_coefficient,
+    }
+
+
+def _apply_contact_friction_perturbation(stage, scene, UsdPhysics) -> None:
+    material_prim = stage.GetPrimAtPath(FINGERTIP_PHYSICS_MATERIAL_PATH)
+    if (
+        not material_prim.IsValid()
+        or not material_prim.HasAPI(UsdPhysics.MaterialAPI)
+    ):
+        raise RuntimeError("full-pad fingertip physics material is missing")
+    material = UsdPhysics.MaterialAPI(material_prim)
+    static_attribute = material.GetStaticFrictionAttr()
+    dynamic_attribute = material.GetDynamicFrictionAttr()
+    before_static = float(static_attribute.Get())
+    before_dynamic = float(dynamic_attribute.Get())
+    requested = scene["requested_contact_friction_coefficient"]
+    if requested is not None:
+        static_attribute.Set(float(requested))
+        dynamic_attribute.Set(float(requested))
+    observed_static = float(static_attribute.Get())
+    observed_dynamic = float(dynamic_attribute.Get())
+    if requested is not None and not np.allclose(
+        (observed_static, observed_dynamic),
+        (requested, requested),
+        rtol=0.0,
+        atol=1.0e-7,
+    ):
+        raise RuntimeError("contact friction perturbation did not read back")
+    scene["contact_friction_material_audit"] = {
+        "material_prim_path": FINGERTIP_PHYSICS_MATERIAL_PATH,
+        "applied": requested is not None,
+        "requested_coefficient": requested,
+        "before_static_friction": before_static,
+        "before_dynamic_friction": before_dynamic,
+        "observed_static_friction": observed_static,
+        "observed_dynamic_friction": observed_dynamic,
+        "scope": "THREE_FULL_NAILFREE_FINGERTIP_PADS_SHARED_PHYSICS_MATERIAL",
     }
 
 
@@ -434,6 +640,33 @@ def _initial_trace(arguments, inputs, grasp, motion_plan, dynamic):
         ),
         "robustness_scenario": arguments.robustness_scenario_name,
         "robustness_perturbation": arguments.robustness_perturbation,
+        "configured_preload_increment_rad": (
+            arguments.configured_preload_increment_rad
+        ),
+        "effective_preload_increment_rad": (
+            arguments.effective_preload_increment_rad
+        ),
+        "configured_finger_preload_scales": (
+            arguments.configured_finger_preload_scales
+        ),
+        "effective_finger_preload_scales": (
+            arguments.effective_finger_preload_scales
+        ),
+        "required_closing_joint_effort_nm": (
+            arguments.required_closing_joint_effort_nm
+        ),
+        "configured_palm_joint_position_rad": (
+            arguments.configured_palm_joint_position_rad
+        ),
+        "effective_palm_joint_position_rad": (
+            arguments.effective_palm_joint_position_rad
+        ),
+        "configured_approach_high_seed_arm_positions_rad": (
+            arguments.configured_approach_high_seed_arm_positions_rad
+        ),
+        "effective_approach_high_seed_arm_positions_rad": (
+            arguments.effective_approach_high_seed_arm_positions_rad
+        ),
         "motion_plan": motion_plan,
         "criteria": criteria,
         "controller_outcome": {"completed": False, "failure_reason": None},
@@ -520,7 +753,7 @@ def _create_isolated_runtime(repository, arguments, inputs, scene_entry, trace):
     from isaacsim.core.simulation_manager import SimulationManager
     from isaacsim.core.utils.stage import add_reference_to_stage, get_current_stage
 
-    dynamic = inputs.config.section("dynamic")
+    dynamic = arguments.dynamic_settings
     robot_asset = arguments.robot_asset_path
     gravity, gravity_source = _isolated_gravity(repository, scene_entry)
     World.clear_instance()
@@ -566,7 +799,7 @@ def _create_isolated_runtime(repository, arguments, inputs, scene_entry, trace):
 
 
 def _execute_isolated(repository, arguments, output, inputs, scene_entry, motion_plan, trace):
-    dynamic = inputs.config.section("dynamic")
+    dynamic = arguments.dynamic_settings
     world, recorder, robot_data = _create_isolated_runtime(
         repository, arguments, inputs, scene_entry, trace
     )
@@ -625,11 +858,20 @@ def _evidence_binding(repository, arguments, inputs, grasp, scene, robot_asset):
         "environment_scope": scene["environment_scope"],
         "robustness_scenario": arguments.robustness_scenario_name,
         "robustness_perturbation": arguments.robustness_perturbation,
+        "effective_finger_preload_scales": (
+            arguments.effective_finger_preload_scales
+        ),
+        "required_closing_joint_effort_nm": (
+            arguments.required_closing_joint_effort_nm
+        ),
         "applied_initial_object_translation_delta_m": scene[
             "applied_initial_object_translation_delta_m"
         ],
         "applied_initial_object_yaw_delta_rad": scene[
             "applied_initial_object_yaw_delta_rad"
+        ],
+        "contact_friction_material_audit": scene[
+            "contact_friction_material_audit"
         ],
         "object_asset_sha256": file_sha256(object_asset),
         "robot_asset_sha256": file_sha256(robot_asset),
@@ -653,7 +895,7 @@ def _create_runtime(
     from omni.physx.bindings._physx import SETTING_DISABLE_CONTACT_PROCESSING
     from pxr import Gf, PhysxSchema, PhysicsSchemaTools, Usd, UsdGeom, UsdLux, UsdPhysics
 
-    dynamic = inputs.config.section("dynamic")
+    dynamic = arguments.dynamic_settings
     robot_asset = arguments.robot_asset_path
     if not robot_asset.is_file():
         raise ValueError("selected robot asset is missing")
@@ -708,6 +950,8 @@ def _create_runtime(
         add_reference_to_stage,
         arguments.robustness_perturbation,
     )
+    add_reference_to_stage(str(robot_asset), ROBOT_ROOT)
+    _apply_contact_friction_perturbation(stage, scene, UsdPhysics)
     if arguments.capture_visual_evidence:
         render = scene["render"]
         lighting_root = "/World/CARTSGraspVisualEvidenceLights"
@@ -729,7 +973,6 @@ def _create_runtime(
         trace["accepted_preflight_bound"] = True
         trace["accepted_preflight_evaluation_sha256"] = file_sha256(
             arguments.preflight_evaluation_path)
-    add_reference_to_stage(str(robot_asset), ROBOT_ROOT)
     rigid_body_prims, contact_report_prims = [], []
     for prim in stage.Traverse():
         if prim.HasAPI(UsdPhysics.RigidBodyAPI):
@@ -1031,7 +1274,7 @@ def _execute(repository, arguments, output, inputs, grasp, scene_entry, motion_p
     runtime = _create_runtime(
         repository, arguments, inputs, grasp, scene_entry, motion_plan, trace
     )
-    dynamic = inputs.config.section("dynamic")
+    dynamic = arguments.dynamic_settings
     if arguments.capture_visual_evidence:
         runtime["visual_capture"] = _VisualEvidenceCapture(
             world=runtime["world"], auditor=runtime["auditor"], output=output,
@@ -1057,7 +1300,7 @@ def main() -> int:
     output.mkdir(parents=True, exist_ok=False)
     inputs, grasp, scene_entry, motion_plan = _load_plan_inputs(
         repository, arguments)
-    dynamic = inputs.config.section("dynamic")
+    dynamic = arguments.dynamic_settings
     from isaacsim import SimulationApp
 
     simulation_app = SimulationApp({

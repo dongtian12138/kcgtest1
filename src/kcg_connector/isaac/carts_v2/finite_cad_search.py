@@ -37,7 +37,7 @@ from kcg_connector.grasp.robust.object_model import load_stl_mesh
 PAD_ORDER = ("finger_1_pad", "finger_2_pad", "finger_3_pad")
 CLOSING_JOINTS = ("f1j2", "f2j1", "f3j2")
 EXPECTED_VARIANT = "DIRECT_USER_NAILFREE_STL"
-EXPECTED_METHOD = "COMPLETE_AXIS_ALIGNED_FULL_PAD_GRID_V2"
+EXPECTED_METHOD = "COMPLETE_AXIS_ALIGNED_FULL_PAD_GRID_V4"
 ARM_SELF_CONTACT_ENVELOPE_M = 2.0 * 5.0e-5
 
 
@@ -64,10 +64,19 @@ class PadPatch:
 
 
 @dataclass(frozen=True)
+class PadResultant:
+    pad_name: str
+    point_object_m: np.ndarray
+    normal_object: np.ndarray
+    collision_witness_count: int
+
+
+@dataclass(frozen=True)
 class PathEvaluation:
     contact_joint_positions_rad: np.ndarray
     patches: tuple[PadPatch, PadPatch, PadPatch]
     minimum_closure_reserve_rad: float
+    minimum_commanded_hand_joint_limit_margin_rad: float
     minimum_forbidden_clearance_m: float
 
 
@@ -81,6 +90,7 @@ class TaskQuality:
     minimum_joint_torque_margin_at_unit_task_nm: float
     maximum_pad_normal_force_at_unit_task_n: float
     minimum_pad_normal_force_margin_at_unit_task_n: float
+    required_closing_joint_effort_nm: tuple[float, float, float]
     wrench_span_rank: int
     force_closure_friction_pyramid: bool
 
@@ -853,16 +863,47 @@ def _evaluate_control_path(
         if patch is None:
             return None, f"LOST_ALLOWED_PAD_CONTACT:{pad_name}"
         patches.append(patch)
+    closing_direction = np.sign(endpoint - pregrasp)
+    if any(float(closing_direction[slot]) == 0.0 for slot in slots):
+        return None, "ZERO_CLOSING_DIRECTION"
     closure_reserve = min(
-        float(endpoint[slot] - current[slot]) for slot in slots
+        float(
+            closing_direction[slot] * (endpoint[slot] - current[slot])
+        )
+        for slot in slots
     )
     if closure_reserve < 0.0:
         return None, "NEGATIVE_CLOSURE_RESERVE"
+    maximum_preload_increment = float(dynamic["preload_increment_rad"])
+    if closure_reserve + 1.0e-12 < maximum_preload_increment:
+        return None, "INSUFFICIENT_MAXIMUM_PRELOAD_CLOSURE_RESERVE"
+    maximum_preload_state = np.array(current, copy=True)
+    for slot in slots:
+        maximum_preload_state[slot] += (
+            closing_direction[slot] * maximum_preload_increment
+        )
+    lower, upper = inputs.hand_model.joint_limit_vectors()
+    commanded_states = np.asarray(
+        (pregrasp, current, maximum_preload_state), dtype=np.float64
+    )
+    joint_limit_margin = float(
+        np.min(
+            np.minimum(
+                commanded_states - lower[None, :],
+                upper[None, :] - commanded_states,
+            )
+        )
+    )
+    if joint_limit_margin <= 0.0:
+        return None, "NONPOSITIVE_COMMANDED_HAND_JOINT_LIMIT_MARGIN"
     return (
         PathEvaluation(
             contact_joint_positions_rad=np.array(current, copy=True),
             patches=(patches[0], patches[1], patches[2]),
             minimum_closure_reserve_rad=closure_reserve,
+            minimum_commanded_hand_joint_limit_margin_rad=(
+                joint_limit_margin
+            ),
             minimum_forbidden_clearance_m=(
                 scene.minimum_forbidden_clearance_m()
             ),
@@ -891,6 +932,27 @@ def _friction_basis(
             for angle in angles
         ],
         dtype=np.float64,
+    )
+
+
+def _single_pad_resultant(patch: PadPatch) -> PadResultant | None:
+    """Collapse one full-pad collision patch to one resultant point contact."""
+
+    point = np.mean(patch.points_object_m, axis=0)
+    mean_normal = np.mean(patch.normals_object, axis=0)
+    magnitude = float(np.linalg.norm(mean_normal))
+    if (
+        not np.all(np.isfinite(point))
+        or not np.all(np.isfinite(mean_normal))
+        or not math.isfinite(magnitude)
+        or magnitude == 0.0
+    ):
+        return None
+    return PadResultant(
+        pad_name=patch.pad_name,
+        point_object_m=point,
+        normal_object=mean_normal / magnitude,
+        collision_witness_count=len(patch.points_object_m),
     )
 
 
@@ -953,19 +1015,28 @@ def _task_quality(
         .friction_coefficient_interval[0]
     )
     force_cap = float(settings["nominal_normal_force_cap_n"])
-    points = np.concatenate([patch.points_object_m for patch in patches], axis=0)
-    normals = np.concatenate([patch.normals_object for patch in patches], axis=0)
-    pad_indices = np.concatenate(
-        [
-            np.full(len(patch.points_object_m), index, dtype=np.int64)
-            for index, patch in enumerate(patches)
-        ]
+    resultants = [_single_pad_resultant(patch) for patch in patches]
+    if any(resultant is None for resultant in resultants):
+        return None
+    points = np.asarray(
+        [resultant.point_object_m for resultant in resultants], dtype=np.float64
     )
+    normals = np.asarray(
+        [resultant.normal_object for resultant in resultants], dtype=np.float64
+    )
+    pad_indices = np.arange(len(PAD_ORDER), dtype=np.int64)
     bases = [
         _friction_basis(normal, friction, edge_count) for normal in normals
     ]
     coefficient_count = len(points) * edge_count
     joint_count = len(inputs.hand_model.independent_joint_names)
+    closing_slots = np.asarray(
+        [
+            inputs.hand_model.independent_joint_names.index(name)
+            for name in CLOSING_JOINTS
+        ],
+        dtype=np.int64,
+    )
     wrench = np.zeros((6, coefficient_count), dtype=np.float64)
     torque = np.zeros((joint_count, coefficient_count), dtype=np.float64)
     assert inputs.task_grip_surfaces is not None
@@ -1093,9 +1164,13 @@ def _task_quality(
                 "minimum_pad_margin": float(
                     np.min(force_cap - unit_pad_force)
                 ),
+                "closing_joint_effort": unit_torque[closing_slots],
             }
         )
     limiting = min(stage_rows, key=lambda row: float(row["factor"]))
+    required_closing_effort = np.maximum.reduce(
+        [np.asarray(row["closing_joint_effort"]) for row in stage_rows]
+    )
     return TaskQuality(
         task_load_factor=float(limiting["factor"]),
         hold_load_factor=float(stage_rows[0]["factor"]),
@@ -1112,6 +1187,9 @@ def _task_quality(
         ),
         minimum_pad_normal_force_margin_at_unit_task_n=float(
             limiting["minimum_pad_margin"]
+        ),
+        required_closing_joint_effort_nm=tuple(
+            float(value) for value in required_closing_effort
         ),
         wrench_span_rank=int(np.linalg.matrix_rank(wrench, tol=1.0e-10)),
         force_closure_friction_pyramid=_force_closure_diagnostic(wrench),
@@ -1135,6 +1213,9 @@ def _quality_record(quality: TaskQuality) -> dict[str, object]:
         ),
         "minimum_pad_normal_force_margin_at_unit_task_n": (
             quality.minimum_pad_normal_force_margin_at_unit_task_n
+        ),
+        "required_closing_joint_effort_nm": dict(
+            zip(CLOSING_JOINTS, quality.required_closing_joint_effort_nm)
         ),
         "wrench_span_rank": quality.wrench_span_rank,
         "force_closure_friction_pyramid": (
@@ -1163,7 +1244,7 @@ def _path_summary(path: PathEvaluation) -> dict[str, object]:
         "contact_joint_positions_rad": (
             path.contact_joint_positions_rad.tolist()
         ),
-        "contact_patch_counts": [
+        "collision_witness_counts": [
             len(patch.points_object_m) for patch in path.patches
         ],
         "contact_patch_centroids_object_m": [
@@ -1171,6 +1252,9 @@ def _path_summary(path: PathEvaluation) -> dict[str, object]:
             for patch in path.patches
         ],
         "minimum_closure_reserve_rad": path.minimum_closure_reserve_rad,
+        "minimum_commanded_hand_joint_limit_margin_rad": (
+            path.minimum_commanded_hand_joint_limit_margin_rad
+        ),
         "minimum_forbidden_clearance_m": path.minimum_forbidden_clearance_m,
     }
 
@@ -1188,8 +1272,12 @@ def _selected_detail(
         "path": _path_summary(path),
         "quality": _quality_record(quality),
         "full_pad_contact_patches": [],
+        "single_resultant_contacts": [],
     }
     for patch in path.patches:
+        resultant = _single_pad_resultant(patch)
+        if resultant is None:
+            raise RuntimeError("selected full-pad contact has no resultant normal")
         result["full_pad_contact_patches"].append(
             {
                 "pad_name": patch.pad_name,
@@ -1202,6 +1290,17 @@ def _selected_detail(
                 "penetration_depths_m": (
                     patch.penetration_depths_m.tolist()
                 ),
+            }
+        )
+        result["single_resultant_contacts"].append(
+            {
+                "pad_name": resultant.pad_name,
+                "point_object_m": resultant.point_object_m.tolist(),
+                "normal_object": resultant.normal_object.tolist(),
+                "source_collision_witness_count": (
+                    resultant.collision_witness_count
+                ),
+                "independent_torsional_moment_allowed": False,
             }
         )
     return result
@@ -1309,10 +1408,34 @@ def main() -> int:
         != "ISAAC_FINGER_SPEED_TIMES_PHYSICS_DT"
         or settings.get("contact_patch_witness_limit_rule")
         != "FULL_PAD_TRIANGLE_COUNT"
+        or settings.get("full_pad_contact_force_model")
+        != "ONE_EQUAL_WITNESS_RESULTANT_PER_FULL_PAD"
+        or settings.get("contact_resultant_point_rule")
+        != "ARITHMETIC_MEAN_OF_FCL_COLLISION_WITNESS_POSITIONS"
+        or settings.get("contact_resultant_normal_rule")
+        != "NORMALIZED_ARITHMETIC_MEAN_OF_OBJECT_OUTWARD_FACE_NORMALS"
+        or settings.get("independent_contact_torsional_moment_allowed") is not False
+        or settings.get("maximum_preload_increment_rule")
+        != "MEASURED_EFFORT_ABORT_DIVIDED_BY_HAND_STIFFNESS"
+        or settings.get("commanded_hand_joint_limit_margin_rule")
+        != "STRICTLY_POSITIVE_AT_PREGRASP_CONTACT_AND_MAXIMUM_PRELOAD"
         or list(settings.get("hand_lateral_offset_task_m", ())) != [0.0, 0.0]
         or list(settings.get("hand_tilt_task_rad", ())) != [0.0, 0.0]
     ):
         raise ValueError("finite search definition is not frozen as declared")
+    dynamic = inputs.config.section("dynamic")
+    physical_preload_limit = float(dynamic["measured_effort_abort_nm"]) / float(
+        dynamic["hand_stiffness"]
+    )
+    if not math.isclose(
+        float(dynamic["preload_increment_rad"]),
+        physical_preload_limit,
+        rel_tol=0.0,
+        abs_tol=1.0e-12,
+    ):
+        raise ValueError(
+            "maximum preload increment is not the declared bounded effort limit"
+        )
 
     palms, yaws, axial, points = _declared_grid(inputs, settings)
     declared_count = len(points)
@@ -1465,6 +1588,7 @@ def main() -> int:
                             key = (
                                 quality.task_load_factor,
                                 path.minimum_forbidden_clearance_m,
+                                path.minimum_commanded_hand_joint_limit_margin_rad,
                                 path.minimum_closure_reserve_rad,
                                 -point.palm_index,
                                 -point.yaw_index,
@@ -1501,11 +1625,38 @@ def main() -> int:
         )
         selected_record = _selected_detail(*selected)
     result = {
-        "schema_version": "finite_cad_nailfree_search_v2",
+        "schema_version": "finite_cad_nailfree_search_v4",
         "object_id": arguments.object_id,
         "hand_variant": inputs.hand_variant,
         "hardware_authorized": False,
         "formal_dynamic_pass": False,
+        "contact_mechanics": {
+            "full_pad_geometry_used_for_collision_and_semantics": True,
+            "force_model": settings["full_pad_contact_force_model"],
+            "resultant_point_rule": settings["contact_resultant_point_rule"],
+            "resultant_normal_rule": settings["contact_resultant_normal_rule"],
+            "independent_contact_torsional_moment_allowed": False,
+            "model_boundary": (
+                "EACH_COMPLETE_PAD REMAINS A FINITE CONTACT REGION; "
+                "ITS ONE DETECTED COLLISION PATCH CONTRIBUTES ONE RESULTANT "
+                "FRICTIONAL POINT CONTACT TO THE TASK-WRENCH MODEL"
+            ),
+        },
+        "execution_margin_contract": {
+            "maximum_preload_increment_rad": float(
+                dynamic["preload_increment_rad"]
+            ),
+            "maximum_preload_increment_rule": settings[
+                "maximum_preload_increment_rule"
+            ],
+            "commanded_hand_joint_limit_margin_rule": settings[
+                "commanded_hand_joint_limit_margin_rule"
+            ],
+            "pre_lift_effort_rule": (
+                "EACH_CLOSING_JOINT_REACHES_COMPONENTWISE_MAXIMUM_"
+                "OF_HOLD_AND_LIFT_UNIT_TASK_LP_EFFORT"
+            ),
+        },
         "search_claim": (
             "BEST_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA"
             if selected_record is not None
@@ -1546,6 +1697,13 @@ def main() -> int:
         )
         generation_settings["selected_by"] = (
             "BEST_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA"
+        )
+        generation_settings["required_closing_joint_effort_nm"] = dict(
+            zip(CLOSING_JOINTS, selected[3].required_closing_joint_effort_nm)
+        )
+        generation_settings["required_closing_joint_effort_source"] = (
+            "COMPONENTWISE_MAXIMUM_OF_HOLD_AND_LIFT_UNIT_TASK_LP_AT_"
+            "FROZEN_FRICTION_LOWER_BOUND"
         )
         (output / "selected_config.yaml").write_text(
             yaml.safe_dump(derived, sort_keys=False, allow_unicode=True),

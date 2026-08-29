@@ -1,0 +1,181 @@
+{
+  "schema_version": "v4_two_model_minimal_research_figures_v1",
+  "figures": {
+    "cad_contacts_normals_friction_and_baseline_v4_geometry": "cad_contacts_normals_friction.png",
+    "complete_gdelta_disposition_and_executable_quality_distribution": "gdelta_search_and_quality_distribution.png",
+    "baseline_vs_v4_independent_metrics": "baseline_vs_finite_best.png",
+    "two_true_isaac_final_hold_frames": "isaac_two_model_final_hold.png"
+  },
+  "sources": {
+    "Current D38999/26KJ61SN": {
+      "search_result": "artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/finite_gdelta_v4/current_run01/search_result.json",
+      "object_id": "current_d38999_26kj61sn_public_spec",
+      "selected_candidate_id": "p15_y13_z07",
+      "baseline_candidate_id": "p07_y00_z17",
+      "baseline_v4_status": "EXECUTABLE_OFFLINE",
+      "baseline_v4_reason": "",
+      "finite_set_size": 13872,
+      "status_counts": {
+        "GENERATION_INFEASIBLE": 2280,
+        "TASK_INFEASIBLE": 264,
+        "EXECUTABLE_OFFLINE": 7872,
+        "PATH_INFEASIBLE": 3456
+      },
+      "executable_quality_statistics": {
+        "finite_set_size": 13872,
+        "executable_count": 7872,
+        "minimum": 1.1582581719729264,
+        "median": 1.4481696832832558,
+        "p90": 1.873854161467479,
+        "maximum": 1.9678090262104504,
+        "status_counts": {
+          "GENERATION_INFEASIBLE": 2280,
+          "TASK_INFEASIBLE": 264,
+          "EXECUTABLE_OFFLINE": 7872,
+          "PATH_INFEASIBLE": 3456
+        }
+      }
+    },
+    "TE D38999/26FJ35PN": {
+      "search_result": "artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/finite_gdelta_v4/te_run01/search_result.json",
+      "object_id": "te_deutsch_d38999_26fj35pn_step",
+      "selected_candidate_id": "p14_y15_z26",
+      "baseline_candidate_id": "p07_y00_z13",
+      "baseline_v4_status": "TASK_INFEASIBLE",
+      "baseline_v4_reason": "TASK_LOAD_FACTOR_BELOW_ONE",
+      "finite_set_size": 13464,
+      "status_counts": {
+        "GENERATION_INFEASIBLE": 3192,
+        "TASK_INFEASIBLE": 6251,
+        "EXECUTABLE_OFFLINE": 1573,
+        "PATH_INFEASIBLE": 2448
+      },
+      "executable_quality_statistics": {
+        "finite_set_size": 13464,
+        "executable_count": 1573,
+        "minimum": 1.0042532933376682,
+        "median": 1.359951916291029,
+        "p90": 1.490183773751698,
+        "maximum": 1.8780264595089202,
+        "status_counts": {
+          "GENERATION_INFEASIBLE": 3192,
+          "TASK_INFEASIBLE": 6251,
+          "EXECUTABLE_OFFLINE": 1573,
+          "PATH_INFEASIBLE": 2448
+        }
+      }
+    }
+  },
+  "contact_geometry_boundary": {
+    "baseline": "deterministic offline FCL reconstruction of the V4 baseline grid member",
+    "v4_auto": "stored CAD/FCL full-pad collision witnesses from the V4 selected candidate",
+    "normals": "stored object-outward CAD face normals",
+    "friction_constraints": "eight unilateral rays at the frozen lower friction bound from each object contract",
+    "not_isaac_measured": true
+  },
+  "quality_boundary": "All G_delta members are represented by status counts; numeric histogram contains only EXECUTABLE_OFFLINE members because infeasible members have no accepted task quality. Heatmap is maximum computed task-load factor over the axial grid.",
+  "not_claimed": [
+    "continuous-space global optimum",
+    "Isaac-measured contact positions or normals",
+    "hardware validation"
+  ],
+  "dynamic_comparison": [
+    {
+      "object": "Current D38999/26KJ61SN",
+      "method": "baseline",
+      "predicted_task_load_factor": 1.2772968979362518,
+      "predicted_forbidden_clearance_mm": 0.8149361680149058,
+      "predicted_closure_reserve_rad": 0.22948104103842937,
+      "predicted_joint_torque_margin_nm": 0.19538699933105308,
+      "predicted_pad_force_margin_n": 4.400917059105816,
+      "isaac_three_full_pads": true,
+      "isaac_off_table": true,
+      "isaac_lift_mm": 55.73247660248731,
+      "isaac_hold_s": 2.0,
+      "isaac_slip_mm": 0.4073815447058956,
+      "isaac_orientation_change_deg": 4.421883336559228,
+      "isaac_maximum_hand_effort_nm": 0.6564894318580627,
+      "isaac_unauthorized_contacts": 0,
+      "isaac_maximum_table_penetration_mm": 0.0012390613556012564,
+      "isaac_post_settle_table_penetration_mm": 0.0006132125854596548,
+      "isaac_controller_completed": true,
+      "isaac_formal_dynamic_pass": false
+    },
+    {
+      "object": "Current D38999/26KJ61SN",
+      "method": "finite_set_best",
+      "predicted_task_load_factor": 1.9678090262104504,
+      "predicted_forbidden_clearance_mm": 0.5425878829167278,
+      "predicted_closure_reserve_rad": 0.22987912224941565,
+      "predicted_joint_torque_margin_nm": 0.44263854468988084,
+      "predicted_pad_force_margin_n": 5.479770291569949,
+      "isaac_three_full_pads": true,
+      "isaac_off_table": true,
+      "isaac_lift_mm": 55.585287090163746,
+      "isaac_hold_s": 2.0,
+      "isaac_slip_mm": 0.461474164353716,
+      "isaac_orientation_change_deg": 0.7728016677351921,
+      "isaac_maximum_hand_effort_nm": 0.47635406255722046,
+      "isaac_unauthorized_contacts": 0,
+      "isaac_maximum_table_penetration_mm": 0.0012390613556012564,
+      "isaac_post_settle_table_penetration_mm": 0.0003598928451642447,
+      "isaac_controller_completed": true,
+      "isaac_formal_dynamic_pass": false
+    },
+    {
+      "object": "TE D38999/26FJ35PN",
+      "method": "baseline",
+      "predicted_task_load_factor": 0.5551728019415267,
+      "predicted_forbidden_clearance_mm": 0.8467981567787664,
+      "predicted_closure_reserve_rad": 0.22966880756534946,
+      "predicted_joint_torque_margin_nm": -0.7211168790195742,
+      "predicted_pad_force_margin_n": -0.8821809662772608,
+      "isaac_three_full_pads": true,
+      "isaac_off_table": true,
+      "isaac_lift_mm": 55.379243909435324,
+      "isaac_hold_s": 2.0,
+      "isaac_slip_mm": 0.4298817856091024,
+      "isaac_orientation_change_deg": 0.07765485097226386,
+      "isaac_maximum_hand_effort_nm": 0.6437144875526428,
+      "isaac_unauthorized_contacts": 0,
+      "isaac_maximum_table_penetration_mm": 0.00028014183045543817,
+      "isaac_post_settle_table_penetration_mm": 0.00028014183045543817,
+      "isaac_controller_completed": true,
+      "isaac_formal_dynamic_pass": false
+    },
+    {
+      "object": "TE D38999/26FJ35PN",
+      "method": "finite_set_best",
+      "predicted_task_load_factor": 1.8780264595089202,
+      "predicted_forbidden_clearance_mm": 0.7510311192449806,
+      "predicted_closure_reserve_rad": 0.23691374963211698,
+      "predicted_joint_torque_margin_nm": 0.42077352507837484,
+      "predicted_pad_force_margin_n": 5.345818977904436,
+      "isaac_three_full_pads": true,
+      "isaac_off_table": true,
+      "isaac_lift_mm": 54.556381653871334,
+      "isaac_hold_s": 2.0,
+      "isaac_slip_mm": 0.5154296525969834,
+      "isaac_orientation_change_deg": 0.17248963271895149,
+      "isaac_maximum_hand_effort_nm": 0.7287323474884033,
+      "isaac_unauthorized_contacts": 0,
+      "isaac_maximum_table_penetration_mm": 0.0003695487976185241,
+      "isaac_post_settle_table_penetration_mm": 0.0003695487976185241,
+      "isaac_controller_completed": true,
+      "isaac_formal_dynamic_pass": false
+    }
+  ],
+  "dynamic_sources": {
+    "Current D38999/26KJ61SN": {
+      "baseline_evaluation": "artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/nailfree_current_com_height_preload050_lift056_regression_run02/grasp_lift/evaluation.json",
+      "v4_evaluation": "artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_nominal_comparison_v4/current_auto/grasp_lift_run02/evaluation.json",
+      "v4_visual_evidence": "artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_nominal_comparison_v4/current_auto/grasp_lift_run02/visual_evidence.json"
+    },
+    "TE D38999/26FJ35PN": {
+      "baseline_evaluation": "artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/te_d38999_26fj35pn_final_shared_method_regression_run01/grasp_lift/evaluation.json",
+      "v4_evaluation": "artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_nominal_comparison_v4/te_auto/grasp_lift_run02/evaluation.json",
+      "v4_visual_evidence": "artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_nominal_comparison_v4/te_auto/grasp_lift_run02/visual_evidence.json"
+    }
+  },
+  "dynamic_evidence_boundary": "Isaac simulation-only; baseline rows use their matching evaluations but those two historical runs have no matching saved images; displayed images are the matching V4 run02 hold frames."
+}

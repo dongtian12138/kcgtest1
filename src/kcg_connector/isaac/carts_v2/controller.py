@@ -835,16 +835,54 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
     closure_target = contact.target.copy()
     direction = np.sign(final_hand - pregrasp["hand"])
     preload_increment = float(settings["preload_increment_rad"])
-    preload_goal = closure_target + preload_increment * direction
+    finger_scales = np.asarray(
+        settings.get("finger_preload_scales", (1.0, 1.0, 1.0)),
+        dtype=np.float64,
+    )
+    if (
+        finger_scales.shape != (3,)
+        or not np.all(np.isfinite(finger_scales))
+        or np.any(finger_scales <= 0.0)
+        or np.any(finger_scales > 1.0)
+    ):
+        return "FINGER_PRELOAD_SCALE_CONFIGURATION_ABORT"
+    preload_scales = np.concatenate(([0.0], finger_scales))
+    preload_limit_goal = (
+        closure_target + preload_increment * direction * preload_scales
+    )
+    required_effort = np.asarray(
+        settings.get("required_closing_joint_effort_nm"), dtype=np.float64
+    )
+    if (
+        required_effort.shape != (3,)
+        or not np.all(np.isfinite(required_effort))
+        or np.any(required_effort <= 0.0)
+        or np.any(required_effort >= float(settings["measured_effort_abort_nm"]))
+    ):
+        return "PRELOAD_REQUIRED_EFFORT_CONFIGURATION_ABORT"
+    closing_direction = direction[1:]
+    if np.any(closing_direction == 0.0):
+        return "PRELOAD_REQUIRED_EFFORT_DIRECTION_ABORT"
     preload_steps = round(float(settings["preload_duration_s"]) / dt)
     maximum_increment = float(settings["finger_maximum_speed_rad_s"]) * dt
     previous_target = closure_target
     for index in stepper.active_steps(preload_steps):
         blend = minimum_jerk_blend((index + 1) / preload_steps)
-        desired = closure_target + blend * (preload_goal - closure_target)
-        hand_target = previous_target + np.clip(
-            desired - previous_target, -maximum_increment, maximum_increment
+        desired_limit = closure_target + blend * (
+            preload_limit_goal - closure_target
         )
+        measured_effort = stepper.latest[2][8:] - tare[1:]
+        resistive_effort = closing_direction * measured_effort
+        hand_target = np.array(previous_target, copy=True)
+        for finger_index, hand_index in enumerate((1, 2, 3)):
+            if resistive_effort[finger_index] < required_effort[finger_index]:
+                hand_target[hand_index] += float(
+                    np.clip(
+                        desired_limit[hand_index] - previous_target[hand_index],
+                        -maximum_increment,
+                        maximum_increment,
+                    )
+                )
         latest = stepper.advance("preload", pregrasp["arm"], hand_target)
         previous_target = hand_target
         if stepper.abort_reason is not None:
@@ -853,8 +891,44 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
             settings["measured_effort_abort_nm"]
         ):
             return "HAND_MEASURED_EFFORT_ABORT"
-    if not np.allclose(previous_target, preload_goal, atol=1.0e-12, rtol=0.0):
-        return "PRELOAD_TARGET_RATE_LIMIT_ABORT"
+    effort_evidence_count = 0
+    effort_check_steps = round(
+        float(settings["contact_endpoint_timeout_s"]) / dt
+    )
+    for _ in stepper.active_steps(effort_check_steps):
+        measured_effort = stepper.latest[2][8:] - tare[1:]
+        resistive_effort = closing_direction * measured_effort
+        hand_target = np.array(previous_target, copy=True)
+        for finger_index, hand_index in enumerate((1, 2, 3)):
+            if resistive_effort[finger_index] < required_effort[finger_index]:
+                hand_target[hand_index] += float(
+                    np.clip(
+                        preload_limit_goal[hand_index]
+                        - previous_target[hand_index],
+                        -maximum_increment,
+                        maximum_increment,
+                    )
+                )
+        latest = stepper.advance(
+            "prelift_effort_check", pregrasp["arm"], hand_target
+        )
+        previous_target = hand_target
+        measured_effort = latest[2][8:] - tare[1:]
+        if np.max(np.abs(measured_effort)) > float(
+            settings["measured_effort_abort_nm"]
+        ):
+            return "HAND_MEASURED_EFFORT_ABORT"
+        resistive_effort = closing_direction * measured_effort
+        effort_evidence_count = (
+            effort_evidence_count + 1
+            if np.all(resistive_effort >= required_effort)
+            else 0
+        )
+        if effort_evidence_count >= int(settings["contact_consecutive_samples"]):
+            break
+    if effort_evidence_count < int(settings["contact_consecutive_samples"]):
+        return "PRELOAD_REQUIRED_EFFORT_NOT_REACHED"
+    preload_goal = previous_target
     stepper.set_lift_arm_damping(float(settings["lift_arm_damping_nm_s_rad"]))
     waypoints = np.asarray(motion_plan["lift_arm_waypoints_rad"])
     lift_steps = round(float(settings["lift_duration_s"]) / dt)
