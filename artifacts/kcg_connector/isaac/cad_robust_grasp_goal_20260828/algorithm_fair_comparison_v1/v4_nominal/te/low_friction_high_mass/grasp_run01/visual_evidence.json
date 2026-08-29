@@ -1,0 +1,91 @@
+{
+  "schema_version": "carts_grasp_v2_visual_evidence_v1",
+  "post_step_observation_only": true,
+  "returned_to_controller": false,
+  "records": [
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_fair_comparison_v1/v4_nominal/te/low_friction_high_mass/grasp_run01/visuals/01_pregrasp.png",
+      "step": 2910,
+      "simulation_time_s": 12.125,
+      "phase": "pregrasp_hold",
+      "object_center_m": [
+        0.5200033361228993,
+        -0.21000140042786464,
+        0.21813547052638552
+      ],
+      "object_lift_from_pregrasp_m": 0.0,
+      "object_table_contact_count": 13,
+      "terminal_link_object_contact_counts": [
+        0,
+        0,
+        0
+      ],
+      "camera_eye_m": [
+        0.9000033361228993,
+        0.1299985995721354,
+        0.4831354705263855
+      ],
+      "camera_target_m": [
+        0.5200033361228993,
+        -0.21000140042786464,
+        0.2331354705263855
+      ]
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_fair_comparison_v1/v4_nominal/te/low_friction_high_mass/grasp_run01/visuals/02_three_finger_clamp.png",
+      "step": 3425,
+      "simulation_time_s": 14.270833333333334,
+      "phase": "preload",
+      "object_center_m": [
+        0.5200039821317163,
+        -0.21000226626435747,
+        0.2181359474354522
+      ],
+      "object_lift_from_pregrasp_m": 4.769090666822962e-07,
+      "object_table_contact_count": 6,
+      "terminal_link_object_contact_counts": [
+        1,
+        1,
+        1
+      ],
+      "camera_eye_m": [
+        0.9000039821317163,
+        0.12999773373564255,
+        0.4831359474354522
+      ],
+      "camera_target_m": [
+        0.5200039821317163,
+        -0.21000226626435747,
+        0.23313594743545218
+      ]
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_fair_comparison_v1/v4_nominal/te/low_friction_high_mass/grasp_run01/visuals/04_final_hold.png",
+      "step": 8590,
+      "simulation_time_s": 35.791666666666664,
+      "phase": "hold",
+      "object_center_m": [
+        0.5207309598615547,
+        -0.21051155707237965,
+        0.2181354854152682
+      ],
+      "object_lift_from_pregrasp_m": 1.4888882682306814e-08,
+      "object_table_contact_count": 13,
+      "terminal_link_object_contact_counts": [
+        0,
+        0,
+        0
+      ],
+      "camera_eye_m": [
+        0.9007309598615547,
+        0.12948844292762038,
+        0.4831354854152682
+      ],
+      "camera_target_m": [
+        0.5207309598615547,
+        -0.21051155707237965,
+        0.23313548541526818
+      ]
+    }
+  ]
+}

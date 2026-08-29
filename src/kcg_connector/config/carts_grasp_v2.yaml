@@ -66,19 +66,33 @@ candidate_generation:
     contact_rms_m: 0.002
 
 finite_cad_search:
-  method: COMPLETE_DECLARED_GRID_WITH_BOUNDED_EXACT_FINALISTS_V1
-  palm_step_rad: 0.08726646259971647
-  minimum_final_closure_phase: 0.30
-  maximum_final_closure_phase: 0.75
-  closure_phase_step: 0.05
+  method: COMPLETE_AXIS_ALIGNED_FULL_PAD_GRID_V4
+  search_space_frozen_before_evaluation: true
+  palm_anchor_rad: 0.7
+  palm_step_rad: 0.1
+  include_palm_joint_limit_endpoints: true
+  object_yaw_anchor_rad: 0.0
   object_yaw_step_rad: 0.2617993877991494
-  object_axial_step_m: 0.00025
-  minimum_inward_alignment_cosine: 0.7071067811865476
-  minimum_three_pad_triangle_area_m2: 0.00010
-  exact_contact_center_tolerance_m: 0.00015
+  object_axial_anchor: OBJECT_CENTER_OF_MASS
+  object_axial_step_m: 0.001
+  include_allowed_axial_band_endpoints: true
+  hand_lateral_offset_task_m: [0.0, 0.0]
+  hand_tilt_task_rad: [0.0, 0.0]
+  approach_path_sample_count: 51
+  closure_path_step_rule: ISAAC_FINGER_SPEED_TIMES_PHYSICS_DT
+  contact_patch_witness_limit_rule: FULL_PAD_TRIANGLE_COUNT
+  full_pad_contact_force_model: ONE_EQUAL_WITNESS_RESULTANT_PER_FULL_PAD
+  contact_resultant_point_rule: ARITHMETIC_MEAN_OF_FCL_COLLISION_WITNESS_POSITIONS
+  contact_resultant_normal_rule: NORMALIZED_ARITHMETIC_MEAN_OF_OBJECT_OUTWARD_FACE_NORMALS
+  independent_contact_torsional_moment_allowed: false
+  maximum_preload_increment_rule: MEASURED_EFFORT_ABORT_DIVIDED_BY_HAND_STIFFNESS
+  commanded_hand_joint_limit_margin_rule: STRICTLY_POSITIVE_AT_PREGRASP_CONTACT_AND_MAXIMUM_PRELOAD
   friction_cone_edge_count: 8
   nominal_normal_force_cap_n: 8.0
-  exact_finalist_limit: null
+  task_quality: MINIMUM_HOLD_AND_UPWARD_LIFT_LOAD_FACTOR
+  minimum_task_friction_resolution: 0.005
+  require_complete_candidate_evaluation: true
+  heuristic_candidate_deletion_allowed: false
 
 closure_prediction:
   closing_order: [finger_1_pad, finger_2_pad, finger_3_pad]
@@ -123,6 +137,71 @@ task_quality:
     ipm_optimality_tolerance: 1.0e-10
     physical_acceptance_gate: false
 
+robustness_evaluation:
+  schema_version: CARTS_V2_FINITE_PHYSICAL_PERTURBATIONS_V1
+  frozen_before_first_dynamic_run: true
+  cartesian_product_used: false
+  conclusion_limit: OBSERVED_ONLY_ON_THE_LISTED_FINITE_SCENARIOS
+  bounds:
+    object_translation_x_m: [-0.00017, 0.00017]
+    object_yaw_rad: [-0.03490658503988659, 0.03490658503988659]
+    contact_friction_coefficient: [0.45, 0.55]
+    object_mass_scale: [0.95, 1.05]
+    center_of_mass_x_m: [-0.001, 0.001]
+    finger_3_joint_target_offset_rad: [-0.004, 0.004]
+    finger_3_preload_scale: [0.95, 1.05]
+  bound_sources:
+    object_translation_x_m: USER_REPORTED_0P17MM_PRIOR_SENSITIVITY
+    object_yaw_rad: EXISTING_RESEARCH_ORIENTATION_ERROR_BOUND
+    contact_friction_coefficient: FROZEN_SHARED_OBJECT_MATERIAL_INTERVAL
+    object_mass_scale: EXISTING_RESEARCH_MASS_RELATIVE_ERROR
+    center_of_mass_x_m: EXISTING_RESEARCH_CENTER_OF_MASS_ERROR
+    finger_3_joint_target_offset_rad: EXISTING_CONTACT_POSITION_ERROR_RAD
+    finger_3_preload_scale: EXPLICIT_SHARED_RESEARCH_ASSUMPTION
+  normalized_margin_scales_for_reporting_only:
+    lift_m: 0.001
+    hold_s: 0.1
+    slip_m: 0.001
+    effort_nm: 0.1
+    penetration_m: 0.001
+  scenarios:
+    nominal: {}
+    pose_x_minus_0p17mm:
+      object_translation_delta_m: [-0.00017, 0.0, 0.0]
+    pose_x_plus_0p17mm:
+      object_translation_delta_m: [0.00017, 0.0, 0.0]
+    yaw_minus_2deg:
+      object_yaw_delta_rad: -0.03490658503988659
+    yaw_plus_2deg:
+      object_yaw_delta_rad: 0.03490658503988659
+    friction_lower_0p45:
+      contact_friction_coefficient: 0.45
+    friction_upper_0p55:
+      contact_friction_coefficient: 0.55
+    mass_minus_5pct:
+      object_mass_scale: 0.95
+    mass_plus_5pct:
+      object_mass_scale: 1.05
+    com_x_minus_1mm:
+      center_of_mass_delta_object_m: [-0.001, 0.0, 0.0]
+    com_x_plus_1mm:
+      center_of_mass_delta_object_m: [0.001, 0.0, 0.0]
+    finger3_joint_minus_0p004rad:
+      finger_joint_target_offset_rad: {finger_3: -0.004}
+    finger3_joint_plus_0p004rad:
+      finger_joint_target_offset_rad: {finger_3: 0.004}
+    finger3_preload_minus_5pct:
+      finger_preload_scale: {finger_3: 0.95}
+    finger3_preload_plus_5pct:
+      finger_preload_scale: {finger_3: 1.05}
+    low_friction_high_mass:
+      contact_friction_coefficient: 0.45
+      object_mass_scale: 1.05
+    pose_plus_0p17mm_finger3_late:
+      object_translation_delta_m: [0.00017, 0.0, 0.0]
+      finger_joint_target_offset_rad: {finger_3: -0.004}
+  numerical_sensitivity_separate_from_physical_u_delta: true
+
 exact_validation:
   top_k: 3
   per_candidate_time_budget_s: 900
@@ -133,7 +212,7 @@ ik:
   interval_maximum_root_bisection_iterations: 256
   lift_waypoint_count: 11
   solver:
-    method: SCIPY_TRF_BOUNDED_POSE_LEAST_SQUARES_V1
+    method: SCIPY_DOGBOX_BOUNDED_POSE_ANALYTIC_JACOBIAN_V3
     pregrasp_seed_rule: HOME_THEN_UNSCRAMBLED_SOBOL_INTERIOR_JOINT_LIMITS
     pregrasp_sobol_point_count: 8
     sobol_interior_lower_fraction: 0.10
@@ -142,9 +221,9 @@ ik:
     orientation_residual_length_scale_m_per_rad: 0.20
     position_tolerance_m: 1.0e-7
     orientation_tolerance_rad: 1.0e-6
-    function_tolerance: 1.0e-13
-    step_tolerance: 1.0e-13
-    gradient_tolerance: 1.0e-13
+    function_tolerance: 1.0e-9
+    step_tolerance: 1.0e-9
+    gradient_tolerance: 1.0e-9
     maximum_function_evaluations: 2000
 
 dynamic:
@@ -163,7 +242,7 @@ dynamic:
   contact_position_error_rad: 0.004
   contact_consecutive_samples: 6
   contact_endpoint_timeout_s: 0.5
-  preload_increment_rad: 0.050
+  preload_increment_rad: 0.075
   preload_duration_s: 0.5
   arm_stiffness: 2500.0
   arm_damping: 60.0

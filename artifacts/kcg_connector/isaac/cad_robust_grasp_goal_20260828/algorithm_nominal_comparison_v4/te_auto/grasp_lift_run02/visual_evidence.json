@@ -1,0 +1,119 @@
+{
+  "schema_version": "carts_grasp_v2_visual_evidence_v1",
+  "post_step_observation_only": true,
+  "returned_to_controller": false,
+  "records": [
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_nominal_comparison_v4/te_auto/grasp_lift_run02/visuals/01_pregrasp.png",
+      "step": 2910,
+      "simulation_time_s": 12.125,
+      "phase": "pregrasp_hold",
+      "object_center_m": [
+        0.520003330156503,
+        -0.21000138821949704,
+        0.2181354854284405
+      ],
+      "object_lift_from_pregrasp_m": 0.0,
+      "object_table_contact_count": 14,
+      "terminal_link_object_contact_counts": [
+        0,
+        0,
+        0
+      ],
+      "camera_eye_m": [
+        0.900003330156503,
+        0.12999861178050298,
+        0.4831354854284405
+      ],
+      "camera_target_m": [
+        0.520003330156503,
+        -0.21000138821949704,
+        0.23313548542844048
+      ]
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_nominal_comparison_v4/te_auto/grasp_lift_run02/visuals/02_three_finger_clamp.png",
+      "step": 3418,
+      "simulation_time_s": 14.241666666666667,
+      "phase": "preload",
+      "object_center_m": [
+        0.520002979276804,
+        -0.20989112186668757,
+        0.2181368409397043
+      ],
+      "object_lift_from_pregrasp_m": 1.3555112638174993e-06,
+      "object_table_contact_count": 9,
+      "terminal_link_object_contact_counts": [
+        1,
+        1,
+        1
+      ],
+      "camera_eye_m": [
+        0.900002979276804,
+        0.13010887813331246,
+        0.4831368409397043
+      ],
+      "camera_target_m": [
+        0.520002979276804,
+        -0.20989112186668757,
+        0.23313684093970433
+      ]
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_nominal_comparison_v4/te_auto/grasp_lift_run02/visuals/03_table_released_20mm.png",
+      "step": 5555,
+      "simulation_time_s": 23.145833333333332,
+      "phase": "lift",
+      "object_center_m": [
+        0.5193969280758571,
+        -0.20955517521964429,
+        0.2381407544657062
+      ],
+      "object_lift_from_pregrasp_m": 0.02000526903726571,
+      "object_table_contact_count": 0,
+      "terminal_link_object_contact_counts": [
+        1,
+        1,
+        1
+      ],
+      "camera_eye_m": [
+        0.8993969280758571,
+        0.13044482478035574,
+        0.5031407544657063
+      ],
+      "camera_target_m": [
+        0.5193969280758571,
+        -0.20955517521964429,
+        0.2531407544657062
+      ]
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/algorithm_nominal_comparison_v4/te_auto/grasp_lift_run02/visuals/04_final_hold.png",
+      "step": 8588,
+      "simulation_time_s": 35.78333333333333,
+      "phase": "hold",
+      "object_center_m": [
+        0.5194382895638733,
+        -0.20957144253082816,
+        0.27269183714132295
+      ],
+      "object_lift_from_pregrasp_m": 0.05455635171288245,
+      "object_table_contact_count": 0,
+      "terminal_link_object_contact_counts": [
+        1,
+        1,
+        1
+      ],
+      "camera_eye_m": [
+        0.8994382895638733,
+        0.13042855746917187,
+        0.537691837141323
+      ],
+      "camera_target_m": [
+        0.5194382895638733,
+        -0.20957144253082816,
+        0.28769183714132296
+      ]
+    }
+  ]
+}

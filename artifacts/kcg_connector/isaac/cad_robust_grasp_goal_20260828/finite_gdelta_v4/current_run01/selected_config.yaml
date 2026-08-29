@@ -1,0 +1,597 @@
+schema_version: carts_grasp_v2
+method: CARTS-Grasp-V2
+claim_scope: SIMULATION_ONLY_TWO_OBJECT_ZERO_TUNE_CASE_STUDY
+hardware_authorized: false
+inputs:
+  object_contract: src/kcg_connector/config/carts_grasp_objects_v1.yaml
+  hand_contract: src/kcg_connector/config/carts_hand_contact_v1.yaml
+  collision_roster: src/kcg_connector/config/carts_collision_roster_v1.yaml
+  development_object: current_d38999_26kj61sn_public_spec
+  transfer_object: te_deutsch_d38999_26fj35pn_step
+  hand_variant: DIRECT_USER_NAILFREE_STL
+  direct_nailfree_stl: /home/noob/Downloads/指尖无指甲.STL
+  direct_nailfree_stl_sha256: d2dc05c9367075acbf1f4970297b4d3ec6778a067a119fc04ee6c286d1961c58
+  direct_nailfree_stl_unit: mm
+  direct_nailfree_pad_surface:
+    semantic_authority: USER_CONFIRMED_BLUE_PAD_BODY
+    definition: WHOLE_CONNECTED_PAD_SURFACE_BOUNDED_BY_SHARP_INTERFACES
+    source_face_index_range_zero_based_inclusive:
+    - 8024
+    - 10465
+  direct_nailfree_link_transforms:
+    f1Link3:
+      yaw_rad: 2.34686878808
+      translation_m:
+      - 0.02049125144
+      - -0.00300734189
+      - 0.0
+    f2Link2:
+      yaw_rad: 2.539984764379217
+      translation_m:
+      - 0.020687502006
+      - 0.000981199056
+      - -0.023999999874
+    f3Link3:
+      yaw_rad: 2.34686878808
+      translation_m:
+      - 0.02049125144
+      - -0.00300734189
+      - 0.0
+surface_roles:
+  method: TASK_AXIS_OUTER_ENVELOPE_V1
+  angular_bin_count: 72
+  axial_bin_count: 24
+  outer_envelope_depth_m: 0.0015
+  minimum_radial_normal_component: 0.6
+  maximum_axial_normal_component: 0.65
+  radial_numerical_epsilon_m: 1.0e-09
+nominal_grasp_generation:
+  method: AXIAL_CENTER_OF_MASS_RADIUS_FULL_PAD_TABLE_CLEARANCE_V1
+  cad_section_ray_count: 72
+  ray_parallel_epsilon: 1.0e-14
+  segment_fraction_tolerance: 1.0e-10
+  palm_joint_position_rad: 1.5
+  pregrasp_radial_clearance_m:
+  - 0.007
+  - 0.007
+  - 0.007
+  joint_coarse_step_rad: 0.001
+  joint_root_bisection_iterations: 16
+  closing_derivative_step_rad: 0.0001
+  final_closure_increment_rad: 0.23
+  minimum_pregrasp_hand_table_clearance_m: 0.001
+  grasp_axis_position_m: 0.004991935483870969
+  hand_yaw_rad: 3.4033920413889422
+  approach_high_seed_arm_positions_rad:
+  - -0.0003974439419274982
+  - 0.46581667914834357
+  - -0.6771574582657441
+  - -0.9918815719825033
+  - 0.291078719466491
+  - 1.7678811999901962
+  - -0.30291275143800056
+  selected_by: BEST_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA
+  required_closing_joint_effort_nm:
+    f1j2: 0.4573614553101191
+    f2j1: 0.4459594138101849
+    f3j2: 0.4573614553101192
+  required_closing_joint_effort_source: COMPONENTWISE_MAXIMUM_OF_HOLD_AND_LIFT_UNIT_TASK_LP_AT_FROZEN_FRICTION_LOWER_BOUND
+candidate_generation:
+  candidate_count: 48
+  surface_pool_count: 384
+  random_seed: 20260823
+  reference_closure_phase: 0.45
+  pregrasp_closure_phase: 0.18
+  maximum_closure_phase: 0.75
+  preshape_joint_positions_rad:
+    f1j1: 0.7
+  deduplication:
+    palm_position_m: 0.002
+    palm_orientation_rad: 0.1308996938995747
+    anchor_position_m: 0.002
+    contact_rms_m: 0.002
+finite_cad_search:
+  method: COMPLETE_AXIS_ALIGNED_FULL_PAD_GRID_V4
+  search_space_frozen_before_evaluation: true
+  palm_anchor_rad: 0.7
+  palm_step_rad: 0.1
+  include_palm_joint_limit_endpoints: true
+  object_yaw_anchor_rad: 0.0
+  object_yaw_step_rad: 0.2617993877991494
+  object_axial_anchor: OBJECT_CENTER_OF_MASS
+  object_axial_step_m: 0.001
+  include_allowed_axial_band_endpoints: true
+  hand_lateral_offset_task_m:
+  - 0.0
+  - 0.0
+  hand_tilt_task_rad:
+  - 0.0
+  - 0.0
+  approach_path_sample_count: 51
+  closure_path_step_rule: ISAAC_FINGER_SPEED_TIMES_PHYSICS_DT
+  contact_patch_witness_limit_rule: FULL_PAD_TRIANGLE_COUNT
+  full_pad_contact_force_model: ONE_EQUAL_WITNESS_RESULTANT_PER_FULL_PAD
+  contact_resultant_point_rule: ARITHMETIC_MEAN_OF_FCL_COLLISION_WITNESS_POSITIONS
+  contact_resultant_normal_rule: NORMALIZED_ARITHMETIC_MEAN_OF_OBJECT_OUTWARD_FACE_NORMALS
+  independent_contact_torsional_moment_allowed: false
+  maximum_preload_increment_rule: MEASURED_EFFORT_ABORT_DIVIDED_BY_HAND_STIFFNESS
+  commanded_hand_joint_limit_margin_rule: STRICTLY_POSITIVE_AT_PREGRASP_CONTACT_AND_MAXIMUM_PRELOAD
+  friction_cone_edge_count: 8
+  nominal_normal_force_cap_n: 8.0
+  task_quality: MINIMUM_HOLD_AND_UPWARD_LIFT_LOAD_FACTOR
+  require_complete_candidate_evaluation: true
+  heuristic_candidate_deletion_allowed: false
+closure_prediction:
+  closing_order:
+  - finger_1_pad
+  - finger_2_pad
+  - finger_3_pad
+  phase_sample_count: 25
+  pad_surface_sample_count: 96
+  nearest_face_candidate_count: 16
+  contact_distance_m: 0.00075
+  initial_clearance_m: 0.001
+  minimum_inward_motion_m_per_phase: 1.0e-05
+  motion_derivative_phase_step: 0.0001
+fast_filter:
+  minimum_three_contact_triangle_area_m2: 1.0e-08
+  hand_table_state_rule: CANDIDATE_DIRECTION_OR_LEGACY_WORLD_Z_APPROACH_AND_COMPLETE_SEQUENTIAL_CLOSURE_CONTROL_STEPS
+  approach_path_sample_count: 5
+  table_penetration_tolerance_m: 1.0e-05
+  table_penetration_tolerance_source: NUMERICAL_TOLERANCE
+  arm_ik_policy: UNRESOLVED_UNTIL_PUBLIC_LEGACY_FORWARDER
+  nonpad_collision_policy: FCL_EXACT_NONPAD_AND_SELF_CONTROL_STATES_SAMPLED
+task_quality:
+  scenario_count: 16
+  random_seed: 20260823
+  lower_tail_fraction: 0.2
+  friction_cone_edges: 8
+  gravity_acceleration_m_s2: 9.80665
+  normal_force_operation_cap_n: 8.0
+  task_force_scale: OBJECT_MASS_TIMES_GRAVITY
+  task_moment_scale: FORCE_SCALE_TIMES_CHARACTERISTIC_RADIUS
+  mass_relative_error: 0.05
+  center_of_mass_error_m: 0.001
+  gravity_direction_error_rad: 0.03490658503988659
+  common_contact_position_error_m: 0.0005
+  contact_position_error_m: 0.0005
+  contact_normal_error_rad: 0.08726646259971647
+  linear_program:
+    solver: SCIPY_HIGHS
+    constraint_scaling: ROW_AND_COLUMN_INF_NORM
+    maximum_iterations: 10000
+    primal_feasibility_tolerance: 1.0e-09
+    dual_feasibility_tolerance: 1.0e-09
+    ipm_optimality_tolerance: 1.0e-10
+    physical_acceptance_gate: false
+robustness_evaluation:
+  schema_version: CARTS_V2_FINITE_PHYSICAL_PERTURBATIONS_V1
+  frozen_before_first_dynamic_run: true
+  cartesian_product_used: false
+  conclusion_limit: OBSERVED_ONLY_ON_THE_LISTED_FINITE_SCENARIOS
+  final_validation_protocol:
+    algorithm_and_controller_commit: d9a1c43
+    declared_before_any_final_validation_run: true
+    role: HELD_OUT_DYNAMIC_EVALUATION_AFTER_FINAL_FREEZE
+    values_are_unseen_interior_research_hypotheses: true
+    same_scenarios_for_both_objects_and_v4_v5: true
+    prior_final_scenarios_role: DEVELOPMENT_DATA_NOT_FINAL_EVALUATION
+    held_out_scenario_names:
+    - heldout_pose_x_minus_0p12mm
+    - heldout_yaw_plus_0p75deg
+    - heldout_friction_0p49
+    - heldout_mass_minus_2pct
+    - heldout_com_x_plus_0p4mm
+    - heldout_finger3_joint_minus_0p0015rad
+    - heldout_combo_c
+    - heldout_combo_d
+  bounds:
+    object_translation_x_m:
+    - -0.00017
+    - 0.00017
+    object_yaw_rad:
+    - -0.03490658503988659
+    - 0.03490658503988659
+    contact_friction_coefficient:
+    - 0.45
+    - 0.55
+    object_mass_scale:
+    - 0.95
+    - 1.05
+    center_of_mass_x_m:
+    - -0.001
+    - 0.001
+    finger_3_joint_target_offset_rad:
+    - -0.004
+    - 0.004
+    finger_3_preload_scale:
+    - 0.95
+    - 1.05
+  bound_sources:
+    object_translation_x_m: USER_REPORTED_0P17MM_PRIOR_SENSITIVITY
+    object_yaw_rad: EXISTING_RESEARCH_ORIENTATION_ERROR_BOUND
+    contact_friction_coefficient: FROZEN_SHARED_OBJECT_MATERIAL_INTERVAL
+    object_mass_scale: EXISTING_RESEARCH_MASS_RELATIVE_ERROR
+    center_of_mass_x_m: EXISTING_RESEARCH_CENTER_OF_MASS_ERROR
+    finger_3_joint_target_offset_rad: EXISTING_CONTACT_POSITION_ERROR_RAD
+    finger_3_preload_scale: EXPLICIT_SHARED_RESEARCH_ASSUMPTION
+  normalized_margin_scales_for_reporting_only:
+    lift_m: 0.001
+    hold_s: 0.1
+    slip_m: 0.001
+    effort_nm: 0.1
+    penetration_m: 0.001
+  scenarios:
+    nominal: {}
+    pose_x_minus_0p17mm:
+      object_translation_delta_m:
+      - -0.00017
+      - 0.0
+      - 0.0
+    pose_x_plus_0p17mm:
+      object_translation_delta_m:
+      - 0.00017
+      - 0.0
+      - 0.0
+    yaw_minus_2deg:
+      object_yaw_delta_rad: -0.03490658503988659
+    yaw_plus_2deg:
+      object_yaw_delta_rad: 0.03490658503988659
+    friction_lower_0p45:
+      contact_friction_coefficient: 0.45
+    friction_upper_0p55:
+      contact_friction_coefficient: 0.55
+    mass_minus_5pct:
+      object_mass_scale: 0.95
+    mass_plus_5pct:
+      object_mass_scale: 1.05
+    com_x_minus_1mm:
+      center_of_mass_delta_object_m:
+      - -0.001
+      - 0.0
+      - 0.0
+    com_x_plus_1mm:
+      center_of_mass_delta_object_m:
+      - 0.001
+      - 0.0
+      - 0.0
+    finger3_joint_minus_0p004rad:
+      finger_joint_target_offset_rad:
+        finger_3: -0.004
+    finger3_joint_plus_0p004rad:
+      finger_joint_target_offset_rad:
+        finger_3: 0.004
+    finger3_preload_minus_5pct:
+      finger_preload_scale:
+        finger_3: 0.95
+    finger3_preload_plus_5pct:
+      finger_preload_scale:
+        finger_3: 1.05
+    low_friction_high_mass:
+      contact_friction_coefficient: 0.45
+      object_mass_scale: 1.05
+    pose_plus_0p17mm_finger3_late:
+      object_translation_delta_m:
+      - 0.00017
+      - 0.0
+      - 0.0
+      finger_joint_target_offset_rad:
+        finger_3: -0.004
+    final_pose_x_plus_0p085mm:
+      object_translation_delta_m:
+      - 8.5e-05
+      - 0.0
+      - 0.0
+    final_yaw_minus_1deg:
+      object_yaw_delta_rad: -0.017453292519943295
+    final_friction_0p475:
+      contact_friction_coefficient: 0.475
+    final_mass_plus_2p5pct:
+      object_mass_scale: 1.025
+    final_com_x_minus_0p5mm:
+      center_of_mass_delta_object_m:
+      - -0.0005
+      - 0.0
+      - 0.0
+    final_finger3_joint_plus_0p002rad:
+      finger_joint_target_offset_rad:
+        finger_3: 0.002
+    final_combo_a:
+      object_translation_delta_m:
+      - 8.5e-05
+      - 0.0
+      - 0.0
+      object_yaw_delta_rad: -0.017453292519943295
+      contact_friction_coefficient: 0.475
+      object_mass_scale: 1.025
+      center_of_mass_delta_object_m:
+      - -0.0005
+      - 0.0
+      - 0.0
+      finger_joint_target_offset_rad:
+        finger_3: 0.002
+    final_combo_b:
+      object_translation_delta_m:
+      - -8.5e-05
+      - 0.0
+      - 0.0
+      object_yaw_delta_rad: 0.017453292519943295
+      contact_friction_coefficient: 0.475
+      object_mass_scale: 1.025
+      center_of_mass_delta_object_m:
+      - 0.0005
+      - 0.0
+      - 0.0
+      finger_joint_target_offset_rad:
+        finger_3: -0.002
+    heldout_pose_x_minus_0p12mm:
+      object_translation_delta_m:
+      - -0.00012
+      - 0.0
+      - 0.0
+    heldout_yaw_plus_0p75deg:
+      object_yaw_delta_rad: 0.013089969389957472
+    heldout_friction_0p49:
+      contact_friction_coefficient: 0.49
+    heldout_mass_minus_2pct:
+      object_mass_scale: 0.98
+    heldout_com_x_plus_0p4mm:
+      center_of_mass_delta_object_m:
+      - 0.0004
+      - 0.0
+      - 0.0
+    heldout_finger3_joint_minus_0p0015rad:
+      finger_joint_target_offset_rad:
+        finger_3: -0.0015
+    heldout_combo_c:
+      object_translation_delta_m:
+      - 0.00013
+      - 0.0
+      - 0.0
+      object_yaw_delta_rad: -0.010471975511965976
+      contact_friction_coefficient: 0.46
+      object_mass_scale: 1.03
+      center_of_mass_delta_object_m:
+      - -0.0006
+      - 0.0
+      - 0.0
+      finger_joint_target_offset_rad:
+        finger_3: 0.0025
+    heldout_combo_d:
+      object_translation_delta_m:
+      - -0.00014
+      - 0.0
+      - 0.0
+      object_yaw_delta_rad: 0.015707963267948967
+      contact_friction_coefficient: 0.48
+      object_mass_scale: 0.97
+      center_of_mass_delta_object_m:
+      - 0.0007
+      - 0.0
+      - 0.0
+      finger_joint_target_offset_rad:
+        finger_3: -0.002
+  numerical_sensitivity_separate_from_physical_u_delta: true
+exact_validation:
+  top_k: 3
+  per_candidate_time_budget_s: 900
+  interface_mismatch_policy: UNRESOLVED_FAILS_FORMAL_MAY_ENTER_RESEARCH
+ik:
+  interval_decimal_precision: 80
+  interval_maximum_root_bisection_iterations: 256
+  lift_waypoint_count: 11
+  solver:
+    method: SCIPY_DOGBOX_BOUNDED_POSE_ANALYTIC_JACOBIAN_V3
+    pregrasp_seed_rule: HOME_THEN_UNSCRAMBLED_SOBOL_INTERIOR_JOINT_LIMITS
+    pregrasp_sobol_point_count: 8
+    sobol_interior_lower_fraction: 0.1
+    sobol_interior_upper_fraction: 0.9
+    feasible_choice_rule: FIRST_FEASIBLE_IN_FIXED_SEED_ORDER
+    orientation_residual_length_scale_m_per_rad: 0.2
+    position_tolerance_m: 1.0e-07
+    orientation_tolerance_rad: 1.0e-06
+    function_tolerance: 1.0e-09
+    step_tolerance: 1.0e-09
+    gradient_tolerance: 1.0e-09
+    maximum_function_evaluations: 2000
+dynamic:
+  physics_dt_s: 0.004166666666666667
+  settle_duration_s: 2.0
+  approach_clearance_height_m: 0.05
+  approach_above_duration_s: 3.0
+  approach_above_settle_error_rad: 0.02
+  approach_above_settle_consecutive_samples: 30
+  approach_above_settle_timeout_s: 1.0
+  approach_descent_duration_s: 4.0
+  pregrasp_hold_duration_s: 0.5
+  effort_tare_duration_s: 0.5
+  finger_maximum_speed_rad_s: 0.18
+  contact_effort_rise_nm: 0.02
+  contact_position_error_rad: 0.004
+  contact_consecutive_samples: 6
+  contact_endpoint_timeout_s: 0.5
+  preload_increment_rad: 0.075
+  preload_duration_s: 0.5
+  arm_stiffness: 1250.0
+  arm_damping: 60.0
+  lift_arm_damping_nm_s_rad: 300.0
+  arm_control_law: NATIVE_FORCE_DRIVE_GRAVITY_EQUIVALENT_POSITION_BIAS_V1
+  hand_stiffness: 12.0
+  hand_damping: 2.0
+  arm_drive_maximum_effort_nm: 100.0
+  hand_drive_maximum_effort_nm: 1.0
+  measured_effort_abort_nm: 0.9
+  maximum_joint_speed_rad_s: 3.0
+  maximum_arm_tracking_error_rad: 0.2
+  lift_distance_m: 0.05
+  lift_command_distance_m: 0.056
+  lift_duration_s: 19.0
+  registered_lift_peak_acceleration_m_s2: 0.0008316402769490454
+  hold_duration_s: 2.0
+  lift_tolerance_m: 0.001
+  lift_acceleration_difference_window_samples: 4
+  lift_acceleration_tolerance_m_s2: 0.02
+  table_release_clearance_m: 0.001
+  maximum_table_penetration_m: 0.002
+  disturbance_executed: false
+  online_object_truth_allowed: false
+  online_contact_truth_allowed: false
+  object_pose_write_after_start_allowed: false
+  robot_asset: artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/handarm.usda
+  registered_grasps:
+    current_d38999_26kj61sn_public_spec:
+      schema_version: carts_v2_registered_grasp_v1
+      grasp_id: centered_outer_shell_tripod_v1
+      object_id: current_d38999_26kj61sn_public_spec
+      hardware_authorized: false
+      construction_method: MECHANICS_DERIVED_FROM_REGISTERED_SCENE_HAND_KINEMATICS_AND_FROZEN_PROPERTIES
+      control_plan:
+        object_from_hand_row_major:
+        - 1.0
+        - 0.0
+        - 0.0
+        - -0.00017
+        - 0.0
+        - 1.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 1.0
+        - -0.405
+        - 0.0
+        - 0.0
+        - 0.0
+        - 1.0
+        approach_direction_object:
+        - 0.0
+        - 0.0
+        - 1.0
+        approach_high_seed_arm_positions_rad:
+        - 0.27259810572824394
+        - 0.7839521240485263
+        - 1.5770809252075877
+        - 1.0267783042174294
+        - -2.2818622977803105
+        - 1.9419760056473545
+        - 2.2508184091970773
+        pregrasp_joint_positions_rad:
+        - 0.7
+        - 0.656261
+        - 0.447734
+        - 0.656261
+        final_joint_positions_rad:
+        - 0.7
+        - 0.9
+        - 0.72
+        - 0.9
+      intended_contact_regions:
+        frame: object
+        region: ALLOWED_OUTER_LOAD_BEARING_SHELL_NEAR_COM
+        radial_range_m:
+        - 0.019
+        - 0.024
+        axial_range_m:
+        - 0.01
+        - 0.024
+        terminal_links:
+        - f1Link3
+        - f2Link2
+        - f3Link3
+        planned_minimum_radial_gap_m: 0.002
+        planned_gap_is_not_contact_evidence: true
+      closure_control:
+        method: SEQUENTIAL_LOW_SPEED_JOINT_EFFORT_CONTACT_THEN_FINITE_PRELOAD
+        finger_maximum_speed_rad_s: 0.18
+        contact_detection_effort_rise_nm: 0.02
+      finite_clamp_target:
+        preload_increment_rad: 0.025
+        estimated_additional_joint_torque_nm: 0.3
+        hand_drive_maximum_effort_nm: 1.0
+        measured_effort_abort_nm: 0.9
+        engineering_estimate:
+          object_mass_kg: 0.31
+          gravity_m_s2: 9.80665
+          resolved_dynamic_friction_coefficient: 1.4
+          required_equal_normal_force_per_finger_n: 0.724
+          kinematic_moment_arm_range_m:
+          - 0.0659
+          - 0.0696
+          estimated_additional_normal_force_per_finger_range_n:
+          - 4.31
+          - 4.552
+          simulation_estimate_not_hardware_calibration: true
+      lift_trajectory:
+        direction_world:
+        - 0.0
+        - 0.0
+        - 1.0
+        distance_m: 0.052
+        duration_s: 19.0
+        arm_damping_nm_s_rad: 160.0
+        registered_peak_acceleration_m_s2: 0.0008316402769490454
+      hold_control:
+        method: HOLD_FINAL_ARM_AND_FINITE_PRELOAD_TARGETS
+        duration_s: 2.0
+  object_scenes:
+    current_d38999_26kj61sn_public_spec:
+      scene_kind: D38999_PAIR_TABLETOP
+      scene_config: artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/scene.yaml
+      frozen_settled_world_from_object_row_major:
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.52
+      - 0.0
+      - -1.0
+      - 0.0
+      - -0.21
+      - 0.0
+      - 0.0
+      - -1.0
+      - 0.2305
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      pose_source: REGISTERED_SCENE_INITIAL_RX180_MINUS_15MM_SETTLE
+    te_deutsch_d38999_26fj35pn_step:
+      scene_kind: FREE_SINGLE_RIGID_ON_SHARED_FINITE_TABLE
+      environment_scene_config: artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/scene.yaml
+      asset: artifacts/kcg_connector/isaac/te_j35_free_tabletop_v1/TE_J35_FREE_PLUG_V1.usdc
+      manifest: artifacts/kcg_connector/isaac/te_j35_free_tabletop_v1/MANIFEST.json
+      reference_prim_path: /World/TE_J35FreePlug
+      component_bottom_offsets_m:
+      - 0.0
+      frozen_settled_world_from_object_row_major:
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.52
+      - 0.0
+      - -1.0
+      - 0.0
+      - -0.21
+      - 0.0
+      - 0.0
+      - -1.0
+      - 0.2
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      pose_source: CARTS_HASH_BOUND_GEOMETRY_DERIVED_TABLETOP_POSE_V1
+parameter_sources:
+  object_geometry_mass_com_inertia: HARDWARE_FACT_OR_REGISTERED_SIMULATION_MODEL
+  urdf_position_limits_and_pad_identity: HARDWARE_FACT
+  urdf_effort_limits: UNKNOWN_UNCALIBRATED_MODEL_VALUE
+  normal_force_operation_cap_n: SIM_OPERATION_CAP
+  friction_mass_com_gravity_contact_ranges: STUDY_RANGE
+  surface_and_candidate_thresholds: STUDY_RANGE
+  dynamic_motion_and_drive_limits: SIM_OPERATION_CAP
+  dynamic_gravity_compensation: SIM_OPERATION_CAP
+  dynamic_approach_settle_gate: SIM_OPERATION_CAP
+  dynamic_contact_detection_thresholds: STUDY_RANGE
+  floating_point_tolerances: NUMERICAL_TOLERANCE
+  legacy_pad_capacity_15_n: UNKNOWN
+  wrist_load_limit: UNKNOWN

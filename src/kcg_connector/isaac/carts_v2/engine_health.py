@@ -284,7 +284,10 @@ def finalize_engine_evaluation(evaluation, engine_runtime, log_path: Path):
     controller = evaluation.get("controller_preflight_pass") is True
     identity = evaluation.get("identity_hash_check_pass") is True
     preflight_boundary = bool(
-        evaluation.get("schema_version") == "carts_grasp_v2_dynamic_evaluation_v2"
+        evaluation.get("schema_version") in {
+            "carts_grasp_v2_dynamic_evaluation_v2",
+            "carts_grasp_v2_dynamic_evaluation_v3",
+        }
         and evaluation.get("mode") == "preflight"
         and evaluation.get("hardware_authorized") is False
         and evaluation.get("formal_dynamic_pass") is False
@@ -360,7 +363,10 @@ def preflight_is_accepted(document: Mapping[str, object]) -> bool:
         "evaluator_source_sha256", "engine_health_source_sha256",
     )
     boundary = bool(
-        document.get("schema_version") == "carts_grasp_v2_dynamic_evaluation_v2"
+        document.get("schema_version") in {
+            "carts_grasp_v2_dynamic_evaluation_v2",
+            "carts_grasp_v2_dynamic_evaluation_v3",
+        }
         and document.get("mode") == "preflight"
         and document.get("hardware_authorized") is False
         and document.get("formal_dynamic_pass") is False

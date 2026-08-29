@@ -399,7 +399,14 @@ def allowed_object_grasp_center_m(inputs) -> np.ndarray:
     return center
 
 
-def generate_axial_pad_intersection_grasp(inputs) -> dict[str, object]:
+def generate_axial_pad_intersection_grasp(
+    inputs,
+    *,
+    palm_joint_position_rad: float | None = None,
+    grasp_axis_position_m: float | None = None,
+    hand_yaw_rad: float | None = None,
+    apply_table_clearance: bool = True,
+) -> dict[str, object]:
     """Generate one bounded executable grasp from CAD and the complete pad surfaces."""
 
     settings = inputs.config.section("nominal_grasp_generation")
@@ -411,7 +418,22 @@ def generate_axial_pad_intersection_grasp(inputs) -> dict[str, object]:
     ray_count = int(settings["cad_section_ray_count"])
     coarse_step = float(settings["joint_coarse_step_rad"])
     bisections = int(settings["joint_root_bisection_iterations"])
-    palm_position = float(settings["palm_joint_position_rad"])
+    palm_position = float(
+        settings["palm_joint_position_rad"]
+        if palm_joint_position_rad is None
+        else palm_joint_position_rad
+    )
+    yaw = float(
+        settings.get("hand_yaw_rad", 0.0)
+        if hand_yaw_rad is None
+        else hand_yaw_rad
+    )
+    approach_seed_value = settings.get("approach_high_seed_arm_positions_rad")
+    approach_seed = (
+        None
+        if approach_seed_value is None
+        else np.asarray(approach_seed_value, dtype=np.float64)
+    )
     clearances = np.asarray(
         settings["pregrasp_radial_clearance_m"], dtype=np.float64
     )
@@ -433,6 +455,13 @@ def generate_axial_pad_intersection_grasp(inputs) -> dict[str, object]:
         or derivative_step <= 0.0
         or not math.isfinite(minimum_table_clearance)
         or minimum_table_clearance < 0.0
+        or not math.isfinite(palm_position)
+        or not math.isfinite(yaw)
+        or not isinstance(apply_table_clearance, bool)
+        or (
+            approach_seed is not None
+            and (approach_seed.shape != (7,) or not np.all(np.isfinite(approach_seed)))
+        )
     ):
         raise ValueError("nominal grasp generation bounds are malformed")
     if inputs.task_grip_surfaces is None:
@@ -447,7 +476,13 @@ def generate_axial_pad_intersection_grasp(inputs) -> dict[str, object]:
     z_min = float(np.min(vertices_task[:, 2]))
     z_max = float(np.max(vertices_task[:, 2]))
     center_of_mass_task = (np.asarray(model.com_m) - origin) @ basis
-    grasp_z = float(center_of_mass_task[2])
+    grasp_z = float(
+        settings.get("grasp_axis_position_m", center_of_mass_task[2])
+        if grasp_axis_position_m is None
+        else grasp_axis_position_m
+    )
+    if not math.isfinite(grasp_z) or not z_min <= grasp_z <= z_max:
+        raise ValueError("requested grasp-axis position is outside the CAD")
 
     import trimesh
 
@@ -603,7 +638,20 @@ def generate_axial_pad_intersection_grasp(inputs) -> dict[str, object]:
     hand_origin_task = np.asarray(
         (0.0, 0.0, grasp_z - float(np.mean(contact_points_hand[:, 2])))
     )
-    contact_points_task = contact_points_hand + hand_origin_task
+    if yaw == 0.0:
+        yaw_rotation = np.eye(3, dtype=np.float64)
+        grasp_rotation = basis
+        contact_points_task = contact_points_hand + hand_origin_task
+    else:
+        cosine, sine = math.cos(yaw), math.sin(yaw)
+        yaw_rotation = np.asarray(
+            ((cosine, -sine, 0.0), (sine, cosine, 0.0), (0.0, 0.0, 1.0)),
+            dtype=np.float64,
+        )
+        grasp_rotation = basis @ yaw_rotation
+        contact_points_task = (
+            contact_points_hand @ yaw_rotation.T + hand_origin_task
+        )
     angles = np.sort(np.mod(
         np.arctan2(contact_points_task[:, 1], contact_points_task[:, 0]),
         2.0 * np.pi,
@@ -613,7 +661,7 @@ def generate_axial_pad_intersection_grasp(inputs) -> dict[str, object]:
         raise ValueError("predicted contacts do not surround the object axis")
 
     object_from_hand = np.eye(4, dtype=np.float64)
-    object_from_hand[:3, :3] = basis
+    object_from_hand[:3, :3] = grasp_rotation
     object_from_hand[:3, 3] = origin + basis @ hand_origin_task
     contact_points_object = contact_points_task @ basis.T + origin
 
@@ -637,8 +685,10 @@ def generate_axial_pad_intersection_grasp(inputs) -> dict[str, object]:
             minimum_world_z = link_minimum_world_z
             limiting_link = link_name
     initial_table_clearance = minimum_world_z - float(inputs.table_top_z_m)
-    table_clearance_shift = max(
-        0.0, minimum_table_clearance - initial_table_clearance
+    table_clearance_shift = (
+        max(0.0, minimum_table_clearance - initial_table_clearance)
+        if apply_table_clearance
+        else 0.0
     )
     if table_clearance_shift > 0.0:
         shift_world = np.asarray((0.0, 0.0, table_clearance_shift))
@@ -657,17 +707,22 @@ def generate_axial_pad_intersection_grasp(inputs) -> dict[str, object]:
         contact_points_object[1] - contact_points_object[0],
         contact_points_object[2] - contact_points_object[0],
     )))
+    control_plan = {
+        "object_from_hand_row_major": object_from_hand.ravel().tolist(),
+        "approach_direction_object": model.assembly_axis.tolist(),
+        "pregrasp_joint_positions_rad": list(map(float, pregrasp)),
+        "final_joint_positions_rad": list(map(float, final)),
+    }
+    if approach_seed is not None:
+        control_plan["approach_high_seed_arm_positions_rad"] = approach_seed.tolist()
     return {
         "method": settings["method"],
-        "control_plan": {
-            "object_from_hand_row_major": object_from_hand.ravel().tolist(),
-            "approach_direction_object": model.assembly_axis.tolist(),
-            "pregrasp_joint_positions_rad": list(map(float, pregrasp)),
-            "final_joint_positions_rad": list(map(float, final)),
-        },
+        "control_plan": control_plan,
         "evidence": {
             "derived_only_from_current_object_cad_shared_hand_and_frozen_table_geometry": True,
             "cad_reference_section_z_m": grasp_z,
+            "palm_joint_position_rad": palm_position,
+            "hand_yaw_rad": yaw,
             "cad_section_outer_radius_m": object_radius,
             "cad_section_ray_radius_range_m": [min(radii), max(radii)],
             "predicted_contact_joint_positions_rad": list(map(float, contact)),

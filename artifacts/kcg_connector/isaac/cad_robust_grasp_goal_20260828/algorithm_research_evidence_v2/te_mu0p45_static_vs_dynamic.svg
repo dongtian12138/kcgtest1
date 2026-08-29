@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="540" viewBox="0 0 1080 540" role="img" aria-labelledby="title desc">
+  <title id="title">TE effective friction 0.45: offline clearance priority versus Isaac dynamic outcome</title>
+  <desc id="desc">The low-spread V5 candidate has the larger offline worst clearance but fails to leave the table. With the same V5 robust-effort policy, the high-spread component representative has lower offline clearance but lifts 54.915 millimetres and holds suspended for two seconds.</desc>
+  <rect width="1080" height="540" fill="#ffffff"/>
+  <text x="540" y="34" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="700" fill="#18212b">TE，有效 μ=0.45：离线优先指标与真实动态结果相反</text>
+  <text x="540" y="60" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#52606d">同一控制器；低张开为 V5 全局选择，高张开为隔离掌角分支的冻结字典序代表</text>
+
+  <g transform="translate(70,92)">
+    <text x="205" y="0" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="700" fill="#18212b">离线最坏禁止接触间隙（mm，越大越优先）</text>
+    <line x1="55" y1="308" x2="400" y2="308" stroke="#4a5568" stroke-width="1.5"/>
+    <line x1="55" y1="8" x2="55" y2="308" stroke="#4a5568" stroke-width="1.5"/>
+    <g font-family="sans-serif" font-size="12" fill="#52606d">
+      <text x="45" y="312" text-anchor="end">0.0</text>
+      <text x="45" y="252" text-anchor="end">0.2</text>
+      <text x="45" y="192" text-anchor="end">0.4</text>
+      <text x="45" y="132" text-anchor="end">0.6</text>
+      <text x="45" y="72" text-anchor="end">0.8</text>
+      <text x="45" y="12" text-anchor="end">1.0</text>
+    </g>
+    <g stroke="#d8dee6" stroke-width="1">
+      <line x1="55" y1="248" x2="400" y2="248"/>
+      <line x1="55" y1="188" x2="400" y2="188"/>
+      <line x1="55" y1="128" x2="400" y2="128"/>
+      <line x1="55" y1="68" x2="400" y2="68"/>
+      <line x1="55" y1="8" x2="400" y2="8"/>
+    </g>
+    <rect x="105" y="41.4" width="90" height="266.6" fill="#3b82f6"/>
+    <rect x="265" y="168.2" width="90" height="139.8" fill="#10b981"/>
+    <g font-family="sans-serif" font-size="14" font-weight="700" fill="#18212b">
+      <text x="150" y="32" text-anchor="middle">0.889</text>
+      <text x="310" y="159" text-anchor="middle">0.466</text>
+    </g>
+    <g font-family="sans-serif" font-size="13" fill="#18212b">
+      <text x="150" y="330" text-anchor="middle">低张开 0.5 rad</text>
+      <text x="150" y="349" text-anchor="middle">V5 全局选择</text>
+      <text x="310" y="330" text-anchor="middle">高张开 1.5 rad</text>
+      <text x="310" y="349" text-anchor="middle">分支代表</text>
+    </g>
+  </g>
+
+  <g transform="translate(585,92)">
+    <text x="205" y="0" text-anchor="middle" font-family="sans-serif" font-size="17" font-weight="700" fill="#18212b">Isaac 最大抬升（mm）与真实悬空保持</text>
+    <line x1="55" y1="308" x2="400" y2="308" stroke="#4a5568" stroke-width="1.5"/>
+    <line x1="55" y1="8" x2="55" y2="308" stroke="#4a5568" stroke-width="1.5"/>
+    <g font-family="sans-serif" font-size="12" fill="#52606d">
+      <text x="45" y="312" text-anchor="end">0</text>
+      <text x="45" y="262" text-anchor="end">10</text>
+      <text x="45" y="212" text-anchor="end">20</text>
+      <text x="45" y="162" text-anchor="end">30</text>
+      <text x="45" y="112" text-anchor="end">40</text>
+      <text x="45" y="62" text-anchor="end">50</text>
+      <text x="45" y="12" text-anchor="end">60</text>
+    </g>
+    <g stroke="#d8dee6" stroke-width="1">
+      <line x1="55" y1="258" x2="400" y2="258"/>
+      <line x1="55" y1="208" x2="400" y2="208"/>
+      <line x1="55" y1="158" x2="400" y2="158"/>
+      <line x1="55" y1="108" x2="400" y2="108"/>
+      <line x1="55" y1="58" x2="400" y2="58"/>
+      <line x1="55" y1="8" x2="400" y2="8"/>
+    </g>
+    <line x1="55" y1="58" x2="400" y2="58" stroke="#dc2626" stroke-width="2" stroke-dasharray="7 5"/>
+    <text x="397" y="51" text-anchor="end" font-family="sans-serif" font-size="12" fill="#dc2626">50 mm 目标</text>
+    <rect x="105" y="304.75" width="90" height="3.25" fill="#3b82f6"/>
+    <rect x="265" y="33.425" width="90" height="274.575" fill="#10b981"/>
+    <g font-family="sans-serif" font-size="14" font-weight="700" fill="#18212b">
+      <text x="150" y="294" text-anchor="middle">0.649</text>
+      <text x="310" y="24" text-anchor="middle">54.915</text>
+    </g>
+    <g font-family="sans-serif" font-size="13" fill="#18212b">
+      <text x="150" y="330" text-anchor="middle">未离桌</text>
+      <text x="150" y="349" text-anchor="middle">悬空保持 0 s</text>
+      <text x="310" y="330" text-anchor="middle">离桌</text>
+      <text x="310" y="349" text-anchor="middle">悬空保持 2.000 s</text>
+    </g>
+  </g>
+
+  <g font-family="sans-serif" font-size="12" fill="#52606d">
+    <text x="70" y="492">数据：V5 搜索的 worst_minimum_forbidden_clearance_m；同一鲁棒 effort 策略下的 Isaac evaluation.json。</text>
+    <text x="70" y="512">结论边界：单一 TE 型号、单一有效摩擦工况、simulation-only；不证明连续空间最优或普遍鲁棒性。</text>
+  </g>
+</svg>

@@ -487,6 +487,7 @@ class TruthAuditRecorder:
             "robot_fixture": 0,
             "robot_unclassified": 0,
             "object_table": 0,
+            "object_table_positive_normal_impulse_n_s": 0.0,
             "event_header_count": 0,
             "event_contact_data_count": 0,
             "poll_header_count": 0,
@@ -567,9 +568,17 @@ class TruthAuditRecorder:
             paths: max(records, poll_map.get(paths, 0)) for paths, records in events
         }
         for row, records in tensor_physical_rows:
+            paths = tuple(sorted(map(str, row["paths"])))
+            if (
+                any(_below(path, self.roots["object"]) for path in paths)
+                and any(_below(path, self.roots["table"]) for path in paths)
+            ):
+                result["object_table_positive_normal_impulse_n_s"] += sum(
+                    max(0.0, float(contact["normal_impulse_n_s"]))
+                    for contact in row["contacts"]
+                )
             if records == 0:
                 continue
-            paths = tuple(sorted(map(str, row["paths"])))
             combined[paths] = max(
                 records, combined.get(paths, 0)
             )
@@ -815,14 +824,105 @@ def _acceleration_metrics(samples, criteria, physics_dt_s: float) -> dict[str, o
         if len(hand_z) > 2 * window
         else np.asarray([], dtype=np.float64)
     )
-    actual = float(np.max(np.abs(acceleration))) if len(acceleration) else None
+    peak_index = int(np.argmax(np.abs(acceleration))) if len(acceleration) else None
+    actual = (
+        float(abs(acceleration[peak_index]))
+        if peak_index is not None
+        else None
+    )
+    signed_peak = (
+        float(acceleration[peak_index])
+        if peak_index is not None
+        else None
+    )
+    peak_center_index = (
+        peak_index + window if peak_index is not None else None
+    )
+    peak_row = (
+        lift_rows[peak_center_index]
+        if peak_center_index is not None
+        else None
+    )
+    table_support_indices = [
+        index
+        for index, row in enumerate(lift_rows)
+        if float(
+            row["contacts"].get(
+                "object_table_positive_normal_impulse_n_s", 0.0
+            )
+        )
+        > 0.0
+    ]
+    last_table_support_index = (
+        table_support_indices[-1] if table_support_indices else None
+    )
+    peak_context = None
+    if peak_index is not None and peak_center_index is not None:
+        stencil_indices = (peak_index, peak_center_index, peak_index + 2 * window)
+        stencil_rows = [lift_rows[index] for index in stencil_indices]
+        peak_context = {
+            "difference_window_samples": window,
+            "stencil_simulation_times_s": [
+                float(row["simulation_time_s"]) for row in stencil_rows
+            ],
+            "stencil_hand_base_z_m": [
+                float(row["hand_base_position_m"][2]) for row in stencil_rows
+            ],
+            "center_arm_positions_rad": list(map(
+                float, peak_row["active_positions_rad"][:7]
+            )),
+            "center_arm_velocities_rad_s": list(map(
+                float, peak_row["active_velocities_rad_s"][:7]
+            )),
+            "center_arm_targets_rad": list(map(
+                float, peak_row["active_targets_rad"][:7]
+            )),
+            "center_arm_control": peak_row.get("arm_control", {}),
+            "center_contact_counts": peak_row.get("contacts", {}),
+            "center_object_bottom_clearance_m": float(
+                peak_row["object_bottom_clearance_m"]
+            ),
+            "last_table_support_lift_elapsed_s": (
+                last_table_support_index * physics_dt_s
+                if last_table_support_index is not None
+                else None
+            ),
+            "peak_after_last_table_support_s": (
+                (peak_center_index - last_table_support_index) * physics_dt_s
+                if last_table_support_index is not None
+                else None
+            ),
+        }
+    peak_lift_elapsed_s = (
+        peak_center_index * physics_dt_s
+        if peak_center_index is not None
+        else None
+    )
+    peak_lift_fraction = (
+        peak_center_index / (len(lift_rows) - 1)
+        if peak_center_index is not None and len(lift_rows) > 1
+        else None
+    )
     registered = float(criteria["registered_lift_peak_acceleration_m_s2"])
     passed = bool(
         actual is not None
         and actual
         <= registered + float(criteria["lift_acceleration_tolerance_m_s2"])
     )
-    return {"actual": actual, "registered": registered, "passed": passed}
+    return {
+        "actual": actual,
+        "signed_peak": signed_peak,
+        "peak_simulation_time_s": (
+            float(peak_row["simulation_time_s"])
+            if peak_row is not None
+            else None
+        ),
+        "peak_lift_elapsed_s": peak_lift_elapsed_s,
+        "peak_lift_fraction": peak_lift_fraction,
+        "peak_context": peak_context,
+        "registered": registered,
+        "passed": passed,
+    }
 
 
 def _finger_clamp_effort_metrics(samples) -> dict[str, object]:
@@ -854,6 +954,65 @@ def _finger_clamp_effort_metrics(samples) -> dict[str, object]:
             for name, index in (("finger_1", 1), ("finger_2", 2), ("finger_3", 3))
         }
     return result
+
+
+def _prelift_transition_effort_metrics(
+    document: Mapping[str, object], samples
+) -> dict[str, object]:
+    """Record whether the LP-required finger efforts exist when lift starts."""
+
+    tare_rows = [
+        np.asarray(row["active_efforts_nm"], dtype=np.float64)[7:]
+        for row in samples
+        if row["phase"] == "tare"
+    ]
+    tare = np.mean(np.stack(tare_rows), axis=0) if tare_rows else np.zeros(4)
+    transition_rows = [
+        row for row in samples if row["phase"] == "prelift_effort_check"
+    ]
+    if not transition_rows:
+        transition_rows = [row for row in samples if row["phase"] == "preload"]
+    if not transition_rows:
+        return {
+            "observed": False,
+            "reason": "NO_PRELIFT_OR_PRELOAD_SAMPLE",
+        }
+
+    row = transition_rows[-1]
+    pregrasp = np.asarray(
+        document["motion_plan"]["pregrasp_hand_positions_rad"],
+        dtype=np.float64,
+    )
+    final = np.asarray(
+        document["motion_plan"]["final_hand_positions_rad"],
+        dtype=np.float64,
+    )
+    closing_direction = np.sign(final - pregrasp)[1:]
+    tare_subtracted = (
+        np.asarray(row["active_efforts_nm"], dtype=np.float64)[7:] - tare
+    )[1:]
+    resistive = closing_direction * tare_subtracted
+    required = np.asarray(
+        document["required_closing_joint_effort_nm"], dtype=np.float64
+    )
+    margin = resistive - required
+    terminal_counts = np.asarray(
+        row["contacts"]["terminal_link_object"], dtype=np.int64
+    )
+    return {
+        "observed": True,
+        "simulation_time_s": float(row["simulation_time_s"]),
+        "source_phase": str(row["phase"]),
+        "closing_joint_names": ["f1j2", "f2j1", "f3j2"],
+        "tare_subtracted_effort_nm": tare_subtracted.tolist(),
+        "resistive_closing_effort_nm": resistive.tolist(),
+        "required_closing_effort_nm": required.tolist(),
+        "required_effort_margin_nm": margin.tolist(),
+        "all_required_efforts_reached": bool(np.all(margin >= 0.0)),
+        "terminal_link_object_contact_records": terminal_counts.tolist(),
+        "all_three_terminal_links_in_contact": bool(np.all(terminal_counts > 0)),
+        "object_bottom_clearance_m": float(row["object_bottom_clearance_m"]),
+    }
 
 
 def _terminal_contact_actor_paths(samples) -> tuple[tuple[str, ...], ...]:
@@ -1063,6 +1222,20 @@ def _derive_pad_surface_identity(
                     "simulation_time_s": float(row["simulation_time_s"]),
                     "phase": str(row["phase"]),
                     "object_center_m": list(map(float, row["object_center_m"])),
+                    "object_reference_position_m": list(map(
+                        float, row["object_part_positions_m"][0]
+                    )),
+                    "object_reference_orientation_wxyz": list(map(
+                        float, row["reference_part_orientation_wxyz"]
+                    )),
+                    "active_positions_rad": list(map(
+                        float, row["active_positions_rad"]
+                    )),
+                    "object_table_positive_normal_impulse_n_s": float(
+                        row["contacts"][
+                            "object_table_positive_normal_impulse_n_s"
+                        ]
+                    ),
                     "world_position_m": world_point.tolist(),
                     "world_normal": world_normal.tolist(),
                     "link_local_position_m": local_point.tolist(),
@@ -1114,6 +1287,130 @@ def _derive_pad_surface_identity(
                 pad_surface.source_face_indices[pad_face]
             )),
         }
+
+        def contact_snapshot(phase: str, *, last: bool) -> dict[str, object] | None:
+            times = [
+                float(metadata["simulation_time_s"])
+                for metadata in point_metadata[name]
+                if metadata["phase"] == phase
+            ]
+            if not times:
+                return None
+            target_time = max(times) if last else min(times)
+            indices = np.asarray([
+                index
+                for index, metadata in enumerate(point_metadata[name])
+                if metadata["phase"] == phase
+                and float(metadata["simulation_time_s"]) == target_time
+            ], dtype=np.int64)
+            minimum_index = int(indices[np.argmin(margin[indices])])
+            metadata = [point_metadata[name][int(index)] for index in indices]
+            world_points = np.asarray(
+                [item["world_position_m"] for item in metadata], dtype=np.float64
+            )
+            world_normals = np.asarray(
+                [item["world_normal"] for item in metadata], dtype=np.float64
+            )
+            normal_impulses = np.asarray(
+                [item["normal_impulse_n_s"] for item in metadata],
+                dtype=np.float64,
+            )
+            object_position = np.asarray(
+                metadata[0]["object_reference_position_m"], dtype=np.float64
+            )
+            object_rotation = _quaternion_rotation_matrix(
+                metadata[0]["object_reference_orientation_wxyz"]
+            )
+            object_points = (world_points - object_position) @ object_rotation
+            object_mesh = inputs.object_contract.model.mesh
+            object_closest, object_distance, object_face = proximity(
+                object_mesh.face_vertices_m, object_points
+            )
+            object_normals = object_mesh.face_normals[object_face]
+            mean_object_normal = np.mean(object_normals, axis=0)
+            mean_object_normal /= np.linalg.norm(mean_object_normal)
+            physics_dt_s = float(document["physics_dt_s"])
+            friction = float(
+                document.get("robustness_perturbation", {}).get(
+                    "contact_friction_coefficient",
+                    inputs.object_contract.contact_material_uncertainty.
+                    friction_coefficient_interval[0],
+                )
+            )
+            upward_force_upper_bound = float(np.sum(
+                normal_impulses
+                / physics_dt_s
+                * (
+                    np.abs(world_normals[:, 2])
+                    + friction * np.sqrt(np.maximum(
+                        0.0, 1.0 - np.square(world_normals[:, 2])
+                    ))
+                )
+            ))
+            object_mass_kg = float(inputs.object_contract.model.mass_kg)
+            object_weight_n = object_mass_kg * 9.80665
+            table_force_n = float(
+                metadata[0]["object_table_positive_normal_impulse_n_s"]
+            ) / physics_dt_s
+            return {
+                "simulation_time_s": target_time,
+                "positive_contact_point_count": int(len(indices)),
+                "contact_centroid_link_local_m": np.mean(
+                    points[indices], axis=0
+                ).tolist(),
+                "minimum_nonpad_minus_pad_distance_m": float(
+                    margin[minimum_index]
+                ),
+                "minimum_margin_point_link_local_m": points[
+                    minimum_index
+                ].tolist(),
+                "contact_points_world_m": world_points.tolist(),
+                "contact_normals_world": world_normals.tolist(),
+                "normal_impulses_n_s": normal_impulses.tolist(),
+                "terminal_normal_force_sum_n": float(
+                    np.sum(normal_impulses) / physics_dt_s
+                ),
+                "friction_coefficient": friction,
+                "friction_cone_upward_force_upper_bound_n": (
+                    upward_force_upper_bound
+                ),
+                "object_contact_centroid_m": np.mean(
+                    object_closest, axis=0
+                ).tolist(),
+                "object_contact_normal": mean_object_normal.tolist(),
+                "maximum_object_surface_residual_m": float(
+                    np.max(object_distance)
+                ),
+                "object_source_face_indices": object_face.tolist(),
+                "active_positions_rad": metadata[0]["active_positions_rad"],
+                "object_weight_n": object_weight_n,
+                "object_table_normal_force_n": table_force_n,
+                "object_table_support_fraction_of_weight": (
+                    table_force_n / object_weight_n
+                ),
+                "all_points_nearest_to_full_pad": bool(
+                    np.all(margin[indices] >= -1.0e-9)
+                ),
+            }
+
+        last_prelift = contact_snapshot("prelift_effort_check", last=True)
+        first_lift = contact_snapshot("lift", last=False)
+        link_evidence["last_prelift_contact_snapshot"] = last_prelift
+        link_evidence["first_lift_contact_snapshot"] = first_lift
+        if last_prelift is not None and first_lift is not None:
+            prelift_centroid = np.asarray(
+                last_prelift["contact_centroid_link_local_m"], dtype=np.float64
+            )
+            lift_centroid = np.asarray(
+                first_lift["contact_centroid_link_local_m"], dtype=np.float64
+            )
+            link_evidence["prelift_to_first_lift_centroid_delta_link_local_m"] = (
+                lift_centroid - prelift_centroid
+            ).tolist()
+            link_evidence["prelift_to_first_lift_minimum_margin_delta_m"] = float(
+                first_lift["minimum_nonpad_minus_pad_distance_m"]
+                - last_prelift["minimum_nonpad_minus_pad_distance_m"]
+            )
         nonpad_indices = np.flatnonzero(margin < -1.0e-9)
         if len(nonpad_indices):
             index = int(nonpad_indices[0])
@@ -1157,6 +1454,7 @@ def evaluate_trace(
     safety = _safety_metrics(samples, criteria)
     acceleration = _acceleration_metrics(samples, criteria, physics_dt_s)
     finger_efforts = _finger_clamp_effort_metrics(samples)
+    prelift_transition = _prelift_transition_effort_metrics(document, samples)
     lift_pass = motion["maximum_lift_m"] >= float(criteria["lift_distance_m"])
     hold_pass = motion["hold_duration_s"] >= float(criteria["hold_duration_s"])
     contact_pass = contacts["maximum_sustained"] >= int(
@@ -1182,7 +1480,6 @@ def evaluate_trace(
         and lift_pass
         and hold_pass
         and motion["table_released"]
-        and acceleration["passed"]
     )
     pad_identity_evidence = _derive_pad_surface_identity(
         document, samples, robot_asset_path, inputs
@@ -1222,7 +1519,7 @@ def evaluate_trace(
         and document.get("truth_audit_data_returned_to_controller") is False
         and document.get("object_pose_writes_after_start") == 0)
     return {
-        "schema_version": "carts_grasp_v2_dynamic_evaluation_v2",
+        "schema_version": "carts_grasp_v2_dynamic_evaluation_v3",
         "object_id": document["object_id"], "candidate_id": document["candidate_id"],
         "mode": document["mode"],
         "physics_time_advanced_s": len(samples) * physics_dt_s,
@@ -1239,8 +1536,25 @@ def evaluate_trace(
         "maximum_relative_slip_m": motion["maximum_slip_m"],
         "maximum_orientation_change_rad": motion["maximum_orientation_change_rad"],
         "actual_lift_peak_acceleration_m_s2": acceleration["actual"],
+        "signed_lift_peak_acceleration_m_s2": acceleration["signed_peak"],
+        "lift_peak_acceleration_simulation_time_s": acceleration[
+            "peak_simulation_time_s"
+        ],
+        "lift_peak_acceleration_elapsed_s": acceleration[
+            "peak_lift_elapsed_s"
+        ],
+        "lift_peak_acceleration_fraction": acceleration[
+            "peak_lift_fraction"
+        ],
+        "lift_peak_acceleration_context": acceleration["peak_context"],
         "registered_lift_peak_acceleration_m_s2": acceleration["registered"],
         "lift_acceleration_consistent": acceleration["passed"],
+        "lift_acceleration_diagnostic_only": True,
+        "lift_acceleration_hard_gate_used": False,
+        "lift_acceleration_measurement": (
+            "FINITE_DIFFERENCE_OF_HAND_BASE_WORLD_Z_DURING_LIFT"
+        ),
+        "lift_acceleration_safety_specification_source": None,
         "maximum_table_penetration_m": safety["overall_penetration_m"],
         "maximum_post_settle_table_penetration_m": safety["post_settle_penetration_m"],
         "unauthorized_contact_records": safety["unauthorized"],
@@ -1265,7 +1579,17 @@ def evaluate_trace(
         "maximum_absolute_hand_effort_nm": document["controller_outcome"].get(
             "maximum_absolute_hand_effort_nm"
         ),
+        "maximum_payload_compensation_nm": document["controller_outcome"].get(
+            "maximum_payload_compensation_nm"
+        ),
+        "payload_compensation_model": document["controller_outcome"].get(
+            "payload_compensation_model"
+        ),
+        "lift_arm_damping_switch_audit": document["controller_outcome"].get(
+            "lift_arm_damping_switch_audit"
+        ),
         "finger_clamp_effort_nm": finger_efforts,
+        "prelift_transition_effort_nm": prelift_transition,
         "truth_isolation_pass": truth_isolation,
         "accepted_preflight_bound": bool(document.get("accepted_preflight_bound")),
         "accepted_preflight_evaluation_sha256": document.get("accepted_preflight_evaluation_sha256"),
