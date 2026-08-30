@@ -28,9 +28,10 @@
 所以是跨型号验证，不是严格盲测；当前结果不是连续抓取空间的绝对全局最优，也不是正式鲁棒性证书。
 
 最新的冻结扰动结果进一步收缩了算法结论：冻结动态面板选择在两个型号各 10 个离散工况中都完成
-了三指合法接触、离桌、50 mm 和悬空 2 s；但与 V4 名义抓法在相同条件下比较时，TE 的
-低摩擦+高质量工况支持鲁棒选择，当前型号的同一工况及 x 位置 ±0.17 mm 端点均不支持其优于名义
-抓法。因此 H1 目前是**型号依赖的混合结果**，不是双型号一致优势。
+了三指合法接触、离桌、50 mm 和悬空 2 s。当前型号的 V4 名义抓法也已在同一 10 点集合全部完成，
+所以 V4 与 V5 的最坏 `R_task` 同为 1，H1 在当前型号上不受支持。TE 的 V4 名义抓法在低摩擦+
+高质量工况第三指迁出指腹、未离桌，而 V5 完成，因此 TE 的最坏 `R_task` 从 0 提高到 1。
+H1 是**型号依赖的混合结果**，不是双型号一致优势。
 
 ## 公平算法对比
 
@@ -556,10 +557,28 @@ TE 名义抓法在预抬升和首个抬升快照仍是三块完整指腹，随�
 | +0.17 mm | 冻结面板选择 | 是 | 55.854 | 0.497 | 4.426 | 0.618 | 0.000256 |
 
 两端都没有真实失败，因此“更大离线禁碰余量会在这两个位置端点产生更大动态成功范围”的预测被
-否定，位姿端点路线停止，不再追加位移或角度。PONG 提供的接触法向/位姿不确定性机理仍适合作为
-静态背景，但没有在这两个端点预测出动态差异；SpringGrasp 的接触建立机理曾促成 x 位移与第三指
-延迟组合实验，两型号也都成功，因此没有依据改变冻结控制器。Get a Grip 与 Grasp to Act 所强调
-的动态 rollout 仍得到支持：只有完整抬升过程暴露了 TE 名义抓法的第三指迁移。
+否定，位姿端点路线停止。保持全部条件冻结后，V4 当前型号的其余成员也逐项完成；下面每格为
+“最大抬升 mm / 最大滑移 mm”，两种抓法在全部格子均为三块完整指腹、离桌、悬空 2 s、错误接触 0：
+
+| 当前型号冻结工况 | V4 名义 | V5 面板选择 |
+|---|---:|---:|
+| x = −0.17 mm | 55.923 / 0.501 | 55.800 / 0.409 |
+| x = +0.17 mm | 55.945 / 0.460 | 55.854 / 0.497 |
+| 轴向角 −2° | 55.966 / 0.429 | 55.836 / 0.428 |
+| 轴向角 +2° | 55.780 / 0.723 | 55.756 / 0.357 |
+| 质心 x = −1 mm | 55.946 / 0.467 | 55.828 / 0.472 |
+| 质心 x = +1 mm | 55.984 / 0.482 | 55.853 / 0.470 |
+| 质量/惯量 +5% | 55.853 / 0.427 | 55.856 / 0.448 |
+| 第三指目标 −0.004 rad | 55.878 / 0.424 | 55.789 / 0.355 |
+| x = +0.17 mm + 第三指迟闭 | 56.035 / 0.533 | 55.850 / 0.459 |
+| 有效 μ=0.45 + 质量/惯量 +5% | 55.421 / 0.756 | 54.400 / 1.469 |
+
+因此当前型号 V4 与 V5 在完整冻结 10 点上的 `min R_task` 都是 1；H1 在当前型号上不受支持。
+V4 的最小抬升、最大滑移和最大 effort 为 55.421 mm、0.756 mm、0.547 N·m，V5 为
+54.400 mm、1.469 mm、0.705 N·m；V5 的最大姿态变化略低（5.429° 对 5.479°），所以不能用
+未预注册的加权综合分数事后制造单一胜负。PONG 的不确定性机理仍是静态背景；SpringGrasp 的
+接触建立机理促成了预定义组合工况，但该组合也成功，没有依据改变冻结控制器。Get a Grip 与
+Grasp to Act 所强调的动态 rollout 仍得到支持：只有完整抬升过程暴露了 TE 名义抓法的第三指迁移。
 
 ![冻结扰动下名义选择与面板选择的真实抬升对比](frozen_h1_physical_comparison.svg)
 
@@ -581,10 +600,18 @@ TE 名义抓法在预抬升和首个抬升快照仍是三块完整指腹，随�
 - [当前 V4 名义，x=+0.17 mm](../algorithm_fair_comparison_v1/v4_nominal/current/pose_x_plus_0p17mm/grasp_run01/evaluation.json)
 - [当前面板选择，x=−0.17 mm](../robustness_dynamic_panel_frozen_v1/current/pose_x_minus_0p17mm/grasp_run01/evaluation.json)
 - [当前面板选择，x=+0.17 mm](../robustness_dynamic_panel_frozen_v1/current/pose_x_plus_0p17mm/grasp_run01/evaluation.json)
+- [当前 V4 名义，轴向角 −2°](../algorithm_fair_comparison_v1/v4_nominal/current/yaw_minus_2deg/grasp_run01/evaluation.json)
+- [当前 V4 名义，轴向角 +2°](../algorithm_fair_comparison_v1/v4_nominal/current/yaw_plus_2deg/grasp_run01/evaluation.json)
+- [当前 V4 名义，质心 x=−1 mm](../algorithm_fair_comparison_v1/v4_nominal/current/com_x_minus_1mm/grasp_run01/evaluation.json)
+- [当前 V4 名义，质心 x=+1 mm](../algorithm_fair_comparison_v1/v4_nominal/current/com_x_plus_1mm/grasp_run01/evaluation.json)
+- [当前 V4 名义，质量/惯量 +5%](../algorithm_fair_comparison_v1/v4_nominal/current/mass_plus_5pct/grasp_run01/evaluation.json)
+- [当前 V4 名义，第三指目标 −0.004 rad](../algorithm_fair_comparison_v1/v4_nominal/current/finger3_joint_minus_0p004rad/grasp_run01/evaluation.json)
+- [当前 V4 名义，x=+0.17 mm 与第三指迟闭组合](../algorithm_fair_comparison_v1/v4_nominal/current/pose_plus_0p17mm_finger3_late/grasp_run01/evaluation.json)
 
-截至这些数据，H1 最多只能写成：**TE 的一个已冻结组合点支持，而当前型号的相同组合点和两个
-位置端点不支持；跨型号结果混合。** 两个连接器都在方法开发中被观察过，不能据此声称严格盲测、
-普遍跨型号提升、连续空间全局最优或完整 $U_\delta$ 的名义—鲁棒最坏值比较。
+截至这些数据，TE V5 的 `min R_task=1`，而 TE V4 因已有一个冻结点为 0，其最坏值必为 0；
+当前型号 V4 与 V5 的完整 10 点最坏值都为 1。H1 只能写成：**TE 支持，当前型号不支持，跨型号
+结果混合。** 两个连接器都在方法开发中被观察过，不能据此声称严格盲测、普遍跨型号提升、连续
+空间全局最优或硬件有效性。
 
 ### 肩面法向支撑假设的局部 CAD 检查
 
