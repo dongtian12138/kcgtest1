@@ -1,0 +1,83 @@
+{
+  "schema_version": "te_postgrasp_disturbance_panel_v1",
+  "panel_status": "FROZEN_BEFORE_FIRST_DYNAMIC_CONDITION",
+  "model_scope": "SIMULATION_ONLY_SPLIT_BODY_AND_ROTATING_COUPLING_NUT_TIME_CONTROL",
+  "hardware_authorized": false,
+  "nominal_grasp_binding": {
+    "config_sha256": "55ec7fcfb0d54024efcbfc19debc653c66f5f9790ba22496c750ff96e6b41d22",
+    "control_plan_sha256": "6372ea65eedd252fa34595e399d42ee37ce08156b982bbe4b473fc6c66dff52e",
+    "object_asset_sha256": "8fe2bbb3d2c5f4ca4e8539184ae5d8537a43bb7fbb4730d83ef5b558d29ab84b",
+    "robot_asset_sha256": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747",
+    "contact_friction_coefficient": 0.45,
+    "preload_increment_rad": 0.075,
+    "finger_preload_scales": [1.0, 1.0, 1.0],
+    "lift_arm_damping_nm_s_rad": 160.0,
+    "required_closing_joint_effort_nm": [
+      0.7811049132562016,
+      0.6570058235403837,
+      0.7356699749848004
+    ]
+  },
+  "coordinate_contract": {
+    "vector_frame": "TE_ASSEMBLY_TASK_FRAME",
+    "task_plus_z": "CONNECTOR_INSERTION_AXIS",
+    "task_plus_x": "UNIQUE_MAIN_KEY_CENTERLINE",
+    "task_from_supplier_object_rotation_row_major": [
+      [1.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0],
+      [0.0, 0.0, 1.0]
+    ],
+    "frozen_world_from_task_rotation_row_major": [
+      [1.0, 0.0, 0.0],
+      [0.0, -1.0, 0.0],
+      [0.0, 0.0, -1.0]
+    ],
+    "frozen_world_task_frame_source": "REGISTERED_SCENE_INITIAL_OBJECT_POSE",
+    "application_point": "TE_BODY_RIGID_BODY_ORIGIN",
+    "application_point_supplier_object_m": [0.0, 0.0, 0.0],
+    "force_and_direct_torque_applied_to": "SPLIT_TE_BODY_RIGID_BODY",
+    "online_object_pose_readback_used": false
+  },
+  "timing": {
+    "zero_input_baseline_steps": 1,
+    "ramp_up_s": 0.2,
+    "ramp_down_s": 0.2,
+    "recovery_s": 2.0,
+    "ramp_profile": "MINIMUM_JERK"
+  },
+  "input_limits": {
+    "maximum_resultant_force_n": 1.0,
+    "maximum_resultant_moment_nm": 0.02,
+    "force_and_moment_may_be_simultaneous": false,
+    "source_scope": "TIME_MATCHED_ZERO_INPUT_CONTROL"
+  },
+  "postrun_qualification": {
+    "require_all_three_legal_pad_contacts_every_sample": true,
+    "require_no_table_recontact": true,
+    "require_no_unauthorized_contact": true,
+    "require_no_joint_or_effort_safety_abort": true,
+    "coupling_nut_grip_region_supplier_object": {
+      "minimum_radius_m": 0.0200,
+      "minimum_z_m": -0.0217678,
+      "maximum_z_m": -0.0015494,
+      "source": "TE_OFFICIAL_CAD_PART_SPLIT_NOT_MANUFACTURING_TOLERANCE"
+    },
+    "recovery_shell_two_point_lateral_limit_m": 0.0001125,
+    "engagement_length_m": 0.00724,
+    "recovery_conservative_key_envelope_limit_m": 0.00014,
+    "main_key_radius_m": 0.018855,
+    "main_key_half_width_clearance_m": 0.00033,
+    "minor_key_half_width_clearance_m": 0.00014,
+    "visual_and_control_uncertainty_must_share_remaining_margin": true,
+    "source": "TIME_CONTROL_CONTINUOUS_METRICS; LEGACY PROXY THRESHOLDS ARE NOT HARDWARE CERTIFICATION"
+  },
+  "conditions": [
+    {
+      "condition_id": "zero_input_2p4s_control",
+      "description_cn": "持续时间相同且力与力矩均为零的漂移对照",
+      "force_task_n": [0.0, 0.0, 0.0],
+      "moment_task_nm": [0.0, 0.0, 0.0]
+    }
+  ],
+  "conclusion_scope": "TIME_MATCHED_ZERO_INPUT_DRIFT_CONTROL_ONLY"
+}

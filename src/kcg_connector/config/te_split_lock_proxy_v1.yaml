@@ -1,0 +1,177 @@
+schema_version: kcg_te_split_lock_proxy_v1
+
+identity:
+  plug: D38999/26FJ35PN
+  receptacle: D38999/20FJ35SN
+  shell_size: 25
+  insert_arrangement: 35
+  polarization: N
+  model_boundary: DEVELOPMENT_CONTACT_BEARING_AND_SMALL_ANGLE_THREAD_WINDOW
+  hardware_authorized: false
+
+source_visual_assets:
+  plug_body: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_BODY_VISUAL.usdc
+  coupling_nut: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_COUPLING_NUT_VISUAL.usdc
+  receptacle: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_20FJ35SN_VISUAL.usdc
+
+component_frames:
+  insertion_axis: Z
+  receptacle_translation_m: [0.0, 0.0, 0.0]
+  plug_body_translation_m: [0.0, 0.0, -0.001]
+  coupling_nut_translation_m: [0.0, 0.0, -0.001]
+  supplier_plug_visual_rotation_xyz_deg: [180.0, 0.0, 0.0]
+  initial_plug_face_z_m: -0.001
+  initial_key_engagement_depth_m: 0.001
+
+mass_properties:
+  source_scope: INITIAL_SIMULATION_PROXY_NOT_VENDOR_MEASUREMENT
+  plug_body_mass_kg: 0.23
+  coupling_nut_mass_kg: 0.08
+  receptacle_mass_kg: 0.30
+  support_fixture_mass_kg: 18.0
+
+contact_offsets:
+  contact_offset_m: 0.00001
+  rest_offset_m: 0.0
+
+materials:
+  shell_and_key:
+    static_friction: 0.35
+    dynamic_friction: 0.25
+    restitution: 0.0
+  coupling_nut_outer_grip:
+    static_friction: 0.55
+    dynamic_friction: 0.45
+    restitution: 0.0
+  transparent_contact_bearing:
+    static_friction: 0.15
+    dynamic_friction: 0.10
+    restitution: 0.0
+  public_thread_contact_proxy:
+    static_friction: 0.20
+    dynamic_friction: 0.15
+    restitution: 0.0
+  support_fixture_contact:
+    source_scope: SIMULATION_ONLY_RESEARCH_VALUE_NOT_HARDWARE_RATING
+    static_friction: 0.70
+    dynamic_friction: 0.55
+    restitution: 0.0
+  table_contact:
+    source_scope: SIMULATION_ONLY_RESEARCH_VALUE_NOT_HARDWARE_RATING
+    static_friction: 0.85
+    dynamic_friction: 0.70
+    restitution: 0.0
+
+support_fixture:
+  representation: VISIBLE_DYNAMIC_TABLE_FRICTION_AND_FLANGE_CAPTURE_NO_JOINT
+  source_scope: SIMULATION_ONLY_RESEARCH_FIXTURE_NOT_VENDOR_TOOLING
+  table:
+    center_m: [0.0, 0.0, -0.07005]
+    size_m: [0.40, 0.40, 0.040]
+    surface_z_m: -0.05005
+    display_color_rgb: [0.32, 0.29, 0.24]
+  fixture:
+    base_center_m: [0.0, 0.0, -0.041]
+    base_size_m: [0.14, 0.14, 0.018]
+    display_color_rgb: [0.18, 0.32, 0.46]
+  receptacle_capture:
+    flange_size_source: TE_OFFICIAL_RECEPTACLE_VISUAL_BOUND_ROUNDED_TO_0P1_UM
+    flange_side_m: 0.0460248
+    flange_thickness_m: 0.0032
+    flange_pad_size_m: 0.0070
+    flange_pad_center_offset_m: 0.0195124
+    lateral_clearance_each_side_m: 0.00005
+    axial_clearance_each_side_m: 0.00005
+    support_post_bottom_z_m: -0.032
+    side_wall_thickness_m: 0.006
+    side_wall_span_m: 0.060
+    side_wall_z_interval_m: [-0.007, 0.0005]
+    upper_retainer_center_offset_m: 0.0205124
+    upper_retainer_xy_size_m: 0.005
+    upper_retainer_thickness_m: 0.003
+    receptacle_collision_color_rgb: [0.27, 0.30, 0.33]
+
+keying_and_mating_collision:
+  key_angles_deg: [0.0, 80.0, 142.0, 196.0, 293.0]
+  plug_shell_radius_m: 0.017845
+  plug_key_outer_radius_m: 0.018855
+  receptacle_bore_radius_m: 0.0179575
+  receptacle_keyway_outer_radius_m: 0.01903
+  main_key_width_m: 0.00254
+  minor_key_width_m: 0.00132
+  main_keyway_width_m: 0.00320
+  minor_keyway_width_m: 0.00160
+  engagement_length_m: 0.00724
+  receptacle_wall_outer_radius_m: 0.0206
+  receptacle_wall_segment_count: 180
+  key_clearance_extra_m: 0.00005
+  contact_face_stop_radius_m: 0.0157
+  contact_face_stop_thickness_m: 0.0005
+
+coupling_nut_outer_grip_collision:
+  segment_count: 24
+  segment_center_radius_m: 0.0222
+  radial_thickness_m: 0.0020
+  tangential_width_m: 0.0052
+  local_z_interval_m: [0.00155, 0.02175]
+
+contact_bearing:
+  representation: EXPLICIT_COAXIAL_GUIDES_AND_AXIAL_SHOULDERS_NO_JOINT
+  guide_segment_count: 96
+  shoulder_segment_count: 48
+  body_outer_journal:
+    radial_interval_m: [0.01890, 0.01935]
+    local_z_interval_m: [0.00850, 0.01750]
+  nut_inner_guide:
+    radial_interval_m: [0.01955, 0.01985]
+    local_z_interval_m: [0.00850, 0.01750]
+  front_axial_stop:
+    radial_interval_m: [0.01790, 0.01920]
+    body_local_z_interval_m: [0.00770, 0.00800]
+    nut_local_z_interval_m: [0.00805, 0.00835]
+  rear_axial_stop:
+    radial_interval_m: [0.01790, 0.01920]
+    body_local_z_interval_m: [0.01800, 0.01830]
+    nut_local_z_interval_m: [0.01765, 0.01795]
+  nominal_axial_endplay_each_direction_m: 0.00005
+
+small_angle_thread_contact:
+  representation: THREE_START_LOCAL_CAPSULE_RAILS_AND_SPHERE_FOLLOWERS
+  source_scope: PUBLIC_7P62_MM_PER_REV_RELATION_WITH_RESEARCH_PROXY_CONTACT_GEOMETRY
+  start_count: 3
+  start_phases_deg: [0.0, 120.0, 240.0]
+  lead_m_per_revolution: 0.00762
+  pitch_radius_m: 0.0201168
+  fixed_rail_entry_z_m: 0.0
+  positive_nut_rotation_axis: task_plus_z
+  positive_rotation_body_progress_direction: task_minus_z
+  rail_window_start_deg: 320.0
+  rail_window_end_deg: 360.0
+  rail_segment_angle_deg: 1.0
+  rail_capsule_radius_m: 0.00015
+  follower_sphere_radius_m: 0.00015
+  initial_follower_clock_deg: 330.5
+  initial_geometry_gap_m: 0.00005
+  frozen_probe_rotation_deg: 20.0
+  expected_probe_axial_progress_m: 0.00042333333333333334
+  minimum_end_of_probe_window_margin_deg: 9.5
+  full_revolution_or_complete_locking_claimed: false
+
+simulation_research_limits:
+  locking_drive_torque_cap_nm: 0.0095
+  locking_thread_equivalent_axial_force_cap_n: 7.833367508950928
+  release_hold_duration_s: 2.0
+  hardware_ratings_claimed: false
+
+static_acceptance:
+  required_rigid_bodies: [Receptacle, PlugBody, CouplingNut, SupportFixture]
+  minimum_geometry_clearance_m: 0.00004
+  minimum_clearance_after_two_contact_offsets_m: 0.00002
+  forbidden_prim_type_tokens: [Joint, Revolute, Prismatic, Rack, Pinion]
+  forbidden_applied_schema_prefixes: [PhysicsDriveAPI]
+  require_all_rigid_bodies_dynamic: true
+  require_thread_collision_count: 123
+  require_support_fixture_collision_count: 13
+  require_table_collision_count: 1
+  require_receptacle_flange_collision_count: 4
+  require_hardware_authorized_false: true

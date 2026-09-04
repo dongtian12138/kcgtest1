@@ -2,6 +2,7 @@ build/
 install/
 log/
 .venv/
+.deps/
 artifacts/*
 !artifacts/README.md
 __pycache__/

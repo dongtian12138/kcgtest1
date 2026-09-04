@@ -1,0 +1,11 @@
+schema_version: kcg_te_rgbd_observe_only_view_override_v1
+base_observe_config: src/kcg_connector/config/te_rgbd_observe_only_v1.yaml
+camera_config: src/kcg_connector/config/te_rgbd_camera_global_balanced_oblique_v1.yaml
+
+experiment_contract:
+  current_physical_state: SIMULATION_ONLY_GLOBAL_CAMERA_RESELECTION
+  unique_unknown: balanced_oblique_view_shows_both_endpoints_at_comparable_scale_for_coarse_handoff
+  single_frozen_variable: global_camera_pose_only
+  falsifiable_judgment: both_official_endpoint_aabbs_are_complete_and_actual_rgb_supports_coarse_instance_masks
+  miss_branch: reject_view_without_robot_motion
+  ready_branch: retain_view_then_validate_plug_and_receptacle_masks

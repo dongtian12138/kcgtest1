@@ -1,0 +1,42 @@
+schema_version: kcg_te_rgbd_camera_v1
+camera:
+  view_id: global_e50_v1
+  calibration_id: te_global_e50_sim_v1
+  prim_path: /World/D38999TabletopV1/TeGlobalE50RgbdCamera
+  frame_id: te_global_e50_rgbd_camera_optical
+  eye_world_m: [0.9528119462962507, -0.0125, 0.7337403880273357]
+  target_world_m: [0.535, -0.0125, 0.2358115]
+  resolution_px: [1280, 720]
+  frequency_hz: 20
+  warmup_frames: 5
+  channels_exactly: [rgb, distance_to_image_plane]
+  camera_cv_axes: [x_right, y_down, z_forward]
+  focal_length_mm: 24.0
+  horizontal_aperture_mm: 20.955
+  clipping_range_m: [0.1, 10.0]
+geometry_preflight:
+  method: OFFICIAL_STEP_AABB_CORNERS_PINHOLE_PROJECTION_V1
+  coarse_global_handoff_only: true
+  geometry_audit_sha256: 0822a669608a42a69e909b4b49c40fd470db1a5f7e75b81d6e33e25d16699eb4
+  plug:
+    nearest_optical_depth_m: 0.648238271077393
+    projected_u_px: [140.29877693604374, 276.62681499009295]
+    projected_v_px: [302.999759758336, 424.35400969236815]
+    optimistic_smallest_key_width_px: 2.985195716723099
+    exposed_key_band_m: 0.000787
+    optimistic_exposed_key_band_px: 1.7798098705008174
+  receptacle:
+    nearest_optical_depth_m: 0.5981328999006907
+    projected_u_px: [1032.364186613206, 1180.4666124882401]
+    projected_v_px: [291.9053361808225, 422.2499990914442]
+    optimistic_smallest_key_width_px: 3.921532672365426
+  minimum_image_border_margin_px: 99.53338751175988
+  camera_point_clearance_m:
+    table: 0.53374779517441
+    fixture: 0.6089331756169
+    plug_official_cad_aabb: 0.6712634548496282
+    receptacle_official_cad_aabb: 0.6230939725272558
+  full_aabb_in_frame: true
+  both_optimistic_key_widths_at_least_4px: false
+  both_key_widths_and_plug_exposed_band_at_least_4p4px: false
+  robot_fk_or_collision_claimed: false

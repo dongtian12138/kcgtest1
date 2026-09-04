@@ -1,0 +1,94 @@
+# Yaw-free visual transport relation for the user-selected 70 degree,
+# 4.5x equal-normal grasp.  Vision supplies only plug position and outward
+# axis; main-key yaw remains deliberately unobserved in this stage.
+schema_version: kcg_te_transport_grasp_relation_v1
+relation_id: te_q70_rear19_equal_normal_4p5_v1
+object_id: te_deutsch_d38999_26fj35pn_step
+reference_part: CouplingNut
+grasp_description: Q70_REAR_MINUS_19MM_YAW0_EQUAL_NORMAL_4P5
+hardware_authorized: false
+
+source_evidence:
+  selected_config: src/kcg_connector/config/te_fixed_pose_high_opening_lateral_bias_v1.yaml
+  selected_config_sha256: b255dcca3a3b1468ea6bc7d01841d25345725b1091a78167802cc97f59189a85
+  nominal_trace: artifacts/kcg_connector/isaac/te_j35_real_mass_0p020_layout_sweep_v1/layout_70/grasp_lift/evaluation.json
+  nominal_trace_sha256: ada0d6d5d05adb3b0ae79217ef642a1bdc67de3b748c96e434f9e5119af3ed3d
+  nominal_lift_m: 0.05594567029064773
+  nominal_hold_s: 2.0
+  evidence_file_kind: POSTRUN_EVALUATION_JSON
+
+transform:
+  convention: parent_T_child
+  object_from_hand_base_row_major:
+    - 1.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 1.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 1.0
+    - -0.43045522960656474
+    - 0.0
+    - 0.0
+    - 0.0
+    - 1.0
+  approach_direction_object: [0.0, 0.0, 1.0]
+
+yaw_free_object_frame_gauge:
+  method: PROJECT_FROZEN_WORLD_REFERENCE_ONTO_AXIS_NORMAL_PLANE_V1
+  primary_world_reference: [1.0, 0.0, 0.0]
+  degenerate_fallback_world_reference: [0.0, 1.0, 0.0]
+  x_axis_rule: normalized_projected_reference
+  y_axis_rule: insertion_axis_cross_x_axis
+  z_axis_rule: observed_outward_axis
+  main_key_inferred: false
+
+hand_contract:
+  palm_layout_angle_deg: 70.0
+  grasp_axis_position_m: -0.019
+  hand_yaw_rad: 0.0
+  pregrasp_joint_positions_rad:
+    - 1.221730476396
+    - 0.6345364456176764
+    - 0.451303031921387
+    - 0.6345330734252933
+  final_joint_positions_rad:
+    - 1.221730476396
+    - 0.9076909103393559
+    - 0.7219313735961919
+    - 0.9076816635131839
+  approach_high_seed_arm_positions_rad:
+    - 2.1877630979352407
+    - -0.5725187342179516
+    - -2.0451957328310892
+    - -1.0169465586472226
+    - 2.6233031888619736
+    - -1.8045351238952514
+    - -1.1099791521585967
+  closing_order: [finger_1, finger_2, finger_3]
+  contact_coordination_mode: parallel_contact_latch
+  required_closing_joint_effort_nm:
+    f1j2: 0.326260829362
+    f2j1: 0.346363750999
+    f3j2: 0.326270244382
+
+physical_binding:
+  total_plug_mass_kg: 0.062459669349
+  contact_friction_coefficient: 0.45
+  unloaded_nut_resistance_nm: 0.020
+  equal_theoretical_normal_force_per_finger_n: 2.041733721404
+  load_factor: 4.5
+
+scope:
+  transport_grasp_planning_allowed: true
+  main_key_required: false
+  assembly_key_pose_consumption_allowed: false
+  receptacle_contact_allowed: false
+  insertion_allowed: false
+  locking_allowed: false
+  online_object_truth_allowed: false
+  semantic_or_instance_truth_allowed: false

@@ -5,8 +5,10 @@ hardware_authorized: false
 
 inputs:
   object_contract: src/kcg_connector/config/carts_grasp_objects_v1.yaml
-  hand_contract: src/kcg_connector/config/carts_hand_contact_v1.yaml
+  hand_contract: src/kcg_connector/config/carts_direct_nailfree_hand_contact_v1.yaml
   collision_roster: src/kcg_connector/config/carts_collision_roster_v1.yaml
+  functional_step_contact_atlas_by_object:
+    te_deutsch_d38999_26fj35pn_step: src/kcg_connector/config/te_continuous_grasp_surface_atlas_v1.yaml
   development_object: current_d38999_26kj61sn_public_spec
   transfer_object: te_deutsch_d38999_26fj35pn_step
   hand_variant: DIRECT_USER_NAILFREE_STL
@@ -29,7 +31,8 @@ inputs:
       translation_m: [0.02049125144, -0.00300734189, 0.0]
 
 surface_roles:
-  method: TASK_AXIS_OUTER_ENVELOPE_V1
+  method: FUNCTIONAL_THREE_STATE_V1
+  geometric_thresholds_are_soft_preference_only: true
   angular_bin_count: 72
   axial_bin_count: 24
   outer_envelope_depth_m: 0.0015
@@ -90,6 +93,7 @@ finite_cad_search:
   friction_cone_edge_count: 8
   nominal_normal_force_cap_n: 8.0
   task_quality: MINIMUM_HOLD_AND_UPWARD_LIFT_LOAD_FACTOR
+  minimum_task_friction_resolution: 0.005
   require_complete_candidate_evaluation: true
   heuristic_candidate_deletion_allowed: false
 
@@ -268,7 +272,7 @@ dynamic:
   online_object_truth_allowed: false
   online_contact_truth_allowed: false
   object_pose_write_after_start_allowed: false
-  robot_asset: artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/handarm.usda
+  robot_asset: artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/nailfree_three_finger_direct_v2_shrinkwrap/handarm_nailfree_three_direct.usda
   registered_grasps:
     current_d38999_26kj61sn_public_spec:
       schema_version: carts_v2_registered_grasp_v1

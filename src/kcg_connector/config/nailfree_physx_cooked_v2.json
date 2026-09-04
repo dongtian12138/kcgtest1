@@ -1,0 +1,302 @@
+{
+  "aggregates": [
+    {
+      "aggregate": {
+        "key_hex": "000200383e2a51b30e9b7fa0ca0d5534e359d3f1fe02ba9482e3d9674bed117b",
+        "payload_sha256": "9583a822b9474b65061352c46d0ac1fbe8868b2d19fcb856f00d2901c65e6cb0",
+        "payload_size": 1284,
+        "record_offset": 771871988,
+        "storage": "large"
+      },
+      "asset_collision_mesh_ids": [
+        "f1_collision",
+        "f3_collision"
+      ],
+      "expected": {
+        "bounds_m": [
+          [
+            -0.04907790571451187,
+            -0.054643843322992325,
+            0.0
+          ],
+          [
+            0.012327172793447971,
+            0.012260613031685352,
+            0.024000000208616257
+          ]
+        ],
+        "hull_count": 32,
+        "large_child_count": 13,
+        "ordered_child_payload_sha256": "1cbc5ecf1b73479fbdafd23c73ef6cefe5c8af2c30c2f9179dd68ab6f3a7130e",
+        "polygon_count": 579,
+        "small_child_count": 19,
+        "triangle_count": 720,
+        "vertex_count": 424
+      },
+      "group_id": "f1_f3_shared_cooked_convex",
+      "output_name": "f1_f3_cooked_convex.npz",
+      "terminal_links": [
+        "f1Link3",
+        "f3Link3"
+      ]
+    },
+    {
+      "aggregate": {
+        "key_hex": "0002003880c02f4ae45837c9a75421e1cec58593db7e45be572dec1ab4c2f845",
+        "payload_sha256": "fa99480bdae53cb79c0e6ecc12b071ff0f63f6a8b9e8d4e0dcf77f2ff7cc1c61",
+        "payload_size": 1284,
+        "record_offset": 771885332,
+        "storage": "large"
+      },
+      "asset_collision_mesh_ids": [
+        "f2_collision"
+      ],
+      "expected": {
+        "bounds_m": [
+          [
+            -0.038962818682193756,
+            -0.06055866926908493,
+            -0.024000000208616257
+          ],
+          [
+            0.012226472608745098,
+            0.012232476845383644,
+            1.2600000209861406e-10
+          ]
+        ],
+        "hull_count": 32,
+        "large_child_count": 10,
+        "ordered_child_payload_sha256": "db7f389b6a0e563972686254866d3c6c66eafcef68a0cb47871ed544e643c026",
+        "polygon_count": 572,
+        "small_child_count": 22,
+        "triangle_count": 718,
+        "vertex_count": 423
+      },
+      "group_id": "f2_cooked_convex",
+      "output_name": "f2_cooked_convex.npz",
+      "terminal_links": [
+        "f2Link2"
+      ]
+    }
+  ],
+  "asset_collision_contract": {
+    "meshes": [
+      {
+        "bounds_m": [
+          [
+            -0.049251862,
+            -0.05483455,
+            0.0
+          ],
+          [
+            0.01249462,
+            0.012494801,
+            0.024
+          ]
+        ],
+        "float32_sequence_sha256": "9b3e3ff187cb450f7d81ec89ce3e4e623c2d43edc6f6fb8c7150eb4f154e52be",
+        "mesh_id": "f1_collision",
+        "occurrence_index_zero_based": 0,
+        "point_count": 34062,
+        "source_transform": {
+          "translation_m": [
+            0.02049125144,
+            -0.00300734189,
+            0.0
+          ],
+          "yaw_rad": 2.34686878808
+        },
+        "terminal_link": "f1Link3"
+      },
+      {
+        "bounds_m": [
+          [
+            -0.0392145,
+            -0.06084327,
+            -0.024
+          ],
+          [
+            0.012468875,
+            0.012499088,
+            1.26e-10
+          ]
+        ],
+        "float32_sequence_sha256": "fc99bf8675c1115038bed5d487bb487bc0a740b6caa47b50ff5f3383cababa09",
+        "mesh_id": "f2_collision",
+        "occurrence_index_zero_based": 1,
+        "point_count": 34062,
+        "source_transform": {
+          "translation_m": [
+            0.020687502006,
+            0.000981199056,
+            -0.023999999874
+          ],
+          "yaw_rad": 2.539984764379217
+        },
+        "terminal_link": "f2Link2"
+      },
+      {
+        "bounds_m": [
+          [
+            -0.049251862,
+            -0.05483455,
+            0.0
+          ],
+          [
+            0.01249462,
+            0.012494801,
+            0.024
+          ]
+        ],
+        "float32_sequence_sha256": "9b3e3ff187cb450f7d81ec89ce3e4e623c2d43edc6f6fb8c7150eb4f154e52be",
+        "mesh_id": "f3_collision",
+        "occurrence_index_zero_based": 2,
+        "point_count": 34062,
+        "source_transform": {
+          "translation_m": [
+            0.02049125144,
+            -0.00300734189,
+            0.0
+          ],
+          "yaw_rad": 2.34686878808
+        },
+        "terminal_link": "f3Link3"
+      }
+    ],
+    "required_text_occurrences": {
+      "bool physxConvexDecompositionCollision:shrinkWrap = 1": 3,
+      "custom string kcg:sourceMeshUri = \"/home/noob/Downloads/指尖无指甲.STL\"": 6,
+      "float physxCollision:contactOffset = 0.00005": 3,
+      "float physxCollision:restOffset = 0": 3,
+      "uniform token physics:approximation = \"convexDecomposition\"": 3
+    }
+  },
+  "ddc": {
+    "cacheindex": {
+      "mtime_ns": 1787927908790132735,
+      "path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/cache/DerivedDataCache/cacheindex.dat",
+      "sha256": "2ceedbc860b81ff73b24a1fa2331f93c47c599795bc66f5c111b113de6ff9fab",
+      "size_bytes": 4535136
+    },
+    "data_record_magic_hex": "efcdab9078563412",
+    "index_record_size": 72,
+    "large_index_magic_hex": "effaebfeeddaebfe",
+    "largecachedata": {
+      "mtime_ns": 1787927908790132735,
+      "path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/cache/DerivedDataCache/largecachedata_0",
+      "sha256": "5be41e976413cf17b3d4bcbe56f652f3f5293955e50bb6f4c576eac7b1d47aff",
+      "size_bytes": 771886664
+    },
+    "small_index_magic_hex": "efbeaddeefbeafde",
+    "smallcachedata": {
+      "mtime_ns": 1787927908790132735,
+      "path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/cache/DerivedDataCache/smallcachedata_0",
+      "sha256": "1fdf9b951cc27a7b2e8667db6b9e5c790f0fa2f1be8c16dd77445fddc8100cd9",
+      "size_bytes": 19992019
+    },
+    "valid_large_index_records": 560,
+    "valid_small_index_records": 62428
+  },
+  "evidence_boundary": {
+    "binding_strength": "TRACE_ASSET_HASH_PLUS_EXACT_STL_TO_USDA_TRANSFORM_PLUS_FROZEN_DDC_HASH_TIME_AND_GEOMETRY_MATCH_NOT_DIRECT_ASSET_HASH_INSIDE_DDC",
+    "cache_is_mutable_outside_this_hash_frozen_snapshot": true,
+    "classification": "OFFLINE_COOKED_CACHE_RECONSTRUCTION",
+    "ddc_contains_direct_robot_asset_or_source_stl_sha256": false,
+    "does_not_prove": [
+      "which individual cooked hull generated a historical contact point",
+      "TE connector grasp success",
+      "50 mm lift or 2 s suspended hold",
+      "dynamic robustness",
+      "hardware behavior",
+      "analytic global optimality"
+    ],
+    "engine_logs_retained": false,
+    "hardware_authorized": false,
+    "online_control_role_allowed": false,
+    "runtime_physx_api_queried_by_extractor": false,
+    "simulation_only": true,
+    "stored_polygon_planes_are_preserved_but_not_claimed_as_exactly_coplanar_with_every_ring_vertex": true
+  },
+  "format_lock": {
+    "aggregate_child_count": 32,
+    "aggregate_child_key_offset": 80,
+    "aggregate_child_key_stride": 32,
+    "clhl_version": 9,
+    "cvxm_serial_flags": 0,
+    "cvxm_version": 14,
+    "little_endian_marker": 1,
+    "require_grb_edges": true,
+    "require_no_gauss_map": true,
+    "require_no_sdf": true
+  },
+  "runtime_binding_evidence": {
+    "file": {
+      "mtime_ns": 1787927972300417387,
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/nailfree_three_current_nominal_run02_shrinkwrap/preflight/evaluation.json",
+      "sha256": "75dd63dbdf3fc575491408dcb0c3210798ceccb9abe3039059827de37ee854a9",
+      "size_bytes": 6660
+    },
+    "required_json_values": [
+      {
+        "path": [
+          "pad_surface_identity_evidence",
+          "robot_asset_path"
+        ],
+        "value": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/nailfree_three_finger_direct_v2_shrinkwrap/handarm_nailfree_three_direct.usda"
+      },
+      {
+        "path": [
+          "pad_surface_identity_evidence",
+          "trace_bound_robot_asset_sha256"
+        ],
+        "value": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747"
+      },
+      {
+        "path": [
+          "pad_surface_identity_evidence",
+          "robot_asset_sha256"
+        ],
+        "value": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747"
+      },
+      {
+        "path": [
+          "pad_surface_identity_evidence",
+          "asset_binding_matches"
+        ],
+        "value": true
+      },
+      {
+        "path": [
+          "evidence_binding",
+          "robot_asset_sha256"
+        ],
+        "value": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747"
+      }
+    ]
+  },
+  "schema_version": "kcg_nailfree_physx_cooked_v2",
+  "simulation_only": true,
+  "source_files": {
+    "robot_asset": {
+      "mtime_ns": 1787927866905944739,
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/nailfree_three_finger_direct_v2_shrinkwrap/handarm_nailfree_three_direct.usda",
+      "sha256": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747",
+      "size_bytes": 9762524
+    },
+    "source_stl": {
+      "mtime_ns": 1787918043791587502,
+      "ordered_vertex_count": 34062,
+      "path": "/home/noob/Downloads/指尖无指甲.STL",
+      "sha256": "d2dc05c9367075acbf1f4970297b4d3ec6778a067a119fc04ee6c286d1961c58",
+      "size_bytes": 3081086,
+      "triangle_count": 11354
+    }
+  },
+  "validation": {
+    "aabb_tolerance_m": 5e-09,
+    "min_index_projection_tolerance_m": 1e-08,
+    "normal_norm_tolerance": 1e-05,
+    "source_transform_tolerance_m": 1e-08,
+    "volume_relative_tolerance": 1e-06
+  }
+}

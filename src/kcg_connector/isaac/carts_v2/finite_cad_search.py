@@ -32,6 +32,9 @@ from kcg_connector.grasp.robust.collision_roster import (
 )
 from kcg_connector.grasp.robust.hand_model import rpy_rotation
 from kcg_connector.grasp.robust.object_model import load_stl_mesh
+from kcg_connector.grasp.robust.surface_atlas import (
+    load_step_triangle_role_partition,
+)
 
 
 PAD_ORDER = ("finger_1_pad", "finger_2_pad", "finger_3_pad")
@@ -39,6 +42,12 @@ CLOSING_JOINTS = ("f1j2", "f2j1", "f3j2")
 EXPECTED_VARIANT = "DIRECT_USER_NAILFREE_STL"
 EXPECTED_METHOD = "COMPLETE_AXIS_ALIGNED_FULL_PAD_GRID_V4"
 ARM_SELF_CONTACT_ENVELOPE_M = 2.0 * 5.0e-5
+ROBUST_SELECTION_METRICS = (
+    "worst_minimum_forbidden_clearance_m",
+    "worst_task_load_factor",
+    "worst_minimum_commanded_hand_joint_limit_margin_rad",
+    "worst_minimum_closure_reserve_rad",
+)
 
 
 @dataclass(frozen=True)
@@ -120,11 +129,20 @@ def _arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--selection-mode",
-        choices=("nominal", "robust"),
+        choices=("nominal", "robust", "friction_margin"),
         default="nominal",
         help=(
             "Keep the frozen nominal selection by default, or replay the same "
-            "G_delta over configured offline-expressible robustness scenarios."
+            "G_delta over configured offline-expressible robustness scenarios, "
+            "or select the executable member with the lowest finite-grid task "
+            "friction requirement."
+        ),
+    )
+    parser.add_argument(
+        "--replay-candidate-id",
+        help=(
+            "Evaluate and materialize exactly one declared G_delta member; "
+            "this mode makes no finite-set optimality claim."
         ),
     )
     parser.add_argument("--output-directory", required=True)
@@ -716,14 +734,13 @@ class ExactCollisionScene:
         }
         mesh = inputs.object_contract.model.mesh
         object_triangles = np.asarray(mesh.face_vertices_m, dtype=np.float64)
-        self.object_face_is_contact_semantically_allowed = np.fromiter(
-            (
-                semantic in inputs.object_contract.model.allowed_contact_semantics
-                for semantic in mesh.face_semantics
-            ),
-            dtype=np.bool_,
-            count=len(mesh.faces),
+        self.object_face_is_contact_semantically_allowed = np.asarray(
+            inputs.face_roles.face_is_allowed, dtype=np.bool_
         )
+        if self.object_face_is_contact_semantically_allowed.shape != (
+            len(mesh.faces),
+        ):
+            raise ValueError("functional object-face role coverage changed")
         winding_signs = np.asarray(
             inputs.object_contract.orientation_certificate
             .positive_volume_winding_sign_by_source_face,
@@ -742,6 +759,38 @@ class ExactCollisionScene:
             if not len(forbidden)
             else fcl.CollisionObject(_fcl_model(forbidden))
         )
+        atlas_bindings = inputs.config.section("inputs").get(
+            "functional_step_contact_atlas_by_object", {}
+        )
+        if not isinstance(atlas_bindings, Mapping):
+            raise ValueError("functional STEP atlas bindings must be a mapping")
+        atlas_path = atlas_bindings.get(inputs.object_contract.object_id)
+        self.step_role_objects: dict[str, object] | None = None
+        self.step_role_parent_faces: dict[str, np.ndarray] | None = None
+        if atlas_path is not None:
+            partition = load_step_triangle_role_partition(
+                str(atlas_path), repository_root=inputs.repository_root
+            )
+            self.step_role_objects = {
+                "proven_searchable": fcl.CollisionObject(
+                    _fcl_model(partition.proven_searchable_triangles_m)
+                ),
+                "unresolved": fcl.CollisionObject(
+                    _fcl_model(partition.unresolved_triangles_m)
+                ),
+                "hard_forbidden": fcl.CollisionObject(
+                    _fcl_model(partition.hard_forbidden_triangles_m)
+                ),
+            }
+            self.step_role_parent_faces = {
+                "proven_searchable": (
+                    partition.proven_searchable_parent_face_index
+                ),
+                "unresolved": partition.unresolved_parent_face_index,
+                "hard_forbidden": (
+                    partition.hard_forbidden_parent_face_index
+                ),
+            }
         links = tuple(sorted(self.full_object))
         adjacent = {
             tuple(sorted((joint.parent_link, joint.child_link)))
@@ -815,6 +864,14 @@ class ExactCollisionScene:
                 return f"NONPAD_OBJECT_COLLISION:{stage}:{link_name}"
             if self._collides(self.full_world[link_name], self.table):
                 return f"HAND_TABLE_COLLISION:{stage}:{link_name}"
+        if self.step_role_objects is not None:
+            hard = self.step_role_objects["hard_forbidden"]
+            for pad_name in PAD_ORDER:
+                if self._collides(self.pad[pad_name], hard):
+                    return (
+                        "PAD_STEP_HARD_OR_SHARED_BOUNDARY_CONTACT_"
+                        f"REQUIRES_EXACT_REVIEW:{stage}:{pad_name}"
+                    )
         return ""
 
     def pad_patch(self, pad_name: str) -> PadPatch | None:
@@ -855,6 +912,29 @@ class ExactCollisionScene:
     def pad_contact_reason(self, patch: PadPatch | None, stage: str) -> str:
         if patch is None:
             return ""
+        if self.step_role_objects is not None:
+            pad = self.pad[patch.pad_name]
+            searchable = self._collides(
+                pad, self.step_role_objects["proven_searchable"]
+            )
+            unresolved = self._collides(
+                pad, self.step_role_objects["unresolved"]
+            )
+            hard = self._collides(
+                pad, self.step_role_objects["hard_forbidden"]
+            )
+            if hard:
+                return (
+                    "PAD_STEP_HARD_OR_SHARED_BOUNDARY_CONTACT_"
+                    f"REQUIRES_EXACT_REVIEW:{stage}:{patch.pad_name}"
+                )
+            if searchable:
+                return ""
+            if unresolved:
+                return (
+                    f"PAD_STEP_UNRESOLVED_CONTACT:{stage}:{patch.pad_name}"
+                )
+            return f"PAD_STEP_ROLE_MISMATCH:{stage}:{patch.pad_name}"
         allowed = self.object_face_is_contact_semantically_allowed[
             patch.object_face_indices
         ]
@@ -878,10 +958,15 @@ class ExactCollisionScene:
             distances.append(self._distance(self.nonpad[link_name], self.object))
             distances.append(self._distance(self.full_world[link_name], self.table))
         if self.forbidden_object is not None:
+            if self.step_role_objects is None:
+                for pad_name in PAD_ORDER:
+                    distances.append(
+                        self._distance(self.pad[pad_name], self.forbidden_object)
+                    )
+        if self.step_role_objects is not None:
+            hard = self.step_role_objects["hard_forbidden"]
             for pad_name in PAD_ORDER:
-                distances.append(
-                    self._distance(self.pad[pad_name], self.forbidden_object)
-                )
+                distances.append(self._distance(self.pad[pad_name], hard))
         return min(distances) if distances else math.inf
 
 
@@ -1349,6 +1434,84 @@ def _quality_record(quality: TaskQuality) -> dict[str, object]:
     }
 
 
+def _minimum_task_friction_record(
+    inputs: V2Inputs,
+    settings: Mapping[str, object],
+    object_from_hand: np.ndarray,
+    contact_joints: np.ndarray,
+    patches: Sequence[PadPatch],
+    upper_quality: TaskQuality,
+) -> dict[str, object]:
+    """Locate the first feasible coefficient on one frozen finite friction grid."""
+
+    resolution = float(settings["minimum_task_friction_resolution"])
+    upper = float(
+        inputs.object_contract.contact_material_uncertainty
+        .friction_coefficient_interval[0]
+    )
+    if (
+        not math.isfinite(resolution)
+        or resolution <= 0.0
+        or not math.isfinite(upper)
+        or upper <= 0.0
+    ):
+        raise ValueError("minimum task friction grid must be positive and finite")
+    upper_index = int(round(upper / resolution))
+    if upper_index < 1 or not math.isclose(
+        upper_index * resolution, upper, rel_tol=0.0, abs_tol=1.0e-12
+    ):
+        raise ValueError(
+            "contact-contract lower friction must lie exactly on the frozen grid"
+        )
+    if upper_quality.task_load_factor < 1.0:
+        raise ValueError("friction-margin input is not feasible at its upper bound")
+
+    zero_quality = _task_quality(
+        inputs,
+        settings,
+        object_from_hand,
+        contact_joints,
+        patches,
+        friction_coefficient=0.0,
+    )
+    if zero_quality is not None and zero_quality.task_load_factor >= 1.0:
+        first_feasible_index = 0
+    else:
+        lower_index = 0
+        first_feasible_index = upper_index
+        while first_feasible_index - lower_index > 1:
+            middle_index = (lower_index + first_feasible_index) // 2
+            middle_quality = _task_quality(
+                inputs,
+                settings,
+                object_from_hand,
+                contact_joints,
+                patches,
+                friction_coefficient=middle_index * resolution,
+            )
+            if (
+                middle_quality is not None
+                and middle_quality.task_load_factor >= 1.0
+            ):
+                first_feasible_index = middle_index
+            else:
+                lower_index = middle_index
+
+    minimum_required = first_feasible_index * resolution
+    return {
+        "definition": (
+            "FIRST_FROZEN_FRICTION_GRID_COEFFICIENT_WITH_"
+            "MINIMUM_HOLD_AND_UPWARD_LIFT_LOAD_FACTOR_AT_LEAST_ONE"
+        ),
+        "minimum_required_friction_coefficient": minimum_required,
+        "analytic_margin_to_contact_contract_lower_bound": upper - minimum_required,
+        "friction_grid_resolution": resolution,
+        "friction_grid_lower": 0.0,
+        "friction_grid_upper": upper,
+        "friction_grid_count": upper_index + 1,
+    }
+
+
 def _grid_record(point: GridPoint) -> dict[str, object]:
     return {
         "candidate_id": point.candidate_id,
@@ -1361,6 +1524,89 @@ def _grid_record(point: GridPoint) -> dict[str, object]:
         "yaw_rad": point.yaw_rad,
         "cad_reference_section_z_m": point.axial_m,
         "is_nominal_baseline_grid_point": point.is_nominal_baseline_point,
+    }
+
+
+def _robust_row_selection_key(row: Mapping[str, object]) -> tuple[float, ...]:
+    robustness = row["robustness"]
+    indices = row["grid_indices"]
+    if not isinstance(robustness, Mapping) or not isinstance(indices, Mapping):
+        raise ValueError("robust candidate row has invalid metric or grid data")
+    return tuple(float(robustness[name]) for name in ROBUST_SELECTION_METRICS) + (
+        -float(indices["palm"]),
+        -float(indices["yaw"]),
+        -float(indices["axial"]),
+    )
+
+
+def _dynamic_palm_component_panel(
+    rows: Sequence[Mapping[str, object]],
+) -> dict[str, object]:
+    """Expose one frozen-static representative per separated palm branch."""
+
+    eligible = [
+        row
+        for row in rows
+        if isinstance(row.get("robustness"), Mapping)
+        and row["robustness"].get("status") == "ROBUST_EXECUTABLE_OFFLINE"
+    ]
+    palm_indices = sorted(
+        {int(row["grid_indices"]["palm"]) for row in eligible}
+    )
+    components: list[list[int]] = []
+    for palm_index in palm_indices:
+        if not components or palm_index != components[-1][-1] + 1:
+            components.append([palm_index])
+        else:
+            components[-1].append(palm_index)
+
+    records: list[dict[str, object]] = []
+    for component_index, component in enumerate(components):
+        members = [
+            row
+            for row in eligible
+            if int(row["grid_indices"]["palm"]) in component
+        ]
+        representative = max(members, key=_robust_row_selection_key)
+        robustness = representative["robustness"]
+        path = representative["path"]
+        records.append(
+            {
+                "component_index": component_index,
+                "palm_grid_indices": component,
+                "palm_rad": sorted({float(row["palm_rad"]) for row in members}),
+                "candidate_count": len(members),
+                "representative": {
+                    "candidate_id": representative["candidate_id"],
+                    "grid_indices": representative["grid_indices"],
+                    "palm_rad": representative["palm_rad"],
+                    "yaw_rad": representative["yaw_rad"],
+                    "cad_reference_section_z_m": representative[
+                        "cad_reference_section_z_m"
+                    ],
+                    "contact_patch_centroids_object_m": path[
+                        "contact_patch_centroids_object_m"
+                    ],
+                    "robustness_metrics": {
+                        name: robustness[name]
+                        for name in ROBUST_SELECTION_METRICS
+                    },
+                },
+            }
+        )
+    return {
+        "method": "CONNECTED_COMPONENTS_OF_FEASIBLE_PALM_GRID_PROJECTION_V1",
+        "adjacency_rule": "ABSOLUTE_PALM_GRID_INDEX_DIFFERENCE_EQUALS_ONE",
+        "representative_selection_rule": (
+            "ORIGINAL_FROZEN_V5_ROBUST_LEXICOGRAPHIC_KEY_WITHIN_COMPONENT"
+        ),
+        "dynamic_result_used_in_panel_construction": False,
+        "physical_scope": (
+            "DIVERSIFIES_SEPARATED_PALM_SPREAD_BRANCHES_ONLY; DOES_NOT_CLAIM_"
+            "COMPLETE_CONTACT_MODE_CLUSTERING_OR_DYNAMIC_OPTIMALITY"
+        ),
+        "component_count": len(records),
+        "components": records,
     }
 
 
@@ -1692,6 +1938,9 @@ def main() -> int:
         raise ValueError("finite search requires the direct nail-free hand binding")
     settings = inputs.config.section("finite_cad_search")
     robust_selection_enabled = arguments.selection_mode == "robust"
+    friction_margin_selection_enabled = (
+        arguments.selection_mode == "friction_margin"
+    )
     robust_scenarios = (
         _load_offline_robust_scenarios(inputs)
         if robust_selection_enabled
@@ -1739,6 +1988,16 @@ def main() -> int:
         )
 
     palms, yaws, axial, points = _declared_grid(inputs, settings)
+    source_declared_count = len(points)
+    replay_candidate_id = arguments.replay_candidate_id
+    candidate_replay_only = replay_candidate_id is not None
+    if candidate_replay_only:
+        replay_points = [
+            point for point in points if point.candidate_id == replay_candidate_id
+        ]
+        if len(replay_points) != 1:
+            raise ValueError("replay candidate is not one declared G_delta member")
+        points = replay_points
     declared_count = len(points)
     print(
         json.dumps(
@@ -1756,6 +2015,7 @@ def main() -> int:
     selected = None
     selected_key = None
     selected_robustness = None
+    selected_friction_margin = None
     selected_motion_plan = None
     selected_arm_route = None
     base_cache: dict[tuple[int, int], Mapping[str, object] | Exception] = {}
@@ -1776,14 +2036,18 @@ def main() -> int:
     ] = baseline_motion
     seed_by_yaw: dict[int, Sequence[float]] = {0: baseline_seed}
     palm_anchor = float(settings["palm_anchor_rad"])
-    evaluation_points = sorted(
-        points,
-        key=lambda point: (
-            abs(point.palm_rad - palm_anchor),
-            point.palm_index,
-            point.axial_index,
-            point.yaw_index,
-        ),
+    evaluation_points = (
+        points
+        if candidate_replay_only
+        else sorted(
+            points,
+            key=lambda point: (
+                abs(point.palm_rad - palm_anchor),
+                point.palm_index,
+                point.axial_index,
+                point.yaw_index,
+            ),
+        )
     )
 
     for evaluated_index, point in enumerate(evaluation_points, start=1):
@@ -1887,7 +2151,32 @@ def main() -> int:
                                     "quality": _quality_record(quality),
                                 }
                             )
-                            if robust_selection_enabled:
+                            friction_margin = None
+                            if friction_margin_selection_enabled:
+                                friction_margin = _minimum_task_friction_record(
+                                    inputs,
+                                    settings,
+                                    pose,
+                                    path.contact_joint_positions_rad,
+                                    path.patches,
+                                    quality,
+                                )
+                                row["friction_margin"] = friction_margin
+                                key = (
+                                    -float(
+                                        friction_margin[
+                                            "minimum_required_friction_coefficient"
+                                        ]
+                                    ),
+                                    quality.task_load_factor,
+                                    path.minimum_forbidden_clearance_m,
+                                    path.minimum_commanded_hand_joint_limit_margin_rad,
+                                    path.minimum_closure_reserve_rad,
+                                    -point.palm_index,
+                                    -point.yaw_index,
+                                    -point.axial_index,
+                                )
+                            elif robust_selection_enabled:
                                 robustness = _robust_candidate_summary(
                                     inputs,
                                     scene,
@@ -1902,12 +2191,7 @@ def main() -> int:
                                 if robustness["status"] == "ROBUST_EXECUTABLE_OFFLINE":
                                     key = tuple(
                                         robustness[name]
-                                        for name in (
-                                            "worst_minimum_forbidden_clearance_m",
-                                            "worst_task_load_factor",
-                                            "worst_minimum_commanded_hand_joint_limit_margin_rad",
-                                            "worst_minimum_closure_reserve_rad",
-                                        )
+                                        for name in ROBUST_SELECTION_METRICS
                                     ) + (
                                         -point.palm_index,
                                         -point.yaw_index,
@@ -1931,6 +2215,8 @@ def main() -> int:
                                 selected_motion_plan = motion_plan
                                 if robust_selection_enabled:
                                     selected_robustness = robustness
+                                if friction_margin_selection_enabled:
+                                    selected_friction_margin = friction_margin
         if robust_selection_enabled and "robustness" not in row:
             row["robustness"] = {
                 "status": "ROBUST_INFEASIBLE_NOMINAL",
@@ -1968,12 +2254,25 @@ def main() -> int:
             if selected_robustness is None:
                 raise RuntimeError("robust selected candidate lacks robustness data")
             selected_record["robustness"] = selected_robustness
+        if friction_margin_selection_enabled:
+            if selected_friction_margin is None:
+                raise RuntimeError(
+                    "friction-margin selected candidate lacks its score"
+                )
+            selected_record["friction_margin"] = selected_friction_margin
     robust_selection_identity = (
         "BEST_MINIMUM_FORBIDDEN_CLEARANCE_THEN_TASK_LOAD_IN_FROZEN_"
         "AXIS_ALIGNED_FINITE_G_DELTA_OVER_OFFLINE_EXPRESSIBLE_"
         "ROBUSTNESS_COMPONENTS"
     )
+    friction_margin_selection_identity = (
+        "MINIMUM_TASK_FEASIBLE_FRICTION_ON_FROZEN_FINITE_FRICTION_GRID_"
+        "IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA"
+    )
     search_claim = (
+        "NO_OPTIMALITY_CLAIM_SINGLE_DECLARED_G_DELTA_MEMBER_REPLAY"
+        if candidate_replay_only
+        else
         (
             robust_selection_identity
             if selected_record is not None
@@ -1984,16 +2283,30 @@ def main() -> int:
         )
         if robust_selection_enabled
         else (
-            "BEST_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA"
-            if selected_record is not None
-            else "FROZEN_AXIS_ALIGNED_FINITE_G_DELTA_HAS_NO_EXECUTABLE_MEMBER"
+            (
+                friction_margin_selection_identity
+                if selected_record is not None
+                else "FROZEN_AXIS_ALIGNED_FINITE_G_DELTA_HAS_NO_EXECUTABLE_MEMBER"
+            )
+            if friction_margin_selection_enabled
+            else (
+                "BEST_IN_FROZEN_AXIS_ALIGNED_FINITE_G_DELTA"
+                if selected_record is not None
+                else "FROZEN_AXIS_ALIGNED_FINITE_G_DELTA_HAS_NO_EXECUTABLE_MEMBER"
+            )
         )
     )
     result = {
         "schema_version": (
-            "finite_cad_nailfree_search_v4_robust_selection_v1"
+            "finite_cad_nailfree_search_v4_single_member_replay_v1"
+            if candidate_replay_only
+            else "finite_cad_nailfree_search_v4_robust_selection_v1"
             if robust_selection_enabled
-            else "finite_cad_nailfree_search_v4"
+            else (
+                "finite_cad_nailfree_search_v4_friction_margin_selection_v1"
+                if friction_margin_selection_enabled
+                else "finite_cad_nailfree_search_v4"
+            )
         ),
         "object_id": arguments.object_id,
         "hand_variant": inputs.hand_variant,
@@ -2036,6 +2349,8 @@ def main() -> int:
             "tilt_task_rad": [0.0, 0.0],
             "declared_candidate_count": declared_count,
             "evaluated_candidate_count": len(rows),
+            "source_g_delta_declared_candidate_count": source_declared_count,
+            "replay_candidate_id": replay_candidate_id,
         },
         "status_counts": counts,
         "unique_hand_base_motion_targets_evaluated": len(motion_cache),
@@ -2046,6 +2361,28 @@ def main() -> int:
         "elapsed_s": time.monotonic() - started,
     }
     if robust_selection_enabled:
+        dynamic_panel = _dynamic_palm_component_panel(rows)
+        dynamic_panel["dynamic_score_contract"] = {
+            "formula": (
+                "R_TASK=I_SAFETY*I_LEGAL_FULL_PAD*I_TABLE_RELEASE*"
+                "MIN(1,MAXIMUM_LIFT_M/LIFT_TARGET_M,"
+                "SUSPENDED_HOLD_S/HOLD_TARGET_S)"
+            ),
+            "lift_target_m": float(dynamic["lift_distance_m"]),
+            "hold_target_s": float(dynamic["hold_duration_s"]),
+            "suspended_hold_rule": (
+                "HOLD_DURATION_COUNTS_ONLY_WHILE_TABLE_CONTACT_IS_RELEASED"
+            ),
+            "safety_indicator_rule": (
+                "ALL_EXISTING_FINITE_SIGNAL_JOINT_SPEED_ARM_TRACKING_"
+                "HAND_EFFORT_UNAUTHORIZED_CONTACT_AND_PENETRATION_GATES"
+            ),
+            "finite_perturbation_aggregation": "MINIMUM_R_TASK_OVER_DECLARED_U_DELTA",
+            "execution_retention_s_ret": (
+                "SECONDARY_POST_ROLLOUT_DIAGNOSTIC_ONLY_NOT_A_STATIC_PREDICTOR"
+            ),
+            "weighted_diagnostic_terms": False,
+        }
         result["robustness_selection"] = {
             "enabled": True,
             "selection_rule": robust_selection_identity,
@@ -2078,6 +2415,31 @@ def main() -> int:
                 "COLLISION_MODEL; PERTURBED_FULL_ARM_ENVIRONMENT_CLEARANCE_"
                 "REQUIRES_DYNAMIC_PREFLIGHT"
             ),
+            "dynamic_candidate_panel": dynamic_panel,
+        }
+    if friction_margin_selection_enabled:
+        result["friction_margin_selection"] = {
+            "enabled": True,
+            "selection_rule": friction_margin_selection_identity,
+            "selection_key_order": [
+                "MINIMIZE_FIRST_TASK_FEASIBLE_FRICTION_GRID_COEFFICIENT",
+                "MAXIMIZE_TASK_LOAD_FACTOR_AT_CONTACT_CONTRACT_LOWER_FRICTION",
+                "MAXIMIZE_MINIMUM_FORBIDDEN_CLEARANCE_M",
+                "MAXIMIZE_MINIMUM_COMMANDED_HAND_JOINT_LIMIT_MARGIN_RAD",
+                "MAXIMIZE_MINIMUM_CLOSURE_RESERVE_RAD",
+                "FIXED_ASCENDING_PALM_YAW_AXIAL_GRID_INDEX",
+            ],
+            "physical_scope": (
+                "STATIC_TASK_WRENCH_AND_JOINT_LIMIT_DIAGNOSTIC_ONLY; "
+                "DOES_NOT_PROVE_DYNAMIC_CONTACT_ESTABLISHMENT_OR_RETENTION"
+            ),
+        }
+    if candidate_replay_only:
+        result["single_member_replay"] = {
+            "enabled": True,
+            "candidate_id": replay_candidate_id,
+            "source_g_delta_declared_candidate_count": source_declared_count,
+            "optimality_claim": False,
         }
     (output / "search_result.json").write_text(
         json.dumps(result, ensure_ascii=False, allow_nan=False, indent=2) + "\n",
@@ -2094,7 +2456,34 @@ def main() -> int:
         generation_settings["approach_high_seed_arm_positions_rad"] = list(
             selected_motion_plan["approach_arm_waypoints_rad"][0]
         )
-        if robust_selection_enabled:
+        if candidate_replay_only and robust_selection_enabled:
+            if selected_robustness is None:
+                raise RuntimeError(
+                    "robust replay candidate lacks robustness effort data"
+                )
+            generation_settings["selected_by"] = (
+                "REPLAYED_FROZEN_G_DELTA_MEMBER_WITH_FROZEN_V5_"
+                "ROBUST_EFFORT_NO_OPTIMALITY_CLAIM"
+            )
+            generation_settings["required_closing_joint_effort_nm"] = dict(
+                selected_robustness["required_closing_joint_effort_nm"]
+            )
+            generation_settings["required_closing_joint_effort_source"] = (
+                "COMPONENTWISE_MAXIMUM_OF_HOLD_AND_LIFT_UNIT_TASK_LP_"
+                "OVER_ALL_OFFLINE_EXPRESSIBLE_ROBUSTNESS_SCENARIOS"
+            )
+        elif candidate_replay_only:
+            generation_settings["selected_by"] = (
+                "REPLAYED_FROZEN_G_DELTA_MEMBER_NO_OPTIMALITY_CLAIM"
+            )
+            generation_settings["required_closing_joint_effort_nm"] = dict(
+                zip(CLOSING_JOINTS, selected[3].required_closing_joint_effort_nm)
+            )
+            generation_settings["required_closing_joint_effort_source"] = (
+                "COMPONENTWISE_MAXIMUM_OF_HOLD_AND_LIFT_UNIT_TASK_LP_AT_"
+                "FROZEN_FRICTION_LOWER_BOUND"
+            )
+        elif robust_selection_enabled:
             assert selected_robustness is not None
             generation_settings["selected_by"] = robust_selection_identity
             generation_settings["required_closing_joint_effort_nm"] = dict(
@@ -2103,6 +2492,17 @@ def main() -> int:
             generation_settings["required_closing_joint_effort_source"] = (
                 "COMPONENTWISE_MAXIMUM_OF_HOLD_AND_LIFT_UNIT_TASK_LP_"
                 "OVER_ALL_OFFLINE_EXPRESSIBLE_ROBUSTNESS_SCENARIOS"
+            )
+        elif friction_margin_selection_enabled:
+            generation_settings["selected_by"] = (
+                friction_margin_selection_identity
+            )
+            generation_settings["required_closing_joint_effort_nm"] = dict(
+                zip(CLOSING_JOINTS, selected[3].required_closing_joint_effort_nm)
+            )
+            generation_settings["required_closing_joint_effort_source"] = (
+                "COMPONENTWISE_MAXIMUM_OF_HOLD_AND_LIFT_UNIT_TASK_LP_AT_"
+                "FROZEN_FRICTION_LOWER_BOUND"
             )
         else:
             generation_settings["selected_by"] = (

@@ -1,0 +1,45 @@
+# Simulation-only global camera for coarse discovery and wrist-view handoff.
+# It is not a key-observation or millimetre-pose camera.
+schema_version: kcg_te_rgbd_camera_v1
+camera:
+  view_id: global_balanced_oblique_v1
+  calibration_id: te_global_balanced_oblique_sim_v1
+  prim_path: /World/D38999TabletopV1/TeGlobalBalancedObliqueRgbdCamera
+  frame_id: te_global_balanced_oblique_rgbd_camera_optical
+  eye_world_m: [0.8097018701314547, -0.0125, 0.8249115615738225]
+  target_world_m: [0.535, -0.0125, 0.2358115]
+  resolution_px: [1280, 720]
+  frequency_hz: 20
+  warmup_frames: 5
+  channels_exactly: [rgb, distance_to_image_plane]
+  camera_cv_axes: [x_right, y_down, z_forward]
+  focal_length_mm: 24.0
+  horizontal_aperture_mm: 20.955
+  clipping_range_m: [0.1, 10.0]
+
+geometry_preflight:
+  method: OFFICIAL_STEP_AABB_CORNERS_PINHOLE_PROJECTION_V1
+  coarse_global_handoff_only: true
+  geometry_audit_sha256: 0822a669608a42a69e909b4b49c40fd470db1a5f7e75b81d6e33e25d16699eb4
+  plug:
+    nearest_optical_depth_m: 0.6507736631269327
+    projected_u_px: [142.24559589920534, 274.8354916238538]
+    projected_v_px: [288.2352521167369, 409.2371743798936]
+    optimistic_smallest_key_width_px: 2.97356549577941
+    exposed_key_band_m: 0.000787
+    optimistic_exposed_key_band_px: 1.7728757918018152
+  receptacle:
+    nearest_optical_depth_m: 0.6014790244099458
+    projected_u_px: [1033.7845822504491, 1177.459909835134]
+    projected_v_px: [307.12296396418594, 436.03082280412906]
+    optimistic_smallest_key_width_px: 3.899716555665896
+  minimum_image_border_margin_px: 102.54009016486589
+  camera_point_clearance_m:
+    table: 0.6249115615738225
+    fixture: 0.6279845415247886
+    plug_official_cad_aabb: 0.6737140606229476
+    receptacle_official_cad_aabb: 0.6265748642116346
+  full_aabb_in_frame: true
+  both_optimistic_key_widths_at_least_4px: false
+  both_key_widths_and_plug_exposed_band_at_least_4p4px: false
+  robot_fk_or_collision_claimed: false

@@ -1,0 +1,68 @@
+{
+  "schema_version": "kcg_te_same_reset_rgbd_observe_v1",
+  "mode": "SIMULATION_ONLY_SAME_RESET_RGBD_OBSERVE_ZERO_ROBOT_COMMANDS",
+  "authorization": {
+    "simulation_only": true,
+    "hardware_authorized": false,
+    "robot_motion_authorized": false,
+    "visual_control_authorized": false,
+    "receptacle_contact_authorized": false
+  },
+  "physical_scene_binding": {
+    "object_id": "te_deutsch_d38999_26fj35pn_step",
+    "grasp_config": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/finite_candidate_round3/high_opening_yaw_reversed_180deg/taskx_plus_0p62mm_extension_v1/selected_config.yaml",
+    "grasp_config_sha256": "d7ad877bc1a794455a677b357d5300524df80a77e1efeebf7984e1c782c03c20",
+    "required_scene_kind": "FREE_SINGLE_RIGID_ON_SHARED_FINITE_TABLE"
+  },
+  "frozen_sources": {
+    "near_side_camera_config": "src/kcg_connector/config/te_rgbd_camera_near_side_v1.yaml",
+    "near_side_camera_config_sha256": "1779c532662b30c9544a92a776968ce1b594ad35cea61732bf3607727bdbcdb2",
+    "rgbd_bootstrap_config": "src/kcg_connector/config/d38999_rgbd_bootstrap_v1.yaml",
+    "rgbd_bootstrap_config_sha256": "25c77b8c8d999635eecf1ec5e18454336f7aa6a240b09b338c72a965a460166f",
+    "provider_input_template": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_rgbd_observe_only_v1/near_side_rx180_run01/provider_input.json",
+    "provider_input_template_sha256": "3e20e93904a079b32d40c8243566baa864f197ce910b3517f66eb24ca745946b",
+    "static_background_depth": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_rgbd_observe_only_v1/near_side_rx180_run01/background/depth_m.npy",
+    "static_background_depth_sha256": "54ee7f6cf1757897e1b4e4aa5a6ef0e74a455c51c6a0ad393aff38a515e9f1f6"
+  },
+  "timing": {
+    "settle_duration_s": 2.0,
+    "tail_observation_duration_s": 2.0,
+    "capture_rt_subframes": 4,
+    "maximum_frame_to_provider_seal_s": 30.0,
+    "required_reset_count": 1
+  },
+  "image_gates": {
+    "minimum_foreground_depth_delta_m": 0.00025,
+    "minimum_plug_foreground_points": 150,
+    "minimum_rx180_ring_points": 1000,
+    "minimum_ring_radius_m": 0.021,
+    "maximum_ring_radius_m": 0.0235,
+    "maximum_ring_absolute_residual_p99_m": 0.0001
+  },
+  "posthoc_research_gates": {
+    "maximum_absolute_support_z_error_m": 0.003,
+    "maximum_axis_tilt_rad": 0.08726646259971647,
+    "maximum_tail_translation_m": 0.001
+  },
+  "truth_firewall": {
+    "provider_scope": "TRANSPORT_PLUG_ONLY",
+    "forbidden_provider_inputs": [
+      "semantic_segmentation_truth",
+      "instance_segmentation_truth",
+      "object_pose_truth",
+      "object_prim_path",
+      "renderer_truth_point_cloud",
+      "contact_truth",
+      "collider_identity",
+      "penetration_depth_truth"
+    ],
+    "posthoc_truth_only_after_provider_file_sealed": true
+  },
+  "experiment_contract": {
+    "unique_unknown": "fresh_same_reset_zero_command_rgbd_support_z_axis_and_physical_settle_candidate",
+    "single_physical_variable": "observe_current_physical_plug_after_two_second_uncommanded_settle",
+    "pass_branch": "retain_only_simulation_research_z_tilt_candidate_then_run_worst_case_path_gate",
+    "physical_failure_branch": "change_only_physical_settle_or_axis_estimator",
+    "capture_failure_branch": "change_only_background_or_same_reset_capture_wiring"
+  }
+}

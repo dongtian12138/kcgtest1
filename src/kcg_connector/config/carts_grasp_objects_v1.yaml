@@ -128,18 +128,20 @@ objects:
       part_number_specific_z_or_radius_cutoffs_allowed: false
       simulator_truth_used: false
     physical_properties:
-      mass_source_class: INITIAL_SIMULATION_VALUE_NOT_VENDOR_MEASUREMENT
-      mass_source: src/kcg_connector/config/te_j35_simulation_v1.yaml#mass
-      mass_source_sha256: 8ae0eb01ccd149e53a57dec51558efb4794fdc513bd1002fdcbc05057d72e745
-      mass_kg: 0.31
+      mass_source_class: MANUFACTURER_REFERENCE_SAME_MIL_SLASH_CONFIGURATION
+      mass_source: src/kcg_connector/config/te_j35_mass_reference_v1.yaml
+      mass_source_sha256: ea5f7db34b23a0926546d7f085201d502b6d654a9d037c3e98475056d57818e1
+      mass_kg: 0.062459669349
       com_and_inertia_source_class: UNIFORM_DENSITY_EQUIVALENT_FROM_WATERTIGHT_STEP_TESSELLATION
-      uniform_density_kg_m3: 10784.942763793735
+      uniform_density_kg_m3: 2172.9805128207963
       center_of_mass_m: [0.0000033654747537864324, 0.0000014076390705697556, -0.018135482728838786]
       inertia_kg_m2:
-        - [0.00005698805727194714, 0.000000011853068453635424, -0.000000009595396905528908]
-        - [0.000000011853068453635424, 0.00005694076813569268, -0.00000002468846151765062]
-        - [-0.000000009595396905528908, -0.00000002468846151765062, 0.00008219210715431102]
+        - [0.000011482113593702235, 0.000000002388189472210101, -0.000000001933307477392753]
+        - [0.000000002388189472210101, 0.000011472585645914322, -0.000000004974300461703124]
+        - [-0.000000001933307477392753, -0.000000004974300461703124, 0.00001656029624501885]
       vendor_hardware_truth_claimed: false
+      same_mil_slash_manufacturer_reference_claimed: true
+      exact_te_specimen_weighed: false
     contact_material_uncertainty:
       model: SHARED_STUDY_MATERIAL_CLASS_BOUNDED_COULOMB_INTERVAL
       friction_coefficient: [0.45, 0.55]

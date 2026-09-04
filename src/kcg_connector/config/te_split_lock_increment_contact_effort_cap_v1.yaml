@@ -1,0 +1,57 @@
+schema_version: kcg_te_split_lock_increment_contact_effort_cap_v1
+hardware_authorized: false
+mode: SIMULATION_ONLY_SINGLE_VARIABLE_CONTACT_EFFORT_CAP
+
+base_contract:
+  path: src/kcg_connector/config/te_split_lock_increment_v1.yaml
+  sha256: 223aac7442c38e6e12c089a8fd4282e958aee75286fa6005586806443b29d7af
+
+decision_evidence:
+  slow_contact_trace:
+    path: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_b/te_split_lock_increment_v1/slow_contact_run01/trace.json
+    sha256: 0ef43733309cfd4f9ee5975bde99b0b035c6adca98a9cf6d3292d4080443ba6d
+  slow_contact_summary:
+    path: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_b/te_split_lock_increment_v1/slow_contact_run01/summary.json
+    sha256: 2e3c8c1ef0b923a474bc7af48d03facd7923229772a94f0abc2c89a8822e567b
+  observed_first_failure: WRIST_FT_BENDING_MOMENT_NM_ABORT
+  observed_finger_maximum_speed_rad_s: 0.09
+  observed_peak_bending_moment_nm: 0.17972275351784195
+  speed_route_status: PARKED
+
+falsifiable_question:
+  hypothesis: >-
+    With the baseline 0.18 rad/s closing speed restored, limiting all four
+    active hand DOFs to 0.023 N*m only during effort tare and sequential
+    contact closure will let the unchanged 0.02 N*m contact predicate be
+    observed before the unchanged wrist-FT safety gate stops the motion.
+  success_next: CONTINUE_WITH_EXISTING_PRELOAD_ONLY_AFTER_CAP_RESTORES_TO_1P0_NM
+  failure_next: PARK_CONTACT_DRIVE_CAP_ROUTE_AND_LOCALIZE_THE_CONTACT_IMPULSE_MECHANISM
+
+single_variable:
+  name: CONTACT_PHASE_ACTIVE_HAND_DOF_MAXIMUM_EFFORT_NM
+  value_nm: 0.023
+  active_hand_dof_names: [f1j1, f1j2, f2j1, f3j2]
+  phase_scope:
+    - finger_effort_tare
+    - sequential_contact_closure
+  apply_immediately_before_tare_and_close: true
+  exact_readback_required_before_closing: true
+  restore_in_finally_immediately_after_tare_and_close: true
+  restore_before_preload_or_release_recovery: true
+  expected_original_and_restored_value_nm: 1.0
+
+frozen_unchanged:
+  finger_maximum_speed_rad_s: 0.18
+  contact_effort_rise_nm: 0.02
+  contact_consecutive_samples: 6
+  pose_changed: false
+  friction_changed: false
+  wrist_ft_limits_changed: false
+  joint_safety_limits_changed: false
+  preload_changed: false
+
+boundaries:
+  online_object_or_contact_truth_used: false
+  connector_pose_force_torque_or_drive_command_allowed: false
+  hardware_authorized: false
+  simulation_app_may_start_only_in_run_mode: true

@@ -1,0 +1,138 @@
+schema_version: kcg_te_split_lock_increment_v1
+hardware_authorized: false
+mode: SIMULATION_ONLY_SINGLE_SMALL_ANGLE_PHYSICAL_RELATION_PROBE
+
+question:
+  falsifiable_hypothesis: >-
+    With the plug body correctly keyed 1 mm into the receptacle, a bounded
+    robot-and-three-finger +20 degree motion can frictionally rotate the
+    coupling nut relative to the plug body and produce 0.42333333333333334 mm
+    of task-minus-Z progress, which remains after complete release for 2 s.
+  one_primary_variable: ROBOT_HAND_ROTATION_ABOUT_FROZEN_TASK_PLUS_Z_DEG
+  frozen_value_deg: 20.0
+  success_next: USE_THIS_CONTACT_ONLY_RELATION_AS_THE_MINIMUM_LOCKING_ASSET_BASELINE
+  failure_next: REPAIR_ONLY_THE_EARLIEST_FIXTURE_BEARING_THREAD_OR_GRIP_CONTACT_CAUSE
+
+inputs:
+  split_asset:
+    path: artifacts/kcg_connector/isaac/te_split_lock_proxy_v1/static_build_run07/TE_J35_SPLIT_LOCK_PROXY_V1.usda
+    sha256: f6e22b829af17408d3263562b8195efebd0cea5a663a08804ddf1f53e2abde8e
+  split_static_audit:
+    path: artifacts/kcg_connector/isaac/te_split_lock_proxy_v1/static_build_run07/STATIC_AUDIT.json
+    sha256: d2cb8aec863eea39b0b5946cbd4a37104d8296c5268d8a9c1d7c91245018d77a
+  robot_asset:
+    path: artifacts/kcg_connector/isaac/cad_robust_grasp_goal_20260828/nailfree_three_finger_direct_v2_shrinkwrap/handarm_nailfree_three_direct.usda
+    sha256: d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747
+  development_grasp_trace:
+    path: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/finite_candidate_round3/high_opening_yaw_reversed_180deg/taskx_plus_0p62mm_extension_v1/dynamic_extension_v1/nominal_grasp_lift_run01/trace.json
+    sha256: 45979e4d8dca776c6a414a47f79d4232b2af8b325223bd85bc05f2507ce273ac
+  development_grasp_config:
+    path: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/finite_candidate_round3/high_opening_yaw_reversed_180deg/taskx_plus_0p62mm_extension_v1/selected_config.yaml
+    sha256: d7ad877bc1a794455a677b357d5300524df80a77e1efeebf7984e1c782c03c20
+  controller_source:
+    path: src/kcg_connector/isaac/carts_v2/controller.py
+    sha256: f45103e2eb3ae44a09e38a1afc9833ba9504aab84a9ce07c2b8da5ce7a83849d
+
+scene:
+  reference_root: /World/TESplitLockDevelopment
+  model_path_under_reference: /World/TESplitLockDevelopment/TE_J35SplitLockProxy
+  component_paths:
+    receptacle: /World/TESplitLockDevelopment/TE_J35SplitLockProxy/Receptacle
+    plug_body: /World/TESplitLockDevelopment/TE_J35SplitLockProxy/PlugBody
+    coupling_nut: /World/TESplitLockDevelopment/TE_J35SplitLockProxy/CouplingNut
+    support_fixture: /World/TESplitLockDevelopment/TE_J35SplitLockProxy/SupportFixture
+    table: /World/TESplitLockDevelopment/TE_J35SplitLockProxy/Table
+  historical_world_from_supplier_row_major:
+    - [1.0, 0.0, 0.0, 0.52]
+    - [0.0, -1.0, 0.0, -0.20938]
+    - [0.0, 0.0, -1.0, 0.20]
+    - [0.0, 0.0, 0.0, 1.0]
+  split_model_from_supplier_row_major:
+    - [1.0, 0.0, 0.0, 0.0]
+    - [0.0, -1.0, 0.0, 0.0]
+    - [0.0, 0.0, -1.0, -0.001]
+    - [0.0, 0.0, 0.0, 1.0]
+  frozen_world_from_split_model_row_major:
+    - [1.0, 0.0, 0.0, 0.52]
+    - [0.0, 1.0, 0.0, -0.20938]
+    - [0.0, 0.0, 1.0, 0.201]
+    - [0.0, 0.0, 0.0, 1.0]
+  task_origin_world_m: [0.52, -0.20938, 0.201]
+  task_rotation_world_row_major:
+    - [1.0, 0.0, 0.0]
+    - [0.0, 1.0, 0.0]
+    - [0.0, 0.0, 1.0]
+  initial_key_engagement_depth_m: 0.001
+  gravity_m_s2: -9.81
+
+control:
+  object_command_channels: []
+  allowed_command_channels:
+    - robot_arm_joint_position_targets
+    - active_hand_joint_position_targets
+  online_inputs:
+    - robot_joint_position
+    - robot_joint_velocity
+    - robot_projected_joint_effort
+    - robot_model_tcp_pose_from_joint_state
+    - hand2arm_fixed_joint_reaction
+  online_object_or_contact_truth_used: false
+  body_or_nut_pose_write_after_start_allowed: false
+  body_or_nut_direct_force_or_torque_allowed: false
+  body_or_nut_drive_allowed: false
+  physics_dt_s: 0.004166666666666667
+  free_space_ft_tare_duration_s: 0.5
+  free_space_ft_tare_minimum_samples: 100
+  rotation_deg: 20.0
+  rotation_duration_s: 10.0
+  rotation_waypoint_count: 21
+  post_rotation_hold_duration_s: 0.5
+  full_hand_open_target_rad: [0.0, 0.0, 0.0, 0.0]
+  hand_release_duration_s: 6.0
+  retreat_distance_task_plus_z_m: 0.05
+  retreat_duration_s: 5.0
+  release_hold_duration_s: 2.0
+
+wrist_ft_safety:
+  source_joint: hand2arm
+  reaction_row_rule: METADATA_JOINT_INDEX_PLUS_ONE
+  raw_semantics: ISAAC_INCOMING_JOINT_REACTION_ON_CHILD
+  canonical_from_raw: NEGATIVE_IDENTITY_6
+  tare_scope: RUN_SPECIFIC_PRECONTACT_FREE_SPACE_QUASISTATIC_BASELINE
+  task_transform_source: FROZEN_TASK_FRAME_AND_ROBOT_MODEL_TCP_FROM_JOINT_STATE
+  old_monitor_calibration_claimed: false
+  full_six_axis_current_scene_calibration_claimed: false
+  maximum_lateral_force_n: 3.0400615
+  maximum_axial_force_n: 7.833367508950928
+  maximum_bending_moment_nm: 0.0540690202
+  maximum_tightening_moment_nm: 0.0095
+  threshold_action: STOP_LOCKING_THEN_FULLY_OPEN_AND_RETREAT
+
+acceptance:
+  commanded_rotation_deg: 20.0
+  minimum_relative_nut_rotation_deg: 19.0
+  maximum_relative_nut_rotation_deg: 21.0
+  expected_axial_progress_m: 0.00042333333333333334
+  maximum_lead_relation_absolute_error_m: 0.00010
+  lead_relation_error_source: >-
+    INITIAL_50_UM_CONTACT_GAP_PLUS_TWO_21P1667_UM_ONE_DEG_RAIL_STEPS_ROUNDED_UP;
+    SIMULATION_RESEARCH_TOLERANCE_NOT_MANUFACTURING_TOLERANCE
+  maximum_plug_body_relative_receptacle_rotation_deg: 1.0
+  maximum_release_rotation_backdrive_deg: 1.0
+  maximum_release_progress_backdrive_m: 0.00010
+  minimum_actual_retreat_m: 0.045
+  maximum_open_hand_joint_error_rad: 0.05
+  require_no_ft_safety_stop: true
+  require_no_joint_safety_stop: true
+  require_complete_release_hold_s: 2.0
+
+boundaries:
+  public_standard_physical_proxy: true
+  full_locking_claimed_from_this_probe: false
+  te_vendor_internal_geometry_claimed: false
+  manufacturing_tolerance_claimed: false
+  hardware_reliability_claimed: false
+  world_fixed_connector_or_fixture_allowed: false
+  connector_joint_or_drive_allowed: false
+  direct_pose_or_scripted_progress_allowed: false
+  simulation_app_may_start_only_in_run_mode: true

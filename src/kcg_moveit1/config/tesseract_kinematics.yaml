@@ -1,0 +1,21 @@
+kinematic_plugins:
+  search_libraries:
+    - tesseract_kinematics_kdl_factories
+  fwd_kin_plugins:
+    kuka:
+      default: KDLFwdKinChain
+      plugins:
+        KDLFwdKinChain:
+          class: KDLFwdKinChainFactory
+          config:
+            base_link: iiwa_link_0
+            tip_link: handbase_link
+  inv_kin_plugins:
+    kuka:
+      default: KDLInvKinChainLMA
+      plugins:
+        KDLInvKinChainLMA:
+          class: KDLInvKinChainLMAFactory
+          config:
+            base_link: iiwa_link_0
+            tip_link: handbase_link

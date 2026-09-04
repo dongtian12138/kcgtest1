@@ -1,0 +1,93 @@
+{
+  "schema_version": "kcg_te_visual_second_short_prefix_exact_v1",
+  "mode": "SIMULATION_ONLY_SECOND_RGBD_TO_EXACT_SAFE_FREE_SPACE_PREFIX",
+  "authorization": {
+    "hardware_authorized": false,
+    "simulation_only": true,
+    "second_visual_short_prefix_authorized": true,
+    "descent_to_pregrasp_authorized": false,
+    "object_contact_authorized": false,
+    "finger_closure_authorized": false
+  },
+  "base_short_prefix_config": {
+    "path": "src/kcg_connector/config/te_visual_second_short_prefix_v1.json",
+    "sha256": "d795e252cc4a6186cf1f250b58208338627dd001d179058955b7e090b33790ad"
+  },
+  "run06_evidence": {
+    "result": {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_visual_second_short_prefix_v1/physical_rx180_run06/result.json",
+      "sha256": "9e4d30e4b3a844fa33f8f708e9fc70c176616cbdc40e2bf856752235ba8ebbb1"
+    },
+    "static_audit": {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_visual_second_short_prefix_v1/physical_rx180_run06/reobservation/second_visual_short_prefix_static_audit.json",
+      "sha256": "6f63afb19f36eab5c56d3ef185ac1ae2bd50484b7bea16706f927f516e7fc34e"
+    },
+    "execution": {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_visual_second_short_prefix_v1/physical_rx180_run06/reobservation/second_visual_short_prefix_execution.json",
+      "sha256": "1af4b4e2dda30d332e42d5b2314b7568602014fef8ad78caac932e829125b8e6"
+    }
+  },
+  "short_prefix": {
+    "target_method": "BOUNDED_IK_EXACT_CARTESIAN_CLEARANCE",
+    "ik_seed_waypoint_indices": [1, 2],
+    "approach_high_clearance_m": 0.05,
+    "target_clearance_from_pregrasp_m": 0.03125,
+    "motion_command_count": 960,
+    "runtime_state_count": 961,
+    "motion_duration_s": 4.0,
+    "settle_timeout_s": 1.0,
+    "settle_error_rad": 0.02,
+    "settle_consecutive_samples": 30,
+    "motion_phase": "second_visual_short_path",
+    "settle_phase": "second_visual_short_path_settle",
+    "hand_command": "FROZEN_PREGRASP_OPENING",
+    "trajectory_start": "ACTUAL_ACTIVE_ARM_READBACK_AFTER_SECOND_PROVIDER_SEAL",
+    "surface_displacement_reference": "FIRST_PROVIDER_MOTION_PLAN_APPROACH_WAYPOINT_0",
+    "second_provider_must_be_sealed_before_target_plan_or_command": true,
+    "truth_read_allowed_only_after_target_plan_static_audit_and_execution_are_sealed": true
+  },
+  "runtime_static_gate": {
+    "method": "COMPLETE_17_LINK_961_COMMAND_STATE_CONSERVATIVE_HIGH_CLEARANCE_PREFIX_V1",
+    "collision_roster": "src/kcg_connector/config/carts_collision_roster_v1.yaml",
+    "collision_link_count": 17,
+    "state_count": 961,
+    "obstacle_clearance_lower_bound_minimum_m": 0.001,
+    "nonadjacent_self_clearance_minimum_m": 0.0001,
+    "joint_limit_margin_must_be_positive": true,
+    "obstacle_lower_bound_rule": "FROZEN_HIGH_MINIMUM_CLEARANCE_MINUS_MAXIMUM_LINK_SURFACE_DISPLACEMENT_FROM_FIRST_PLANNED_HIGH",
+    "nonadjacent_self_collision_method": "FCL_DISTANCE_ON_ACTUAL_START_AND_EVERY_RUNTIME_PREFIX_COMMAND_TARGET_STATE",
+    "continuous_joint_space_proof_claimed": false
+  },
+  "offline_static_reference": {
+    "scope": "RUN06_GEOMETRY_REHEARSAL_WITH_EXACT_31P25MM_IK_NOT_RUNTIME_AUTHORIZATION",
+    "ik_position_error_m": 1.1443916996305594e-16,
+    "ik_rotation_error_rad": 1.860289300072345e-16,
+    "target_arm_rad": [2.1912823222789624, -0.5474459176213531, -2.114334529223118, -1.0734898737796732, -0.4691577007342628, 1.7423950124556586, -1.1289101739069805],
+    "maximum_link_surface_displacement_from_first_planned_high_m": 0.021255339017633927,
+    "conservative_table_clearance_lower_bound_m": 0.003234862455602179,
+    "conservative_range_robust_plug_clearance_lower_bound_m": 0.0017589385754018597,
+    "conservative_fixture_clearance_lower_bound_m": 0.2735697806611225,
+    "minimum_nonadjacent_self_clearance_m": 0.0005531182686927304,
+    "minimum_active_joint_limit_margin_rad": 0.06943959712982184,
+    "all_runtime_gate_thresholds_satisfied": true,
+    "runtime_reaudit_still_required": true
+  },
+  "wrist_ft_safety": {
+    "physical_source_joint": "hand2arm",
+    "maximum_resultant_force_n": 3.0400615,
+    "maximum_resultant_torque_nm": 0.0540690202,
+    "dynamic_inertia_enabled_phases": [
+      "approach_above",
+      "second_visual_short_path",
+      "second_visual_short_path_settle"
+    ],
+    "threshold_action": "STOP_AND_HOLD_NO_FURTHER_MOTION",
+    "limits_unchanged_from_base": true
+  },
+  "experiment_contract": {
+    "unique_unknown": "whether_the_second_sealed_rgbd_pose_can_drive_one_exact_31p25mm_clearance_free_space_prefix",
+    "success_branch": "seal_second_target_exact_ik_static_audit_and_execution_then_evaluate_the_next_earliest_approach_limit",
+    "static_failure_branch": "seal_failure_with_zero_new_robot_commands",
+    "dynamic_failure_branch": "stop_and_hold_with_zero_finger_closure_and_no_contact_authorization"
+  }
+}

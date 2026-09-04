@@ -12,6 +12,7 @@ install(
 install(PROGRAMS
   scripts/check_physics_stability.py
   scripts/moveit_smoke_test.py
+  scripts/plan_visual_pose.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

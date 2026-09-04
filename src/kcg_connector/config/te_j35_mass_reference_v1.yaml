@@ -1,0 +1,62 @@
+schema_version: kcg_te_j35_mass_reference_v1
+scope: SAME_MIL_SLASH_CONFIGURATION_MANUFACTURER_REFERENCE_WEIGHT
+hardware_authorized: false
+
+source:
+  manufacturer: Amphenol Aerospace
+  title: MIL-DTL-38999 Series III TV Connector Catalog
+  url: https://www.amphenol-aerospace.com/Resources/Literature/Download/38999-Catalog
+  page: 38
+  table: Tri-Start Weight in Ounces (includes contacts)
+  row: 25-35
+  retrieved_utc: 2026-09-02
+
+unit_conversion:
+  ounce_to_kg: 0.028349523125
+
+plug:
+  military_part_number: D38999/26FJ35PN
+  shell_style: straight_plug
+  shell_material: aluminum
+  contact_type: pin
+  contact_count: 128
+  published_reference_weight_oz: 2.2032
+  converted_reference_mass_kg: 0.062459669349
+
+wall_mount_receptacle:
+  military_part_number: D38999/20FJ35SN
+  shell_style: wall_mount_receptacle
+  shell_material: aluminum
+  contact_type: socket
+  contact_count: 128
+  published_reference_weight_oz: 2.9456
+  converted_reference_mass_kg: 0.083506355317
+
+jam_nut_receptacle_alternative:
+  military_part_number: D38999/24FJ35SN
+  shell_style: jam_nut_receptacle
+  shell_material: aluminum
+  contact_type: socket
+  contact_count: 128
+  published_reference_weight_oz: 3.4160
+  converted_reference_mass_kg: 0.096841970995
+
+selected_receptacle_for_current_fixture:
+  military_part_number: D38999/20FJ35SN
+  reason: CURRENT_FIXED_ENDPOINT_VISUAL_IS_WALL_MOUNT_STYLE
+
+split_plug_mass_distribution:
+  method: UNIFORM_EFFECTIVE_DENSITY_OVER_SUPPLIER_CAD_PARTITION
+  body_closed_volume_m3: 0.00001267780269405571
+  coupling_nut_closed_volume_m3: 0.000016065975275843533
+  effective_uniform_density_kg_m3: 2172.9805128207963
+  body_mass_kg: 0.027548618179969777
+  coupling_nut_mass_kg: 0.03491105116903022
+  masses_sum_to_reference_total: true
+  limitation: MANUFACTURER_DOES_NOT_PUBLISH_SEPARATE_BODY_AND_NUT_MASSES
+
+evidence_boundary:
+  exact_te_specimen_weighed: false
+  same_military_slash_configuration: true
+  manufacturer_reference_includes_contacts: true
+  component_mass_split_is_estimated: true

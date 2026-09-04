@@ -1,0 +1,83 @@
+# Corrected frozen relation for the visually transported development grasp.
+# The +0.62 mm supplier-Y term is not a new candidate: it is the successful
+# fixed-path object's +world-Y displacement re-expressed as object_T_hand.
+schema_version: kcg_te_transport_grasp_relation_v1
+relation_id: te_development_transport_grasp_v2
+object_id: te_deutsch_d38999_26fj35pn_step
+reference_part: CouplingNut
+grasp_description: HISTORICAL_TE_HIGH_OPENING_GRASP_ROTATED_180_DEGREES_PLUS_TASK_X_0P62MM
+hardware_authorized: false
+
+source_evidence:
+  selected_config: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/finite_candidate_round3/high_opening_yaw_reversed_180deg/taskx_plus_0p62mm_extension_v1/selected_config.yaml
+  selected_config_sha256: d7ad877bc1a794455a677b357d5300524df80a77e1efeebf7984e1c782c03c20
+  nominal_trace: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/finite_candidate_round3/high_opening_yaw_reversed_180deg/taskx_plus_0p62mm_extension_v1/dynamic_extension_v1/nominal_grasp_lift_run01/trace.json
+  nominal_trace_sha256: 45979e4d8dca776c6a414a47f79d4232b2af8b325223bd85bc05f2507ce273ac
+  nominal_lift_m: 0.055985843
+  nominal_hold_s: 2.0
+
+transform:
+  convention: parent_T_child
+  object_from_hand_base_row_major:
+    - -0.4999999999999998
+    - -0.8660254037844387
+    - 0.0
+    - 0.0
+    - 0.8660254037844387
+    - -0.4999999999999998
+    - 0.0
+    - 0.00062
+    - 0.0
+    - 0.0
+    - 1.0
+    - -0.4296729339758569
+    - 0.0
+    - 0.0
+    - 0.0
+    - 1.0
+  approach_direction_object: [0.0, 0.0, 1.0]
+
+lateral_offset_derivation:
+  method: SUCCESSFUL_FIXED_PATH_OBJECT_TRANSLATION_REEXPRESSED_AS_OBJECT_FROM_HAND_V1
+  selected_hand_offset_assembly_task_m: [0.00062, 0.0, 0.0]
+  assembly_task_plus_x_supplier: [0.0, 1.0, 0.0]
+  successful_run_object_translation_world_m: [0.0, 0.00062, 0.0]
+  successful_run_supplier_rotation_world_row_major:
+    - [1.0, 0.0, 0.0]
+    - [0.0, -1.0, 0.0]
+    - [0.0, 0.0, -1.0]
+  derived_object_from_hand_translation_m: [0.0, 0.00062, -0.4296729339758569]
+  measured_pregrasp_object_from_hand_translation_m:
+    - 0.000008000012
+    - 0.000664152906
+    - -0.429633612077
+  measured_minus_derived_translation_norm_m: 0.000059663146
+  measured_rotation_error_rad: 0.000117645297
+  measured_values_are_tracking_diagnostics_not_control_parameters: true
+
+yaw_free_object_frame_gauge:
+  method: PROJECT_FROZEN_WORLD_REFERENCE_ONTO_AXIS_NORMAL_PLANE_V1
+  primary_world_reference: [1.0, 0.0, 0.0]
+  degenerate_fallback_world_reference: [0.0, 1.0, 0.0]
+  x_axis_rule: normalized_projected_reference
+  y_axis_rule: insertion_axis_cross_x_axis
+  z_axis_rule: observed_outward_axis
+  historical_rx180_reproduced: true
+
+hand_contract:
+  pregrasp_joint_positions_rad: [1.5, 0.6275677413940436, 0.4584584274291995, 0.6274753952026372]
+  final_joint_positions_rad: [1.5, 0.9022056808471682, 0.7293089981079105, 0.9021871261596685]
+  approach_high_seed_arm_positions_rad: [2.212621368697372, -0.548885259691238, -2.1164324345176397, -1.0169465591798323, -0.47463488868920156, 1.7909917678272054, -1.1356363764558548]
+  closing_order: [finger_1, finger_2, finger_3]
+  contact_confirmation_velocity_absolute_max_rad_s: 0.14
+  contact_confirmation_velocity_source: THREE_SUCCESSFUL_HISTORICAL_SIX_FRAME_CONTACT_WINDOWS_BELOW_FREE_COMMAND_SPEED
+
+scope:
+  transport_grasp_planning_allowed: true
+  main_key_required: false
+  assembly_key_pose_consumption_allowed: false
+  receptacle_contact_allowed: false
+  insertion_allowed: false
+  locking_allowed: false
+  online_object_truth_allowed: false
+  semantic_or_instance_truth_allowed: false

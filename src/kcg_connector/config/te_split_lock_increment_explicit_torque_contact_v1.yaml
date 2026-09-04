@@ -1,0 +1,83 @@
+schema_version: kcg_te_split_lock_increment_explicit_torque_contact_v1
+hardware_authorized: false
+mode: SIMULATION_ONLY_SINGLE_VARIABLE_EXPLICIT_TORQUE_CONTACT
+
+base_contract:
+  path: src/kcg_connector/config/te_split_lock_increment_v1.yaml
+  sha256: 223aac7442c38e6e12c089a8fd4282e958aee75286fa6005586806443b29d7af
+
+decision_evidence:
+  contact_effort_cap_trace:
+    path: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_b/te_split_lock_increment_v1/contact_effort_cap_run02/trace.json
+    sha256: 709f5a5f584748e51acf8322a26fb129886c6052ac974675adef672be76e3122
+  contact_effort_cap_summary:
+    path: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_b/te_split_lock_increment_v1/contact_effort_cap_run02/summary.json
+    sha256: e9684c7049b92b734759fc205814da803b34e0ef25aa03f3bac59aff81eb4967
+  observed_first_failure: FINGER_1_NO_CONTACT_SIGNAL
+  observed_physical_contact_postrun: true
+  observed_peak_tare_subtracted_f1_effort_nm: 0.01758142340889511
+  observed_f1_pregrasp_position_rad: 0.6271628737449646
+  observed_f1_contact_position_rad: 0.6660603880882263
+  observed_f1_free_motion_to_contact_rad: 0.03889751434326172
+  parked_routes:
+    - SEQUENTIAL_POSITION_CONTACT_WITH_SPEED_CHANGE
+    - SEQUENTIAL_POSITION_CONTACT_WITH_DRIVE_CAP
+
+falsifiable_question:
+  hypothesis: >-
+    Per-finger bounded explicit joint-torque ramps, with position gains disabled
+    only on the active and already-confirmed closing DOFs, can confirm all three
+    contacts from joint motion and effort signals without crossing the unchanged
+    wrist-FT or joint safety gates.
+  success_next: TRANSITION_TO_THE_EXISTING_FINITE_PRELOAD_AFTER_EXACT_DRIVE_RESTORE
+  failure_next: PARK_EXPLICIT_TORQUE_CONTACT_AND_LOCALIZE_THE_EARLIEST_PHYSICAL_CAUSE
+
+single_variable:
+  name: CONTACT_CONTROL_MECHANISM
+  value: SEQUENTIAL_EXPLICIT_JOINT_TORQUE_RAMP_V1
+  closing_dof_names: [f1j2, f2j1, f3j2]
+  closing_order: [finger_1, finger_2, finger_3]
+  positive_closing_direction: [1.0, 1.0, 1.0]
+  maximum_absolute_command_nm: 0.023
+  linear_ramp_duration_s: 0.5
+  confirmed_finger_hold_command_nm: 0.020
+  per_finger_timeout_s: 3.0
+  minimum_movement_before_confirmation_rad: 0.020
+  minimum_movement_source: >-
+    CONTACT_EFFORT_CAP_RUN02_OBSERVED_0P0388975_RAD_FREE_MOTION_TO_FIRST_PHYSICAL_CONTACT;
+    0P020_RAD_EXCLUDES_STARTING_STICTION_WITHOUT_REACHING_THE_OBSERVED_CONTACT_ANGLE
+  near_zero_velocity_threshold_rad_s: 0.010
+  maximum_closing_speed_rad_s: 0.18
+  maximum_closing_speed_action: ABORT_CLEAR_EFFORT_AND_RESTORE_DRIVES
+  measured_effort_threshold_nm: 0.020
+  consecutive_confirmation_samples: 6
+  endpoint_positions_source: DEVELOPMENT_GRASP_FINAL_HAND_TARGETS
+  active_and_confirmed_position_drive_kp_kd: [0.0, 0.0]
+  palm_and_not_yet_active_position_drive_unchanged: true
+  explicit_effort_written_every_physics_step: true
+  transition_position_bias_rule: CURRENT_ANGLE_PLUS_0P02_DIVIDED_BY_HAND_STIFFNESS
+  clear_explicit_effort_before_drive_restore: true
+  exact_gain_and_cap_readback_required: true
+  effort_command_buffer_zero_readback_required: true
+  per_step_evidence: COMMAND_AND_POSTSTEP_PROJECTED_JOINT_EFFORT
+  restore_in_finally_before_preload_or_release_recovery: true
+
+frozen_unchanged:
+  finger_maximum_speed_rad_s: 0.18
+  contact_effort_rise_nm: 0.02
+  contact_consecutive_samples: 6
+  hand_stiffness: 12.0
+  hand_damping: 2.0
+  restored_hand_drive_maximum_effort_nm: 1.0
+  pose_changed: false
+  friction_changed: false
+  wrist_ft_limits_changed: false
+  joint_safety_limits_changed: false
+  preload_changed: false
+
+boundaries:
+  allowed_new_robot_command_channel: active_hand_joint_effort_targets
+  online_object_or_contact_truth_used: false
+  connector_pose_force_torque_or_drive_command_allowed: false
+  hardware_authorized: false
+  simulation_app_may_start_only_in_run_mode: true

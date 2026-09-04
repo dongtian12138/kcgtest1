@@ -1,0 +1,10 @@
+schema_version: kcg_te_rgbd_observe_only_view_override_v1
+base_observe_config: src/kcg_connector/config/te_rgbd_observe_only_v1.yaml
+camera_config: src/kcg_connector/config/te_rgbd_camera_global_e50_v1.yaml
+experiment_contract:
+  current_physical_state: SIMULATION_ONLY_GLOBAL_CAMERA_COMPARISON
+  unique_unknown: fifty_degree_oblique_view_improves_sidewall_pose_evidence
+  single_frozen_variable: global_camera_pose_e50
+  falsifiable_judgment: both_endpoint_sam6d_masks_then_foundationpose_position_axis_outputs_are_compared_posthoc
+  miss_branch: reject_view_without_robot_motion
+  ready_branch: retain_only_for_four_view_comparison

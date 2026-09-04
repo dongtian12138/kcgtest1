@@ -14,11 +14,13 @@ visual_assets:
   coupling_nut: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_COUPLING_NUT_VISUAL.usdc
   receptacle: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_20FJ35SN_VISUAL.usdc
 
-assembly_frame:
+legacy_surrogate_asset_assembly_frame:
   axis: Z
   receptacle_mating_face_z_m: 0.0
   plug_visual_rotation_xyz_deg: [180.0, 0.0, 0.0]
   initial_face_gap_m: 0.004
+  completion_authority: false
+  note: retained only to explain the existing joint-driven TE_J35_PHYSX_V1 asset
 
 keying:
   angles_deg: [0.0, 80.0, 142.0, 196.0, 293.0]
@@ -32,13 +34,15 @@ keying:
   minor_keyway_width_m: 0.00160
   engagement_length_m: 0.00724
 
-thread:
+legacy_surrogate_asset_thread:
   starts: 3
   start_phases_deg: [0.0, 120.0, 240.0]
   lead_m_per_revolution: 0.00762
   working_rotation_deg: 360.0
   axial_travel_m: 0.00762
   direction: 1
+  completion_authority: false
+  note: retained only for the existing joint-driven smoke asset
 
 collision:
   receptacle_wall_segment_count: 180
@@ -48,6 +52,126 @@ collision:
   contact_face_stop_thickness_m: 0.0005
 
 mass:
-  plug_body_kg: 0.23
-  coupling_nut_kg: 0.08
-  note: initial simulation values; replace when the two real parts are weighed
+  source: src/kcg_connector/config/te_j35_mass_reference_v1.yaml
+  source_sha256: ea5f7db34b23a0926546d7f085201d502b6d654a9d037c3e98475056d57818e1
+  plug_total_kg: 0.062459669349
+  plug_body_kg: 0.027548618179969777
+  coupling_nut_kg: 0.03491105116903022
+  wall_mount_receptacle_kg: 0.083506355317
+  plug_total_source: AMPHENOL_OFFICIAL_SAME_MIL_SLASH_CONFIGURATION_REFERENCE_INCLUDING_CONTACTS
+  split_method: UNIFORM_EFFECTIVE_DENSITY_OVER_SUPPLIER_CAD_PARTITION
+  split_limit: MANUFACTURER_SEPARATE_BODY_AND_NUT_MASSES_NOT_PUBLISHED
+
+# Frozen for the simulation-only TE visual/force assembly goal.  This section
+# defines what a later integrated asset must implement; it does not upgrade the
+# existing joint-driven smoke assets into a physical locking result.
+assembly_completion_contract:
+  schema_version: te_j35_public_standard_physical_proxy_contract_v1
+  authoritative_completion_section: true
+  required_completion_model_boundary: PUBLIC_STANDARD_PHYSICAL_PROXY
+  current_model_boundary: SURROGATE_LOCKING
+  hardware_authorized: false
+
+  supplier_cad_frames:
+    plug:
+      origin: mating_face_center
+      mating_face_z_m: 0.0
+      body_extends_toward_local: negative_z
+      outward_axis_local: [0.0, 0.0, 1.0]
+      unique_main_key_local: [0.0, 1.0, 0.0]
+      observed_key_centers_deg: [90.0, 10.0, 308.0, 254.0, 157.0]
+      observed_main_key_angular_span_deg: 7.738
+      observed_minor_key_angular_span_deg: 4.022
+    receptacle:
+      origin: mating_face_center
+      mating_face_z_m: 0.0
+      body_extends_toward_local: negative_z
+      outward_axis_local: [0.0, 0.0, 1.0]
+      unique_main_keyway_local: [0.0, 1.0, 0.0]
+
+  assembly_task_frame:
+    origin: receptacle_mating_face_center
+    plus_z: from_receptacle_toward_approaching_plug
+    insertion_direction: [0.0, 0.0, -1.0]
+    plus_x: unique_main_key_and_keyway_centerline
+    plus_y: right_handed_completion
+    plug_task_from_supplier_rotation_row_major:
+      - [0.0, 1.0, 0.0]
+      - [1.0, 0.0, 0.0]
+      - [0.0, 0.0, -1.0]
+    plug_rotation_equivalent: Rz_plus_90_deg_after_Rx_180_deg
+    receptacle_task_from_supplier_rotation_row_major:
+      - [0.0, 1.0, 0.0]
+      - [-1.0, 0.0, 0.0]
+      - [0.0, 0.0, 1.0]
+    receptacle_rotation_equivalent: Rz_minus_90_deg
+    proxy_key_centers_deg: [0.0, 80.0, 142.0, 196.0, 293.0]
+
+  insertion_and_locking:
+    initial_plug_face_z_m: 0.008
+    final_plug_face_z_m: 0.0
+    target_axial_progress_m: 0.008
+    final_face_tolerance_m: 0.00035
+    thread_starts: 3
+    thread_lead_m_per_revolution: 0.00762
+    positive_nut_rotation_axis: task_plus_z
+    positive_nut_rotation_body_progress_direction: task_minus_z
+    nominal_rotation_for_target_progress_deg: 377.9527559055118
+    thread_relation_tolerance_m: 0.00025
+    release_hold_duration_s: 2.0
+    release_hold_requires:
+      - all_three_fingers_fully_open
+      - robot_retreated_to_safe_position
+      - no_active_nut_or_axial_drive
+      - no_world_to_plug_constraint
+      - insertion_depth_key_angle_and_nut_angle_remain_in_tolerance
+
+  simulation_research_limits:
+    insertion_hard_axial_force_n: 5.0
+    insertion_hard_lateral_force_n: 2.0
+    insertion_hard_bending_moment_nm: 0.18
+    insertion_hard_torsional_moment_nm: 0.05
+    locking_drive_torque_cap_nm: 0.0095
+    locking_thread_equivalent_axial_force_cap_n: 7.833367508950928
+    postgrasp_disturbance_resultant_force_cap_n: 3.0400615
+    postgrasp_disturbance_resultant_moment_cap_nm: 0.0540690202
+    source_scope: simulation_research_limits_not_hardware_ratings
+
+  required_physics:
+    independent_parts: [plug_body, coupling_nut, receptacle]
+    nut_actuation: robot_and_three_finger_friction_only
+    axial_progress: public_interface_thread_contact_proxy
+    body_rotation_constraint_after_engagement: five_key_contact
+    passive_hold_during_regrasp_and_after_release: true
+    forbidden:
+      - direct_nut_angle_write
+      - post_start_object_pose_write
+      - world_to_plug_prismatic_fixture
+      - rack_and_pinion_locking_constraint
+      - scripted_axial_advance
+      - hidden_fixed_support
+      - magnetic_attraction
+
+  current_asset_audit:
+    status: SURROGATE_LOCKING
+    te_physics_asset_reason: thread_coupling_disabled_and_world_body_prismatic_fixture_present
+    public_proxy_reason: connector_only_pre_authored_joint_drive_without_robot_or_hand
+    physical_locking_completion_claimed: false
+    minimum_asset_bridge_still_required: true
+
+historical_high_opening_grasp_role_audit:
+  evidence_scope: HISTORICAL_FREE_SINGLE_RIGID_KNOWN_POSE_ONLY
+  contacted_part_region: coupling_nut_outer_grip
+  contact_radius_range_m: [0.02340, 0.02365]
+  contact_local_z_range_m: [-0.01993, -0.01206]
+  mating_face_contacted: false
+  full_finger_receptacle_clearance_verified: false
+  full_locking_rotation_sweep_verified: false
+  independent_nut_relative_rotation_verified: false
+  intended_single_hand_strategy:
+    - grasp_and_insert_while_holding_coupling_nut
+    - constrain_plug_body_by_five_key_contact_before_tightening
+    - rotate_nut_with_bounded_robot_motion
+    - verify_passive_no_rollback_before_each_release_and_reindex
+    - regrasp_nut_for_additional_bounded_rotation_if_needed
+  strategy_status: GEOMETRICALLY_PLAUSIBLE_NOT_DYNAMICALLY_VERIFIED

@@ -1,0 +1,51 @@
+# Frozen simulation-only near-side observation camera.  This is one view
+# change after the fixed-global view returned MISS_KEY_NOT_OBSERVABLE; it does
+# not change the TE poses, workspaces, segmentation, 4 px gate, or grasp.
+schema_version: kcg_te_rgbd_camera_v1
+camera:
+  view_id: near_side_single_view_v1
+  calibration_id: te_near_side_rgbd_sim_v1
+  prim_path: /World/D38999TabletopV1/TeNearSideRgbdCamera
+  frame_id: te_near_side_rgbd_camera_optical
+  # 55 mm closer than the first FOV-feasible ray, along the same optical
+  # line.  This gives both key-width bounds and the plug's 0.787 mm exposed
+  # key band more than 10 percent margin above the frozen 4 px gate.
+  eye_world_m: [0.6909924702601342, -0.3951701813111166, 0.30681475920915197]
+  target_world_m: [0.500, -0.100, 0.220]
+  resolution_px: [1280, 720]
+  frequency_hz: 20
+  warmup_frames: 5
+  channels_exactly: [rgb, distance_to_image_plane]
+  camera_cv_axes: [x_right, y_down, z_forward]
+  focal_length_mm: 24.0
+  horizontal_aperture_mm: 20.955
+  clipping_range_m: [0.1, 10.0]
+
+# Pure projection of the official supplier-CAD bounding-box corners in the
+# unchanged authored scene.  Pixel bounds include all eight corners per part;
+# the FOV gate reserves a further 16 px image border.
+geometry_preflight:
+  method: OFFICIAL_STEP_AABB_CORNERS_PINHOLE_PROJECTION_V1
+  geometry_audit_sha256: 0822a669608a42a69e909b4b49c40fd470db1a5f7e75b81d6e33e25d16699eb4
+  plug:
+    nearest_optical_depth_m: 0.22779144878712593
+    projected_u_px: [202.26227270892917, 583.5686735113145]
+    projected_v_px: [391.6389995028933, 683.6933623923667]
+    optimistic_smallest_key_width_px: 8.500279178172304
+    exposed_key_band_m: 0.000787
+    optimistic_exposed_key_band_px: 5.064899843444582
+  receptacle:
+    nearest_optical_depth_m: 0.5247928096685073
+    projected_u_px: [1074.5027084804494, 1236.0570652223555]
+    projected_v_px: [88.5914172447442, 187.51173820946593]
+    optimistic_smallest_key_width_px: 4.469569068331685
+  minimum_image_border_margin_px: 36.30663760763332
+  camera_point_clearance_m:
+    table: 0.10681475920915195
+    fixture: 0.5194013446082235
+    plug_official_cad_aabb: 0.23165173797196772
+    receptacle_official_cad_aabb: 0.5705984140911267
+  full_aabb_in_frame: true
+  both_optimistic_key_widths_at_least_4px: true
+  both_key_widths_and_plug_exposed_band_at_least_4p4px: true
+  robot_fk_or_collision_claimed: false

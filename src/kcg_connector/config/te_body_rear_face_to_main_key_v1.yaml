@@ -1,0 +1,77 @@
+# Frozen simulation-only rigid relation on the plug body.  One ordinary RGB-D
+# observation directly saw the wide main key, uniquely selected the five-key
+# branch, and passed the predeclared posthoc 3-sigma error bounds.  The
+# coupling nut is explicitly not a reference because it can rotate relative
+# to PlugBody.
+schema_version: kcg_te_body_rear_face_to_main_key_v1
+relation_id: te_body_rear_face_to_main_key_v1
+identity:
+  connector: D38999/26FJ35PN
+  polarization: N
+  reference_part: PlugBody
+  forbidden_reference_part: CouplingNut
+  registration_cad: artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_VISUAL.stl
+  registration_cad_sha256: 89bbf4ba3b8b5fb388276a378a820bb7547e676e97f0b9e2635b7862a86aa617
+
+frames:
+  supplier_mating_frame:
+    origin: mating_face_center
+    outward_axis_local: [0.0, 0.0, 1.0]
+    unique_main_key_local: [0.0, 1.0, 0.0]
+  body_rear_face_observation_frame:
+    origin_supplier_m: [0.0, 0.0, -0.031013399124]
+    axes_parallel_to_supplier_frame: true
+    source: OFFICIAL_STL_REAR_TERMINATION_BOUND
+  body_rear_face_from_supplier_mating:
+    translation_xyz_m: [0.0, 0.0, 0.031013399124]
+    quaternion_xyzw: [0.0, 0.0, 0.0, 1.0]
+  main_key_direction_in_body_rear_face: [0.0, 1.0, 0.0]
+
+freeze_contract:
+  status: FROZEN_ONE_TIME_DIRECT_MAIN_KEY_BRANCH
+  required_direct_evidence:
+    - ordinary_rgb
+    - ordinary_depth
+    - official_plugbody_cad
+    - wide_main_key_depth_consistent_patch
+    - unique_best_five_key_branch
+  minimum_main_key_depth_support_pixels: 12
+  direct_main_key_observation_policy: ONCE_UNLESS_COMPLETE_BRANCH_LOSS
+  freeze_capture_id: main_key_calibration_identity_yaw222p72_run01
+  freeze_candidate_sha256: 4526e6876c3911d4d0cd32e78024b1e276f2e10b49b355362721fd65566fb3dd
+  frozen_relation_sha256: 4526e6876c3911d4d0cd32e78024b1e276f2e10b49b355362721fd65566fb3dd
+  frozen_supplier_main_key_index: 1
+  frozen_unwrapped_yaw_rad: 3.893829561199349
+  provider_evidence_path: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_rgbd_observe_only_v1/main_key_calibration_identity_yaw222p72_run01/pose_provider_result_v2.json
+  posthoc_evidence_path: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_rgbd_observe_only_v1/main_key_calibration_identity_yaw222p72_run01/pose_provider_result_v2_posthoc_truth_sidecar.json
+  posthoc_error_inside_frozen_3sigma: true
+  post_freeze_update_rule: UPDATE_ONLY_CURRENT_BODY_REAR_FACE_POSE
+  relabel_main_key_after_slip_or_disturbance_allowed: false
+  repeat_direct_key_observation_required_after_slip_or_disturbance: false
+  missing_rear_face_observation_result: MISS_BODY_REAR_FACE_NOT_OBSERVED
+  short_rear_face_occlusion_with_continuous_branch_requires_recalibration: false
+  ordinary_pose_miss_triggers_main_key_relabel: false
+  complete_branch_loss_definition: AXISYMMETRIC_REAR_FACE_TRACKING_FULLY_LOST_AND_REACQUIRED_WITHOUT_RECOVERABLE_IN_PLANE_BRANCH
+  complete_branch_loss_status: RECALIBRATION_REQUIRED_AFTER_BRANCH_LOSS
+  complete_branch_loss_action: RETURN_TO_DEDICATED_TRUE_MAIN_KEY_VIEW
+
+branch_continuity:
+  branch_id: N_POLARIZATION_SUPPLIER_MAIN_KEY_INDEX_1
+  supplier_key_centers_deg: [10.0, 90.0, 157.0, 254.0, 308.0]
+  supplier_main_key_index: 1
+  supplier_main_key_center_deg: 90.0
+  yaw_representation: CONTINUOUS_UNWRAPPED_ABOUT_CURRENT_BODY_AXIS
+  last_unwrapped_yaw_rad: 3.893829561199349
+  branch_switch_without_direct_key_evidence_allowed: false
+  coupling_nut_rotation_changes_branch: false
+  continuity_update_during_slip_or_disturbance: TRACK_CURRENT_BODY_REAR_FACE_WITHOUT_RELABEL
+  continuity_update_during_short_occlusion: PROPAGATE_EXISTING_UNWRAPPED_BRANCH_IF_RECOVERABLE
+  reacquisition_with_recoverable_branch_requires_direct_key_view: false
+  reacquisition_without_recoverable_branch_requires_direct_key_view: true
+
+authorization:
+  simulation_only: true
+  hardware_authorized: false
+  relation_frozen: true
+  assembly_control_authorized: false
+  receptacle_contact_authorized: false

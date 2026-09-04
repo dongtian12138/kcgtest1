@@ -36,9 +36,14 @@ from kcg_connector.grasp.carts_v2.task_grip_surface import (
 
 _SCHEMA = "carts_grasp_v2"
 _LEGACY_ROLE_METHOD = "TASK_AXIS_OUTER_ENVELOPE_V1"
-_ROLE_METHOD = "TASK_AXIS_OUTER_ENVELOPE_THREE_ROLE_V2"
-PRIMARY_GRIP, SECONDARY_GRIP, HARD_FORBIDDEN = range(3)
-FACE_ROLE_NAMES = ("PRIMARY_GRIP", "SECONDARY_GRIP", "HARD_FORBIDDEN")
+_ROLE_METHOD = "FUNCTIONAL_THREE_STATE_V1"
+PRIMARY_GRIP, UNRESOLVED_SEARCHABLE, HARD_FORBIDDEN = range(3)
+SECONDARY_GRIP = UNRESOLVED_SEARCHABLE
+FACE_ROLE_NAMES = (
+    "GEOMETRICALLY_PREFERRED_SEARCHABLE",
+    "UNRESOLVED_SEARCHABLE",
+    "PROVEN_FUNCTIONAL_HARD_FORBIDDEN",
+)
 
 
 def rotation_distance(left: np.ndarray, right: np.ndarray) -> float:
@@ -344,7 +349,7 @@ def load_v2_config(path: Path | str) -> CARTSV2Config:
 def build_face_role_map(
     loaded: LoadedObjectContract, config: CARTSV2Config
 ) -> FaceRoleMap:
-    """Partition every source face once using shared task-axis geometry rules."""
+    """Keep geometry thresholds soft; only explicit semantics create hard bans."""
 
     settings = config.section("surface_roles")
     method = settings.get("method")
@@ -394,8 +399,7 @@ def build_face_role_map(
         radial_alignment >= float(settings["minimum_radial_normal_component"])
     ) & (axial_alignment <= float(settings["maximum_axial_normal_component"]))
     primary = semantic_allowed & non_axis & legacy_lateral & on_outer_envelope
-    hard = (~semantic_allowed | ~non_axis | ~on_outer_envelope
-            | (axial_alignment > float(settings["maximum_axial_normal_component"])))
+    hard = ~semantic_allowed
     secondary = ~hard & ~primary
     if method == _LEGACY_ROLE_METHOD:
         hard, secondary = ~primary, np.zeros_like(primary)
@@ -404,14 +408,10 @@ def build_face_role_map(
     allowed = ~hard
     reason = np.zeros(len(allowed), dtype=np.uint8)
     reason[~semantic_allowed] = 1
-    reason[semantic_allowed & ~non_axis] = 2
     if method == _LEGACY_ROLE_METHOD:
+        reason[semantic_allowed & ~non_axis] = 2
         reason[semantic_allowed & non_axis & ~legacy_lateral] = 3
         reason[semantic_allowed & non_axis & legacy_lateral & ~on_outer_envelope] = 4
-    else:
-        reason[semantic_allowed & non_axis & ~on_outer_envelope] = 4
-        reason[semantic_allowed & non_axis & on_outer_envelope
-               & (axial_alignment > float(settings["maximum_axial_normal_component"]))] = 5
     area = mesh.face_areas_m2
     return FaceRoleMap(
         object_id=loaded.object_id,
@@ -520,6 +520,78 @@ def load_v2_inputs(
     task_surfaces, collision_triangles, hand_variant = bind_task_hand_variant(
         root, inputs, collision_triangles
     )
+    if task_surfaces is not None:
+        canonical_surfaces: dict[str, TaskGripSurface] = {}
+        canonical_collisions = dict(collision_triangles)
+        for pad in hand_contract.pads:
+            surface = task_surfaces.get(pad.name)
+            contract_triangles = pad.points_local_m[pad.faces]
+            if surface is None or surface.link_name != pad.link_name:
+                raise ValueError(
+                    f"hand contract PAD differs from active task surface: {pad.name}"
+                )
+            runtime_triangles = surface.triangles_local_m
+            arithmetic_scale_m = max(
+                1.0e-3,
+                float(np.max(np.abs(contract_triangles))),
+                float(np.max(np.abs(runtime_triangles))),
+            )
+            transform_roundoff_bound_m = (
+                32.0 * np.finfo(np.float64).eps * arithmetic_scale_m
+            )
+            if (
+                runtime_triangles.shape != contract_triangles.shape
+                or not np.allclose(
+                    contract_triangles,
+                    runtime_triangles,
+                    rtol=0.0,
+                    atol=transform_roundoff_bound_m,
+                )
+            ):
+                raise ValueError(
+                    f"hand contract PAD differs from active task surface: {pad.name}"
+                )
+            canonical_surfaces[pad.name] = TaskGripSurface(
+                surface_name=surface.surface_name,
+                pad_name=surface.pad_name,
+                finger_name=surface.finger_name,
+                link_name=surface.link_name,
+                points_local_m=pad.points_local_m,
+                faces=pad.faces,
+                source_face_indices=surface.source_face_indices,
+                face_normals_local=surface.face_normals_local,
+                patch_indices=surface.patch_indices,
+                legacy_blue_pad_face_mask=surface.legacy_blue_pad_face_mask,
+                source_mesh_path=surface.source_mesh_path,
+                source_mesh_sha256=surface.source_mesh_sha256,
+            )
+            full_terminal = np.array(
+                canonical_collisions[pad.link_name],
+                dtype=np.float64,
+                copy=True,
+            )
+            source_faces = surface.source_face_indices
+            if (
+                full_terminal.ndim != 3
+                or full_terminal.shape[1:] != (3, 3)
+                or len(source_faces) != pad.triangle_count
+                or np.any(source_faces < 0)
+                or np.any(source_faces >= len(full_terminal))
+                or not np.allclose(
+                    full_terminal[source_faces],
+                    contract_triangles,
+                    rtol=0.0,
+                    atol=transform_roundoff_bound_m,
+                )
+            ):
+                raise ValueError(
+                    f"full terminal collision PAD differs from contract: {pad.name}"
+                )
+            full_terminal[source_faces] = contract_triangles
+            full_terminal.setflags(write=False)
+            canonical_collisions[pad.link_name] = full_terminal
+        task_surfaces = MappingProxyType(canonical_surfaces)
+        collision_triangles = MappingProxyType(canonical_collisions)
     world_from_object, table_bounds, table_top = _load_frozen_scene_geometry(
         root, config, object_id
     )

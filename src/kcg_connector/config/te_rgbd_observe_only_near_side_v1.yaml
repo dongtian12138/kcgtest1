@@ -1,0 +1,14 @@
+# View-only continuation after fixed_global_rx180_run02.  The base scene,
+# object poses, workspaces, 4 px gate, foreground delta and grasp are inherited
+# unchanged; only the camera view/calibration source is replaced.
+schema_version: kcg_te_rgbd_observe_only_view_override_v1
+base_observe_config: src/kcg_connector/config/te_rgbd_observe_only_v1.yaml
+camera_config: src/kcg_connector/config/te_rgbd_camera_near_side_v1.yaml
+
+experiment_contract:
+  current_physical_state: DEVELOPMENT_TRANSPORT_GRASP_REOBSERVE_REQUIRED_NO_NEW_MOTION
+  unique_unknown: near_side_ordinary_rgbd_places_both_endpoints_above_the_frozen_key_observability_gate
+  single_frozen_variable: observation_view_fixed_global_rgbd_v1_to_near_side_single_view_v1
+  falsifiable_judgment: both_endpoint_foregrounds_are_present_and_each_optimistic_key_width_is_at_least_4px_so_status_is_READY_FOR_FULL_CAD_REGISTRATION_with_zero_commands
+  miss_branch: park_this_single_near_view_and_freeze_a_two_position_single_camera_strategy_before_any_new_run
+  ready_branch: proceed_only_to_full_te_cad_registration_without_motion

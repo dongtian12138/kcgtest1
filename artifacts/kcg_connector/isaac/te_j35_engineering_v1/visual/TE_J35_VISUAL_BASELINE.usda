@@ -1,0 +1,26 @@
+#usda 1.0
+(
+    defaultPrim = "TE_J35VisualBaseline"
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "TE_J35VisualBaseline"
+{
+    def Xform "Plug" (
+        prepend references = @./D38999_26FJ35PN_VISUAL.usdc@
+    )
+    {
+        double3 xformOp:translate = (-0.03, 0, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+
+    def Xform "Receptacle" (
+        prepend references = @./D38999_20FJ35SN_VISUAL.usdc@
+    )
+    {
+        double3 xformOp:translate = (0.03, 0, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+}
+

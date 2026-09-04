@@ -1,7 +1,8 @@
 --extra-index-url https://pypi.nvidia.com
 
 isaacsim[all,extscache]==6.0.1.0
-trimesh==5.0.0
+trimesh==4.11.1
+python-fcl==0.7.0.11
 fast-simplification==0.2.0
 manifold3d==3.5.2
 matplotlib==3.7.5

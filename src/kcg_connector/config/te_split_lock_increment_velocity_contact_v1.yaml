@@ -1,0 +1,89 @@
+schema_version: kcg_te_split_lock_increment_velocity_contact_v1
+hardware_authorized: false
+mode: SIMULATION_ONLY_SINGLE_VARIABLE_VELOCITY_DRIVE_CONTACT
+
+base_contract:
+  path: src/kcg_connector/config/te_split_lock_increment_v1.yaml
+  sha256: 223aac7442c38e6e12c089a8fd4282e958aee75286fa6005586806443b29d7af
+
+decision_evidence:
+  explicit_torque_trace:
+    path: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_b/te_split_lock_increment_v1/explicit_torque_contact_run02/trace.json
+    sha256: 59a87ad7e626af0a72fdec57d50b1013ccf391838cb75ecff1a09b097bc0a86e
+  explicit_torque_summary:
+    path: artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_b/te_split_lock_increment_v1/explicit_torque_contact_run02/summary.json
+    sha256: 4212090b9aa64eb3a6c0897db50ef1a686a0ca78048d3ffc3a5108b5c99fd20c
+  observed_first_failure: FINGER_1_EXPLICIT_TORQUE_CONTACT_TIMEOUT
+  observed_mode_tare_start_position_rad: 0.62714684009552
+  observed_mode_tare_end_position_rad: 0.6116102337837219
+  observed_ramp_final_position_rad: 0.6538192629814148
+  observed_ramp_maximum_movement_rad: 0.04220902919769287
+  observed_peak_tare_subtracted_effort_nm: 0.0030381509005868185
+  observed_final_pad_to_nut_distance_m: 0.0018783964128638595
+  parked_routes:
+    - SEQUENTIAL_POSITION_CONTACT_WITH_SPEED_CHANGE
+    - SEQUENTIAL_POSITION_CONTACT_WITH_DRIVE_CAP
+    - SEQUENTIAL_EXPLICIT_JOINT_TORQUE_RAMP_V1
+
+falsifiable_question:
+  hypothesis: >-
+    Per-finger velocity drive at 0.020 rad/s, with kp zero, the original
+    2.0 N*m*s/rad damping and 0.023 N*m drive cap, can traverse the observed
+    free motion and confirm all three contacts without crossing the unchanged
+    wrist-FT or joint safety gates.
+  success_next: TRANSITION_TO_THE_EXISTING_FINITE_PRELOAD_AFTER_EXACT_DRIVE_RESTORE
+  failure_next: PARK_VELOCITY_DRIVE_CONTACT_AND_LOCALIZE_THE_EARLIEST_PHYSICAL_CAUSE
+
+single_variable:
+  name: CONTACT_CONTROL_MECHANISM
+  value: SEQUENTIAL_VELOCITY_DRIVE_CONTACT_V1
+  closing_dof_names: [f1j2, f2j1, f3j2]
+  closing_order: [finger_1, finger_2, finger_3]
+  positive_closing_direction: [1.0, 1.0, 1.0]
+  velocity_target_rad_s: 0.020
+  velocity_target_source: >-
+    WITH_KP_ZERO_AND_FROZEN_KD_2P0_A_STALL_GIVES_0P040_NM_UNCLIPPED_DAMPING_EFFORT,
+    WHICH_IS_CLIPPED_BY_THE_UNCHANGED_0P023_NM_CAP; 0P020_RAD_S_IS_FAR_BELOW_THE
+    UNCHANGED_0P18_RAD_S_HARD_LIMIT_AND_TRAVERSES_THE_OBSERVED_0P039_RAD_FREE_MOTION
+    WITHIN_THE_FROZEN_3_S_TIMEOUT
+  per_finger_timeout_s: 3.0
+  minimum_movement_before_confirmation_rad: 0.020
+  minimum_movement_source: CONTACT_EFFORT_CAP_RUN02_OBSERVED_0P0388975_RAD_FREE_MOTION
+  near_zero_velocity_threshold_rad_s: 0.010
+  maximum_actual_closing_speed_rad_s: 0.18
+  maximum_actual_closing_speed_action: ABORT_ZERO_VELOCITY_TARGETS_AND_RESTORE_DRIVES
+  maximum_drive_effort_nm: 0.023
+  measured_effort_threshold_nm: 0.020
+  consecutive_confirmation_samples: 6
+  endpoint_positions_source: DEVELOPMENT_GRASP_FINAL_HAND_TARGETS
+  active_and_confirmed_drive_kp_kd: [0.0, 2.0]
+  palm_and_not_yet_active_position_drive_unchanged: true
+  active_and_confirmed_velocity_target_rad_s: 0.020
+  future_and_palm_velocity_target_rad_s: 0.0
+  full_active_hand_velocity_vector_written_every_physics_step: true
+  explicit_effort_buffer_required_zero: true
+  set_dof_efforts_allowed_for_velocity_progress: false
+  transition_position_bias_rule: CURRENT_ANGLE_PLUS_0P02_DIVIDED_BY_HAND_STIFFNESS
+  zero_velocity_targets_before_position_target_and_drive_restore: true
+  exact_velocity_gain_cap_readback_required: true
+  restore_in_finally_before_preload_or_release_recovery: true
+
+frozen_unchanged:
+  finger_maximum_speed_rad_s: 0.18
+  contact_effort_rise_nm: 0.02
+  contact_consecutive_samples: 6
+  hand_stiffness: 12.0
+  hand_damping: 2.0
+  restored_hand_drive_maximum_effort_nm: 1.0
+  pose_changed: false
+  friction_changed: false
+  wrist_ft_limits_changed: false
+  joint_safety_limits_changed: false
+  preload_changed: false
+
+boundaries:
+  allowed_new_robot_command_channel: active_hand_joint_velocity_targets
+  online_object_or_contact_truth_used: false
+  connector_pose_force_torque_or_drive_command_allowed: false
+  hardware_authorized: false
+  simulation_app_may_start_only_in_run_mode: true

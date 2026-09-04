@@ -1,0 +1,43 @@
+{
+  "schema_version": "kcg_te_visual_high_reobserve_slow_v1",
+  "mode": "SIMULATION_ONLY_FRESH_VISION_TO_APPROACH_HIGH_AND_REOBSERVE",
+  "authorization": {
+    "hardware_authorized": false,
+    "simulation_only": true,
+    "approach_high_motion_authorized": true,
+    "descent_authorized": false,
+    "object_contact_authorized": false,
+    "finger_closure_authorized": false
+  },
+  "base_visual_high_reobserve_config": {
+    "path": "src/kcg_connector/config/te_visual_high_reobserve_v1.json",
+    "sha256": "766e1d7a7b2a714f81bb41137ef2dd2fcb919bf2464ec3a915500a9c9979c14f"
+  },
+  "direct_failure_evidence": {
+    "high_motion_execution": {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_visual_high_reobserve_v1/physical_rx180_run01/high_motion_execution.json",
+      "sha256": "01bdcce9e455a710d20149d547174fa48b311bffda0e3147bc89a44bf75295b3"
+    },
+    "trace": {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_visual_high_reobserve_v1/physical_rx180_run01/trace.json",
+      "sha256": "a69086d0dd0d06209aff998ea155fc130ca2e6b8f5b74a809572e22d4f11cad8"
+    }
+  },
+  "single_variable_override": {
+    "field": "controller.approach_high_motion_duration_s",
+    "configured_value_s": 3.0,
+    "effective_value_s": 6.0,
+    "preshape_duration_s_unchanged": 3.0,
+    "base_dynamic_mapping_unchanged": true,
+    "minimum_jerk_peak_acceleration_ratio_vs_base": 0.25,
+    "all_other_dynamic_fields_identical_to_base": true,
+    "force_and_torque_limits_unchanged": true,
+    "visual_target_path_grasp_and_static_panel_unchanged": true
+  },
+  "experiment_contract": {
+    "unique_unknown": "whether_halving_only_the_arm_approach_high_speed_scale_keeps_gravity_compensated_inertial_torque_below_the_unchanged_soft_limit",
+    "single_changed_physical_variable": "home_to_approach_high_arm_motion_duration_3s_to_6s",
+    "success_branch": "continue_to_the_unchanged_high_wait_and_second_ordinary_rgbd_observation",
+    "failure_branch": "retain_zero_descent_and_zero_closure_then_classify_the_unchanged_earliest_ft_or_path_failure"
+  }
+}

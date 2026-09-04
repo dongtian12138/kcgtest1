@@ -1,0 +1,158 @@
+{
+  "schema_version": "te_postgrasp_disturbance_panel_v1",
+  "panel_status": "FROZEN_BEFORE_FIRST_DYNAMIC_CONDITION",
+  "model_scope": "SIMULATION_ONLY_FIXED_POSE_GRASP_QUALIFICATION",
+  "hardware_authorized": false,
+  "binding_lineage": {
+    "source_panel": "src/kcg_connector/config/te_postgrasp_disturbance_panel_v1.json",
+    "source_panel_sha256": "d7092f83dc1676141db5b4e9319fda3504381ca687752fe6e7f192bba48c3ce3",
+    "only_nominal_candidate_binding_changed": true,
+    "conditions_coordinate_timing_limits_and_qualification_unchanged": true,
+    "candidate_config": "src/kcg_connector/config/te_fixed_pose_high_opening_lateral_bias_bound_asset_v1.yaml",
+    "candidate_config_sha256": "55ec7fcfb0d54024efcbfc19debc653c66f5f9790ba22496c750ff96e6b41d22"
+  },
+  "nominal_grasp_binding": {
+    "config_sha256": "55ec7fcfb0d54024efcbfc19debc653c66f5f9790ba22496c750ff96e6b41d22",
+    "control_plan_sha256": "bb521f928c0a9e97293e9b6e3b71124d824bff5ffb68c77d0b8da6f069c86d39",
+    "object_asset_sha256": "231d589b17ffbef9224344ec304826e5110abf0ed2d5b18a0f96e888d88d7f99",
+    "robot_asset_sha256": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747",
+    "contact_friction_coefficient": 0.45,
+    "preload_increment_rad": 0.075,
+    "finger_preload_scales": [1.0, 1.0, 1.0],
+    "lift_arm_damping_nm_s_rad": 160.0,
+    "required_closing_joint_effort_nm": [
+      0.8222156981644227,
+      0.6915850774109302,
+      0.7743894473524215
+    ]
+  },
+  "coordinate_contract": {
+    "vector_frame": "TE_ASSEMBLY_TASK_FRAME",
+    "task_plus_z": "FROM_RECEPTACLE_TOWARD_APPROACHING_PLUG",
+    "task_plus_x": "UNIQUE_MAIN_KEY_CENTERLINE",
+    "task_from_supplier_object_rotation_row_major": [
+      [0.0, 1.0, 0.0],
+      [1.0, 0.0, 0.0],
+      [0.0, 0.0, -1.0]
+    ],
+    "frozen_world_from_task_rotation_row_major": [
+      [0.005020801394688, 0.9996605462739759, -0.02556528459788877],
+      [-0.9936164329098536, 0.00786845029543871, 0.11253653514057789],
+      [0.11269949336555783, 0.02483706329589229, 0.9933186520356809]
+    ],
+    "frozen_world_task_frame_source": "PRIOR_NOMINAL_FIXED_POSE_RUN_POSTRUN_FINAL_HOLD_POSE",
+    "frozen_world_task_frame_source_evaluation": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/fixed_pose_baseline/historical_te_high_opening_run01/grasp_lift_run01/evaluation.json",
+    "frozen_world_task_frame_source_evaluation_sha256": "29576f03ea75868146fbb1f96548d9ce4f24820b21ac11d50c816d23c9a635ef",
+    "frozen_world_task_frame_source_trace": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/fixed_pose_baseline/historical_te_high_opening_run01/grasp_lift_run01/trace.json",
+    "frozen_world_task_frame_source_trace_sha256": "fc4cdac62079c6c234c437103c199221c2da57b4e7115509f6a57885c61b55cd",
+    "frozen_world_task_frame_source_final_sample": {
+      "step": 8600,
+      "simulation_time_s": 35.8375,
+      "phase": "hold",
+      "supplier_object_position_world_m": [
+        0.5188969969749451,
+        -0.2119767665863037,
+        0.2550354301929474
+      ],
+      "supplier_object_orientation_world_wxyz": [
+        0.056403593255308804,
+        0.9983230478181286,
+        0.0032277256641266177,
+        0.012621753049761103
+      ]
+    },
+    "application_point": "TE_MATING_FACE_CENTER_RIGID_BODY_ORIGIN",
+    "application_point_supplier_object_m": [0.0, 0.0, 0.0],
+    "te_cad_center_of_mass_task_m": [
+      0.0000014076390705697556,
+      0.0000033654747537864324,
+      0.018135482728838786
+    ],
+    "lateral_direct_moment_sign_rule": "AUGMENT_R_FROM_COM_TO_MATING_FACE_CROSS_FORCE_IN_THIS_TASK_FRAME",
+    "force_and_direct_torque_applied_to": "FUSED_TE_BASELINE_SINGLE_RIGID_BODY",
+    "online_object_pose_readback_used": false
+  },
+  "timing": {
+    "zero_input_baseline_steps": 1,
+    "ramp_up_s": 0.2,
+    "ramp_down_s": 0.2,
+    "recovery_s": 2.0,
+    "ramp_profile": "MINIMUM_JERK"
+  },
+  "input_limits": {
+    "maximum_resultant_force_n": 3.0400615,
+    "maximum_resultant_moment_nm": 0.0540690202,
+    "force_and_moment_may_be_simultaneous": true,
+    "source_scope": "SIMULATION_RESEARCH_LIMITS_NOT_HARDWARE_RATINGS"
+  },
+  "postrun_qualification": {
+    "require_all_three_legal_pad_contacts_every_sample": true,
+    "require_no_table_recontact": true,
+    "require_no_unauthorized_contact": true,
+    "require_no_joint_or_effort_safety_abort": true,
+    "coupling_nut_grip_region_supplier_object": {
+      "minimum_radius_m": 0.0200,
+      "minimum_z_m": -0.0217678,
+      "maximum_z_m": -0.0015494,
+      "source": "TE_OFFICIAL_CAD_PART_SPLIT_NOT_MANUFACTURING_TOLERANCE"
+    },
+    "recovery_shell_two_point_lateral_limit_m": 0.0001125,
+    "engagement_length_m": 0.00724,
+    "recovery_conservative_key_envelope_limit_m": 0.00014,
+    "main_key_radius_m": 0.018855,
+    "main_key_half_width_clearance_m": 0.00033,
+    "minor_key_half_width_clearance_m": 0.00014,
+    "visual_and_control_uncertainty_must_share_remaining_margin": true,
+    "source": "PUBLIC_INTERFACE_PROXY_GEOMETRY_NOT_CAMERA_OR_MANUFACTURING_CERTIFICATION"
+  },
+  "conditions": [
+    {
+      "condition_id": "lateral_x_positive",
+      "description_cn": "主键横向正向力与同平面负向倾覆力矩",
+      "force_task_n": [3.0400615, 0.0, 0.0],
+      "moment_task_nm": [0.0, -0.0540690202, 0.0]
+    },
+    {
+      "condition_id": "lateral_x_negative",
+      "description_cn": "主键横向负向力与同平面正向倾覆力矩",
+      "force_task_n": [-3.0400615, 0.0, 0.0],
+      "moment_task_nm": [0.0, 0.0540690202, 0.0]
+    },
+    {
+      "condition_id": "lateral_y_positive_tilt_x_positive",
+      "description_cn": "另一横向正向力与同平面正向倾覆力矩",
+      "force_task_n": [0.0, 3.0400615, 0.0],
+      "moment_task_nm": [0.0540690202, 0.0, 0.0]
+    },
+    {
+      "condition_id": "lateral_y_negative_tilt_x_negative",
+      "description_cn": "另一横向负向力与同平面负向倾覆力矩",
+      "force_task_n": [0.0, -3.0400615, 0.0],
+      "moment_task_nm": [-0.0540690202, 0.0, 0.0]
+    },
+    {
+      "condition_id": "axial_positive_twist_positive",
+      "description_cn": "沿退出方向轴向力与正向绕插入轴力矩",
+      "force_task_n": [0.0, 0.0, 3.0400615],
+      "moment_task_nm": [0.0, 0.0, 0.0540690202]
+    },
+    {
+      "condition_id": "axial_negative_twist_negative",
+      "description_cn": "沿插入方向轴向力与负向绕插入轴力矩",
+      "force_task_n": [0.0, 0.0, -3.0400615],
+      "moment_task_nm": [0.0, 0.0, -0.0540690202]
+    },
+    {
+      "condition_id": "combined_xyz_positive_twist_positive",
+      "description_cn": "三轴正向合力与三轴有限组合力矩",
+      "force_task_n": [1.7551803253780176, 1.7551803253780176, 1.7551803253780176],
+      "moment_task_nm": [0.031216763367289315, -0.031216763367289315, 0.031216763367289315]
+    },
+    {
+      "condition_id": "combined_xyz_negative_twist_negative",
+      "description_cn": "三轴负向合力与相反三轴有限组合力矩",
+      "force_task_n": [-1.7551803253780176, -1.7551803253780176, -1.7551803253780176],
+      "moment_task_nm": [-0.031216763367289315, 0.031216763367289315, -0.031216763367289315]
+    }
+  ]
+}

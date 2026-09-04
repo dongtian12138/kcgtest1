@@ -19,4 +19,14 @@ def generate_launch_description():
         )
         .to_moveit_configs()
     )
+    robot_description = moveit_config.robot_description["robot_description"]
+    for link_name in ("f1Link3", "f2Link2", "f3Link3"):
+        old_mesh = f"meshes/hand/collision/{link_name}_convex.stl"
+        new_mesh = f"meshes/hand/connector_no_nail/{link_name}_nailfree.stl"
+        if robot_description.count(old_mesh) != 1:
+            raise RuntimeError(
+                f"expected exactly one MoveIt collision mesh for {link_name}"
+            )
+        robot_description = robot_description.replace(old_mesh, new_mesh)
+    moveit_config.robot_description["robot_description"] = robot_description
     return generate_move_group_launch(moveit_config)

@@ -1,0 +1,77 @@
+{
+  "schema_version": "te_postgrasp_disturbance_panel_v2",
+  "panel_status": "FROZEN_BEFORE_FIRST_DYNAMIC_CONDITION",
+  "hardware_authorized": false,
+  "coordinate_contract": {
+    "vector_frame": "HELD_HAND_FRAME_FROZEN_AT_DISTURBANCE_START",
+    "task_plus_x": "HELD_HAND_PLUS_X_IN_THE_THREE_FINGER_LAYOUT",
+    "task_plus_y": "HELD_HAND_PLUS_Y_IN_THE_THREE_FINGER_LAYOUT",
+    "task_plus_z": "HELD_HAND_PLUS_Z_NOMINALLY_ALIGNED_WITH_THE_GRASPED_PLUG_AXIS",
+    "task_from_supplier_object_rotation_row_major": [[0, 1, 0], [1, 0, 0], [0, 0, -1]],
+    "task_from_hand_rotation_row_major": [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    "frozen_world_task_frame_source": "CURRENT_RUN_HELD_HAND_POSE_FROZEN_BEFORE_DISTURBANCE",
+    "application_point": "TE_BODY_CENTER_OF_MASS",
+    "application_point_supplier_object_m": [0.000007630388806767835, 0.0000031914738841630513, -0.02142457954243458],
+    "body_com_source_manifest": "artifacts/kcg_connector/isaac/te_j35_free_split_tabletop_real_mass_resistance_0p020_v2/MANIFEST.json",
+    "body_com_source_manifest_sha256": "a3b15290fd69dee109defd401e1b74afb6e68f150a3c4e66e02bb7ed13c0b2ea",
+    "current_body_pose_readback_used_only_for_test_frame_and_com_application": true,
+    "force_and_direct_torque_applied_to": "TE_SPLIT_PLUG_BODY",
+    "returned_to_grasp_controller": false
+  },
+  "timing": {
+    "zero_input_baseline_steps": 1,
+    "ramp_up_s": 0.2,
+    "plateau_s": 1.0,
+    "ramp_down_s": 0.2,
+    "recovery_s": 2.0,
+    "ramp_profile": "MINIMUM_JERK"
+  },
+  "input_limits": {
+    "maximum_resultant_force_n": 3.0400615,
+    "maximum_resultant_moment_nm": 0.0540690202,
+    "force_and_moment_may_be_simultaneous": false,
+    "source_scope": "EXISTING_SIMULATION_RESEARCH_LIMITS_NOT_HARDWARE_RATINGS"
+  },
+  "nominal_grasp_binding": {
+    "config_sha256": "b255dcca3a3b1468ea6bc7d01841d25345725b1091a78167802cc97f59189a85",
+    "control_plan_sha256": "3f1176c8a0f169fde1ce74c81e03ae744232b45639ff59133f5c2087eb110a48",
+    "object_asset_sha256": "182ffa9f9bbddf582c221eb46854751bbaaa9c6413d43aac1d3eb055ebbc6007",
+    "robot_asset_sha256": "d4ec8ada91bf948824bdf2c50d007ef86e03834c234059e45ef4785493781747",
+    "contact_friction_coefficient": 0.45,
+    "preload_increment_rad": 0.075,
+    "finger_preload_scales": [1.0, 1.0, 1.0],
+    "lift_arm_damping_nm_s_rad": 160.0,
+    "required_closing_joint_effort_nm": [0.326260829362, 0.346363750999, 0.326270244382]
+  },
+  "postrun_qualification": {
+    "require_all_three_legal_pad_contacts_every_sample": true,
+    "require_no_table_recontact": true,
+    "require_no_unauthorized_contact": true,
+    "require_no_joint_or_effort_safety_abort": true,
+    "coupling_nut_grip_region_supplier_object": {
+      "minimum_radius_m": 0.020,
+      "minimum_z_m": -0.0217678,
+      "maximum_z_m": -0.0015494,
+      "source": "TE_OFFICIAL_CAD_PART_SPLIT_NOT_MANUFACTURING_TOLERANCE"
+    },
+    "recovery_shell_two_point_lateral_limit_m": 0.0005,
+    "engagement_length_m": 0.00724,
+    "recovery_conservative_key_envelope_limit_m": 0.0005,
+    "main_key_radius_m": 0.018855,
+    "main_key_half_width_clearance_m": 0.0005,
+    "minor_key_half_width_clearance_m": 0.0005,
+    "visual_and_control_uncertainty_must_share_remaining_margin": true,
+    "precision_limit_translation_m": 0.0005,
+    "precision_limit_axis_tilt_rad": 0.008726646259971648,
+    "precision_limit_key_rotation_rad": 0.008726646259971648,
+    "source": "CURRENT_EXPERIMENTAL_LIMIT_DEFINITION_NOT_HARDWARE_CERTIFICATION"
+  },
+  "conditions": [
+    {
+      "condition_id": "lateral_x_pos_4w",
+      "description_cn": "手坐标系+X，4倍插头重量，安全边界中点",
+      "force_task_n": [2.4500804656854833, 0, 0],
+      "moment_task_nm": [0, 0, 0]
+    }
+  ]
+}

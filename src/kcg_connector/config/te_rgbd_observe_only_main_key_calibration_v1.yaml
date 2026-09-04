@@ -1,0 +1,74 @@
+# One-time direct main-key observation scene.  It preserves the near-side
+# camera, thresholds, workspaces, assets and provider; only the scene-authored
+# plug observation pose changes.  These authored values are never copied into
+# provider_input.json or treated as an estimated pose.
+schema_version: kcg_te_rgbd_observe_only_key_observation_overlay_v1
+base_observe_config: src/kcg_connector/config/te_rgbd_observe_only_v1.yaml
+camera_config: src/kcg_connector/config/te_rgbd_camera_near_side_v1.yaml
+body_rear_face_to_main_key_contract: src/kcg_connector/config/te_body_rear_face_to_main_key_v1.yaml
+
+experiment_contract:
+  current_physical_state: DEVELOPMENT_TRANSPORT_GRASP_REOBSERVE_REQUIRED_NO_NEW_MOTION
+  unique_unknown: ordinary_rgbd_directly_observes_the_plugbody_wide_main_key_and_unique_five_key_branch
+  single_frozen_variable: plug_observation_pose_rx180_to_supplier_identity_yaw222p72
+  falsifiable_judgment: K90_main_and_K10_K157_have_depth_consistent_visible_support_and_one_unique_five_key_branch_with_zero_commands
+  miss_branch: retain_pending_body_rear_face_to_main_key_relation_and_stop_without_relabeling
+  ready_branch: freeze_the_PlugBody_rear_face_to_main_key_branch_then_update_only_rear_face_pose
+
+scene_generation_truth:
+  scene_pose_id: supplier_identity_yaw222p72_main_key_calibration_v1
+  plug_world_translation_m: [0.520, -0.210, 0.231013399124]
+  plug_world_rotation_xyz_deg: [0.0, 0.0, 222.72]
+  plug_support_surface: table_top
+  receptacle_world_translation_m: [0.550, 0.185, 0.271623]
+  receptacle_world_rotation_xyz_deg: [0.0, 0.0, 0.0]
+  receptacle_support_surface: fixture_top
+
+geometry_preflight:
+  method: OFFICIAL_STL_KEY_PATCH_FULL_CAD_ZBUFFER_V1
+  camera_calibration_id: te_near_side_rgbd_sim_v1
+  plug_pose_use_scope: SCENE_GENERATION_AND_POSTHOC_ONLY
+  main_key_directly_visible: true
+  main_key_depth_consistent_pixels: 29
+  plug_key_patches:
+    K90_main:
+      front_facing_triangles: 9
+      projected_pixels: 29
+      self_visible_pixels: 29
+      self_occluded_pixels: 0
+      projected_bbox_uv: [391, 406, 475, 477]
+      minimum_other_cad_depth_margin_m: 0.00077634
+      median_other_cad_depth_margin_m: 0.00128093
+    K10:
+      front_facing_triangles: 6
+      projected_pixels: 13
+      self_visible_pixels: 13
+      self_occluded_pixels: 0
+      projected_bbox_uv: [289, 294, 453, 455]
+      minimum_other_cad_depth_margin_m: 0.00004650
+      median_other_cad_depth_margin_m: 0.00064365
+    K157:
+      front_facing_triangles: 6
+      projected_pixels: 12
+      self_visible_pixels: 12
+      self_occluded_pixels: 0
+      projected_bbox_uv: [493, 499, 450, 451]
+      minimum_other_cad_depth_margin_m: 0.00018669
+      median_other_cad_depth_margin_m: 0.00086193
+  full_stl_projection:
+    u_px: [261.877, 533.151]
+    v_px: [411.815, 642.393]
+    optical_depth_m: [0.238057, 0.287053]
+    minimum_image_border_margin_px: 76.607
+  supplier_aabb_projection:
+    u_px: [249.319, 546.356]
+    v_px: [398.764, 668.947]
+    optical_depth_m: [0.232961, 0.293044]
+    minimum_image_border_margin_px: 50.053
+  support_geometry:
+    table_top_world_z_m: 0.200
+    plug_mesh_min_world_z_m: 0.199999999999855
+    numerical_surface_residual_m: -0.000000000000145
+    actual_penetration_claimed: false
+    main_key_cap_world_z_m: 0.230251399124
+    main_key_cap_table_clearance_m: 0.030251399124

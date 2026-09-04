@@ -1,0 +1,249 @@
+{
+  "schema_version": "kcg_te_j35_free_split_tabletop_asset_v1",
+  "product_id": "D38999/26FJ35PN",
+  "hardware_authorized": false,
+  "asset": "artifacts/kcg_connector/isaac/te_j35_free_split_tabletop_real_mass_resistance_0p020_v2/TE_J35_FREE_SPLIT_PLUG_V1.usdc",
+  "asset_sha256": "182ffa9f9bbddf582c221eb46854751bbaaa9c6413d43aac1d3eb055ebbc6007",
+  "reference_prim_path": "/World/TE_J35FreeSplitPlug",
+  "body_relative_prim_path": "Body",
+  "coupling_nut_relative_prim_path": "CouplingNut",
+  "joint_relative_prim_path": "Joints/CouplingNutRevolute",
+  "component_bottom_offsets_m": [
+    0.0,
+    0.0015493999235332012
+  ],
+  "legal_grasp_contact_part": "CouplingNut",
+  "joint": {
+    "type": "REVOLUTE",
+    "axis_in_supplier_object_frame": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "allowed_relative_motion": "ROTATION_ABOUT_COMMON_Z_AXIS_ONLY",
+    "locked_relative_motion": [
+      "TRANSLATION_X",
+      "TRANSLATION_Y",
+      "TRANSLATION_Z",
+      "ROTATION_X",
+      "ROTATION_Y"
+    ],
+    "lower_limit_authored": false,
+    "upper_limit_authored": false,
+    "drive_authored": true,
+    "joint_friction_authored": false,
+    "rotational_resistance_evidence": "ENGINEERING_ASSUMPTION_PUBLIC_NUMERIC_VALUE_UNAVAILABLE",
+    "rotational_resistance": {
+      "model": "SYMMETRIC_CAPPED_ZERO_VELOCITY_BRAKE",
+      "assumed_resisting_torque_nm": 0.02,
+      "drive_type": "force",
+      "target_velocity_deg_s": 0.0,
+      "stiffness_nm_per_deg": 0.0,
+      "damping_nm_s_per_deg": 10000000000.0,
+      "maximum_drive_torque_nm": 0.02,
+      "angle_preference_or_limit_authored": false,
+      "physical_status": "ENGINEERING_ASSUMPTION_PUBLIC_NUMERIC_VALUE_UNAVAILABLE"
+    }
+  },
+  "mass_model": {
+    "total_mass_kg": 0.062459669349,
+    "source": "src/kcg_connector/config/te_j35_mass_reference_v1.yaml",
+    "source_sha256": "ea5f7db34b23a0926546d7f085201d502b6d654a9d037c3e98475056d57818e1",
+    "reference_scope": "AMPHENOL_OFFICIAL_SAME_MIL_SLASH_CONFIGURATION_WEIGHT_INCLUDING_CONTACTS",
+    "component_split_method": "UNIFORM_EFFECTIVE_DENSITY_OVER_SUPPLIER_CAD_PARTITION",
+    "component_split_is_manufacturer_measurement": false
+  },
+  "parts": {
+    "Body": {
+      "visual_usd": "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_BODY_VISUAL.usdc",
+      "visual_usd_sha256": "9449dfebc239a19ca844d994710582a404afb1a68aa454055bb614716f742874",
+      "source_mesh": {
+        "vertex_count": 338320,
+        "triangle_count": 676462,
+        "supplier_split_open_boundary": true
+      },
+      "hidden_interface_caps": [
+        {
+          "edge_count": 104,
+          "plane_z_m": -0.015011399984359741,
+          "radial_extent_m": 0.01996440106665559
+        },
+        {
+          "edge_count": 70,
+          "plane_z_m": -0.02176779881119728,
+          "radial_extent_m": 0.019075400651038906
+        }
+      ],
+      "closed_collision_source": {
+        "vertex_count": 338322,
+        "triangle_count": 676636,
+        "watertight": true,
+        "winding_consistent": true
+      },
+      "collision": {
+        "method": "COACD_FROM_EXACT_SPLIT_SUPPLIER_SURFACE",
+        "hull_count": 64,
+        "maximum_hulls": 64,
+        "output_vertex_count": 9887,
+        "output_triangle_count": 19518,
+        "threshold": 0.05,
+        "preprocess_mode": "auto",
+        "preprocess_resolution": 50,
+        "resolution": 2000,
+        "mcts_nodes": 20,
+        "mcts_iterations": 150,
+        "mcts_max_depth": 3,
+        "pca": false,
+        "merge": true,
+        "decimate": false,
+        "max_ch_vertex": 256,
+        "extrude": false,
+        "seed": 20260902
+      },
+      "mass_properties": {
+        "mass_kg": 0.027548618179969776,
+        "volume_m3": 1.267780269405571e-05,
+        "center_of_mass_m": [
+          7.630388806767835e-06,
+          3.1914738841630513e-06,
+          -0.02142457954243458
+        ],
+        "inertia_tensor_kg_m2": [
+          [
+            4.4263769941236014e-06,
+            2.3589401932960884e-09,
+            -2.6247020186272447e-09
+          ],
+          [
+            2.3589401932960884e-09,
+            4.416584026861659e-06,
+            -5.263487178921851e-09
+          ],
+          [
+            -2.6247020186272447e-09,
+            -5.263487178921851e-09,
+            5.161510747144413e-06
+          ]
+        ],
+        "principal_inertia_kg_m2": [
+          4.4160176418673385e-06,
+          4.426896700763069e-06,
+          5.161557425499265e-06
+        ],
+        "principal_axes_quaternion_wxyz": [
+          0.7811918027112318,
+          0.003885544233056054,
+          0.0008055531163757438,
+          -0.6242784803330685
+        ],
+        "method": "UNIFORM_EFFECTIVE_DENSITY_OVER_SUPPLIER_CAD_PARTITION_SCALED_TO_OFFICIAL_REFERENCE_TOTAL"
+      }
+    },
+    "CouplingNut": {
+      "visual_usd": "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_COUPLING_NUT_VISUAL.usdc",
+      "visual_usd_sha256": "7bf42ff2bfc07b8ecde271822b5ef030000745a7e86f923f28bf322b0fba727d",
+      "source_mesh": {
+        "vertex_count": 5374,
+        "triangle_count": 10574,
+        "supplier_split_open_boundary": true
+      },
+      "hidden_interface_caps": [
+        {
+          "edge_count": 104,
+          "plane_z_m": -0.015011399984359741,
+          "radial_extent_m": 0.01996440106665559
+        },
+        {
+          "edge_count": 70,
+          "plane_z_m": -0.02176779881119728,
+          "radial_extent_m": 0.019075400651038906
+        }
+      ],
+      "closed_collision_source": {
+        "vertex_count": 5376,
+        "triangle_count": 10748,
+        "watertight": true,
+        "winding_consistent": true
+      },
+      "collision": {
+        "method": "COACD_FROM_EXACT_SPLIT_SUPPLIER_SURFACE",
+        "hull_count": 47,
+        "maximum_hulls": 64,
+        "output_vertex_count": 1313,
+        "output_triangle_count": 2438,
+        "threshold": 0.05,
+        "preprocess_mode": "auto",
+        "preprocess_resolution": 50,
+        "resolution": 2000,
+        "mcts_nodes": 20,
+        "mcts_iterations": 150,
+        "mcts_max_depth": 3,
+        "pca": false,
+        "merge": true,
+        "decimate": false,
+        "max_ch_vertex": 256,
+        "extrude": false,
+        "seed": 20260902
+      },
+      "mass_properties": {
+        "mass_kg": 0.03491105116903022,
+        "volume_m3": 1.6065975275843533e-05,
+        "center_of_mass_m": [
+          -1.3749419257482987e-12,
+          -1.438586289075064e-13,
+          -0.015540027431723075
+        ],
+        "inertia_tensor_kg_m2": [
+          [
+            6.5225367263418975e-06,
+            2.962595668226419e-11,
+            4.610706449607075e-16
+          ],
+          [
+            2.962595668226419e-11,
+            6.522800884457434e-06,
+            3.792996993796452e-17
+          ],
+          [
+            4.610706449607075e-16,
+            3.792996993796452e-17,
+            1.1398784180907301e-05
+          ]
+        ],
+        "principal_inertia_kg_m2": [
+          6.522533444493897e-06,
+          6.522804166305434e-06,
+          1.1398784180907301e-05
+        ],
+        "principal_axes_quaternion_wxyz": [
+          0.9984788996248004,
+          -6.490477091852348e-12,
+          4.699084711350706e-11,
+          -0.055135170300343594
+        ],
+        "method": "UNIFORM_EFFECTIVE_DENSITY_OVER_SUPPLIER_CAD_PARTITION_SCALED_TO_OFFICIAL_REFERENCE_TOTAL"
+      }
+    }
+  },
+  "official_structure_sources": [
+    {
+      "claim": "series_iii_uses_triple_start_coupling_and_anti_decoupling_ratcheting",
+      "url": "https://www.te.com/en/products/connectors/circular-connectors/intersection/mil-dtl-38999-series-iii-connectors.html?tab=pgp-story"
+    },
+    {
+      "claim": "plug_coupling_ring_rotates_approximately_360_degrees_and_has_anti_decoupling_device",
+      "url": "https://landandmaritimeapps.dla.mil/Downloads/MilSpec/Docs/MIL-DTL-38999/dtl38999.pdf"
+    },
+    {
+      "claim": "slash_26_is_a_straight_threaded_plug",
+      "url": "https://landandmaritimeapps.dla.mil/Downloads/MilSpec/Docs/MIL-DTL-38999/dtl38999ss26.pdf"
+    }
+  ],
+  "evidence_limit": "PUBLIC_DOCUMENTS_CONFIRM_ARCHITECTURE_BUT_NOT_THIS_SPECIMENS_ROTATIONAL_RESISTANCE_OR_BACKLASH",
+  "derived_from_zero_resistance_asset": {
+    "manifest": "artifacts/kcg_connector/isaac/te_j35_free_split_tabletop_v1/MANIFEST.json",
+    "asset_sha256": "42c757056f6ffd4cfa24de3366f63f4ee5effc8593b358c19076fc31a70f82fc",
+    "geometry_and_collision_records_unchanged": true,
+    "mass_records_unchanged": false
+  }
+}

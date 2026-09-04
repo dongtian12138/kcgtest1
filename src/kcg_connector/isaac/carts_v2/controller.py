@@ -21,6 +21,29 @@ from kcg_connector.robot_model import (
 
 ARM_JOINT_NAMES = tuple(f"iiwa_joint_{index}" for index in range(1, 8))
 ACTIVE_HAND_JOINT_NAMES = ("f1j1", "f1j2", "f2j1", "f3j2")
+_FINGER_NUMBER_BY_ORDER_LABEL = {
+    "finger_1": 1,
+    "finger_1_pad": 1,
+    "finger_2": 2,
+    "finger_2_pad": 2,
+    "finger_3": 3,
+    "finger_3_pad": 3,
+}
+
+
+def normalized_closing_order(value: object) -> tuple[tuple[str, ...], tuple[int, ...]]:
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        raise ValueError("closing order must contain three finger labels")
+    labels = tuple(value)
+    if len(labels) != 3 or any(
+        not isinstance(label, str) or label not in _FINGER_NUMBER_BY_ORDER_LABEL
+        for label in labels
+    ):
+        raise ValueError("closing order contains an unknown finger label")
+    numbers = tuple(_FINGER_NUMBER_BY_ORDER_LABEL[label] for label in labels)
+    if set(numbers) != {1, 2, 3}:
+        raise ValueError("closing order must be one permutation of all three fingers")
+    return tuple(f"finger_{number}" for number in numbers), numbers
 
 
 def minimum_jerk_blend(unit_time: float) -> float:
@@ -42,6 +65,7 @@ def create_native_gravity_compensated_robot(
     *,
     initial_arm_positions: Sequence[float] | None = None,
     initial_hand_positions: Sequence[float] | None = None,
+    command_api_counter: dict[str, int] | None = None,
 ):
     """Create the only robot view and configure its bounded native drives."""
 
@@ -70,9 +94,17 @@ def create_native_gravity_compensated_robot(
             dof_names, initial_arm_positions, initial_hand_positions
         )
     )
+    def count(name: str) -> None:
+        if command_api_counter is not None:
+            command_api_counter[name] = int(command_api_counter.get(name, 0)) + 1
+
+    count("set_dof_positions")
     robot.set_dof_positions(initial_positions.reshape(1, -1))
+    count("set_dof_position_targets")
     robot.set_dof_position_targets(initial_positions.reshape(1, -1))
+    count("set_dof_velocities")
     robot.set_dof_velocities(np.zeros((1, robot.num_dofs)))
+    count("set_dof_velocity_targets")
     robot.set_dof_velocity_targets(np.zeros((1, robot.num_dofs)))
     stiffnesses = np.asarray(
         [float(settings["arm_stiffness"])] * 7
@@ -376,6 +408,12 @@ def build_joint_motion_plan(
     final_hand = tuple(
         float(value) for value in control_plan["final_joint_positions_rad"]
     )
+    closing_order, closing_order_numbers = normalized_closing_order(
+        control_plan.get(
+            "closing_order",
+            inputs.config.section("closure_prediction")["closing_order"],
+        )
+    )
     model = inputs.robot_model
     solver_settings = inputs.config.section("ik")["solver"]
     direction_object = control_plan.get("approach_direction_object")
@@ -408,6 +446,8 @@ def build_joint_motion_plan(
         "pregrasp_arm_positions_rad": arm,
         "pregrasp_hand_positions_rad": pregrasp_hand,
         "final_hand_positions_rad": final_hand,
+        "closing_order": closing_order,
+        "closing_order_finger_numbers": closing_order_numbers,
         "lift_arm_waypoints_rad": tuple(lift_rows),
         "world_from_hand_base_target": tuple(float(v) for v in target.ravel()),
         "approach_direction_world": tuple(
@@ -449,22 +489,43 @@ class SequentialEffortContactController:
         consecutive_samples: int,
         endpoint_timeout_samples: int,
         hand_stiffness: float,
+        velocity_absolute_max_rad_s: float | None = None,
+        finger_order: Sequence[int] = (1, 2, 3),
     ) -> None:
+        self.coordination_mode = "sequential"
         self.start = np.asarray(start, dtype=np.float64)
         self.target = self.start.copy()
         self.goal = np.asarray(goal, dtype=np.float64)
         self.effort_rise_nm = float(effort_rise_nm)
         self.position_error_rad = float(position_error_rad)
+        self.velocity_absolute_max_rad_s = (
+            math.inf
+            if velocity_absolute_max_rad_s is None
+            else float(velocity_absolute_max_rad_s)
+        )
         self.consecutive_samples = int(consecutive_samples)
         self.endpoint_timeout_samples = int(endpoint_timeout_samples)
         self.hand_stiffness = float(hand_stiffness)
-        self.finger_order = (1, 2, 3)
+        order = tuple(finger_order)
+        if (
+            len(order) != 3
+            or any(type(value) is not int for value in order)
+            or set(order) != {1, 2, 3}
+        ):
+            raise ValueError("finger_order must be one permutation of (1, 2, 3)")
+        self.finger_order = order
         self.active_finger = self._evidence_count = self._endpoint_count = 0
         self.state, self._state_samples = "APPROACH", 0
         self._contact_targets: list[float] = []
-        self.last_output_state, self.last_output_finger = self.state, 1
+        self._contact_confirmation_absolute_velocities: list[float] = []
+        self.last_output_state = self.state
+        self.last_output_finger = self.finger_order[0]
         self.maximum_target_delta_rad = 0.0
         self.failure_reason: str | None = None
+        if self.velocity_absolute_max_rad_s <= 0.0:
+            raise ValueError(
+                "contact velocity threshold must be positive and finite"
+            )
 
     @property
     def complete(self) -> bool:
@@ -477,6 +538,12 @@ class SequentialEffortContactController:
     @property
     def contact_targets_rad(self) -> tuple[float, ...]:
         return tuple(self._contact_targets)
+
+    @property
+    def contact_confirmation_absolute_velocities_rad_s(
+        self,
+    ) -> tuple[float, ...]:
+        return tuple(self._contact_confirmation_absolute_velocities)
 
     def _resistive_effort(self, index, measured_effort) -> float:
         direction = float(np.sign(self.goal[index] - self.start[index]))
@@ -498,6 +565,7 @@ class SequentialEffortContactController:
         measured_effort_delta: Sequence[float],
         maximum_increment_rad: float,
         *,
+        measured_velocity: Sequence[float] | None = None,
         advance_after_hold: bool = True,
     ) -> np.ndarray:
         if self.complete or self.failed:
@@ -505,18 +573,36 @@ class SequentialEffortContactController:
         maximum_increment = float(maximum_increment_rad)
         if maximum_increment <= 0.0 or self.hand_stiffness <= 0.0:
             raise ValueError("contact control bounds must be positive")
+        if measured_velocity is None:
+            if math.isfinite(self.velocity_absolute_max_rad_s):
+                raise ValueError(
+                    "enabled contact velocity threshold requires velocity input"
+                )
+            measured_velocity = np.zeros_like(self.target)
         previous = self.target.copy()
         for completed in self.finger_order[:self.active_finger]:
             self._effort_adjust(completed, measured_effort_delta, maximum_increment)
         index = self.finger_order[self.active_finger]
-        output_state, output_finger = self.state, self.active_finger + 1
+        output_state, output_finger = self.state, index
         if self.state == "APPROACH":
             error = abs(self.target[index] - float(measured_position[index]))
+            absolute_velocity = abs(float(measured_velocity[index]))
             loaded = (self._resistive_effort(index, measured_effort_delta)
                       >= self.effort_rise_nm)
-            self._evidence_count = self._evidence_count + 1 if loaded and error >= self.position_error_rad else 0
+            slow = absolute_velocity <= self.velocity_absolute_max_rad_s
+            complete_evidence = bool(
+                loaded and error >= self.position_error_rad and slow
+            )
+            self._evidence_count = (
+                self._evidence_count + 1
+                if complete_evidence
+                else 0
+            )
             if self._evidence_count >= self.consecutive_samples:
                 self._contact_targets.append(float(measured_position[index]))
+                self._contact_confirmation_absolute_velocities.append(
+                    absolute_velocity
+                )
                 self.state, output_state = "CONTACT_CONFIRMED", "CONTACT_CONFIRMED"
                 self._state_samples = self._endpoint_count = 0
             else:
@@ -542,14 +628,142 @@ class SequentialEffortContactController:
                 self.state, self._state_samples = "APPROACH", 0
             self._evidence_count = self._endpoint_count = 0
         if self.state == "APPROACH" and self._endpoint_count >= self.endpoint_timeout_samples:
-            self.failure_reason = f"FINGER_{self.active_finger + 1}_NO_CONTACT_SIGNAL"
+            self.failure_reason = f"FINGER_{index}_NO_CONTACT_SIGNAL"
         elif self.state == "CONTACT_SETTLE" and self._endpoint_count >= self.endpoint_timeout_samples:
-            self.failure_reason = f"FINGER_{self.active_finger + 1}_CONTACT_SETTLE_TIMEOUT"
+            self.failure_reason = f"FINGER_{index}_CONTACT_SETTLE_TIMEOUT"
         target_delta = float(np.max(np.abs(self.target - previous)))
         if target_delta > maximum_increment + 1.0e-12:
             raise RuntimeError("contact target continuity invariant violated")
         self.maximum_target_delta_rad = max(self.maximum_target_delta_rad, target_delta)
         self.last_output_state, self.last_output_finger = output_state, output_finger
+        return self.target.copy()
+
+
+class ParallelEffortContactController(SequentialEffortContactController):
+    """Approach with all fingers and latch each contact independently."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        kwargs["finger_order"] = (1, 2, 3)
+        super().__init__(*args, **kwargs)
+        self.coordination_mode = "parallel_contact_latch"
+        self._confirmed = np.zeros(4, dtype=np.bool_)
+        self._parallel_evidence_count = np.zeros(4, dtype=np.int64)
+        self._parallel_endpoint_count = np.zeros(4, dtype=np.int64)
+        self._contact_target_by_finger: dict[int, float] = {}
+        self._contact_velocity_by_finger: dict[int, float] = {}
+
+    @property
+    def complete(self) -> bool:
+        return bool(np.all(self._confirmed[1:])) and not self.failed
+
+    @property
+    def contact_targets_rad(self) -> tuple[float, ...]:
+        return tuple(
+            self._contact_target_by_finger[index]
+            for index in (1, 2, 3)
+            if index in self._contact_target_by_finger
+        )
+
+    @property
+    def contact_confirmation_absolute_velocities_rad_s(
+        self,
+    ) -> tuple[float, ...]:
+        return tuple(
+            self._contact_velocity_by_finger[index]
+            for index in (1, 2, 3)
+            if index in self._contact_velocity_by_finger
+        )
+
+    def step(
+        self,
+        measured_position: Sequence[float],
+        measured_effort_delta: Sequence[float],
+        maximum_increment_rad: float,
+        *,
+        measured_velocity: Sequence[float] | None = None,
+        advance_after_hold: bool = True,
+    ) -> np.ndarray:
+        del advance_after_hold
+        if self.complete or self.failed:
+            return self.target.copy()
+        maximum_increment = float(maximum_increment_rad)
+        if maximum_increment <= 0.0 or self.hand_stiffness <= 0.0:
+            raise ValueError("contact control bounds must be positive")
+        if measured_velocity is None:
+            if math.isfinite(self.velocity_absolute_max_rad_s):
+                raise ValueError(
+                    "enabled contact velocity threshold requires velocity input"
+                )
+            measured_velocity = np.zeros_like(self.target)
+
+        previous = self.target.copy()
+        newly_confirmed: list[int] = []
+        for index in (1, 2, 3):
+            if self._confirmed[index]:
+                self._effort_adjust(
+                    index, measured_effort_delta, maximum_increment
+                )
+                continue
+
+            error = abs(self.target[index] - float(measured_position[index]))
+            absolute_velocity = abs(float(measured_velocity[index]))
+            loaded = (
+                self._resistive_effort(index, measured_effort_delta)
+                >= self.effort_rise_nm
+            )
+            slow = absolute_velocity <= self.velocity_absolute_max_rad_s
+            complete_evidence = bool(
+                loaded and error >= self.position_error_rad and slow
+            )
+            self._parallel_evidence_count[index] = (
+                self._parallel_evidence_count[index] + 1
+                if complete_evidence
+                else 0
+            )
+            if self._parallel_evidence_count[index] >= self.consecutive_samples:
+                self._confirmed[index] = True
+                self._contact_target_by_finger[index] = float(
+                    measured_position[index]
+                )
+                self._contact_velocity_by_finger[index] = absolute_velocity
+                newly_confirmed.append(index)
+                continue
+
+            remaining = self.goal[index] - self.target[index]
+            self.target[index] += math.copysign(
+                min(abs(remaining), maximum_increment), remaining
+            )
+            at_endpoint = abs(self.goal[index] - self.target[index]) <= 1.0e-12
+            self._parallel_endpoint_count[index] = (
+                self._parallel_endpoint_count[index] + 1
+                if at_endpoint
+                else 0
+            )
+            if (
+                self._parallel_endpoint_count[index]
+                >= self.endpoint_timeout_samples
+            ):
+                self.failure_reason = f"FINGER_{index}_NO_CONTACT_SIGNAL"
+                break
+
+        if newly_confirmed:
+            self.last_output_state = "CONTACT_CONFIRMED"
+            self.last_output_finger = newly_confirmed[0]
+        elif self.complete:
+            self.last_output_state = "HOLD"
+            self.last_output_finger = 3
+        else:
+            unconfirmed = np.flatnonzero(~self._confirmed[1:]) + 1
+            self.last_output_state = "APPROACH"
+            self.last_output_finger = int(unconfirmed[0])
+        self.state = "HOLD" if self.complete else "APPROACH"
+
+        target_delta = float(np.max(np.abs(self.target - previous)))
+        if target_delta > maximum_increment + 1.0e-12:
+            raise RuntimeError("contact target continuity invariant violated")
+        self.maximum_target_delta_rad = max(
+            self.maximum_target_delta_rad, target_delta
+        )
         return self.target.copy()
 
 
@@ -568,6 +782,7 @@ class JointSignalStepper:
         render: bool,
         robot_model=None,
         payload_model: Mapping[str, object] | None = None,
+        command_api_counter: dict[str, int] | None = None,
     ) -> None:
         self.robot, self.world, self.auditor = robot, world, auditor
         self.active_indices, self.arm_indices = active_indices, arm_indices
@@ -583,6 +798,7 @@ class JointSignalStepper:
             None if payload_model is None else dict(payload_model)
         )
         self.payload_compensation_fraction = 0.0
+        self.command_api_counter = command_api_counter
         self.step_index = 0
         self.maximum_speed = self.maximum_arm_error = 0.0
         self.maximum_speed_joint: str | None = None
@@ -656,7 +872,8 @@ class JointSignalStepper:
         }
 
     def advance(
-        self, phase: str, arm_target: np.ndarray, hand_target: np.ndarray
+        self, phase: str, arm_target: np.ndarray, hand_target: np.ndarray,
+        *, pre_step_hook=None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
         if self.abort_reason is not None:
             return self.latest
@@ -688,11 +905,18 @@ class JointSignalStepper:
             self.abort_reason = "ARM_COMMAND_EFFORT_SATURATION_ABORT"
             return self.latest
         drive_target = np.concatenate((drive_arm_target, hand_target))
+        if self.command_api_counter is not None:
+            name = "set_dof_position_targets"
+            self.command_api_counter[name] = int(
+                self.command_api_counter.get(name, 0)
+            ) + 1
         self.robot.set_dof_position_targets(
             drive_target.reshape(1, -1),
             indices=0,
             dof_indices=self.active_indices,
         )
+        if pre_step_hook is not None:
+            pre_step_hook()
         self.world.step(render=self.render)
         all_positions = self.robot.get_dof_positions(indices=0).numpy()[0]
         all_velocities = self.robot.get_dof_velocities(indices=0).numpy()[0]
@@ -797,6 +1021,14 @@ class JointSignalStepper:
             self.settings["maximum_arm_tracking_error_rad"]
         ):
             self.abort_reason = "ARM_TRACKING_ERROR_ABORT"
+        # The three closing actuators must remain protected from the very
+        # first contact sample.  The later preload/lift checks are too late
+        # for a contact-approach overload, because the wrist monitor can stop
+        # the sequence before the contact controller confirms a finger.
+        elif float(np.max(np.abs(efforts[8:]))) > float(
+            self.settings["measured_effort_abort_nm"]
+        ):
+            self.abort_reason = "HAND_MEASURED_EFFORT_ABORT"
 
     def active_steps(self, count: int):
         for step in range(count):
@@ -811,8 +1043,39 @@ def run_pregrasp_sequence(
     settings: Mapping[str, object],
     *,
     initialized_at_pregrasp: bool = False,
+    stop_after_approach_high: bool = False,
+    observation_wait_hold_duration_s: float | None = None,
+    approach_high_motion_duration_s: float | None = None,
+    approach_high_arm_states: Sequence[Sequence[float]] | None = None,
 ) -> dict[str, object]:
     dt = float(settings["physics_dt_s"])
+    if stop_after_approach_high and initialized_at_pregrasp:
+        raise ValueError(
+            "approach-high observation cannot initialize directly at pregrasp"
+        )
+    observation_hold_duration = (
+        float(settings["pregrasp_hold_duration_s"])
+        if observation_wait_hold_duration_s is None
+        else float(observation_wait_hold_duration_s)
+    )
+    if stop_after_approach_high and (
+        not math.isfinite(observation_hold_duration)
+        or observation_hold_duration < 0.0
+    ):
+        raise ValueError(
+            "observation wait hold duration must be finite and nonnegative"
+        )
+    configured_approach_duration = float(settings["approach_above_duration_s"])
+    effective_approach_duration = (
+        configured_approach_duration
+        if approach_high_motion_duration_s is None
+        else float(approach_high_motion_duration_s)
+    )
+    if (
+        not math.isfinite(effective_approach_duration)
+        or effective_approach_duration <= 0.0
+    ):
+        raise ValueError("approach-high motion duration must be finite and positive")
     pregrasp_arm = np.asarray(motion_plan["pregrasp_arm_positions_rad"])
     pregrasp_hand = np.asarray(motion_plan["pregrasp_hand_positions_rad"])
     if initialized_at_pregrasp:
@@ -854,20 +1117,49 @@ def run_pregrasp_sequence(
     for _ in stepper.active_steps(round(float(settings["settle_duration_s"]) / dt)):
         stepper.advance("settle", home_arm, home_hand)
     approach = np.asarray(motion_plan["approach_arm_waypoints_rad"])
-    above_steps = round(float(settings["approach_above_duration_s"]) / dt)
-    for index in stepper.active_steps(above_steps):
-        blend = minimum_jerk_blend((index + 1) / above_steps)
+    preshape_steps = round(configured_approach_duration / dt)
+    for index in stepper.active_steps(preshape_steps):
+        blend = minimum_jerk_blend((index + 1) / preshape_steps)
         stepper.advance("preshape_at_home", home_arm, blend * pregrasp_hand)
-    for index in stepper.active_steps(above_steps):
-        blend = minimum_jerk_blend((index + 1) / above_steps)
-        stepper.advance("approach_above", blend * approach[0], pregrasp_hand)
+    explicit_states = (
+        None
+        if approach_high_arm_states is None
+        else np.asarray(approach_high_arm_states, dtype=np.float64)
+    )
+    if explicit_states is not None:
+        if (
+            explicit_states.ndim != 2
+            or explicit_states.shape[1] != 7
+            or len(explicit_states) < 2
+            or not np.all(np.isfinite(explicit_states))
+            or not np.allclose(
+                explicit_states[0], home_arm, rtol=0.0, atol=1.0e-9
+            )
+        ):
+            raise ValueError(
+                "explicit approach path must start at home and contain finite 7-DOF states"
+            )
+        approach_target = explicit_states[-1]
+        for index in stepper.active_steps(len(explicit_states) - 1):
+            stepper.advance(
+                "approach_above", explicit_states[index + 1], pregrasp_hand
+            )
+        effective_approach_duration = (len(explicit_states) - 1) * dt
+    else:
+        above_steps = round(effective_approach_duration / dt)
+        for index in stepper.active_steps(above_steps):
+            blend = minimum_jerk_blend((index + 1) / above_steps)
+            stepper.advance("approach_above", blend * approach[0], pregrasp_hand)
+        approach_target = approach[0]
 
     settled_count = 0
     settled = False
     final_error = None
     settle_limit = round(float(settings["approach_above_settle_timeout_s"]) / dt)
     for _ in stepper.active_steps(settle_limit):
-        latest = stepper.advance("wait_above_settled", approach[0], pregrasp_hand)
+        latest = stepper.advance(
+            "wait_above_settled", approach_target, pregrasp_hand
+        )
         if stepper.abort_reason is not None:
             break
         final_error = float(np.max(np.abs(latest[0][:7] - approach[0])))
@@ -881,6 +1173,36 @@ def run_pregrasp_sequence(
             break
     if stepper.abort_reason is None and not settled:
         stepper.abort_reason = "PREGRASP_ABOVE_NOT_SETTLED"
+    if stop_after_approach_high:
+        requested_hold_steps = round(observation_hold_duration / dt)
+        completed_hold_steps = 0
+        for _ in stepper.active_steps(requested_hold_steps):
+            stepper.advance(
+                "observation_wait_hold", approach_target, pregrasp_hand
+            )
+            completed_hold_steps += 1
+        return {
+            "arm": approach_target,
+            "hand": pregrasp_hand,
+            "above_settled": settled,
+            "above_final_error_rad": final_error,
+            "stop_after_approach_high_policy_requested": True,
+            "high_wait_reached_without_abort": bool(
+                stepper.abort_reason is None
+                and settled
+                and completed_hold_steps == requested_hold_steps
+            ),
+            "observation_wait_hold_steps_requested": requested_hold_steps,
+            "observation_wait_hold_steps_completed": completed_hold_steps,
+            "configured_preshape_duration_s": configured_approach_duration,
+            "configured_approach_high_motion_duration_s": (
+                configured_approach_duration
+            ),
+            "effective_approach_high_motion_duration_s": (
+                effective_approach_duration
+            ),
+            "descent_command_count": 0,
+        }
     descent_steps = round(float(settings["approach_descent_duration_s"]) / dt)
     for index in stepper.active_steps(descent_steps):
         blend = minimum_jerk_blend((index + 1) / descent_steps)
@@ -908,14 +1230,34 @@ def _tare_and_close(stepper, motion_plan, settings, pregrasp, first_finger_only=
             tare_rows.append(latest[2][7:].copy())
     tare = np.mean(np.stack(tare_rows), axis=0) if tare_rows else np.zeros(4)
     final_hand = np.asarray(motion_plan["final_hand_positions_rad"])
-    contact = SequentialEffortContactController(
+    coordination_mode = str(
+        settings.get("contact_coordination_mode", "sequential")
+    )
+    if coordination_mode not in ("sequential", "parallel_contact_latch"):
+        raise ValueError("unsupported contact coordination mode")
+    if first_finger_only and coordination_mode != "sequential":
+        raise ValueError(
+            "first-finger diagnostics require sequential contact control"
+        )
+    controller_type = (
+        ParallelEffortContactController
+        if coordination_mode == "parallel_contact_latch"
+        else SequentialEffortContactController
+    )
+    contact = controller_type(
         pregrasp["hand"],
         final_hand,
         effort_rise_nm=float(settings["contact_effort_rise_nm"]),
         position_error_rad=float(settings["contact_position_error_rad"]),
+        velocity_absolute_max_rad_s=(
+            None
+            if settings.get("contact_velocity_absolute_max_rad_s") is None
+            else float(settings["contact_velocity_absolute_max_rad_s"])
+        ),
         consecutive_samples=int(settings["contact_consecutive_samples"]),
         endpoint_timeout_samples=round(float(settings["contact_endpoint_timeout_s"]) / dt),
         hand_stiffness=float(settings["hand_stiffness"]),
+        finger_order=tuple(motion_plan["closing_order_finger_numbers"]),
     )
     maximum_increment = float(settings["finger_maximum_speed_rad_s"]) * dt
     closure_steps = sum(
@@ -926,10 +1268,23 @@ def _tare_and_close(stepper, motion_plan, settings, pregrasp, first_finger_only=
     )
     for _ in stepper.active_steps(closure_steps):
         measured_hand = stepper.latest[0][7:]
+        measured_hand_velocity = stepper.latest[1][7:]
         effort_delta = stepper.latest[2][7:] - tare
-        hand_target = contact.step(measured_hand, effort_delta, maximum_increment,
-                                   advance_after_hold=not first_finger_only)
-        phase = f"finger_{contact.last_output_finger}_{contact.last_output_state.lower()}"
+        hand_target = contact.step(
+            measured_hand,
+            effort_delta,
+            maximum_increment,
+            measured_velocity=measured_hand_velocity,
+            advance_after_hold=not first_finger_only,
+        )
+        if contact.failed:
+            break
+        phase = (
+            f"parallel_contact_{contact.last_output_state.lower()}"
+            if coordination_mode == "parallel_contact_latch"
+            else
+            f"finger_{contact.last_output_finger}_{contact.last_output_state.lower()}"
+        )
         stepper.advance(phase, pregrasp["arm"], hand_target)
         if (stepper.abort_reason or contact.complete or contact.failed or
                 first_finger_only and contact.state == "HOLD"):
@@ -937,10 +1292,21 @@ def _tare_and_close(stepper, motion_plan, settings, pregrasp, first_finger_only=
     held_steps = 0
     hold_steps = round(float(settings["preload_duration_s"]) / dt) if first_finger_only and contact.state == "HOLD" else 0
     for _ in stepper.active_steps(hold_steps):
-        measured_hand, effort = stepper.latest[0][7:], stepper.latest[2][7:] - tare
+        measured_hand = stepper.latest[0][7:]
+        measured_hand_velocity = stepper.latest[1][7:]
+        effort = stepper.latest[2][7:] - tare
         hand_target = contact.step(
-            measured_hand, effort, maximum_increment, advance_after_hold=False)
-        stepper.advance("finger_1_hold", pregrasp["arm"], hand_target)
+            measured_hand,
+            effort,
+            maximum_increment,
+            measured_velocity=measured_hand_velocity,
+            advance_after_hold=False,
+        )
+        stepper.advance(
+            f"finger_{contact.last_output_finger}_hold",
+            pregrasp["arm"],
+            hand_target,
+        )
         held_steps += 1
     return contact, tare, final_hand, held_steps * dt
 
@@ -993,6 +1359,50 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
     initial_lift_damping = float(stepper.effective_arm_damping_nm_s_rad)
     final_lift_damping = float(settings["lift_arm_damping_nm_s_rad"])
     maximum_increment = float(settings["finger_maximum_speed_rad_s"]) * dt
+    effort_tolerance = float(settings["effort_regulation_tolerance_nm"])
+    hand_stiffness = float(settings["hand_stiffness"])
+    if (
+        not np.isfinite(effort_tolerance)
+        or effort_tolerance <= 0.0
+        or not np.isfinite(hand_stiffness)
+        or hand_stiffness <= 0.0
+    ):
+        return "FINGER_EFFORT_REGULATION_CONFIGURATION_ABORT"
+    # Collective loading can raise a finger's effort even after that finger
+    # stopped at first contact.  Permit bounded unloading back toward the
+    # already verified pregrasp position; otherwise the controller cannot
+    # remove this coupled overshoot.
+    preload_lower = np.minimum(pregrasp["hand"], preload_limit_goal)
+    preload_upper = np.maximum(pregrasp["hand"], preload_limit_goal)
+
+    def regulated_hand_target(
+        previous: np.ndarray, desired_effort: np.ndarray
+    ) -> np.ndarray:
+        """Map joint-effort error to a bounded bidirectional position step."""
+
+        measured_effort = stepper.latest[2][8:] - tare[1:]
+        resistive_effort = closing_direction * measured_effort
+        result = np.array(previous, copy=True)
+        for finger_index, hand_index in enumerate((1, 2, 3)):
+            effort_error = desired_effort[finger_index] - resistive_effort[
+                finger_index
+            ]
+            joint_delta = closing_direction[finger_index] * float(
+                np.clip(
+                    effort_error / hand_stiffness,
+                    -maximum_increment,
+                    maximum_increment,
+                )
+            )
+            result[hand_index] = float(
+                np.clip(
+                    previous[hand_index] + joint_delta,
+                    preload_lower[hand_index],
+                    preload_upper[hand_index],
+                )
+            )
+        return result
+
     previous_target = closure_target
     for index in stepper.active_steps(preload_steps):
         damping_blend = minimum_jerk_blend((index + 1) / preload_steps)
@@ -1001,21 +1411,9 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
             + damping_blend * (final_lift_damping - initial_lift_damping)
         )
         blend = minimum_jerk_blend((index + 1) / preload_steps)
-        desired_limit = closure_target + blend * (
-            preload_limit_goal - closure_target
+        hand_target = regulated_hand_target(
+            previous_target, blend * predicted_task_effort
         )
-        measured_effort = stepper.latest[2][8:] - tare[1:]
-        resistive_effort = closing_direction * measured_effort
-        hand_target = np.array(previous_target, copy=True)
-        for finger_index, hand_index in enumerate((1, 2, 3)):
-            if resistive_effort[finger_index] < predicted_task_effort[finger_index]:
-                hand_target[hand_index] += float(
-                    np.clip(
-                        desired_limit[hand_index] - previous_target[hand_index],
-                        -maximum_increment,
-                        maximum_increment,
-                    )
-                )
         latest = stepper.advance("preload", pregrasp["arm"], hand_target)
         previous_target = hand_target
         if stepper.abort_reason is not None:
@@ -1029,19 +1427,9 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
         float(settings["contact_endpoint_timeout_s"]) / dt
     )
     for _ in stepper.active_steps(effort_check_steps):
-        measured_effort = stepper.latest[2][8:] - tare[1:]
-        resistive_effort = closing_direction * measured_effort
-        hand_target = np.array(previous_target, copy=True)
-        for finger_index, hand_index in enumerate((1, 2, 3)):
-            if resistive_effort[finger_index] < predicted_task_effort[finger_index]:
-                hand_target[hand_index] += float(
-                    np.clip(
-                        preload_limit_goal[hand_index]
-                        - previous_target[hand_index],
-                        -maximum_increment,
-                        maximum_increment,
-                    )
-                )
+        hand_target = regulated_hand_target(
+            previous_target, predicted_task_effort
+        )
         latest = stepper.advance(
             "prelift_effort_check", pregrasp["arm"], hand_target
         )
@@ -1052,16 +1440,28 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
         ):
             return "HAND_MEASURED_EFFORT_ABORT"
         resistive_effort = closing_direction * measured_effort
+        # The low contact threshold only says that all three fingertips have
+        # touched. Lifting is allowed only after all three efforts settle in
+        # the target band for the requested consecutive samples.
         effort_evidence_count = (
             effort_evidence_count + 1
-            if np.all(resistive_effort >= contact_confirmation_effort)
+            if np.all(
+                np.abs(resistive_effort - predicted_task_effort)
+                <= effort_tolerance
+            )
             else 0
         )
         if effort_evidence_count >= int(settings["contact_consecutive_samples"]):
             break
     if effort_evidence_count < int(settings["contact_consecutive_samples"]):
         return "PRELOAD_CONTACT_EFFORT_NOT_REACHED"
-    preload_goal = previous_target
+    preload_goal = np.array(previous_target, copy=True)
+
+    def maintain_finger_effort() -> np.ndarray:
+        """Regulate all three efforts within the same finite position bounds."""
+
+        return regulated_hand_target(preload_goal, predicted_task_effort)
+
     waypoints = np.asarray(motion_plan["lift_arm_waypoints_rad"])
     lift_steps = round(float(settings["lift_duration_s"]) / dt)
     payload_transfer_distance = float(settings["table_release_clearance_m"])
@@ -1073,6 +1473,7 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
         stepper.set_payload_compensation_fraction(
             minimum_jerk_blend(commanded_lift / payload_transfer_distance)
         )
+        preload_goal = maintain_finger_effort()
         latest = stepper.advance(
             "lift", piecewise_waypoint(waypoints, blend), preload_goal
         )
@@ -1082,6 +1483,7 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
             return "HAND_MEASURED_EFFORT_ABORT"
     final_arm = waypoints[-1]
     for _ in stepper.active_steps(round(float(settings["hold_duration_s"]) / dt)):
+        preload_goal = maintain_finger_effort()
         latest = stepper.advance("hold", final_arm, preload_goal)
         if np.max(np.abs(latest[2][8:] - tare[1:])) > float(
             settings["measured_effort_abort_nm"]
@@ -1150,15 +1552,36 @@ def controller_outcome(
         "approach_above_settled": pregrasp["above_settled"],
         "approach_above_final_tracking_error_rad": pregrasp["above_final_error_rad"],
         "contact_targets_rad": [] if contact is None else list(contact.contact_targets_rad),
+        "contact_confirmation_absolute_velocities_rad_s": (
+            []
+            if contact is None
+            else list(
+                contact.contact_confirmation_absolute_velocities_rad_s
+            )
+        ),
+        "contact_velocity_absolute_max_rad_s": (
+            None
+            if contact is None
+            or not math.isfinite(contact.velocity_absolute_max_rad_s)
+            else contact.velocity_absolute_max_rad_s
+        ),
+        "closing_order_finger_numbers": (
+            [] if contact is None else list(contact.finger_order)
+        ),
+        "contact_coordination_mode": (
+            None if contact is None else contact.coordination_mode
+        ),
         "maximum_finger_target_delta_rad": 0.0 if contact is None else contact.maximum_target_delta_rad,
     }
 
 
 __all__ = [
     "ACTIVE_HAND_JOINT_NAMES", "ARM_JOINT_NAMES", "JointSignalStepper",
-    "SequentialEffortContactController", "build_joint_motion_plan",
+    "ParallelEffortContactController", "SequentialEffortContactController",
+    "build_joint_motion_plan",
     "controller_outcome", "create_native_gravity_compensated_robot",
     "gravity_biased_arm_target", "minimum_jerk_blend",
+    "normalized_closing_order",
     "payload_compensation_joint_torque", "piecewise_waypoint",
     "run_grasp_lift_sequence", "run_pregrasp_sequence",
 ]

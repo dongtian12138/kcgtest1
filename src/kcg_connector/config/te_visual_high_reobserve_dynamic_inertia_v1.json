@@ -1,0 +1,104 @@
+{
+  "schema_version": "kcg_te_visual_high_reobserve_dynamic_inertia_v1",
+  "mode": "SIMULATION_ONLY_FRESH_VISION_TO_APPROACH_HIGH_AND_REOBSERVE",
+  "authorization": {
+    "hardware_authorized": false,
+    "simulation_only": true,
+    "approach_high_motion_authorized": true,
+    "descent_authorized": false,
+    "object_contact_authorized": false,
+    "finger_closure_authorized": false
+  },
+  "base_visual_high_reobserve_slow2_config": {
+    "path": "src/kcg_connector/config/te_visual_high_reobserve_slow2_v1.json",
+    "sha256": "b329bfc57ab2659a198460784acb7d5be276fa8dc5112eb03d7302a171b03a07"
+  },
+  "sealed_free_space_evidence": {
+    "run01": {
+      "samples": {
+        "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_visual_high_reobserve_v1/physical_rx180_run01/high_motion_joint_ft_samples.json",
+        "sha256": "ed283d350dfaa2b847d59ba6021ed6f28d2f5129587ec1e98b563ff47d99aeac"
+      },
+      "result": {
+        "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_visual_high_reobserve_v1/physical_rx180_run01/high_motion_execution.json",
+        "sha256": "01bdcce9e455a710d20149d547174fa48b311bffda0e3147bc89a44bf75295b3"
+      }
+    },
+    "run02": {
+      "samples": {
+        "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_visual_high_reobserve_slow_v1/physical_rx180_run02/high_motion_joint_ft_samples.json",
+        "sha256": "1ec5bc0122538610e1b087c1d5789e139cef446423acef208d0b5f29464641d8"
+      },
+      "result": {
+        "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_visual_high_reobserve_slow_v1/physical_rx180_run02/high_motion_execution.json",
+        "sha256": "35b53b25f8d7aca0c938cbe99802de7fe8cabea98b2ee7657b3856c6593e7ed6"
+      }
+    },
+    "run03": {
+      "samples": {
+        "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_visual_high_reobserve_slow2_v1/physical_rx180_run03/high_motion_joint_ft_samples.json",
+        "sha256": "2e3fc262a05c2fdafbff9e4348353bd3581eee42521157f1613d266bda151b0e"
+      },
+      "result": {
+        "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_visual_high_reobserve_slow2_v1/physical_rx180_run03/high_motion_execution.json",
+        "sha256": "8da70a40f53319d15ecdb02bf3ff192585d3abc4fa99c3c36ecfe86bc9c2b03d"
+      }
+    }
+  },
+  "single_variable_override": {
+    "field": "wrist_ft_safety.dynamic_inertia_compensation",
+    "configured_value": "GRAVITY_ONLY",
+    "effective_value": "GRAVITY_PLUS_FROZEN_HAND_DYNAMIC_INERTIA",
+    "approach_high_motion_duration_s_unchanged": 6.5,
+    "preshape_duration_s_unchanged": 3.0,
+    "force_and_torque_limits_unchanged": true,
+    "visual_target_path_grasp_and_static_panel_unchanged": true
+  },
+  "dynamic_inertia_contract": {
+    "algorithm": "FROZEN_PREGRASP_9_LINK_AGGREGATE_JACOBIAN_BACKWARD_DIFFERENCE_V1",
+    "enabled_phases": ["approach_above"],
+    "physics_rate_hz": 240,
+    "causal_history": "CURRENT_AND_ONE_CONSECUTIVE_PREVIOUS_Q_QDOT_JACOBIAN",
+    "missing_or_nonconsecutive_history_action": "FAIL_CLOSE_ABORT",
+    "joint_numerical_zero_clamp_rad": 1e-06,
+    "inertial_source": {
+      "path": "src/iiwa_description/urdf/hand.xacro",
+      "sha256": "b7ddf62c62b8127816e5ba8ecefb72c257622952e3aa2211355a6a61f4d1097f"
+    },
+    "frozen_pregrasp_hand_positions_rad": [1.5, 0.6275677413940436, 0.4584584274291995, 0.6274753952026372],
+    "aggregate_mass_kg": 2.091942,
+    "aggregate_center_of_mass_sensor_m": [0.0016569821081330975, -0.0005743568696737788, 0.21327348478218228],
+    "aggregate_inertia_about_com_sensor_kg_m2": [
+      [0.017871071630650284, -0.0007010588716428018, 0.0007384700759496471],
+      [-0.0007010588716428018, 0.017000724774605708, -0.0003740202179173948],
+      [0.0007384700759496471, -0.0003740202179173948, 0.006470865376132146]
+    ],
+    "force_balance": "canonical=gravity+external_contact-inertia; external_residual=gravity_residual+predicted_positive_inertia",
+    "prediction_inputs": ["robot_joint_position", "robot_joint_velocity", "frozen_hand_inertia", "physics_dt"],
+    "physical_hand2arm_wrench_used_as_prediction_input": false,
+    "object_semantic_instance_or_contact_truth_used": false,
+    "online_parameter_fit_or_adaptation": false
+  },
+  "offline_replay": {
+    "implementation_method_peak_force_torque": {
+      "run01": [0.001414773858820591, 0.000274504532825147],
+      "run02": [0.0033259522454741875, 0.0008224391823176474],
+      "run03": [0.004924746856995128, 0.0011572828314513673]
+    },
+    "conservative_9_link_fk_sensitivity_peak_force_torque": {
+      "run01": [0.002533, 0.000887174],
+      "run02": [0.033635, 0.010291962],
+      "run03": [0.0275274, 0.00986958]
+    },
+    "sensitivity_result_not_selected_to_reduce_reported_peak": true,
+    "maximum_resultant_force_n_unchanged": 3.0400615,
+    "maximum_resultant_torque_nm_unchanged": 0.0540690202,
+    "all_three_sealed_observed_segments_inside_unchanged_limits": true,
+    "full_unobserved_approach_path_proven": false
+  },
+  "experiment_contract": {
+    "unique_unknown": "whether_physics_based_hand_dynamic_inertia_compensation_removes_free_space_self_inertia_without_hiding_external_contact_and_reaches_the_unchanged_6p5s_high_wait",
+    "success_branch": "continue_to_the_unchanged_high_wait_and_second_ordinary_rgbd_observation",
+    "failure_branch": "stop_with_zero_descent_and_zero_closure_then_change_only_the_earliest_dynamic_model_or_physical_contact_cause"
+  }
+}

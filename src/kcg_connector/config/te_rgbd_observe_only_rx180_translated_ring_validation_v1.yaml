@@ -1,0 +1,26 @@
+# Independent validation capture for the Rx180 CAD-axial transport ring fit.
+# The base scene, near-side camera, receptacle, workspaces, segmentation and
+# zero-command boundary are inherited unchanged.  Only the scene-authored plug
+# x/y translation changes by [+15, +15] mm and never enters provider_input.
+schema_version: kcg_te_rgbd_observe_only_rx180_translation_overlay_v1
+base_observe_config: src/kcg_connector/config/te_rgbd_observe_only_v1.yaml
+camera_config: src/kcg_connector/config/te_rgbd_camera_near_side_v1.yaml
+
+experiment_contract:
+  current_physical_state: DEVELOPMENT_TRANSPORT_GRASP_REOBSERVE_REQUIRED_NO_NEW_MOTION
+  unique_unknown: independent_translated_rx180_rgbd_preserves_the_cad_axial_ring_center_error_bound_and_axis_sign
+  single_frozen_variable: plug_rx180_world_xy_translation_plus_15mm_plus_15mm
+  falsifiable_judgment: sealed_provider_ring_center_posthoc_absolute_x_and_y_errors_are_each_at_most_0p183mm_and_supplier_plus_z_world_sign_is_negative_unique_with_zero_commands
+  miss_branch: keep_formal_uncertainty_null_and_control_false_then_change_only_the_ring_or_axis_estimator_from_this_failure
+  ready_branch: freeze_only_the_simulation_research_lateral_bound_then_require_same_reset_z_tilt_freshness_and_path_gates_before_motion
+
+# Scene author and posthoc evaluator only.  The capture runner omits this
+# mapping from provider_input.json and records zero object-pose reads.
+scene_generation_truth:
+  scene_pose_id: rx180_tabletop_xy_plus15mm_ring_validation_v1
+  plug_world_translation_m: [0.535, -0.195, 0.200]
+  plug_world_rotation_xyz_deg: [180.0, 0.0, 0.0]
+  plug_support_surface: table_top
+  receptacle_world_translation_m: [0.550, 0.185, 0.271623]
+  receptacle_world_rotation_xyz_deg: [0.0, 0.0, 0.0]
+  receptacle_support_surface: fixture_top

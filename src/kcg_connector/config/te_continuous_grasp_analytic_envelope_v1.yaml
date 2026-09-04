@@ -1,0 +1,104 @@
+schema_version: kcg_te_continuous_grasp_analytic_envelope_v1
+claim_scope: SIMULATION_ONLY_ACTUATOR_ENVELOPE_NOT_PD_OR_DYNAMIC_CAPACITY
+hardware_authorized: false
+development_object: te_deutsch_d38999_26fj35pn_step
+
+inputs:
+  step_contact_atlas: src/kcg_connector/config/te_continuous_grasp_surface_atlas_v1.yaml
+  hand_contact_contract: src/kcg_connector/config/carts_direct_nailfree_hand_contact_v1.yaml
+
+object_model:
+  mass_kg: 0.31
+  center_of_mass_object_m: [0.00000336547475, 0.00000140763907, -0.0181354827]
+  inertia_object_kg_m2:
+    - [0.0000569880573, 0.0000000118530685, -0.00000000959539691]
+    - [0.0000000118530685, 0.0000569407681, -0.0000000246884615]
+    - [-0.00000000959539691, -0.0000000246884615, 0.0000821921072]
+  gravity_object_m_s2: [0.0, 0.0, 9.80665]
+  source: FROZEN_TE_SIMULATION_MODEL_AND_NOMINAL_TABLETOP_FRAME
+
+continuous_uncertainty:
+  visual_pose_empirical_hard_set_defined: false
+  visual_pose_empirical_hard_set_status: PENDING_FROZEN_GLOBAL_WRIST_PALM_TE_SIM_6DOF_RESIDUAL_PROTOCOL
+  visual_pose_empirical_hard_set_source: PENDING_MATCHED_ESTIMATE_AND_POST_HOC_SIM_TRUTH_PAIRS
+  visual_pose_measurement_protocol_executable: false
+  visual_pose_measurement_protocol_status: SKELETON_FROZEN_EXECUTION_INPUTS_PENDING
+  visual_pose_observation_rule: SYNCHRONIZED_GLOBAL_WRIST_PALM_RGB_AND_METRIC_DEPTH_PRECONTACT
+  visual_pose_estimate_truth_firewall: ESTIMATE_JSON_COMMITTED_BEFORE_POST_HOC_TRUTH_READ
+  visual_pose_residual_coordinates: [dx_m, dy_m, dz_m, rx_rad, ry_rad, rz_rad]
+  visual_pose_residual_frame: ESTIMATED_TE_CONNECTOR_TASK_FRAME
+  visual_pose_residual_transform: RIGHT_INVARIANT_RELATIVE_TRANSLATION_PLUS_SO3_LOG
+  visual_pose_orientation_branch_rule: NO_POST_HOC_TRUTH_SELECTION_OR_SYMMETRY_MINIMIZATION
+  visual_pose_failure_rule: NO_OUTPUT_NONFINITE_OR_UNRESOLVED_MULTIMODAL_IS_MISS
+  visual_pose_empirical_support_rule: COMPONENTWISE_ASYMMETRIC_MIN_MAX_OF_ALL_ACCEPTED_FINITE_RESIDUALS_NO_OUTLIER_REMOVAL
+  visual_pose_miss_rule: MISS_RATE_REPORTED_CONTROLLER_ABSTAINS_ANY_PREREGISTERED_SCENE_ALL_MISS_LEAVES_U_UNDEFINED
+  visual_pose_empirical_support_claim: ACCEPTED_CONDITIONAL_SIMULATION_EMPIRICAL_SUPPORT_ONLY
+  visual_pose_truth_use: POST_HOC_RESIDUAL_EVALUATION_ONLY
+  visual_pose_research_set_defined: true
+  visual_pose_research_set_frozen_before_robust_grasp_outcomes: true
+  visual_pose_research_set_role: LITERATURE_ANCHORED_EX_ANTE_STUDY_DOMAIN
+  visual_pose_research_set_source: LEE_ET_AL_2026_DOI_10_1007_S12541_026_01488_7_WITH_CONNECTOR_SCALE_SANITY_CHECKS
+  visual_pose_research_set_coordinates: RIGHT_INVARIANT_TRANSLATION_PLUS_SO3_LOG
+  visual_pose_research_set_lower: [-0.002, -0.002, -0.002, -0.03490658503988659, -0.03490658503988659, -0.03490658503988659]
+  visual_pose_research_set_upper: [0.002, 0.002, 0.002, 0.03490658503988659, 0.03490658503988659, 0.03490658503988659]
+  visual_pose_research_set_coverage_probability: null
+  visual_pose_research_set_guarantee_scope: CONDITIONAL_ON_ESTIMATOR_ACCEPTANCE_AND_TRUE_RESIDUAL_INSIDE_SET
+  visual_pose_research_set_transfer_limit: LITERATURE_EULER_AND_BASE_FRAME_VALUES_ANCHOR_MAGNITUDE_ONLY_NOT_COORDINATE_EQUIVALENCE_OR_COVERAGE
+  stress_test_pose_translation_radius_m: 0.010
+  stress_test_pose_rotation_radius_rad: 0.1308996938995747
+  stress_test_pose_role: POST_CALIBRATION_STRESS_TEST_ONLY_NOT_VISUAL_ERROR_HARD_SET
+  shared_friction_interval: [0.45, 0.55]
+  wrench_force_radius_n: 3.0400615
+  wrench_torque_radius_nm: 0.0540690201829443
+  characteristic_radius_m: 0.017785502096896496
+  probability_distribution_claimed: false
+  camera_performance_certification_claimed: false
+
+contact_and_actuation:
+  contact_count: 3
+  normal_force_cap_n: 8.0
+  independent_joint_names: [f1j1, f1j2, f2j1, f3j2]
+  closing_joint_names: [f1j2, f2j1, f3j2]
+  closing_order_mode: EXACTLY_ONE_OF_ALL_SIX_FINGER_PERMUTATIONS
+  closing_order_permutations:
+    - [finger_1, finger_2, finger_3]
+    - [finger_1, finger_3, finger_2]
+    - [finger_2, finger_1, finger_3]
+    - [finger_2, finger_3, finger_1]
+    - [finger_3, finger_1, finger_2]
+    - [finger_3, finger_2, finger_1]
+  fixed_finger_1_first_physical_or_safety_evidence: false
+  active_finger_first_contact_rule: COMPLETE_2442_TRIANGLE_PAD_BEFORE_SAME_FINGER_8912_TRIANGLE_NONPAD
+  active_finger_pad_triangle_count: 2442
+  active_finger_nonpad_triangle_count: 8912
+  hand_drive_maximum_effort_nm: 1.0
+  contact_effort_rise_nm: 0.020
+  measured_effort_abort_nm: 0.90
+  required_closing_joint_effort_role: PRELOAD_POSITION_TARGET_ADVANCE_THRESHOLD_NOT_DRIVE_CAP_OR_REQUIRED_ACHIEVED_EFFORT
+  hand_stiffness_nm_per_rad: 12.0
+  hand_damping_nm_s_per_rad: 2.0
+  pad_contract_15n_capacity_used: false
+  urdf_100nm_effort_used: false
+
+outer_master:
+  objective: MINIMIZE_NEGATIVE_ACTUATOR_ENVELOPE_MARGIN
+  pose_scenario: NOMINAL_ONLY_CONTINUOUS_POSE_SET_OMITTED_FOR_LOWER_BOUND
+  wrench_scenarios: ZERO_AND_POSITIVE_NEGATIVE_SIX_AXIS_BOUNDARY
+  friction_rule: CONTINUOUS_INTERVAL_REDUCED_EXACTLY_TO_LOWER_ENDPOINT
+  friction_outer_polygon_edges: 8
+  object_surface_mode: ALL_NON_HARD_STEP_PARENT_FACE_AABB_UNION_AND_GLOBAL_AXIS_SUPPORT_OUTER_PER_FINGER
+  pad_surface_mode: ALL_2442_DIRECT_NAILFREE_PAD_TRIANGLES_EXACT_ONE_PER_FINGER
+  shared_design_across_scenarios: true
+  scenario_specific_contact_force_only: true
+  omitted_for_outer_relaxation:
+    - continuous_pose_uncertainty
+    - exact_pd_equation_after_nominal_gravity
+    - required_closing_effort_preload_closed_loop_response
+    - exact_object_surface_membership_and_contact_normal_coupling
+    - pad_object_normal_opposition
+    - contact_nonpenetration_and_complementarity
+    - forbidden_surface_clearance
+    - hand_self_object_and_table_collision
+    - closure_order_contact_timing_and_pad_before_nonpad
+    - arm_ik_and_continuous_paths
+  output_claim: FLOATING_POINT_SCIP_DUAL_BOUND_FOR_ENCODED_OUTER_MODEL_ONLY

@@ -1,0 +1,106 @@
+{
+  "schema_version": "kcg_te_visual_high_reobserve_v1",
+  "mode": "SIMULATION_ONLY_FRESH_VISION_TO_APPROACH_HIGH_AND_REOBSERVE",
+  "authorization": {
+    "hardware_authorized": false,
+    "simulation_only": true,
+    "approach_high_motion_authorized": true,
+    "descent_authorized": false,
+    "object_contact_authorized": false,
+    "finger_closure_authorized": false
+  },
+  "base_same_reset_config": {
+    "path": "src/kcg_connector/config/te_same_reset_rgbd_observe_v1.json",
+    "sha256": "d1eb31077b3e5238f640a9d944e1d036fb49f86b623ea6a19f41f3e1b1b0ac76"
+  },
+  "frozen_grasp_relation": {
+    "path": "src/kcg_connector/config/te_transport_grasp_relation_v1.yaml",
+    "sha256": "94822860dd72d072fa463eca8d4fab6e2b1ae281cc28b19e81d073ee02f91be4"
+  },
+  "source_evidence": {
+    "same_reset_provider": {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_same_reset_rgbd_observe_v1/physical_rx180_run02/pose_provider_result.json",
+      "sha256": "915d3288f6944423aab4cb7b80cfe598aff41faf2607d936efb421508ba645bd"
+    },
+    "same_reset_sealed_capture": {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_same_reset_rgbd_observe_v1/physical_rx180_run02/sealed_capture_report.json",
+      "sha256": "bbad9af6ff1c79dad857b11345753d74a2196d1bccdc4103b68988522fa599e3"
+    },
+    "same_reset_posthoc": {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_same_reset_rgbd_observe_v1/physical_rx180_run02/posthoc_truth_evaluation.json",
+      "sha256": "a1aa7d6b51c407c726d133a2929d6671ac4fbe4e30ccd1b4ef7abc0fa4ed6d2b"
+    },
+    "translated_ring_provider": {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_rgbd_observe_only_v1/rx180_translated_ring_validation_run01/pose_provider_result_v4.json",
+      "sha256": "b05dda53626f34020637e902a7ef42590aad9e9442028e4fac489575d151caae"
+    },
+    "translated_ring_posthoc": {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_rgbd_observe_only_v1/rx180_translated_ring_validation_run01/pose_provider_result_v4_posthoc_truth_sidecar.json",
+      "sha256": "908dc481baff97896ff92815772c4531c5d648f9aa7e6fc1271a11d5895110e1"
+    },
+    "hand_inertial_source": {
+      "path": "src/iiwa_description/urdf/hand.xacro",
+      "sha256": "b7ddf62c62b8127816e5ba8ecefb72c257622952e3aa2211355a6a61f4d1097f"
+    }
+  },
+  "simulation_research_range": {
+    "kind": "FINITE_ADMISSIBLE_SET_NOT_3SIGMA",
+    "lateral_x_absolute_m": 0.000183,
+    "lateral_y_absolute_m": 0.000183,
+    "support_z_absolute_m": 0.003,
+    "axis_tilt_cone_rad": 0.08726646259971647,
+    "yaw_range_rad": [-3.141592653589793, 3.141592653589793],
+    "yaw_consumed_by_transport_target": false
+  },
+  "static_path_panel": {
+    "method": "COMPLETE_17_LINK_FCL_126_STATE_FINITE_PANEL_PLUS_CONTINUOUS_OBJECT_POSE_ENVELOPE",
+    "collision_link_count": 17,
+    "state_count": 126,
+    "approach_high_clearance_m": 0.05,
+    "minimum_table_clearance_m": 0.024490201473236106,
+    "minimum_nominal_plug_clearance_m": 0.029987321248709693,
+    "minimum_fixture_clearance_m": 0.2948251196787564,
+    "maximum_object_pose_surface_displacement_m": 0.006973043655673907,
+    "minimum_range_robust_plug_clearance_m": 0.023014277593035787,
+    "mathematical_continuous_joint_space_proof_claimed": false
+  },
+  "motion": {
+    "allowed_controller_phases": [
+      "ft_free_space_tare",
+      "settle",
+      "preshape_at_home",
+      "approach_above",
+      "wait_above_settled",
+      "observation_wait_hold"
+    ],
+    "observation_wait_hold_duration_s": 0.5,
+    "required_descent_command_count": 0,
+    "required_finger_closure_command_count": 0
+  },
+  "wrist_ft_safety": {
+    "source_joint": "hand2arm",
+    "reaction_row_rule": "METADATA_JOINT_INDEX_PLUS_ONE",
+    "canonical_from_raw": "NEGATIVE_IDENTITY_6",
+    "tare_duration_s": 0.5,
+    "minimum_tare_samples": 100,
+    "gravity_difference_compensation": "FROZEN_HAND_LINK_MASS_COM_MODEL_FROM_HAND_XACRO",
+    "maximum_resultant_force_n": 3.0400615,
+    "maximum_resultant_torque_nm": 0.0540690202,
+    "limit_source": "USER_GOAL_SIMULATION_ONLY_RESEARCH_UPPER_BOUND_NOT_HARDWARE_CALIBRATION",
+    "hardware_load_certification_claimed": false,
+    "threshold_action": "STOP_AND_HOLD_NO_DESCENT"
+  },
+  "reobservation": {
+    "same_reset_required": true,
+    "robot_stationary_required": true,
+    "provider_scope": "TRANSPORT_PLUG_ONLY",
+    "miss_result": "REOBSERVATION_MISS_STOP_NO_DESCENT",
+    "truth_read_only_after_second_provider_sealed": true
+  },
+  "experiment_contract": {
+    "unique_unknown": "fresh_visual_target_changes_robot_command_and_reaches_only_the_safe_50mm_high_wait_before_a_second_fresh_observation",
+    "success_branch": "retain_high_wait_motion_evidence_and_use_second_provider_only_for_next_short_path_planning",
+    "motion_failure_branch": "stop_and_hold_then_change_only_target_frame_or_high_path_cause",
+    "reobservation_miss_branch": "stop_without_descent_then_change_only_observation_pose_or_view"
+  }
+}

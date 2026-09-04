@@ -122,6 +122,17 @@ def _prim_at_path(stage, path):
     return prim
 
 
+def _host_numpy(value, *, dtype):
+    """Convert Isaac tensor values on GPU to a host NumPy array."""
+    if hasattr(value, "detach"):
+        value = value.detach()
+    if hasattr(value, "cpu"):
+        value = value.cpu()
+    if hasattr(value, "numpy"):
+        value = value.numpy()
+    return np.asarray(value, dtype=dtype)
+
+
 def _require_prim_type(prim, path, expected_type):
     """Fail closed when a persistent RGB-D prim has an alien USD type."""
     actual_type = str(prim.GetTypeName())
@@ -999,7 +1010,7 @@ def capture_d38999_rgbd_runtime(
                     "horizontal_aperture_mm": (
                         camera.get_horizontal_aperture()
                     ),
-                    "intrinsics": np.asarray(
+                    "intrinsics": _host_numpy(
                         camera.get_intrinsics_matrix(), dtype=np.float64
                     ).tolist(),
                     "prim_path": rgbd.camera.prim_path,
@@ -1319,6 +1330,9 @@ def capture_d38999_rgbd_raw_formal(
         )
         rgba = np.asarray(rgb_annotator.get_data())
         depth = np.asarray(depth_annotator.get_data(), dtype=np.float32)
+        metrics["capture_timestamp_utc"] = datetime.now(
+            timezone.utc
+        ).isoformat()
         if rgba.ndim not in (2, 3):
             raise RuntimeError("raw RGB output must be 2D or 3D")
         if rgba.ndim == 3 and rgba.shape[2] < 3:
@@ -1347,7 +1361,7 @@ def capture_d38999_rgbd_raw_formal(
             "focal_length_mm": camera.get_focal_length(),
             "frame_id": rgbd.camera.frame_id,
             "horizontal_aperture_mm": camera.get_horizontal_aperture(),
-            "intrinsics": np.asarray(
+            "intrinsics": _host_numpy(
                 camera.get_intrinsics_matrix(), dtype=np.float64
             ).tolist(),
             "prim_path": rgbd.camera.prim_path,

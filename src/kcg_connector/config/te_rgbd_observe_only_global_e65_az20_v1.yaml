@@ -1,0 +1,10 @@
+schema_version: kcg_te_rgbd_observe_only_view_override_v1
+base_observe_config: src/kcg_connector/config/te_rgbd_observe_only_v1.yaml
+camera_config: src/kcg_connector/config/te_rgbd_camera_global_e65_az20_v1.yaml
+experiment_contract:
+  current_physical_state: SIMULATION_ONLY_GLOBAL_CAMERA_COMPARISON
+  unique_unknown: azimuth_offset_breaks_symmetric_pose_projection_without_losing_both_endpoints
+  single_frozen_variable: global_camera_pose_e65_az20
+  falsifiable_judgment: both_endpoint_sam6d_masks_then_foundationpose_position_axis_outputs_are_compared_posthoc
+  miss_branch: reject_view_without_robot_motion
+  ready_branch: retain_only_for_four_view_comparison
