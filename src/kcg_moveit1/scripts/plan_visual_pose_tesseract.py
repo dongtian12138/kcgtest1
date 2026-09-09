@@ -148,7 +148,11 @@ def _prepare_robot_files(
     if completed.returncode != 0:
         raise RuntimeError(f"xacro failed: {completed.stderr.strip()}")
     urdf_text = completed.stdout
-    for link_name in ("f1Link3", "f2Link2", "f3Link3"):
+    legacy_nailfree_links = (
+        ("f1Link3", "f2Link2", "f3Link3")
+        if "cartesian_waypoints_world_from_hand_row_major" not in request else ()
+    )
+    for link_name in legacy_nailfree_links:
         old = f"meshes/hand/collision/{link_name}_convex.stl"
         new = f"meshes/hand/connector_no_nail/{link_name}_nailfree.stl"
         if urdf_text.count(old) != 1:
@@ -455,6 +459,128 @@ def _trajectory(instructions: CompositeInstruction) -> dict[str, object]:
     return {"joint_names": list(ARM_JOINT_NAMES), "points": points}
 
 
+def _plan_cartesian_constrained(robot, request, start_arm, start_hand, target, bounds, obstacle_ids):
+    """Use the installed TrajOpt pipeline for one supplied Cartesian hand path."""
+    from tesseract_robotics.planning import CartesianTarget, TaskComposer
+    from tesseract_robotics.tesseract_command_language import (
+        CartesianWaypointPoly, MoveInstructionType_LINEAR,
+    )
+    from tesseract_robotics.tesseract_common import JointState
+    from tesseract_robotics.planning.profiles import (
+        _create_trajopt_profiles, TRAJOPT_DEFAULT_NAMESPACE,
+    )
+    from tesseract_robotics.tesseract_motion_planners_trajopt import (
+        ProfileDictionary_addTrajOptCompositeProfile,
+        ProfileDictionary_addTrajOptPlanProfile,
+        ProfileDictionary_addTrajOptSolverProfile,
+        TrajOptOSQPSolverProfile,
+    )
+
+    poses = [
+        _matrix4(value, f"Cartesian hand waypoint {index}")
+        for index, value in enumerate(request["cartesian_waypoints_world_from_hand_row_major"])
+    ]
+    if len(poses) < 2:
+        raise ValueError("Cartesian mode requires start and end hand poses")
+    robot.set_joints(_robot_joint_state(start_arm, start_hand))
+    actual_start = np.asarray(robot.fk("kuka", start_arm, tip_link="handbase_link").matrix)
+    position_tolerance = float(request.get("position_tolerance_m", 1e-4))
+    orientation_tolerance = float(request.get("orientation_tolerance_rad", 5e-4))
+
+    def pose_error(first, second):
+        return (
+            float(np.linalg.norm(first[:3, 3] - second[:3, 3])),
+            float(math.acos(np.clip((np.trace(first[:3, :3].T @ second[:3, :3]) - 1.0) / 2.0, -1.0, 1.0))),
+        )
+
+    for name, first, second in (("start", poses[0], actual_start), ("end", poses[-1], target)):
+        position_error, orientation_error = pose_error(first, second)
+        if position_error > position_tolerance or orientation_error > orientation_tolerance:
+            raise ValueError(f"Cartesian {name} does not match the request: {(position_error, orientation_error)}")
+    names = list(ARM_JOINT_NAMES)
+    program = (MotionProgram("kuka", tcp_frame="handbase_link", working_frame="world", profile="DEFAULT")
+               .set_joint_names(names)
+               .start_at(StateTarget(start_arm, names=names, profile="DEFAULT")))
+    instructions = program.to_composite_instruction(names, "handbase_link")
+    goal_seed, seed_search = _solve_goal(robot, target, start_arm, start_hand, bounds)
+    # These joint values are numerical initial guesses only. All supplied
+    # Cartesian poses remain constraints; the seed is never an executable path.
+    for index, pose in enumerate(poses[1:], 1):
+        fraction = index / (len(poses) - 1)
+        cartesian_waypoint = CartesianTarget(Pose(pose)).to_waypoint()
+        cartesian_waypoint.setSeed(JointState(names, (1.0 - fraction) * start_arm + fraction * goal_seed))
+        move = MoveInstruction(CartesianWaypointPoly(cartesian_waypoint), MoveInstructionType_LINEAR, "DEFAULT")
+        instructions.appendMoveInstruction(MoveInstructionPoly_wrap_MoveInstruction(move))
+    robot.set_joints(_robot_joint_state(start_arm, start_hand))
+
+    # Reuse the installed Cartesian constraint profile. The glass-upright
+    # example frees translation; this request supplies the full hand path, so
+    # enforce all six pose coordinates instead. Preserve the current clearance
+    # and edge subdivision rather than inheriting the example's 10 mm margin.
+    composite, waypoint = _create_trajopt_profiles()
+    for config in (composite.collision_cost_config, composite.collision_constraint_config):
+        config.contact_manager_config.default_margin = COLLISION_CLEARANCE_M
+        config.collision_margin_buffer = COLLISION_CLEARANCE_M
+        config.collision_check_config.type = CollisionEvaluatorType.LVS_DISCRETE
+        config.collision_check_config.longest_valid_segment_length = LVS_JOINT_SEGMENT_RAD
+    waypoint.cartesian_constraint_config.coeff = np.ones(6)
+    waypoint.cartesian_constraint_config.use_tolerance_override = True
+    waypoint.cartesian_constraint_config.lower_tolerance = -np.r_[
+        np.full(3, position_tolerance / math.sqrt(3.0)),
+        np.full(3, orientation_tolerance / math.sqrt(3.0)),
+    ]
+    waypoint.cartesian_constraint_config.upper_tolerance = -waypoint.cartesian_constraint_config.lower_tolerance
+    profiles = ProfileDictionary()
+    ProfileDictionary_addTrajOptCompositeProfile(profiles, TRAJOPT_DEFAULT_NAMESPACE, "DEFAULT", composite)
+    ProfileDictionary_addTrajOptPlanProfile(profiles, TRAJOPT_DEFAULT_NAMESPACE, "DEFAULT", waypoint)
+    solver = TrajOptOSQPSolverProfile()
+    solver.opt_params.max_time = float(request.get("allowed_planning_time_s", 8.0))
+    ProfileDictionary_addTrajOptSolverProfile(profiles, TRAJOPT_DEFAULT_NAMESPACE, "DEFAULT", solver)
+    started = time.perf_counter()
+    result = TaskComposer.from_config().plan(
+        robot, instructions, pipeline="TrajOptPipeline", profiles=profiles, auto_seed=False,
+    )
+    report = {
+        "schema_version": "kcg_tesseract_kdl_planner_v2",
+        "success": False, "failure_stage": "tesseract_cartesian_trajopt",
+        "planner": "TESSERACT_TRAJOPT_CARTESIAN_CONSTRAINTS",
+        "message": result.message, "planning_time_s": time.perf_counter() - started,
+        "cartesian_constraint_waypoint_count": len(poses),
+        "input_program_move_count": len(instructions.getInstructions()),
+        "collision_evaluator": "LVS_DISCRETE",
+        "numerical_seed": {"method": "CURRENT_TO_EXISTING_ENDPOINT_IK_INTERPOLATION_ONLY",
+                           "endpoint_ik": seed_search, "endpoint_joint_rad": goal_seed.tolist(),
+                           "executable_without_constraint_solve": False},
+        "collision_object_ids": obstacle_ids,
+        "collision_model": "ORIGINAL_NAIL_ROBOT_MESHES",
+        "required_clearance_m": COLLISION_CLEARANCE_M,
+        "trajectory": None, "requires_isaac_exact_fcl_recheck": True,
+        "requires_resampled_body_axis_fk_check": True,
+        "object_or_contact_truth_used": False,
+    }
+    if not result.successful:
+        return report
+    positions = _positions(result.raw_results)
+    margin = float(np.min(np.minimum(positions - bounds[:, 0], bounds[:, 1] - positions)))
+    report["minimum_path_soft_limit_margin_rad"] = margin
+    if margin < -1e-9 or not np.allclose(positions[0], start_arm, rtol=0.0, atol=1e-6):
+        report.update(failure_stage="cartesian_start_or_joint_bounds", message="Cartesian path changed the start or crossed an original soft bound")
+        return report
+    collision = _first_colliding_state(robot, positions, start_hand)
+    if collision is not None:
+        report.update(failure_stage="cartesian_collision", first_colliding_state_index=collision)
+        return report
+    final_fk = np.asarray(robot.fk("kuka", positions[-1], tip_link="handbase_link").matrix)
+    position_error, orientation_error = pose_error(final_fk, target)
+    report.update(endpoint_position_error_m=position_error, endpoint_orientation_error_rad=orientation_error)
+    if position_error > position_tolerance or orientation_error > orientation_tolerance:
+        report.update(failure_stage="cartesian_endpoint_tolerance", message="Cartesian endpoint is outside the original requested tolerance")
+        return report
+    report.update(success=True, failure_stage=None, selected_path_type="CARTESIAN_CONSTRAINED_TRAJOPT",
+                  trajectory=_trajectory(result.raw_results))
+    return report
+
+
 def plan(repository: Path, request: dict[str, object]) -> dict[str, object]:
     start_names = [str(name) for name in request["start_joint_names"]]
     start_values = _finite_vector(
@@ -489,6 +615,10 @@ def plan(repository: Path, request: dict[str, object]) -> dict[str, object]:
         arm_names = robot.get_joint_names("kuka")
         if tuple(arm_names) != ARM_JOINT_NAMES:
             raise RuntimeError("Tesseract arm joint order differs")
+        if "cartesian_waypoints_world_from_hand_row_major" in request:
+            return _plan_cartesian_constrained(
+                robot, request, start_arm, start_hand, target, bounds, obstacle_ids,
+            )
         goal_arm, goal_search = _solve_goal(
             robot, target, start_arm, start_hand, bounds
         )

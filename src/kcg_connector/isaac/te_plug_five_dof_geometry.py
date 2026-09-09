@@ -121,12 +121,13 @@ def _coarse_face_center(
     intrinsics: np.ndarray,
     face_radius_m: float,
     plane_residual_limit_m: float,
+    minimum_component_band_m: float = 0.00075,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, int]:
     yy, xx = image_points
     residual_image = np.full(mask.shape, np.inf, dtype=np.float64)
     residual_image[yy, xx] = np.abs(point_cloud @ normal + offset)
     component_mask = mask & (
-        residual_image < max(plane_residual_limit_m, 0.00075)
+        residual_image < max(plane_residual_limit_m, minimum_component_band_m)
     )
     component_mask = cv2.morphologyEx(
         component_mask.astype(np.uint8),
@@ -331,6 +332,105 @@ def estimate_plug_five_dof(
             "truth_inputs_used": [],
         },
     }
+
+
+def estimate_plug_rear_circle_from_float_depth(
+    *, depth_m: np.ndarray, mask: np.ndarray, intrinsics: np.ndarray,
+    mesh_path: Path, plane_residual_limit_m: float = 0.00002,
+    pixel_center_offset_px: float = 0.0,
+) -> dict[str, object]:
+    """Locate the rear circular face using float depth, independent of shadows.
+
+    The legacy millimetre-image plane band mixes the rear face with a nearby
+    parallel rim in the close palm view. This explicit float-depth mode keeps
+    those surfaces separate and uses the CAD face circle rather than intensity
+    symmetry. Its default noise band is a nominal simulation assumption.
+    """
+    started = time.perf_counter()
+    depth = np.asarray(depth_m, dtype=np.float64)
+    valid = np.asarray(mask, dtype=bool) & np.isfinite(depth) & (depth > 0)
+    K = np.asarray(intrinsics, dtype=np.float64).reshape(3, 3).copy()
+    if pixel_center_offset_px not in (0.0, 0.5):
+        raise ValueError("pixel-centre convention must be declared as zero or half a pixel")
+    # RTX capture uses centre rays at index+0.5 with the supplied width/2,
+    # height/2 principal point. Adjust a local K equivalently for every ray,
+    # including contour rays; never mutate the caller's camera calibration.
+    K[0, 2] -= pixel_center_offset_px
+    K[1, 2] -= pixel_center_offset_px
+    yy, xx = np.nonzero(valid)
+    z = depth[yy, xx]
+    points = np.column_stack(((xx - K[0, 2]) * z / K[0, 0],
+                             (yy - K[1, 2]) * z / K[1, 1], z))
+    radius, axial_offset = _visible_face_geometry(mesh_path)
+    normal, offset, inliers, fraction = _fit_visible_plane(
+        points, residual_limit_m=plane_residual_limit_m, iterations=700)
+    center_2d, first, second, circle_rms, pixels = _coarse_face_center(
+        mask=valid, image_points=(yy, xx), point_cloud=points, normal=normal,
+        offset=offset, intrinsics=K, face_radius_m=radius,
+        plane_residual_limit_m=plane_residual_limit_m, minimum_component_band_m=0.0)
+    center = -offset * normal + center_2d[0] * first + center_2d[1] * second
+    pixel_footprint = float(center[2] / min(K[0, 0], K[1, 1]))
+    quality_limit = max(2.0 * plane_residual_limit_m, 1.5 * pixel_footprint)
+    original_circle_rms = circle_rms
+    plane_seed_completed = False
+    if circle_rms > quality_limit:
+        # SAM may select only the textured interior of the face. Its mask is
+        # a seed, not evidence that the mask boundary is the CAD circle.
+        # Extend only to the same measured plane, near the coarse face, and
+        # retain the connected component overlapping that current-image seed.
+        all_valid=np.isfinite(depth)&(depth>0)
+        ay,ax=np.nonzero(all_valid);az=depth[ay,ax]
+        all_points=np.column_stack(((ax-K[0,2])*az/K[0,0],(ay-K[1,2])*az/K[1,1],az))
+        near_plane=np.abs(all_points@normal+offset)<plane_residual_limit_m
+        near_center=np.linalg.norm(all_points-center,axis=1)<1.5*radius
+        candidate=np.zeros(depth.shape,np.uint8)
+        candidate[ay,ax]=(near_plane&near_center).astype(np.uint8)
+        count,labels=cv2.connectedComponents(candidate,connectivity=8)
+        if count>1:
+            overlap=np.bincount(labels[valid].ravel(),minlength=count);overlap[0]=0
+            chosen=int(np.argmax(overlap))
+            if overlap[chosen]>0:
+                completed=labels==chosen
+                cy,cx=np.nonzero(completed);cz=depth[cy,cx]
+                cp=np.column_stack(((cx-K[0,2])*cz/K[0,0],(cy-K[1,2])*cz/K[1,1],cz))
+                cc,cf,cs,cr,cpixels=_coarse_face_center(
+                    mask=completed,image_points=(cy,cx),point_cloud=cp,normal=normal,offset=offset,
+                    intrinsics=K,face_radius_m=radius,plane_residual_limit_m=plane_residual_limit_m,
+                    minimum_component_band_m=0.)
+                if cr<=quality_limit:
+                    center_2d,first,second,circle_rms,pixels=cc,cf,cs,cr,cpixels
+                    center=-offset*normal+center_2d[0]*first+center_2d[1]*second
+                    plane_seed_completed=True
+    if circle_rms > quality_limit:
+        raise RuntimeError(f"rear-face contour does not fit source circle: {circle_rms} > {quality_limit} m")
+    axis = -normal
+    a, b = _plane_basis(axis)
+    pose = np.eye(4)
+    pose[:3, :3] = np.column_stack((a, b, axis))
+    pose[:3, 3] = center + axial_offset * axis
+    return {"camera_from_object": pose, "metrics": {
+        "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+        "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+        "axial_yaw_estimated": False, "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+        "rgb_intensity_used_for_center": False, "mask_source": "CURRENT_IMAGE_SAM",
+        "sam_used_as_plane_seed_not_required_full_contour":plane_seed_completed,
+        "original_seed_contour_rms_m":original_circle_rms,
+        "depth_source": "FLOAT_METERS_NPY", "mask_valid_depth_pixels": len(points),
+        "depth_pixel_center_offset_px": float(pixel_center_offset_px),
+        "backprojection_principal_point_index_coordinates_px": [float(K[0, 2]), float(K[1, 2])],
+        "visible_face_component_pixels": pixels, "visible_face_radius_m": radius,
+        "visible_face_to_object_origin_m": axial_offset,
+        "plane_residual_limit_m": plane_residual_limit_m,
+        "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+        "plane_ransac_sampled_inlier_fraction": fraction,
+        "plane_refined_inlier_fraction": float(np.mean(inliers)),
+        "plane_inlier_residual_rms_m": float(np.sqrt(np.mean((points[inliers] @ normal + offset) ** 2))),
+        "circle_residual_rms_m": circle_rms, "circle_quality_limit_m": quality_limit,
+        "estimated_pixel_footprint_m": pixel_footprint,
+        "estimated_visible_face_center_camera_m": center.tolist(),
+        "estimated_directed_axis_camera": axis.tolist(),
+        "elapsed_s": time.perf_counter() - started, "truth_inputs_used": [],
+    }}
 
 
 def main() -> int:

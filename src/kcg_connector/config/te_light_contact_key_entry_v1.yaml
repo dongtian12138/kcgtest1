@@ -1,0 +1,71 @@
+schema_version: te_light_contact_key_entry_v1
+authorization:
+  source: CURRENT_CONVERSATION_USER_INSTRUCTION_2026_09_05
+  user_instruction: 就按照你说的做吧，记得和仿真真值作对照，得出确切的是否可行的结论。
+  simulation_only: true
+  hardware_authorized: false
+  grasp_transport_observation_authorized: true
+  light_contact_key_entry_authorized: true
+  locking_authorized: false
+experiment:
+  status: PARKED
+  hypothesis: 受阻后退离插座再小幅腕转，能够改变本体方向，并通过有界试插找到键槽。
+  primary_variable: wrist_rotation_only_after_retracting_out_of_contact
+  current_implementation_stage: three_probes_no_key_entry_stopped_by_lateral_force
+  observed_result: artifacts/kcg_connector/isaac/te_light_contact_key_entry_v1/run09/physical_key_entry_result.json
+  success_next: assess_actual_key_entry_before_any_full_insertion_or_locking
+  failure_next: verify_fresh_key_observation_near_socket_before_repeating_the_same_search
+  replay_scope: 同一场景复用抓取、RGBD键位粗定位和携带入口；最多13次预定小角度试插，真值只在整组结束后评价。
+receptacle_templates: artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates
+collision:
+  body_representation: source_cad_sparse_sdf
+  body_sdf_resolution: 1024
+  body_sdf_subgrid_resolution: 6
+  body_sdf_narrow_band_thickness: 0.002
+  receptacle_representation: stationary_source_cad_triangle_mesh
+  contact_offset_m: 0.00005
+  rest_offset_m: 0.0
+key_camera:
+  eye_world_m: [0.590, -0.370, 0.225]
+  resolution_px: [1280, 720]
+  focal_length_mm: 24.0
+  horizontal_aperture_mm: 20.955
+  clipping_range_m: [0.02, 10.0]
+motion:
+  search_mode: retract_rotate_probe
+  trial_wrist_offsets_deg: [0.0, 0.25, -0.25, 0.5, -0.5, 0.75, -0.75, 1.0, -1.0, 1.25, -1.25, 1.5, -1.5]
+  retracted_face_gap_m: 0.001
+  blocked_hold_duration_s: 0.75
+  unloaded_hold_duration_s: 0.25
+  rotation_settle_duration_s: 0.5
+  maximum_total_search_duration_s: 240.0
+  transport_face_gap_m: 0.050
+  maximum_precontact_speed_m_s: 0.002
+  precontact_face_gap_m: 0.003
+  target_key_entry_depth_m: 0.001
+  maximum_axial_travel_m: 0.006
+  axial_force_reference_n: 0.20
+  maximum_axial_speed_m_s: 0.0003
+  maximum_xy_correction_m: 0.002
+  maximum_xy_speed_m_s: 0.00015
+  maximum_tilt_correction_deg: 1.0
+  maximum_tilt_speed_rad_s: 0.002
+  sweep_start_deg: -10.0
+  sweep_end_deg: 10.0
+  sweep_speed_deg_s: 0.5
+  maximum_contact_duration_s: 75.0
+  maximum_transport_joint_speed_rad_s: 0.15
+probe_stops:
+  maximum_contact_axial_force_n: 0.75
+  maximum_contact_lateral_force_n: 0.30
+  maximum_contact_bending_moment_nm: 0.020
+  maximum_contact_torsional_moment_nm: 0.015
+  note: 这些是本次轻触实验额外的较低停止值，不替换或提高原有腕部与单指保护。
+boundaries:
+  plug_mass_kg: 0.062459669349
+  unloaded_nut_resistance_nm: 0.020
+  grasp_relation: src/kcg_connector/config/te_transport_grasp_relation_q70_4p5_v1.yaml
+  online_object_or_contact_truth_allowed: false
+  post_start_object_pose_write_allowed: false
+  direct_body_or_nut_force_or_torque_allowed: false
+  cable_or_marker_addition_allowed: false

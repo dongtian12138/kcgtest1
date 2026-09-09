@@ -1103,10 +1103,17 @@ class ThreeFingerHandModel:
         *,
         point_local_m: Sequence[float] = (0.0, 0.0, 0.0),
         base_transform: np.ndarray | None = None,
+        enforce_limits: bool = True,
     ) -> np.ndarray:
-        """Return a 6-by-N geometric Jacobian in independent-joint order."""
+        """Return a 6-by-N geometric Jacobian in independent-joint order.
 
-        transforms = self.forward_kinematics(positions, base_transform=base_transform)
+        Planning keeps joint-limit validation by default. Sensor-side kinematic
+        evaluation can explicitly retain finite measured states outside a bound
+        without clipping observations or changing motion limits.
+        """
+
+        transforms = self.forward_kinematics(
+            positions, base_transform=base_transform, enforce_limits=enforce_limits)
         if link_name not in transforms:
             raise HandModelError(f"link is outside hand subtree: {link_name}")
         point_local = np.asarray(

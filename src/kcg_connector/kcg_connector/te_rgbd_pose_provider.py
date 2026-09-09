@@ -6,6 +6,10 @@ frozen workspaces, known static support geometry, and hash-bound official TE
 STL meshes.  It never opens a capture report, USD stage, Prim, semantic image,
 or simulator pose.
 
+The held-plug and socket-lip helpers also accept ordinary depth arrays,
+explicit camera calibration and sensor-based position/axis estimates. They
+identify the shell keys or slots without using the pin field.
+
 For the current historical Rx180 tabletop observation the earliest decisive
 test is key visibility.  The asymmetric axial radius profile chooses the
 supplier +Z sign.  The five-key yaw is eligible for scoring only if the narrow
@@ -1701,6 +1705,290 @@ def estimate_te_pose_pair(inputs: ProviderInputs) -> dict[str, Any]:
     return result
 
 
+def estimate_receptacle_key_from_depth(
+    depth_m: np.ndarray,
+    mask: np.ndarray,
+    intrinsics: np.ndarray,
+    world_from_camera: np.ndarray,
+    camera_from_receptacle_seed: np.ndarray,
+) -> dict[str, Any]:
+    """Refine a coarse socket pose using its annular lip and five real slots."""
+    import cv2
+    from scipy.ndimage import map_coordinates
+    from scipy.optimize import least_squares
+
+    depth = np.asarray(depth_m, dtype=np.float64)
+    k = np.asarray(intrinsics, dtype=np.float64).reshape(3, 3)
+    camera = np.asarray(world_from_camera, dtype=np.float64).reshape(4, 4)
+    seed = np.asarray(camera_from_receptacle_seed, dtype=np.float64).reshape(4, 4)
+    miss = {"key_direction_measured": False, "world_from_receptacle_row_major": None}
+    yy, xx = np.nonzero(np.asarray(mask, dtype=bool) & np.isfinite(depth) & (depth > 0.0))
+    z = depth[yy, xx]
+    # Isaac Camera.get_pointcloud uses centres 0.5 .. width-0.5 with
+    # principal point width/2. Array indices denote pixel corners here.
+    points = np.column_stack(((xx + 0.5 - k[0, 2]) * z / k[0, 0],
+                              (yy + 0.5 - k[1, 2]) * z / k[1, 1], z))
+    local = (points - seed[:3, 3]) @ seed[:3, :3]
+    radius = np.linalg.norm(local[:, :2], axis=1)
+    grid_y, grid_x = np.indices(depth.shape)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        grid = np.stack(((grid_x + 0.5 - k[0, 2]) * depth / k[0, 0],
+                         (grid_y + 0.5 - k[1, 2]) * depth / k[1, 1], depth), axis=-1)
+        cross = np.cross(grid[1:-1, 2:] - grid[1:-1, :-2],
+                         grid[2:, 1:-1] - grid[:-2, 1:-1])
+        cross /= np.linalg.norm(cross, axis=-1)[..., None]
+        normals = np.full_like(grid, np.nan)
+        normals[1:-1, 1:-1] = cross
+        lip_facing = np.abs(normals[yy, xx] @ seed[:3, 2]) > 0.995
+    roi = ((radius > 0.0175) & (radius < 0.0202)
+           & (local[:, 2] > -0.002) & (local[:, 2] < 0.0008))
+    planar_roi = roi & lip_facing
+    if np.count_nonzero(planar_roi) < 20:
+        return {**miss, "reason": "SOCKET_LIP_UNOBSERVED"}
+    counts, edges = np.histogram(local[planar_roi, 2], bins=np.arange(-0.002, 0.000801, 0.00004))
+    index = int(np.argmax(counts))
+    peak = 0.5 * (edges[index] + edges[index + 1])
+    inliers = planar_roi & (np.abs(local[:, 2] - peak) < 0.00008)
+    for _ in range(4):
+        if np.count_nonzero(inliers) < 20:
+            return {**miss, "reason": "SOCKET_LIP_PLANE_UNRESOLVED"}
+        centroid = points[inliers].mean(axis=0)
+        _, _, vectors = np.linalg.svd(points[inliers] - centroid, full_matrices=False)
+        axis = vectors[-1]
+        axis *= np.sign(axis @ seed[:3, 2])
+        inliers = roi & (np.abs((points - centroid) @ axis) < 0.00004)
+    lip_mask = np.zeros(depth.shape, np.uint8)
+    lip_mask[yy[inliers], xx[inliers]] = 255
+    contours, _ = cv2.findContours(lip_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    if not contours:
+        return {**miss, "reason": "SOCKET_LIP_CONTOUR_UNRESOLVED"}
+    border = max(contours, key=cv2.contourArea).reshape(-1, 2)
+    rays = np.column_stack(((border[:, 0] + 0.5 - k[0, 2]) / k[0, 0],
+                            (border[:, 1] + 0.5 - k[1, 2]) / k[1, 1], np.ones(len(border))))
+    boundary = rays * ((axis @ centroid) / (rays @ axis))[:, None]
+    first = seed[:3, 0] - axis * (seed[:3, 0] @ axis)
+    first /= np.linalg.norm(first)
+    second = np.cross(axis, first)
+    boundary_xy = (boundary - centroid) @ np.column_stack((first, second))
+    fit = least_squares(
+        lambda center: np.linalg.norm(boundary_xy - center, axis=1) - 0.0195707,
+        [0.0, 0.0], loss="soft_l1", f_scale=0.0002,
+    )
+    origin = centroid + first * fit.x[0] + second * fit.x[1]
+    angles = np.arange(0.0, 360.0, 0.25)
+    angle_rad = np.radians(angles)
+    ring = (origin + (0.01860 * np.cos(angle_rad))[:, None] * first
+            + (0.01860 * np.sin(angle_rad))[:, None] * second)
+    pixels = ring @ k.T
+    pixels = pixels[:, :2] / pixels[:, 2:] - 0.5
+    observed = map_coordinates(depth, [pixels[:, 1], pixels[:, 0]],
+                               order=1, mode="constant", cval=np.nan)
+    gap = np.isfinite(observed) & (observed - ring[:, 2] > 0.00025)
+    angular_pixel = math.degrees(math.atan2(
+        origin[2] / min(k[0, 0], k[1, 1]), 0.01860,
+    ))
+    arcs = []
+    for start in np.flatnonzero(gap & ~np.roll(gap, 1)):
+        length = 0
+        while length < len(gap) and gap[(start + length) % len(gap)]:
+            length += 1
+        if length * 0.25 >= 2.0 * angular_pixel:
+            arcs.append({"center_deg": float((start + length / 2.0) * 0.25 % 360.0),
+                         "width_deg": float(length * 0.25)})
+    # Source CAD, at z=0: slot centres and angular widths of the inner lip.
+    slot_angles = (23.0, 90.0, 170.0, 232.0, 286.0)
+    small_width, main_width = 4.817476, 9.643492
+    candidates = []
+    for main in arcs:
+        if abs(main["width_deg"] - main_width) > 2.0 * angular_pixel:
+            continue
+        yaw = (main["center_deg"] - 90.0 + 180.0) % 360.0 - 180.0
+        yaws, matched = [yaw], [90.0]
+        for arc in arcs:
+            if arc is main or abs(arc["width_deg"] - small_width) > 2.0 * angular_pixel:
+                continue
+            errors = [abs((arc["center_deg"] - angle - yaw + 180.0) % 360.0 - 180.0)
+                      for angle in slot_angles]
+            nearest = int(np.argmin(errors))
+            if nearest != 1 and errors[nearest] <= 2.0 * angular_pixel:
+                yaws.append(yaw + (arc["center_deg"] - slot_angles[nearest] - yaw + 180.0) % 360.0 - 180.0)
+                matched.append(slot_angles[nearest])
+        if len(set(matched)) >= 3:
+            candidates.append((float(np.mean(yaws)), sorted(set(matched))))
+    diagnostics = {"observed_slot_arcs": arcs, "lip_plane_pixel_count": int(inliers.sum()),
+                   "lip_origin_camera_m": origin.tolist(), "lip_axis_camera": axis.tolist(),
+                   "lip_circle_residual_m": float(np.sqrt(np.mean(fit.fun ** 2))),
+                   "angular_pixel_footprint_deg": angular_pixel}
+    if len(candidates) != 1:
+        return {**miss, **diagnostics, "reason": "SOCKET_MAIN_SLOT_PATTERN_NOT_UNIQUE"}
+    yaw, matched = candidates[0]
+    theta = math.radians(yaw)
+    rz = np.array(((math.cos(theta), -math.sin(theta), 0.0),
+                   (math.sin(theta), math.cos(theta), 0.0), (0.0, 0.0, 1.0)))
+    camera_from_socket = np.eye(4)
+    camera_from_socket[:3, :3] = np.column_stack((first, second, axis)) @ rz
+    camera_from_socket[:3, 3] = origin
+    pose = camera @ camera_from_socket
+    return {**diagnostics, "key_direction_measured": True,
+            "world_from_receptacle_row_major": pose.ravel().tolist(),
+            "matched_supplier_slot_angles_deg": matched,
+            "seed_axial_yaw_correction_deg": yaw,
+            "scope": "CURRENT_SOCKET_LIP_AND_KEY_SLOTS_NO_PIN_FIELD",
+            "online_object_or_contact_truth_used": False}
+
+
+def estimate_held_plug_key_from_depth(
+    depth_m: np.ndarray,
+    intrinsics: np.ndarray,
+    world_from_camera: np.ndarray,
+    estimated_world_from_plug: np.ndarray,
+) -> dict[str, Any]:
+    """Measure the exposed J35 shell keys in one held-plug depth image.
+
+    The hand-derived pose supplies a position/axis region of interest only.
+    The circular mating rim refines that region; the wide key and at least
+    one complete narrow key must agree with the supplier's angular pattern.
+    Pin holes, nut features, object truth and an assumed previous yaw are not
+    inputs. The result describes this frame, not an occluded future pose.
+    """
+    from scipy.optimize import least_squares
+
+    depth = np.asarray(depth_m, dtype=np.float64)
+    k = np.asarray(intrinsics, dtype=np.float64).reshape(3, 3)
+    camera = np.asarray(world_from_camera, dtype=np.float64).reshape(4, 4)
+    estimate = np.asarray(estimated_world_from_plug, dtype=np.float64).reshape(4, 4)
+    miss = {"key_direction_measured": False, "world_from_plug_row_major": None}
+    yy, xx = np.indices(depth.shape)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        points_camera = np.stack((
+            (xx + 0.5 - k[0, 2]) * depth / k[0, 0],
+            (yy + 0.5 - k[1, 2]) * depth / k[1, 1], depth,
+        ), axis=-1)
+        points = points_camera @ camera[:3, :3].T + camera[:3, 3]
+        local = (points - estimate[:3, 3]) @ estimate[:3, :3]
+        dx = points[1:-1, 2:] - points[1:-1, :-2]
+        dy = points[2:, 1:-1] - points[:-2, 1:-1]
+        normal_inner = np.cross(dx, dy)
+        normal_inner /= np.linalg.norm(normal_inner, axis=-1)[..., None]
+        normals = np.full_like(points, np.nan)
+        normals[1:-1, 1:-1] = normal_inner
+        normal_local = normals @ estimate[:3, :3]
+        radius = np.linalg.norm(local[:, :, :2], axis=-1)
+    planar_roi = (
+        np.isfinite(local).all(2) & (radius > 0.0165) & (radius < 0.0194)
+        & (local[:, :, 2] > -0.002) & (local[:, :, 2] < 0.001)
+        & (np.abs(normal_local[:, :, 2]) > 0.995)
+    )
+    if np.count_nonzero(planar_roi) < 20:
+        return {**miss, "reason": "MATING_RIM_PLANE_UNOBSERVED"}
+    # A stale hand-derived axis can cut the tilted rim into a narrow stripe.
+    # Measure its normal before selecting a thin plane-height histogram bin.
+    roi_normals = normals[planar_roi].copy()
+    roi_normals *= np.sign(roi_normals @ estimate[:3, 2])[:, None]
+    observed_axis = np.median(roi_normals, axis=0)
+    observed_axis /= np.linalg.norm(observed_axis)
+    with np.errstate(invalid="ignore"):
+        plane_heights = (points - estimate[:3, 3]) @ observed_axis
+    counts, edges = np.histogram(
+        plane_heights[planar_roi], bins=np.arange(-0.002, 0.00101, 0.00002),
+    )
+    index = int(np.argmax(counts))
+    peak = 0.5 * (edges[index] + edges[index + 1])
+    inliers = planar_roi & (np.abs(plane_heights - peak) < 0.00005)
+    for _ in range(4):
+        if np.count_nonzero(inliers) < 20:
+            return {**miss, "reason": "MATING_RIM_PLANE_UNRESOLVED"}
+        centroid = points[inliers].mean(axis=0)
+        _, _, vectors = np.linalg.svd(points[inliers] - centroid, full_matrices=False)
+        axis = vectors[-1]
+        axis *= np.sign(axis @ estimate[:3, 2])
+        with np.errstate(invalid="ignore"):
+            inliers = planar_roi & (np.abs((points - centroid) @ axis) < 0.000035)
+    rotation = _rotation_from_axis_and_yaw(axis, 0.0)
+    origin = estimate[:3, 3] - axis * ((estimate[:3, 3] - centroid) @ axis)
+    with np.errstate(invalid="ignore"):
+        local = (points - origin) @ rotation
+        normal_local = normals @ rotation
+        radius = np.linalg.norm(local[:, :, :2], axis=-1)
+    rim = (
+        np.isfinite(local).all(2) & (radius > 0.0165) & (radius < 0.0192)
+        & (local[:, :, 2] > -0.00064) & (local[:, :, 2] < -0.00010)
+        & (np.abs(normal_local[:, :, 2]) < 0.25)
+    )
+    if np.count_nonzero(rim) < 20:
+        return {**miss, "reason": "MATING_RIM_CENTRE_UNOBSERVED"}
+    rim_xy = local[rim, :2]
+    fit = least_squares(
+        lambda center: np.linalg.norm(rim_xy - center, axis=1) - 0.01783715,
+        [0.0, 0.0], loss="soft_l1", f_scale=0.000025, max_nfev=80,
+    )
+    origin += rotation[:, :2] @ fit.x
+    with np.errstate(invalid="ignore"):
+        local = (points - origin) @ rotation
+        radius = np.linalg.norm(local[:, :, :2], axis=-1)
+        angles = np.degrees(np.arctan2(local[:, :, 1], local[:, :, 0])) % 360.0
+    key_pixels = (
+        np.isfinite(local).all(2) & (radius > 0.01845) & (radius < 0.01905)
+        & (local[:, :, 2] > -0.00146) & (local[:, :, 2] < -0.00084)
+        & (np.abs(normal_local[:, :, 2]) < 0.30)
+    )
+    if np.count_nonzero(key_pixels) < 6:
+        return {**miss, "reason": "EXPOSED_KEYS_UNOBSERVED"}
+    angular_pixel = math.degrees(math.atan2(
+        float(np.median(depth[key_pixels])) / min(k[0, 0], k[1, 1]),
+        _PLUG_KEY_RADIUS_M,
+    ))
+    ordered = np.sort(angles[key_pixels])
+    cut = int(np.argmax(np.diff(np.r_[ordered, ordered[0] + 360.0]))) + 1
+    ordered = np.r_[ordered[cut:], ordered[:cut] + 360.0]
+    arcs = []
+    for group in np.split(ordered, np.where(np.diff(ordered) > 2.5 * angular_pixel)[0] + 1):
+        if len(group) >= 3:
+            arcs.append({
+                "pixel_count": int(len(group)),
+                "center_deg": float(0.5 * (group[0] + group[-1]) % 360.0),
+                "width_deg": float(group[-1] - group[0]),
+            })
+    candidates = []
+    for main in arcs:
+        if abs(main["width_deg"] - _PLUG_KEY_WIDTHS_DEG[1]) > 2.0 * angular_pixel:
+            continue
+        yaw = (main["center_deg"] - 90.0 + 180.0) % 360.0 - 180.0
+        observations = [yaw]
+        matched = [90.0]
+        for arc in arcs:
+            if arc is main or abs(arc["width_deg"] - _PLUG_KEY_WIDTHS_DEG[0]) > 2.0 * angular_pixel:
+                continue
+            errors = [abs((arc["center_deg"] - key - yaw + 180.0) % 360.0 - 180.0)
+                      for key in _PLUG_KEY_CENTERS_DEG]
+            nearest = int(np.argmin(errors))
+            if nearest != 1 and errors[nearest] <= 2.0 * angular_pixel:
+                observations.append(yaw + (arc["center_deg"] - _PLUG_KEY_CENTERS_DEG[nearest] - yaw + 180.0) % 360.0 - 180.0)
+                matched.append(_PLUG_KEY_CENTERS_DEG[nearest])
+        if len(matched) >= 2:
+            candidates.append((float(np.mean(observations)), matched))
+    diagnostics = {
+        "observed_key_arcs": arcs, "key_pixel_count": int(key_pixels.sum()),
+        "angular_pixel_footprint_deg": angular_pixel,
+        "rim_plane_pixel_count": int(inliers.sum()),
+        "rim_cylinder_inlier_pixel_count": int(np.count_nonzero(np.abs(fit.fun) < 0.000075)),
+    }
+    if len(candidates) != 1:
+        return {**miss, **diagnostics, "reason": "WIDE_KEY_AND_NARROW_KEY_PATTERN_NOT_UNIQUE"}
+    yaw, matched = candidates[0]
+    pose = np.eye(4)
+    pose[:3, :3] = _rotation_from_axis_and_yaw(axis, math.radians(yaw))
+    pose[:3, 3] = origin
+    return {
+        **diagnostics, "key_direction_measured": True,
+        "world_from_plug_row_major": pose.ravel().tolist(),
+        "key_yaw_in_axis_gauge_deg": yaw,
+        "matched_supplier_key_angles_deg": matched,
+        "scope": "CURRENT_EXPOSED_SHELL_KEYS_ONLY_NO_HIDDEN_YAW_PROPAGATION",
+        "online_object_or_contact_truth_used": False,
+    }
+
+
 def run_te_rgbd_pose_provider(
     provider_input_path: Path | str,
     repository_root: Path | str,
@@ -1716,6 +2004,8 @@ __all__ = [
     "MISS_KEY_NOT_OBSERVABLE",
     "RESULT_SCHEMA_VERSION",
     "estimate_te_pose_pair",
+    "estimate_held_plug_key_from_depth",
+    "estimate_receptacle_key_from_depth",
     "load_binary_stl_mm",
     "load_provider_inputs",
     "run_te_rgbd_pose_provider",

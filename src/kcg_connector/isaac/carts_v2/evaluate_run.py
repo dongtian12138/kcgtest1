@@ -16,8 +16,10 @@ from scipy.spatial.transform import Rotation
 
 if __package__:
     from .engine_health import pending_engine_fields
+    from .native_pose_audit import read_native_hand_link_poses
 else:
     from engine_health import pending_engine_fields
+    from native_pose_audit import read_native_hand_link_poses
 
 
 TERMINAL_LINK_NAMES = ("f1Link3", "f2Link2", "f3Link3")
@@ -330,13 +332,23 @@ class TruthAuditRecorder:
         tensor_contact_prim,
         tensor_contact_sensor_paths: Sequence[str],
         tensor_contact_max_count: int,
+        object_articulation=None,
     ) -> None:
         self.object_parts = tuple(object_parts)
+        self.object_articulation = object_articulation
         self.hand_base_prim = hand_base_prim
         self.robot_model = robot_model
         self.Gf, self.Usd, self.UsdGeom = stage_modules
         self.contact_interface = contact_interface
         self.path_decoder = path_decoder
+        # Read-only evidence: a pose plateau may otherwise hide actor sleep.
+        # This state is never supplied to the online controller.
+        from pxr import PhysicsSchemaTools, Sdf, UsdUtils
+        self._sleep_stage_id = UsdUtils.StageCache.Get().GetId(
+            hand_base_prim.GetStage()).ToLongInt()
+        self._sleep_body_paths = tuple(
+            PhysicsSchemaTools.sdfPathToInt(Sdf.Path(part.prim_path))
+            for part in self.object_parts)
         self.roots = dict(roots)
         self.engine_monitor = engine_monitor
         self.tensor_contact_prim = tensor_contact_prim
@@ -789,7 +801,21 @@ class TruthAuditRecorder:
         arm_control: Mapping[str, object],
     ) -> None:
         self.engine_monitor.sample()
+        internal_joint = None
+        if self.object_articulation is not None:
+            internal_joint = {
+                "positions_rad": _host_array(self.object_articulation.get_joint_positions()).tolist(),
+                "velocities_rad_s": _host_array(self.object_articulation.get_joint_velocities()).tolist(),
+                "incoming_link_wrenches_joint_frame_n_nm": _host_array(
+                    self.object_articulation.get_measured_joint_forces()).tolist(),
+            }
+            if any(not np.isfinite(np.asarray(value)).all() for value in internal_joint.values()):
+                raise RuntimeError("object articulation audit readback is non-finite")
         poses = [tuple(_host_array(value) for value in part.get_world_pose()) for part in self.object_parts]
+        linear_velocities = [_host_array(part.get_linear_velocity()).reshape(3).tolist()
+                             for part in self.object_parts]
+        angular_velocities = [_host_array(part.get_angular_velocity()).reshape(3).tolist()
+                              for part in self.object_parts]
         positions = np.asarray([pose[0] for pose in poses], dtype=np.float64)
         centers = np.asarray(
             [
@@ -806,6 +832,9 @@ class TruthAuditRecorder:
             active_positions, ("handbase_link", *TERMINAL_LINK_NAMES)
         )
         hand_position, hand_orientation = link_poses["handbase_link"]
+        native_hand_poses = read_native_hand_link_poses(
+            self.tensor_contact_prim, self.tensor_contact_sensor_paths,
+            self.roots["robot"])
         usd_hand_position, usd_hand_orientation = self._usd_hand_pose()
         bottom = min(
             float(position[2]) + offset
@@ -825,12 +854,19 @@ class TruthAuditRecorder:
                 "object_part_orientations_wxyz": [
                     list(map(float, pose[1])) for pose in poses
                 ],
+                "object_part_linear_velocities_world_m_s": linear_velocities,
+                "object_part_angular_velocities_world_rad_s": angular_velocities,
+                "object_part_sleeping": [
+                    bool(self.contact_interface.is_sleeping(self._sleep_stage_id, path))
+                    for path in self._sleep_body_paths],
+                "object_internal_joint_audit": internal_joint,
                 "reference_part_orientation_wxyz": list(map(float, poses[0][1])),
                 "object_center_m": list(map(float, center)),
                 "object_bottom_clearance_m": bottom - self.table_top_z_m,
                 "hand_base_pose_source": (
                     "MEASURED_ACTIVE_JOINTS_FROZEN_ROBOT_MODEL_FK"
                 ),
+                "native_robot_link_pose_audit": native_hand_poses,
                 "hand_base_position_m": hand_position,
                 "hand_base_orientation_wxyz": hand_orientation,
                 "terminal_link_positions_m": {
@@ -987,7 +1023,9 @@ def _contact_surface_slip_metrics(
             if part_index is None:
                 continue
             for contact in header.get("contacts", ()):
-                impulse = float(contact.get("normal_impulse_n_s", 0.0))
+                signed_impulse = float(contact.get("normal_impulse_n_s", 0.0))
+                vector = np.asarray(contact.get("impulse_n_s", (0., 0., 0.)), dtype=np.float64)
+                impulse = float(np.linalg.norm(vector))
                 if not math.isfinite(impulse) or impulse <= 0.0:
                     continue
                 result.append({
@@ -996,10 +1034,9 @@ def _contact_surface_slip_metrics(
                     "world_point_m": np.asarray(
                         contact["position_m"], dtype=np.float64
                     ),
-                    "world_normal": np.asarray(
-                        contact["normal"], dtype=np.float64
-                    ),
+                    "world_normal": vector / impulse,
                     "normal_impulse_n_s": impulse,
+                    "signed_source_normal_impulse_n_s": signed_impulse,
                     "separation_m": float(contact.get("separation_m", 0.0)),
                 })
         return result
@@ -2732,7 +2769,9 @@ def _derive_pad_surface_identity(
             if len(links) != 1:
                 continue
             for contact in header.get("contacts", ()):
-                if float(contact.get("normal_impulse_n_s", 0.0)) > 0.0:
+                # Native scalar polarity can differ between the two sensor
+                # sides. Keep the one hand-side vector, without mirror counts.
+                if np.linalg.norm(contact.get("impulse_n_s", (0., 0., 0.))) > 0.0:
                     point = np.asarray(contact.get("position_m"), dtype=np.float64)
                     if point.shape != (3,) or not np.all(np.isfinite(point)):
                         result["reason"] = "NONFINITE_TERMINAL_CONTACT_POINT"
@@ -2753,7 +2792,9 @@ def _derive_pad_surface_identity(
             ) @ transform[:3, :3]
             local_points[name].extend(local_array)
             for local_point, (world_point, contact) in zip(local_array, points):
-                world_normal = np.asarray(contact.get("normal"), dtype=np.float64)
+                vector = np.asarray(contact["impulse_n_s"], dtype=np.float64)
+                magnitude = float(np.linalg.norm(vector))
+                world_normal = vector / magnitude
                 point_metadata[name].append({
                     "step": int(row["step"]),
                     "simulation_time_s": float(row["simulation_time_s"]),
@@ -2777,7 +2818,8 @@ def _derive_pad_surface_identity(
                     "world_normal": world_normal.tolist(),
                     "link_local_position_m": local_point.tolist(),
                     "link_local_normal": (world_normal @ transform[:3, :3]).tolist(),
-                    "normal_impulse_n_s": float(contact["normal_impulse_n_s"]),
+                    "normal_impulse_n_s": magnitude,
+                    "signed_source_normal_impulse_n_s": float(contact["normal_impulse_n_s"]),
                     "separation_m": float(contact["separation_m"]),
                 })
 
@@ -4003,23 +4045,33 @@ def evaluate_trace(
     inputs=None,
 ) -> dict[str, object]:
     """Apply frozen physical success criteria to an independently saved trace."""
+    from time import perf_counter
+
+    wall_timing = {}
+
+    def timed(function, *args, **kwargs):
+        started = perf_counter()
+        try:
+            return function(*args, **kwargs)
+        finally:
+            wall_timing[function.__name__] = perf_counter() - started
 
     samples = list(document["samples"])
     criteria = document["criteria"]
     if not samples:
         raise ValueError("dynamic trace contains no samples")
     physics_dt_s = float(document["physics_dt_s"])
-    motion = _motion_metrics(samples, criteria, physics_dt_s)
-    contacts = _contact_metrics(samples, motion["grasped"])
-    safety = _safety_metrics(samples, criteria)
-    acceleration = _acceleration_metrics(samples, criteria, physics_dt_s)
-    finger_efforts = _finger_clamp_effort_metrics(samples)
-    prelift_transition = _prelift_transition_effort_metrics(document, samples)
-    contact_surface_slip = _contact_surface_slip_metrics(
+    motion = timed(_motion_metrics, samples, criteria, physics_dt_s)
+    contacts = timed(_contact_metrics, samples, motion["grasped"])
+    safety = timed(_safety_metrics, samples, criteria)
+    acceleration = timed(_acceleration_metrics, samples, criteria, physics_dt_s)
+    finger_efforts = timed(_finger_clamp_effort_metrics, samples)
+    prelift_transition = timed(_prelift_transition_effort_metrics, document, samples)
+    contact_surface_slip = timed(_contact_surface_slip_metrics,
         document, samples, inputs, physics_dt_s
     )
-    hand_object_pose = _hand_object_pose_metrics(document, samples, criteria)
-    hand_grasp_part_pose = _hand_grasp_part_pose_metrics(
+    hand_object_pose = timed(_hand_object_pose_metrics, document, samples, criteria)
+    hand_grasp_part_pose = timed(_hand_grasp_part_pose_metrics,
         document, samples, criteria
     )
     lift_pass = motion["maximum_lift_m"] >= float(criteria["lift_distance_m"])
@@ -4048,11 +4100,11 @@ def evaluate_trace(
         and hold_pass
         and motion["table_released"]
     )
-    pad_identity_evidence = _derive_pad_surface_identity(
+    pad_identity_evidence = timed(_derive_pad_surface_identity,
         document, samples, robot_asset_path, inputs
     )
     pad_identity = bool(pad_identity_evidence["verified"])
-    postgrasp_disturbance = _postgrasp_disturbance_metrics(
+    postgrasp_disturbance = timed(_postgrasp_disturbance_metrics,
         document,
         samples,
         inputs,
@@ -4291,6 +4343,7 @@ def evaluate_trace(
             if pad_identity else
             "RESEARCH_ONLY_TERMINAL_LINK_CONTACT_PAD_IDENTITY_UNRESOLVED"
         ),
+        "evaluation_wall_timing_s": wall_timing,
     }
 
 
@@ -4301,6 +4354,12 @@ def main() -> int:
     parser.add_argument("--robot-asset")
     arguments = parser.parse_args()
     trace = json.loads(Path(arguments.trace_json).read_text(encoding="utf-8"))
+    if "samples" not in trace and "durable_truth_samples" in trace:
+        sample_path = Path(trace["durable_truth_samples"]["path"])
+        if not sample_path.is_absolute():
+            sample_path = Path(arguments.trace_json).resolve().parent / sample_path
+        with sample_path.open() as stream:
+            trace["samples"] = [json.loads(line) for line in stream]
     if trace.get("mode") != "isolated-hand" and not arguments.robot_asset:
         parser.error("dynamic trace evaluation requires --robot-asset")
     if trace.get("mode") == "isolated-hand":

@@ -1,0 +1,146 @@
+schema_version: te_light_contact_key_entry_v1
+authorization:
+  source: CURRENT_CONVERSATION_FULL_SIM_ASSEMBLY_2026_09_05
+  user_instruction: 持续完成现有有指甲三指手和机械臂的Isaac Sim电连接器全流程装配与学术成果；依据合理性修改旧门限。
+  simulation_only: true
+  hardware_authorized: false
+  grasp_transport_observation_authorized: true
+  light_contact_key_entry_authorized: true
+  locking_authorized: true
+experiment:
+  hypothesis: 已实跑的旧居中70度指腹抓法能够由机械臂带动Nut旋转；轴向由接触力导纳形成，不用导程驱动位移。
+  primary_variable: enable_one_bounded_30_degree_robot_driven_nut_turn_after_verified_pad_grasp
+  baseline: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_pad_regrasp_filter_01
+  success_next: 事后核对Nut随手转动、Body键约束和螺纹带来的实际轴向推进。
+  failure_next: 定位首次异常；不自动增加夹力或重写对象位姿。
+receptacle_templates: artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates
+collision:
+  body_representation: source_cad_sparse_sdf
+  body_sdf_resolution: 1024
+  body_sdf_subgrid_resolution: 6
+  body_sdf_narrow_band_thickness: 0.002
+  receptacle_representation: stationary_source_cad_triangle_mesh
+  contact_offset_m: 5.0e-05
+  rest_offset_m: 0.0
+  nut_representation: source_cad_sparse_sdf
+  representative_inner_thread_manifest: artifacts/kcg_connector/isaac/te_full_assembly_20260905/representative_thread_geometry_clean_01/geometry_manifest.json
+key_camera:
+  eye_world_m:
+  - 0.59
+  - -0.37
+  - 0.225
+  resolution_px:
+  - 1280
+  - 720
+  focal_length_mm: 24.0
+  horizontal_aperture_mm: 20.955
+  clipping_range_m:
+  - 0.02
+  - 10.0
+motion:
+  search_mode: retract_rotate_probe
+  trial_wrist_offsets_deg:
+  - 0.0
+  retracted_face_gap_m: 0.001
+  blocked_hold_duration_s: 0.75
+  unloaded_hold_duration_s: 0.25
+  rotation_settle_duration_s: 0.5
+  maximum_total_search_duration_s: 75.0
+  transport_face_gap_m: 0.05
+  maximum_precontact_speed_m_s: 0.002
+  precontact_face_gap_m: 0.003
+  target_key_entry_depth_m: 0.001
+  maximum_axial_travel_m: 0.009
+  axial_force_reference_n: 0.2
+  maximum_axial_speed_m_s: 0.0003
+  maximum_xy_correction_m: 0.002
+  maximum_xy_speed_m_s: 0.00015
+  maximum_tilt_correction_deg: 1.0
+  maximum_tilt_speed_rad_s: 0.002
+  sweep_start_deg: -10.0
+  sweep_end_deg: 10.0
+  sweep_speed_deg_s: 0.5
+  maximum_contact_duration_s: 75.0
+  maximum_transport_joint_speed_rad_s: 0.15
+  contact_seating:
+    enabled: true
+    stability_duration_s: 0.25
+    minimum_force_reference_fraction: 0.75
+    maximum_force_reference_fraction: 1.5
+    maximum_depth_range_m: 3.0e-05
+    rationale: 确认窗0.25 s，为50 ms一阶力状态滤波的5个时间常数；输入是原始接触估计的独立滤波，未串联导纳用的滤波器。腕部与单指保护仍逐物理步执行；原始接触估计另行记录。0.20
+      N参考及0.3 mm/s速度不变。
+    travel_bound_rationale: 3 mm视觉前位加已观测约4.37 mm承载深度仍小于9 mm；保留约1.6 mm范围余量，最大到6 mm深度，远未到14.6
+      mm密封端面。接触位置不是在线目标。
+    force_state_filter_time_constant_s: 0.05
+  contact_estimate_filter_time_constant_s: 0.05
+  contact_estimate_filter_rationale: 匹配低速导纳与接触估计带宽：用既有50 ms时间常数的因果一阶低通处理六维接触估计，供导纳和附加试探停止判断；原始估计另行保存，原腕部与单指逐步保护不变。回放多个已结束回合显示高频接触估计弯矩远大于50
+    ms分量；新物理动作仍需核对真实接触和穿透。0.3 mm/s下每时间常数轴向移动上界15 um，小于50 um接触偏置；不放大力参考或速度。
+probe_stops:
+  maximum_contact_axial_force_n: 0.75
+  maximum_contact_lateral_force_n: 0.3
+  maximum_contact_bending_moment_nm: 0.02
+  maximum_contact_torsional_moment_nm: 0.015
+  note: 附加试探门限作用于50 ms滤波后的六维接触估计；未滤波估计单独记录。原腕部力/矩保护和单指保护逐物理步继续执行，数值不变。
+boundaries:
+  plug_mass_kg: 0.062459669349
+  unloaded_nut_resistance_nm: 0.02
+  grasp_relation: src/kcg_connector/config/te_nail_tip_body_grasp_v1.yaml
+  online_object_or_contact_truth_allowed: false
+  post_start_object_pose_write_allowed: false
+  direct_body_or_nut_force_or_torque_allowed: false
+  cable_or_marker_addition_allowed: false
+nut_regrasp:
+  geometry_plan: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_pad_regrasp_geometry_v1.json
+  scope: one_finite_regrasp_from_current_palm_position_and_axis
+  torque_rotation_in_this_experiment: true
+  cooked_hand_geometry: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_regrasp_01/cooked_finger_inspection/geometry_only_manifest.json
+  nailfree_grasp_reuse:
+    source_relation: src/kcg_connector/config/te_transport_grasp_relation_q70_4p5_v1.yaml
+    directly_reused:
+    - centered_hand_to_nut_pose
+    - 70_degree_palm_layout
+    - pregrasp_joint_positions
+    - finite_closing_endpoint
+    - effort_references
+    - parallel_contact_latch
+    current_nails_kept: true
+    finite_closure_path_model_check: artifacts/kcg_connector/isaac/te_full_assembly_20260905/old_nailfree_pose_with_current_nails_geometry_v2.json
+    prior_wrong_nonpad_contact_audit: artifacts/kcg_connector/isaac/te_full_assembly_20260905/thread_pilot_5tau_01/current_nut_grip_pad_surface_audit.json
+    dynamic_pad_contact_verification_pending: true
+  required_closing_joint_effort_nm:
+  - 0.326260829362
+  - 0.346363750999
+  - 0.326270244382
+  pad_contact_required_for_physical_evaluation: true
+nut_rotation:
+  enabled: true
+  rotation_about_socket_plus_z_deg: -30.0
+  rotation_direction_source: RIGHT_HAND_THREE_START_THREAD; clockwise viewed from
+    plug rear advances toward socket
+  maximum_rotation_speed_deg_s: 2.0
+  axial_settle_duration_s: 2.0
+  post_rotation_hold_s: 1.0
+  axial_force_reference_n: 0.2
+  axial_admittance_m_per_n_s: 0.0015
+  maximum_axial_speed_m_s: 0.0003
+  maximum_axial_travel_m: 0.004
+  maximum_arm_speed_rad_s: 0.075
+  payload_mass_kg: 0.062459669349
+  payload_com_body_m:
+  - 3.365477557677864e-06
+  - 1.407639432650501e-06
+  - -0.018135482890882567
+  payload_source: original frozen source Body and CouplingNut MassAPI values; Nut
+    transverse COM is essentially zero
+  stops:
+    axial_force_n: 0.75
+    lateral_force_n: 0.75
+    bending_moment_nm: 0.2
+    torsional_moment_nm: 0.04
+  stop_rationale: 单次低速旋拧的附加工程停止值；轴向沿用0.75 N。Nut抓持已观测0.393 N横向残力，不能套用自由导键的0.30 N判据；接触原点弯矩单独计算。0.04
+    N·m为本次双倍0.020 N·m假设内阻的有界试验值，不代表厂商额定或旧试验认证。原3.0400615 N/1.380577 N·m腕部及0.9 N·m单指保护继续有效。
+  no_lead_based_position_command: true
+  no_loaded_wrench_rezeroing: true
+  disabled_reason: 用户要求先核实完整导键及旧方案指腹夹Nut；本回合只验证指腹换抓。
+  verified_pad_grasp_reference: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_pad_regrasp_filter_01/nut_pad_surface_posthoc_v1.json

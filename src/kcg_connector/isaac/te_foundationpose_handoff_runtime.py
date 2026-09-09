@@ -44,6 +44,10 @@ from te_foundationpose_handoff_plan import (  # type: ignore  # noqa: E402
 )
 from te_plug_five_dof_geometry import (  # type: ignore  # noqa: E402
     estimate_plug_five_dof,
+    estimate_plug_rear_circle_from_float_depth,
+)
+from te_multiview_video import (  # type: ignore  # noqa: E402
+    MultiViewVideoRecorder,
 )
 
 
@@ -135,6 +139,8 @@ def _split_scene_entry(
 
 
 def _json_ready(value: object) -> object:
+    if isinstance(value, Path):
+        return str(value)
     if isinstance(value, np.ndarray):
         return value.tolist()
     if isinstance(value, np.generic):
@@ -144,6 +150,723 @@ def _json_ready(value: object) -> object:
     if isinstance(value, (list, tuple)):
         return [_json_ready(item) for item in value]
     return value
+
+
+def _install_rgbd_resume_sync(world, stage) -> None:
+    """Reconnect render output after resume, before the next native physics step."""
+    from isaacsim.core.simulation_manager import SimulationManager
+    if not SimulationManager.is_fabric_enabled():
+        import carb
+        if carb.settings.get_settings().get("/physics/updateToUsd") is not True:
+            raise RuntimeError("RGB-D requires active native USD output or Fabric synchronization")
+        # CPU World already publishes native physics transforms to USD. Keep
+        # its existing play/step methods; no extra step or object write occurs.
+        world._kcg_rgbd_resume_sync_backend = "NATIVE_PHYSICS_USD_OUTPUT"
+        return
+    from omni.physxfabric import get_physx_fabric_interface
+    from pxr import UsdUtils
+
+    original_play = world.play
+    original_step = world.step
+    fabric = get_physx_fabric_interface()
+    stage_id = UsdUtils.StageCache.Get().GetId(stage).ToLongInt()
+
+    def play_with_render_sync() -> None:
+        original_play()
+        fabric.detach_stage()
+        fabric.attach_stage(stage_id)
+
+    def step_with_render_sync(*args, **kwargs):
+        kwargs["update_fabric"] = True
+        return original_step(*args, **kwargs)
+
+    world.play = play_with_render_sync
+    world.step = step_with_render_sync
+    world._kcg_rgbd_resume_sync_backend = "PHYSX_FABRIC_REATTACH_AND_STEP_UPDATE"
+
+
+def _check_held_plug_path(
+    collision_scene, arm_states, hand_positions, obstacles, hand_from_plug,
+    plug_bounds, physics_dt_s, maximum_arm_speed_rad_s,
+    *, allow_speedup=False,
+):
+    """Check the carried plug as well as the existing complete robot geometry."""
+    import fcl
+
+    source = np.asarray(arm_states, dtype=np.float64)
+    if len(source) < 2 or source.shape[1] != 7 or not np.isfinite(source).all():
+        raise ValueError("held-plug arm path is invalid")
+    peak = float(np.max(np.abs(np.diff(source, axis=0))) / physics_dt_s)
+    speed_ratio = peak / (0.8 * maximum_arm_speed_rad_s)
+    stretch = speed_ratio if allow_speedup else max(1.0, speed_ratio)
+    sample_count = max(2, int(math.ceil((len(source) - 1) * stretch)) + 1)
+    if allow_speedup:
+        sample_count = max(sample_count, round(1.0 / physics_dt_s) + 1)
+    coordinate = np.linspace(0.0, len(source) - 1, sample_count)
+    states = np.column_stack([
+        np.interp(coordinate, np.arange(len(source)), source[:, joint])
+        for joint in range(7)
+    ])
+    z_min, z_max = float(plug_bounds["z_min_m"]), float(plug_bounds["z_max_m"])
+    held = fcl.CollisionObject(fcl.Cylinder(float(plug_bounds["radius_m"]), z_max - z_min))
+    request = fcl.CollisionRequest(num_max_contacts=1, enable_contact=False)
+    first_collision = None
+    for index, arm in enumerate(states):
+        first_collision = _first_discrete_collision(
+            collision_scene, arm, hand_positions, obstacles,
+        )
+        if first_collision is None:
+            hand = np.asarray(collision_scene.inputs.robot_model.forward_kinematics(
+                tuple(np.r_[arm, hand_positions]), enforce_limits=False,
+            )["handbase_link"])
+            plug = hand @ hand_from_plug
+            center = plug[:3, 3] + 0.5 * (z_min + z_max) * plug[:3, 2]
+            held.setTransform(fcl.Transform(plug[:3, :3], center))
+            for name, obstacle in obstacles.items():
+                if fcl.collide(held, obstacle, request, fcl.CollisionResult()):
+                    first_collision = {"kind": "held_plug", "obstacle": name}
+                    break
+        if first_collision is not None:
+            first_collision = {**first_collision, "sample": index}
+            break
+    return states, {
+        "first_collision": first_collision,
+        "duration_s": (len(states) - 1) * physics_dt_s,
+        "source_duration_s": (len(source) - 1) * physics_dt_s,
+        "free_space_speedup_requested": bool(allow_speedup),
+        "maximum_commanded_arm_speed_rad_s": float(np.max(np.abs(np.diff(states, axis=0))) / physics_dt_s),
+        "held_shape": "SOURCE_PLUG_YAW_SWEPT_CYLINDER",
+        "object_pose_input": "CURRENT_RGBD_KEY_POSE_AND_ENCODER_HAND_POSE",
+        "online_object_or_contact_truth_used": False,
+    }
+
+
+def _plan_key_probe_descent(inputs, start_positions, target_hand, physics_dt_s, maximum_linear_speed_m_s):
+    """One straight precontact descent, solved with the existing bounded IK."""
+    start = np.asarray(start_positions, dtype=np.float64)
+    current = np.asarray(inputs.robot_model.forward_kinematics(
+        tuple(start), enforce_limits=False,
+    )["handbase_link"])
+    target = np.asarray(target_hand, dtype=np.float64)
+    displacement = target[:3, 3] - current[:3, 3]
+    rotation_vector = Rotation.from_matrix(target[:3, :3] @ current[:3, :3].T).as_rotvec()
+    rows = [start[:7].copy()]
+    errors = []
+    for fraction in np.linspace(0.0, 1.0, 21)[1:]:
+        pose = current.copy()
+        pose[:3, 3] += fraction * displacement
+        pose[:3, :3] = Rotation.from_rotvec(fraction * rotation_vector).as_matrix() @ current[:3, :3]
+        solved, position_error, angle_error, _ = solve_bounded_hand_base_ik(
+            inputs.config.section("ik")["solver"], model=inputs.robot_model,
+            hand_positions=start[7:], target_world_from_hand_base=pose,
+            seed_arm_positions=(rows[-1],), label="KEY_PROBE_PRECONTACT_DESCENT",
+        )
+        if position_error > 0.0001 or angle_error > 0.001:
+            raise RuntimeError("precontact descent IK did not reach its measured target")
+        rows.append(np.asarray(solved))
+        errors.append((position_error, angle_error))
+    duration = max(1.0, 1.875 * float(np.linalg.norm(displacement)) / maximum_linear_speed_m_s)
+    count = int(math.ceil(duration / physics_dt_s))
+    states = np.asarray([control.piecewise_waypoint(np.asarray(rows), control.minimum_jerk_blend(i / count))
+                         for i in range(count + 1)])
+    return states, {"duration_s": count * physics_dt_s,
+                    "maximum_ik_position_error_m": max(row[0] for row in errors),
+                    "maximum_ik_orientation_error_rad": max(row[1] for row in errors)}
+
+
+def _execute_held_plug_path(
+    world, stepper, ft_auditor, grasp_result, dynamic, arm_states, probe,
+    phase="key_probe_transport",
+):
+    """Continue the existing finite, bidirectional finger-effort regulation."""
+    if probe["authorization"]["simulation_only"] is not True or probe["authorization"]["hardware_authorized"] is not False:
+        raise ValueError("held-plug motion requires the current simulation authorization")
+    contact = grasp_result["contact_controller"]
+    direction = np.sign(np.asarray(contact.goal) - np.asarray(contact.start))
+    scales = np.r_[0.0, np.asarray(dynamic.get("finger_preload_scales", [1.0, 1.0, 1.0]))]
+    limit = np.asarray(contact.target) + float(dynamic["preload_increment_rad"]) * direction * scales
+    lower = np.minimum(contact.start, limit)
+    upper = np.maximum(contact.start, limit)
+    tare = np.mean([row["active_efforts_nm"][7:] for row in ft_auditor.samples if row["phase"] == "tare"], axis=0)
+    desired = np.asarray(dynamic["required_closing_joint_effort_nm"])
+    hand_target = np.asarray(ft_auditor.samples[-1]["active_targets_rad"][7:], dtype=np.float64)
+    increment = float(dynamic["finger_maximum_speed_rad_s"]) * float(dynamic["physics_dt_s"])
+    stiffness = float(dynamic["hand_stiffness"])
+    if tare.shape != (4,) or not np.isfinite(tare).all() or np.any(direction[1:] == 0.0):
+        raise ValueError("held-plug finger tare or closing direction is unavailable")
+    # The authorized held-object phase uses the existing 1.380577 N m outer
+    # wrist limit. All joint, force and individual finger limits are unchanged.
+    ft_auditor._PLANNED_CONTACT_PHASE_PREFIXES = tuple(ft_auditor._PLANNED_CONTACT_PHASE_PREFIXES) + ("key_probe_",)
+    completed, peak_speed = 0, 0.0
+    requested_steps = len(arm_states) if hasattr(arm_states, "__len__") else None
+    first_step = int(stepper.step_index)
+    world.play()
+    for arm in arm_states:
+        if stepper.abort_reason is not None:
+            break
+        measured = direction[1:] * (stepper.latest[2][8:] - tare[1:])
+        delta = direction[1:] * np.clip((desired - measured) / stiffness, -increment, increment)
+        hand_target[1:] = np.clip(hand_target[1:] + delta, lower[1:], upper[1:])
+        stepper.advance(phase, np.asarray(arm), hand_target)
+        completed += 1
+        peak_speed = max(peak_speed, float(np.max(np.abs(stepper.latest[1][:7]))))
+        if peak_speed > float(probe["motion"]["maximum_transport_joint_speed_rad_s"]):
+            stepper.abort_reason = "KEY_PROBE_TRANSPORT_ARM_SPEED_LIMIT"
+    world.pause()
+    world.render()
+    return {
+        "phase": phase, "completed": (requested_steps is None or completed == requested_steps) and stepper.abort_reason is None,
+        "abort_reason": stepper.abort_reason, "first_step": first_step,
+        "last_step": int(stepper.step_index), "maximum_arm_speed_rad_s": peak_speed,
+        "hand_effort_targets_nm": desired.tolist(),
+        "physical_object_transport_success": "REQUIRES_POSTRUN_OBJECT_MOTION_EVALUATION",
+        "online_object_or_contact_truth_used": False,
+    }
+
+
+def _run_light_contact_key_search(
+    world, stepper, ft_auditor, grasp_result, dynamic, inputs, probe,
+    hand_from_plug, world_from_socket, payload_model, collision_scene, obstacles,
+):
+    """One bounded force-guided entry attempt; no object/contact truth input."""
+    motion, stops = probe["motion"], probe["probe_stops"]
+    seating = motion.get("contact_seating", {})
+    seat_before_release = seating.get("enabled", False)
+    retract_search = motion.get("search_mode") == "retract_rotate_probe"
+    trial_offsets = tuple(map(float, motion.get("trial_wrist_offsets_deg", [0.0])))
+    dt = float(dynamic["physics_dt_s"])
+    socket = np.asarray(world_from_socket)
+    socket_rotation = socket[:3, :3]
+    hand_from_plug = np.asarray(hand_from_plug)
+    gravity_force = np.array([0.0, 0.0, -float(payload_model["mass_kg"]) * float(payload_model["gravity_m_s2"])])
+    com_hand = np.asarray(payload_model["center_of_mass_from_hand_m"])
+    record = {"probe_motion_executed": False, "controller_entry_depth_reached": False,
+              "contact_seating_requested": bool(seat_before_release),
+              "stable_axial_contact_detected": False,
+              "termination": None, "contact_detected": False, "capture_motion_detected": False,
+              "online_object_or_contact_truth_used": False, "samples": []}
+
+    def sensor_without_payload():
+        row = ft_auditor.samples[-1]
+        hand = np.eye(4)
+        hand[:3, :3] = np.asarray(row["handbase_rotation_world_row_major"])
+        hand[:3, 3] = row["handbase_position_world_m"]
+        measured = np.asarray(row["gravity_and_dynamic_compensated_task_wrench"])
+        force_world = ft_auditor.task_rotation_world @ measured[:3]
+        moment_world = ft_auditor.task_rotation_world @ measured[3:]
+        com_world = hand[:3, 3] + hand[:3, :3] @ com_hand
+        payload_moment = np.cross(com_world - hand[:3, 3], gravity_force)
+        corrected = np.r_[hand[:3, :3].T @ (force_world - gravity_force),
+                          hand[:3, :3].T @ (moment_world - payload_moment)]
+        prediction = row["dynamic_inertia_prediction"]
+        if prediction is None or prediction["ready"] is not True:
+            raise RuntimeError("current causal hand-inertia estimate is unavailable")
+        if not prediction["applied_to_safety_residual"]:
+            corrected += np.asarray(prediction["predicted_positive_inertia_wrench_sensor"])
+        return corrected, hand, hand @ hand_from_plug
+
+    def commands():
+        held_arm = np.asarray(ft_auditor.samples[-1]["active_targets_rad"][:7])
+        baseline_rows = []
+        for _ in range(round(0.5 / dt)):
+            yield held_arm
+            baseline_rows.append(sensor_without_payload()[0])
+        bias = np.mean(baseline_rows, axis=0)
+        record["held_sensor_bias_after_payload_compensation"] = bias.tolist()
+        record["held_sensor_standard_deviation"] = np.std(baseline_rows, axis=0).tolist()
+        if np.linalg.norm(bias[:3]) > 0.5 * float(motion["axial_force_reference_n"]):
+            record["termination"] = "HELD_FORCE_BASELINE_TOO_LARGE_FOR_LIGHT_CONTACT"
+            return
+        _, _, initial_plug = sensor_without_payload()
+        desired_plug = initial_plug.copy()
+        commanded_arm = held_arm.copy()
+        initial_gap = float((initial_plug[:3, 3] - socket[:3, 3]) @ socket[:, 2][:3])
+        record["initial_encoder_estimated_face_gap_m"] = initial_gap
+        filtered_axial_force = 0.0
+        state_filter_tau = float(seating.get("force_state_filter_time_constant_s", 0.0))
+        contact_filter_tau = float(motion.get("contact_estimate_filter_time_constant_s", 0.0))
+        filtered_contact_wrench = np.zeros(6)
+        record["contact_estimate_filter"] = {
+            "time_constant_s": contact_filter_tau,
+            "method": "CAUSAL_FIRST_ORDER_BACKWARD_EULER",
+            "applies_to": "ADMITTANCE_AND_ADDITIONAL_PROBE_STOPS",
+            "raw_estimate_recorded_separately": True,
+            "existing_wrist_auditor_and_finger_protections_unchanged": True,
+        }
+        record["axial_contact_state_filter"] = {
+            "time_constant_s": state_filter_tau,
+            "method": "CAUSAL_FIRST_ORDER_BACKWARD_EULER",
+            "raw_wrench_still_drives_protection_and_admittance": contact_filter_tau == 0.0,
+            "state_input": "RAW_CONTACT_ESTIMATE_NOT_A_SECOND_FILTER_OF_CONTROL_SIGNAL",
+        }
+        sweep, tilt, xy = 0.0, np.zeros(2), np.zeros(2)
+        blocked_depth = None
+        sweep_end_time = None
+        contact_start_time = None
+        probe_phase, trial_index, phase_started = "probe", 0, 0.0
+        block_started, block_reference_depth, unloaded_since = None, None, None
+        record["trials"] = [{"index": 0, "wrist_offset_deg": 0.0, "start_step": int(stepper.step_index)}]
+        limit_angle = math.radians(float(motion["sweep_end_deg"]) - float(motion["sweep_start_deg"]))
+        lower = np.asarray([MOVEIT_SOFT_ARM_BOUNDS_RAD[name][0] for name in control.ARM_JOINT_NAMES])
+        upper = np.asarray([MOVEIT_SOFT_ARM_BOUNDS_RAD[name][1] for name in control.ARM_JOINT_NAMES])
+        duration_limit = float(motion["maximum_total_search_duration_s"] if retract_search
+                               else motion["maximum_contact_duration_s"])
+        for index in range(round(duration_limit / dt)):
+            residual, hand, plug = sensor_without_payload()
+            sensor_contact = residual - bias
+            force_world = hand[:3, :3] @ sensor_contact[:3]
+            moment_world = hand[:3, :3] @ sensor_contact[3:] + np.cross(hand[:3, 3] - plug[:3, 3], force_world)
+            raw_wrench = np.r_[socket_rotation.T @ force_world, socket_rotation.T @ moment_world]
+            if contact_filter_tau > 0:
+                filtered_contact_wrench += dt / (contact_filter_tau + dt) * (raw_wrench - filtered_contact_wrench)
+                wrench = filtered_contact_wrench.copy()
+            else:
+                wrench = raw_wrench
+            filtered_axial_force += dt / (state_filter_tau + dt) * (float(raw_wrench[2]) - filtered_axial_force)
+            depth = -float((plug[:3, 3] - socket[:3, 3]) @ socket_rotation[:, 2])
+            record["samples"].append({"step": int(stepper.step_index), "elapsed_s": index * dt,
+                                      "contact_force_and_moment": wrench.tolist(),
+                                      "raw_contact_force_and_moment": raw_wrench.tolist(),
+                                      "axial_contact_state_force_n": filtered_axial_force,
+                                      "encoder_estimated_depth_m": depth, "commanded_sweep_deg": math.degrees(sweep),
+                                      "probe_phase": probe_phase, "trial_index": trial_index})
+            if index % round(5.0 / dt) == 0:
+                print("KEY_CONTACT", json.dumps({"elapsed_s": index * dt, "axial_force_n": float(wrench[2]),
+                                                  "bending_moment_nm": float(np.linalg.norm(wrench[3:5])),
+                                                  "encoder_depth_mm": 1000.0 * depth,
+                                                  "sweep_deg": math.degrees(sweep), "phase": probe_phase,
+                                                  "trial_index": trial_index}), flush=True)
+            limits = (
+                (abs(wrench[2]) > float(stops["maximum_contact_axial_force_n"]), "AXIAL_FORCE_LIMIT"),
+                (np.linalg.norm(wrench[:2]) > float(stops["maximum_contact_lateral_force_n"]), "LATERAL_FORCE_LIMIT"),
+                (np.linalg.norm(wrench[3:5]) > float(stops["maximum_contact_bending_moment_nm"]), "BENDING_MOMENT_LIMIT"),
+                (abs(wrench[5]) > float(stops["maximum_contact_torsional_moment_nm"]), "TORSIONAL_MOMENT_LIMIT"),
+            )
+            violated = next((reason for hit, reason in limits if hit), None)
+            if violated is not None:
+                record["termination"] = violated
+                return
+            if seat_before_release:
+                count = max(2, round(float(seating["stability_duration_s"]) / dt))
+                window = record["samples"][-count:]
+                if len(window) == count:
+                    forces_z = np.asarray([row["axial_contact_state_force_n"] for row in window])
+                    depths = np.asarray([row["encoder_estimated_depth_m"] for row in window])
+                    force_reference = float(motion["axial_force_reference_n"])
+                    stable = bool(
+                        np.min(depths) >= float(motion["target_key_entry_depth_m"])
+                        and np.min(forces_z) >= float(seating["minimum_force_reference_fraction"]) * force_reference
+                        and np.max(forces_z) <= float(seating["maximum_force_reference_fraction"]) * force_reference
+                        and np.ptp(depths) <= float(seating["maximum_depth_range_m"]))
+                    if stable:
+                        record.update(stable_axial_contact_detected=True,
+                            controller_entry_depth_reached=True,
+                            termination="STABLE_AXIAL_CONTACT_REQUIRES_POSTRUN_EVALUATION",
+                            axial_contact_trigger={"first_step": window[0]["step"],
+                                "last_step": window[-1]["step"], "sample_count": count,
+                                "force_range_n": [float(np.min(forces_z)), float(np.max(forces_z))],
+                                "encoder_depth_range_m": [float(np.min(depths)), float(np.max(depths))]})
+                        record["trials"][-1].update(termination=record["termination"],
+                                                    end_step=int(stepper.step_index))
+                        return
+            if not seat_before_release and depth >= float(motion["target_key_entry_depth_m"]) and probe_phase == "probe":
+                record["controller_entry_depth_reached"] = True
+                if not retract_search:
+                    record["termination"] = "ENCODER_ENTRY_DEPTH_REACHED_REQUIRES_PHYSICAL_EVALUATION"
+                    return
+                probe_phase, phase_started = "entry_hold", index * dt
+                record["trials"][-1].update({"termination": "ENCODER_ENTRY_DEPTH_REACHED",
+                                             "end_step": int(stepper.step_index)})
+                desired_plug = plug.copy()
+            if initial_gap + depth >= float(motion["maximum_axial_travel_m"]):
+                record["termination"] = "AXIAL_TRAVEL_LIMIT"
+                return
+            if not record["contact_detected"] and wrench[2] > 0.25 * float(motion["axial_force_reference_n"]):
+                record["contact_detected"] = True
+                contact_start_time = index * dt
+                blocked_depth = depth
+            if blocked_depth is not None and depth - blocked_depth > 0.00015 and wrench[2] < 0.5 * float(motion["axial_force_reference_n"]):
+                record["capture_motion_detected"] = True
+            force_reference = float(motion["axial_force_reference_n"])
+            velocity = np.r_[
+                np.clip(wrench[:2] * float(motion["maximum_xy_speed_m_s"]) / float(stops["maximum_contact_lateral_force_n"]),
+                        -float(motion["maximum_xy_speed_m_s"]), float(motion["maximum_xy_speed_m_s"])),
+                np.clip((wrench[2] - force_reference) * float(motion["maximum_axial_speed_m_s"]) / force_reference,
+                        -float(motion["maximum_axial_speed_m_s"]), float(motion["maximum_axial_speed_m_s"])),
+            ]
+            omega = np.r_[
+                np.clip(wrench[3:5] * float(motion["maximum_tilt_speed_rad_s"]) / float(stops["maximum_contact_bending_moment_nm"]),
+                        -float(motion["maximum_tilt_speed_rad_s"]), float(motion["maximum_tilt_speed_rad_s"])), 0.0,
+            ]
+            if retract_search:
+                now = index * dt
+                if probe_phase == "probe" and not seat_before_release:
+                    if wrench[2] > 0.5 * force_reference:
+                        if block_started is None or depth - block_reference_depth > 0.00003:
+                            block_started, block_reference_depth = now, depth
+                        elif now - block_started >= float(motion["blocked_hold_duration_s"]):
+                            record["trials"][-1].update({
+                                "termination": "BLOCKED_WITHOUT_AXIAL_PROGRESS",
+                                "end_step": int(stepper.step_index), "blocked_encoder_depth_m": depth,
+                                "contact_force_and_moment": wrench.tolist(),
+                            })
+                            print("KEY_TRIAL", json.dumps(record["trials"][-1]), flush=True)
+                            probe_phase = "retract" if trial_index + 1 < len(trial_offsets) else "final_retract"
+                            phase_started, unloaded_since = now, None
+                            block_started, block_reference_depth = None, None
+                    else:
+                        block_started, block_reference_depth = None, None
+                if probe_phase in ("retract", "final_retract"):
+                    velocity[:2], omega[:] = 0.0, 0.0
+                    gap_error = float(motion["retracted_face_gap_m"]) + depth
+                    velocity[2] = np.clip(3.0 * gap_error,
+                                          -float(motion["maximum_precontact_speed_m_s"]),
+                                          float(motion["maximum_precontact_speed_m_s"]))
+                    clear = abs(gap_error) < 0.00003 and np.linalg.norm(wrench[:3]) < 0.25 * force_reference
+                    unloaded_since = now if clear and unloaded_since is None else unloaded_since if clear else None
+                    if unloaded_since is not None and now - unloaded_since >= float(motion["unloaded_hold_duration_s"]):
+                        if probe_phase == "final_retract":
+                            record["termination"] = "BOUNDED_RETRACT_ROTATE_TRIALS_FINISHED_WITHOUT_ENTRY"
+                            return
+                        trial_index += 1
+                        probe_phase, phase_started = "rotate", now
+                        record["trials"].append({"index": trial_index, "wrist_offset_deg": trial_offsets[trial_index],
+                                                 "start_step": int(stepper.step_index), "rotation_start_step": int(stepper.step_index)})
+                if probe_phase == "rotate":
+                    velocity[:], omega[:] = 0.0, 0.0
+                    remaining = math.radians(trial_offsets[trial_index]) - sweep
+                    omega[2] = np.clip(remaining / dt, -math.radians(float(motion["sweep_speed_deg_s"])),
+                                      math.radians(float(motion["sweep_speed_deg_s"])))
+                    sweep += omega[2] * dt
+                    if abs(remaining) < 1.0e-10:
+                        probe_phase, phase_started = "rotation_settle", now
+                        record["trials"][-1]["rotation_end_step"] = int(stepper.step_index)
+                if probe_phase == "rotation_settle":
+                    velocity[:], omega[:] = 0.0, 0.0
+                    if now - phase_started >= float(motion["rotation_settle_duration_s"]):
+                        probe_phase, phase_started = "probe", now
+                        record["trials"][-1]["probe_start_step"] = int(stepper.step_index)
+                        record["contact_detected"], record["capture_motion_detected"] = False, False
+                        blocked_depth, block_started, block_reference_depth = None, None, None
+                if probe_phase == "entry_hold":
+                    velocity[:], omega[:] = 0.0, 0.0
+                    if now - phase_started >= 0.5:
+                        record["termination"] = "ENCODER_ENTRY_DEPTH_REACHED_REQUIRES_PHYSICAL_EVALUATION"
+                        return
+            elif record["contact_detected"] and not record["capture_motion_detected"] and sweep < limit_angle:
+                omega[2] = min(math.radians(float(motion["sweep_speed_deg_s"])), (limit_angle - sweep) / dt)
+                sweep += omega[2] * dt
+            if not retract_search and sweep >= limit_angle - 1.0e-12:
+                sweep_end_time = index * dt if sweep_end_time is None else sweep_end_time
+                if index * dt - sweep_end_time > 2.0 and not record["capture_motion_detected"]:
+                    record["termination"] = "BOUNDED_SWEEP_FINISHED_WITHOUT_ENTRY"
+                    return
+            xy += velocity[:2] * dt
+            tilt += omega[:2] * dt
+            if np.linalg.norm(xy) > float(motion["maximum_xy_correction_m"]) or np.linalg.norm(tilt) > math.radians(float(motion["maximum_tilt_correction_deg"])):
+                record["termination"] = "LATERAL_OR_TILT_CORRECTION_LIMIT"
+                return
+            desired_plug[:3, 3] += socket_rotation @ velocity * dt
+            desired_plug[:3, :3] = Rotation.from_rotvec(socket_rotation @ omega * dt).as_matrix() @ desired_plug[:3, :3]
+            if -float((desired_plug[:3, 3] - initial_plug[:3, 3]) @ socket_rotation[:, 2]) > float(motion["maximum_axial_travel_m"]):
+                record["termination"] = "COMMANDED_AXIAL_TRAVEL_LIMIT"
+                return
+            joint = np.asarray(stepper.latest[0])
+            jacobian = np.asarray(inputs.robot_model.geometric_jacobian("handbase_link", tuple(joint)))[:, :7]
+            radius = plug[:3, 3] - hand[:3, 3]
+            skew = np.array([[0.0, -radius[2], radius[1]], [radius[2], 0.0, -radius[0]], [-radius[1], radius[0], 0.0]])
+            point_jacobian = np.vstack((jacobian[:3] - skew @ jacobian[3:], 0.05 * jacobian[3:]))
+            # Continue the last nominal drive target. Replacing it with the
+            # measured joints jumps across the steady loaded tracking offset.
+            pose_error = np.r_[desired_plug[:3, 3] - plug[:3, 3],
+                               0.05 * Rotation.from_matrix(desired_plug[:3, :3] @ plug[:3, :3].T).as_rotvec()]
+            desired_twist = np.r_[socket_rotation @ velocity, 0.05 * socket_rotation @ omega]
+            joint_velocity = point_jacobian.T @ np.linalg.solve(
+                point_jacobian @ point_jacobian.T + 0.0005 ** 2 * np.eye(6),
+                desired_twist + 3.0 * pose_error,
+            )
+            arm_speed_limit = 0.5 * float(motion["maximum_transport_joint_speed_rad_s"])
+            commanded_arm += np.clip(joint_velocity, -arm_speed_limit, arm_speed_limit) * dt
+            target = commanded_arm.copy()
+            if np.any(target < lower) or np.any(target > upper):
+                record["termination"] = "ARM_SOFT_JOINT_BOUND"
+                return
+            collision = _first_discrete_collision(collision_scene, target, joint[7:], obstacles)
+            if collision is not None:
+                record["termination"] = "PREDICTED_ROBOT_COLLISION"
+                record["predicted_robot_collision"] = collision
+                return
+            record["probe_motion_executed"] = True
+            yield target
+        record["termination"] = "CONTACT_DURATION_LIMIT"
+
+    execution = _execute_held_plug_path(world, stepper, ft_auditor, grasp_result, dynamic,
+                                       commands(), probe, phase="key_probe_contact")
+    record["execution"] = execution
+    if stepper.abort_reason is not None:
+        record["termination"] = stepper.abort_reason
+    return record
+
+
+def _evaluate_key_entry_after_motion(truth_samples, controller_record, true_socket, probe):
+    """Read simulator truth only after the complete bounded motion has stopped."""
+    by_step = {int(row["step"]) + 1: row for row in truth_samples}
+    socket = np.asarray(true_socket)
+    mating = Rotation.from_euler("y", 180, degrees=True).as_matrix()
+    keys = np.asarray([10.0, 90.0, 157.0, 254.0, 308.0])
+    widths = np.asarray([4.02158, 7.73810, 4.02158, 4.02158, 4.02158])
+    slot_centres = (180.0 - keys) % 360.0
+    slot_widths = np.asarray([4.817476, 9.643492, 4.817476, 4.817476, 4.817476])
+    edge_angles = np.deg2rad(np.column_stack((keys - widths / 2, keys + widths / 2)).ravel())
+    edges = np.column_stack((0.0188214 * np.cos(edge_angles), 0.0188214 * np.sin(edge_angles),
+                             np.full(len(edge_angles), -0.000762)))
+    rows, max_penetration, robot_socket_contacts = [], 0.0, 0
+    unauthorized, table_contacts = 0, 0
+    for commanded in controller_record["samples"]:
+        actual = by_step.get(int(commanded["step"]))
+        if actual is None:
+            continue
+        rotations = [Rotation.from_quat(np.roll(q, -1)).as_matrix()
+                     for q in actual["object_part_orientations_wxyz"]]
+        positions = np.asarray(actual["object_part_positions_m"])
+        yaws = [math.degrees(math.atan2(r[1, 0], r[0, 0]))
+                for r in (socket[:3, :3].T @ part @ mating.T for part in rotations)]
+        centre = socket[:3, :3].T @ (positions[0] - socket[:3, 3])
+        points = (edges @ rotations[0].T + positions[0] - socket[:3, 3]) @ socket[:3, :3]
+        polar = np.rad2deg(np.arctan2(points[:, 1], points[:, 0])).reshape(-1, 2)
+        errors = (polar - slot_centres[:, None] + 180.0) % 360.0 - 180.0
+        margin = float(np.min(slot_widths[:, None] / 2.0 - np.abs(errors)))
+        minimum_key_depth = float(np.min(-points[:, 2]))
+        key_radial_clearance = 0.0190373 - float(np.max(np.linalg.norm(points[:, :2], axis=1)))
+        axis_socket = socket[:3, :3].T @ rotations[0][:, 2]
+        if abs(float(axis_socket[2])) > 1e-6:
+            lip_center = centre - axis_socket * (centre[2] / axis_socket[2])
+            # Source J35 sections: body radius 17.83715 mm, socket bore
+            # radius 17.9705 mm. Bound the tilted cylinder at the mouth.
+            body_radial_clearance = (0.0179705
+                - max(float(np.linalg.norm(centre[:2])), float(np.linalg.norm(lip_center[:2])))
+                - 0.01783715 / abs(float(axis_socket[2])))
+        else:
+            body_radial_clearance = -1.0
+        contact = actual["contacts"]
+        fingers = list(contact["terminal_link_object"])
+        for header in contact["tensor_headers"]:
+            paths = header["paths"]
+            if not any("FixedReceptaclePose" in path for path in paths):
+                continue
+            for hit in header["contacts"]:
+                if any("TE_J35FreeSplitPlug/Body" in path for path in paths):
+                    max_penetration = max(max_penetration, -float(hit["separation_m"]))
+                if any(path.startswith("/World/HandArm/") for path in paths) and abs(float(hit["normal_impulse_n_s"])) > 1e-9:
+                    robot_socket_contacts += 1
+        unauthorized += int(bool(contact.get("robot_object_unauthorized")))
+        table_contacts += int(float(contact.get("object_table_positive_normal_impulse_n_s", 0.0)) > 1e-9)
+        rows.append({
+            "step": int(commanded["step"]), "elapsed_s": commanded["elapsed_s"],
+            "trial_index": commanded.get("trial_index", 0), "phase": commanded.get("probe_phase", "probe"),
+            "commanded_wrist_offset_deg": commanded["commanded_sweep_deg"],
+            "true_body_yaw_deg": yaws[0], "true_nut_yaw_deg": yaws[1],
+            "true_depth_m": -float(centre[2]), "encoder_depth_m": commanded["encoder_estimated_depth_m"],
+            "minimum_key_front_depth_m": minimum_key_depth, "minimum_slot_angular_margin_deg": margin,
+            "minimum_key_radial_clearance_m": key_radial_clearance,
+            "body_lip_radial_clearance_m": body_radial_clearance,
+            "lateral_offset_m": float(np.linalg.norm(centre[:2])),
+            "axis_tilt_deg": math.degrees(math.acos(float(np.clip(
+                -socket[:3, 2] @ rotations[0][:, 2], -1.0, 1.0)))),
+            "three_finger_contact": fingers, "contact_force_and_moment": commanded["contact_force_and_moment"],
+            "raw_contact_force_and_moment": commanded.get("raw_contact_force_and_moment", commanded["contact_force_and_moment"]),
+            "keys_inside": bool(minimum_key_depth > 0.00015 and margin > 0.0
+                                and key_radial_clearance > 0.0 and body_radial_clearance > 0.0
+                                and all(fingers)),
+        })
+    trials = []
+    for trial in controller_record.get("trials", []):
+        subset = [row for row in rows if row["trial_index"] == trial["index"]]
+        if not subset:
+            continue
+        moving = [row for row in subset if row["phase"] in ("rotate", "rotation_settle")]
+        angles = np.rad2deg(np.unwrap(np.deg2rad([[row["true_body_yaw_deg"], row["true_nut_yaw_deg"]]
+                                                 for row in moving]), axis=0)) if moving else None
+        trials.append({**trial,
+                       "true_body_rotation_during_free_rotation_deg": float(angles[-1, 0] - angles[0, 0]) if moving else None,
+                       "true_nut_rotation_during_free_rotation_deg": float(angles[-1, 1] - angles[0, 1]) if moving else None,
+                       "maximum_true_depth_m": max(row["true_depth_m"] for row in subset),
+                       "final_body_key_error_deg": subset[-1]["true_body_yaw_deg"],
+                       "any_keys_inside": any(row["keys_inside"] for row in subset)})
+    forces = np.asarray([row["contact_force_and_moment"] for row in rows])
+    raw_forces = np.asarray([row["raw_contact_force_and_moment"] for row in rows])
+    force_peaks = {
+        "axial_force_n": float(np.max(np.abs(forces[:, 2]))),
+        "lateral_force_n": float(np.max(np.linalg.norm(forces[:, :2], axis=1))),
+        "bending_moment_nm": float(np.max(np.linalg.norm(forces[:, 3:5], axis=1))),
+        "torsional_moment_nm": float(np.max(np.abs(forces[:, 5]))),
+    } if rows else None
+    force_limits_respected = bool(force_peaks and all(
+        value <= float(probe["probe_stops"]["maximum_contact_" + name])
+        for name, value in force_peaks.items()
+    ))
+    final_window = rows[-min(60, len(rows)):]
+    success = bool(final_window and all(row["keys_inside"] for row in final_window)
+                   and controller_record.get("controller_entry_depth_reached")
+                   and controller_record["termination"] in (
+                       "ENCODER_ENTRY_DEPTH_REACHED_REQUIRES_PHYSICAL_EVALUATION",
+                       "STABLE_AXIAL_CONTACT_REQUIRES_POSTRUN_EVALUATION")
+                   and force_limits_respected
+                   and not controller_record["execution"]["abort_reason"]
+                   and not robot_socket_contacts and not unauthorized and not table_contacts
+                   and max_penetration <= float(probe["collision"]["contact_offset_m"]))
+    summary = {"status": "DYNAMIC_PASS" if success else "PARKED", "simulation_only": True,
+               "physical_key_entry_observed": success, "controller_termination": controller_record["termination"],
+               "trials": trials, "maximum_body_socket_penetration_m": max_penetration,
+               "robot_socket_positive_contact_records": robot_socket_contacts,
+               "unauthorized_robot_object_samples": unauthorized, "object_table_contact_samples": table_contacts,
+               "maximum_absolute_force_and_moment": np.max(np.abs(forces), axis=0).tolist() if len(rows) else None,
+               "contact_force_and_moment_norm_peaks": force_peaks,
+               "probe_force_limit_signal": (
+                   "CAUSALLY_FILTERED_CONTACT_ESTIMATE"
+                   if controller_record.get("contact_estimate_filter", {}).get("time_constant_s", 0) > 0
+                   else "RAW_CONTACT_ESTIMATE"),
+               "raw_contact_force_and_moment_norm_peaks": ({
+                   "axial_force_n": float(np.max(np.abs(raw_forces[:, 2]))),
+                   "lateral_force_n": float(np.max(np.linalg.norm(raw_forces[:, :2], axis=1))),
+                   "bending_moment_nm": float(np.max(np.linalg.norm(raw_forces[:, 3:5], axis=1))),
+                   "torsional_moment_nm": float(np.max(np.abs(raw_forces[:, 5]))),
+               } if len(raw_forces) else None),
+               "probe_force_limits_respected": force_limits_respected,
+               "final": rows[-1] if rows else None,
+               "truth_role": "POST_MOTION_EVALUATION_ONLY_NOT_RETURNED_TO_CONTROLLER",
+               "scope": "KEY_ENTRY_AT_ONE_FIXED_SCENE_NOT_FULL_INSERTION_LOCKING_OR_HARDWARE"}
+    return summary, rows
+
+
+def _author_key_entry_collisions(
+    stage, repository, scene, receptacle_root, probe, *,
+    Gf, Usd, UsdGeom, UsdPhysics, PhysxSchema, UsdShade,
+):
+    """Preserve source mating geometry for the explicitly authorized probe."""
+    from build_te_free_split_plug import (
+        _load_single_usd_mesh, _close_hidden_planar_boundaries,
+    )
+
+    body_root = str(scene["part_prim_paths"][0])
+    prior_colliders = [
+        prim for prim in Usd.PrimRange(stage.GetPrimAtPath(body_root))
+        if prim.HasAPI(UsdPhysics.CollisionAPI)
+    ]
+    material_targets = []
+    for prim in prior_colliders:
+        material_targets += list(
+            prim.GetRelationship("material:binding:physics").GetTargets()
+        )
+        UsdPhysics.CollisionAPI(prim).GetCollisionEnabledAttr().Set(False)
+    body_source = repository / (
+        "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/"
+        "D38999_26FJ35PN_BODY_VISUAL.usdc"
+    )
+    vertices, faces = _load_single_usd_mesh(body_source)
+    vertices, faces, caps = _close_hidden_planar_boundaries(vertices, faces)
+    mesh = UsdGeom.Mesh.Define(stage, body_root + "/SourceCadCollision")
+    mesh.CreatePointsAttr([Gf.Vec3f(*map(float, row)) for row in vertices])
+    mesh.CreateFaceVertexCountsAttr([3] * len(faces))
+    mesh.CreateFaceVertexIndicesAttr(faces.ravel().tolist())
+    mesh.CreateSubdivisionSchemeAttr("none")
+    mesh.CreateVisibilityAttr("invisible")
+    UsdPhysics.CollisionAPI.Apply(mesh.GetPrim()).CreateCollisionEnabledAttr(True)
+    UsdPhysics.MeshCollisionAPI.Apply(mesh.GetPrim()).CreateApproximationAttr("sdf")
+    sdf = PhysxSchema.PhysxSDFMeshCollisionAPI.Apply(mesh.GetPrim())
+    cfg = probe["collision"]
+    sdf.CreateSdfResolutionAttr(int(cfg["body_sdf_resolution"]))
+    sdf.CreateSdfSubgridResolutionAttr(int(cfg["body_sdf_subgrid_resolution"]))
+    sdf.CreateSdfNarrowBandThicknessAttr(float(cfg["body_sdf_narrow_band_thickness"]))
+    sdf.CreateSdfTriangleCountReductionFactorAttr(1.0)
+    if material_targets:
+        UsdShade.MaterialBindingAPI.Apply(mesh.GetPrim()).Bind(
+            UsdShade.Material(stage.GetPrimAtPath(material_targets[0])),
+            materialPurpose="physics",
+        )
+    nut_report = {}
+    nut_mesh = None
+    if cfg.get("nut_representation") == "source_cad_sparse_sdf":
+        nut_root = str(scene["part_prim_paths"][1])
+        nut_prior_colliders = [
+            prim for prim in Usd.PrimRange(stage.GetPrimAtPath(nut_root))
+            if prim.HasAPI(UsdPhysics.CollisionAPI)
+        ]
+        nut_material_targets = []
+        for prim in nut_prior_colliders:
+            nut_material_targets += list(
+                prim.GetRelationship("material:binding:physics").GetTargets()
+            )
+            UsdPhysics.CollisionAPI(prim).GetCollisionEnabledAttr().Set(False)
+        nut_source = repository / (
+            "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/"
+            "D38999_26FJ35PN_COUPLING_NUT_VISUAL.usdc"
+        )
+        nut_vertices, nut_faces = _load_single_usd_mesh(nut_source)
+        nut_vertices, nut_faces, nut_caps = _close_hidden_planar_boundaries(
+            nut_vertices, nut_faces
+        )
+        nut_mesh = UsdGeom.Mesh.Define(stage, nut_root + "/SourceCadCollision")
+        nut_mesh.CreatePointsAttr([Gf.Vec3f(*map(float, row)) for row in nut_vertices])
+        nut_mesh.CreateFaceVertexCountsAttr([3] * len(nut_faces))
+        nut_mesh.CreateFaceVertexIndicesAttr(nut_faces.ravel().tolist())
+        nut_mesh.CreateSubdivisionSchemeAttr("none")
+        nut_mesh.CreateVisibilityAttr("invisible")
+        UsdPhysics.CollisionAPI.Apply(nut_mesh.GetPrim()).CreateCollisionEnabledAttr(True)
+        UsdPhysics.MeshCollisionAPI.Apply(nut_mesh.GetPrim()).CreateApproximationAttr("sdf")
+        nut_sdf = PhysxSchema.PhysxSDFMeshCollisionAPI.Apply(nut_mesh.GetPrim())
+        nut_sdf.CreateSdfResolutionAttr(int(cfg["body_sdf_resolution"]))
+        nut_sdf.CreateSdfSubgridResolutionAttr(int(cfg["body_sdf_subgrid_resolution"]))
+        nut_narrow_band = float(cfg.get(
+            "nut_sdf_narrow_band_thickness", cfg["body_sdf_narrow_band_thickness"]))
+        nut_sdf.CreateSdfNarrowBandThicknessAttr(nut_narrow_band)
+        nut_sdf.CreateSdfTriangleCountReductionFactorAttr(1.0)
+        if nut_material_targets:
+            UsdShade.MaterialBindingAPI.Apply(nut_mesh.GetPrim()).Bind(
+                UsdShade.Material(stage.GetPrimAtPath(nut_material_targets[0])),
+                materialPurpose="physics",
+            )
+        nut_report = {
+            "nut_representation": "source_cad_sparse_sdf",
+            "nut_source": str(nut_source),
+            "nut_collision": str(nut_mesh.GetPath()),
+            "nut_disabled_convex_hulls": len(nut_prior_colliders),
+            "nut_hidden_internal_interface_caps": nut_caps,
+            "nut_sdf_resolution": int(cfg["body_sdf_resolution"]),
+            "nut_sdf_subgrid_resolution": int(cfg["body_sdf_subgrid_resolution"]),
+            "nut_sdf_narrow_band_thickness": nut_narrow_band,
+            "nut_material_binding_targets": [str(path) for path in dict.fromkeys(nut_material_targets)],
+            "nut_mass_inertia_material_joint_and_self_filter_changed": False,
+            "nut_source_missing_internal_thread_geometry_reconstructed": False,
+        }
+    socket_meshes = [
+        prim for prim in Usd.PrimRange(stage.GetPrimAtPath(receptacle_root))
+        if prim.IsA(UsdGeom.Mesh)
+    ]
+    if len(socket_meshes) != 1:
+        raise RuntimeError("key-entry receptacle must be one source CAD mesh")
+    socket = socket_meshes[0]
+    UsdPhysics.CollisionAPI.Apply(socket).CreateCollisionEnabledAttr(True)
+    UsdPhysics.MeshCollisionAPI.Apply(socket).CreateApproximationAttr("none")
+    contact_prims = [mesh.GetPrim(), socket]
+    if nut_mesh is not None:
+        contact_prims.append(nut_mesh.GetPrim())
+    for prim in contact_prims:
+        api = PhysxSchema.PhysxCollisionAPI.Apply(prim)
+        api.CreateContactOffsetAttr(float(cfg["contact_offset_m"]))
+        api.CreateRestOffsetAttr(float(cfg["rest_offset_m"]))
+    return {
+        "body_source": str(body_source), "body_collision": str(mesh.GetPath()),
+        "body_sdf_resolution": int(cfg["body_sdf_resolution"]),
+        "body_disabled_convex_hulls": len(prior_colliders),
+        "hidden_internal_interface_caps": caps,
+        "receptacle_collision": str(socket.GetPath()),
+        "mass_inertia_joint_changed": False,
+        "nut_grip_collisions_changed": nut_mesh is not None,
+        "mass_inertia_joint_and_nut_grip_collisions_changed": nut_mesh is not None,
+        **nut_report,
+        "scope": "SOURCE_CAD_CONTACT_GEOMETRY_FOR_LIGHT_KEY_ENTRY_ONLY",
+    }
 
 
 def _matrix4(values: object, label: str) -> np.ndarray:
@@ -385,6 +1108,7 @@ def _capture_rgbd(
 ) -> dict[str, object]:
     from PIL import Image
 
+    started = time.perf_counter()
     output_dir.mkdir(parents=True, exist_ok=False)
     resource_key = (camera_path, resolution)
     if resource_key not in resources:
@@ -424,6 +1148,7 @@ def _capture_rgbd(
     Image.fromarray(preview).save(output_dir / "depth_mm.png")
     return {
         "camera_path": camera_path,
+        "capture_and_save_wall_s": time.perf_counter() - started,
         "resolution": list(resolution),
         "finite_positive_depth_pixels": int(np.sum(finite)),
         "depth_valid_fraction": float(np.mean(finite)),
@@ -648,6 +1373,7 @@ def _run_external_pose_plan(
     physics_dt_s: float,
     ik_timeout_s: float,
     planning_timeout_s: float,
+    cartesian_waypoints_world_from_hand_row_major: list | None = None,
 ) -> tuple[list[np.ndarray], dict[str, object]]:
     if backend not in ("moveit", "tesseract"):
         raise ValueError(f"unsupported external planning backend: {backend}")
@@ -690,6 +1416,10 @@ def _run_external_pose_plan(
         },
         "collision_objects": collision_objects,
     }
+    if cartesian_waypoints_world_from_hand_row_major is not None:
+        request["cartesian_waypoints_world_from_hand_row_major"] = (
+            cartesian_waypoints_world_from_hand_row_major
+        )
     request_path.write_text(
         json.dumps(request, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -735,12 +1465,17 @@ def _run_external_pose_plan(
         )
         if not all(path.exists() for path in (setup, planner, python, isaac_library)):
             raise RuntimeError("Tesseract planner environment is missing")
+        tesseract_libraries = tuple((repository / ".venv" / "lib").glob(
+            "python*/site-packages/tesseract_robotics"))
+        if len(tesseract_libraries) != 1:
+            raise RuntimeError("Tesseract's bundled runtime library directory is ambiguous")
+        planner_libraries = str(tesseract_libraries[0]) + ":" + str(isaac_library)
         shell_command = " && ".join(
             (
                 "source /opt/ros/humble/setup.bash",
                 f"source {shlex.quote(str(setup))}",
                 "export LD_LIBRARY_PATH="
-                f"{shlex.quote(str(isaac_library))}:$LD_LIBRARY_PATH",
+                f"{shlex.quote(planner_libraries)}:$LD_LIBRARY_PATH",
                 f"exec {shlex.quote(str(python))} {shlex.quote(str(planner))} "
                 f"--request {shlex.quote(str(request_path))} "
                 f"--output {shlex.quote(str(plan_path))}",
@@ -984,6 +1719,7 @@ def _run_geometry_frame(
     camera_json: Path,
     camera_matrix: np.ndarray,
     output_dir: Path,
+    geometry_method: str = "rgb_pin_centroid",
 ) -> dict[str, object]:
     """Run one independent SAM mask and Five-DoF geometry observation."""
     sam_result = _run_sam6d_frame(
@@ -999,13 +1735,17 @@ def _run_geometry_frame(
         output_dir=output_dir,
         run_pem=False,
     )
-    geometry_result = _estimate_five_dof_from_float_depth(
-        rgb_path=rgb,
-        depth_m_path=depth_m,
-        mask_path=Path(sam_result["mask"]),
-        intrinsics=camera_matrix,
-        mesh_path=cad_mm,
-    )
+    if geometry_method == "float_depth_circle":
+        geometry_result = estimate_plug_rear_circle_from_float_depth(
+            depth_m=np.load(depth_m),
+            mask=cv2.imread(str(sam_result["mask"]), cv2.IMREAD_GRAYSCALE) > 0,
+            intrinsics=camera_matrix, mesh_path=cad_mm, pixel_center_offset_px=0.5)
+    elif geometry_method == "rgb_pin_centroid":
+        geometry_result = _estimate_five_dof_from_float_depth(
+            rgb_path=rgb, depth_m_path=depth_m, mask_path=Path(sam_result["mask"]),
+            intrinsics=camera_matrix, mesh_path=cad_mm)
+    else:
+        raise ValueError(f"unknown five-DOF geometry method: {geometry_method}")
     geometry_elapsed = float(dict(geometry_result["metrics"])["elapsed_s"])
     timing = {
         **dict(sam_result["timing_s"]),
@@ -1212,6 +1952,10 @@ def main() -> int:
     parser.add_argument("--postgrasp-disturbance-panel", type=Path)
     parser.add_argument("--postgrasp-disturbance-condition")
     parser.add_argument(
+        "--light-contact-key-entry-config", type=Path,
+        help="explicit simulation-only authorization and bounds for the key-entry probe",
+    )
+    parser.add_argument(
         "--nominal-grasp-qualification-evaluation",
         type=Path,
         help="prior successful visual-grasp evaluation authorizing disturbance",
@@ -1236,10 +1980,35 @@ def main() -> int:
     parser.add_argument("--moveit-ik-timeout-s", type=float, default=2.0)
     parser.add_argument("--moveit-planning-timeout-s", type=float, default=8.0)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--record-multiview-video",
+        type=Path,
+        help=(
+            "write one synchronized main/global/palm/wrist H.264 video; "
+            "capture is observation-only and does not change control"
+        ),
+    )
+    parser.add_argument("--video-fps", type=int, default=30)
     parser.add_argument("--gui", action="store_true")
     args = parser.parse_args()
 
     repository = Path(__file__).resolve().parents[3]
+    key_entry_probe = None
+    if args.light_contact_key_entry_config is not None:
+        key_entry_probe = yaml.safe_load(
+            args.light_contact_key_entry_config.read_text(encoding="utf-8")
+        )
+        auth = key_entry_probe.get("authorization", {})
+        if not (
+            key_entry_probe.get("schema_version") == "te_light_contact_key_entry_v1"
+            and auth.get("simulation_only") is True
+            and auth.get("hardware_authorized") is False
+            and auth.get("light_contact_key_entry_authorized") is True
+            and auth.get("locking_authorized") is False
+            and args.execute_grasp_lift
+            and args.postgrasp_disturbance_panel is None
+        ):
+            raise ValueError("key-entry probe lacks its bounded simulation authorization")
     output = args.output_dir.resolve()
     if args.moveit_pick_ik_rrtconnect and args.tesseract_kdl_ompl_rrtconnect:
         raise ValueError("select exactly one external motion planner")
@@ -1252,6 +2021,8 @@ def main() -> int:
     )
     if args.palm_capture_count < 1 or args.palm_capture_count > 5:
         raise ValueError("palm capture count must be between one and five")
+    if args.record_multiview_video is not None and args.video_fps <= 0:
+        raise ValueError("video fps must be positive")
     if not math.isfinite(args.palm_capture_hold_s) or args.palm_capture_hold_s <= 0.0:
         raise ValueError("palm capture hold must be positive and finite")
     if args.execute_grasp_lift and (
@@ -1510,6 +2281,11 @@ def main() -> int:
             "active_gpu": 0,
             "physics_gpu": 0,
             "fast_shutdown": True,
+            "extra_args": (
+                ["--/rtx/hydra/supportMultiTickRate=false"]
+                if (args.record_multiview_video is not None
+                    or key_entry_probe is not None) else []
+            ),
         }
     )
     engine_log_path = runner.current_engine_log_path()
@@ -1551,6 +2327,7 @@ def main() -> int:
     rgbd_resources: dict[
         tuple[str, tuple[int, int]], tuple[object, tuple[object, object]]
     ] = {}
+    video_recorder: MultiViewVideoRecorder | None = None
     try:
         import carb.settings
         import fcl
@@ -1588,6 +2365,8 @@ def main() -> int:
         )
         context = world.get_physics_context()
         stage = get_current_stage()
+        if key_entry_probe is not None:
+            _install_rgbd_resume_sync(world, stage)
         physics_scene_api = PhysxSchema.PhysxSceneAPI.Apply(
             stage.GetPrimAtPath(context.prim_path)
         )
@@ -1639,6 +2418,13 @@ def main() -> int:
             receptacle_root + "/OfficialVisual",
         )
         result["receptacle_geometry_binding"] = receptacle_visual_binding
+        if key_entry_probe is not None:
+            result["key_entry_authorization"] = key_entry_probe
+            result["key_entry_collision_setup"] = _author_key_entry_collisions(
+                stage, repository, scene, receptacle_root, key_entry_probe,
+                Gf=Gf, Usd=Usd, UsdGeom=UsdGeom, UsdPhysics=UsdPhysics,
+                PhysxSchema=PhysxSchema, UsdShade=UsdShade,
+            )
         table_bounds = np.asarray(inputs.table_xy_bounds_m, dtype=np.float64)
         table_size = np.asarray(
             (
@@ -1730,6 +2516,116 @@ def main() -> int:
             Gf=Gf,
             UsdGeom=UsdGeom,
         )
+        wrist_definition = hand_camera_document["wrist"]
+        wrist_path = runner.HAND_BASE_PATH + str(
+            wrist_definition["prim_suffix"]
+        )
+        wrist_t_hc = np.asarray(
+            wrist_definition["T_HC_cv"], dtype=np.float64
+        )
+        _author_camera(
+            stage,
+            wrist_path,
+            wrist_t_hc,
+            resolution=tuple(hand_camera_document["resolution_px"]),
+            focal_length_mm=float(hand_camera_document["focal_length_mm"]),
+            horizontal_aperture_mm=float(
+                hand_camera_document["horizontal_aperture_mm"]
+            ),
+            clipping_range_m=tuple(hand_camera_document["clipping_range_m"]),
+            Gf=Gf,
+            UsdGeom=UsdGeom,
+        )
+        wrist_video_path = runner.HAND_BASE_PATH + "/WristVideoCamera"
+        wrist_video_eye_hand_m = (-0.18, -0.16, 0.10)
+        wrist_video_target_hand_m = (0.0, 0.0, 0.46)
+        wrist_video_t_hc = _camera_cv_pose_from_eye_target(
+            wrist_video_eye_hand_m,
+            wrist_video_target_hand_m,
+        )
+        _author_camera(
+            stage,
+            wrist_video_path,
+            wrist_video_t_hc,
+            resolution=tuple(hand_camera_document["resolution_px"]),
+            focal_length_mm=22.0,
+            horizontal_aperture_mm=22.0,
+            clipping_range_m=tuple(hand_camera_document["clipping_range_m"]),
+            Gf=Gf,
+            UsdGeom=UsdGeom,
+        )
+        main_video_path = "/World/TEVisualHandoff/MainVideoCamera"
+        main_video_wide_eye_m = np.asarray((2.35, -2.15, 1.70), dtype=np.float64)
+        main_video_wide_target_m = np.asarray((0.25, -0.05, 0.80), dtype=np.float64)
+        main_video_close_eye_m = np.asarray(
+            (
+                reference_object_pose[0, 3] + 0.58,
+                reference_object_pose[1, 3] - 0.62,
+                reference_object_pose[2, 3] + 0.40,
+            ),
+            dtype=np.float64,
+        )
+        main_video_close_target_m = np.asarray(
+            (
+                reference_object_pose[0, 3],
+                reference_object_pose[1, 3],
+                reference_object_pose[2, 3] + 0.22,
+            ),
+            dtype=np.float64,
+        )
+        main_video_pose = _camera_cv_pose_from_eye_target(
+            main_video_wide_eye_m,
+            main_video_wide_target_m,
+        )
+        _author_camera(
+            stage,
+            main_video_path,
+            main_video_pose,
+            resolution=(1200, 900),
+            focal_length_mm=22.0,
+            horizontal_aperture_mm=24.0,
+            clipping_range_m=(0.02, 10.0),
+            Gf=Gf,
+            UsdGeom=UsdGeom,
+        )
+        main_video_xform_ops = UsdGeom.Xformable(
+            stage.GetPrimAtPath(main_video_path)
+        ).GetOrderedXformOps()
+        if len(main_video_xform_ops) != 1:
+            raise RuntimeError("main video camera must have one transform op")
+        main_video_transform_op = main_video_xform_ops[0]
+        main_video_close_frames = 0
+
+        def update_main_video_camera(
+            phase: str, phase_frame_index: int, video_fps: int
+        ) -> None:
+            nonlocal main_video_close_frames
+            close_phases = {
+                "parallel_contact_approach",
+                "parallel_contact_contact_confirmed",
+                "preload",
+                "prelift_effort_check",
+                "lift",
+                "hold",
+                "complete",
+            }
+            if phase == "tare" or phase in close_phases:
+                main_video_close_frames += 1
+            fraction = min(1.0, main_video_close_frames / (1.5 * video_fps))
+            blend = fraction * fraction * (3.0 - 2.0 * fraction)
+            eye = (
+                (1.0 - blend) * main_video_wide_eye_m
+                + blend * main_video_close_eye_m
+            )
+            target = (
+                (1.0 - blend) * main_video_wide_target_m
+                + blend * main_video_close_target_m
+            )
+            parent_from_camera_cv = _camera_cv_pose_from_eye_target(eye, target)
+            parent_from_camera_usd = parent_from_camera_cv @ CV_FROM_USD
+            main_video_transform_op.Set(
+                Gf.Matrix4d(*parent_from_camera_usd.T.ravel().tolist())
+            )
         light_root = "/World/TEFoundationPoseHandoff/Lights"
         dome = UsdLux.DomeLight.Define(stage, light_root + "/Fill")
         dome.CreateIntensityAttr(900.0)
@@ -1854,6 +2750,49 @@ def main() -> int:
         if result["physics_backend"]["pass"] is not True:
             raise RuntimeError("GPU physics backend audit failed")
 
+        if args.record_multiview_video is not None:
+            video_recorder = MultiViewVideoRecorder(
+                rep=rep,
+                world=world,
+                camera_paths={
+                    "main": main_video_path,
+                    "global": global_path,
+                    "palm": palm_path,
+                    "wrist": wrist_video_path,
+                },
+                output_path=args.record_multiview_video,
+                physics_hz=int(round(1.0 / float(dynamic["physics_dt_s"]))),
+                fps=int(args.video_fps),
+                rt_subframes=1,
+                before_phase_render=update_main_video_camera,
+            )
+            result["multiview_video_request"] = {
+                "path": str(args.record_multiview_video.resolve()),
+                "fps": int(args.video_fps),
+                "layout": "RAW_MAIN_1440X1080_PLUS_THREE_480X360",
+                "camera_paths": {
+                    "main": main_video_path,
+                    "global": global_path,
+                    "palm": palm_path,
+                    "wrist": wrist_video_path,
+                },
+                "main_wide_eye_world_m": main_video_wide_eye_m.tolist(),
+                "main_wide_target_world_m": main_video_wide_target_m.tolist(),
+                "main_close_eye_world_m": main_video_close_eye_m.tolist(),
+                "main_close_target_world_m": main_video_close_target_m.tolist(),
+                "main_transition_phase": "tare",
+                "main_transition_duration_s": 1.5,
+                "wrist_video_eye_hand_m": list(wrist_video_eye_hand_m),
+                "wrist_video_target_hand_m": list(
+                    wrist_video_target_hand_m
+                ),
+                "wrist_video_T_HC_cv": wrist_video_t_hc.ravel().tolist(),
+                "canonical_wrist_T_HC_cv_not_used_for_video": (
+                    wrist_t_hc.ravel().tolist()
+                ),
+                "observation_only_not_returned_to_control": True,
+            }
+
         world.pause()
         simulation_app.update()
         result["global_before"] = _capture_rgbd(
@@ -1870,6 +2809,8 @@ def main() -> int:
             or float(result["global_before"]["rgb_standard_deviation"]) < 1.0
         ):
             raise RuntimeError("global RGB-D capture is unusable")
+        if video_recorder is not None:
+            video_recorder.write_hold(0.8, phase="global_rgbd")
         if args.stop_after_global_capture:
             result["result_scope"] = (
                 "one corrected global RGB-D scene capture; no perception, "
@@ -2058,6 +2999,11 @@ def main() -> int:
                     "global mask/depth geometry is inconsistent with the known "
                     "tabletop plug workspace; refusing to plan motion"
                 )
+            if video_recorder is not None:
+                video_recorder.write_hold(
+                    1.5,
+                    phase="global_localized",
+                )
             if args.stop_after_global_localization:
                 result["result_scope"] = (
                     "one corrected global RGB-D localization with SAM mask, "
@@ -2067,6 +3013,8 @@ def main() -> int:
                 result["truth_inputs_used_for_control"] = []
                 raise _GlobalCaptureOnlyComplete
         world.play()
+        if video_recorder is not None:
+            video_recorder.sync_after_resume()
 
         command_counter: dict[str, int] = {}
         robot_data = control.create_native_gravity_compensated_robot(
@@ -2110,6 +3058,32 @@ def main() -> int:
                 "tare",
             ),
         )
+        if video_recorder is not None:
+            original_ft_capture = ft_auditor.capture
+
+            def capture_ft_and_multiview(**keywords: object) -> None:
+                original_ft_capture(**keywords)
+                video_recorder.capture_step(
+                    step=int(keywords["step"]),
+                    phase=str(keywords["phase"]),
+                    simulation_time_s=(
+                        (int(keywords["step"]) + 1)
+                        * float(dynamic["physics_dt_s"])
+                    ),
+                )
+                if int(keywords["step"]) % 240 == 0:
+                    expected_hand = np.asarray(inputs.robot_model.forward_kinematics(
+                        tuple(keywords["active_positions"]), enforce_limits=False
+                    )["handbase_link"])
+                    import isaacsim.core.experimental.utils.stage as stage_utils
+                    import isaacsim.core.experimental.utils.xform as xform_utils
+                    shown_position, _ = xform_utils.get_world_pose(
+                        stage_utils.get_current_stage(backend="fabric").GetPrimAtPath(runner.HAND_BASE_PATH)
+                    )
+                    print("VIDEO_POSE", keywords["step"], expected_hand[:3, 3].tolist(),
+                          shown_position.numpy().tolist(), flush=True)
+
+            ft_auditor.capture = capture_ft_and_multiview
         payload_model = None
         if args.execute_grasp_lift:
             assert split_manifest is not None
@@ -2312,8 +3286,32 @@ def main() -> int:
         if not reached:
             raise RuntimeError(f"handoff motion failed: {stepper.abort_reason}")
 
+        if key_entry_probe is not None:
+            import isaacsim.core.experimental.utils.stage as sync_stage_utils
+            import isaacsim.core.experimental.utils.xform as sync_xform_utils
+
+            def record_handoff_render_sync(label: str) -> None:
+                render_stage = sync_stage_utils.get_current_stage(backend="fabric")
+                shown, _ = sync_xform_utils.get_world_pose(
+                    render_stage.GetPrimAtPath(runner.HAND_BASE_PATH)
+                )
+                row = {
+                    "stage": label, "timeline_playing": bool(world.is_playing()),
+                    "physics_time_s": float(world.current_time),
+                    "hand_position_encoder_fk_world_m": actual_fk[:3, 3].tolist(),
+                    "hand_position_fabric_world_m": shown.numpy().tolist(),
+                    "used_for_control": False,
+                }
+                (output / f"render_sync_{label}.json").write_text(
+                    json.dumps(row, indent=2) + "\n", encoding="utf-8",
+                )
+                print("RENDER_SYNC", json.dumps(row), flush=True)
+
+            record_handoff_render_sync("before_pause")
         world.pause()
         simulation_app.update()
+        if key_entry_probe is not None:
+            record_handoff_render_sync("after_pause")
         result["global_handoff"] = _capture_rgbd(
             rep=rep,
             resources=rgbd_resources,
@@ -2333,6 +3331,8 @@ def main() -> int:
         for frame_index in range(int(args.palm_capture_count)):
             if frame_index > 0:
                 world.play()
+                if video_recorder is not None:
+                    video_recorder.sync_after_resume()
                 for _ in stepper.active_steps(capture_hold_steps):
                     stepper.advance(
                         "handoff_capture_hold", handoff_arm, handoff_hand
@@ -2649,6 +3649,11 @@ def main() -> int:
                         )
                         servo_frames.append(frame_record)
                     assert frozen_task_frame is not None
+                    if video_recorder is not None:
+                        video_recorder.write_hold(
+                            1.5,
+                            phase="palm_localized",
+                        )
                     if args.stop_after_palm_localization:
                         termination = "PALM_LOCALIZATION_ONLY_COMPLETED"
                         raise _PalmLocalizationOnlyComplete
@@ -3044,6 +4049,8 @@ def main() -> int:
                         termination = "FROZEN_PLAN_COLLISION_CHECK_FAILED"
                     else:
                         world.play()
+                        if video_recorder is not None:
+                            video_recorder.sync_after_resume()
                         for motion_step in stepper.active_steps(
                             frozen_motion_steps
                         ):
@@ -3271,6 +4278,8 @@ def main() -> int:
                             "visual_target_frozen_before_contact": True,
                         }
                         world.play()
+                        if video_recorder is not None:
+                            video_recorder.sync_after_resume()
                         stepper.advance(
                             "settle",
                             physical_pregrasp["arm"],
@@ -4207,6 +5216,8 @@ def main() -> int:
                         break
 
                     world.play()
+                    if video_recorder is not None:
+                        video_recorder.sync_after_resume()
                     motion_steps = max(
                         1, round(float(args.servo_step_duration_s) / dt)
                     )
@@ -4496,6 +5507,219 @@ def main() -> int:
             actual = final_active
             actual_fk = final_hand_pose
 
+        if key_entry_probe is not None and result.get("physical_grasp", {}).get("success"):
+            # Camera targeting uses encoder FK and the visually initialized
+            # transport relation. No object or contact truth enters observation.
+            active = robot.get_dof_positions(indices=0).numpy()[0][active_indices]
+            hand_pose = np.asarray(inputs.robot_model.forward_kinematics(
+                tuple(active), enforce_limits=False,
+            )["handbase_link"], dtype=np.float64)
+            estimated_plug = hand_pose @ np.linalg.inv(object_from_hand)
+            camera_cfg = key_entry_probe["key_camera"]
+            key_camera_pose = _camera_cv_pose_from_eye_target(
+                camera_cfg["eye_world_m"], estimated_plug[:3, 3],
+            )
+            key_camera_path = "/World/TEVisualHandoff/PostgraspKeyCamera"
+            key_resolution = tuple(camera_cfg["resolution_px"])
+            world.pause()
+            _author_camera(
+                stage, key_camera_path, key_camera_pose,
+                resolution=key_resolution,
+                focal_length_mm=float(camera_cfg["focal_length_mm"]),
+                horizontal_aperture_mm=float(camera_cfg["horizontal_aperture_mm"]),
+                clipping_range_m=tuple(camera_cfg["clipping_range_m"]),
+                Gf=Gf, UsdGeom=UsdGeom,
+            )
+            simulation_app.update()
+            # Preserve the last physics step's render transforms while paused.
+            # Reattachment belongs to resume; doing it here restores old poses.
+            world.render()
+            key_frame = _capture_rgbd(
+                rep=rep, resources=rgbd_resources, camera_path=key_camera_path,
+                resolution=key_resolution, output_dir=output / "postgrasp_key",
+                warmup_frames=3, rt_subframes=4,
+            )
+            # Postcapture diagnostic for the observed stale-render failure.
+            # These readbacks never form the camera target or a motion target.
+            import isaacsim.core.experimental.utils.stage as key_stage_utils
+            import isaacsim.core.experimental.utils.xform as key_xform_utils
+
+            key_fabric_stage = key_stage_utils.get_current_stage(backend="fabric")
+            key_render_position, _ = key_xform_utils.get_world_pose(
+                key_fabric_stage.GetPrimAtPath(str(scene["part_prim_paths"][0]))
+            )
+            key_physical_position, _ = object_parts[0].get_world_pose()
+            from kcg_connector.te_rgbd_pose_provider import estimate_held_plug_key_from_depth
+
+            key_focal_px = (key_resolution[0] * float(camera_cfg["focal_length_mm"])
+                            / float(camera_cfg["horizontal_aperture_mm"]))
+            key_intrinsics = np.array([[key_focal_px, 0.0, key_resolution[0] / 2.0],
+                                       [0.0, key_focal_px, key_resolution[1] / 2.0],
+                                       [0.0, 0.0, 1.0]])
+            key_measurement = estimate_held_plug_key_from_depth(
+                np.load(output / "postgrasp_key" / "depth_m.npy"), key_intrinsics,
+                key_camera_pose, estimated_plug,
+            )
+            result["key_entry_probe"] = {
+                "status": "IMPLEMENTING", "key_entry_executed": False,
+                "current_stage": ("POSTGRASP_KEY_DIRECTION_MEASURED" if key_measurement["key_direction_measured"]
+                                  else "POSTGRASP_KEY_NOT_OBSERVED"),
+                "capture": key_frame,
+                "world_from_camera_cv": key_camera_pose.tolist(),
+                "estimated_world_from_plug_yaw_free": estimated_plug.tolist(),
+                "key_direction_measured": key_measurement["key_direction_measured"],
+                "key_measurement": key_measurement,
+                "intrinsics_3x3": key_intrinsics.tolist(),
+                "render_sync": "PHYSX_FABRIC_REATTACH_ON_RESUME_THEN_NATIVE_PHYSICS_UPDATE",
+                "posthoc_render_diagnostic": {
+                    "physics_time_s": float(world.current_time),
+                    "multitick_enabled": settings.get_as_bool("/rtx/hydra/supportMultiTickRate"),
+                    "body_position_physics_world_m": key_physical_position.detach().cpu().tolist(),
+                    "body_position_fabric_world_m": key_render_position.numpy().tolist(),
+                    "used_for_control": False,
+                },
+                "online_object_or_contact_truth_used": False,
+            }
+            (output / "postgrasp_key" / "camera_and_estimate.json").write_text(
+                json.dumps(_json_ready(result["key_entry_probe"]), indent=2) + "\n",
+                encoding="utf-8",
+            )
+            print("KEY_ENTRY_STAGE POSTGRASP_KEY_RGBD_CAPTURED", flush=True)
+            if key_entry_probe["motion"].get("search_mode") == "retract_rotate_probe":
+                if not key_measurement["key_direction_measured"]:
+                    raise RuntimeError("held plug main key was not observed; no contact trial was started")
+                from kcg_connector.te_rgbd_pose_provider import estimate_receptacle_key_from_depth
+                import trimesh
+
+                _capture_rgbd(rep=rep, resources=rgbd_resources, camera_path=global_path,
+                              resolution=resolution, output_dir=output / "socket_before",
+                              warmup_frames=2, rt_subframes=4)
+                socket_seed = _run_sam6d_frame(
+                    repository=repository, sam6d_root=args.sam6d_root.resolve(),
+                    sam6d_python=args.sam6d_python,
+                    templates=(repository / key_entry_probe["receptacle_templates"]).resolve(),
+                    cad_mm=receptacle_mesh, rgb=output / "socket_before" / "rgb.png",
+                    depth_m=output / "socket_before" / "depth_m.npy",
+                    depth_mm=output / "socket_before" / "depth_mm.png",
+                    camera_json=global_camera_json, output_dir=output / "perception" / "receptacle_current",
+                )
+                socket_measurement = estimate_receptacle_key_from_depth(
+                    np.load(output / "socket_before" / "depth_m.npy"),
+                    cv2.imread(str(socket_seed["mask"]), cv2.IMREAD_GRAYSCALE) > 0,
+                    global_camera_matrix, global_world_from_camera, socket_seed["camera_from_object"],
+                )
+                if not socket_measurement["key_direction_measured"]:
+                    raise RuntimeError("socket key slots were not observed; no contact trial was started")
+                observed_plug = np.asarray(key_measurement["world_from_plug_row_major"]).reshape(4, 4)
+                observed_socket = np.asarray(socket_measurement["world_from_receptacle_row_major"]).reshape(4, 4)
+                held_relation = np.linalg.inv(hand_pose) @ observed_plug
+                (output / "key_observations.json").write_text(json.dumps(_json_ready({
+                    "plug": key_measurement, "socket": socket_measurement,
+                    "hand_from_plug": held_relation.tolist(), "source": "CURRENT_RUN_ORDINARY_RGBD",
+                }), indent=2) + "\n", encoding="utf-8")
+                target_plug = observed_socket.copy()
+                target_plug[:3, :3] = observed_socket[:3, :3] @ Rotation.from_euler("y", 180, degrees=True).as_matrix()
+                target_plug[:3, 3] += float(key_entry_probe["motion"]["transport_face_gap_m"]) * observed_socket[:3, 2]
+                target_hand = target_plug @ np.linalg.inv(held_relation)
+                obstacle_documents = _moveit_collision_documents(
+                    collision_contract=collision, known_scene_geometry=known_scene_geometry,
+                    world_from_object=observed_plug, receptacle_position_m=observed_socket[:3, 3],
+                )
+                obstacle_documents = [row for row in obstacle_documents if row["id"] != "plug"]
+                carried_obstacles = dict(static_obstacles)
+                carried_obstacles["receptacle"], _ = _cylinder_from_mesh(
+                    receptacle_mesh, RECEPTACLE_MESH_SCALE_TO_M, observed_socket)
+                states, carry_plan = _run_external_pose_plan(
+                    backend=external_planner_backend, repository=repository, ros_domain_id=int(args.moveit_ros_domain_id),
+                    stage_name="held_plug_to_socket_above", output_dir=output,
+                    start_arm=np.asarray(active[:7]), hand_positions=np.asarray(active[7:]),
+                    target_world_from_hand=target_hand, collision_objects=obstacle_documents,
+                    physics_dt_s=dt, ik_timeout_s=float(args.moveit_ik_timeout_s),
+                    planning_timeout_s=float(args.moveit_planning_timeout_s),
+                )
+                states, carry_check = _check_held_plug_path(
+                    collision_scene, states, active[7:], carried_obstacles, held_relation, plug_bounds,
+                    dt, float(key_entry_probe["motion"]["maximum_transport_joint_speed_rad_s"]),
+                )
+                (output / "held_plug_path_check.json").write_text(json.dumps(carry_check, indent=2) + "\n")
+                if carry_check["first_collision"] is not None:
+                    raise RuntimeError(f"carried plug path collides: {carry_check['first_collision']}")
+                print("KEY_ENTRY_STAGE CARRY_TO_SOCKET", flush=True)
+                carry_result = _execute_held_plug_path(world, stepper, ft_auditor, physical_grasp_result,
+                                                      dynamic, states, key_entry_probe)
+                result["key_entry_probe"]["transport"] = carry_result
+                if not carry_result["completed"]:
+                    raise RuntimeError(f"carried plug motion failed: {carry_result['abort_reason']}")
+                _capture_rgbd(rep=rep, resources=rgbd_resources, camera_path=global_path,
+                              resolution=resolution, output_dir=output / "above_socket",
+                              warmup_frames=1, rt_subframes=4)
+                active = np.asarray(stepper.latest[0])
+                target_plug[:3, 3] = observed_socket[:3, 3] + float(key_entry_probe["motion"]["precontact_face_gap_m"]) * observed_socket[:3, 2]
+                states, descent_ik = _plan_key_probe_descent(
+                    inputs, active, target_plug @ np.linalg.inv(held_relation), dt,
+                    float(key_entry_probe["motion"]["maximum_precontact_speed_m_s"]),
+                )
+                # IK produces measured-joint positions. Retain the established
+                # nominal-target offset of the loaded arm at the transition.
+                target_offset = np.asarray(ft_auditor.samples[-1]["active_targets_rad"][:7]) - active[:7]
+                states = np.asarray(states) + target_offset
+                states, descent_check = _check_held_plug_path(
+                    collision_scene, states, active[7:], carried_obstacles, held_relation, plug_bounds,
+                    dt, float(key_entry_probe["motion"]["maximum_transport_joint_speed_rad_s"]),
+                )
+                (output / "precontact_descent_check.json").write_text(json.dumps({
+                    "ik": descent_ik, "collision": descent_check,
+                }, indent=2) + "\n")
+                if descent_check["first_collision"] is not None:
+                    raise RuntimeError(f"precontact path collides: {descent_check['first_collision']}")
+                print("KEY_ENTRY_STAGE DESCEND_BEFORE_CONTACT", flush=True)
+                descent_result = _execute_held_plug_path(world, stepper, ft_auditor, physical_grasp_result,
+                                                        dynamic, states, key_entry_probe, phase="key_probe_descent")
+                result["key_entry_probe"]["precontact_descent"] = descent_result
+                if not descent_result["completed"]:
+                    raise RuntimeError(f"precontact descent failed: {descent_result['abort_reason']}")
+                mesh = trimesh.load(receptacle_mesh, force="mesh", process=False)
+                socket_bvh = fcl.BVHModel()
+                socket_bvh.beginModel(len(mesh.vertices), len(mesh.faces))
+                socket_bvh.addSubModel(np.asarray(mesh.vertices) * RECEPTACLE_MESH_SCALE_TO_M,
+                                      np.asarray(mesh.faces, dtype=np.int32))
+                socket_bvh.endModel()
+                probe_obstacles = dict(static_obstacles)
+                probe_obstacles["receptacle"] = fcl.CollisionObject(
+                    socket_bvh, fcl.Transform(observed_socket[:3, :3], observed_socket[:3, 3]))
+                truth_start, ft_start = len(truth_auditor.samples), len(ft_auditor.samples)
+                print("KEY_ENTRY_STAGE RETRACT_ROTATE_PROBES", flush=True)
+                trial_record = _run_light_contact_key_search(
+                    world, stepper, ft_auditor, physical_grasp_result, dynamic, inputs, key_entry_probe,
+                    held_relation, observed_socket, payload_model, collision_scene, probe_obstacles,
+                )
+                (output / "retract_rotate_controller_result.json").write_text(
+                    json.dumps(_json_ready(trial_record), ensure_ascii=False) + "\n", encoding="utf-8")
+                for name, samples in (("key_search_truth_samples.json.gz", truth_auditor.samples[truth_start:]),
+                                      ("key_search_ft_samples.json.gz", ft_auditor.samples[ft_start:])):
+                    with gzip.open(output / name, "wt", encoding="utf-8", compresslevel=3) as stream:
+                        json.dump(_json_ready(samples), stream, ensure_ascii=False, separators=(",", ":"))
+                # This is after all trial motion. Neither this pose nor any
+                # evaluator output is passed back to the controller.
+                true_socket = _world_from_prim(stage, receptacle_root, Usd=Usd, UsdGeom=UsdGeom)
+                evaluation, plot_rows = _evaluate_key_entry_after_motion(
+                    truth_auditor.samples[truth_start:], trial_record, true_socket, key_entry_probe)
+                (output / "physical_key_entry_result.json").write_text(
+                    json.dumps(_json_ready(evaluation), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                (output / "key_search_plot_data.json").write_text(json.dumps(plot_rows) + "\n")
+                result["key_entry_probe"].update({
+                    "status": evaluation["status"],
+                    "key_entry_executed": trial_record["probe_motion_executed"],
+                    "current_stage": "BOUNDED_RETRACT_ROTATE_PROBES_FINISHED",
+                    "physical_key_entry_observed": evaluation["physical_key_entry_observed"],
+                    "physical_evaluation": str(output / "physical_key_entry_result.json"),
+                    "controller_termination": trial_record["termination"],
+                })
+                print("KEY_ENTRY_PHYSICAL_RESULT", json.dumps(_json_ready(evaluation)), flush=True)
+                _capture_rgbd(rep=rep, resources=rgbd_resources, camera_path=global_path,
+                              resolution=resolution, output_dir=output / "final_global",
+                              warmup_frames=1, rt_subframes=4)
+
         result.update(
             {
                 "abort_reason": stepper.abort_reason,
@@ -4564,6 +5788,10 @@ def main() -> int:
             )
             else 2
         )
+        if key_entry_probe is not None:
+            result["result_scope"] += "; key-entry probe: see separate current-stage record"
+            if result.get("key_entry_probe", {}).get("physical_key_entry_observed") is not True:
+                exit_code = 2
     except _GlobalCaptureOnlyComplete:
         exit_code = 0
     except Exception as error:
@@ -4572,6 +5800,18 @@ def main() -> int:
         result["traceback"] = traceback.format_exc()
         exit_code = 1
     finally:
+        if video_recorder is not None:
+            try:
+                if exit_code == 0 and args.execute_grasp_lift:
+                    video_recorder.write_hold(1.2, phase="complete")
+                result["multiview_video"] = video_recorder.close()
+            except Exception as video_error:
+                result["multiview_video_error"] = {
+                    "error_type": type(video_error).__name__,
+                    "error": str(video_error),
+                    "traceback": traceback.format_exc(),
+                }
+                exit_code = 1
         _close_rgbd_resources(rgbd_resources)
         (output / "runtime_result.json").write_text(
             json.dumps(_json_ready(result), ensure_ascii=False, indent=2) + "\n",

@@ -1,0 +1,93 @@
+schema_version: te_light_contact_key_entry_v1
+authorization:
+  source: CURRENT_CONVERSATION_FULL_SIM_ASSEMBLY_2026_09_05
+  user_instruction: 持续完成现有有指甲三指手和机械臂的Isaac Sim电连接器全流程装配与学术成果；依据合理性修改旧门限。
+  simulation_only: true
+  hardware_authorized: false
+  grasp_transport_observation_authorized: true
+  light_contact_key_entry_authorized: true
+  locking_authorized: true
+experiment:
+  hypothesis: 真实承载后的Body可由插座支持；用固定掌心RGBD重估中心与轴线后，有限张指、轴向换位和原力矩参考可将三指接触切换到Nut。
+  primary_variable: regrasp_collision_checks_match_cooked_hand_and_body_axial_profile
+  baseline: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_regrasp_01/nut_regrasp_posthoc_v1.json
+  success_next: 以当前掌心RGBD重新估计本体中心及轴线，验证有限开指换抓螺母。
+  failure_next: 定位首次阻滞、力异常或卸载运动，不自动增力。
+receptacle_templates: artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates
+collision:
+  body_representation: source_cad_sparse_sdf
+  body_sdf_resolution: 1024
+  body_sdf_subgrid_resolution: 6
+  body_sdf_narrow_band_thickness: 0.002
+  receptacle_representation: stationary_source_cad_triangle_mesh
+  contact_offset_m: 5.0e-05
+  rest_offset_m: 0.0
+  nut_representation: source_cad_sparse_sdf
+key_camera:
+  eye_world_m:
+  - 0.59
+  - -0.37
+  - 0.225
+  resolution_px:
+  - 1280
+  - 720
+  focal_length_mm: 24.0
+  horizontal_aperture_mm: 20.955
+  clipping_range_m:
+  - 0.02
+  - 10.0
+motion:
+  search_mode: retract_rotate_probe
+  trial_wrist_offsets_deg:
+  - 0.0
+  retracted_face_gap_m: 0.001
+  blocked_hold_duration_s: 0.75
+  unloaded_hold_duration_s: 0.25
+  rotation_settle_duration_s: 0.5
+  maximum_total_search_duration_s: 75.0
+  transport_face_gap_m: 0.05
+  maximum_precontact_speed_m_s: 0.002
+  precontact_face_gap_m: 0.003
+  target_key_entry_depth_m: 0.001
+  maximum_axial_travel_m: 0.009
+  axial_force_reference_n: 0.2
+  maximum_axial_speed_m_s: 0.0003
+  maximum_xy_correction_m: 0.002
+  maximum_xy_speed_m_s: 0.00015
+  maximum_tilt_correction_deg: 1.0
+  maximum_tilt_speed_rad_s: 0.002
+  sweep_start_deg: -10.0
+  sweep_end_deg: 10.0
+  sweep_speed_deg_s: 0.5
+  maximum_contact_duration_s: 75.0
+  maximum_transport_joint_speed_rad_s: 0.15
+  contact_seating:
+    enabled: true
+    stability_duration_s: 0.5
+    minimum_force_reference_fraction: 0.75
+    maximum_force_reference_fraction: 1.5
+    maximum_depth_range_m: 3.0e-05
+    rationale: 0.20 N参考不变。承载状态使用50 ms一阶因果低通后的力，连续0.5 s在0.15–0.30 N且编码器深度变化≤30 um；原始力继续做保护和导纳。原逐原始样本判据在contact_seat_01因接触抖动漏判，回放25.3417
+      s时可检出真实五键保持的稳定承载；新动作仍须实跑。
+    travel_bound_rationale: 3 mm视觉前位加已观测约4.37 mm承载深度仍小于9 mm；保留约1.6 mm范围余量，最大到6 mm深度，远未到14.6
+      mm密封端面。接触位置不是在线目标。
+    force_state_filter_time_constant_s: 0.05
+probe_stops:
+  maximum_contact_axial_force_n: 0.75
+  maximum_contact_lateral_force_n: 0.3
+  maximum_contact_bending_moment_nm: 0.02
+  maximum_contact_torsional_moment_nm: 0.015
+  note: 这些是本次轻触实验额外的较低停止值，不替换或提高原有腕部与单指保护。
+boundaries:
+  plug_mass_kg: 0.062459669349
+  unloaded_nut_resistance_nm: 0.02
+  grasp_relation: src/kcg_connector/config/te_nail_tip_body_grasp_v1.yaml
+  online_object_or_contact_truth_allowed: false
+  post_start_object_pose_write_allowed: false
+  direct_body_or_nut_force_or_torque_allowed: false
+  cable_or_marker_addition_allowed: false
+nut_regrasp:
+  geometry_plan: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_regrasp_geometry_02/geometry_plan.json
+  scope: one_finite_regrasp_from_current_palm_position_and_axis
+  torque_rotation_in_this_experiment: false
+  cooked_hand_geometry: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_regrasp_01/cooked_finger_inspection/geometry_only_manifest.json

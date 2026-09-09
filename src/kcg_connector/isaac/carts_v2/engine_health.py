@@ -56,11 +56,13 @@ def load_runtime_resources(path: Path) -> dict[str, object]:
     return document
 
 
-def gpu_world_parameters(resources) -> dict[str, object]:
+def physics_world_parameters(resources, requested_device="cuda:0") -> dict[str, object]:
+    if requested_device not in ("cuda:0", "cpu"):
+        raise ValueError("unsupported physics device")
     return {
-        "backend": "numpy", "device": "cuda:0",
+        "backend": "numpy", "device": requested_device,
         "sim_params": {
-            "use_gpu_pipeline": True,
+            "use_gpu_pipeline": requested_device == "cuda:0",
             "gpu_found_lost_aggregate_pairs_capacity": int(resources[
                 "gpu_found_lost_aggregate_pairs_capacity"]),
             "gpu_total_aggregate_pairs_capacity": int(resources[
@@ -69,20 +71,37 @@ def gpu_world_parameters(resources) -> dict[str, object]:
     }
 
 
-def gpu_backend_record(world, context) -> dict[str, object]:
+def gpu_world_parameters(resources) -> dict[str, object]:
+    return physics_world_parameters(resources, "cuda:0")
+
+
+def physics_backend_record(world, context, requested_device="cuda:0") -> dict[str, object]:
+    if requested_device not in ("cuda:0", "cpu"):
+        raise ValueError("unsupported physics device")
     result = {
-        "requested_device": "cuda:0", "actual_data_backend": str(world.backend),
+        "requested_device": requested_device, "actual_data_backend": str(world.backend),
         "world_device": str(world.device), "physics_context_device": str(context.device),
         "gpu_sim": bool(context.use_gpu_sim), "gpu_pipeline": bool(context.use_gpu_pipeline),
         "gpu_dynamics_enabled": bool(context.is_gpu_dynamics_enabled()),
         "broadphase_type": str(context.get_broadphase_type()),
     }
-    result["pass"] = bool(
-        "cuda" in result["world_device"] and result["gpu_sim"] and result["gpu_pipeline"]
+    gpu_pass = bool(
+        "cuda" in result["world_device"] and "cuda" in result["physics_context_device"]
+        and result["gpu_sim"] and result["gpu_pipeline"]
         and result["gpu_dynamics_enabled"]
         and result["broadphase_type"] == "GPU"
     )
+    cpu_pass = bool(result["world_device"] == "cpu" and result["physics_context_device"] == "cpu"
+                    and not result["gpu_sim"] and not result["gpu_pipeline"]
+                    and not result["gpu_dynamics_enabled"] and result["broadphase_type"] in ("MBP", "SAP"))
+    result["pass"] = gpu_pass if requested_device == "cuda:0" else cpu_pass
+    result["gpu_backend_pass"] = gpu_pass
+    result["cpu_backend_pass"] = cpu_pass
     return result
+
+
+def gpu_backend_record(world, context) -> dict[str, object]:
+    return physics_backend_record(world, context, "cuda:0")
 
 
 def current_engine_log_path() -> Path:
@@ -271,8 +290,14 @@ def finalize_engine_evaluation(evaluation, engine_runtime, log_path: Path):
         int(log.get("requested_total_peak", 0)))
     found_capacity = int(engine_runtime["configured_gpu_found_lost_aggregate_pairs_capacity"])
     total_capacity = int(engine_runtime["configured_gpu_total_aggregate_pairs_capacity"])
+    requested_device = engine_runtime.get("requested_physics_device", "cuda:0")
+    backend_pass = bool(
+        (requested_device == "cuda:0" and engine_runtime.get("gpu_backend_pass") is True)
+        or (requested_device == "cpu" and engine_runtime.get("physics_backend_pass") is True
+            and engine_runtime.get("cpu_backend_pass") is True
+            and engine_runtime.get("gpu_backend_pass") is False))
     engine_pass = bool(
-        engine_runtime.get("gpu_backend_pass") is True
+        backend_pass
         and marker_seen
         and engine_runtime.get("physx_statistics_sample_count", 0) > 0
         and engine_runtime.get("physx_statistics_read_failures") == 0

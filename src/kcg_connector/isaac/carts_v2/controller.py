@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from time import perf_counter
 from pathlib import Path
 from typing import Mapping, Sequence
 
@@ -118,7 +119,8 @@ def create_native_gravity_compensated_robot(
     )
     caps = np.asarray(
         [float(settings["arm_drive_maximum_effort_nm"])] * 7
-        + [float(settings["hand_drive_maximum_effort_nm"])] * 4,
+        + [float(settings["hand_drive_maximum_effort_nm"])]
+        + [float(settings.get("closing_drive_maximum_effort_nm",settings["hand_drive_maximum_effort_nm"]))] * 3,
         dtype=np.float32,
     )
     if (
@@ -285,8 +287,8 @@ def payload_compensation_joint_torque(
         or not np.all(np.isfinite(com_from_hand))
     ):
         raise RuntimeError("payload compensation model is invalid")
-    hand_transform = robot_model.forward_kinematics(positions)["handbase_link"]
-    jacobian = robot_model.geometric_jacobian("handbase_link", positions)
+    hand_transform = robot_model.forward_kinematics(positions, enforce_limits=False)["handbase_link"]
+    jacobian = robot_model.geometric_jacobian("handbase_link", positions, enforce_limits=False)
     force_world = np.asarray((0.0, 0.0, mass * gravity), dtype=np.float64)
     lever_world = hand_transform[:3, :3] @ com_from_hand
     wrench_world = np.concatenate((force_world, np.cross(lever_world, force_world)))
@@ -767,6 +769,18 @@ class ParallelEffortContactController(SequentialEffortContactController):
         return self.target.copy()
 
 
+def measured_effort_requires_abort(settings, efforts):
+    """Apply the declared action to projected joint-load measurements.
+
+    These measurements include constraint reactions and are not the actuator
+    drive command. The original finite drive cap is enforced separately.
+    """
+    action = settings.get("measured_effort_abort_action", "abort")
+    if action not in ("abort", "record_only"):
+        raise ValueError("measured-effort action must be abort or record_only")
+    return action == "abort" and float(np.max(np.abs(efforts))) > float(settings["measured_effort_abort_nm"])
+
+
 class JointSignalStepper:
     def __init__(
         self,
@@ -789,6 +803,8 @@ class JointSignalStepper:
         self.arm_lower_limits, self.arm_upper_limits = arm_lower_limits, arm_upper_limits
         self.settings = settings
         self.render = bool(render)
+        self._render_every_physics_steps = max(
+            1, round((1.0 / 60.0) / float(settings["physics_dt_s"])))
         if (robot_model is None) != (payload_model is None):
             raise RuntimeError(
                 "robot and payload models must be supplied together"
@@ -800,6 +816,8 @@ class JointSignalStepper:
         self.payload_compensation_fraction = 0.0
         self.command_api_counter = command_api_counter
         self.step_index = 0
+        self.wall_times = dict(command_and_sensor_s=0.0, physics_step_s=0.0,
+                               audit_and_record_s=0.0, viewport_render_s=0.0)
         self.maximum_speed = self.maximum_arm_error = 0.0
         self.maximum_speed_joint: str | None = None
         self.maximum_hand_effort = self.maximum_gravity_effort = 0.0
@@ -877,6 +895,7 @@ class JointSignalStepper:
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
         if self.abort_reason is not None:
             return self.latest
+        started = perf_counter()
         active_target = np.concatenate((arm_target, hand_target))
         payload_feedforward = (
             np.zeros(7, dtype=np.float64)
@@ -917,13 +936,28 @@ class JointSignalStepper:
         )
         if pre_step_hook is not None:
             pre_step_hook()
-        self.world.step(render=self.render)
+        # Isaac's rendered step advances to the rendering time step (four
+        # physics ticks here). Keep one control command per physics tick;
+        # refresh the viewport separately after reading this tick's sensors.
+        before_physics = perf_counter()
+        self.wall_times["command_and_sensor_s"] += before_physics - started
+        self.world.step(render=False)
+        after_physics = perf_counter()
+        self.wall_times["physics_step_s"] += after_physics - before_physics
         all_positions = self.robot.get_dof_positions(indices=0).numpy()[0]
         all_velocities = self.robot.get_dof_velocities(indices=0).numpy()[0]
         all_efforts = self.robot.get_dof_projected_joint_forces(indices=0).numpy()[0]
         positions, velocities = all_positions[self.active_indices], all_velocities[self.active_indices]
         efforts = all_efforts[self.active_indices]
         arm_control["projected_joint_force_nm"] = efforts[:7].tolist()
+        arm_control["hand_projected_effort_monitor"] = {
+            "action": self.settings.get("measured_effort_abort_action", "abort"),
+            "legacy_reference_nm": float(self.settings["measured_effort_abort_nm"]),
+            "reference_exceeded": bool(np.max(np.abs(efforts[8:])) > self.settings["measured_effort_abort_nm"]),
+            "source": "NATIVE_PROJECTED_JOINT_FORCE_NOT_DRIVE_COMMAND",
+            "manufacturer_load_rating_claimed": False,
+            "finite_drive_effort_cap_nm": float(self.settings.get("closing_drive_maximum_effort_nm",self.settings["hand_drive_maximum_effort_nm"])),
+        }
         first, follower = self._f1_indices
         margins = np.minimum(all_positions - self._all_lower, self._all_upper - all_positions)
         arm_control["f1_mimic_diagnostic"] = {
@@ -960,6 +994,8 @@ class JointSignalStepper:
             },
         }
         self._update_metrics(positions, all_velocities, efforts, arm_target, arm_control)
+        before_audit = perf_counter()
+        self.wall_times["command_and_sensor_s"] += before_audit - after_physics
         self.auditor.capture(
             step=self.step_index,
             phase=phase,
@@ -969,10 +1005,15 @@ class JointSignalStepper:
             active_targets=active_target,
             arm_control=arm_control,
         )
+        self.wall_times["audit_and_record_s"] += perf_counter() - before_audit
         self.step_index += 1
         self.latest = (positions, velocities, efforts)
         self._apply_signal_aborts(
             arm_target, all_positions, all_velocities, all_efforts)
+        if self.render and self.step_index % self._render_every_physics_steps == 0:
+            before_render = perf_counter()
+            self.world.render()
+            self.wall_times["viewport_render_s"] += perf_counter() - before_render
         return self.latest
 
     def _update_metrics(self, positions, all_velocities, efforts, arm_target, arm_control):
@@ -1021,13 +1062,9 @@ class JointSignalStepper:
             self.settings["maximum_arm_tracking_error_rad"]
         ):
             self.abort_reason = "ARM_TRACKING_ERROR_ABORT"
-        # The three closing actuators must remain protected from the very
-        # first contact sample.  The later preload/lift checks are too late
-        # for a contact-approach overload, because the wrist monitor can stop
-        # the sequence before the contact controller confirms a finger.
-        elif float(np.max(np.abs(efforts[8:]))) > float(
-            self.settings["measured_effort_abort_nm"]
-        ):
+        # Preserve the declared legacy action unless the current simulation
+        # explicitly retires the uncalibrated projected-load reference.
+        elif measured_effort_requires_abort(self.settings, efforts[8:]):
             self.abort_reason = "HAND_MEASURED_EFFORT_ABORT"
 
     def active_steps(self, count: int):
@@ -1418,9 +1455,7 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
         previous_target = hand_target
         if stepper.abort_reason is not None:
             return stepper.abort_reason
-        if np.max(np.abs(latest[2][8:] - tare[1:])) > float(
-            settings["measured_effort_abort_nm"]
-        ):
+        if measured_effort_requires_abort(settings, latest[2][8:] - tare[1:]):
             return "HAND_MEASURED_EFFORT_ABORT"
     effort_evidence_count = 0
     effort_check_steps = round(
@@ -1435,9 +1470,7 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
         )
         previous_target = hand_target
         measured_effort = latest[2][8:] - tare[1:]
-        if np.max(np.abs(measured_effort)) > float(
-            settings["measured_effort_abort_nm"]
-        ):
+        if measured_effort_requires_abort(settings, measured_effort):
             return "HAND_MEASURED_EFFORT_ABORT"
         resistive_effort = closing_direction * measured_effort
         # The low contact threshold only says that all three fingertips have
@@ -1456,10 +1489,15 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
     if effort_evidence_count < int(settings["contact_consecutive_samples"]):
         return "PRELOAD_CONTACT_EFFORT_NOT_REACHED"
     preload_goal = np.array(previous_target, copy=True)
+    post_preload_control = settings.get("post_preload_finger_control", "effort_regulation")
+    if post_preload_control not in ("effort_regulation", "hold_joint_targets"):
+        return "POST_PRELOAD_FINGER_CONTROL_CONFIGURATION_ABORT"
 
     def maintain_finger_effort() -> np.ndarray:
-        """Regulate all three efforts within the same finite position bounds."""
+        """Keep the finite clamp; optional target holding retains drive stiffness."""
 
+        if post_preload_control == "hold_joint_targets":
+            return preload_goal.copy()
         return regulated_hand_target(preload_goal, predicted_task_effort)
 
     waypoints = np.asarray(motion_plan["lift_arm_waypoints_rad"])
@@ -1477,17 +1515,13 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
         latest = stepper.advance(
             "lift", piecewise_waypoint(waypoints, blend), preload_goal
         )
-        if np.max(np.abs(latest[2][8:] - tare[1:])) > float(
-            settings["measured_effort_abort_nm"]
-        ):
+        if measured_effort_requires_abort(settings, latest[2][8:] - tare[1:]):
             return "HAND_MEASURED_EFFORT_ABORT"
     final_arm = waypoints[-1]
     for _ in stepper.active_steps(round(float(settings["hold_duration_s"]) / dt)):
         preload_goal = maintain_finger_effort()
         latest = stepper.advance("hold", final_arm, preload_goal)
-        if np.max(np.abs(latest[2][8:] - tare[1:])) > float(
-            settings["measured_effort_abort_nm"]
-        ):
+        if measured_effort_requires_abort(settings, latest[2][8:] - tare[1:]):
             return "HAND_MEASURED_EFFORT_ABORT"
     return stepper.abort_reason
 

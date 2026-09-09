@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+from time import perf_counter
 import traceback
 from typing import Any, Mapping, Sequence
 import uuid
@@ -26,7 +27,7 @@ if __package__:
     from . import controller as control
     from .engine_health import (
         PhysxStatsMonitor, current_engine_log_path, finalize_engine_evaluation,
-        gpu_backend_record, gpu_world_parameters, identity_hashes_match,
+        physics_backend_record, physics_world_parameters, identity_hashes_match,
         load_runtime_resources, preflight_is_accepted, synchronize_engine_log,
     )
     from .evaluate_run import (
@@ -38,7 +39,7 @@ else:
     import controller as control
     from engine_health import (
         PhysxStatsMonitor, current_engine_log_path, finalize_engine_evaluation,
-        gpu_backend_record, gpu_world_parameters, identity_hashes_match,
+        physics_backend_record, physics_world_parameters, identity_hashes_match,
         load_runtime_resources, preflight_is_accepted, synchronize_engine_log,
     )
     from evaluate_run import (
@@ -1745,6 +1746,35 @@ def _arguments(repository: Path) -> argparse.Namespace:
     parser.add_argument("--same-reset-rgbd-config")
     parser.add_argument("--capture-id")
     parser.add_argument(
+        "--body-assembly-collision-config",
+        help="prepare the fixed source-CAD socket and body SDF before the first physics reset",
+    )
+    parser.add_argument(
+        "--body-assembly-transport", action="store_true",
+        help="use one fresh plug observation and current socket RGB-D for bounded noncontact transport",
+    )
+    parser.add_argument(
+        "--body-key-entry", action="store_true",
+        help="after current RGB-D alignment, execute one original-limit 0.20 N key-entry probe",
+    )
+    parser.add_argument(
+        "--body-support-test", action="store_true",
+        help="after the bounded key probe, hold the arm and gradually unload/open the body grasp",
+    )
+    parser.add_argument(
+        "--body-nut-regrasp", action="store_true",
+        help="after supported release and a fresh palm observation, execute one finite nut regrasp",
+    )
+    parser.add_argument(
+        "--postgrasp-key-observation", action="store_true",
+        help="capture ordinary RGB-D after the existing lift/hold and compare pose offline",
+    )
+    parser.add_argument(
+        "--postgrasp-camera-eye-m", type=float, nargs=3,
+        default=(0.590, -0.370, 0.225),
+        help="fixed observation eye in world metres; targeting uses hand encoders only",
+    )
+    parser.add_argument(
         "--visual-transport-target",
         help=(
             "versioned ordinary-RGB-D transport target; changes motion-plan "
@@ -1842,6 +1872,15 @@ def _arguments(repository: Path) -> argparse.Namespace:
         help="prior 50 mm plus 2 s nominal evidence authorizing disturbance",
     )
     arguments = parser.parse_args()
+    if arguments.body_nut_regrasp and not arguments.body_support_test:
+        parser.error("nut regrasp requires the supported body release stage")
+    if arguments.body_support_test and not arguments.body_key_entry:
+        parser.error("body support testing requires the explicit body key-entry sequence")
+    if arguments.body_key_entry and not (
+        arguments.mode == "grasp-lift" and arguments.body_assembly_transport
+        and arguments.postgrasp_key_observation and arguments.body_assembly_collision_config
+    ):
+        parser.error("body key entry requires the same-scene body grasp, observation, and transport")
     if arguments.mode in ("first-finger-diagnostic", "grasp-lift") and not arguments.preflight_evaluation:
         parser.error("object contact execution requires --preflight-evaluation")
     if arguments.mode == "isolated-hand" and not arguments.reference_trace:
@@ -2042,13 +2081,27 @@ def _registered_grasp(
     hand_yaw_rad: float | None,
     closing_order: tuple[str, ...],
 ) -> Mapping[str, object]:
-    generation = generate_axial_pad_intersection_grasp(
-        inputs,
-        palm_joint_position_rad=palm_joint_position_rad,
-        grasp_axis_position_m=grasp_axis_position_m,
-        hand_yaw_rad=hand_yaw_rad,
-        apply_table_clearance=False,
-    )
+    explicit = dynamic.get("nail_body_grasp_control_plan")
+    if explicit is not None:
+        if inputs.hand_variant != "LEGACY_NAIL_PRESENT" or object_id != "te_deutsch_d38999_26fj35pn_step":
+            raise ValueError("nail body trial requires the original nail-present hand and TE J35")
+        generation = {"control_plan": dict(explicit),
+                      "method": "USER_AUTHORIZED_THREE_ORIGINAL_FINGERTIPS_ON_BODY",
+                      "evidence": {"source": "OFFLINE_NAIL_GRASP_PARAMETERS",
+                                   "parameter_sources": dict(inputs.config.values.get("experiment", {}).get(
+                                       "parameter_sources", {"geometry": "SOURCE_CAD_AND_HAND_KINEMATICS"})),
+                                   "physical_contact_verified": False}}
+        if inputs.config.section("dynamic")["object_scenes"][object_id].get("legal_grasp_contact_part") == "CouplingNut":
+            generation["method"] = "USER_AUTHORIZED_ORIGINAL_FINGER_PADS_ON_NUT"
+            generation["evidence"]["source"] = "HISTORICAL_CENTERED_70_DEGREE_NUT_GRASP_REVERIFIED_WITH_CURRENT_NAILS"
+    else:
+        generation = generate_axial_pad_intersection_grasp(
+            inputs,
+            palm_joint_position_rad=palm_joint_position_rad,
+            grasp_axis_position_m=grasp_axis_position_m,
+            hand_yaw_rad=hand_yaw_rad,
+            apply_table_clearance=False,
+        )
     control_plan = dict(generation["control_plan"])
     control_plan["closing_order"] = list(closing_order)
     if approach_high_seed_arm_positions_rad is not None:
@@ -2924,6 +2977,16 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
     arguments.runtime_resources_path = Path(arguments.runtime_resources).resolve()
     arguments.runtime_resources_document = load_runtime_resources(
         arguments.runtime_resources_path)
+    arguments.physics_device = "cuda:0"
+    if arguments.body_assembly_collision_config:
+        import yaml
+        assembly_path = Path(arguments.body_assembly_collision_config)
+        if not assembly_path.is_absolute():
+            assembly_path = repository / assembly_path
+        numerical = yaml.safe_load(assembly_path.read_text()).get("physics_numerics", {})
+        arguments.physics_device = numerical.get("device", "cuda:0")
+    if arguments.physics_device not in ("cuda:0", "cpu"):
+        raise ValueError("assembly physics device must be cpu or cuda:0")
     inputs = load_v2_inputs(repository, config_path=config_path,
                             object_id=arguments.object_id)
     configured_closing_order, _ = control.normalized_closing_order(
@@ -3565,7 +3628,11 @@ def prepare_dynamic_scene(
                 "asset_readback_matches_manifest": True,
             }
         part_paths = (body_path, nut_path)
-        legal_contact_paths = (nut_path,)
+        contact_part = entry.get("legal_grasp_contact_part", "CouplingNut")
+        if contact_part not in ("Body", "CouplingNut", "BodyAndCouplingNut"):
+            raise ValueError("unsupported split plug contact target")
+        legal_contact_paths = ((body_path, nut_path) if contact_part == "BodyAndCouplingNut"
+                               else (body_path,) if contact_part == "Body" else (nut_path,))
     else:
         if not object_prim.HasAPI(UsdPhysics.RigidBodyAPI):
             raise RuntimeError("free object rigid body is missing")
@@ -4207,11 +4274,11 @@ def _create_isolated_runtime(repository, arguments, inputs, scene_entry, trace):
     robot_asset = arguments.robot_asset_path
     gravity, gravity_source = _isolated_gravity(repository, scene_entry)
     World.clear_instance()
-    SimulationManager.set_physics_sim_device("cuda:0")
+    SimulationManager.set_physics_sim_device(arguments.physics_device)
     world = World(
         stage_units_in_meters=1.0, physics_dt=float(dynamic["physics_dt_s"]),
-        rendering_dt=1.0 / 60.0, backend="numpy", device="cuda:0",
-        sim_params={"use_gpu_pipeline": True},
+        rendering_dt=1.0 / 60.0,
+        **physics_world_parameters(arguments.runtime_resources_document, arguments.physics_device),
     )
     context = world.get_physics_context()
     add_reference_to_stage(str(robot_asset), ROBOT_ROOT)
@@ -4220,9 +4287,9 @@ def _create_isolated_runtime(repository, arguments, inputs, scene_entry, trace):
     robot_data = control.create_native_gravity_compensated_robot(
         ARTICULATION_PATH, EXPECTED_DOF_NAMES, dynamic)
     robot, active_indices, arm_indices, lower, upper, active_audit = robot_data
-    backend = gpu_backend_record(world, context)
+    backend = physics_backend_record(world, context, arguments.physics_device)
     if not backend["pass"]:
-        raise RuntimeError(f"GPU physics backend audit failed: {backend}")
+        raise RuntimeError(f"requested physics backend audit failed: {backend}")
     trace["physics_backend"] = backend
     trace["gravity_m_s2"] = gravity
     trace["gravity_source"] = str(gravity_source)
@@ -4655,11 +4722,9 @@ class _CausalFrozenHandDynamicInertia:
         positions = np.asarray(active_positions, dtype=np.float64)
         velocities = np.asarray(active_velocities, dtype=np.float64)
         sensor = np.asarray(sensor_world, dtype=np.float64)
-        jacobian_positions = positions.copy()
-        jacobian_positions[np.abs(jacobian_positions) < 1.0e-6] = 0.0
         jacobian = np.asarray(
             self.robot_model.geometric_jacobian(
-                "handbase_link", tuple(jacobian_positions)
+                "handbase_link", tuple(positions), enforce_limits=False
             ),
             dtype=np.float64,
         )
@@ -4860,7 +4925,10 @@ class _HighObservationWristFtAuditor:
     """Truth-free joint and physical hand2arm safety recorder."""
 
     _PLANNED_CONTACT_PHASES = frozenset(
-        ("preload", "prelift_effort_check", "lift", "hold")
+        ("preload", "prelift_effort_check", "lift", "hold",
+         "key_probe_nut_rotation_visual_align", "key_probe_nut_rotation_axial_settle",
+         "key_probe_nut_rotation_visual_refine", "key_probe_nut_rotation_turn",
+         "key_probe_nut_rotation_hold", "key_probe_nut_grip_hold")
     )
     _PLANNED_CONTACT_PHASE_PREFIXES = (
         "parallel_contact_",
@@ -4881,11 +4949,18 @@ class _HighObservationWristFtAuditor:
         force_limit_n: float,
         torque_limit_nm: float,
         planned_contact_torque_limit_nm: float | None = None,
+        planned_contact_torque_action: str = "abort",
+        contact_force_limit_overrides_n: Mapping[str, float] | None = None,
+        planned_contact_force_time_constant_s: float = 0.0,
         dynamic_inertia_compensation_enabled: bool = False,
         frozen_hand_positions: Sequence[float] | None = None,
         dynamic_inertia_enabled_phases: Sequence[str] = ("approach_above",),
     ) -> None:
         self.ft_articulation = ft_articulation
+        self.planned_contact_force_time_constant_s = float(planned_contact_force_time_constant_s)
+        if not math.isfinite(self.planned_contact_force_time_constant_s) or self.planned_contact_force_time_constant_s < 0:
+            raise ValueError("planned-contact force monitoring time constant must be finite and nonnegative")
+        self._continuous_filtered_force_task = None
         self.reaction_row = int(reaction_row)
         self.robot_model = robot_model
         self.hand_inertials = tuple(hand_inertials)
@@ -4896,11 +4971,21 @@ class _HighObservationWristFtAuditor:
         )
         self.force_limit_n = float(force_limit_n)
         self.torque_limit_nm = float(torque_limit_nm)
+        self.contact_force_limit_overrides_n = {
+            str(phase): float(value) for phase, value in (contact_force_limit_overrides_n or {}).items()
+        }
+        if any(phase not in self._PLANNED_CONTACT_PHASES or not math.isfinite(value)
+               or value < self.force_limit_n
+               for phase, value in self.contact_force_limit_overrides_n.items()):
+            raise ValueError("contact-force overrides require finite bounds in explicit planned-contact phases")
         self.planned_contact_torque_limit_nm = (
             None
             if planned_contact_torque_limit_nm is None
             else float(planned_contact_torque_limit_nm)
         )
+        if planned_contact_torque_action not in ("abort", "record_only"):
+            raise ValueError("planned-contact torque action must be abort or record_only")
+        self.planned_contact_torque_action = planned_contact_torque_action
         self.dynamic_inertia_compensation_enabled = bool(
             dynamic_inertia_compensation_enabled
         )
@@ -4968,6 +5053,18 @@ class _HighObservationWristFtAuditor:
                 aggregate=self.dynamic_inertia_aggregate,
                 physics_dt_s=self.physics_dt_s,
             )
+
+    def _force_for_protection(self, force_task, planned_contact_mode):
+        force = np.asarray(force_task, dtype=np.float64).reshape(3)
+        tau = self.planned_contact_force_time_constant_s
+        if self._continuous_filtered_force_task is None or tau == 0.:
+            self._continuous_filtered_force_task = force.copy()
+        else:
+            self._continuous_filtered_force_task += self.physics_dt_s / (tau+self.physics_dt_s) * (
+                force-self._continuous_filtered_force_task)
+        use_filtered = bool(planned_contact_mode and tau > 0.)
+        return ((self._continuous_filtered_force_task.copy(), "CAUSAL_PLANNED_CONTACT_FORCE_VECTOR")
+                if use_filtered else (force.copy(), "RAW_CURRENT_WRENCH_FORCE"))
 
     def _kinematics(
         self, active_positions: np.ndarray
@@ -5103,8 +5200,12 @@ class _HighObservationWristFtAuditor:
         residual_task = None
         dynamic_inertia_applied = False
         force_norm = None
+        protection_force = None
+        protection_force_norm = None
+        force_limit_signal = None
         torque_norm = None
         limit_reason = None
+        effective_force_limit_n = self.contact_force_limit_overrides_n.get(phase, self.force_limit_n)
         if (
             self.tare_canonical_sensor is not None
             and self.tare_gravity_sensor is not None
@@ -5162,6 +5263,9 @@ class _HighObservationWristFtAuditor:
                 self.task_rotation_world,
             )
             force_norm = float(np.linalg.norm(residual_task[:3]))
+            protection_force, force_limit_signal = self._force_for_protection(
+                residual_task[:3], planned_contact_mode)
+            protection_force_norm = float(np.linalg.norm(protection_force))
             torque_norm = float(np.linalg.norm(residual_task[3:]))
             self.maximum_residual_force_n = max(
                 self.maximum_residual_force_n, force_norm
@@ -5169,11 +5273,12 @@ class _HighObservationWristFtAuditor:
             self.maximum_residual_torque_nm = max(
                 self.maximum_residual_torque_nm, torque_norm
             )
-            if limit_reason is None and force_norm > self.force_limit_n:
+            if limit_reason is None and protection_force_norm > effective_force_limit_n:
                 limit_reason = "WRIST_FT_RESULTANT_FORCE_ABORT"
             elif (
                 limit_reason is None
                 and torque_norm > effective_torque_limit_nm
+                and not (planned_contact_mode and self.planned_contact_torque_action == "record_only")
             ):
                 limit_reason = (
                     "WRIST_FT_PLANNED_CONTACT_RESULTANT_TORQUE_ABORT"
@@ -5198,6 +5303,8 @@ class _HighObservationWristFtAuditor:
                         None if residual_task is None else residual_task.tolist()
                     ),
                     "resultant_force_n": force_norm,
+                    "resultant_force_used_for_protection_n": protection_force_norm,
+                    "force_limit_signal": force_limit_signal,
                     "resultant_torque_nm": torque_norm,
                 }
             if self.stepper is None:
@@ -5279,14 +5386,23 @@ class _HighObservationWristFtAuditor:
                     None if residual_task is None else residual_task.tolist()
                 ),
                 "resultant_force_n": force_norm,
+                "force_used_for_protection_task_n": (
+                    None if protection_force is None else protection_force.tolist()),
+                "resultant_force_used_for_protection_n": protection_force_norm,
+                "force_limit_signal": force_limit_signal,
                 "resultant_torque_nm": torque_norm,
                 "ft_safety_mode": (
                     "PLANNED_CONTACT"
                     if planned_contact_mode
                     else "STRICT_FREE_SPACE"
                 ),
-                "effective_force_limit_n": self.force_limit_n,
+                "effective_force_limit_n": effective_force_limit_n,
                 "effective_torque_limit_nm": effective_torque_limit_nm,
+                "torque_stop_enabled": not (
+                    planned_contact_mode and self.planned_contact_torque_action == "record_only"),
+                "torque_reference_exceeded": (
+                    torque_norm is not None and torque_norm > effective_torque_limit_nm),
+                "torque_reference_provenance": "LEGACY_RESEARCH_BOUND_NOT_KUKA_OR_SENSOR_RATING",
                 "ft_gate_enabled": bool(self.gate_enabled),
                 "ft_limit_reason": limit_reason,
                 "arm_control": {
@@ -5345,10 +5461,22 @@ class _HighObservationWristFtAuditor:
             "maximum_residual_force_n": self.maximum_residual_force_n,
             "maximum_residual_torque_nm": self.maximum_residual_torque_nm,
             "force_limit_n": self.force_limit_n,
+            "contact_force_limit_overrides_n": self.contact_force_limit_overrides_n,
+            "planned_contact_force_monitoring": {
+                "time_constant_s": self.planned_contact_force_time_constant_s,
+                "history": "CONTINUOUS_FROM_FIRST_AVAILABLE_COMPENSATED_FORCE; NO_PHASE_RESET_OR_LOADED_REZERO",
+                "coordinate_axes": "FIXED_TASK_AXES",
+                "free_space_force_gate": "RAW_CURRENT_WRENCH_FORCE",
+                "raw_force_samples_and_peaks_retained": True,
+                "torque_gate": "RAW_CURRENT_WRENCH_TORQUE",
+                "hardware_peak_force_limit_claimed": False,
+            },
             "torque_limit_nm": self.torque_limit_nm,
             "planned_contact_torque_limit_nm": (
                 self.planned_contact_torque_limit_nm
             ),
+            "planned_contact_torque_action": self.planned_contact_torque_action,
+            "planned_contact_torque_reference_is_hardware_rating": False,
             "planned_contact_phase_selection": (
                 "CONTROLLER_PHASE_ONLY_NO_CONTACT_OR_OBJECT_TRUTH"
             ),
@@ -9082,12 +9210,12 @@ def _create_runtime(
     if contact_processing_before_world:
         raise RuntimeError("PhysX contact processing was not enabled before World creation")
     World.clear_instance()
-    SimulationManager.set_physics_sim_device("cuda:0")
+    SimulationManager.set_physics_sim_device(arguments.physics_device)
     world = World(
         stage_units_in_meters=1.0,
         physics_dt=float(dynamic["physics_dt_s"]),
         rendering_dt=1.0 / 60.0,
-        **gpu_world_parameters(arguments.runtime_resources_document),
+        **physics_world_parameters(arguments.runtime_resources_document, arguments.physics_device),
     )
     context = world.get_physics_context()
     stage = get_current_stage()
@@ -9096,16 +9224,65 @@ def _create_runtime(
     minimum_velocity_iterations = (
         physics_scene_api.GetMinVelocityIterationCountAttr().Get()
     )
-    physics_scene_api.CreateMinVelocityIterationCountAttr().Set(8)
+    maximum_velocity_iterations = physics_scene_api.GetMaxVelocityIterationCountAttr().Get()
+    required_velocity_iterations = 8
+    explicit_velocity_iterations = False
+    if arguments.body_assembly_collision_config:
+        import yaml
+        assembly_path = Path(arguments.body_assembly_collision_config)
+        if not assembly_path.is_absolute():
+            assembly_path = repository / assembly_path
+        numerical = yaml.safe_load(assembly_path.read_text()).get("physics_numerics", {})
+        if "position_iterations" in numerical:
+            count = numerical["position_iterations"]
+            if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 255:
+                raise ValueError("position iteration override must be an integer in [1, 255]")
+            previous = [physics_scene_api.GetMinPositionIterationCountAttr().Get(),
+                        physics_scene_api.GetMaxPositionIterationCountAttr().Get()]
+            physics_scene_api.CreateMinPositionIterationCountAttr(count)
+            physics_scene_api.CreateMaxPositionIterationCountAttr(count)
+            observed = [physics_scene_api.GetMinPositionIterationCountAttr().Get(),
+                        physics_scene_api.GetMaxPositionIterationCountAttr().Get()]
+            if observed != [count, count]:
+                raise RuntimeError("physics scene position iteration override did not read back")
+            trace["physics_scene_position_iteration_audit"] = {
+                "before_min_max": previous, "requested": count, "observed_min_max": observed,
+                "scope": "PRE_RESET_SCENE_SOLVER_ITERATIONS_NOT_CONTROL_OR_FORCE_LIMIT_CHANGE"}
+        if "external_forces_every_iteration" in numerical:
+            flag = numerical["external_forces_every_iteration"]
+            if not isinstance(flag, bool):
+                raise ValueError("external-forces-per-iteration override must be Boolean")
+            attribute = physics_scene_api.GetEnableExternalForcesEveryIterationAttr()
+            before_flag = attribute.Get()
+            physics_scene_api.CreateEnableExternalForcesEveryIterationAttr(flag)
+            if attribute.Get() is not flag:
+                raise RuntimeError("external-forces-per-iteration setting did not read back")
+            trace["physics_external_forces_iteration_audit"] = {
+                "before": before_flag, "requested": flag, "observed": attribute.Get(),
+                "scope": "PRE_RESET_TGS_NUMERICAL_SETTING_NOT_FORCE_LIMIT_CHANGE",
+            }
+        if "velocity_iterations" in numerical:
+            value = numerical["velocity_iterations"]
+            if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 255:
+                raise ValueError("velocity iteration override must be an integer in the PhysX range")
+            required_velocity_iterations = value
+            explicit_velocity_iterations = True
+            physics_scene_api.CreateMaxVelocityIterationCountAttr().Set(value)
+    physics_scene_api.CreateMinVelocityIterationCountAttr().Set(required_velocity_iterations)
     observed_minimum_velocity_iterations = (
         physics_scene_api.GetMinVelocityIterationCountAttr().Get()
     )
-    if observed_minimum_velocity_iterations != 8:
-        raise RuntimeError("physics scene minimum velocity iterations did not read back as 8")
+    if (observed_minimum_velocity_iterations != required_velocity_iterations
+            or (explicit_velocity_iterations and physics_scene_api.GetMaxVelocityIterationCountAttr().Get()
+                != required_velocity_iterations)):
+        raise RuntimeError("physics scene velocity iteration override did not read back")
     trace["physics_scene_velocity_iteration_audit"] = {
         "before": minimum_velocity_iterations,
-        "required": 8,
+        "required": required_velocity_iterations,
         "observed": observed_minimum_velocity_iterations,
+        "maximum_before": maximum_velocity_iterations,
+        "maximum_observed": physics_scene_api.GetMaxVelocityIterationCountAttr().Get(),
+        "explicit_assembly_numerical_override": explicit_velocity_iterations,
     }
     scene = prepare_dynamic_scene(
         repository,
@@ -9114,12 +9291,116 @@ def _create_runtime(
         add_reference_to_stage,
         arguments.robustness_perturbation,
     )
+    if arguments.body_assembly_collision_config:
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from te_body_assembly_scene import prepare_body_assembly_scene
+        prepared = prepare_body_assembly_scene(
+            repository, stage, scene, arguments.body_assembly_collision_config)
+        scene = prepared["scene"]
+        trace["body_assembly_scene"] = prepared["report"]
     add_reference_to_stage(str(robot_asset), ROBOT_ROOT)
     _apply_contact_friction_perturbation(
         stage, scene, Usd, UsdPhysics, UsdShade, PhysxSchema
     )
     _apply_object_mass_perturbation(stage, scene, Gf, UsdPhysics)
     _apply_center_of_mass_perturbation(stage, scene, Gf, UsdGeom, UsdPhysics)
+    if arguments.body_assembly_collision_config:
+        import yaml
+        assembly_config_path = Path(arguments.body_assembly_collision_config)
+        if not assembly_config_path.is_absolute():
+            assembly_config_path = repository / assembly_config_path
+        assembly_document = yaml.safe_load(assembly_config_path.read_text())
+        band = assembly_document.get("grounding_band_contact_model")
+        if band is not None:
+            from te_grounding_band_scene import install_grounding_band_contact_model
+            manifest_path = repository / band["geometry_manifest"]
+            pair_options = {}
+            if band.get("preserve_original_non_socket_collision", False):
+                body_path = str(scene["part_prim_paths"][0])
+                other_bodies = [str(p.GetPath()) for p in stage.Traverse()
+                                if p.HasAPI(UsdPhysics.RigidBodyAPI) and str(p.GetPath()) != body_path]
+                pair_options = {
+                    "socket_collision_path": prepared["receptacle_collision_path"],
+                    "non_socket_contact_paths": [*other_bodies, str(scene["roots"]["table"]),
+                                                 str(scene["roots"]["fixture"])],
+                }
+            model = install_grounding_band_contact_model(
+                stage, str(scene["part_prim_paths"][0]), manifest_path,
+                stiffness_n_m=float(band["native_per_contact_stiffness_n_m"]),
+                damping_ns_m=float(band["native_per_contact_damping_ns_m"]), **pair_options)
+            model["parameter_source"] = band["parameter_source"]
+            prepared["report"]["grounding_band_contact_model"] = model
+            prepared["report"]["source_mass_material_and_joint_drive_parameters_changed"] = False
+            prepared["report"]["local_representative_contact_material_added"] = True
+            geometry = json.loads(manifest_path.read_text())
+            scene["evidence_paths"] = tuple(dict.fromkeys((
+                *scene["evidence_paths"], manifest_path,
+                repository / band["parameter_source"],
+                Path(__file__).resolve().parents[1] / "te_grounding_band_scene.py",
+                *(Path(entry["path"]) for entry in geometry["meshes"].values()),
+            )))
+        mating = assembly_document.get("mating_contact_model")
+        if mating and mating.get("enabled"):
+            from te_mating_contact_scene import install_socket_contact_interior
+            install_socket_contact_interior(repository, stage, prepared, mating["manifest"])
+            scene = prepared["scene"]
+        frozen = assembly_document.get("validated_connector")
+        if frozen is not None:
+            # Use the same physical connector and hand friction as the local
+            # CPU tests, while retaining this episode's tabletop initial pose.
+            import importlib.util
+            if (arguments.physics_device != "cpu"
+                    or not math.isclose(float(dynamic["physics_dt_s"]), 1. / 960., rel_tol=0., abs_tol=1e-12)
+                    or numerical.get("position_iterations") != 128
+                    or numerical.get("velocity_iterations") != 1
+                    or numerical.get("external_forces_every_iteration") is not True):
+                raise ValueError("validated connector requires CPU 960 Hz, 128/1 iterations and per-iteration external forces")
+            physics_scene_api.CreateSolverTypeAttr("TGS")
+            physics_scene_api.CreateEnableGPUDynamicsAttr(False)
+            physics_scene_api.CreateBroadphaseTypeAttr("MBP")
+            model_path = (repository / frozen["model_path"]).resolve()
+            installer = model_path.with_name("install_model.py")
+            spec = importlib.util.spec_from_file_location("validated_connector_installer", installer)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            installed = module.install_model(stage, model_path=model_path, prepared=prepared)
+            scene["evidence_paths"] = tuple(dict.fromkeys((
+                *scene["evidence_paths"], model_path, installer)))
+            (output / "frozen_model_installation.json").write_text(json.dumps(installed, indent=2) + "\n")
+            if frozen.get("hand_friction_effort_from_urdf", False):
+                from te_hand_joint_friction import author_urdf_hand_friction_efforts
+                friction = author_urdf_hand_friction_efforts(repository, stage, ROBOT_ROOT)
+                (output / "hand_joint_friction_authoring.json").write_text(json.dumps(friction, indent=2) + "\n")
+                scene["evidence_paths"] = tuple(dict.fromkeys((
+                    *scene["evidence_paths"], Path(__file__).resolve().parents[1] / "te_hand_joint_friction.py")))
+            fingertip_links = tuple(frozen.get("nut_fingertip_source_sdf_links", ()))
+            if fingertip_links:
+                from te_nut_fingertip_sdf import author_nut_only_fingertip_sdf
+                contact = author_nut_only_fingertip_sdf(
+                    stage, ROBOT_ROOT, str(scene["part_prim_paths"][1]), links=fingertip_links)
+                (output / "nut_fingertip_sdf_authoring.json").write_text(json.dumps(contact, indent=2) + "\n")
+                scene["evidence_paths"] = tuple(dict.fromkeys((
+                    *scene["evidence_paths"], Path(__file__).resolve().parents[1] / "te_nut_fingertip_sdf.py")))
+            for prim in stage.Traverse():
+                if prim.HasAPI(PhysxSchema.PhysxArticulationAPI):
+                    api = PhysxSchema.PhysxArticulationAPI(prim)
+                    api.CreateSolverPositionIterationCountAttr(128)
+                    api.CreateSolverVelocityIterationCountAttr(1)
+                if prim.HasAPI(UsdPhysics.RigidBodyAPI):
+                    api = PhysxSchema.PhysxRigidBodyAPI.Apply(prim)
+                    api.CreateSolverPositionIterationCountAttr(128)
+                    api.CreateSolverVelocityIterationCountAttr(1)
+            trace["validated_connector_integration"] = {
+                "model_path": str(model_path), "ordinary_passive_revolute": True,
+                "solver": str(physics_scene_api.GetSolverTypeAttr().Get()),
+                "broadphase": str(physics_scene_api.GetBroadphaseTypeAttr().Get()),
+                "original_tabletop_initial_poses_preserved": True,
+                "same_episode_unloaded_wrist_tare_required": True,
+                "assembly_success_claimed": False,
+            }
+        (output / "assembly_scene.json").write_text(
+            json.dumps(prepared["report"], indent=2) + "\n")
     center_delta = (
         np.zeros(3, dtype=np.float64)
         if scene["requested_center_of_mass_delta_object_m"] is None
@@ -9148,7 +9429,7 @@ def _create_runtime(
         "transfer_distance_m": float(dynamic["table_release_clearance_m"]),
         "online_object_truth_used": False,
     }
-    if arguments.capture_visual_evidence:
+    if arguments.capture_visual_evidence or arguments.postgrasp_key_observation:
         render = scene["render"]
         lighting_root = "/World/CARTSGraspVisualEvidenceLights"
         dome = UsdLux.DomeLight.Define(stage, lighting_root + "/Fill")
@@ -9228,15 +9509,28 @@ def _create_runtime(
                 name="te_visual_high_hand2arm_reaction_reader",
             )
         )
-        if arguments.mode in VISION_MOTION_MODES
+        if arguments.mode in VISION_MOTION_MODES or dynamic.get("nail_body_grasp_control_plan") is not None
         else None
     )
+    object_articulation = None
+    if (arguments.body_assembly_collision_config
+            and not prepared["report"].get("frozen_connector_model")
+            and prepared["report"].get("passive_joint_solver", {}).get("floating_base")):
+        object_articulation = world.scene.add(SingleArticulation(
+            prim_path=prepared["report"]["passive_joint_solver"]["root_path"],
+            name="plug_internal_joint_postrun_reader", reset_xform_properties=False))
     robot_contact_paths = tuple(
         path for path in rigid_body_prims
         if path == ROBOT_ROOT or path.startswith(ROBOT_ROOT + "/")
     )
     object_contact_paths = tuple(map(str, scene["part_prim_paths"]))
     tensor_contact_sensor_paths = robot_contact_paths + object_contact_paths
+    recorded_contact_filters = object_contact_paths + (
+        tuple(prepared["contact_recording"]["additional_required_contact_filter_paths"])
+        if arguments.body_assembly_collision_config else ())
+    contact_capacity = max(TENSOR_CONTACT_MAX_COUNT, int(
+        prepared["contact_recording"].get("minimum_contact_records", TENSOR_CONTACT_MAX_COUNT))
+        if arguments.body_assembly_collision_config else TENSOR_CONTACT_MAX_COUNT)
     if (
         len(set(tensor_contact_sensor_paths)) != len(tensor_contact_sensor_paths)
         or not set(object_contact_paths).issubset(rigid_body_prims)
@@ -9245,18 +9539,37 @@ def _create_runtime(
     tensor_contact_prim = TensorRigidPrim(
         list(tensor_contact_sensor_paths),
         resolve_paths=False,
-        contact_filter_paths=list(object_contact_paths),
-        max_contact_count=TENSOR_CONTACT_MAX_COUNT,
+        contact_filter_paths=list(recorded_contact_filters),
+        max_contact_count=contact_capacity,
     )
     trace["tensor_contact_view_audit"] = {
         "robot_sensor_paths": list(robot_contact_paths),
         "object_sensor_paths": list(object_contact_paths),
-        "contact_filter_paths": list(object_contact_paths),
+        "contact_filter_paths": list(recorded_contact_filters),
         "sensor_paths": list(tensor_contact_sensor_paths),
-        "max_contact_count": TENSOR_CONTACT_MAX_COUNT,
+        "max_contact_count": contact_capacity,
     }
     context.set_gravity(float(scene["gravity_m_s2"]))
     world.reset()
+    if trace.get("validated_connector_integration"):
+        # Known repeated material warnings are retained during initialization;
+        # only their subsequent log spam is suppressed. Physics stays active.
+        import carb.logging
+        carb.logging.acquire_logging().set_level_threshold_for_source(
+            "omni.physx.plugin", carb.logging.LogSettingBehavior.OVERRIDE, carb.logging.LEVEL_ERROR)
+        trace["validated_connector_integration"]["post_reset_physx_log_level"] = "ERROR"
+    if object_articulation is not None:
+        metadata = object_articulation._articulation_view._metadata
+        trace["object_internal_joint_reader"] = {
+            "root_path": prepared["report"]["passive_joint_solver"]["root_path"],
+            "body_names": list(object_articulation._articulation_view.body_names),
+            "joint_indices": dict(metadata.joint_indices),
+            "joint_names": list(metadata.joint_names),
+            "source": "NATIVE_ARTICULATION_INCOMING_LINK_JOINT_WRENCH",
+            "coordinates": "EACH_LINK_INCOMING_JOINT_FRAME",
+            "temporal_scope": "SOLVER_AVERAGE_OVER_PHYSICS_STEP",
+            "online_control_used": False,
+        }
     if arguments.postgrasp_disturbance is not None:
         retain_rows = []
         for path in scene["part_prim_paths"]:
@@ -9301,9 +9614,9 @@ def _create_runtime(
         "complete": (set(rigid_body_prims) == set(contact_report_prims)
                      == set(after_rigid) == set(after_reporters)),
     })
-    backend = gpu_backend_record(world, context)
+    backend = physics_backend_record(world, context, arguments.physics_device)
     if not backend["pass"]:
-        raise RuntimeError(f"GPU physics backend audit failed: {backend}")
+        raise RuntimeError(f"requested physics backend audit failed: {backend}")
     trace["physics_backend"] = backend
     visual_grasp_services = None
     if arguments.mode == VISION_GRASP_SERVO_MODE:
@@ -9327,7 +9640,7 @@ def _create_runtime(
             physics_step_interface=get_physx_interface(),
             tensor_contact_prim=tensor_contact_prim,
             tensor_contact_sensor_paths=tensor_contact_sensor_paths,
-            tensor_contact_max_count=TENSOR_CONTACT_MAX_COUNT,
+            tensor_contact_max_count=contact_capacity,
         )
         visual_grasp_services = {
             "truth_auditor": visual_truth_auditor,
@@ -9381,6 +9694,7 @@ def _create_runtime(
     )
     auditor = TruthAuditRecorder(
         object_parts=object_parts,
+        object_articulation=object_articulation,
         hand_base_prim=hand_base_prim,
         robot_model=inputs.robot_model,
         stage_modules=(Gf, Usd, UsdGeom),
@@ -9398,10 +9712,41 @@ def _create_runtime(
         physics_step_interface=get_physx_interface(),
         tensor_contact_prim=tensor_contact_prim,
         tensor_contact_sensor_paths=tensor_contact_sensor_paths,
-        tensor_contact_max_count=TENSOR_CONTACT_MAX_COUNT,
+        tensor_contact_max_count=contact_capacity,
     )
+    truth_stream = None
+    truth_write_timing = {"serialization_and_write_s": 0.0, "sample_count": 0}
+    if arguments.body_assembly_transport:
+        # Keep raw physical evidence even if a long run is interrupted before
+        # the final aggregate report. This sink never returns data to control.
+        truth_stream = (output / "truth_samples.jsonl").open("x", encoding="utf-8", buffering=1)
+        original_truth_capture = auditor.capture
+
+        def capture_with_durable_truth(**kwargs):
+            result = original_truth_capture(**kwargs)
+            started = perf_counter()
+            # Encode one bounded sample with the C encoder, then flush one
+            # complete line. json.dump made thousands of Python writes/tick.
+            truth_stream.write(json.dumps(auditor.samples[-1], ensure_ascii=False,
+                                          separators=(",", ":")) + "\n")
+            truth_write_timing["serialization_and_write_s"] += perf_counter() - started
+            truth_write_timing["sample_count"] += 1
+            return result
+
+        auditor.capture = capture_with_durable_truth
     return {
         "world": world, "scene": scene, "robot_asset": robot_asset,
+        "output_directory": output,
+        "truth_stream": truth_stream,
+        "truth_write_timing": truth_write_timing,
+        "inputs": inputs,
+        "body_assembly_scene": prepared if arguments.body_assembly_collision_config else None,
+        "body_assembly_control_config": arguments.body_assembly_collision_config,
+        "body_key_entry_requested": arguments.body_key_entry,
+        "body_support_test_requested": arguments.body_support_test,
+        "body_nut_regrasp_requested": arguments.body_nut_regrasp,
+        "body_pregrasp_hand_positions_rad": motion_plan["pregrasp_hand_positions_rad"],
+        "ft_articulation": ft_articulation,
         "auditor": auditor, "robot_data": robot_data,
         "object_parts": object_parts,
         "engine_monitor": engine_monitor,
@@ -9991,6 +10336,49 @@ def _run_postgrasp_disturbance(runtime, arguments, stepper, grasp_result):
 
 def _run_controller(runtime, arguments, motion_plan, dynamic):
     robot, active_indices, arm_indices, lower, upper, drive_audit = runtime["robot_data"]
+    ft_auditor = None
+    if dynamic.get("nail_body_grasp_control_plan") is not None:
+        repository = Path(__file__).resolve().parents[4]
+        ft_document = json.loads((repository / "src/kcg_connector/config/te_visual_high_reobserve_v1.json").read_text())
+        ft_contract = ft_document["wrist_ft_safety"]
+        import yaml
+        assembly_control = (yaml.safe_load((repository / runtime["body_assembly_control_config"]).read_text())
+                            if runtime.get("body_assembly_control_config") else {})
+        effort_monitor = assembly_control.get("hand_measured_effort_monitor", {})
+        if effort_monitor:
+            if not math.isclose(float(effort_monitor["legacy_reference_nm"]),
+                                float(dynamic["measured_effort_abort_nm"]), rel_tol=0., abs_tol=1e-12):
+                raise ValueError("retired hand-effort reference differs from the recorded control setting")
+            dynamic = {**dynamic, "measured_effort_abort_action": effort_monitor["action"]}
+        contact_force_overrides = assembly_control.get("wrist_contact_force_probe", {}).get("phase_limits_n", {})
+        ft_articulation = runtime["ft_articulation"]
+        reaction_row = int(ft_articulation._articulation_view._metadata.joint_indices["hand2arm"]) + 1
+        ft_auditor = _HighObservationWristFtAuditor(
+            ft_articulation=ft_articulation, reaction_row=reaction_row,
+            robot_model=runtime["robot_model"],
+            hand_inertials=_load_frozen_hand_inertials(repository / ft_document["source_evidence"]["hand_inertial_source"]["path"]),
+            gravity_m_s2=runtime["scene"]["gravity_m_s2"], physics_dt_s=dynamic["physics_dt_s"],
+            task_rotation_world=np.eye(3), force_limit_n=ft_contract["maximum_resultant_force_n"],
+            torque_limit_nm=ft_contract["maximum_resultant_torque_nm"],
+            planned_contact_torque_limit_nm=float(assembly_control.get(
+                "wrist_planned_contact_torque_monitor", {}).get("legacy_reference_nm", 1.380577140290147)),
+            planned_contact_torque_action=assembly_control.get(
+                "wrist_planned_contact_torque_monitor", {}).get("action", "abort"),
+            contact_force_limit_overrides_n=contact_force_overrides,
+            planned_contact_force_time_constant_s=assembly_control.get(
+                "wrist_planned_contact_force_monitor", {}).get("time_constant_s", 0.),
+            dynamic_inertia_compensation_enabled=True,
+            frozen_hand_positions=motion_plan["pregrasp_hand_positions_rad"],
+            dynamic_inertia_enabled_phases=("approach_above", "wait_above_settled", "approach_descent", "settle", "pregrasp_hold", "tare"),
+        )
+        truth_capture = runtime["auditor"].capture
+
+        def capture_truth_and_ft(**keywords):
+            truth_capture(**keywords)
+            ft_auditor.capture(**keywords)
+
+        runtime["auditor"].capture = capture_truth_and_ft
+        runtime["nail_body_ft_auditor"] = ft_auditor
     stepper = control.JointSignalStepper(
         robot=robot, world=runtime["world"], auditor=runtime["auditor"],
         active_indices=active_indices, arm_indices=arm_indices,
@@ -9999,6 +10387,12 @@ def _run_controller(runtime, arguments, motion_plan, dynamic):
         robot_model=runtime["robot_model"],
         payload_model=runtime["payload_model"],
     )
+    if ft_auditor is not None:
+        ft_auditor.stepper = stepper
+        for _ in stepper.active_steps(round(0.5 / dynamic["physics_dt_s"])):
+            stepper.advance("ft_free_space_tare", np.zeros(7), np.zeros(4))
+        if stepper.abort_reason is None:
+            ft_auditor.finalize_tare(100)
     pregrasp = control.run_pregrasp_sequence(
         stepper,
         motion_plan,
@@ -10015,6 +10409,7 @@ def _run_controller(runtime, arguments, motion_plan, dynamic):
     disturbance_execution = _run_postgrasp_disturbance(
         runtime, arguments, stepper, grasp
     )
+    runtime["grasp_result"] = grasp
     outcome = control.controller_outcome(
         stepper, mode=arguments.mode, native_drive_audit=drive_audit,
         pregrasp=pregrasp, grasp=grasp,
@@ -10162,6 +10557,8 @@ def _split_plug_contact_policy_summary(runtime, evaluation) -> dict[str, object]
     ):
         return {"status": "NOT_APPLICABLE_FUSED_OBJECT"}
     legal = set(map(str, scene.get("legal_grasp_contact_paths", ())))
+    body_paths = {str(scene["part_prim_paths"][0])}
+    nut_paths = {str(scene["part_prim_paths"][1])}
     slip = evaluation.get("fingertip_contact_surface_slip", {})
     fingers = []
     for row in slip.get("per_finger", ()):
@@ -10170,9 +10567,11 @@ def _split_plug_contact_policy_summary(runtime, evaluation) -> dict[str, object]
             {
                 "terminal_link": row.get("terminal_link"),
                 "contacted_part_paths": sorted(contacted),
-                "contacted_coupling_nut": bool(contacted & legal),
-                "contacted_body_or_other_part": bool(contacted - legal),
-                "nut_only": bool(contacted and contacted <= legal),
+                "contacted_coupling_nut": bool(contacted & nut_paths),
+                "contacted_body_or_other_part": bool(contacted - nut_paths),
+                "nut_only": bool(contacted and contacted <= nut_paths),
+                "body_only": bool(contacted and contacted <= body_paths),
+                "requested_part_only": bool(contacted and contacted <= legal),
             }
         )
     observed = {path for row in fingers for path in row["contacted_part_paths"]}
@@ -10185,7 +10584,9 @@ def _split_plug_contact_policy_summary(runtime, evaluation) -> dict[str, object]
         "observed_contact_part_paths": sorted(observed),
         "per_finger": fingers,
         "all_three_fingers_contacted_coupling_nut_only": all_three_nut_only,
-        "body_contact_observed": bool(observed - legal),
+        "body_contact_observed": bool(observed & body_paths),
+        "all_three_fingers_contacted_body_only": bool(len(fingers) == 3 and all(row["body_only"] for row in fingers)),
+        "all_three_fingers_contacted_requested_part_only": bool(len(fingers) == 3 and all(row["requested_part_only"] for row in fingers)),
         "online_control_used": False,
     }
 
@@ -10211,9 +10612,100 @@ def _apply_split_plug_contact_policy(
         )
 
 
+def _nail_body_stability_after_motion(samples, evaluation, wrist_ft):
+    """Measure actual body stability after motion; never used by the controller."""
+    def relative_pose(row):
+        hand = _quaternion_wxyz_rotation(np.asarray(row["hand_base_orientation_wxyz"]))
+        body = _quaternion_wxyz_rotation(np.asarray(row["object_part_orientations_wxyz"][0]))
+        position = hand.T @ (np.asarray(row["object_part_positions_m"][0]) - row["hand_base_position_m"])
+        return position, hand.T @ body
+
+    def measure(rows):
+        if not rows:
+            return None
+        initial_position, initial_rotation = relative_pose(rows[0])
+        shifts, rotations = [], []
+        for row in rows:
+            position, rotation = relative_pose(row)
+            shifts.append(position - initial_position)
+            rotations.append(math.acos(float(np.clip((np.trace(rotation @ initial_rotation.T) - 1.0) / 2.0, -1.0, 1.0))))
+        shifts = np.asarray(shifts)
+        return {"reference_step": int(rows[0]["step"]), "sample_count": len(rows),
+                "maximum_translation_m": float(np.max(np.linalg.norm(shifts, axis=1))),
+                "maximum_rotation_deg": float(np.rad2deg(max(rotations))),
+                "final_translation_components_m": shifts[-1].tolist(),
+                "final_rotation_deg": float(np.rad2deg(rotations[-1])),
+                "three_finger_contact_missing_samples": sum(not all(row["contacts"]["terminal_link_object"]) for row in rows),
+                "table_positive_contact_samples": sum(float(row["contacts"]["object_table_positive_normal_impulse_n_s"]) > 1e-9 for row in rows)}
+
+    first_contact = next((index for index, row in enumerate(samples)
+                          if row["phase"] == "parallel_contact_contact_confirmed"
+                          and all(row["contacts"]["terminal_link_object"])), None)
+    lift = [row for row in samples if row["phase"] == "lift"]
+    hold = [row for row in samples if row["phase"] == "hold"]
+    policy = evaluation["split_plug_grasp_contact_policy"]
+    body_path = next((path for path in policy.get("observed_contact_part_paths", ()) if path.endswith("/Body")), None)
+    first_body_contact = next((index for index, row in enumerate(samples)
+                               if any(body_path in header["paths"]
+                                      and any(abs(float(c["normal_impulse_n_s"])) > 1e-9
+                                              for c in header["contacts"])
+                                      and any("/" + name in path
+                                              for name in ("f1Link3", "f2Link2", "f3Link3")
+                                              for path in header["paths"])
+                                      for header in row["contacts"]["tensor_headers"])), None)
+    body_contact_counts = []
+    for row in lift + hold:
+        body_fingers = set()
+        for header in row["contacts"]["tensor_headers"]:
+            if body_path not in header["paths"] or not any(abs(float(c["normal_impulse_n_s"])) > 1e-9 for c in header["contacts"]):
+                continue
+            body_fingers.update(name for name in ("f1Link3", "f2Link2", "f3Link3")
+                                if any("/" + name in path for path in header["paths"]))
+        body_contact_counts.append(len(body_fingers))
+    direct_body_contact = bool(body_contact_counts and min(body_contact_counts) >= 1)
+    qualified = bool(evaluation["controller_completed"] and evaluation["lift_50mm_passed"]
+                     and evaluation["hold_2s_passed"] and evaluation["table_contact_released_during_hold"]
+                     and direct_body_contact
+                     and lift and hold and all(all(row["contacts"]["terminal_link_object"]) for row in lift + hold)
+                     and not any(evaluation["unauthorized_contact_records"].values())
+                     and wrist_ft["first_safety_stop"] is None and evaluation["truth_isolation_pass"])
+    return {"body_pickup_and_hold_observed": qualified,
+            "minimum_fingers_directly_contacting_body_during_lift_and_hold": min(body_contact_counts) if body_contact_counts else 0,
+            "all_three_fingers_body_only": policy.get("all_three_fingers_contacted_body_only"),
+            "from_first_body_contact": measure(samples[first_body_contact:]) if first_body_contact is not None else None,
+            "from_first_three_contact": measure(samples[first_contact:]) if first_contact is not None else None,
+            "lift": measure(lift), "hold": measure(hold),
+            "maximum_lift_m": evaluation["maximum_lift_m"],
+            "maximum_finger_effort_nm": evaluation["maximum_absolute_hand_effort_nm"],
+            "maximum_wrist_force_n": wrist_ft["maximum_residual_force_n"],
+            "maximum_wrist_moment_nm": wrist_ft["maximum_residual_torque_nm"],
+            "controller_failure_reason": evaluation["controller_failure_reason"],
+            "evaluation_only_no_online_truth": True,
+            "scope": "NOMINAL_NAIL_BODY_GRASP_STABILITY_NOT_ASSEMBLY_OR_GLOBAL_OPTIMALITY"}
+
+
 def _finish_run(repository, inputs, runtime, trace, outcome):
+    finish_started = perf_counter()
+    timing = runtime["wall_timing"]
+    if runtime.get("truth_stream") is not None:
+        runtime["truth_stream"].close()
+        trace["durable_truth_samples"] = {"path": runtime["truth_stream"].name,
+            "format": "JSONL", "returned_to_controller": False}
     trace["controller_outcome"] = outcome
     trace["samples"] = runtime["auditor"].samples
+    if runtime.get("nail_body_ft_auditor") is not None:
+        trace["wrist_ft"] = runtime["nail_body_ft_auditor"].summary()
+        import gzip
+        from te_foundationpose_handoff_runtime import _json_ready
+        archive = Path(runtime["output_directory"]) / "wrist_ft_samples.json.gz"
+        sensor_rows = runtime["nail_body_ft_auditor"].samples
+        with gzip.open(archive, "xt", encoding="utf-8", compresslevel=1) as stream:
+            json.dump(_json_ready(sensor_rows), stream, ensure_ascii=False, separators=(",", ":"))
+        trace["wrist_ft"]["samples_archive"] = {
+            "path": str(archive), "sample_count": len(sensor_rows),
+            "scope": "ALL_AUDITOR_SAMPLES_INCLUDING_PRETASK_TARE",
+            "saved_after_motion": True,
+        }
     split_relative_motion = _split_plug_relative_motion_summary(runtime)
     trace["split_plug_relative_motion"] = split_relative_motion
     visual_consumption = trace.get("visual_transport_target_consumption")
@@ -10233,10 +10725,17 @@ def _finish_run(repository, inputs, runtime, trace, outcome):
     trace["runtime"] = _runtime_record(repository, inputs, runtime)
     trace["identity_hash_check_pass"] = identity_hashes_match(trace)
     engine_runtime = runtime["engine_monitor"].summary()
-    engine_runtime["gpu_backend_pass"] = trace["physics_backend"]["pass"]
+    engine_runtime["physics_backend_pass"] = trace["physics_backend"]["pass"]
+    engine_runtime["requested_physics_device"] = trace["physics_backend"]["requested_device"]
+    engine_runtime["gpu_backend_pass"] = trace["physics_backend"]["gpu_backend_pass"]
+    engine_runtime["cpu_backend_pass"] = trace["physics_backend"]["cpu_backend_pass"]
+    timing["sensor_archive_and_runtime_summary_s"] = perf_counter() - finish_started
+    evaluate_started = perf_counter()
     evaluation = evaluate_trace(
         trace, robot_asset_path=runtime["robot_asset"], inputs=inputs
     )
+    timing["evaluate_trace_s"] = perf_counter() - evaluate_started
+    evaluate_started = perf_counter()
     evaluation["split_plug_relative_motion"] = split_relative_motion
     evaluation["split_plug_grasp_contact_policy"] = (
         _split_plug_contact_policy_summary(runtime, evaluation)
@@ -10244,6 +10743,12 @@ def _finish_run(repository, inputs, runtime, trace, outcome):
     _apply_split_plug_contact_policy(
         evaluation, evaluation["split_plug_grasp_contact_policy"]
     )
+    if runtime.get("nail_body_ft_auditor") is not None:
+        evaluation["nail_body_stability"] = _nail_body_stability_after_motion(
+            trace["samples"], evaluation, trace["wrist_ft"])
+        print("NAIL_BODY_STABILITY", json.dumps(evaluation["nail_body_stability"], ensure_ascii=False), flush=True)
+    timing["split_contact_and_grasp_evaluation_s"] = perf_counter() - evaluate_started
+    trace["wall_timing"] = timing
     return trace, evaluation, engine_runtime
 
 
@@ -10255,6 +10760,7 @@ def _execute(
         return _execute_isolated(
             repository, arguments, output, inputs, scene_entry, motion_plan, trace
         )
+    runtime_started = perf_counter()
     runtime = _create_runtime(
         repository, arguments, inputs, grasp, scene_entry, motion_plan, trace,
         simulation_app, output,
@@ -10263,19 +10769,179 @@ def _execute(
         return runtime["visual_grasp_result"]
     if arguments.mode in (SAME_RESET_RGBD_MODE, VISION_HIGH_REOBSERVE_MODE):
         return int(runtime["same_reset_rgbd_exit_code"])
+    runtime["wall_timing"] = {"runtime_setup_s": perf_counter() - runtime_started}
+    execution_started = perf_counter()
     dynamic = arguments.dynamic_settings
     if arguments.capture_visual_evidence:
         runtime["visual_capture"] = _VisualEvidenceCapture(
             world=runtime["world"], auditor=runtime["auditor"], output=output,
             physics_dt_s=float(dynamic["physics_dt_s"]),
         )
-    _, outcome, disturbance_execution = _run_controller(
+    stepper, outcome, disturbance_execution = _run_controller(
         runtime, arguments, motion_plan, dynamic
     )
     trace["postgrasp_disturbance_execution"] = disturbance_execution
     if arguments.capture_visual_evidence and arguments.mode == "grasp-lift":
         runtime["visual_capture"].capture_run_end()
+    if arguments.postgrasp_key_observation and arguments.mode == "grasp-lift":
+        if not outcome["completed"]:
+            trace["postgrasp_key_observation_skipped"] = outcome["failure_reason"]
+        else:
+            observation = _observe_held_body(runtime, arguments, output, simulation_app)
+            if arguments.body_assembly_transport:
+                if runtime["body_assembly_scene"] is None:
+                    raise ValueError("body transport requires the same-scene source-CAD socket")
+                if observation["key_measurement"]["key_direction_measured"]:
+                    from te_body_assembly_motion import run_to_socket_observation
+                    first_motion_step = stepper.step_index
+                    try:
+                        trace["body_assembly_transport"] = run_to_socket_observation(
+                            repository, runtime, stepper, runtime["grasp_result"],
+                            dynamic, observation, output / "socket_transport")
+                    except Exception as error:
+                        saved_transport = output / "socket_transport/transport_and_observation.json"
+                        trace["body_assembly_transport"] = (
+                            json.loads(saved_transport.read_text()) if saved_transport.exists() else {})
+                        trace["body_assembly_transport"].update(completed=False, error=str(error))
+                        (output / "transport_failure.json").write_text(
+                            json.dumps({"error": str(error), "traceback": traceback.format_exc()}, indent=2) + "\n")
+                    posthoc_started = perf_counter()
+                    runtime["wall_timing"]["execution_through_transport_s"] = perf_counter() - execution_started
+                    _evaluate_body_memory_after_motion(
+                        runtime, observation["hand_from_body_visual_memory"], first_motion_step, output)
+                    entry = trace.get("body_assembly_transport", {}).get("key_entry", {})
+                    probe_record = entry.get("probe_controller")
+                    if isinstance(probe_record, dict) and probe_record.get("samples"):
+                        from te_foundationpose_handoff_runtime import _evaluate_key_entry_after_motion
+                        true_socket = np.eye(4)
+                        true_socket[:3, 3] = runtime["body_assembly_scene"]["report"]["socket_initial_position_world_m"]
+                        physical, rows = _evaluate_key_entry_after_motion(
+                            runtime["auditor"].samples, entry["probe_controller"],
+                            true_socket, entry["probe_config"])
+                        (output / "physical_key_entry_result.json").write_text(
+                            json.dumps(physical, indent=2) + "\n")
+                        (output / "physical_key_entry_samples.json").write_text(
+                            json.dumps(rows, indent=2) + "\n")
+                    runtime["wall_timing"]["body_memory_and_key_evaluation_s"] = perf_counter() - posthoc_started
+    runtime["wall_timing"]["stepper"] = dict(stepper.wall_times, physical_step_count=stepper.step_index)
+    runtime["wall_timing"]["truth_jsonl"] = runtime["truth_write_timing"]
+    (output / "run_timing.json").write_text(json.dumps(runtime["wall_timing"], indent=2) + "\n")
     return _finish_run(repository, inputs, runtime, trace, outcome)
+
+
+def _observe_held_body(runtime, arguments, output, simulation_app):
+    """Observe at fixed physics time; truth is saved only after visual estimation."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from te_foundationpose_handoff_runtime import (
+        _author_camera, _camera_cv_pose_from_eye_target, _capture_rgbd,
+        _close_rgbd_resources,
+    )
+    from kcg_connector.te_rgbd_pose_provider import estimate_held_plug_key_from_depth
+    from scipy.spatial.transform import Rotation
+    import omni.replicator.core as rep
+    import omni.usd
+    from pxr import Gf, UsdGeom
+
+    robot, active_indices, *_ = runtime["robot_data"]
+    active = robot.get_dof_positions(indices=0).numpy()[0][active_indices]
+    hand = np.asarray(runtime["robot_model"].forward_kinematics(
+        tuple(active), enforce_limits=False)["handbase_link"], dtype=np.float64)
+    nominal = np.asarray(runtime["control_plan"]["object_from_hand_row_major"]).reshape(4, 4)
+    seed = hand @ np.linalg.inv(nominal)
+    camera_pose = _camera_cv_pose_from_eye_target(arguments.postgrasp_camera_eye_m, seed[:3, 3])
+    resolution = (1280, 720)
+    focal_px = resolution[0] * 24.0 / 20.955
+    intrinsics = np.array(((focal_px, 0, 640), (0, focal_px, 360), (0, 0, 1)))
+    world = runtime["world"]
+    world.pause()
+    stage = omni.usd.get_context().get_stage()
+    camera_path = "/World/BodyGraspPostliftCamera"
+    _author_camera(stage, camera_path, camera_pose, resolution=resolution,
+                   focal_length_mm=24.0, horizontal_aperture_mm=20.955,
+                   clipping_range_m=(0.02, 10.0), Gf=Gf, UsdGeom=UsdGeom)
+    simulation_app.update()
+    world.render()
+    root = output / "postgrasp_key"
+    resources = {}
+    try:
+        capture = _capture_rgbd(rep=rep, resources=resources, camera_path=camera_path,
+                                resolution=resolution, output_dir=root,
+                                warmup_frames=3, rt_subframes=4)
+        measurement = estimate_held_plug_key_from_depth(
+            np.load(root / "depth_m.npy"), intrinsics, camera_pose, seed)
+        record = {"capture": capture, "physics_time_s": float(world.current_time),
+                  "intrinsics_3x3": intrinsics.tolist(),
+                  "world_from_camera_cv": camera_pose.tolist(),
+                  "world_from_hand_encoder": hand.tolist(),
+                  "nominal_world_from_plug_roi_seed": seed.tolist(),
+                  "active_positions_rad": active.tolist(), "key_measurement": measurement,
+                  "online_object_or_contact_truth_used": False}
+        if measurement["key_direction_measured"]:
+            observed = np.asarray(measurement["world_from_plug_row_major"]).reshape(4, 4)
+            record["hand_from_body_visual_memory"] = (np.linalg.inv(hand) @ observed).tolist()
+        (root / "camera_and_estimate.json").write_text(json.dumps(record, indent=2) + "\n")
+        # Separate posthoc readback; never supplies the camera target or estimate.
+        position, orientation = runtime["object_parts"][0].get_world_pose()
+        position = _host_array(position)
+        orientation = _host_array(orientation)
+        truth = np.eye(4)
+        truth[:3, :3] = Rotation.from_quat(orientation[[1, 2, 3, 0]]).as_matrix()
+        truth[:3, 3] = position
+        posthoc = {"world_from_body_truth": truth.tolist(), "used_for_control": False,
+                   "physics_time_s": float(world.current_time)}
+        import isaacsim.core.experimental.utils.stage as stage_utils
+        import isaacsim.core.experimental.utils.xform as xform_utils
+        fabric = stage_utils.get_current_stage(backend="fabric")
+        render_position, _ = xform_utils.get_world_pose(
+            fabric.GetPrimAtPath(str(runtime["scene"]["part_prim_paths"][0])))
+        posthoc["body_position_fabric_m"] = render_position.numpy().tolist()
+        if measurement["key_direction_measured"]:
+            posthoc["center_error_m"] = float(np.linalg.norm(observed[:3, 3] - truth[:3, 3]))
+            posthoc["axis_error_deg"] = math.degrees(math.acos(float(np.clip(observed[:3, 2] @ truth[:3, 2], -1, 1))))
+            posthoc["main_key_direction_error_deg"] = math.degrees(math.acos(float(np.clip(observed[:3, 1] @ truth[:3, 1], -1, 1))))
+            posthoc["full_rotation_error_deg"] = math.degrees(Rotation.from_matrix(observed[:3, :3].T @ truth[:3, :3]).magnitude())
+        (root / "posthoc_truth_comparison.json").write_text(json.dumps(posthoc, indent=2) + "\n")
+        print("POSTGRASP_BODY_OBSERVATION", json.dumps({"measurement": measurement, "posthoc": posthoc}), flush=True)
+        return record
+    finally:
+        _close_rgbd_resources(resources)
+
+
+def _evaluate_body_memory_after_motion(runtime, hand_from_body, first_step, output):
+    """Compare the one-shot prediction with truth only after all motion ends."""
+    from scipy.spatial.transform import Rotation
+    relation = np.asarray(hand_from_body)
+    rows = []
+    for sample in runtime["auditor"].samples:
+        if sample["step"] < first_step:
+            continue
+        if sample["phase"].startswith("key_probe_body_support_"):
+            # This visual hand-to-Body relation expires when the Body grasp
+            # is unloaded. The following raw physical trajectory stays saved.
+            break
+        hand = np.eye(4)
+        hand[:3, :3] = _quaternion_wxyz_rotation(np.asarray(sample["hand_base_orientation_wxyz"]))
+        hand[:3, 3] = sample["hand_base_position_m"]
+        predicted = hand @ relation
+        actual_rotation = _quaternion_wxyz_rotation(np.asarray(sample["object_part_orientations_wxyz"][0]))
+        actual_position = np.asarray(sample["object_part_positions_m"][0])
+        rows.append({"step": sample["step"], "phase": sample["phase"],
+                     "simulation_time_s": sample["simulation_time_s"],
+                     "center_error_m": float(np.linalg.norm(predicted[:3, 3] - actual_position)),
+                     "full_rotation_error_deg": math.degrees(Rotation.from_matrix(predicted[:3, :3].T @ actual_rotation).magnitude()),
+                     "axis_error_deg": math.degrees(math.acos(float(np.clip(predicted[:3, 2] @ actual_rotation[:, 2], -1, 1)))),
+                     "main_key_direction_error_deg": math.degrees(math.acos(float(np.clip(predicted[:3, 1] @ actual_rotation[:, 1], -1, 1)))),
+                     "predicted_body_position_m": predicted[:3, 3].tolist(),
+                     "actual_body_position_m": actual_position.tolist(),
+                     "three_finger_contact": list(sample["contacts"]["terminal_link_object"])})
+    result = {"evaluated_after_motion_only": True, "returned_to_controller": False,
+              "scope": "INITIAL_BODY_GRASP_MEMORY_UNTIL_FIRST_RELEASE",
+              "sample_count": len(rows), "final": rows[-1] if rows else None,
+              "maximum_center_error_m": max((r["center_error_m"] for r in rows), default=None),
+              "maximum_rotation_error_deg": max((r["full_rotation_error_deg"] for r in rows), default=None),
+              "samples": rows}
+    (output / "body_memory_posthoc.json").write_text(json.dumps(result, indent=2) + "\n")
 
 
 def _write_failure(output: Path, error: Exception) -> None:
@@ -10286,6 +10952,7 @@ def _write_failure(output: Path, error: Exception) -> None:
 
 
 def main() -> int:
+    main_started = perf_counter()
     repository = Path(__file__).resolve().parents[4]
     arguments = _arguments(repository)
     output = Path(arguments.output_directory).resolve()
@@ -10299,6 +10966,8 @@ def main() -> int:
         "headless": not (arguments.gui or arguments.capture_visual_evidence),
         "multi_gpu": False,
         "active_gpu": 0, "physics_gpu": 0, "fast_shutdown": True,
+        "extra_args": (["--/rtx/hydra/supportMultiTickRate=false"]
+                       if arguments.postgrasp_key_observation else []),
     })
     engine_log_path = current_engine_log_path()
     trace = (
@@ -10323,16 +10992,37 @@ def main() -> int:
         trace, evaluation, engine_runtime = result
         engine_runtime["engine_log_sync"] = synchronize_engine_log(engine_log_path)
         evaluation = finalize_engine_evaluation(evaluation, engine_runtime, engine_log_path)
+        save_started = perf_counter()
+        # Keep every non-sample field required by postprocessing. Raw physics
+        # samples are already durably recorded once in truth_samples.jsonl.
+        if arguments.body_assembly_transport:
+            metadata = {key: value for key, value in trace.items() if key != "samples"}
+            (output / "trace_metadata.json").write_text(json.dumps(
+                metadata, ensure_ascii=False, separators=(",", ":")) + "\n")
         if not arguments.omit_trace_json:
-            (output / "trace.json").write_text(
-                json.dumps(trace, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            with (output / "trace.json").open("w", encoding="utf-8") as stream:
+                json.dump(trace, stream, ensure_ascii=False,
+                           indent=None if arguments.body_assembly_transport else 2,
+                           separators=(",", ":") if arguments.body_assembly_transport else None)
+                stream.write("\n")
         if "visual_evidence" in trace:
             (output / "visual_evidence.json").write_text(
                 json.dumps(trace["visual_evidence"], ensure_ascii=False, indent=2)
                 + "\n", encoding="utf-8")
         (output / "evaluation.json").write_text(
-            json.dumps(evaluation, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print(json.dumps(evaluation, ensure_ascii=False, indent=2))
+            json.dumps(evaluation, ensure_ascii=False,
+                       indent=None if arguments.body_assembly_transport else 2,
+                       separators=(",", ":") if arguments.body_assembly_transport else None)
+            + "\n", encoding="utf-8")
+        if "wall_timing" in trace:
+            trace["wall_timing"].update(final_output_s=perf_counter() - save_started,
+                total_before_shutdown_s=perf_counter() - main_started,
+                duplicate_trace_json_written=not arguments.omit_trace_json)
+            (output / "run_timing.json").write_text(json.dumps(trace["wall_timing"], indent=2) + "\n")
+        if arguments.body_assembly_transport:
+            print("BODY_ASSEMBLY_EVALUATION_SAVED", str(output / "evaluation.json"), flush=True)
+        else:
+            print(json.dumps(evaluation, ensure_ascii=False, indent=2))
         if arguments.postgrasp_disturbance is not None:
             exit_pass = bool(
                 evaluation["nominal_research_dynamic_pass"]
