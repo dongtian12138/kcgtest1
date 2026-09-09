@@ -19,7 +19,8 @@ class BodyAssemblyVideo:
         from pxr import Gf, UsdGeom
         from te_body_socket_observation import GLOBAL_CAMERA_CONFIG, hand_camera_mount
         from te_foundationpose_handoff_runtime import _author_camera, _camera_cv_pose_from_eye_target
-        from te_multiview_video import MultiViewVideoRecorder, MAIN_SOURCE_RESOLUTION, SMALL_SOURCE_RESOLUTION
+        from te_multiview_video import (MultiViewVideoRecorder, MAIN_SOURCE_RESOLUTION, SMALL_SOURCE_RESOLUTION,
+                                       create_inspection_camera, refresh_inspection_view)
 
         self.runtime = runtime
         self.capture_wall_s = 0.0
@@ -47,6 +48,14 @@ class BodyAssemblyVideo:
         self._set_poses("initialization", np.zeros(11))
         self.recorder = MultiViewVideoRecorder(rep=rep, world=self.world, camera_paths=self.paths,
             output_path=self.output / "assembly_four_view.mp4", physics_hz=round(1.0/self.physics_dt_s), fps=self.fps)
+        self.inspection_camera = create_inspection_camera(self.world, self.paths['global'])
+        self.refresh_inspection_view = refresh_inspection_view
+        self.next_ui_refresh_wall_s = perf_counter()
+        self.last_ui_refresh_wall_s = None
+        self.ui_refresh_count = 0
+        self.ui_refresh_wall_s = 0.0
+        self.maximum_ui_refresh_gap_s = 0.0
+        self.ui_audit = (self.output / "inspection_refresh_audit.jsonl").open("x", buffering=1)
         self.timeline = (self.output / "assembly_four_view_frames.jsonl").open("x", encoding="utf-8", buffering=1)
         self.original_capture = runtime["auditor"].capture
         runtime["auditor"].capture = self.capture
@@ -81,6 +90,25 @@ class BodyAssemblyVideo:
     def capture(self, **kwargs):
         self.original_capture(**kwargs)
         step = int(kwargs["step"])
+        wall_now = perf_counter()
+        if self.inspection_camera is not None and wall_now >= self.next_ui_refresh_wall_s:
+            native_before_ui = self._native_state_for_recording()
+            audit = self.refresh_inspection_view(self.world)
+            native_after_ui = self._native_state_for_recording()
+            audit.update(step=step, phase=str(kwargs['phase']),
+                         native_state_deltas_are_record_only_not_controller_inputs=True,
+                         native_state_max_abs_deltas={
+                             name: float(np.max(np.abs(native_after_ui[name]-value)))
+                             for name, value in native_before_ui.items()})
+            self.ui_audit.write(json.dumps(audit)+'\n')
+            if self.last_ui_refresh_wall_s is not None:
+                self.maximum_ui_refresh_gap_s = max(self.maximum_ui_refresh_gap_s,
+                                                   wall_now-self.last_ui_refresh_wall_s)
+            self.last_ui_refresh_wall_s = wall_now
+            self.ui_refresh_count += 1
+            after_ui = perf_counter()
+            self.ui_refresh_wall_s += after_ui-wall_now
+            self.next_ui_refresh_wall_s = after_ui+0.1
         if step % self.stride:
             return
         started = perf_counter()
@@ -88,7 +116,12 @@ class BodyAssemblyVideo:
         native_before = self._native_state_for_recording()
         self._set_poses(phase, np.asarray(kwargs["active_positions"]))
         before = float(self.world.current_time)
-        self.recorder.capture_step(step=step, phase=phase, simulation_time_s=(step+1)*self.physics_dt_s)
+        index_before = int(self.world.current_time_step_index)
+        render_error = None
+        try:
+            self.recorder.capture_step(step=step, phase=phase, simulation_time_s=(step+1)*self.physics_dt_s)
+        except Exception as error:
+            render_error = error
         after = float(self.world.current_time)
         native_after = self._native_state_for_recording()
         deltas = {name: float(np.max(np.abs(native_after[name] - value)))
@@ -96,14 +129,20 @@ class BodyAssemblyVideo:
         for name, value in deltas.items():
             self.maximum_render_state_deltas[name] = max(
                 self.maximum_render_state_deltas.get(name, 0.0), value)
-        if abs(after - before) > 1e-9:
-            raise RuntimeError("video rendering advanced physics time")
-        self.timeline.write(json.dumps({"frame": self.recorder.frame_count-1, "step": step,
+        self.timeline.write(json.dumps({"frame": self.recorder.frame_count-1 if render_error is None else None, "step": step,
             "phase": phase, "simulation_time_s": (step+1)*self.physics_dt_s,
             "world_time_before_render_s": before, "world_time_after_render_s": after,
+            "world_step_before_render": index_before,
+            "world_step_after_render": int(self.world.current_time_step_index),
+            "render_error": str(render_error) if render_error else None,
+            "render_clock_audit": getattr(self.recorder, "last_render_audit", None),
             "render_native_state_max_abs_deltas": deltas,
             "native_state_deltas_are_record_only_not_controller_inputs": True}) + "\n")
         self.capture_wall_s += perf_counter() - started
+        if abs(after - before) > 1e-9 or int(self.world.current_time_step_index) != index_before:
+            raise RuntimeError("video rendering advanced physics time or step index") from render_error
+        if render_error is not None:
+            raise render_error
 
     def _native_state_for_recording(self):
         """Read the same native APIs on both sides of rendering; never control."""
@@ -135,8 +174,14 @@ class BodyAssemblyVideo:
     def close(self):
         self.runtime["auditor"].capture = self.original_capture
         self.timeline.close()
+        self.ui_audit.close()
         result = self.recorder.close()
         result["capture_and_encode_wall_s"] = self.capture_wall_s
+        result['inspection_view'] = dict(camera_path=self.inspection_camera,
+            camera_pose_rewritten_during_motion=False, refresh_count=self.ui_refresh_count,
+            refresh_wall_s=self.ui_refresh_wall_s, maximum_refresh_gap_s=self.maximum_ui_refresh_gap_s,
+            wall_seconds_between_refresh_attempts=0.1,
+            note='Responsiveness during explicit motion; blocking planning/perception calls are not yet serviced here.')
         result["maximum_render_native_state_deltas"] = self.maximum_render_state_deltas
         result["render_state_audit_role"] = "POSTRUN_ONLY; NO_STATE_VALUES_RETURNED_TO_CONTROL"
         result.update(camera_pose_inputs="FIXED_RIG_CALIBRATION_AND_JOINT_ENCODER_FK",

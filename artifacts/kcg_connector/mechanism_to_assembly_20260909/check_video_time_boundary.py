@@ -6,13 +6,16 @@ from pathlib import Path
 
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--output', type=Path, required=True)
+p.add_argument('--robot-display-settings', action='store_true')
+p.add_argument('--inspection-refresh', action='store_true')
 args = p.parse_args()
 out = args.output.resolve()
 out.mkdir(parents=True, exist_ok=False)
 repo = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(repo/'src/kcg_connector/isaac'))
 from isaacsim import SimulationApp
-app = SimulationApp({'headless': True, 'multi_gpu': False, 'fast_shutdown': True})
+app = SimulationApp({'headless': not args.robot_display_settings, 'multi_gpu': False, 'fast_shutdown': True,
+                     'extra_args': ['--/rtx/hydra/supportMultiTickRate=false'] if args.robot_display_settings else []})
 try:
     import numpy as np
     import omni.replicator.core as rep
@@ -22,7 +25,7 @@ try:
     from isaacsim.core.api import World
     from isaacsim.core.experimental.prims import RigidPrim
     from isaacsim.core.simulation_manager import SimulationManager
-    from te_multiview_video import MultiViewVideoRecorder
+    from te_multiview_video import MultiViewVideoRecorder,create_inspection_camera,refresh_inspection_view
     from te_foundationpose_handoff_runtime import _author_camera, _camera_cv_pose_from_eye_target
 
     SimulationManager.set_physics_sim_device('cpu')
@@ -48,6 +51,8 @@ try:
     world.pause()
     recorder = MultiViewVideoRecorder(rep=rep, world=world, camera_paths=paths,
                                       output_path=out/'diagnostic.mp4', physics_hz=960, fps=5)
+    inspection = create_inspection_camera(world, paths['global']) if args.inspection_refresh else None
+    inspection_expected = None
     tl = omni.timeline.get_timeline_interface()
     rows = []
     stream = (out/'capture_checks.jsonl').open('x', buffering=1)
@@ -55,14 +60,32 @@ try:
     failure = None
     for step in range(1, 9601):
         world.step(render=False)
+        if args.robot_display_settings and step in (1920, 5314):
+            world.pause()
+            product = rep.create.render_product(paths['palm'], (1280, 720))
+            depth = rep.AnnotatorRegistry.get_annotator('distance_to_image_plane')
+            depth.attach([product.path])
+            for _ in range(3):
+                recorder._render_views()
+            depth.detach()
+            product.destroy()
+            world.play()
         if step % 192:
             continue
+        if inspection and step == 4800:
+            camera_xform = UsdGeom.Xformable(stage.GetPrimAtPath(inspection))
+            old_transform = camera_xform.GetLocalTransformation()
+            old_transform.SetTranslateOnly(old_transform.ExtractTranslation()+Gf.Vec3d(.02, 0., 0.))
+            camera_xform.MakeMatrixXform().Set(old_transform)
+            inspection_expected = np.asarray(old_transform).copy()
         row = {'step': step, 'physics_time_before_s': float(world.current_time),
                'physics_index_before': int(world.current_time_step_index),
                'timeline_before_s': float(tl.get_current_time()),
                'timeline_end_s': float(tl.get_end_time()), 'auto_update_before': tl.is_auto_updating()}
         position_before = np.asarray(view.get_world_poses()[0]).copy()
         try:
+            if args.inspection_refresh:
+                row['inspection_refresh'] = refresh_inspection_view(world)
             recorder.capture_step(step=step, phase='moving_cube', simulation_time_s=step/960)
         except Exception as error:
             failure = str(error)
@@ -71,6 +94,10 @@ try:
                    physics_index_after=int(world.current_time_step_index),
                    timeline_after_s=float(tl.get_current_time()),
                    native_position_change_m=float(np.max(abs(np.asarray(view.get_world_poses()[0])-position_before))))
+        row['render_clock_audit'] = getattr(recorder, 'last_render_audit', None)
+        if inspection_expected is not None:
+            actual = np.asarray(UsdGeom.Xformable(stage.GetPrimAtPath(inspection)).GetLocalTransformation())
+            row['inspection_camera_edit_retained_error'] = float(np.max(abs(actual-inspection_expected)))
         stream.write(json.dumps(row)+'\n')
         rows.append(row)
         if failure:

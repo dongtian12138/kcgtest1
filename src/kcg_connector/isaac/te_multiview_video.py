@@ -8,6 +8,7 @@ steps and never returns image data to motion, grasp, or safety control.
 from __future__ import annotations
 
 from collections import Counter
+import json
 import math
 from pathlib import Path
 import shutil
@@ -27,6 +28,57 @@ SMALL_PANELS = {
     "palm": (1440, 360, 480, 360),
     "wrist": (1440, 720, 480, 360),
 }
+
+
+def refresh_inspection_view(world) -> dict[str, object]:
+    """Service UI/render events while keeping the explicit physics step fixed."""
+    import carb
+    import omni.kit.app
+    import omni.timeline
+    from isaacsim.core.simulation_manager import SimulationManager
+
+    before_time = float(world.current_time)
+    before_step = int(world.current_time_step_index)
+    timeline = omni.timeline.get_timeline_interface()
+    before_timeline = float(timeline.get_current_time())
+    auto_update = bool(timeline.is_auto_updating())
+    settings = carb.settings.get_settings()
+    play_simulations = settings.get("/app/player/playSimulations")
+    if SimulationManager.is_fabric_enabled():
+        from omni.physxfabric import get_physx_fabric_interface
+        get_physx_fabric_interface().force_update(world.get_physics_dt(), before_time)
+    try:
+        timeline.set_auto_update(False)
+        timeline.commit_silently()
+        settings.set("/app/player/playSimulations", False)
+        omni.kit.app.get_app().update()
+    finally:
+        settings.set("/app/player/playSimulations", play_simulations)
+        timeline.set_auto_update(auto_update)
+        timeline.commit_silently()
+    audit = dict(physics_time_before_s=before_time, physics_time_after_s=float(world.current_time),
+                 physics_step_before=before_step, physics_step_after=int(world.current_time_step_index),
+                 timeline_before_s=before_timeline, timeline_after_s=float(timeline.get_current_time()))
+    if audit['physics_time_after_s'] != before_time or audit['physics_step_after'] != before_step:
+        raise RuntimeError("inspection refresh advanced physics: " + json.dumps(audit))
+    return audit
+
+
+def create_inspection_camera(world, source_camera_path: str) -> str | None:
+    """Copy a framing camera once; its subsequent user edits belong to the user."""
+    from omni.kit.viewport.utility import get_active_viewport
+    from pxr import Sdf
+
+    viewport = get_active_viewport()
+    if viewport is None:
+        return None
+    path = "/World/AssemblyInspectionCamera"
+    if not world.stage.GetPrimAtPath(path):
+        layer = world.stage.GetRootLayer()
+        if not Sdf.CopySpec(layer, Sdf.Path(source_camera_path), layer, Sdf.Path(path)):
+            raise RuntimeError("could not create independent inspection camera")
+    viewport.camera_path = path
+    return path
 
 
 def build_mask_overlay(rgb_path: Path, mask_path: Path) -> np.ndarray:
@@ -198,6 +250,16 @@ class MultiViewVideoRecorder:
         timeline = omni.timeline.get_timeline_interface()
         auto_update = timeline.is_auto_updating()
         timeline_time = timeline.get_current_time()
+        def clock_state():
+            return {
+                "timeline_s": float(timeline.get_current_time()),
+                "physics_s": float(self.world.current_time),
+                "physics_step": int(self.world.current_time_step_index),
+                "timeline_playing": bool(timeline.is_playing()),
+                "timeline_auto_update": bool(timeline.is_auto_updating()),
+                "play_simulations": settings.get("/app/player/playSimulations"),
+            }
+        render_audit = {"before": clock_state()}
         try:
             timeline.set_auto_update(False)
             timeline.commit_silently()
@@ -207,18 +269,22 @@ class MultiViewVideoRecorder:
             # needs normal graph evaluation for its explicit zero-time capture.
             for _ in range(3):
                 omni.kit.app.get_app().update()
+            render_audit["after_app_flush"] = clock_state()
             settings.set("/app/player/playSimulations", play_simulations)
             self.rep.orchestrator.step(
                 rt_subframes=self.rt_subframes,
                 delta_time=0.0,
                 pause_timeline=not was_playing,
             )
+            render_audit["after_capture"] = clock_state()
         finally:
             settings.set("/app/player/playSimulations", play_simulations)
             timeline.set_auto_update(auto_update)
             timeline.commit_silently()
+            render_audit["after_restore"] = clock_state()
+            self.last_render_audit = render_audit
         if abs(timeline.get_current_time() - timeline_time) > 1e-9:
-            raise RuntimeError("observational video advanced the timeline")
+            raise RuntimeError("observational video advanced the timeline: " + json.dumps(render_audit))
         frames: dict[str, np.ndarray] = {}
         for name, (_, annotator) in self.resources.items():
             rgba = np.asarray(annotator.get_data())
