@@ -116,8 +116,8 @@ try:
             raise RuntimeError(f'copy failed: {prim.GetPath()}')
         copied.append(str(prim.GetPath()))
     physics=PhysxSchema.PhysxSceneAPI.Apply(stage.GetPrimAtPath(world.get_physics_context().prim_path))
-    if args.physics_device=='cpu':
-        physics.CreateEnableGPUDynamicsAttr(False);physics.CreateBroadphaseTypeAttr('MBP')
+    physics.CreateEnableGPUDynamicsAttr(args.physics_device!='cpu')
+    physics.CreateBroadphaseTypeAttr('MBP' if args.physics_device=='cpu' else 'GPU')
     physics.CreateSolverTypeAttr(args.solver)
     physics.CreateEnableExternalForcesEveryIterationAttr(args.external_forces_every_iteration)
     if not 0 <= args.velocity_iterations <= 255:
@@ -382,7 +382,27 @@ try:
     UsdLux.DomeLight.Define(stage,'/World/ModelVerificationLight').CreateIntensityAttr(1200.)
     product=rep.create.render_product(camera_path,(960,720)); rgb=rep.AnnotatorRegistry.get_annotator('rgb'); rgb.attach([product.path])
     layer.Export(str(out/'test_apparatus_before_physics.usdc'))
-    world.reset()
+    import faulthandler
+    reset_started=time.perf_counter()
+    (out/'initialization_status.json').write_text(json.dumps({
+        'stage':'WORLD_RESET_ENTERED','elapsed_since_app_ready_s':reset_started-wall_start})+'\n')
+    with (out/'initialization_stacks.txt').open('w') as reset_stacks:
+        faulthandler.dump_traceback_later(45.,repeat=True,file=reset_stacks)
+        try:
+            world.reset()
+        finally:
+            faulthandler.cancel_dump_traceback_later()
+    (out/'initialization_status.json').write_text(json.dumps({
+        'stage':'WORLD_RESET_COMPLETED','world_reset_wall_s':time.perf_counter()-reset_started,
+        'physics_time_after_reset_s':float(world.current_time)})+'\n')
+    backend_record={'requested_device':args.physics_device,
+        'gpu_dynamics_enabled':bool(physics.GetEnableGPUDynamicsAttr().Get()),
+        'broadphase':str(physics.GetBroadphaseTypeAttr().Get()),
+        'tensor_device':str(SimulationManager.get_physics_sim_device()),
+        'solver':str(physics.GetSolverTypeAttr().Get()),'physics_dt_s':float(world.get_physics_dt())}
+    (out/'effective_physics_backend.json').write_text(json.dumps(backend_record,indent=2)+'\n')
+    if backend_record['gpu_dynamics_enabled']!=(args.physics_device!='cpu'):
+        raise RuntimeError('Requested and effective physics backend differ')
     if args.defer_usd_output:
         if args.physics_device!='cpu':raise ValueError('deferred USD output is restricted to this CPU diagnostic')
         output_settings=carb.settings.get_settings()
@@ -528,6 +548,7 @@ try:
         sequence=[('free_hold',args.free_engagement_duration_s)]
     stream=(out/'samples.jsonl').open('x',buffering=1)
     rows=[]; previous=0.; unwrapped=0.; step=0; peaks={'contact_torque_nm':0.,'body_axial_n':0.}
+    previous_part_rotations=None
     measured_times={'world_step_s':0.,'readback_and_reduction_s':0.,'recording_s':0.,'evidence_s':0.}
     raw_depth_milestones=[.0113,.0144,.0145,.0146]
     phase_releases=[]
@@ -569,7 +590,11 @@ try:
             measured_times['world_step_s']+=time.perf_counter()-measured_tick;measured_tick=time.perf_counter()
             positions,quats=(host(x) for x in contacts.get_world_poses())
             linear,angular=(host(x) for x in contacts.get_velocities())
-            rn=Rotation.from_quat(quats[1,[1,2,3,0]]).as_matrix(); relative=frame.T@rn
+            part_rotations=Rotation.from_quat(quats[:,[1,2,3,0]]).as_matrix()
+            pose_increment_speed=(None if previous_part_rotations is None else
+                Rotation.from_matrix(part_rotations@np.swapaxes(previous_part_rotations,-1,-2)).magnitude()/dt)
+            previous_part_rotations=part_rotations.copy()
+            rn=part_rotations[1]; relative=frame.T@rn
             wrapped=float(np.arctan2(relative[1,0],relative[0,0]))
             unwrapped+=float(np.arctan2(np.sin(wrapped-previous),np.cos(wrapped-previous))); previous=wrapped
             f,points,normals,separations,counts,starts,ids=contacts.get_raw_contact_data()
@@ -595,6 +620,8 @@ try:
                  'external_applied_torque_world_nm':(axis*applied_torque_nm).tolist(),
                  'positions_world_m':positions.tolist(),'quaternions_wxyz':quats.tolist(),
                  'native_linear_velocity_m_s':linear.tolist(),'native_angular_velocity_rad_s':angular.tolist(),
+                 'pose_increment_angular_speed_rad_s':None if pose_increment_speed is None else pose_increment_speed.tolist(),
+                 'pose_speed_used_only_for_independent_abort_not_actuator_feedback':True,
                  'native_link_velocity_crosscheck':(read_link_velocity_crosscheck(link_view,link_indices) if link_view is not None else None),
                  'normal_wrenches_n_nm':np.asarray(nw).tolist(),'friction_wrenches_n_nm':fw.tolist(),
                  'normal_counts':counts.ravel().tolist(),'normal_loads_n':normal_load,
@@ -646,8 +673,9 @@ try:
                 (out/'timing_progress.json').write_text(json.dumps(measured_times,indent=2)+'\n')
             if not np.isfinite(positions).all():
                 raise RuntimeError('native observation is not finite')
-            if direct_torque and np.max(np.linalg.norm(angular,axis=1))>5.:
-                raise RuntimeError('Direct torque diagnostic stopped at independent 5 rad/s speed limit')
+            if ((direct_torque or args.torque_only_guide) and pose_increment_speed is not None
+                    and float(np.max(pose_increment_speed))>5.):
+                raise RuntimeError('Torque-only diagnostic stopped at independent 5 rad/s speed limit')
             step+=1
     capture('final',step);video.release();stream.close();frame_audit.close();world.pause()
     (out/'video_frames.json').write_text(json.dumps(images,indent=2)+'\n')
@@ -679,6 +707,10 @@ try:
 except Exception:
     import traceback
     failed=True;error=traceback.format_exc();(out/'error.txt').write_text(error);print(error,flush=True)
+    (out/'failure_timing.json').write_text(json.dumps({
+        'elapsed_since_app_ready_s':time.perf_counter()-wall_start,
+        'components_s':globals().get('measured_times'),
+        'completed_loop_steps':globals().get('step')},indent=2)+'\n')
     if 'video' in globals():video.release()
     if 'stream' in globals():stream.close()
     if 'frame_audit' in globals():frame_audit.close()
