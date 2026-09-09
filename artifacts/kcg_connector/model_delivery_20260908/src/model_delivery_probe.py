@@ -51,7 +51,25 @@ p.add_argument('--video-fps', type=float, default=2.)
 p.add_argument('--instrumented-guide-calibration',type=Path)
 p.add_argument('--profile-python',action='store_true',help='Record call-time profile without changing physics commands.')
 p.add_argument('--defer-usd-output',action='store_true',help='Publish native CPU poses to USD only for evidence; verify native state invariance.')
+p.add_argument('--free-engagement-duration-s',type=float,
+               help='Short free-connector diagnostic; all external apparatus disabled BEFORE reset.')
+p.add_argument('--diagnostic-disable-grounding-band',action='store_true',
+               help='Causal comparison only, never a delivery model or assembly result.')
+p.add_argument('--torque-only-guide',action='store_true',
+               help='Apply the finite rotary drive without lateral, axial or tilt constraints.')
 args = p.parse_args()
+if args.torque_only_guide and (args.insert_distance_m or args.instrumented_guide_calibration
+                              or args.rotation_driver!='external_d6'
+                              or args.free_engagement_duration_s is not None):
+    p.error('Torque-only apparatus cannot have insertion, instrumentation or a free-settling override')
+if args.free_engagement_duration_s is not None:
+    if (not 0 < args.free_engagement_duration_s <= .1 or not args.initial_pose
+            or not args.frozen_model or args.instrumented_guide_calibration
+            or args.rotation_driver != 'external_d6' or args.insert_distance_m
+            or args.rigid_contact_diagnostic or args.diagnostic_thread_friction is not None):
+        p.error('Free engagement requires a frozen model, declared initial pose, <=0.1 s and no other apparatus/contact changes')
+elif args.diagnostic_disable_grounding_band:
+    p.error('Grounding-band removal is restricted to the short free-engagement causal diagnostic')
 repo=args.repository.resolve(); out=args.output.resolve()
 out.mkdir(parents=True, exist_ok=False)
 (out/'driver_snapshot.py').write_bytes(Path(__file__).read_bytes())
@@ -115,7 +133,9 @@ try:
     installed_model=None;seal_record=None
     if args.frozen_model:
         import importlib.util
-        installer=Path(__file__).resolve().parents[1]/'package/install_model.py'
+        installer=args.frozen_model.resolve().with_name('install_model.py')
+        if not installer.is_file():
+            installer=Path(__file__).resolve().parents[1]/'package/install_model.py'
         spec=importlib.util.spec_from_file_location('delivery_install_model',installer)
         module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
         installed_model=module.install_model(stage,model_path=args.frozen_model)
@@ -183,6 +203,11 @@ try:
             UsdPhysics.CollisionAPI(stage.GetPrimAtPath(path)).CreateCollisionEnabledAttr(False)
         report['diagnostic_only']={'disabled_compliant_contacts':diagnostic_disabled,
             'not_a_delivery_model':True,'purpose':'Isolate rigid keys, threads and stop from compliant loads'}
+    if args.diagnostic_disable_grounding_band:
+        path=report['grounding_band_contact_model']['compliant_band_collision']
+        UsdPhysics.CollisionAPI(stage.GetPrimAtPath(path)).CreateCollisionEnabledAttr(False)
+        report['diagnostic_only']={'disabled_compliant_contacts':[path],
+            'not_a_delivery_model':True,'purpose':'Causal comparison of the first free engagement transient only'}
     if args.paired_stop_boxes:
         if not args.hard_stop_boxes:raise ValueError('Paired Socket boxes require the existing Body stop boxes')
         from contact_stop_proxy import install_socket_stop_boxes
@@ -265,7 +290,7 @@ try:
     guide.CreateBody1Rel().SetTargets([parts[1].GetPath()]); guide.CreateExcludeFromArticulationAttr(True)
     guide.CreateLocalPos0Attr(Gf.Vec3f(*origin)); guide.CreateLocalRot0Attr(Gf.Quatf(q0[3],Gf.Vec3f(*q0[:3])))
     guide.CreateLocalPos1Attr(Gf.Vec3f(0.)); guide.CreateLocalRot1Attr(Gf.Quatf(1.))
-    for name in ('transX','transY','rotX','rotY'):
+    for name in (() if args.torque_only_guide else ('transX','transY','rotX','rotY')):
         limit=UsdPhysics.LimitAPI.Apply(guide.GetPrim(),name); limit.CreateLowAttr(1.); limit.CreateHighAttr(-1.)
     drive=UsdPhysics.DriveAPI.Apply(guide.GetPrim(),'rotZ')
     K=30.; D=.1
@@ -318,6 +343,23 @@ try:
         external_drive=drive
         (out/'instrumented_guide.json').write_text(json.dumps(instrumentation['metadata'],indent=2)+'\n')
         (out/'instrumented_guide_snapshot.py').write_bytes((repo/'src/kcg_connector/isaac/te_instrumented_rotary_guide.py').read_bytes())
+    if args.free_engagement_duration_s is not None:
+        guide.CreateJointEnabledAttr(False)
+        drive.GetMaxForceAttr().Set(0.);drive.GetStiffnessAttr().Set(0.);drive.GetDampingAttr().Set(0.)
+        report['free_engagement_diagnostic']={
+            'duration_s':args.free_engagement_duration_s,
+            'external_guide_disabled_before_world_reset':True,
+            'external_drive_cap_nm':0.,'post_start_pose_writes':False,
+            'grounding_band_disabled_for_comparison':args.diagnostic_disable_grounding_band,
+            'not_robot_assembly_or_delivery_validation':True}
+        (out/'assembly_scene.json').write_text(json.dumps(report,indent=2)+'\n')
+    if args.torque_only_guide:
+        report['torque_only_apparatus']={
+            'lateral_translation_constrained':False,'axial_translation_constrained':False,
+            'tilt_constrained':False,'only_rotZ_force_drive_authored':True,
+            'maximum_rotary_drive_nm':args.torque_cap_nm,
+            'scope':'DECLARED_TEST_ACTUATOR_NOT_ROBOT_ASSEMBLY'}
+        (out/'assembly_scene.json').write_text(json.dumps(report,indent=2)+'\n')
     # The CPU tensor contact reader also needs this API even when the optional
     # per-shape event query below is not used.
     for x in parts:PhysxSchema.PhysxContactReportAPI.Apply(x).CreateThresholdAttr(0.)
@@ -328,6 +370,10 @@ try:
     band_report=report['grounding_band_contact_model']
     own_groups={band_report['rigid_core_collision']:'rigid_core',
                 band_report['compliant_band_collision']:'grounding'}
+    for prim in stage.Traverse():
+        path=str(prim.GetPath())
+        if path.startswith(band_report['compliant_band_collision']+'_Sector_'):
+            own_groups[path]='grounding'
     if seal_record:own_groups[seal_record['seal_collision']]='seal'
     other_groups={path:'contacts128' for path in report['representative_mating_contacts']['clip_paths']}
     camera_path='/World/ModelVerificationCamera'
@@ -478,6 +524,8 @@ try:
     sequence=[('initial_hold',args.initial_hold_duration_s)]
     if axial:sequence.append(('key_insertion',args.insert_duration_s));sequence.append(('insertion_settle',.5))
     sequence += [('rotation',args.turn_duration_s),('loaded_hold',args.loaded_hold_duration_s),('free_hold',args.release_duration_s)]
+    if args.free_engagement_duration_s is not None:
+        sequence=[('free_hold',args.free_engagement_duration_s)]
     stream=(out/'samples.jsonl').open('x',buffering=1)
     rows=[]; previous=0.; unwrapped=0.; step=0; peaks={'contact_torque_nm':0.,'body_axial_n':0.}
     measured_times={'world_step_s':0.,'readback_and_reduction_s':0.,'recording_s':0.,'evidence_s':0.}
@@ -576,6 +624,7 @@ try:
                 if args.full_shape_contact_report:
                     pairs=read_shape_contact_pairs(contact_interface,dt,body_path,positions[0])
                     row['body_shape_contacts']=group_shape_pairs(pairs,own_groups,other_groups)
+                    row['body_shape_contact_pairs']=pairs
             if raw_depth_milestones and depth>=raw_depth_milestones[0]:
                 milestone=raw_depth_milestones.pop(0)
                 np.savez_compressed(out/f'raw_depth_{milestone*1000:.1f}mm.npz',
@@ -621,6 +670,11 @@ try:
             'free_hold_depth_change_m':free[-1]['body_depth_m']-free[0]['body_depth_m'],
             'wall_seconds':time.perf_counter()-wall_start,'success_requires_postrun_physical_review':True}
     result['measured_wall_time_components_s']=measured_times
+    if args.torque_only_guide:
+        result['torque_only_apparatus']=report['torque_only_apparatus']
+    if args.free_engagement_duration_s is not None:
+        result['scope']='SHORT_FREE_ENGAGEMENT_CAUSAL_DIAGNOSTIC_NOT_ASSEMBLY_OR_DELIVERY_VALIDATION'
+        result['free_engagement_diagnostic']=report['free_engagement_diagnostic']
     (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
 except Exception:
     import traceback
