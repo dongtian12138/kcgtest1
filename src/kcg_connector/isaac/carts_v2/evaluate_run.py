@@ -333,6 +333,7 @@ class TruthAuditRecorder:
         tensor_contact_sensor_paths: Sequence[str],
         tensor_contact_max_count: int,
         object_articulation=None,
+        sample_log_path=None,
     ) -> None:
         self.object_parts = tuple(object_parts)
         self.object_articulation = object_articulation
@@ -375,7 +376,14 @@ class TruthAuditRecorder:
             raise ValueError("simulator mass differs from the registered object model")
         self.table_top_z_m = float(table_top_z_m)
         self.physics_dt_s = float(physics_dt_s)
-        self.samples: list[dict[str, object]] = []
+        if sample_log_path is None:
+            self.samples = []
+        else:
+            if __package__:
+                from .disk_samples import DiskSamples
+            else:
+                from disk_samples import DiskSamples
+            self.samples = DiskSamples(sample_log_path)
         self._event_headers: list[tuple[tuple[str, ...], int]] = []
         self._physics_step_reports: list[list[dict[str, object]]] = []
         self._contact_report_subscription = contact_interface.subscribe_contact_report_events(

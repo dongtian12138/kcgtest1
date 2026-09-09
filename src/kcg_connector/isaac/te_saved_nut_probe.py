@@ -103,7 +103,8 @@ def run_probe(*, repository, args, world, robot_data, ft_tree, plug_tree,
         physics_dt_s=dynamic["physics_dt_s"],engine_monitor=PhysxStatsMonitor(world.get_physics_context()),
         physics_step_interface=get_physx_interface(),tensor_contact_prim=contact_view,
         tensor_contact_sensor_paths=contact_paths,tensor_contact_max_count=max(
-            4096,int(prepared_scene["contact_recording"].get("minimum_contact_records",4096))))
+            4096,int(prepared_scene["contact_recording"].get("minimum_contact_records",4096))),
+        sample_log_path=output/"truth_samples.jsonl")
     ft_document=json.loads((repository/"src/kcg_connector/config/te_visual_high_reobserve_v1.json").read_text())
     w=source_metadata["wrist_ft"]
     rotation_force_reference=(float(w["force_limit_n"]) if args.probe_planned_contact_force_stop_n is None
@@ -159,11 +160,9 @@ def run_probe(*, repository, args, world, robot_data, ft_tree, plug_tree,
     # before enabling a new free-space test. Grasp/contact motions are not run
     # in this open-hand warmup; all raw FT and existing joint limits remain.
     ft.gate_enabled=not args.probe_start_open
-    truth_stream=(output/"truth_samples.jsonl").open("x",buffering=1)
     original_capture=recorder.capture
     def capture(**kwargs):
         original_capture(**kwargs)
-        truth_stream.write(json.dumps(recorder.samples[-1],separators=(",",":"))+"\n")
         ft.capture(**kwargs)
     recorder.capture=capture
     stepper=controller.JointSignalStepper(robot=robot,world=world,auditor=recorder,
@@ -522,11 +521,14 @@ def run_probe(*, repository, args, world, robot_data, ft_tree, plug_tree,
     except Exception as error:
         result["failure_reason"]=str(error)
     finally:
-        world.pause();truth_stream.close()
+        world.pause();recorder.samples.close()
         result["video"]=video.close()
         result["stepper_wall_s"]=stepper.wall_times
         result["execution_wall_s"]=perf_counter()-started
         result["physical_step_count"]=stepper.step_index
+        result["truth_storage"]={"kind":"INDEXED_JSONL_WITH_ONE_CACHED_PAYLOAD",
+            "sample_count":len(recorder.samples),"full_historical_rows_retained_on_disk":True,
+            "wrist_force_filter_and_sensor_history_changed":False}
         result["controller_completed"]=bool(result.get("controller",{}).get("completed"))
         if args.probe_repeat_after_reindex:
             result["controller_completed"] &= bool(result.get("controller_after_index",{}).get("completed"))
