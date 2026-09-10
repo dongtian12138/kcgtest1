@@ -90,8 +90,20 @@ def install_model(stage, model_path=None, *, body_path=BODY, nut_path=NUT,
                 raise ValueError(f'Caller mass/inertia differs from frozen model: {dst}.{name}')
     old_joint=stage.GetPrimAtPath(passive_joint_path)
     source_joint=source.GetPrimAtPath(JOINT)
-    if not old_joint or not source_joint or not old_joint.IsA(UsdPhysics.RevoluteJoint) or not source_joint.IsA(UsdPhysics.RevoluteJoint):
-        raise ValueError('The existing original Body/Nut revolute joint is required')
+    def permitted_internal_bearing(prim):
+        if not prim:return False
+        if prim.IsA(UsdPhysics.RevoluteJoint):return True
+        if prim.GetTypeName()!='PhysicsJoint':return False
+        travel=prim.GetAttribute('kcg:captiveNutAxialPlayM').Get()
+        if travel is None or not 0<float(travel)<=.002:return False
+        for axis in ('transX','transY','rotX','rotY'):
+            limit=UsdPhysics.LimitAPI(prim,axis)
+            if limit.GetLowAttr().Get()!=1. or limit.GetHighAttr().Get()!=-1.:return False
+        axial=UsdPhysics.LimitAPI(prim,'transZ')
+        return (abs(float(axial.GetLowAttr().Get())+float(travel)/2)<1e-9 and
+                abs(float(axial.GetHighAttr().Get())-float(travel)/2)<1e-9)
+    if not permitted_internal_bearing(old_joint) or not permitted_internal_bearing(source_joint):
+        raise ValueError('Expected original revolute or bounded captive-nut bearing')
     src_joint=UsdPhysics.Joint(source_joint)
     if list(map(str,src_joint.GetBody0Rel().GetTargets()))!=[BODY] or list(map(str,src_joint.GetBody1Rel().GetTargets()))!=[NUT]:
         raise ValueError('Frozen internal joint is not the permitted Body/Nut topology')

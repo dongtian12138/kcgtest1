@@ -149,7 +149,7 @@ try:
         for key in ('interfacial_seal_contact_model','hard_stop_contact_model','paired_stop_contact_model',
                     'passive_joint_representation','grounding_band_contact_model',
                     'representative_mating_contacts','representative_inner_thread','native_joint_friction',
-                    'pin_entry_compliance_candidate'):
+                    'pin_entry_compliance_candidate','source_shell_guide_contacts','captive_nut_axial_play'):
             if key in frozen_report:report[key]=frozen_report[key]
         material_map={x['source']:x['installed'] for x in installed_model['private_materials']}
         def remap_materials(value):
@@ -260,16 +260,18 @@ try:
             if part.HasAPI(UsdPhysics.ArticulationRootAPI):part.RemoveAPI(UsdPhysics.ArticulationRootAPI)
             if part.HasAPI(PhysxSchema.PhysxArticulationAPI):part.RemoveAPI(PhysxSchema.PhysxArticulationAPI)
         joint=stage.GetPrimAtPath('/World/TE_J35FreeSplitPlug/Joints/CouplingNutRevolute')
-        source_static=float(joint.GetAttribute('physxJointAxis:angular:staticFrictionEffort').Get())
-        source_dynamic=float(joint.GetAttribute('physxJointAxis:angular:dynamicFrictionEffort').Get())
+        captive_play=joint.GetAttribute('kcg:captiveNutAxialPlayM').Get()
+        source_static=float(joint.GetAttribute('kcg:passiveResistanceNm' if captive_play else 'physxJointAxis:angular:staticFrictionEffort').Get())
+        source_dynamic=float(joint.GetAttribute('kcg:passiveResistanceNm' if captive_play else 'physxJointAxis:angular:dynamicFrictionEffort').Get())
         if abs(source_static-source_dynamic)>1e-8:
             raise ValueError('This passive regularization requires equal source static/dynamic effort')
-        friction=UsdPhysics.DriveAPI.Apply(joint,'angular')
+        friction=UsdPhysics.DriveAPI.Apply(joint,'rotZ' if captive_play else 'angular')
         friction.CreateTypeAttr('force');friction.CreateStiffnessAttr(0.)
         friction.CreateDampingAttr(100.*np.pi/180.);friction.CreateMaxForceAttr(source_dynamic)
         friction.CreateTargetVelocityAttr(0.)
         report['passive_joint_representation']={
-            'kind':'REGULAR_REVOLUTE_SAME_FRAMES_AND_MASSES',
+            'kind':'CAPTIVE_NUT_WITH_AXIAL_PLAY' if captive_play else 'REGULAR_REVOLUTE_SAME_FRAMES_AND_MASSES',
+            'axial_play_m':float(captive_play or 0.),
             'source_axis_static_dynamic_effort_nm':[source_static,source_dynamic],
             'passive_resistance':'Native zero-speed damper capped at source dry-friction torque; regularized near zero velocity',
             'damping_nm_s_rad':100.,'maximum_resistance_nm':source_dynamic,
