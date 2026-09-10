@@ -12,4 +12,4 @@ exec timeout --signal=TERM --kill-after=2 175 \
   --model artifacts/kcg_connector/first_turn_support_20260910/connector_engagement_repaired/connector_model.usdc \
   --install-into-source artifacts/kcg_connector/model_delivery_20260908/package/source_scene.usda \
   --initial-pose artifacts/kcg_connector/first_turn_support_20260910/first_thread_start_pose.json \
-  --first-turn-deg 40 --output "${connector_run_output}"
+  --first-turn-deg 40 --release-hold-s 3 --output "${connector_run_output}"

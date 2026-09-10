@@ -24,9 +24,12 @@ def main():
     parser.add_argument('--first-turn-duration-s', type=float, default=.7)
     parser.add_argument('--first-turn-torque-cap-nm', type=float, default=.12)
     parser.add_argument('--oscillation-deg', type=float, default=5.)
+    parser.add_argument('--release-hold-s', type=float, default=.1,
+                        help='Passive hold after the first turn and at the end, up to 3 s.')
     args = parser.parse_args()
     if not (0 <= args.first_turn_deg <= 60 and .3 <= args.first_turn_duration_s <= 1.5
-            and 0 < args.first_turn_torque_cap_nm <= .25 and 0 < args.oscillation_deg <= 10):
+            and 0 < args.first_turn_torque_cap_nm <= .25 and 0 < args.oscillation_deg <= 10
+            and .1 <= args.release_hold_s <= 3.):
         parser.error('Finite first-turn load and duration required')
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output/'driver_snapshot.py').write_bytes(Path(__file__).read_bytes())
@@ -175,8 +178,8 @@ def main():
         sequence = [('settle', .05), ('side_load', .12), ('release', .10), ('nut_forward', .10), ('nut_reverse', .10), ('free_hold', .10)]
         if turn_joint:
             sequence = [('settle', .05), ('first_turn', args.first_turn_duration_s),
-                        ('after_turn_release', .10), ('side_load', .12), ('release', .10),
-                        ('nut_reverse', .18), ('nut_forward', .18), ('free_hold', .10)]
+                        ('after_turn_release', args.release_hold_s), ('side_load', .12), ('release', .10),
+                        ('nut_reverse', .18), ('nut_forward', .18), ('free_hold', args.release_hold_s)]
         rows = []; previous = None
         with (args.output/'samples.jsonl').open('x', buffering=1) as stream:
             for phase, duration in sequence:
