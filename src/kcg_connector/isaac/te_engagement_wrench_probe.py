@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Short open-loop lateral-load / loose-nut diagnostic of a frozen connector.
 
-Only the socket is fixed. No external joint, pose correction or feedback drive
-is added. The force schedule is an explicit laboratory load, not hand control.
+Only the socket is fixed. The optional finite rotary test actuator has no
+lateral, axial or tilt constraints and is disabled during disturbance loading.
+The force schedule is an explicit laboratory load, not hand control or a Body
+pose servo. No state-dependent pose correction is applied.
 Run through timeout with a wall limit below 180 s, including startup/output.
 """
 import argparse
@@ -26,11 +28,21 @@ def main():
     parser.add_argument('--oscillation-deg', type=float, default=5.)
     parser.add_argument('--release-hold-s', type=float, default=.1,
                         help='Passive hold after the first turn and at the end, up to 3 s.')
+    parser.add_argument('--loaded-retention', action='store_true',
+                        help='Continue tightening, release the rotary tool, then apply a fixed six-axis load basis to Body.')
+    parser.add_argument('--tighten-deg', type=float, default=230.)
+    parser.add_argument('--tighten-duration-s', type=float, default=2.5)
+    parser.add_argument('--retention-load-set', choices=('all','body_torsion','side_pair','challenge','reverse_torsion'), default='all')
+    parser.add_argument('--retention-hold-s', type=float, default=.06,
+                        help='Full-load plateau, with the original30ms loading/unloading ramps.')
     args = parser.parse_args()
     if not (0 <= args.first_turn_deg <= 60 and .3 <= args.first_turn_duration_s <= 1.5
             and 0 < args.first_turn_torque_cap_nm <= .25 and 0 < args.oscillation_deg <= 10
             and .1 <= args.release_hold_s <= 3.):
         parser.error('Finite first-turn load and duration required')
+    if args.loaded_retention and not (args.first_turn_deg==40. and 60.<=args.tighten_deg<=260.
+                                     and 1.5<=args.tighten_duration_s<=3. and .06<=args.retention_hold_s<=.6):
+        parser.error('Loaded retention requires the existing first40deg and a finite additional profile')
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output/'driver_snapshot.py').write_bytes(Path(__file__).read_bytes())
     started = time.monotonic()
@@ -44,7 +56,7 @@ def main():
         import omni.usd
         import omni.replicator.core as rep
         import omni.timeline
-        from pxr import Gf, PhysxSchema, Sdf, Usd, UsdGeom, UsdLux, UsdPhysics
+        from pxr import Gf, PhysxSchema, Sdf, Usd, UsdGeom, UsdLux, UsdPhysics, PhysicsSchemaTools
         from scipy.spatial.transform import Rotation
         from isaacsim.core.api import World
         from isaacsim.core.experimental.prims import RigidPrim
@@ -151,6 +163,16 @@ def main():
         print(json.dumps(native_shapes),flush=True)
         carb.logging.acquire_logging().set_level_threshold_for_source('omni.physx.plugin', carb.logging.LogSettingBehavior.OVERRIDE, carb.logging.LEVEL_ERROR)
         interface = get_physx_simulation_interface()
+        # Reuse one complete native contact snapshot for both actors. This
+        # removes duplicate reads/path decoding, not contact processing or samples.
+        class ContactSnapshot:
+            data = None
+            def get_full_contact_report(self): return self.data
+        snapshot=ContactSnapshot();decoded_paths={}
+        def decode_path(value):
+            key=int(value)
+            if key not in decoded_paths:decoded_paths[key]=str(PhysicsSchemaTools.intToSdfPath(value))
+            return decoded_paths[key]
         def host(value): return value.numpy() if hasattr(value, 'numpy') else np.asarray(value)
         def state(): return np.concatenate([host(a).ravel() for a in (*view.get_world_poses(), *view.get_velocities())])
         image_rows = []
@@ -180,65 +202,125 @@ def main():
             sequence = [('settle', .05), ('first_turn', args.first_turn_duration_s),
                         ('after_turn_release', args.release_hold_s), ('side_load', .12), ('release', .10),
                         ('nut_reverse', .18), ('nut_forward', .18), ('free_hold', args.release_hold_s)]
+        load_cases={}
+        if args.loaded_retention:
+            sequence=[('settle',.05),('first_turn',args.first_turn_duration_s),('first_turn_hold',.10),
+                      ('tighten',args.tighten_duration_s),('tighten_hold',.20),('preload_release',.15)]
+            kinds=[('side',10.)] if args.retention_load_set=='side_pair' else [('force',10.),('moment',.2)]
+            for kind,amplitude in kinds:
+                for axis in range(2 if kind=='side' else 3):
+                    if args.retention_load_set=='body_torsion' and (kind!='moment' or axis!=2):continue
+                    directions=([(-1.,'minus'),(1.,'plus')] if args.retention_load_set=='body_torsion' else [(1.,'plus'),(-1.,'minus')])
+                    for sign,label in directions:
+                        name=f'{kind}_{"xyz"[axis]}_{label}'
+                        load_cases[name]=(kind,axis,sign*amplitude)
+                        sequence.extend([(name,.06+args.retention_hold_s),(name+'_unload',.06)])
+            if args.retention_load_set in ('challenge','reverse_torsion'):
+                load_cases=({'side_x_plus':('side',0,10.),'moment_z_plus':('moment',2,.2)}
+                            if args.retention_load_set=='challenge' else {'moment_z_plus':('moment',2,.2)})
+                sequence=sequence[:6]
+                for name in load_cases:sequence.extend([(name,.06+args.retention_hold_s),(name+'_unload',.06)])
+            sequence.append(('free_hold',.20))
         rows = []; previous = None
+        initial_nut_rotation=Rotation.from_quat(np.asarray(pose['quaternions_wxyz'][1])[[1,2,3,0]]).as_matrix()
+        measured_wall={'physics_s':0.,'readback_s':0.,'evidence_s':0.}
         with (args.output/'samples.jsonl').open('x', buffering=1) as stream:
             for phase, duration in sequence:
                 if turn_joint:
-                    rotating = phase in ('first_turn', 'nut_reverse', 'nut_forward')
+                    rotating = phase in ('first_turn', 'first_turn_hold', 'tighten', 'tighten_hold', 'nut_reverse', 'nut_forward')
                     turn_joint.CreateJointEnabledAttr(rotating)
                     turn_drive.GetStiffnessAttr().Set(30.*np.pi/180. if rotating else 0.)
                     turn_drive.GetDampingAttr().Set(.1*np.pi/180. if rotating else 0.)
-                    turn_drive.GetMaxForceAttr().Set((args.first_turn_torque_cap_nm if phase == 'first_turn' else .05) if rotating else 0.)
+                    cap=(.25 if phase in ('tighten','tighten_hold') else args.first_turn_torque_cap_nm if phase in ('first_turn','first_turn_hold') else .05)
+                    turn_drive.GetMaxForceAttr().Set(cap if rotating else 0.)
                     interface.flush_changes()
                 for i in range(round(duration/dt)):
                     ramp = min(1., (i+1)*dt/.03)
                     forces = np.zeros((2, 3)); torques = np.zeros((2, 3))
                     if phase == 'side_load': forces[0, 0] = 10.*ramp; torques[0, 1] = .2*ramp
+                    if phase in load_cases:
+                        kind,axis,value=load_cases[phase]
+                        # 30ms ramp up, declared plateau, 30ms ramp down; no
+                        # retightening or pose reset between the prescribed cases.
+                        elapsed=(i+1)*dt
+                        scale=min(1.,elapsed/.03,max(0.,(duration-elapsed)/.03))
+                        if kind=='side':
+                            forces[0,axis]=value*scale
+                            torques[0]=np.cross([0.,0.,.02],forces[0])
+                        else:
+                            (forces if kind=='force' else torques)[0,axis]=value*scale
                     if turn_joint:
                         u = (i+1)/round(duration/dt); blend = 10*u**3-15*u**4+6*u**5
                         if phase == 'first_turn': target = args.first_turn_deg*blend
+                        elif phase == 'tighten': target = args.first_turn_deg+(args.tighten_deg-args.first_turn_deg)*blend
                         elif phase == 'nut_reverse': target = args.first_turn_deg-args.oscillation_deg*blend
                         elif phase == 'nut_forward': target = args.first_turn_deg-args.oscillation_deg+args.oscillation_deg*blend
                         else: target = float(turn_drive.GetTargetPositionAttr().Get())
                         turn_drive.GetTargetPositionAttr().Set(target)
                     elif phase in ('nut_forward', 'nut_reverse'): torques[1, 2] = (-1 if phase == 'nut_forward' else 1)*.05*ramp
                     view.apply_forces_and_torques_at_pos(forces=forces, torques=torques)
+                    tick=time.monotonic()
                     world.step(render=False)
+                    measured_wall['physics_s']+=time.monotonic()-tick;tick=time.monotonic()
                     pos, quat = (host(x).copy() for x in view.get_world_poses())
                     rotation = Rotation.from_quat(quat[:, [1, 2, 3, 0]])
                     speed = None if previous is None else (rotation*previous.inv()).magnitude()/dt
                     previous = rotation
                     relative = rotation[0].inv()*rotation[1]
+                    nut_from_initial=initial_nut_rotation.T@rotation[1].as_matrix()
+                    nut_angle=float(np.degrees(np.arctan2(nut_from_initial[1,0],nut_from_initial[0,0])))
+                    if args.loaded_retention and nut_angle< -30.:nut_angle+=360.
+                    angle_error=(float(turn_drive.GetTargetPositionAttr().Get())-nut_angle) if turn_joint else 0.
+                    spring_estimate=(float(np.clip(30.*2.*np.sin(np.radians(angle_error)/2.),
+                                      -float(turn_drive.GetMaxForceAttr().Get()),float(turn_drive.GetMaxForceAttr().Get())))
+                                     if turn_joint and turn_joint.GetJointEnabledAttr().Get() else 0.)
+                    snapshot.data=interface.get_full_contact_report()
                     row = {'time_s': float(world.current_time), 'phase': phase, 'positions_world_m': pos.tolist(), 'quaternions_wxyz': quat.tolist(),
                            'applied_forces_world_n': forces.tolist(), 'applied_torques_world_nm': torques.tolist(),
                            'lateral_m': float(np.linalg.norm(pos[0, :2]-socket_origin[:2])), 'depth_m': float(socket_origin[2]-pos[0, 2]),
                            'tilt_deg': float(np.degrees(np.arccos(np.clip(-rotation[0].as_matrix()[2, 2], -1, 1)))),
                            'nut_relative_deg': float(np.degrees(np.arctan2(relative.as_matrix()[1, 0], relative.as_matrix()[0, 0]))),
                            'nut_axial_offset_in_body_m': float((rotation[0].as_matrix().T@(pos[1]-pos[0]))[2]),
-                           'shape_contacts': read_shape_contact_pairs(interface, dt, body, pos[0]),
-                           'nut_shape_contacts': read_shape_contact_pairs(interface, dt, nut, pos[1]),
+                           'shape_contacts': read_shape_contact_pairs(snapshot, dt, body, pos[0],decode_path=decode_path),
+                           'nut_shape_contacts': read_shape_contact_pairs(snapshot, dt, nut, pos[1],decode_path=decode_path),
+                           'nut_angle_about_socket_axis_deg':nut_angle,
+                           'rotary_spring_effort_estimate_nm':spring_estimate,
+                           'effort_scope':'Drive spring-law estimate excluding damping/implicit-solver effects; not a force sensor',
+                           'pose_increment_speed_rad_s':None if speed is None else speed.tolist(),
                            'native_linear_velocity_m_s': host(view.get_velocities()[0]).tolist(),
                            'native_angular_velocity_rad_s': host(view.get_velocities()[1]).tolist(),
                            'rotary_actuator_enabled': bool(turn_joint.GetJointEnabledAttr().Get()) if turn_joint else False,
                            'rotary_actuator_target_deg': float(turn_drive.GetTargetPositionAttr().Get()) if turn_joint else None,
                            'rotary_actuator_cap_nm': float(turn_drive.GetMaxForceAttr().Get()) if turn_joint else 0.}
                     stream.write(json.dumps(row, separators=(',', ':'))+'\n'); rows.append(row)
+                    measured_wall['readback_s']+=time.monotonic()-tick
                     if not np.isfinite(pos).all() or (speed is not None and max(speed)>5.) or row['lateral_m']>.002 or row['tilt_deg']>5.:
                         raise RuntimeError('Independent finite state / speed / displacement stop')
                     if time.monotonic()-started > 155.: raise RuntimeError('Internal wall-clock stop; reserve time for output')
-                capture(phase)
-                print(json.dumps({k: rows[-1][k] for k in ('phase', 'depth_m', 'lateral_m', 'tilt_deg', 'nut_relative_deg')}), flush=True)
+                    if phase in load_cases and i==round((duration-.03)/dt)-1:
+                        tick=time.monotonic();capture(phase+'_peak');measured_wall['evidence_s']+=time.monotonic()-tick
+                tick=time.monotonic();capture(phase);measured_wall['evidence_s']+=time.monotonic()-tick
+                print(json.dumps({k: rows[-1][k] for k in ('phase', 'depth_m', 'lateral_m', 'tilt_deg', 'nut_relative_deg','nut_axial_offset_in_body_m','rotary_spring_effort_estimate_nm')}), flush=True)
         result = {'scope': 'SHORT_CONNECTOR_ENGAGEMENT_LOAD_TEST_NOT_ASSEMBLY_OR_HARDWARE', 'configuration': {k: str(v.resolve()) if isinstance(v, Path) else v for k, v in vars(args).items()},
                   'socket_origin_world_m': socket_origin.tolist(), 'mass_properties': mass_before, 'physics_hz': 960, 'position_iterations': 128,
                   'external_lateral_axial_or_tilt_constraint': False,
                   'finite_rotary_test_actuator': bool(turn_joint), 'post_start_pose_writes': False, 'prescribed_force_cap_n': 10., 'prescribed_bending_torque_cap_nm': .2,
                   'nut_torque_cap_nm': .05, 'wall_seconds': time.monotonic()-started, 'images': image_rows,
                   'maximum_lateral_m': max(r['lateral_m'] for r in rows), 'maximum_tilt_deg': max(r['tilt_deg'] for r in rows)}
+        result['measured_wall_time_s']=measured_wall
+        result['loaded_retention_protocol']={'enabled':args.loaded_retention,'tightening_torque_cap_nm':.25,
+            'load_cases':load_cases,'rotary_actuator_disabled_during_all_loads':True,
+            'state_reset_or_retighten_between_load_cases':False,
+            'preload_eligibility_requires_postrun_review':True}
         (args.output/'result.json').write_text(json.dumps(result, indent=2)+'\n')
     except Exception:
         import traceback
         failed = True; error = traceback.format_exc()
         (args.output/'error.txt').write_text(error); print(error, flush=True)
+        (args.output/'failure_timing.json').write_text(json.dumps({
+            'elapsed_since_start_s':time.monotonic()-started,
+            'components_s':locals().get('measured_wall'),
+            'recorded_steps':len(locals().get('rows',[]))},indent=2)+'\n')
     finally:
         app.close(exit_code=1 if failed else 0)
     return int(failed)
