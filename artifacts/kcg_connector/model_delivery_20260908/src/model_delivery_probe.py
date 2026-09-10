@@ -22,6 +22,8 @@ p.add_argument('--paired-stop-boxes',action='store_true')
 p.add_argument('--verify-installer-roundtrip',action='store_true')
 p.add_argument('--angle-deg', type=float, default=300.)
 p.add_argument('--turn-duration-s', type=float, default=60.)
+p.add_argument('--rotation-window-s', type=float,
+               help='Run only this prefix of the unchanged full rotation profile, then release; local diagnostic only.')
 p.add_argument('--torque-cap-nm', type=float, default=1.6)
 p.add_argument('--thread-friction', type=float, default=.45)
 p.add_argument('--seal-stiffness', type=float, default=100.)
@@ -58,6 +60,10 @@ p.add_argument('--diagnostic-disable-grounding-band',action='store_true',
 p.add_argument('--torque-only-guide',action='store_true',
                help='Apply the finite rotary drive without lateral, axial or tilt constraints.')
 args = p.parse_args()
+if args.rotation_window_s is not None and not (0 < args.rotation_window_s <= args.turn_duration_s):
+    p.error('Rotation window must be positive and no longer than the original profile')
+if args.rotation_window_s is not None and not args.torque_only_guide:
+    p.error('Short profile comparison requires the existing torque-only apparatus')
 if args.torque_only_guide and (args.insert_distance_m or args.instrumented_guide_calibration
                               or args.rotation_driver!='external_d6'
                               or args.free_engagement_duration_s is not None):
@@ -142,7 +148,8 @@ try:
         frozen_report=json.loads((args.frozen_model_report or args.frozen_model.with_name('assembly_scene.json')).read_text())
         for key in ('interfacial_seal_contact_model','hard_stop_contact_model','paired_stop_contact_model',
                     'passive_joint_representation','grounding_band_contact_model',
-                    'representative_mating_contacts','representative_inner_thread','native_joint_friction'):
+                    'representative_mating_contacts','representative_inner_thread','native_joint_friction',
+                    'pin_entry_compliance_candidate'):
             if key in frozen_report:report[key]=frozen_report[key]
         material_map={x['source']:x['installed'] for x in installed_model['private_materials']}
         def remap_materials(value):
@@ -543,7 +550,7 @@ try:
         if playing and not world.is_playing():world.play()
     sequence=[('initial_hold',args.initial_hold_duration_s)]
     if axial:sequence.append(('key_insertion',args.insert_duration_s));sequence.append(('insertion_settle',.5))
-    sequence += [('rotation',args.turn_duration_s),('loaded_hold',args.loaded_hold_duration_s),('free_hold',args.release_duration_s)]
+    sequence += [('rotation',args.rotation_window_s or args.turn_duration_s),('loaded_hold',args.loaded_hold_duration_s),('free_hold',args.release_duration_s)]
     if args.free_engagement_duration_s is not None:
         sequence=[('free_hold',args.free_engagement_duration_s)]
     stream=(out/'samples.jsonl').open('x',buffering=1)
@@ -577,7 +584,8 @@ try:
             contact_interface.flush_changes()
             phase_releases.append({'step':step,'all_external_guidance_and_drives_disabled':True})
         for i in range(round(duration/dt)):
-            u=(i+1)/round(duration/dt); fraction=10*u**3-15*u**4+6*u**5
+            profile_duration=args.turn_duration_s if phase=='rotation' else duration
+            u=(i+1)/round(profile_duration/dt); fraction=10*u**3-15*u**4+6*u**5
             if phase=='key_insertion':axial.GetTargetPositionAttr().Set(args.insert_distance_m*fraction)
             if phase=='rotation':
                 if test_motor:set_native_motor('set_dof_position_targets',np.deg2rad(drive_offset_deg+args.angle_deg*fraction))
@@ -700,6 +708,10 @@ try:
     result['measured_wall_time_components_s']=measured_times
     if args.torque_only_guide:
         result['torque_only_apparatus']=report['torque_only_apparatus']
+    if args.rotation_window_s is not None:
+        result['scope']='SHORT_PREFIX_OF_EXISTING_ROTATION_PROFILE_NOT_COMPLETE_ASSEMBLY'
+        result['full_profile_duration_s']=args.turn_duration_s
+        result['executed_rotation_prefix_s']=args.rotation_window_s
     if args.free_engagement_duration_s is not None:
         result['scope']='SHORT_FREE_ENGAGEMENT_CAUSAL_DIAGNOSTIC_NOT_ASSEMBLY_OR_DELIVERY_VALIDATION'
         result['free_engagement_diagnostic']=report['free_engagement_diagnostic']
