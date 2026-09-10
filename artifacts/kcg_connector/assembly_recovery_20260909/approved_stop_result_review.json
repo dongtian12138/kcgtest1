@@ -1,0 +1,408 @@
+{
+  "summary": {
+    "scope": "AUTHORIZED_ONE_SHOT_MODEL_ONLY_STOP_ATTEMPT; no robot assembly",
+    "program_exit": 0,
+    "wall_seconds": 500.52191243018024,
+    "initial_depth_mm": 10.354859083890888,
+    "actual_rotation_during_drive_deg": 27.871429119700785,
+    "final_nut_angle_deg": 27.87276622712229,
+    "final_depth_mm": 10.940683335065815,
+    "maximum_depth_mm": 10.941338986158344,
+    "remaining_to_nominal_14_6_mm": 3.6593166649341846,
+    "release_duration_s": 3.0,
+    "release_depth_range_um": 0.059604644775390625,
+    "maximum_tilt_deg": 0.1296617243096022,
+    "maximum_pose_increment_speed_rad_s": 1.9435510265011102,
+    "all_release_rows_external_guide_disabled": true,
+    "positive_body_stop_contact_reports": 0,
+    "stop_reached": false,
+    "assembly_completed": false
+  },
+  "selected_saved_states": [
+    {
+      "step": 45,
+      "time_s": 0.05000000260770321,
+      "phase": "initial_hold",
+      "request_deg": 0.0,
+      "actual_deg": -0.0005439418296238892,
+      "depth_mm": 10.354859083890888,
+      "body_yaw_deg": 0.00032954347042699425,
+      "body_tilt_deg": 0.01569266707839676,
+      "body_lateral_um": 10.919578096835457,
+      "body_nut_origin_gap_um": 0.5992045778895349,
+      "tip_min_nominal_radial_clearance_um": null,
+      "body_normal_load_n": 39.91537094116211,
+      "nut_normal_load_n": 8.065621376037598,
+      "largest_body_contact_pairs": [
+        {
+          "own": "CompliantGroundingBandCollision_Sector_03",
+          "other": "Geometry",
+          "normal_load_n": 6.202290639682521,
+          "max_penetration_um": 265.40952967479825
+        },
+        {
+          "own": "CompliantGroundingBandCollision_Sector_05",
+          "other": "Geometry",
+          "normal_load_n": 5.508614280032768,
+          "max_penetration_um": 262.95139105059206
+        },
+        {
+          "own": "CompliantGroundingBandCollision_Sector_02",
+          "other": "Geometry",
+          "normal_load_n": 5.483372224028452,
+          "max_penetration_um": 259.2675155028701
+        }
+      ]
+    },
+    {
+      "step": 2397,
+      "time_s": 2.5000001303851604,
+      "phase": "rotation",
+      "request_deg": 18.17205238342285,
+      "actual_deg": 17.32946147302311,
+      "depth_mm": 10.721338242292378,
+      "body_yaw_deg": -0.03322832051997346,
+      "body_tilt_deg": 0.05720352111032177,
+      "body_lateral_um": 40.30875781761728,
+      "body_nut_origin_gap_um": 1.5333722058101733,
+      "tip_min_nominal_radial_clearance_um": 52.37974861614181,
+      "body_normal_load_n": 42.53474426269531,
+      "nut_normal_load_n": 35.80921936035156,
+      "largest_body_contact_pairs": [
+        {
+          "own": "CompliantGroundingBandCollision_Sector_03",
+          "other": "Geometry",
+          "normal_load_n": 7.239296551750516,
+          "max_penetration_um": 287.8035884350538
+        },
+        {
+          "own": "CompliantGroundingBandCollision_Sector_02",
+          "other": "Geometry",
+          "normal_load_n": 6.709049873413762,
+          "max_penetration_um": 287.7827500924468
+        },
+        {
+          "own": "CompliantGroundingBandCollision_Sector_00",
+          "other": "Geometry",
+          "normal_load_n": 5.500219875819787,
+          "max_penetration_um": 273.5596208367497
+        }
+      ]
+    },
+    {
+      "step": 2637,
+      "time_s": 2.7500001434236765,
+      "phase": "rotation",
+      "request_deg": 23.304758071899414,
+      "actual_deg": 22.486155680664936,
+      "depth_mm": 10.830772370099995,
+      "body_yaw_deg": -0.04615250934704257,
+      "body_tilt_deg": 0.07770004348676522,
+      "body_lateral_um": 54.99428692514745,
+      "body_nut_origin_gap_um": 1.4196044640320007,
+      "tip_min_nominal_radial_clearance_um": 37.93703433106261,
+      "body_normal_load_n": 45.10338592529297,
+      "nut_normal_load_n": 33.90636444091797,
+      "largest_body_contact_pairs": [
+        {
+          "own": "CompliantGroundingBandCollision_Sector_03",
+          "other": "Geometry",
+          "normal_load_n": 8.005408662573585,
+          "max_penetration_um": 299.25917624495924
+        },
+        {
+          "own": "CompliantGroundingBandCollision_Sector_02",
+          "other": "Geometry",
+          "normal_load_n": 7.398950318603832,
+          "max_penetration_um": 300.79917632974684
+        },
+        {
+          "own": "CompliantGroundingBandCollision_Sector_00",
+          "other": "Geometry",
+          "normal_load_n": 6.401110482464476,
+          "max_penetration_um": 283.73271925374866
+        }
+      ]
+    },
+    {
+      "step": 2781,
+      "time_s": 2.900000151246786,
+      "phase": "rotation",
+      "request_deg": 26.70380973815918,
+      "actual_deg": 25.896525287651,
+      "depth_mm": 10.903788059949848,
+      "body_yaw_deg": -0.07889319465600389,
+      "body_tilt_deg": 0.1230830304654066,
+      "body_lateral_um": 87.6933389248763,
+      "body_nut_origin_gap_um": 1.4712963173386013,
+      "tip_min_nominal_radial_clearance_um": 4.616422515449803,
+      "body_normal_load_n": 44.375083923339844,
+      "nut_normal_load_n": 32.87477493286133,
+      "largest_body_contact_pairs": [
+        {
+          "own": "CompliantGroundingBandCollision_Sector_03",
+          "other": "Geometry",
+          "normal_load_n": 8.048144328376848,
+          "max_penetration_um": 316.7055838275701
+        },
+        {
+          "own": "CompliantGroundingBandCollision_Sector_00",
+          "other": "Geometry",
+          "normal_load_n": 6.29307394257412,
+          "max_penetration_um": 299.5394461322576
+        },
+        {
+          "own": "CompliantGroundingBandCollision_Sector_01",
+          "other": "Geometry",
+          "normal_load_n": 6.115398320414985,
+          "max_penetration_um": 314.00713487528265
+        }
+      ]
+    },
+    {
+      "step": 2877,
+      "time_s": 3.0000001564621925,
+      "phase": "rotation",
+      "request_deg": 29.09941291809082,
+      "actual_deg": 27.34736912755166,
+      "depth_mm": 10.933322161436054,
+      "body_yaw_deg": -0.1761250723364125,
+      "body_tilt_deg": 0.09707286276271264,
+      "body_lateral_um": 69.85885959430979,
+      "body_nut_origin_gap_um": 5.5518175171252135,
+      "tip_min_nominal_radial_clearance_um": -5.622840341658613,
+      "body_normal_load_n": 1328.937255859375,
+      "nut_normal_load_n": 94.62500762939453,
+      "largest_body_contact_pairs": [
+        {
+          "own": "SourcePinSdf_018",
+          "other": "Geometry",
+          "normal_load_n": 550.0219325859003,
+          "max_penetration_um": 5.658200734615093
+        },
+        {
+          "own": "SourcePinSdf_021",
+          "other": "Geometry",
+          "normal_load_n": 501.13322127405024,
+          "max_penetration_um": 5.804282409371808
+        },
+        {
+          "own": "SourcePinSdf_017",
+          "other": "Geometry",
+          "normal_load_n": 178.62814720716491,
+          "max_penetration_um": 1.092996512852551
+        }
+      ]
+    },
+    {
+      "step": 2973,
+      "time_s": 3.100000161677599,
+      "phase": "rotation",
+      "request_deg": 31.5961856842041,
+      "actual_deg": 27.563487039246866,
+      "depth_mm": 10.93558713793752,
+      "body_yaw_deg": -0.18410937214217218,
+      "body_tilt_deg": 0.09773917318072615,
+      "body_lateral_um": 67.58497187548441,
+      "body_nut_origin_gap_um": 9.402479213574011,
+      "tip_min_nominal_radial_clearance_um": -5.143436422710025,
+      "body_normal_load_n": 1988.716796875,
+      "nut_normal_load_n": 185.28053283691406,
+      "largest_body_contact_pairs": [
+        {
+          "own": "SourcePinSdf_018",
+          "other": "Geometry",
+          "normal_load_n": 719.3982000230669,
+          "max_penetration_um": 7.24892015568912
+        },
+        {
+          "own": "SourcePinSdf_021",
+          "other": "Geometry",
+          "normal_load_n": 390.75317210639025,
+          "max_penetration_um": 7.336825547099579
+        },
+        {
+          "own": "SourcePinSdf_017",
+          "other": "Geometry",
+          "normal_load_n": 352.475468969839,
+          "max_penetration_um": 2.8067540824849857
+        }
+      ]
+    },
+    {
+      "step": 3117,
+      "time_s": 3.2500001695007086,
+      "phase": "rotation",
+      "request_deg": 35.52564239501953,
+      "actual_deg": 27.644779308107605,
+      "depth_mm": 10.937077254056904,
+      "body_yaw_deg": -0.20911992010436944,
+      "body_tilt_deg": 0.09028161217260415,
+      "body_lateral_um": 63.93723793339598,
+      "body_nut_origin_gap_um": 7.041551566109503,
+      "tip_min_nominal_radial_clearance_um": -8.915834822931506,
+      "body_normal_load_n": 2538.108154296875,
+      "nut_normal_load_n": 209.89920043945312,
+      "largest_body_contact_pairs": [
+        {
+          "own": "SourcePinSdf_018",
+          "other": "Geometry",
+          "normal_load_n": 820.489920538384,
+          "max_penetration_um": 8.100152626866475
+        },
+        {
+          "own": "SourcePinSdf_021",
+          "other": "Geometry",
+          "normal_load_n": 721.0873670756479,
+          "max_penetration_um": 9.321889592683874
+        },
+        {
+          "own": "SourcePinSdf_015",
+          "other": "Geometry",
+          "normal_load_n": 521.8084179110415,
+          "max_penetration_um": 8.650959898659494
+        }
+      ]
+    },
+    {
+      "step": 3837,
+      "time_s": 4.000000208616257,
+      "phase": "rotation",
+      "request_deg": 58.137264251708984,
+      "actual_deg": 27.637206372882055,
+      "depth_mm": 10.938746184110615,
+      "body_yaw_deg": -0.20864483436405976,
+      "body_tilt_deg": 0.08901259320072304,
+      "body_lateral_um": 62.66540909431882,
+      "body_nut_origin_gap_um": 5.039699607551,
+      "tip_min_nominal_radial_clearance_um": -7.77162948351458,
+      "body_normal_load_n": 1892.0538330078125,
+      "nut_normal_load_n": 200.37017822265625,
+      "largest_body_contact_pairs": [
+        {
+          "own": "SourcePinSdf_018",
+          "other": "Geometry",
+          "normal_load_n": 726.824627004838,
+          "max_penetration_um": 7.2068073677655775
+        },
+        {
+          "own": "SourcePinSdf_021",
+          "other": "Geometry",
+          "normal_load_n": 525.7003955481948,
+          "max_penetration_um": 8.101051207631826
+        },
+        {
+          "own": "SourcePinSdf_015",
+          "other": "Geometry",
+          "normal_load_n": 364.97514806275507,
+          "max_penetration_um": 6.781942374800565
+        }
+      ]
+    },
+    {
+      "step": 5757,
+      "time_s": 6.000000312924385,
+      "phase": "rotation",
+      "request_deg": 130.86517333984375,
+      "actual_deg": 27.587239283626555,
+      "depth_mm": 10.938328951597187,
+      "body_yaw_deg": -0.2082932397262435,
+      "body_tilt_deg": 0.08885093428820923,
+      "body_lateral_um": 62.74019179370204,
+      "body_nut_origin_gap_um": 4.593909819586653,
+      "tip_min_nominal_radial_clearance_um": -7.792394682931312,
+      "body_normal_load_n": 1937.9259033203125,
+      "nut_normal_load_n": 214.79310607910156,
+      "largest_body_contact_pairs": [
+        {
+          "own": "SourcePinSdf_018",
+          "other": "Geometry",
+          "normal_load_n": 730.192095938447,
+          "max_penetration_um": 7.2473653744964395
+        },
+        {
+          "own": "SourcePinSdf_021",
+          "other": "Geometry",
+          "normal_load_n": 531.5110486094509,
+          "max_penetration_um": 8.090297342278063
+        },
+        {
+          "own": "SourcePinSdf_015",
+          "other": "Geometry",
+          "normal_load_n": 354.56097874303646,
+          "max_penetration_um": 6.686973392788786
+        }
+      ]
+    },
+    {
+      "step": 10077,
+      "time_s": 10.500000547617674,
+      "phase": "rotation",
+      "request_deg": 209.99974060058594,
+      "actual_deg": 27.870835911118483,
+      "depth_mm": 10.940683335065815,
+      "body_yaw_deg": -0.21790875777637797,
+      "body_tilt_deg": 0.08643005229682114,
+      "body_lateral_um": 61.01613172287154,
+      "body_nut_origin_gap_um": 7.886375332439243,
+      "tip_min_nominal_radial_clearance_um": -8.786219396956108,
+      "body_normal_load_n": 2446.609130859375,
+      "nut_normal_load_n": 181.20938110351562,
+      "largest_body_contact_pairs": [
+        {
+          "own": "SourcePinSdf_018",
+          "other": "Geometry",
+          "normal_load_n": 814.4828826189246,
+          "max_penetration_um": 7.967655619722791
+        },
+        {
+          "own": "SourcePinSdf_021",
+          "other": "Geometry",
+          "normal_load_n": 694.2473984237931,
+          "max_penetration_um": 9.07698085939046
+        },
+        {
+          "own": "SourcePinSdf_015",
+          "other": "Geometry",
+          "normal_load_n": 520.6970012675821,
+          "max_penetration_um": 8.244042874139268
+        }
+      ]
+    },
+    {
+      "step": 13197,
+      "time_s": 13.750000717118382,
+      "phase": "free_hold",
+      "request_deg": 210.0,
+      "actual_deg": 27.872766226891933,
+      "depth_mm": 10.940683335065815,
+      "body_yaw_deg": -0.2179362105278147,
+      "body_tilt_deg": 0.08641189080636498,
+      "body_lateral_um": 61.02332531596578,
+      "body_nut_origin_gap_um": 8.07642936706543,
+      "tip_min_nominal_radial_clearance_um": -8.799657290115817,
+      "body_normal_load_n": 2447.656005859375,
+      "nut_normal_load_n": 172.87884521484375,
+      "largest_body_contact_pairs": [
+        {
+          "own": "SourcePinSdf_018",
+          "other": "Geometry",
+          "normal_load_n": 814.666795078748,
+          "max_penetration_um": 7.969375474203844
+        },
+        {
+          "own": "SourcePinSdf_021",
+          "other": "Geometry",
+          "normal_load_n": 694.1067257929451,
+          "max_penetration_um": 9.077012691705022
+        },
+        {
+          "own": "SourcePinSdf_015",
+          "other": "Geometry",
+          "normal_load_n": 519.9163980016814,
+          "max_penetration_um": 8.255503416876309
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
-  "status": "PREPARED_NOT_AUTHORIZED_NOT_RUN",
-  "requires_user_approval": true,
+  "status": "EXECUTED_PHYSICAL_FAILURE_NO_RETRY",
+  "requires_user_approval": false,
   "requested_exception": "One complete model-to-stop verification, maximum 600 wall seconds, beyond the current 180-second/two-attempt stage limit; no extension or automatic retry",
   "scope": "Connector-only from a declared correctly clocked engaged initial condition; not hand or tabletop assembly",
   "argv": [
@@ -58,5 +58,13 @@
   "source_reference": "artifacts/kcg_connector/assembly_recovery_20260909/thread_preparation_repaired_twenty_degree_02",
   "hardware_authorized": false,
   "no_runtime_object_pose_writes": true,
-  "no_lateral_axial_or_tilt_lock_during_rotation": true
+  "no_lateral_axial_or_tilt_lock_during_rotation": true,
+  "user_authorization": "User explicitly answered \u5141\u8bb8 to this one maximum-10-minute verification",
+  "launch_record": "artifacts/kcg_connector/assembly_recovery_20260909/approved_clocked_stop_validation_01.launch.json",
+  "returncode": 0,
+  "wall_seconds": 500.52191243018024,
+  "exception_consumed": true,
+  "physical_review": "artifacts/kcg_connector/assembly_recovery_20260909/approved_stop_result_review.json",
+  "physical_stop_reached": false,
+  "physical_assembly_completed": false
 }
