@@ -1,6 +1,6 @@
 # 当前任务：第一版视觉全链路装配
 
-核验：2026-09-12 13:09 UTC。用户已明确授权按详细计划自主执行、可据证据修改安排并持续反馈。唯一目标仍为同一回合完成Isaac Sim视觉取件到完整装配；不在局部阶段结束任务。simulation-only，hardware_authorized=false。
+核验：2026-09-12 12:29 UTC。用户已明确授权按详细计划自主执行、可据证据修改安排并持续反馈。唯一目标仍为同一回合完成Isaac Sim视觉取件到完整装配；不在局部阶段结束任务。simulation-only，hardware_authorized=false。
 
 ## 用户最新验收与工作边界
 
@@ -8,7 +8,7 @@
 
 用户明确“能否导纳”只是问题，并未强制必须采用导纳。控制方法服从上述链路，不把二阶导纳、导纳扰动试验、电路仿真或参数辨识另立为阻挡第一版的目标。保留有限驱动、原几何/质量/惯量/限位和实际安全边界；15N指—螺母法向上限已取消，16N提砝码与PWM600/750不等于通用接触容量或80%力矩。
 
-详细计划：[FIRST_VISUAL_ASSEMBLY_V1_PLAN_CN.md](/home/noob/WorkPlace/kcgtest1/docs/FIRST_VISUAL_ASSEMBLY_V1_PLAN_CN.md)。用户已批准执行该计划；当前已完成新版同回合视觉指甲取件、56 mm抬升/2 s保持及抓后识键；正在继续搬运、对键插入和自然支承验证，不在局部阶段结束。
+详细计划：[FIRST_VISUAL_ASSEMBLY_V1_PLAN_CN.md](/home/noob/WorkPlace/kcgtest1/docs/FIRST_VISUAL_ASSEMBLY_V1_PLAN_CN.md)。用户已批准执行该计划；当前正在第1步共享机构接入及真实接近验证，不再等待计划批准。
 
 旧“修复J599旋拧后仿真偏斜”任务01a088b0-0c88-76e0-ac61-1fc9e31682e7已停止交接，最近app核验completed/notLoaded，不自行恢复。本任务为唯一实施方；不主动创建子代理。硬件与推送未授权。
 
@@ -27,29 +27,26 @@
 
 ## 当前执行进展与最早阻塞
 
-R=`artifacts/visual_assembly_v1`。当前分支`codex/visual-assembly-v1`，先前基线提交`c928aa7`。无关用户修改、删除标记和原始数据保留。没有推送、硬件动作或删除旧artifacts。旧源码/工作区快照在R/checkpoints/20260912T112851Z。
+- 已创建执行分支`codex/visual-assembly-v1`，基线提交`c928aa7`保存40个相关源码/配置/计划文件；无关用户修改和原始数据保持原样。额外原状态补丁与相关源码压缩快照在`artifacts/visual_assembly_v1/checkpoints/20260912T112851Z`。未推送。
+- 新增`isaac/te_hand_mechanism_runtime.py`和`config/hand_mechanism_runtime_v1.json`。四杆和4个电机统一包在同一world.step前后，公共JointSignalStepper提交名义参考；支持一个掌面电机+两布局轴的原1:1关系，保留全行程，未用零宽限位锁死掌面。新手起始为arm零位、掌面70°、三指20°，一次reset前声明；之后无实际q/qd写入。各指弹性/输出黏性120/2、输入摩擦等沿用已验证候选；Body阶段保留主动cap1Nm，指传动边界3.5Nm、掌面1Nm（此前固定掌面实际合反力峰约.246Nm）。均开发参考，非实测额定。
+- 公共运行入口已增加`--hand-mechanism-config`并使用新FK；FT读者在reset后只读初始化。手的准备动作从声明初态开始，未先跳回0。新增压缩`hand_mechanism_samples.jsonl.gz`，新机构所有preflight/assembly也保存压缩原始truth流。旧文件未删。
+- 新配置`visual_assembly_v1_body.yaml`、`visual_assembly_v1_task.yaml`明确候选身份及当前授权，保留Body原夹紧算法/参考；物理dt=1/960。旧旋拧settings已提取到`visual_assembly_v1_rotation_reference.json`，消费者尚未全部改用新路径。
+- 手指甲源面已定位：原STL的零基半开范围[11836,12912)为nail shell，随后两段为安装柱，不当指甲抓取面。绑定见`visual_assembly_v1_contact_regions.json`；Nail-only动态评价尚未接入。
+- 原运动学/电机相关44项检查通过。新公共Runtime尚未最终提交，正在实际验证。
 
-**最近完成的有效阶段：`visual_body_grasp04`已实际完成本回合RGB-D定位→三指甲抓Body→抬升约56.02mm→保持2s→抓后新图像识别本体键。** 当前手机构、连接器、原指甲和有限驱动均保持。独立`source_nail_body_review.json`确认保持每一步三根指甲均接触Body；三指所有正载触点投影到原STL指甲shell，无PAD/安装柱/其他物体承载，源面投影最大约.291mm（当前烘焙表示近似，不冒称零几何误差）。保持阶段无桌面接触，最低抬升56.0199mm，手—Body相对变化约1.30µm/.00349°。抬升过程抓内变化约.351mm/2.197°，因此仍保留搬运后重观察。
+R=`artifacts/visual_assembly_v1`。首次`shared_runtime_preflight01`在11.4104s下降阶段因腕力矩停止；确有第一指与Body首个正接触。不是单纯惯性补偿误报。01缺少原始接触流（保存了FT/evaluation/video），02仅补记录后同一步重复了该停止，失败保留。
 
-04抓后识键误差仅用于独立评价：位置.02968mm，轴角约1.36e-5°，主键角.013509°。初始视觉仅用普通RGB-D、冻结背景/CAD与桌面支承先验，明确没有测键yaw；抓后才测键。初始226个离散检查姿态覆盖17link、所有Body yaw包络、桌面/夹具/插座搜索体积；没有读真实物体位姿来生成动作。
+**预抓角不是目前证据支持的根因，不要盲改开手角或抬高腕阈值。** `check_body_opening.py`使用当前4bar、绑定烘焙凸块和冻结连接器，原开手下降通道名义最小间隙约4.58mm；不采用其无意义的2.4e-6rad变化。02实际9个手刚体见证算杆长误差<.3µm，表明四杆运动与实际体姿态相符。
 
-04程序外部900s超时发生在物理动作及独立评价已完成后的最后汇总阶段，退出124，**没有最终evaluation.json，不能伪造它为正常结束**。已保存完整35389步压缩truth、手传动记录、FT、RGB-D、成品mp4和日志中的NAIL_BODY_STABILITY；`physical_stage_review.json`明确记录从这些独立证据恢复阶段结论及超时限制。视频R/visual_body_grasp04/video/assembly_four_view.mp4已给用户打开。下一回合不再附加该不合适的总wall timeout。
+02原始数据揭示更早问题：**机器人尚未接近前，插头在桌上已漂移约8mm并持续摇动**。约1.56s Body在[.511116,-.206261,.200930]，原初态[.52,-.21,.2]；6.59s仍有明显角速度，最终Body[.513242,-.205246,.200974]。桌面接触来自Body/SourceCadCollision和Nut/ExternalSurfaceContact，不是安装柱或内部推力代理。名义抓取按旧初态接近遂提前碰到已移动Body。当前task配置没有启用既有source_equivalent_triangle_box选项，实际桌面是Cube。
 
-已解决的前置故障：01/02按旧Cube桌面时手未靠近插头已漂移约8mm并摇动，下降提前碰到Body；源四杆闭环杆长误差<.3µm，原开手几何下降最小间隙约4.58mm，故没有盲改开手或提高腕门限。03仅换同尺寸、同材质、同变换的12三角面桌面，整个13.03s最大漂移约.007mm，空手接近无碰撞通过；04同样稳定。使用现有`visual_assembly_v1_table_mesh_trial.yaml`保留03物理配置身份，待整合时正式收敛到canonical task配置。不要误切回未启用该选项的旧表面。
+当前唯一物理回合`shared_runtime_table_mesh03`正在进行（恢复时核对真实进程/结果，不凭“运行中”等待）。仅将桌面碰撞由Cube改为同形12三角面盒；几何界限、变换、材料、手、连接器、初态和驱动力不变。使用`visual_assembly_v1_table_mesh_trial.yaml`，与02比较静止漂移/摇摆和接近结果；外部timeout420s，日志R/shared_runtime_table_mesh03.log。当前exec session19558。
 
-已接入：
-- `te_hand_mechanism_runtime.py`将4个电机和非线性四杆包在同一world.step前后，所有共同JointSignalStepper名义目标均由它驱动；初始化后不写实际q/qd或物体位姿。掌面保留全行程和1:1两个支路，已替换局部零宽限位；70→60主动换位仍待换抓时实证。
-- `te_visual_body_start.py`在主`grasp-lift`流程的FTtare/桌面停稳后采图、生成抓取计划并继续原后段。`--visual-body-start`不能初始化到预抓/载入旧视觉。当前视觉轨迹有独立几何检查，03只作为名义物理比较，accepted_preflight_bound=false，不冒充旧preflight验证了新图像。
-- Controller的mimic诊断已由q2−q1改为q2−f(q1)和实际局部导数速度误差。Body夹紧算法/目标保持原设定；原电机K264/D4.4+输出弹性120/黏性2，自锁c1.2等仍开发参考。Body主动cap1Nm，指传动边界3.5Nm、掌面1Nm。
-- 指甲源面定义见`visual_assembly_v1_contact_regions.json`：[11836,12912)指甲shell，后续两安装柱不算NAIL；独立评价入口`evaluate_visual_body_grasp.py`只运行后读取实际体姿态/触点。
-- LocalInterfaceFollowing已改为读正式`visual_assembly_v1_rotation_reference.json`中提取的旧settings，不再依赖9月7日大型结果作为执行输入。
-- 后续Nut接口已修正两个确定性旧假设：开手60°时关闭目标不再携带Body70°；对于新约5°绕轴偏转的canonical抓位，先把平移转成Hand局部量再按当次观察轴/当前手横向基生成目标，不再要求canonical旋转为单位阵。这些仅逻辑/语法检查，尚未动态执行。
+下一步先收03并检查真实停稳与接触。若解决则将这个表示纳入新配置；若未解决，按原始碰撞记录定位桌面/连接器接触，不为过关直接固定插头、删碰撞或增力。这个问题必须在视觉抓取前处理。
 
-**当前唯一主要回合：`visual_to_key_entry05`**，exec session78879。已授权运行至自然支承/释放后观察，命令含visual-body-start、postgrasp-key-observation、body-assembly-transport、body-key-entry、body-support-test；尚未开启Nut复抓/旋拧，因为前段还未在新模型实证。恢复先核对实际进程/文件，不能凭本段“运行中”等待。日志R/visual_to_key_entry05.log，无外部wall timeout。若前段通过就接后续；失败按最早原因修复，不能拿预插入局部回合替代。
+另外`te_visual_body_start.py`已写好并仅语法检查，**未接入、未运行**：复用当前普通RGB-D定位及静态桌面支承先验生成无键角的Body抓取坐标；绕轴角只作抓位选择，抓后仍必须重新识别键。它不读取物体位姿或语义真值。待稳定后接在同一runtime的_run_controller之前，用本回合估计重建抓取/抬升计划，并继续已有postgrasp→socket链。不要回到旧vision分支的提前return。需要核对provider输入路径/校准匹配，并对新视觉轨迹检查接近安全，不能拿名义preflight冒充新视觉路径通过。
 
-05新增的记录改动：`carts_v2/sample_store.py`将原始truth按512步普通gzip成员保存并以2块缓存读取，完整原始数据和随机访问保留；无损读取/切片/有界缓存/标准gzip兼容检查通过。仍是同一个truth_samples.jsonl.gz，未抽样、未删观测。原实现04物理37s内存从约12GB涨至19GB，完整装配有撑满62GiB风险，故在长流程前修正。录像包装异常退出也会关闭原始归档；初始化、抓取完成、录像关闭前先保存元数据/结果。旧pickup evaluator仅评价第一次抓起到hold的前缀，后续释放/换抓不能按Body-grasp规则误判；完整机械验收仍待全链评价。
-
-下一步先核对05初始化/新的记录接口，继续实际搬运及视觉对鍵插入，检查新版自然支承。Nut阶段仍需统一3.5Nm主动cap/新根力矩目标及姿态相关重力扣除、选好最后松手间隙，并接真实分段旋拧到止挡/卸手保持。当前canonical task里的Nut旋拧仍有旧0.04Nm扭矩试探门等历史参数，不能直接冒称采用最新已验证局部方案。完整装配尚未发生。
+其他待完成接入：controller里的mimic诊断当前仍计算旧1:1差，需改为真实f(q)；新手端默认Body反馈仍只减固定空载零点，后续统一到姿态相关根力矩语义；掌面主动70→60尚未实测；Nut阶段主动cap/根力矩监测需按阶段与已用参考统一；完整新视觉Body抓取与旋拧尚未开始。
 
 ## 有效资产与证据边界
 

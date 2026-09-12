@@ -36,8 +36,8 @@ class LocalInterfaceFollowing:
             if geometry.get('finger_mechanism_id')!=self.finger_mechanism_id:
                 raise ValueError('Force-following grasp geometry belongs to a different finger mechanism')
             observer_options['sensor_semantics']='BASE_BRIDGE_EXTERNAL_MOMENT_ABOUT_O'
-        old=repo/'artifacts/kcg_connector/isaac/te_full_assembly_20260907/gpu_wrist_force_consistent_assembly_01/socket_transport/nut_rotation/nut_rotation_controller_result.json'
-        self.settings=json.loads(old.read_text())['settings'];self.source=str(old);self.dt=dt
+        reference=repo/'src/kcg_connector/config/visual_assembly_v1_rotation_reference.json'
+        self.settings=json.loads(reference.read_text())['settings'];self.source=str(reference);self.dt=dt
         if grip_recipe and 'maximum_arm_speed_rad_s' in grip_recipe:
             speed=float(grip_recipe['maximum_arm_speed_rad_s'])
             source_limit=min(self.model.joints[f'iiwa_joint_{i}'].limit.velocity for i in range(1,8))

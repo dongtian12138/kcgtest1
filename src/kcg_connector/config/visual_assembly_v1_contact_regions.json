@@ -1,0 +1,26 @@
+{
+  "schema": "kcg.source_hand_contact_regions.v1",
+  "purpose": "phase-specific postrun acceptance; not an online simulator contact input",
+  "nail_shell_face_range_zero_based_half_open": [
+    11836,
+    12912
+  ],
+  "mount_posts_not_counted_as_nail_contact": [
+    [
+      12912,
+      13552
+    ],
+    [
+      13552,
+      14192
+    ]
+  ],
+  "lineage_source": "src/kcg_connector/isaac/build_nailfree_hand_geometry.py",
+  "source_face_count": 14192,
+  "pad_manifest": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TERMINAL_PAD_EXACT_SOURCE_V2/TERMINAL_PAD_SOURCE_MANIFEST.json",
+  "bindings": {
+    "f1Link3": "7a33a6ab46729a2237dd13d99be3bcefb92bb3d4b77bbf9e69d884509cffcdb0",
+    "f2Link2": "1758619f7ef1369fc3342c7032edee07222f9bdccc187c33830f9fa59bd508b3",
+    "f3Link3": "93645443cff113b8c6e5a0280e3270192831d04246233cc45d9745c6e3c7d16e"
+  }
+}

@@ -819,6 +819,7 @@ class JointSignalStepper:
         command_api_counter: dict[str, int] | None = None,
     ) -> None:
         self.robot, self.world, self.auditor = robot, world, auditor
+        self.hand_mechanism = getattr(world, "hand_mechanism", None)
         self.active_indices, self.arm_indices = active_indices, arm_indices
         self.arm_lower_limits, self.arm_upper_limits = arm_lower_limits, arm_upper_limits
         self.settings = settings
@@ -944,6 +945,8 @@ class JointSignalStepper:
             self.abort_reason = "ARM_COMMAND_EFFORT_SATURATION_ABORT"
             return self.latest
         drive_target = np.concatenate((drive_arm_target, hand_target))
+        if self.hand_mechanism is not None:
+            self.hand_mechanism.submit(hand_target, phase)
         if self.command_api_counter is not None:
             name = "set_dof_position_targets"
             self.command_api_counter[name] = int(
@@ -986,9 +989,18 @@ class JointSignalStepper:
                    "limit_margin_rad": float(margins[index]) if math.isfinite(margins[index]) else None}
             for name, index in (("f1j2", first), ("f1j3", follower))
         }
-        arm_control["f1_mimic_diagnostic"].update({
-            "position_error_rad": float(all_positions[follower] - all_positions[first]),
-            "velocity_error_rad_s": float(all_velocities[follower] - all_velocities[first])})
+        mimic_errors = {}
+        for mimic, source in MIMIC_HAND_JOINTS.items():
+            source_q=float(all_positions[self._hand_indices[source]])
+            expected, derivative=source_q, 1.
+            if self.hand_mechanism is not None and mimic in self.hand_mechanism.setup["couplings"]:
+                expected, derivative=self.hand_mechanism.setup["couplings"][mimic].position_and_derivative(source_q)
+            mimic_errors[mimic]={
+                "source":source,"expected_position_rad":float(expected),"local_derivative":float(derivative),
+                "position_error_rad":float(all_positions[self._hand_indices[mimic]]-expected),
+                "velocity_error_rad_s":float(all_velocities[self._hand_indices[mimic]]
+                    -derivative*all_velocities[self._hand_indices[source]])}
+        arm_control["f1_mimic_diagnostic"].update(mimic_errors["f1j3"])
         arm_control["hand_joint_diagnostic"] = {
             "joints": {
                 name: {
@@ -998,20 +1010,7 @@ class JointSignalStepper:
                 }
                 for name, index in self._hand_indices.items()
             },
-            "mimic_errors": {
-                mimic: {
-                    "source": source,
-                    "position_error_rad": float(
-                        all_positions[self._hand_indices[mimic]]
-                        - all_positions[self._hand_indices[source]]
-                    ),
-                    "velocity_error_rad_s": float(
-                        all_velocities[self._hand_indices[mimic]]
-                        - all_velocities[self._hand_indices[source]]
-                    ),
-                }
-                for mimic, source in MIMIC_HAND_JOINTS.items()
-            },
+            "mimic_errors": mimic_errors,
         }
         self._update_metrics(positions, all_velocities, efforts, arm_target, arm_control)
         before_audit = perf_counter()
@@ -1170,14 +1169,15 @@ def run_pregrasp_sequence(
             "above_final_error_rad": final_error,
         }
     home_arm = np.zeros(7, dtype=np.float64)
-    home_hand = np.zeros(4, dtype=np.float64)
+    home_hand = (stepper.hand_mechanism.reference.copy() if stepper.hand_mechanism is not None
+                 else np.zeros(4, dtype=np.float64))
     for _ in stepper.active_steps(round(float(settings["settle_duration_s"]) / dt)):
         stepper.advance("settle", home_arm, home_hand)
     approach = np.asarray(motion_plan["approach_arm_waypoints_rad"])
     preshape_steps = round(configured_approach_duration / dt)
     for index in stepper.active_steps(preshape_steps):
         blend = minimum_jerk_blend((index + 1) / preshape_steps)
-        stepper.advance("preshape_at_home", home_arm, blend * pregrasp_hand)
+        stepper.advance("preshape_at_home", home_arm, (1.-blend)*home_hand+blend*pregrasp_hand)
     explicit_states = (
         None
         if approach_high_arm_states is None

@@ -1,0 +1,15 @@
+{
+  "schema": "kcg.source_hand_runtime.v1",
+  "fourbar_contract": "src/kcg_connector/config/hand_fourbar_20260912.json",
+  "initial_hand_positions_rad": [1.2217304763960306, 0.3490658503988659, 0.3490658503988659, 0.3490658503988659],
+  "transmission_stiffness_nm_rad": 120.0,
+  "output_viscosity_nm_s_rad": 2.0,
+  "input_viscosity": 1.0,
+  "load_friction_ratio": 1.2,
+  "motor_position_kp": 264.0,
+  "motor_position_kd": 4.4,
+  "finger_transmission_boundary_nm": 3.5,
+  "palm_transmission_boundary_nm": 1.0,
+  "hardware_calibrated": false,
+  "basis": "Single-finger and whole-grip passive-split candidate. Palm drive retains its former 1 Nm reference; measured fixed-palm generalized reaction in whole25 peaked near 0.246 Nm. Motor active caps remain stage-specific; source geometry and physical joint limits are unchanged."
+}

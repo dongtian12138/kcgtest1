@@ -64,6 +64,9 @@ def recorded_execute(*args, **kwargs):
         return original_execute(*args, **kwargs)
     finally:
         runtime = recording_state.get("runtime", {})
+        raw_archive=runtime.get("truth_stream")
+        if raw_archive is not None and not raw_archive.closed:
+            raw_archive.close()
         recorder = runtime.pop("body_assembly_video", None)
         if recorder is not None:
             video = recorder.close()

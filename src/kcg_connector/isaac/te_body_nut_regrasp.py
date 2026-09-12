@@ -109,7 +109,10 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
     open_goal = np.asarray(geometry["open_hand_positions_rad"])
     source_config = yaml.safe_load((repository / "src/kcg_connector/config/te_nail_tip_body_grasp_v1.yaml").read_text())
     close_goal = np.asarray(geometry.get("finite_closing_goal_rad",
-        source_config["dynamic"]["nail_body_grasp_control_plan"]["final_joint_positions_rad"]))
+        source_config["dynamic"]["nail_body_grasp_control_plan"]["final_joint_positions_rad"])).copy()
+    # Palm layout belongs to this nut grasp. Finger closure must not send
+    # the palm back to the legacy Body layout.
+    close_goal[0]=open_goal[0]
     world, inputs, ft = runtime["world"], runtime["inputs"], runtime["nail_body_ft_auditor"]
     stage = omni.usd.get_context().get_stage()
     dt = float(dynamic["physics_dt_s"])
@@ -183,7 +186,10 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
         x /= np.linalg.norm(x)
         target = np.eye(4)
         target[:3, :3] = np.column_stack((x, np.cross(axis, x), axis))
-        target[:3, 3] = body[:3, 3] + target[:3, :3] @ canonical[:3, 3]
+        # Canonical translation is expressed in the source Body frame; the
+        # observed cylinder leaves yaw free. Express that offset in the hand
+        # frame before using the currently selected transverse hand basis.
+        target[:3, 3] = body[:3, 3] + target[:3, :3] @ canonical[:3, :3].T @ canonical[:3, 3]
         return body, target
 
     environment = dict(obstacles)
@@ -258,8 +264,12 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
     try:
         if stepper.abort_reason is not None or not config["authorization"]["simulation_only"]:
             raise ValueError("the existing controller is not clear for simulation regrasp")
-        if not np.allclose(canonical[:3, :3], np.eye(3)):
-            raise ValueError("the canonical nut grip must use the hand's transverse basis")
+        if (not np.allclose(canonical[:3,:3].T@canonical[:3,:3],np.eye(3),atol=1e-8)
+                or np.linalg.norm(canonical[:3,2]-np.array([0.,0.,1.]))>1e-4):
+            raise ValueError("this nut-grasp adapter requires a coaxial canonical hand pose")
+        mechanism=getattr(world,"hand_mechanism",None)
+        if mechanism is not None and geometry.get("finger_mechanism_id")!=mechanism.setup["mechanism_id"]:
+            raise ValueError("nut-grasp geometry differs from the running hand mechanism")
         body, target = target_from_palm(observation)
         locate_part_bounds(body)
         record.update(world_from_body_palm_five_dof=body.tolist(), target_world_from_hand=target.tolist(),

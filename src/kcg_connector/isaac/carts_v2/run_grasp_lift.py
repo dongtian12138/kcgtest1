@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import gzip
 from dataclasses import replace
 from datetime import datetime, timezone
 import hashlib
@@ -1743,6 +1744,9 @@ def _arguments(repository: Path) -> argparse.Namespace:
         ),
     )
     parser.add_argument("--preflight-evaluation")
+    parser.add_argument("--hand-mechanism-config",help="Shared measured four-bar and finite worm-drive runtime for the original hand")
+    parser.add_argument("--visual-body-start",action="store_true",
+        help="Localize the tabletop Body from this episode's RGB-D before the shared grasp/assembly path")
     parser.add_argument("--same-reset-rgbd-config")
     parser.add_argument("--capture-id")
     parser.add_argument(
@@ -1872,6 +1876,9 @@ def _arguments(repository: Path) -> argparse.Namespace:
         help="prior 50 mm plus 2 s nominal evidence authorizing disturbance",
     )
     arguments = parser.parse_args()
+    if arguments.visual_body_start and (arguments.mode!="grasp-lift" or not arguments.hand_mechanism_config
+                                       or arguments.initialize_at_pregrasp or arguments.visual_transport_target):
+        parser.error("fresh Body localization requires grasp-lift and shared mechanics from the normal home state")
     if arguments.body_nut_regrasp and not arguments.body_support_test:
         parser.error("nut regrasp requires the supported body release stage")
     if arguments.body_support_test and not arguments.body_key_entry:
@@ -2987,8 +2994,17 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         arguments.physics_device = numerical.get("device", "cuda:0")
     if arguments.physics_device not in ("cuda:0", "cpu"):
         raise ValueError("assembly physics device must be cpu or cuda:0")
+    mechanism_path=None
+    if arguments.hand_mechanism_config:
+        mechanism_config=Path(arguments.hand_mechanism_config)
+        if not mechanism_config.is_absolute():mechanism_config=repository/mechanism_config
+        mechanism_document=json.loads(mechanism_config.read_text())
+        mechanism_path=repository/mechanism_document["fourbar_contract"]
+        arguments.hand_mechanism_config=str(mechanism_config.resolve())
+        if arguments.mode in VISION_MOTION_MODES or arguments.mode in (SAME_RESET_RGBD_MODE,"isolated-hand"):
+            raise ValueError("Shared source-hand runtime is scoped to the main assembly/preflight path")
     inputs = load_v2_inputs(repository, config_path=config_path,
-                            object_id=arguments.object_id)
+                            object_id=arguments.object_id,finger_mechanism_path=mechanism_path)
     configured_closing_order, _ = control.normalized_closing_order(
         inputs.config.section("closure_prediction")["closing_order"]
     )
@@ -9387,7 +9403,7 @@ def _create_runtime(
             scene["evidence_paths"] = tuple(dict.fromkeys((
                 *scene["evidence_paths"], model_path, installer)))
             (output / "frozen_model_installation.json").write_text(json.dumps(installed, indent=2) + "\n")
-            if frozen.get("hand_friction_effort_from_urdf", False):
+            if frozen.get("hand_friction_effort_from_urdf", False) and not arguments.hand_mechanism_config:
                 from te_hand_joint_friction import author_urdf_hand_friction_efforts
                 friction = author_urdf_hand_friction_efforts(repository, stage, ROBOT_ROOT)
                 (output / "hand_joint_friction_authoring.json").write_text(json.dumps(friction, indent=2) + "\n")
@@ -9467,6 +9483,25 @@ def _create_runtime(
         key.AddRotateXYZOp().Set(
             Gf.Vec3f(*render.key_light_rotation_degrees_xyz)
         )
+    mechanism_setup=None
+    if arguments.hand_mechanism_config:
+        from te_hand_mechanism_runtime import author_hand_mechanism
+        settings_document=json.loads(Path(arguments.hand_mechanism_config).read_text())
+        starting_hand=(motion_plan["pregrasp_hand_positions_rad"] if arguments.initialize_at_pregrasp else
+                       settings_document["initial_hand_positions_rad"])
+        starting_arm=(motion_plan["pregrasp_arm_positions_rad"] if arguments.initialize_at_pregrasp else np.zeros(7))
+        initial=dict(zip(control.ARM_JOINT_NAMES,map(float,starting_arm)))
+        initial.update(dict(zip(control.ACTIVE_HAND_JOINT_NAMES,map(float,starting_hand))))
+        mechanism_setup=author_hand_mechanism(stage,repository,arguments.hand_mechanism_config,
+                                             ROBOT_ROOT+"/Physics",initial)
+        scene["evidence_paths"]=tuple(dict.fromkeys((*scene["evidence_paths"],
+            Path(arguments.hand_mechanism_config),Path(mechanism_setup["contract_path"]),
+            Path(__file__).resolve().parents[1]/"te_hand_mechanism_runtime.py",
+            Path(__file__).resolve().parents[1]/"te_hand_fourbar.py",
+            Path(__file__).resolve().parents[1]/"te_worm_drive.py")))
+        trace["hand_mechanism"]={"mechanism_id":mechanism_setup["mechanism_id"],
+            "initial_positions":mechanism_setup["initial_positions"],
+            "palm_actively_repositionable":True,"physical_state_writes_after_reset":False}
     trace["evidence_binding"] = _evidence_binding(
         repository, arguments, inputs, grasp, scene, robot_asset)
     if arguments.mode in ("first-finger-diagnostic", "grasp-lift"):
@@ -9486,6 +9521,11 @@ def _create_runtime(
         compared_binding_keys = (
             set(preflight_binding) | set(current_binding)
         ) - clamp_only_binding_keys
+        if arguments.visual_body_start:
+            # The old preflight remains a nominal physical comparison. The
+            # current image's trajectory is checked separately before motion;
+            # source edits do not turn the old trial into visual acceptance.
+            compared_binding_keys -= {"runner_source_sha256", "controller_source_sha256"}
         mismatched_binding_keys = sorted(
             key
             for key in compared_binding_keys
@@ -9506,9 +9546,14 @@ def _create_runtime(
             "ignored_binding_keys": sorted(clamp_only_binding_keys),
             "all_other_binding_keys_match": True,
         }
-        trace["accepted_preflight_bound"] = True
+        trace["accepted_preflight_bound"] = not arguments.visual_body_start
         trace["accepted_preflight_evaluation_sha256"] = file_sha256(
             arguments.preflight_evaluation_path)
+        if arguments.visual_body_start:
+            trace["nominal_preflight_reference"]={"path":str(arguments.preflight_evaluation_path),
+                "physical_bindings_match":True,"fresh_visual_trajectory_accepted_by_old_preflight":False,
+                "changed_source_hashes":{k:{"reference":preflight_binding.get(k),"current":current_binding.get(k)}
+                    for k in ("runner_source_sha256","controller_source_sha256")}}
     rigid_body_prims, contact_report_prims = [], []
     for prim in stage.Traverse():
         if prim.HasAPI(UsdPhysics.RigidBodyAPI):
@@ -9535,7 +9580,8 @@ def _create_runtime(
                 name="te_visual_high_hand2arm_reaction_reader",
             )
         )
-        if arguments.mode in VISION_MOTION_MODES or dynamic.get("nail_body_grasp_control_plan") is not None
+        if (arguments.mode in VISION_MOTION_MODES or dynamic.get("nail_body_grasp_control_plan") is not None)
+           and not arguments.hand_mechanism_config
         else None
     )
     object_articulation = None
@@ -9577,6 +9623,11 @@ def _create_runtime(
     }
     context.set_gravity(float(scene["gravity_m_s2"]))
     world.reset()
+    if mechanism_setup is not None:
+        # A read-only FT view after reset must not reinitialize the new hand.
+        ft_articulation=SingleArticulation(prim_path=ARTICULATION_PATH,
+            name="source_hand_wrist_reader",reset_xform_properties=False)
+        ft_articulation.initialize()
     if trace.get("validated_connector_integration"):
         # Known repeated material warnings are retained during initialization;
         # only their subsequent log spam is suppressed. Physics stays active.
@@ -9714,7 +9765,14 @@ def _create_runtime(
             if arguments.initialize_at_pregrasp
             else None
         ),
+        preserve_authored_state=mechanism_setup is not None,
+        initial_named_positions=None if mechanism_setup is None else mechanism_setup["initial_positions"],
     )
+    if mechanism_setup is not None:
+        from te_hand_mechanism_runtime import HandMechanismRuntime
+        hand_caps=[float(dynamic["hand_drive_maximum_effort_nm"]),
+                   *[float(dynamic.get("closing_drive_maximum_effort_nm",dynamic["hand_drive_maximum_effort_nm"]))]*3]
+        HandMechanismRuntime(world,robot_data[0],mechanism_setup,output,active_effort_caps=hand_caps)
     trace["initial_joint_audit"] = audit_initial_joint_state(
         robot_data[0], robot_data[0].dof_names
     )
@@ -9742,10 +9800,18 @@ def _create_runtime(
     )
     truth_stream = None
     truth_write_timing = {"serialization_and_write_s": 0.0, "sample_count": 0}
-    if arguments.body_assembly_transport:
+    if arguments.body_assembly_transport or arguments.hand_mechanism_config:
         # Keep raw physical evidence even if a long run is interrupted before
         # the final aggregate report. This sink never returns data to control.
-        truth_stream = (output / "truth_samples.jsonl").open("x", encoding="utf-8", buffering=1)
+        disk_samples = bool(arguments.hand_mechanism_config and arguments.omit_trace_json)
+        if disk_samples:
+            from sample_store import GzipSampleStore
+            truth_stream=GzipSampleStore(output/"truth_samples.jsonl.gz")
+            auditor.samples=truth_stream
+        else:
+            truth_stream = (gzip.open(output/"truth_samples.jsonl.gz","xt",encoding="utf-8",compresslevel=1)
+                        if arguments.hand_mechanism_config else
+                        (output / "truth_samples.jsonl").open("x", encoding="utf-8", buffering=1))
         original_truth_capture = auditor.capture
 
         def capture_with_durable_truth(**kwargs):
@@ -9753,8 +9819,9 @@ def _create_runtime(
             started = perf_counter()
             # Encode one bounded sample with the C encoder, then flush one
             # complete line. json.dump made thousands of Python writes/tick.
-            truth_stream.write(json.dumps(auditor.samples[-1], ensure_ascii=False,
-                                          separators=(",", ":")) + "\n")
+            if not disk_samples:
+                truth_stream.write(json.dumps(auditor.samples[-1], ensure_ascii=False,
+                                              separators=(",", ":")) + "\n")
             truth_write_timing["serialization_and_write_s"] += perf_counter() - started
             truth_write_timing["sample_count"] += 1
             return result
@@ -10415,10 +10482,35 @@ def _run_controller(runtime, arguments, motion_plan, dynamic):
     )
     if ft_auditor is not None:
         ft_auditor.stepper = stepper
+        initial_hand=(runtime["world"].hand_mechanism.reference.copy()
+                      if getattr(runtime["world"],"hand_mechanism",None) else np.zeros(4))
+        initial_arm=(np.asarray([runtime["world"].hand_mechanism.setup["initial_positions"][n]
+                                for n in control.ARM_JOINT_NAMES])
+                     if getattr(runtime["world"],"hand_mechanism",None) else np.zeros(7))
         for _ in stepper.active_steps(round(0.5 / dynamic["physics_dt_s"])):
-            stepper.advance("ft_free_space_tare", np.zeros(7), np.zeros(4))
+            stepper.advance("ft_free_space_tare", initial_arm, initial_hand)
         if stepper.abort_reason is None:
             ft_auditor.finalize_tare(100)
+    if arguments.visual_body_start and stepper.abort_reason is None:
+        from te_visual_body_start import observe_tabletop_body, check_initial_approach
+        repository=runtime["inputs"].repository_root
+        for _ in stepper.active_steps(round(1.5 / dynamic["physics_dt_s"])):
+            stepper.advance("initial_rgbd_settle",initial_arm,initial_hand)
+        if stepper.abort_reason is None:
+            observed,record=observe_tabletop_body(repository,runtime,runtime["output_directory"]/"initial_rgbd")
+            visual_plan=control.build_joint_motion_plan(repository,runtime["inputs"],runtime["control_plan"],
+                                                        observed,include_lift=True)
+            record["approach_geometry"]=check_initial_approach(repository,runtime,visual_plan,observed,initial_hand)
+            record["consumed_motion_plan"]=visual_plan
+            record["controller_start_step"]=stepper.step_index
+            runtime["initial_visual_body_grasp"]=record
+            (runtime["output_directory"]/"initial_rgbd/consumed_grasp_plan.json").write_text(
+                json.dumps(record,indent=2)+"\n")
+            # Keep the single motion-plan object shared with the final trace.
+            motion_plan.clear();motion_plan.update(visual_plan)
+            runtime["body_pregrasp_hand_positions_rad"]=visual_plan["pregrasp_hand_positions_rad"]
+            print("CURRENT_RGBD_BODY_PLAN_CONSUMED",json.dumps({"position":observed[:3,3].tolist(),
+                "geometry":record["approach_geometry"]}),flush=True)
     pregrasp = control.run_pregrasp_sequence(
         stepper,
         motion_plan,
@@ -10713,12 +10805,21 @@ def _nail_body_stability_after_motion(samples, evaluation, wrist_ft):
 def _finish_run(repository, inputs, runtime, trace, outcome):
     finish_started = perf_counter()
     timing = runtime["wall_timing"]
+    mechanism=getattr(runtime["world"],"hand_mechanism",None)
+    if mechanism is not None:
+        mechanism.close()
+        trace["shared_hand_mechanism_execution"]={"physical_steps":mechanism.steps,
+            "failure":mechanism.failure,"motor_input_state_continued_across_phases":True,
+            "stream":"hand_mechanism_samples.jsonl.gz",
+            "initial_drive_readback_is_bootstrap_not_operating_transmission_gains":True}
     if runtime.get("truth_stream") is not None:
         runtime["truth_stream"].close()
         trace["durable_truth_samples"] = {"path": runtime["truth_stream"].name,
-            "format": "JSONL", "returned_to_controller": False}
+            "format": "JSONL_GZIP" if str(runtime["truth_stream"].name).endswith(".gz") else "JSONL",
+            "returned_to_controller": False}
     trace["controller_outcome"] = outcome
     trace["samples"] = runtime["auditor"].samples
+    _write_progress_metadata(runtime["output_directory"],trace)
     if runtime.get("nail_body_ft_auditor") is not None:
         trace["wrist_ft"] = runtime["nail_body_ft_auditor"].summary()
         import gzip
@@ -10757,9 +10858,13 @@ def _finish_run(repository, inputs, runtime, trace, outcome):
     engine_runtime["cpu_backend_pass"] = trace["physics_backend"]["cpu_backend_pass"]
     timing["sensor_archive_and_runtime_summary_s"] = perf_counter() - finish_started
     evaluate_started = perf_counter()
-    evaluation = evaluate_trace(
-        trace, robot_asset_path=runtime["robot_asset"], inputs=inputs
-    )
+    # The legacy pickup evaluator applies only to pickup, lift and hold.
+    # Later intentional release/regrasp stages have separate physical reviews.
+    grasp_samples=trace["samples"][:runtime.get("first_grasp_sample_count",len(trace["samples"]))]
+    grasp_trace={**trace,"samples":grasp_samples}
+    evaluation = evaluate_trace(grasp_trace,robot_asset_path=runtime["robot_asset"],inputs=inputs)
+    evaluation["pickup_evaluation_sample_scope"]={"first":0,"count":len(grasp_samples),
+        "full_episode_count":len(trace["samples"]),"whole_assembly_acceptance":False}
     timing["evaluate_trace_s"] = perf_counter() - evaluate_started
     evaluate_started = perf_counter()
     evaluation["split_plug_relative_motion"] = split_relative_motion
@@ -10771,11 +10876,23 @@ def _finish_run(repository, inputs, runtime, trace, outcome):
     )
     if runtime.get("nail_body_ft_auditor") is not None:
         evaluation["nail_body_stability"] = _nail_body_stability_after_motion(
-            trace["samples"], evaluation, trace["wrist_ft"])
+            grasp_samples, evaluation, trace["wrist_ft"])
         print("NAIL_BODY_STABILITY", json.dumps(evaluation["nail_body_stability"], ensure_ascii=False), flush=True)
     timing["split_contact_and_grasp_evaluation_s"] = perf_counter() - evaluate_started
     trace["wall_timing"] = timing
+    _write_progress_metadata(runtime["output_directory"],trace)
+    (runtime["output_directory"]/"physics_evaluation_before_video_close.json").write_text(
+        json.dumps(evaluation,ensure_ascii=False,separators=(",", ":"))+"\n")
     return trace, evaluation, engine_runtime
+
+
+def _write_progress_metadata(output,trace):
+    from te_foundationpose_handoff_runtime import _json_ready
+    metadata={key:value for key,value in trace.items() if key!="samples"}
+    target=Path(output)/"trace_metadata.json"
+    temporary=target.with_suffix('.json.tmp')
+    temporary.write_text(json.dumps(_json_ready(metadata),ensure_ascii=False,separators=(",", ":"))+"\n")
+    temporary.replace(target)
 
 
 def _execute(
@@ -10791,6 +10908,9 @@ def _execute(
         repository, arguments, inputs, grasp, scene_entry, motion_plan, trace,
         simulation_app, output,
     )
+    if arguments.hand_mechanism_config:
+        trace["audit_roots"]={"robot":ROBOT_ROOT,**runtime["scene"]["roots"]}
+        _write_progress_metadata(output,trace)
     if arguments.mode == VISION_GRASP_SERVO_MODE:
         return runtime["visual_grasp_result"]
     if arguments.mode in (SAME_RESET_RGBD_MODE, VISION_HIGH_REOBSERVE_MODE):
@@ -10806,6 +10926,14 @@ def _execute(
     stepper, outcome, disturbance_execution = _run_controller(
         runtime, arguments, motion_plan, dynamic
     )
+    trace["initial_visual_body_grasp"]=runtime.get("initial_visual_body_grasp")
+    runtime["first_grasp_sample_count"]=stepper.step_index
+    trace["first_grasp_sample_count"]=stepper.step_index
+    trace["controller_outcome"]=outcome
+    if arguments.hand_mechanism_config:
+        _write_progress_metadata(output,trace)
+        from te_foundationpose_handoff_runtime import _json_ready
+        (output/"pickup_controller_outcome.json").write_text(json.dumps(_json_ready(outcome),indent=2)+"\n")
     trace["postgrasp_disturbance_execution"] = disturbance_execution
     if arguments.capture_visual_evidence and arguments.mode == "grasp-lift":
         runtime["visual_capture"].capture_run_end()
@@ -11021,7 +11149,7 @@ def main() -> int:
         save_started = perf_counter()
         # Keep every non-sample field required by postprocessing. Raw physics
         # samples are already durably recorded once in truth_samples.jsonl.
-        if arguments.body_assembly_transport:
+        if arguments.body_assembly_transport or arguments.hand_mechanism_config:
             metadata = {key: value for key, value in trace.items() if key != "samples"}
             (output / "trace_metadata.json").write_text(json.dumps(
                 metadata, ensure_ascii=False, separators=(",", ":")) + "\n")
