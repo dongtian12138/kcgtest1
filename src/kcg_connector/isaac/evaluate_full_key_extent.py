@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 import numpy as np
-from trace_metadata import iter_control_samples
+from trace_metadata import iter_control_samples,iter_truth_samples
 from scipy.spatial.transform import Rotation
 
 
@@ -34,34 +34,32 @@ def evaluate(directory):
     first_turn = next((int(s["step"]) for s in (iter_control_samples(rotation) if rotation else [])
                        if abs(s["commanded_rotation_deg"]) > 1e-6), None)
     rows, first_full, before_turn, consecutive_start = [], None, None, None
-    with (directory / "truth_samples.jsonl").open() as stream:
-        for line in stream:
-            sample = json.loads(line)
-            if sample["step"] < first:
-                continue
-            position = np.asarray(sample["object_part_positions_m"][0])
-            R = Rotation.from_quat(np.roll(sample["object_part_orientations_wxyz"][0], -1)).as_matrix()
-            depths = [socket_position[2]-(p @ R.T+position)[:, 2] for p in points]
-            minima = np.asarray([d.min() for d in depths])
-            maxima = np.asarray([d.max() for d in depths])
-            full = bool(np.all(minima > 0.))
-            row = {"step": sample["step"], "phase": sample["phase"],
-                   "time_s": sample["simulation_time_s"],
-                   "body_depth_m": float(socket_position[2]-position[2]),
-                   "body_lateral_offset_m": float(np.linalg.norm(position[:2]-socket_position[:2])),
-                   "body_axis_tilt_deg": float(np.rad2deg(np.arccos(np.clip(-R[2, 2], -1, 1)))),
-                   "rearmost_key_vertex_depths_m": minima.tolist(),
-                   "frontmost_key_vertex_depths_m": maxima.tolist(),
-                   "all_source_key_vertices_behind_mouth": full}
-            if first_full is None and full:
-                first_full = row.copy()
-            if first_turn is not None and sample["step"] == first_turn-1:
-                before_turn = row.copy()
-            if full and consecutive_start is None:
-                consecutive_start = sample["simulation_time_s"]
-            elif not full:
-                consecutive_start = None
-            rows.append(row)
+    for sample in iter_truth_samples(directory):
+        if sample["step"] < first:
+            continue
+        position = np.asarray(sample["object_part_positions_m"][0])
+        R = Rotation.from_quat(np.roll(sample["object_part_orientations_wxyz"][0], -1)).as_matrix()
+        depths = [socket_position[2]-(p @ R.T+position)[:, 2] for p in points]
+        minima = np.asarray([d.min() for d in depths])
+        maxima = np.asarray([d.max() for d in depths])
+        full = bool(np.all(minima > 0.))
+        row = {"step": sample["step"], "phase": sample["phase"],
+               "time_s": sample["simulation_time_s"],
+               "body_depth_m": float(socket_position[2]-position[2]),
+               "body_lateral_offset_m": float(np.linalg.norm(position[:2]-socket_position[:2])),
+               "body_axis_tilt_deg": float(np.rad2deg(np.arccos(np.clip(-R[2, 2], -1, 1)))),
+               "rearmost_key_vertex_depths_m": minima.tolist(),
+               "frontmost_key_vertex_depths_m": maxima.tolist(),
+               "all_source_key_vertices_behind_mouth": full}
+        if first_full is None and full:
+            first_full = row.copy()
+        if first_turn is not None and sample["step"] == first_turn-1:
+            before_turn = row.copy()
+        if full and consecutive_start is None:
+            consecutive_start = sample["simulation_time_s"]
+        elif not full:
+            consecutive_start = None
+        rows.append(row)
     if len(rows) < 2:
         raise ValueError("no complete entry/turn interval")
     dt = float(np.median(np.diff([r["time_s"] for r in rows])))

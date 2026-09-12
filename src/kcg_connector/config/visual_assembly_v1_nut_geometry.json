@@ -1,0 +1,630 @@
+{
+  "scope": "OFFLINE_NUT_REGRASP_RELATIVE_GEOMETRY_NOT_DYNAMIC_SUCCESS",
+  "source_config": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/config/visual_assembly_v1_body.yaml",
+  "hand_variant": "LEGACY_NAIL_PRESENT",
+  "finger_mechanism_id": "source_nails_fourbar_20260912",
+  "finger_mechanism_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/config/hand_fourbar_20260912.json",
+  "terminal_original_surface_geometry": true,
+  "hand_tilt_deg": 0.0,
+  "hand_tilt_axis_azimuth_deg": 0.0,
+  "hand_lateral_offset_m": [
+    0.0,
+    0.0
+  ],
+  "base_nut_geometry_plan": "artifacts/hand_mechanism_audit_20260912/fourbar_flank60_geometry/geometry_plan.json",
+  "hand_yaw_about_canonical_nut_axis_deg": 0.0,
+  "source_joint_range_contact_search": true,
+  "geometry_search_upper_bounds_rad": [
+    1.0471975511965976,
+    1.3963,
+    1.3963,
+    1.3963
+  ],
+  "palm_layout_rad": 1.0471975511965976,
+  "candidate_axial_shift_from_body_grasp_m": -0.0035,
+  "extra_open_joint_increment_rad": 0.08,
+  "open_hand_positions_rad": [
+    1.0471975511965976,
+    0.6345364456176764,
+    0.451303031921387,
+    0.6345330734252933
+  ],
+  "canonical_body_from_hand_for_nut_grasp": [
+    [
+      0.9961940548876934,
+      -0.08716309428206989,
+      1.2611057617611518e-06,
+      -0.004723811845598846
+    ],
+    [
+      0.0871630942818577,
+      0.9961940548884851,
+      2.223861200432847e-07,
+      -0.0015223509279360232
+    ],
+    [
+      -1.275689924821307e-06,
+      -1.1161785011248335e-07,
+      0.9999999999991801,
+      -0.4259552269256162
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "first_contact_hand_positions_rad": [
+    1.0471975511965976,
+    0.7145840210130978,
+    0.4727261595530192,
+    0.6775124413253222
+  ],
+  "first_contacts": [
+    {
+      "link": "f1Link3",
+      "first_contact_joint_rad": 0.7145840210130978,
+      "source_nut_contact_positions_m": [
+        [
+          -0.018911424701580686,
+          -0.01422993768045367,
+          -0.019534582142964774
+        ],
+        [
+          -0.018911424701580686,
+          -0.01422993768045367,
+          -0.019534582142964774
+        ],
+        [
+          -0.018911424701580686,
+          -0.01422993768045367,
+          -0.019534582142964774
+        ],
+        [
+          -0.018911424701580686,
+          -0.01422993768045367,
+          -0.019534582142964774
+        ],
+        [
+          -0.018911424701580686,
+          -0.01422993768045367,
+          -0.019534582142964774
+        ],
+        [
+          -0.018911424701580686,
+          -0.01422993768045367,
+          -0.019534582142964774
+        ]
+      ],
+      "source_contact_normals": [
+        [
+          0.8208818249992229,
+          0.5710980908617587,
+          1.3877787807814457e-16
+        ],
+        [
+          0.8208818249992229,
+          0.5710980908617587,
+          1.3877787807814457e-16
+        ],
+        [
+          0.8208818249992229,
+          0.5710980908617587,
+          1.3877787807814457e-16
+        ],
+        [
+          0.8208818249992229,
+          0.5710980908617587,
+          1.3877787807814457e-16
+        ],
+        [
+          0.8208818249992229,
+          0.5710980908617587,
+          1.3877787807814457e-16
+        ],
+        [
+          0.8208818249992229,
+          0.5710980908617587,
+          1.3877787807814457e-16
+        ]
+      ],
+      "positive_gap_before_first_contact_m": 1.5275440564716192e-07,
+      "nearest_hand_point_before_contact_body_frame_m": [
+        -0.018911674959981153,
+        -0.014230112914859663,
+        -0.01953439690289485
+      ],
+      "nearest_nut_point_before_contact_body_frame_m": [
+        -0.01891154956666586,
+        -0.01423002567711023,
+        -0.019534396902894845
+      ],
+      "nearest_original_source_face_is_pad": true,
+      "nearest_hand_point_source_surface_distance_m": 1.0048591735576162e-17,
+      "body_clearance_m_at_first_nut_contact": 0.004258132429035511
+    },
+    {
+      "link": "f2Link2",
+      "first_contact_joint_rad": 0.4727261595530192,
+      "source_nut_contact_positions_m": [
+        [
+          0.02117072688012691,
+          -0.010562499143581712,
+          -0.01078338970799688
+        ],
+        [
+          0.02117072688012691,
+          -0.010562499143581712,
+          -0.01078338970799688
+        ],
+        [
+          0.02117072688012691,
+          -0.010562499143581712,
+          -0.01078338970799688
+        ],
+        [
+          0.02117072688012691,
+          -0.010562499143581712,
+          -0.01078338970799688
+        ],
+        [
+          0.02117072688012691,
+          -0.010562499143581712,
+          -0.01078338970799688
+        ],
+        [
+          0.021382029927444382,
+          -0.01010934232287989,
+          -0.01078338823864531
+        ],
+        [
+          0.02117072688012691,
+          -0.010562499143581712,
+          -0.01078338970799688
+        ]
+      ],
+      "source_contact_normals": [
+        [
+          -0.906562880679001,
+          0.4220707800535252,
+          -3.885780586188048e-16
+        ],
+        [
+          -0.906562880679001,
+          0.4220707800535252,
+          -3.885780586188048e-16
+        ],
+        [
+          -0.906562880679001,
+          0.4220707800535252,
+          -3.885780586188048e-16
+        ],
+        [
+          -0.906562880679001,
+          0.4220707800535252,
+          -3.885780586188048e-16
+        ],
+        [
+          -0.906562880679001,
+          0.4220707800535252,
+          -3.885780586188048e-16
+        ],
+        [
+          -0.906562880679001,
+          0.4220707800535252,
+          -3.885780586188048e-16
+        ],
+        [
+          -0.906562880679001,
+          0.4220707800535252,
+          -3.885780586188048e-16
+        ]
+      ],
+      "positive_gap_before_first_contact_m": 1.711984864791834e-07,
+      "nearest_hand_point_before_contact_body_frame_m": [
+        0.021171037198921216,
+        -0.010562643842864379,
+        -0.010783280805754754
+      ],
+      "nearest_nut_point_before_contact_body_frame_m": [
+        0.021170881996728147,
+        -0.010562571584985646,
+        -0.01078328080575476
+      ],
+      "nearest_original_source_face_is_pad": true,
+      "nearest_hand_point_source_surface_distance_m": 8.881784197001253e-18,
+      "body_clearance_m_at_first_nut_contact": 0.0046663800084320636
+    },
+    {
+      "link": "f3Link3",
+      "first_contact_joint_rad": 0.6775124413253222,
+      "source_nut_contact_positions_m": [
+        [
+          -0.003174999961629503,
+          0.02345891669392587,
+          -0.02002790011465551
+        ],
+        [
+          -0.003685671459304783,
+          0.024154961334647923,
+          -0.01810775510866023
+        ],
+        [
+          -0.003118710276284107,
+          0.023411571979227067,
+          -0.016268632215803623
+        ],
+        [
+          -0.003118710276284107,
+          0.023411571979227067,
+          -0.016268632215803623
+        ]
+      ],
+      "source_contact_normals": [
+        [
+          -0.6403064527347502,
+          -0.7659948329989743,
+          0.05709257749580385
+        ],
+        [
+          -1.0000000000000002,
+          1.3877787807814457e-16,
+          1.0408340855860843e-17
+        ],
+        [
+          0.1766228361883992,
+          -0.9842786057497978,
+          -2.7755575615628914e-17
+        ],
+        [
+          0.1766228361883992,
+          -0.9842786057497978,
+          -2.7755575615628914e-17
+        ]
+      ],
+      "positive_gap_before_first_contact_m": 1.1276685516256322e-07,
+      "nearest_hand_point_before_contact_body_frame_m": [
+        -0.0031749275081108842,
+        0.023459003104869994,
+        -0.01626653468193441
+      ],
+      "nearest_nut_point_before_contact_body_frame_m": [
+        -0.0031749999616295065,
+        0.02345891669392587,
+        -0.01626653468193441
+      ],
+      "nearest_original_source_face_is_pad": true,
+      "nearest_hand_point_source_surface_distance_m": 3.1174936010075254e-17,
+      "body_clearance_m_at_first_nut_contact": 0.003755069181948082
+    }
+  ],
+  "minimum_open_approach_clearance_m": 0.003694243476218862,
+  "approach_clearances": [
+    {
+      "axial_shift_m": -0.0,
+      "minimum_plug_clearance_m": 0.0038028134525824554,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -7.291666666666666e-05,
+      "minimum_plug_clearance_m": 0.003793248762216873,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.00014583333333333332,
+      "minimum_plug_clearance_m": 0.0037836840718513246,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.00021875,
+      "minimum_plug_clearance_m": 0.003774119381485781,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.00029166666666666664,
+      "minimum_plug_clearance_m": 0.0037645546911202234,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0003645833333333333,
+      "minimum_plug_clearance_m": 0.0037549900007546803,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0004375,
+      "minimum_plug_clearance_m": 0.0037454253103891247,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0005104166666666666,
+      "minimum_plug_clearance_m": 0.003735860620023579,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0005833333333333333,
+      "minimum_plug_clearance_m": 0.0037262960926752863,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.00065625,
+      "minimum_plug_clearance_m": 0.003717455719890266,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0007291666666666666,
+      "minimum_plug_clearance_m": 0.003710027650699925,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0008020833333333334,
+      "minimum_plug_clearance_m": 0.0037040203818455267,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.000875,
+      "minimum_plug_clearance_m": 0.0036994408347548234,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0009479166666666666,
+      "minimum_plug_clearance_m": 0.00369629431608625,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0010208333333333332,
+      "minimum_plug_clearance_m": 0.003694584487187571,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.00109375,
+      "minimum_plug_clearance_m": 0.003694243476218862,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0011666666666666665,
+      "minimum_plug_clearance_m": 0.003694243476218864,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0012395833333333332,
+      "minimum_plug_clearance_m": 0.0036942434762188693,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0013125,
+      "minimum_plug_clearance_m": 0.0036942434762188715,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0013854166666666665,
+      "minimum_plug_clearance_m": 0.0036942434762188715,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0014583333333333332,
+      "minimum_plug_clearance_m": 0.003694243476218864,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.00153125,
+      "minimum_plug_clearance_m": 0.0036942434762188693,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0016041666666666667,
+      "minimum_plug_clearance_m": 0.0036942434762188715,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0016770833333333332,
+      "minimum_plug_clearance_m": 0.003694243476218879,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.00175,
+      "minimum_plug_clearance_m": 0.0036942434762188715,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0018229166666666665,
+      "minimum_plug_clearance_m": 0.003694243476218864,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0018958333333333331,
+      "minimum_plug_clearance_m": 0.0036942434762188693,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.00196875,
+      "minimum_plug_clearance_m": 0.0036942434762188715,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0020416666666666665,
+      "minimum_plug_clearance_m": 0.003694243476218879,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0021145833333333333,
+      "minimum_plug_clearance_m": 0.0036942434762188715,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0021875,
+      "minimum_plug_clearance_m": 0.003694243476218862,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0022604166666666667,
+      "minimum_plug_clearance_m": 0.0036942434762188693,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.002333333333333333,
+      "minimum_plug_clearance_m": 0.0036942434762188715,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.00240625,
+      "minimum_plug_clearance_m": 0.003694243476218864,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0024791666666666664,
+      "minimum_plug_clearance_m": 0.0036942434762188693,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0025520833333333333,
+      "minimum_plug_clearance_m": 0.003694243476218862,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.002625,
+      "minimum_plug_clearance_m": 0.0036942434762188693,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0026979166666666666,
+      "minimum_plug_clearance_m": 0.0036942434762188715,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.002770833333333333,
+      "minimum_plug_clearance_m": 0.0036942434762188693,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.00284375,
+      "minimum_plug_clearance_m": 0.0036942434762188715,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0029166666666666664,
+      "minimum_plug_clearance_m": 0.0036942434762188693,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0029895833333333332,
+      "minimum_plug_clearance_m": 0.0036942434762188715,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0030625,
+      "minimum_plug_clearance_m": 0.003694243476218877,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0031354166666666666,
+      "minimum_plug_clearance_m": 0.0036942434762188693,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0032083333333333334,
+      "minimum_plug_clearance_m": 0.003694243476218862,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.00328125,
+      "minimum_plug_clearance_m": 0.0036942434762188693,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0033541666666666663,
+      "minimum_plug_clearance_m": 0.0036942434762188715,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.003427083333333333,
+      "minimum_plug_clearance_m": 0.003694243476218877,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    },
+    {
+      "axial_shift_m": -0.0035,
+      "minimum_plug_clearance_m": 0.0036942434762188693,
+      "hand_link": "f2Link2",
+      "plug_part": "nut"
+    }
+  ],
+  "nonterminal_plug_clearances_at_contact_m": {
+    "handbase_link": 0.0871539499285613,
+    "f1Link1": 0.0955008473088452,
+    "f1Link2": 0.05073243347619221,
+    "f2Link1": 0.04001125988230388,
+    "f3Link1": 0.09306795640554524,
+    "f3Link2": 0.0480195395529182
+  },
+  "object_pose_source_for_future_motion": "FRESH_PALM_POSITION_AND_AXIS_WITH_HAND_TRANSVERSE_BASIS",
+  "axial_key_yaw_required_for_axisymmetric_nut_grasp": false,
+  "remaining_checks": [
+    "arm IK and current scene path",
+    "current-image visibility and accuracy",
+    "dynamic force-limited nut contact",
+    "no source-surface forbidden contacts"
+  ],
+  "finite_closing_goal_rad": [
+    1.0471975511965976,
+    0.73904479125,
+    0.643757008125,
+    0.737972525625
+  ],
+  "source_geometry_artifact": {
+    "path": "artifacts/visual_assembly_v1/nut_grasp_raise_3p5mm/geometry_plan.json",
+    "sha256": "0ea55d7f0e13fed27ce185b73a88dab8f3bfcdac9654deb175c6177145a71822"
+  },
+  "geometry_and_short_turn_evidence": [
+    "artifacts/visual_assembly_v1/nut_grasp_raise_3p5mm/end_clearance_lower_axial.json",
+    "artifacts/visual_assembly_v1/nut_grasp_raise_3p5mm/end_clearance_upper_axial.json",
+    "artifacts/visual_assembly_v1/raised_nut_xy_follow07/local_physical_review.json"
+  ]
+}

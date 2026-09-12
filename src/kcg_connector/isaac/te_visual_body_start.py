@@ -22,6 +22,34 @@ def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def compare_nominal_scene_scope(repository,reference_scene,current_scene,current_config):
+    """Compare the physical setup used by nominal preflight, not later tasks."""
+    repository=Path(repository);current_path=Path(current_config)
+    if not current_path.is_absolute():current_path=repository/current_path
+    current_document=yaml.safe_load(current_path.read_text())
+    candidates=[]
+    for relative,sha in reference_scene.items():
+        path=repository/relative
+        if path.suffix not in ('.yaml','.yml'):continue
+        if not path.is_file() or digest(path)!=sha:
+            raise ValueError('The preserved preflight configuration changed: '+str(path))
+        document=yaml.safe_load(path.read_text())
+        if document.get('schema_version')==current_document['schema_version']:
+            candidates.append((relative,document))
+    if len(candidates)!=1:raise ValueError('A unique preserved assembly scene configuration is required')
+    source_path,source=candidates[0]
+    keys=('collision','physics_numerics','passive_joint_solver','grounding_band_contact_model','validated_connector')
+    old={k:source[k] for k in keys};new={k:current_document[k] for k in keys}
+    if old!=new:raise ValueError('Nominal preflight physical scene differs from this candidate')
+    left=dict(reference_scene);right=dict(current_scene)
+    left.pop(source_path);right.pop(str(current_path.resolve().relative_to(repository.resolve())))
+    signature=hashlib.sha256(json.dumps(new,sort_keys=True).encode()).hexdigest()
+    left['ASSEMBLY_PHYSICAL_CONFIGURATION']=signature;right['ASSEMBLY_PHYSICAL_CONFIGURATION']=signature
+    return left,right,{'reference_configuration':source_path,'current_configuration':str(current_path),
+        'physical_fields_compared':list(keys),'physical_parameters_match':True,
+        'later_controller_settings_are_not_preflight_results':True}
+
+
 def body_grasp_frame(axis_pose):
     if axis_pose.get("status") != "OBSERVED_AXIS_POSITION_YAW_FREE":
         raise ValueError("The current image did not resolve the supported plug axis")
@@ -110,6 +138,7 @@ def observe_tabletop_body(repository, runtime, output):
     axis=result["transport_grasp_pose"];body=body_grasp_frame(axis)
     record={"source":"CURRENT_RGBD_WITH_CAD_COAXIALITY_AND_STATIC_TABLE_SUPPORT_PRIOR",
         "capture":capture,"physics_time_s":before,"provider_result":str(result_path),
+        "robot_sample_step":int(runtime["nail_body_ft_auditor"].samples[-1]["step"]),
         "provider_result_sha256":digest(result_path),"world_from_body_for_initial_grasp":body.tolist(),
         "key_angle_measured":False,"axial_frame_yaw_selected_for_grasp_not_measured":True,
         "required_later_key_observation":True,"captive_nut_axial_play_not_observed_by_ring":True,

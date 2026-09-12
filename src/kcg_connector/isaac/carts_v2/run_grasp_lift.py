@@ -9526,6 +9526,13 @@ def _create_runtime(
             # current image's trajectory is checked separately before motion;
             # source edits do not turn the old trial into visual acceptance.
             compared_binding_keys -= {"runner_source_sha256", "controller_source_sha256"}
+            from te_visual_body_start import compare_nominal_scene_scope
+            old_scene,new_scene,scene_comparison=compare_nominal_scene_scope(repository,
+                preflight_binding['scene_evidence_sha256'],current_binding['scene_evidence_sha256'],
+                arguments.body_assembly_collision_config)
+            preflight_binding={**preflight_binding,'scene_evidence_sha256':old_scene}
+            current_binding={**current_binding,'scene_evidence_sha256':new_scene}
+            trace['preflight_physical_scene_scope_comparison']=scene_comparison
         mismatched_binding_keys = sorted(
             key
             for key in compared_binding_keys
@@ -10819,6 +10826,7 @@ def _finish_run(repository, inputs, runtime, trace, outcome):
             "returned_to_controller": False}
     trace["controller_outcome"] = outcome
     trace["samples"] = runtime["auditor"].samples
+    _postrun_pose_observation_reviews(runtime)
     _write_progress_metadata(runtime["output_directory"],trace)
     if runtime.get("nail_body_ft_auditor") is not None:
         trace["wrist_ft"] = runtime["nail_body_ft_auditor"].summary()
@@ -10826,8 +10834,8 @@ def _finish_run(repository, inputs, runtime, trace, outcome):
         from te_foundationpose_handoff_runtime import _json_ready
         archive = Path(runtime["output_directory"]) / "wrist_ft_samples.json.gz"
         sensor_rows = runtime["nail_body_ft_auditor"].samples
-        with gzip.open(archive, "xt", encoding="utf-8", compresslevel=1) as stream:
-            json.dump(_json_ready(sensor_rows), stream, ensure_ascii=False, separators=(",", ":"))
+        from trace_metadata import write_gzip_array
+        write_gzip_array(archive,sensor_rows,prepare=_json_ready)
         trace["wrist_ft"]["samples_archive"] = {
             "path": str(archive), "sample_count": len(sensor_rows),
             "scope": "ALL_AUDITOR_SAMPLES_INCLUDING_PRETASK_TARE",
@@ -10879,6 +10887,8 @@ def _finish_run(repository, inputs, runtime, trace, outcome):
             grasp_samples, evaluation, trace["wrist_ft"])
         print("NAIL_BODY_STABILITY", json.dumps(evaluation["nail_body_stability"], ensure_ascii=False), flush=True)
     timing["split_contact_and_grasp_evaluation_s"] = perf_counter() - evaluate_started
+    if mechanism is not None:
+        _archive_evaluation_details(runtime["output_directory"],evaluation)
     trace["wall_timing"] = timing
     _write_progress_metadata(runtime["output_directory"],trace)
     (runtime["output_directory"]/"physics_evaluation_before_video_close.json").write_text(
@@ -10893,6 +10903,55 @@ def _write_progress_metadata(output,trace):
     temporary=target.with_suffix('.json.tmp')
     temporary.write_text(json.dumps(_json_ready(metadata),ensure_ascii=False,separators=(",", ":"))+"\n")
     temporary.replace(target)
+
+
+def _postrun_pose_observation_reviews(runtime):
+    """Compare saved observations with recorded poses after all motion ends."""
+    output=Path(runtime["output_directory"])
+    for relative in ('initial_rgbd/body_localization.json','postgrasp_key/camera_and_estimate.json'):
+        path=output/relative
+        if not path.exists():continue
+        record=json.loads(path.read_text())
+        if 'robot_sample_step' not in record:continue
+        step=int(record['robot_sample_step']);row=runtime['auditor'].samples[step]
+        if int(row['step'])!=step:raise ValueError('Observation and raw sample indices differ')
+        truth=np.eye(4);truth[:3,3]=row['object_part_positions_m'][0]
+        truth[:3,:3]=_quaternion_wxyz_rotation(np.asarray(row['object_part_orientations_wxyz'][0]))
+        key=record.get('key_measurement',{})
+        measured_key=bool(key.get('key_direction_measured'))
+        measured=(key.get('world_from_plug_row_major') if 'key_measurement' in record
+                  else record.get('world_from_body_for_initial_grasp'))
+        result={'world_from_body_truth':truth.tolist(),'used_for_control':False,
+            'evaluation_timing':'AFTER_ALL_PHYSICAL_MOTION','physics_sample_step':step,
+            'physics_time_s':row['simulation_time_s'],'key_angle_measured':measured_key}
+        if measured is not None:
+            observed=np.asarray(measured).reshape(4,4)
+            result['center_error_m']=float(np.linalg.norm(observed[:3,3]-truth[:3,3]))
+            result['axis_error_deg']=math.degrees(math.acos(float(np.clip(observed[:3,2]@truth[:3,2],-1,1))))
+            if measured_key:
+                result['main_key_direction_error_deg']=math.degrees(math.acos(float(np.clip(observed[:3,1]@truth[:3,1],-1,1))))
+                result['full_rotation_error_deg']=math.degrees(_rotation_error_rad(observed[:3,:3],truth[:3,:3]))
+        (path.parent/'posthoc_truth_comparison.json').write_text(json.dumps(result,indent=2)+'\n')
+
+
+def _archive_evaluation_details(output,evaluation):
+    from trace_metadata import write_gzip_array
+    folder=Path(output)/"evaluation_details";folder.mkdir(exist_ok=True)
+    archives=[]
+    def visit(value,path):
+        if isinstance(value,dict):
+            for key,child in list(value.items()):
+                if isinstance(child,list) and len(child)>1000:
+                    file=folder/('_'.join((*path,key))+'.json.gz')
+                    write_gzip_array(file,child)
+                    record={"path":str(file),"count":len(child),"format":"JSON_ARRAY_GZIP"}
+                    value[key]=[];value[key+"_archive"]=record;archives.append(record)
+                else:visit(child,(*path,key))
+        elif isinstance(value,list):
+            for index,child in enumerate(value):visit(child,(*path,str(index)))
+    visit(evaluation,())
+    evaluation["detailed_timeseries_archives"]={"raw_values_preserved":True,"files":archives,
+        "empty_inline_arrays_with_archive_fields_mean_external_storage_not_absent_data":True}
 
 
 def _execute(
@@ -10961,7 +11020,8 @@ def _execute(
                             json.dumps({"error": str(error), "traceback": traceback.format_exc()}, indent=2) + "\n")
                     posthoc_started = perf_counter()
                     runtime["wall_timing"]["execution_through_transport_s"] = perf_counter() - execution_started
-                    _evaluate_body_memory_after_motion(
+                    from trace_metadata import without_cyclic_gc
+                    without_cyclic_gc(_evaluate_body_memory_after_motion,
                         runtime, observation["hand_from_body_visual_memory"], first_motion_step, output)
                     entry = trace.get("body_assembly_transport", {}).get("key_entry", {})
                     probe_record = entry.get("probe_controller")
@@ -10969,7 +11029,7 @@ def _execute(
                         from te_foundationpose_handoff_runtime import _evaluate_key_entry_after_motion
                         true_socket = np.eye(4)
                         true_socket[:3, 3] = runtime["body_assembly_scene"]["report"]["socket_initial_position_world_m"]
-                        physical, rows = _evaluate_key_entry_after_motion(
+                        physical, rows = without_cyclic_gc(_evaluate_key_entry_after_motion,
                             runtime["auditor"].samples, entry["probe_controller"],
                             true_socket, entry["probe_config"])
                         (output / "physical_key_entry_result.json").write_text(
@@ -10980,7 +11040,8 @@ def _execute(
     runtime["wall_timing"]["stepper"] = dict(stepper.wall_times, physical_step_count=stepper.step_index)
     runtime["wall_timing"]["truth_jsonl"] = runtime["truth_write_timing"]
     (output / "run_timing.json").write_text(json.dumps(runtime["wall_timing"], indent=2) + "\n")
-    return _finish_run(repository, inputs, runtime, trace, outcome)
+    from trace_metadata import without_cyclic_gc
+    return without_cyclic_gc(_finish_run,repository,inputs,runtime,trace,outcome)
 
 
 def _observe_held_body(runtime, arguments, output, simulation_app):
@@ -11025,6 +11086,7 @@ def _observe_held_body(runtime, arguments, output, simulation_app):
         measurement = estimate_held_plug_key_from_depth(
             np.load(root / "depth_m.npy"), intrinsics, camera_pose, seed)
         record = {"capture": capture, "physics_time_s": float(world.current_time),
+                  "robot_sample_step":int(runtime["nail_body_ft_auditor"].samples[-1]["step"]),
                   "intrinsics_3x3": intrinsics.tolist(),
                   "world_from_camera_cv": camera_pose.tolist(),
                   "world_from_hand_encoder": hand.tolist(),
@@ -11035,28 +11097,8 @@ def _observe_held_body(runtime, arguments, output, simulation_app):
             observed = np.asarray(measurement["world_from_plug_row_major"]).reshape(4, 4)
             record["hand_from_body_visual_memory"] = (np.linalg.inv(hand) @ observed).tolist()
         (root / "camera_and_estimate.json").write_text(json.dumps(record, indent=2) + "\n")
-        # Separate posthoc readback; never supplies the camera target or estimate.
-        position, orientation = runtime["object_parts"][0].get_world_pose()
-        position = _host_array(position)
-        orientation = _host_array(orientation)
-        truth = np.eye(4)
-        truth[:3, :3] = Rotation.from_quat(orientation[[1, 2, 3, 0]]).as_matrix()
-        truth[:3, 3] = position
-        posthoc = {"world_from_body_truth": truth.tolist(), "used_for_control": False,
-                   "physics_time_s": float(world.current_time)}
-        import isaacsim.core.experimental.utils.stage as stage_utils
-        import isaacsim.core.experimental.utils.xform as xform_utils
-        fabric = stage_utils.get_current_stage(backend="fabric")
-        render_position, _ = xform_utils.get_world_pose(
-            fabric.GetPrimAtPath(str(runtime["scene"]["part_prim_paths"][0])))
-        posthoc["body_position_fabric_m"] = render_position.numpy().tolist()
-        if measurement["key_direction_measured"]:
-            posthoc["center_error_m"] = float(np.linalg.norm(observed[:3, 3] - truth[:3, 3]))
-            posthoc["axis_error_deg"] = math.degrees(math.acos(float(np.clip(observed[:3, 2] @ truth[:3, 2], -1, 1))))
-            posthoc["main_key_direction_error_deg"] = math.degrees(math.acos(float(np.clip(observed[:3, 1] @ truth[:3, 1], -1, 1))))
-            posthoc["full_rotation_error_deg"] = math.degrees(Rotation.from_matrix(observed[:3, :3].T @ truth[:3, :3]).magnitude())
-        (root / "posthoc_truth_comparison.json").write_text(json.dumps(posthoc, indent=2) + "\n")
-        print("POSTGRASP_BODY_OBSERVATION", json.dumps({"measurement": measurement, "posthoc": posthoc}), flush=True)
+        print("POSTGRASP_BODY_OBSERVATION",json.dumps({"measurement":measurement,
+            "truth_comparison_deferred_until_all_motion_ends":True}),flush=True)
         return record
     finally:
         _close_rgbd_resources(resources)

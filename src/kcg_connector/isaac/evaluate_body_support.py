@@ -10,6 +10,7 @@ from pathlib import Path
 import ijson
 import numpy as np
 from scipy.spatial.transform import Rotation
+from trace_metadata import iter_truth_samples
 
 
 def evaluate(directory: Path, phase_kind: str = "support", stage_name: str | None = None):
@@ -39,91 +40,85 @@ def evaluate(directory: Path, phase_kind: str = "support", stage_name: str | Non
     edges = np.column_stack((0.0188214 * np.cos(angles), 0.0188214 * np.sin(angles),
                             np.full(len(angles), -0.000762)))
     rows, final_truth, preclose_truth = [], None, None
-    trace_path = directory / "truth_samples.jsonl"
-    if not trace_path.exists():
-        trace_path = directory / "trace.json"
-    with trace_path.open("rb") as stream:
-        source_rows = ((json.loads(line) for line in stream) if trace_path.suffix == ".jsonl"
-                       else ijson.items(stream, "samples.item", use_float=True))
-        for actual in source_rows:
-            step = int(actual["step"])
-            if step < start:
+    for actual in iter_truth_samples(directory):
+        step = int(actual["step"])
+        if step < start:
+            continue
+        if step > end:
+            break
+        if (phase_kind == "nut_regrasp" and preclose_truth is None
+                and actual["phase"] == "key_probe_nut_tare"):
+            preclose_truth = final_truth
+        if phase_kind == "nut_rotation" and preclose_truth is None:
+            preclose_truth = actual
+        final_truth = actual
+        positions = np.asarray(actual["object_part_positions_m"])
+        rotations = Rotation.from_quat(np.roll(np.asarray(
+            actual["object_part_orientations_wxyz"]), -1, axis=1)).as_matrix()
+        center = positions[0] - socket_position
+        points = edges @ rotations[0].T + center
+        polar = np.rad2deg(np.arctan2(points[:, 1], points[:, 0])).reshape(-1, 2)
+        errors = (polar - slot_centers[:, None] + 180.0) % 360.0 - 180.0
+        margins = np.min(slot_widths[:, None] / 2.0 - np.abs(errors), axis=1)
+        radial = 0.0190373 - np.max(np.linalg.norm(points[:, :2], axis=1))
+        tilt = np.rad2deg(np.arccos(np.clip(-rotations[0, 2, 2], -1.0, 1.0)))
+        contact = actual["contacts"]
+        impulses = {"body_socket": 0.0, "nut_socket": 0.0, "robot_socket": 0.0,
+                    "finger_body": 0.0, "finger_nut": 0.0}
+        finger_impulses = {"body": [0.0, 0.0, 0.0], "nut": [0.0, 0.0, 0.0]}
+        penetration = {"body_socket": 0.0, "nut_socket": 0.0}
+        for header in contact["tensor_headers"]:
+            paths = header["paths"]
+            is_socket = any("FixedReceptaclePose" in path for path in paths)
+            is_robot = any(path.startswith("/World/HandArm/") for path in paths)
+            part = next((name for name, path in part_paths.items() if path in paths), None)
+            key = ((part + "_socket") if part and is_socket else
+                   "robot_socket" if is_robot and is_socket else
+                   "finger_" + part if part and is_robot else None)
+            if key is None:
                 continue
-            if step > end:
-                break
-            if (phase_kind == "nut_regrasp" and preclose_truth is None
-                    and actual["phase"] == "key_probe_nut_tare"):
-                preclose_truth = final_truth
-            if phase_kind == "nut_rotation" and preclose_truth is None:
-                preclose_truth = actual
-            final_truth = actual
-            positions = np.asarray(actual["object_part_positions_m"])
-            rotations = Rotation.from_quat(np.roll(np.asarray(
-                actual["object_part_orientations_wxyz"]), -1, axis=1)).as_matrix()
-            center = positions[0] - socket_position
-            points = edges @ rotations[0].T + center
-            polar = np.rad2deg(np.arctan2(points[:, 1], points[:, 0])).reshape(-1, 2)
-            errors = (polar - slot_centers[:, None] + 180.0) % 360.0 - 180.0
-            margins = np.min(slot_widths[:, None] / 2.0 - np.abs(errors), axis=1)
-            radial = 0.0190373 - np.max(np.linalg.norm(points[:, :2], axis=1))
-            tilt = np.rad2deg(np.arccos(np.clip(-rotations[0, 2, 2], -1.0, 1.0)))
-            contact = actual["contacts"]
-            impulses = {"body_socket": 0.0, "nut_socket": 0.0, "robot_socket": 0.0,
-                        "finger_body": 0.0, "finger_nut": 0.0}
-            finger_impulses = {"body": [0.0, 0.0, 0.0], "nut": [0.0, 0.0, 0.0]}
-            penetration = {"body_socket": 0.0, "nut_socket": 0.0}
-            for header in contact["tensor_headers"]:
-                paths = header["paths"]
-                is_socket = any("FixedReceptaclePose" in path for path in paths)
-                is_robot = any(path.startswith("/World/HandArm/") for path in paths)
-                part = next((name for name, path in part_paths.items() if path in paths), None)
-                key = ((part + "_socket") if part and is_socket else
-                       "robot_socket" if is_robot and is_socket else
-                       "finger_" + part if part and is_robot else None)
-                if key is None:
-                    continue
-                for hit in header["contacts"]:
-                    impulse = max(0.0, float(hit["normal_impulse_n_s"]))
-                    impulses[key] += impulse
-                    if key.startswith("finger_"):
-                        for finger, link in enumerate(("f1Link3", "f2Link2", "f3Link3")):
-                            if any(path.endswith("/" + link) for path in paths):
-                                finger_impulses[part][finger] += impulse
-                    if key in penetration:
-                        penetration[key] = max(penetration[key], -float(hit["separation_m"]))
-            rows.append({"step": step, "phase": actual["phase"],
-                "time_s": actual["simulation_time_s"], "body_depth_m": -float(center[2]),
-                "axis_tilt_deg": float(tilt), "lateral_offset_m": float(np.linalg.norm(center[:2])),
-                "minimum_key_front_depth_m": float(np.min(-points[:, 2])),
-                "minimum_slot_angular_margin_deg": float(np.min(margins)),
-                "minimum_key_radial_clearance_m": float(radial),
-                "five_keys_within_slot_front_bounds": bool(np.min(-points[:, 2]) > 0
-                                                          and np.min(margins) > 0 and radial > 0),
-                "positive_impulses_n_s": impulses, "penetration_m": penetration,
-                "finger_part_positive_impulses_n_s": finger_impulses,
-                "unauthorized_robot_object": int(contact.get("robot_object_unauthorized", 0)),
-                "table_impulse_n_s": float(contact.get("object_table_positive_normal_impulse_n_s", 0)),
-                "physics_step_callback_count": int(contact["physics_step_callback_count"])})
-            if phase_kind == "nut_rotation":
-                hand_rotation = Rotation.from_quat(np.roll(np.asarray(actual["hand_base_orientation_wxyz"]), -1)).as_matrix()
-                hand_position = np.asarray(actual["hand_base_position_m"])
-                relative_rotation = hand_rotation.T @ rotations[1]
-                relative_translation = hand_rotation.T @ (positions[1] - hand_position)
-                if len(rows) == 1:
-                    initial_rotations = rotations.copy()
-                    initial_hand_rotation = hand_rotation.copy()
-                    initial_relative_rotation = relative_rotation.copy()
-                    initial_relative_translation = relative_translation.copy()
-                deltas = [rotations[part] @ initial_rotations[part].T for part in range(2)]
-                deltas.append(hand_rotation @ initial_hand_rotation.T)
-                rows[-1].update(
-                    body_clock_delta_deg=float(np.rad2deg(np.arctan2(deltas[0][1, 0], deltas[0][0, 0]))),
-                    nut_clock_delta_deg=float(np.rad2deg(np.arctan2(deltas[1][1, 0], deltas[1][0, 0]))),
-                    hand_clock_delta_deg=float(np.rad2deg(np.arctan2(deltas[2][1, 0], deltas[2][0, 0]))),
-                    nut_depth_m=float(socket_position[2] - positions[1, 2]),
-                    nut_in_hand_translation_change_m=float(np.linalg.norm(relative_translation - initial_relative_translation)),
-                    nut_in_hand_rotation_change_deg=float(np.rad2deg(Rotation.from_matrix(
-                        relative_rotation @ initial_relative_rotation.T).magnitude())))
+            for hit in header["contacts"]:
+                impulse = max(0.0, float(hit["normal_impulse_n_s"]))
+                impulses[key] += impulse
+                if key.startswith("finger_"):
+                    for finger, link in enumerate(("f1Link3", "f2Link2", "f3Link3")):
+                        if any(path.endswith("/" + link) for path in paths):
+                            finger_impulses[part][finger] += impulse
+                if key in penetration:
+                    penetration[key] = max(penetration[key], -float(hit["separation_m"]))
+        rows.append({"step": step, "phase": actual["phase"],
+            "time_s": actual["simulation_time_s"], "body_depth_m": -float(center[2]),
+            "axis_tilt_deg": float(tilt), "lateral_offset_m": float(np.linalg.norm(center[:2])),
+            "minimum_key_front_depth_m": float(np.min(-points[:, 2])),
+            "minimum_slot_angular_margin_deg": float(np.min(margins)),
+            "minimum_key_radial_clearance_m": float(radial),
+            "five_keys_within_slot_front_bounds": bool(np.min(-points[:, 2]) > 0
+                                                      and np.min(margins) > 0 and radial > 0),
+            "positive_impulses_n_s": impulses, "penetration_m": penetration,
+            "finger_part_positive_impulses_n_s": finger_impulses,
+            "unauthorized_robot_object": int(contact.get("robot_object_unauthorized", 0)),
+            "table_impulse_n_s": float(contact.get("object_table_positive_normal_impulse_n_s", 0)),
+            "physics_step_callback_count": int(contact["physics_step_callback_count"])})
+        if phase_kind == "nut_rotation":
+            hand_rotation = Rotation.from_quat(np.roll(np.asarray(actual["hand_base_orientation_wxyz"]), -1)).as_matrix()
+            hand_position = np.asarray(actual["hand_base_position_m"])
+            relative_rotation = hand_rotation.T @ rotations[1]
+            relative_translation = hand_rotation.T @ (positions[1] - hand_position)
+            if len(rows) == 1:
+                initial_rotations = rotations.copy()
+                initial_hand_rotation = hand_rotation.copy()
+                initial_relative_rotation = relative_rotation.copy()
+                initial_relative_translation = relative_translation.copy()
+            deltas = [rotations[part] @ initial_rotations[part].T for part in range(2)]
+            deltas.append(hand_rotation @ initial_hand_rotation.T)
+            rows[-1].update(
+                body_clock_delta_deg=float(np.rad2deg(np.arctan2(deltas[0][1, 0], deltas[0][0, 0]))),
+                nut_clock_delta_deg=float(np.rad2deg(np.arctan2(deltas[1][1, 0], deltas[1][0, 0]))),
+                hand_clock_delta_deg=float(np.rad2deg(np.arctan2(deltas[2][1, 0], deltas[2][0, 0]))),
+                nut_depth_m=float(socket_position[2] - positions[1, 2]),
+                nut_in_hand_translation_change_m=float(np.linalg.norm(relative_translation - initial_relative_translation)),
+                nut_in_hand_rotation_change_deg=float(np.rad2deg(Rotation.from_matrix(
+                    relative_rotation @ initial_relative_rotation.T).magnitude())))
     if not rows or final_truth is None or rows[0]["step"] != start or rows[-1]["step"] != end:
         raise ValueError("the saved trace does not cover the complete support experiment")
     dt = float(np.median(np.diff([row["time_s"] for row in rows])))

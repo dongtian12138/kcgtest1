@@ -107,9 +107,11 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
         raise ValueError("the declared nut-grasp axial shift must be within 3 mm")
     canonical[2, 3] += grasp_axis_shift
     open_goal = np.asarray(geometry["open_hand_positions_rad"])
-    source_config = yaml.safe_load((repository / "src/kcg_connector/config/te_nail_tip_body_grasp_v1.yaml").read_text())
-    close_goal = np.asarray(geometry.get("finite_closing_goal_rad",
-        source_config["dynamic"]["nail_body_grasp_control_plan"]["final_joint_positions_rad"])).copy()
+    closing=geometry.get("finite_closing_goal_rad")
+    if closing is None:
+        source_config=yaml.safe_load((repository/"src/kcg_connector/config/te_nail_tip_body_grasp_v1.yaml").read_text())
+        closing=source_config["dynamic"]["nail_body_grasp_control_plan"]["final_joint_positions_rad"]
+    close_goal=np.asarray(closing).copy()
     # Palm layout belongs to this nut grasp. Finger closure must not send
     # the palm back to the legacy Body layout.
     close_goal[0]=open_goal[0]
@@ -121,6 +123,7 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
     if not np.isfinite(effort_tau) or effort_tau < 0:
         raise ValueError("nut grip target relaxation time must be finite and nonnegative")
     effort_gain = dt/(effort_tau+dt) if effort_tau > 0 else 1.
+    root_preload=config["nut_regrasp"].get("root_moment_preload")
     first_ft = len(ft.samples)
     command_rows = []
     record = {"completed": False, "stage": "BEFORE_NUT_REGRASP", "first_step": int(stepper.step_index),
@@ -270,6 +273,27 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
         mechanism=getattr(world,"hand_mechanism",None)
         if mechanism is not None and geometry.get("finger_mechanism_id")!=mechanism.setup["mechanism_id"]:
             raise ValueError("nut-grasp geometry differs from the running hand mechanism")
+        if root_preload:
+            if mechanism is None:raise ValueError("root-moment preload requires the shared source transmission")
+            caps=[float(mechanism.settings["palm_transmission_boundary_nm"]),
+                  *[float(root_preload["finite_motor_cap_nm"])]*3]
+            mechanism.set_caps(caps)
+            record["motor_cap_transition"]={"active_caps_nm":caps,"motor_input_state_reset":False,
+                "source":root_preload["source_evidence"],"hardware_rating_claimed":False}
+            # The old 0.9 Nm value is an observation reference from the old
+            # grasp, not a rating for the requested finite 3.5 Nm motor path.
+            stepper.settings={**stepper.settings,"measured_effort_abort_action":root_preload["legacy_effort_monitor_action"]}
+            reference_force=float(root_preload["wrist_force_observation_n"])
+            if not np.isfinite(reference_force) or not 0<reference_force<=20.:
+                raise ValueError("nut grip retains the declared finite wrist observation range")
+            loaded_phases=("key_probe_nut_contact","key_probe_nut_grip_hold",
+                "key_probe_nut_index_unload","key_probe_nut_index_open",
+                "key_probe_nut_rotation_visual_align","key_probe_nut_rotation_visual_refine",
+                "key_probe_nut_rotation_axial_settle","key_probe_nut_rotation_turn","key_probe_nut_rotation_hold")
+            ft.contact_force_limit_overrides_n.update({phase:reference_force for phase in loaded_phases})
+            record["loaded_nut_force_observation"]={"limit_n":reference_force,"phases":list(loaded_phases),
+                "source":root_preload["source_evidence"],"source_local_grip_peak_n":7.423843484462589,
+                "commanded_force_reference_changed":False,"hardware_rating_claimed":False}
         body, target = target_from_palm(observation)
         locate_part_bounds(body)
         record.update(world_from_body_palm_five_dof=body.tolist(), target_world_from_hand=target.tolist(),
@@ -352,11 +376,18 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
         record["stage"] = "CURRENT_OPEN_HAND_EFFORT_TARE"
         save()
         world.play()
-        tare_rows = []
+        tare_rows = [];tare_encoder_rows=[]
         for _ in range(round(float(dynamic["effort_tare_duration_s"]) / dt)):
             advance("key_probe_nut_tare", held_arm, open_goal)
             tare_rows.append(np.asarray(stepper.latest[2])[7:].copy())
+            tare_encoder_rows.append(np.asarray(stepper.latest[0]).copy())
         tare = np.mean(tare_rows, axis=0)
+        root_observer=None
+        if root_preload:
+            from te_three_finger_wrench_observer import ThreeFingerWrenchObserver
+            root_observer=ThreeFingerWrenchObserver(repository,inputs.robot_model,geometry_path,
+                sensor_semantics="BASE_BRIDGE_EXTERNAL_MOMENT_ABOUT_O")
+            root_observer.calibrate_free_space(tare_encoder_rows,np.asarray(tare_rows)[:,1:])
         contact = control.ParallelEffortContactController(
             open_goal, close_goal, effort_rise_nm=float(dynamic["contact_effort_rise_nm"]),
             position_error_rad=float(dynamic["contact_position_error_rad"]),
@@ -388,11 +419,40 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
         record.update(new_grasp_effort_tare_nm=tare.tolist(), first_contact_hand_targets_rad=contact.target.tolist(),
                       finite_preload_bounds_rad=[lower.tolist(), upper.tolist()], effort_reference_nm=desired.tolist())
         save()
-        for _ in range(round((float(dynamic["preload_duration_s"]) + float(dynamic["hold_duration_s"])) / dt)):
-            measured = direction[1:] * (stepper.latest[2][8:] - tare[1:])
-            q[1:] = np.clip(q[1:] + direction[1:] * np.clip(
-                effort_gain*(desired - measured) / float(dynamic["hand_stiffness"]), -increment, increment), lower[1:], upper[1:])
-            advance("key_probe_nut_grip_hold", held_arm, q, nut_contact=True)
+        if root_preload:
+            desired=np.asarray(root_preload["targets_nm"],float)
+            source_lower,source_upper=inputs.robot_model.joint_limit_vectors()
+            lower[1:]=np.maximum(open_goal[1:],contact.target[1:]-float(root_preload["target_open_allowance_rad"]))
+            upper[1:]=np.minimum(np.asarray(source_upper)[8:],contact.target[1:]+float(root_preload["target_close_allowance_rad"]))
+            ramp=float(root_preload["ramp_duration_s"]);duration=float(root_preload["total_duration_s"])
+            relaxation=dt/(float(root_preload["target_relaxation_time_constant_s"])+dt)
+            stiffness=float(root_preload["position_stiffness_reference_nm_rad"])
+            limit=min(increment,float(root_preload["maximum_target_speed_rad_s"])*dt)
+            if desired.shape!=(3,) or not np.isfinite(desired).all() or np.any(desired<=0) or not 0<ramp<=duration:
+                raise ValueError("finite root-moment preload references are required")
+            for index in range(round(duration/dt)):
+                encoder=np.asarray(stepper.latest[0]);raw=np.asarray(stepper.latest[2])[8:]
+                gravity=root_observer._system(encoder)[2]
+                measured=raw-root_observer.tare_reaction-(gravity-root_observer.tare_gravity)
+                reference=control.minimum_jerk_blend(min(1.,(index+1)*dt/ramp))*desired
+                q[1:]=np.clip(q[1:]+np.clip(relaxation*(reference-measured)/stiffness,-limit,limit),lower[1:],upper[1:])
+                advance("key_probe_nut_grip_hold",held_arm,q,nut_contact=True)
+                command_rows[-1]["base_bridge_external_moment_nm"]=measured.tolist()
+                command_rows[-1]["base_bridge_reference_nm"]=reference.tolist()
+            if np.any(measured<=float(dynamic["contact_effort_rise_nm"])):
+                raise RuntimeError("a finger lost its load evidence during root-moment preload")
+            record["root_moment_preload"]={**root_preload,"gravity_compensated":True,
+                "tare_gravity_nm":root_observer.tare_gravity.tolist(),
+                "final_measured_external_moment_nm":measured.tolist(),
+                "relative_reference_error":((measured-desired)/desired).tolist(),
+                "exact_target_reached_claimed":False,"motor_targets_frozen_for_next_rotation":True}
+            record.update(finite_preload_bounds_rad=[lower.tolist(),upper.tolist()],effort_reference_nm=desired.tolist())
+        else:
+            for _ in range(round((float(dynamic["preload_duration_s"]) + float(dynamic["hold_duration_s"])) / dt)):
+                measured = direction[1:] * (stepper.latest[2][8:] - tare[1:])
+                q[1:] = np.clip(q[1:] + direction[1:] * np.clip(
+                    effort_gain*(desired - measured) / float(dynamic["hand_stiffness"]), -increment, increment), lower[1:], upper[1:])
+                advance("key_probe_nut_grip_hold", held_arm, q, nut_contact=True)
         record.update(completed=True, stage="NUT_GRIP_CONTROLLER_FINISHED_REQUIRES_PHYSICAL_EVALUATION",
                       final_hand_target_rad=q.tolist(), fixed_arm_target_rad=held_arm.tolist())
         # Carry only robot-model geometry checks into the immediately following

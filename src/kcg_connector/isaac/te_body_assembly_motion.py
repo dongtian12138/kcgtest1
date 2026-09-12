@@ -324,6 +324,11 @@ def run_to_socket_observation(
                 record["failure_reason"] = (record["key_entry"].get("failure_reason")
                                              or record["key_entry"].get("original_contact_termination"))
             record["stage"] = "KEY_PROBE_RETURNED_FOR_POSTRUN_PHYSICAL_EVALUATION"
+            record["completed"]=bool(record["key_entry"].get("controller_depth_reached"))
+            record["completed_scope"]="REQUESTED_KEY_ENTRY_CONTROLLER_REQUIRES_POSTRUN_PHYSICAL_EVALUATION"
+            if not record["completed"]:
+                record["failure_reason"]=(record["key_entry"].get("failure_reason")
+                    or (probe_record or {}).get("termination") or "KEY_ENTRY_NOT_REACHED")
             if (runtime.get("body_support_test_requested")
                     and record["key_entry"].get("controller_depth_reached")):
                 from te_body_support_release import run_body_support_release
@@ -426,8 +431,8 @@ def run_to_socket_observation(
         world.pause()
         _close_rgbd_resources(resources)
         samples = ft.samples[first_ft_sample:]
-        with gzip.open(output / "transport_joint_ft_samples.json.gz", "wt", encoding="utf-8") as stream:
-            json.dump(_json_ready(samples), stream, ensure_ascii=False, separators=(",", ":"))
+        from trace_metadata import write_gzip_array
+        write_gzip_array(output/"transport_joint_ft_samples.json.gz",samples,prepare=_json_ready)
         predictions = []
         if "hand_from_body_visual_memory" in record:
             for sample in samples:

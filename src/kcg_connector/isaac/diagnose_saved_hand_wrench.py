@@ -58,8 +58,10 @@ parser.add_argument("--output", type=Path, required=True)
 parser.add_argument('--robot-asset',type=Path,help='Explicit existing robot/hand variant for a declared comparison; authored before physics')
 parser.add_argument('--hand-role',choices=('production-nails','nailfree-comparison'),default='production-nails',
                     help='Production requires original nails; nail-free results are comparison-only')
-parser.add_argument('--palm-layout-mechanism',choices=('self-lock','legacy-servo'),
+parser.add_argument('--palm-layout-mechanism',choices=('self-lock','legacy-servo','shared-worm-pd'),
                     help='User-confirmed worm self-lock is the production default; legacy servo is comparison-only')
+parser.add_argument('--shared-hand-mechanism',type=Path,
+                    help='Use the same four-motor runtime as the visual assembly path, including the actively driven palm')
 parser.add_argument('--finger-mechanism',type=Path,
                     help='Explicit measured four-bar candidate contract; default retains historical linear mimic')
 parser.add_argument('--finger-worm-self-lock',action='store_true',
@@ -194,9 +196,13 @@ parser.add_argument("--probe-freeze-planar-after-preparation", action="store_tru
 parser.add_argument("--probe-force-consistent-planar-range",action='store_true')
 parser.add_argument("--probe-guided-socket-pivot", action="store_true")
 args = parser.parse_args()
+if args.shared_hand_mechanism:
+    if not args.robot_state_before_reset or not args.finger_mechanism or args.interface_twist_deg is None or args.finger_worm_self_lock:
+        parser.error('Shared hand requires pre-reset source state, fourbar contract and interface mode, without a second worm integrator')
+    args.palm_layout_mechanism='shared-worm-pd'
 if args.palm_layout_mechanism is None:
     args.palm_layout_mechanism='self-lock' if args.hand_role=='production-nails' else 'legacy-servo'
-if args.hand_role=='production-nails' and args.palm_layout_mechanism!='self-lock':
+if args.hand_role=='production-nails' and args.palm_layout_mechanism not in ('self-lock','shared-worm-pd'):
     parser.error('The production palm mechanism must reflect the user-confirmed mechanical self-lock')
 if args.palm_layout_mechanism=='self-lock' and not args.robot_state_before_reset:
     parser.error('The mechanical palm lock must be authored at the declared pre-physics joint state')
@@ -417,6 +423,7 @@ try:
     from omni.physx.bindings._physx import SETTING_DISABLE_CONTACT_PROCESSING
     import controller
     fourbar_couplings={};fourbar_authoring=None;fourbar_initial_targets=None
+    shared_hand_runtime=None;shared_hand_setup=None
     if args.finger_mechanism is not None:
         from te_hand_fourbar import load_fourbar_contract,author_fourbar_rods,update_fourbar_tangents
         finger_mechanism_document,fourbar_couplings=load_fourbar_contract(args.finger_mechanism)
@@ -977,6 +984,10 @@ try:
         (args.output/'sdf_resolution_comparison.json').write_text(json.dumps({
             'scope':'UNVALIDATED_COLLISION_DISCRETIZATION_COMPARISON','source_CAD_vertices_unchanged':True,
             'rows':sdf_rows},indent=2)+'\n')
+    if args.shared_hand_mechanism:
+        from te_hand_mechanism_runtime import author_hand_mechanism
+        shared_hand_setup=author_hand_mechanism(stage,repo,args.shared_hand_mechanism.resolve(),
+            '/World/HandArm/Physics',source_positions)
     print(json.dumps({'stage':'begin_physics_reset','wall_seconds':time.monotonic()-diagnostic_started,
                       'device':args.physics_device}),flush=True)
     world.reset();world.pause()
@@ -1074,6 +1085,10 @@ try:
         initial_hand_positions=sensor_sample["active_positions_rad"][7:],
         preserve_authored_state=bool(fourbar_couplings),initial_named_positions=fourbar_initial_targets)
     robot,active,*_=robot_data
+    if shared_hand_setup is not None:
+        from te_hand_mechanism_runtime import HandMechanismRuntime
+        shared_hand_runtime=HandMechanismRuntime(world,robot,shared_hand_setup,args.output,
+            active_effort_caps=[1.,args.closing_drive_cap_nm,args.closing_drive_cap_nm,args.closing_drive_cap_nm])
     palm_lock_native_angle=None
     if args.palm_layout_mechanism=='self-lock':
         lock_indices=[robot.dof_names.index(n) for n in ('f1j1','f3j1')]
@@ -1448,7 +1463,15 @@ try:
                 robot.set_dof_position_targets(np.asarray([worm_targets]),indices=0,dof_indices=fourbar_source_indices)
             except (ValueError,RuntimeError) as error:
                 interface_abort='WORM_MOTOR_COMMAND: '+str(error);break
-        tick=time.monotonic();world.step(render=False);performance['physics_s']+=time.monotonic()-tick
+        if shared_hand_runtime is not None:
+            shared_hand_runtime.submit(command[7:],phase)
+        tick=time.monotonic()
+        try:
+            world.step(render=False)
+        except RuntimeError as error:
+            if shared_hand_runtime is None:raise
+            interface_abort='SHARED_HAND_RUNTIME: '+str(error)
+        performance['physics_s']+=time.monotonic()-tick
         if worm_drives:
             worm_q=host(robot.get_dof_positions(indices=0))[0];worm_velocity=host(robot.get_dof_velocities(indices=0))[0]
             projected=host(robot.get_dof_projected_joint_forces(indices=0))[0]
@@ -1740,6 +1763,11 @@ try:
     result['hand_role']=args.hand_role
     result['production_acceptance_eligible']=args.hand_role=='production-nails' and not fourbar_couplings
     result['palm_layout_mechanism']=args.palm_layout_mechanism
+    if shared_hand_runtime is not None:
+        result['shared_hand_runtime']={'source':str(args.shared_hand_mechanism),'steps':shared_hand_runtime.steps,
+            'failure':shared_hand_runtime.failure,'full_palm_travel_retained':True,
+            'zero_width_palm_joint_limits_used':False,'motor_state_reset_during_episode':False,
+            'stream':'hand_mechanism_samples.jsonl.gz'}
     result['interface_grip_only']=args.interface_grip_only
     if worm_drives:
         result['finger_worm_integration']={
@@ -1777,6 +1805,7 @@ except Exception:
     import traceback
     error=traceback.format_exc();(args.output/"error.txt").write_text(error);print(error,flush=True)
 finally:
+    if locals().get('shared_hand_runtime') is not None:shared_hand_runtime.close()
     if locals().get('worm_stream') is not None:worm_stream.flush();worm_stream.close()
     # The finite interface check saves its frames, video and samples itself.
     # Do not wait on stage teardown after those artifacts are complete.
