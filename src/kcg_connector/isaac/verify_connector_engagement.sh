@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # First short turn, passive side support and low-torque nut oscillation.
 # This entry does not run a full assembly or request hardware motion.
+# Historical first-turn baseline. The current delivered model is exercised by
+# verify_te_connector_assembly.sh, verify_te_connector_release.sh and
+# verify_te_connector_retention.sh, using its revised entrance and shallow state.
 set -euo pipefail
 connector_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 connector_repository="$(cd -- "${connector_script_dir}/../../.." && pwd)"

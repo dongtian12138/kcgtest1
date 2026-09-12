@@ -18,8 +18,11 @@ class ThreeFingerWrenchObserver:
     joints=("f1j2","f2j1","f3j2")
     subtrees=(("f1Link2","f1Link3"),("f2Link1","f2Link2"),("f3Link2","f3Link3"))
 
-    def __init__(self,repository,model,source_geometry_plan):
+    def __init__(self,repository,model,source_geometry_plan,*,sensor_semantics=None):
         self.model=model
+        self.sensor_semantics=sensor_semantics or 'LEGACY_PROXIMAL_JOINT_REACTION'
+        if self.sensor_semantics not in ('LEGACY_PROXIMAL_JOINT_REACTION','BASE_BRIDGE_EXTERNAL_MOMENT_ABOUT_O'):
+            raise ValueError('Unknown finger torque-signal definition')
         self.geometry_path=Path(source_geometry_plan)
         if not self.geometry_path.is_absolute():self.geometry_path=Path(repository)/self.geometry_path
         geometry=json.loads(self.geometry_path.read_text())
@@ -29,7 +32,7 @@ class ThreeFingerWrenchObserver:
         fk={k:np.asarray(v) for k,v in model.forward_kinematics(q,enforce_limits=False).items()}
         body=fk["handbase_link"]@self.hand_from_body
         records={r["link"]:r for r in geometry["first_contacts"]}
-        self.points_local={}
+        self.points_local={};self.source_normals_local={}
         for name in self.links:
             r=records[name]
             if not r["nearest_original_source_face_is_pad"] or r["positive_gap_before_first_contact_m"]<=0:
@@ -37,6 +40,13 @@ class ThreeFingerWrenchObserver:
             point=np.asarray(r["nearest_nut_point_before_contact_body_frame_m"],float)
             world=body[:3,:3]@point+body[:3,3];link=fk[name]
             self.points_local[name]=link[:3,:3].T@(world-link[:3,3])
+            outward=np.asarray(r['nearest_hand_point_before_contact_body_frame_m'])-point
+            outward/=np.linalg.norm(outward)
+            if 'force_estimator_outward_normals_body' in geometry:
+                outward=np.asarray(geometry['force_estimator_outward_normals_body'][name],float)
+                if outward.shape!=(3,) or not np.isfinite(outward).all() or abs(np.linalg.norm(outward)-1.)>1e-6:
+                    raise ValueError('A source-CAD force reference normal must be a finite unit vector')
+            self.source_normals_local[name]=link[:3,:3].T@body[:3,:3]@outward
         self.inertials={}
         for link in ET.parse(Path(repository)/"src/iiwa_description/urdf/hand.xacro").getroot().findall("link"):
             i=link.find("inertial")
@@ -54,6 +64,13 @@ class ThreeFingerWrenchObserver:
         return np.array([[0.,-p[2],p[1]],[p[2],0.,-p[0]],[-p[1],p[0],0.]])
 
     def _system(self,q,fk=None):
+        if (getattr(self.model,"fourbar_couplings",{})
+                and self.sensor_semantics!='BASE_BRIDGE_EXTERNAL_MOMENT_ABOUT_O'):
+            raise ValueError(
+                "The measured hand uses a base-mounted four-gauge bridge. "
+                "Its calibrated strain/load projection is required before using force feedback; "
+                "the historical single proximal-joint reaction balance is not that sensor."
+            )
         if fk is None:fk=self.model.forward_kinematics(q,enforce_limits=False)
         fk={k:np.asarray(v) for k,v in fk.items()};hand=fk["handbase_link"]
         A=np.zeros((9,9));points=[];gravity=[]
@@ -108,11 +125,26 @@ class ThreeFingerWrenchObserver:
         projection=np.zeros((3,9))
         for i in range(3):projection[i,3*i:3*i+3]=normals[i]
         normal_map=projection@np.linalg.inv(A)
-        return {"normal_force_n":np.sum(forces*normals,axis=1),
+        current_fk=self.model.forward_kinematics(q,enforce_limits=False) if fk is None else fk
+        source_normals=np.array([np.asarray(current_fk[name])[:3,:3]@self.source_normals_local[name]
+                                 for name in self.links])
+        radial_resultant=np.sum(forces*normals,axis=1)
+        return {"radial_resultant_force_n":radial_resultant,
+                "source_surface_normal_force_n":np.sum(forces*source_normals,axis=1),
+                "source_surface_normals_world":source_normals,
+                "source_surface_projection_assumption":"ONE_LOCAL_CAD_CONTACT_NORMAL_PER_FINGER_NOT_A_DISTRIBUTED_CONTACT_SUM_BOUND",
+                # Retain the historical key for saved diagnostic recipes.
+                # This is not the sum of local contact-normal magnitudes.
+                "normal_force_n":radial_resultant,
+                "force_estimate_quantity":"NET_FORCE_PROJECTED_ON_PLANNED_RADIAL_DIRECTION",
+                "local_contact_normal_sum_is_observed":False,
                 "force_world_n":forces,"cad_force_points_world_m":points,
                 "normalized_condition":float(singular[0]/singular[-1]),
                 "normal_force_sensor_map":normal_map,
                 "source_joint_gravity_reaction_nm":gravity,
                 "axis_source":"ENCODER_HAND_POSE_AND_ORIGINAL_CAD_GRASP_PLAN",
                 "object_or_contact_truth_used":False,
-                "accuracy_bound_verified_online":False}
+                "accuracy_bound_verified_online":False,
+                "finger_sensor_semantics":self.sensor_semantics,
+                "sensor_is_motor_effort":False,
+                "base_bridge_cross_axis_sensitivity_calibrated":False}

@@ -7,12 +7,65 @@ a declared laboratory fixture, not an assembly success or hidden support.
 import argparse
 import gzip
 import json
+import math
 from pathlib import Path
 import sys
+import time
+
+
+def initialize_fourbar_pose(positions, couplings, joint_limits_rad, geometry_uncertainty_m):
+    """Resolve a new pre-physics mechanism pose without relaxing hinge limits.
+
+    A declared exact source lower stop may need a tiny closure correction from
+    CAD alignment. Permit only that case and only within the contract's linear
+    geometry uncertainty; the corrected angle comes from closure inversion.
+    """
+    result={name:float(value) for name,value in positions.items()}
+    records=[]
+    if not math.isfinite(geometry_uncertainty_m) or geometry_uncertainty_m<=0:
+        raise ValueError('Four-bar initialization requires a positive CAD alignment uncertainty')
+    for follower,coupling in couplings.items():
+        source=coupling.source_joint
+        source_bounds=joint_limits_rad[source];follower_bounds=joint_limits_rad[follower]
+        low,high=coupling.source_interval(source_bounds,follower_bounds)
+        original=result[source];corrected=original
+        if not low<=original<=high:
+            source_lower=float(source_bounds[0])
+            p,_=coupling.position_and_derivative(original)
+            radius=math.hypot(*coupling.distal_anchor_xy_m)
+            lower_stop_displacement=2.*radius*abs(math.sin((p-follower_bounds[0])/2.))
+            tolerance=64.*math.ulp(max(1.,abs(original),abs(source_lower)))
+            if (original<low and abs(original-source_lower)<=tolerance
+                    and p<follower_bounds[0] and lower_stop_displacement<=geometry_uncertainty_m):
+                corrected=low
+            else:
+                raise ValueError(f'Initial {source}={original} is outside its measured closure interval [{low}, {high}]')
+        result[source]=corrected
+        value,derivative=coupling.position_and_derivative(corrected)
+        old_follower=result[follower];result[follower]=value
+        records.append({'source_joint':source,'follower_joint':follower,
+            'source_before_rad':original,'source_after_rad':corrected,
+            'follower_before_rad':old_follower,'follower_after_rad':value,
+            'source_feasible_interval_rad':[low,high],'dp_dq':derivative,
+            'source_lower_roundoff_corrected':corrected!=original,
+            'source_and_follower_physical_limits_unchanged':True})
+    return result,records
+
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--run", type=Path, required=True)
 parser.add_argument("--output", type=Path, required=True)
+parser.add_argument('--robot-asset',type=Path,help='Explicit existing robot/hand variant for a declared comparison; authored before physics')
+parser.add_argument('--hand-role',choices=('production-nails','nailfree-comparison'),default='production-nails',
+                    help='Production requires original nails; nail-free results are comparison-only')
+parser.add_argument('--palm-layout-mechanism',choices=('self-lock','legacy-servo'),
+                    help='User-confirmed worm self-lock is the production default; legacy servo is comparison-only')
+parser.add_argument('--finger-mechanism',type=Path,
+                    help='Explicit measured four-bar candidate contract; default retains historical linear mimic')
+parser.add_argument('--finger-worm-self-lock',action='store_true',
+                    help='Route motor position commands through the validated single-finger passive split transmission candidate')
+parser.add_argument('--interface-grip-only',action='store_true',
+                    help='Zero-twist free-connector grip/hold/release; disable insertion force following')
 parser.add_argument("--assembly-config",type=Path,
                     help="Explicit local physical-model configuration; defaults to the sealed source configuration.")
 parser.add_argument("--mounted-grasp-recipe",type=Path,
@@ -26,7 +79,44 @@ parser.add_argument("--wrist-reference-loads",action="store_true",
                     help="Keep the source hand open and apply bounded reference loads to its wrist sensor subtree; no grasp or assembly.")
 parser.add_argument("--position-iterations",type=int,default=32)
 parser.add_argument("--closing-drive-cap-nm",type=float,default=1.)
+parser.add_argument('--finite-drive-sensitivity',action='store_true',
+                    help='Explicit bounded actuator-reference sensitivity up to3.5Nm; not a hardware rating')
+parser.add_argument('--native-model-velocity-limits',action='store_true',
+                    help='Enforce the kinematic model joint velocity references in native physics as well as controller commands')
+parser.add_argument('--hand-stiffness-nm-rad',type=float,default=12.,help='Finite hand position-drive gain; torque caps remain independent')
+parser.add_argument('--hand-damping-nm-s-rad',type=float,default=2.,help='Finite hand drive damping for explicit coupled-contact stability comparisons')
+parser.add_argument('--mimic-natural-frequency',type=float,
+                    help='Explicit finite PhysX mimic compliance preserving source1:1 coupling; uncalibrated transmission stiffness reference')
 parser.add_argument("--frozen-connector-model",type=Path)
+parser.add_argument("--connector-initial-pose",type=Path,
+                    help="Declared bench Body/Nut relative pose, rigidly relocated to the saved Nut before physics; includes relocating its static socket")
+parser.add_argument("--interface-twist-deg",type=float,
+                    help="Minimal original-hand interface test: bounded wrist-joint7 stroke over one second, then hold")
+parser.add_argument('--interface-motion-duration-s',type=float,help='Finite declared local comparison stroke duration')
+parser.add_argument('--interface-wall-limit-s',type=float,default=240.,help='Finite local test wall time, at most360seconds')
+parser.add_argument('--interface-release-at-end',action='store_true',help='Physically open the fingers and observe passive connector retention after the finite turn')
+parser.add_argument('--interface-regrasp-stroke-deg',type=float,
+                    help='Finite wrist stroke followed by real finger opening and open-hand wrist return; total angle remains interface-twist-deg')
+parser.add_argument('--contact-record-stride',type=int,choices=(4,8,30,120),default=120,
+                    help='Physics steps between posthoc contact-point records; never a control input')
+parser.add_argument('--raw-contact-only',action='store_true',
+                    help='Use native unfiltered contact records; omit unused per-filter contact matrices and invalid friction readback')
+parser.add_argument('--sdf-resolution-override',type=int,choices=(512,1024),
+                    help='Explicit collision-grid resolution comparison; original CAD triangles and frozen asset remain unchanged')
+parser.add_argument("--interface-start-open",action='store_true',
+                    help="Start at the existing open-hand grasp posture and close with finite drives before the interface stroke")
+parser.add_argument('--interface-extra-closure-deg',type=float,default=0.,
+                    help='Bounded additional target closure on the three independent closing joints; drive caps unchanged')
+parser.add_argument('--interface-grasp-relation',type=Path,
+                    help='Declared CAD Nut-to-hand relation for a local pre-physics fixture placement; never robot alignment success')
+parser.add_argument('--interface-force-following',action='store_true',
+                    help='Restore original bounded axial/lateral wrist-force following in the declared local fixture test')
+parser.add_argument('--interface-grip-recipe',type=Path,
+                    help='Explicit original-CAD grasp posture and robot-sensor force recipe; historical15N contact reference is not calibrated hardware capacity')
+parser.add_argument('--interface-control-decimation',type=int,choices=(1,2,4),default=1,
+                    help='Explicit controller period in physics steps; physical contact solving and evaluation remain at960Hz')
+parser.add_argument('--interface-legacy-pad-sensitivity','--interface-source-pad-material',dest='interface_source_pad_material',action='store_true',
+                    help='Unvalidated legacy material sensitivity only; the asset coefficient is not a material calibration or formal acceptance basis')
 parser.add_argument("--cpu-wrist-reference",type=Path)
 parser.add_argument('--probe-in-turn-feedback',action='store_true',
                     help='Use current RGBD and encoder feedback between bounded nut-turn intervals; no object truth.')
@@ -38,6 +128,10 @@ parser.add_argument("--fabric-gpu-interop",action="store_true",
                     help="Explicitly request GPU-resident Fabric output at process startup for the bounded rendering consistency check.")
 parser.add_argument("--gpu-host-readback",action="store_true",
                     help="Retain GPU dynamics but allow host result readback before initialization; a bounded physics-output/data-path diagnostic.")
+parser.add_argument('--experimental-connector-gpu-comparison',action='store_true',
+                    help='Explicit CPU/GPU comparison of the unchanged connector; does not transfer CPU model validation to GPU')
+parser.add_argument('--experimental-connector-time-resolution',action='store_true',
+                    help='Explicit480Hz CPU comparison with unchanged solver iterations and geometry; default960Hz validation remains separate')
 parser.add_argument("--independent-robot-rigid-frames",action="store_true",
                     help="Before reset, give nested robot rigid bodies independent transform stacks while preserving all source world poses and joint properties.")
 parser.add_argument("--standard-render-steps",action="store_true",
@@ -76,6 +170,7 @@ parser.add_argument("--probe-lateral-stop-n", type=float)
 parser.add_argument("--probe-grasp-axis-shift-m", type=float, default=0.)
 parser.add_argument("--probe-grip-effort-scale", type=float, default=1.)
 parser.add_argument("--closing-reaction-stop-nm", type=float, default=.9)
+parser.add_argument('--closing-reaction-record-only',action='store_true',help='Record legacy projected-joint reaction reference; finite motor drive caps remain active')
 parser.add_argument("--probe-visual-alignment-feedback", action="store_true")
 parser.add_argument("--probe-visual-position-feedback", action="store_true")
 parser.add_argument("--probe-hold-grip-through-preparation", action="store_true")
@@ -99,13 +194,113 @@ parser.add_argument("--probe-freeze-planar-after-preparation", action="store_tru
 parser.add_argument("--probe-force-consistent-planar-range",action='store_true')
 parser.add_argument("--probe-guided-socket-pivot", action="store_true")
 args = parser.parse_args()
+if args.palm_layout_mechanism is None:
+    args.palm_layout_mechanism='self-lock' if args.hand_role=='production-nails' else 'legacy-servo'
+if args.hand_role=='production-nails' and args.palm_layout_mechanism!='self-lock':
+    parser.error('The production palm mechanism must reflect the user-confirmed mechanical self-lock')
+if args.palm_layout_mechanism=='self-lock' and not args.robot_state_before_reset:
+    parser.error('The mechanical palm lock must be authored at the declared pre-physics joint state')
+if args.finger_worm_self_lock and (args.finger_mechanism is None or args.interface_twist_deg is None
+        or args.hand_friction_effort_from_urdf):
+    parser.error('Worm integration requires the measured four-bar local interface and no duplicate legacy URDF friction model')
+if args.interface_grip_only and (args.interface_twist_deg!=0. or not args.interface_force_following
+        or args.interface_regrasp_stroke_deg is not None):
+    parser.error('Grip-only requires zero requested twist and the existing force-feedback grip controller')
+finger_mechanism_document=None
+if args.finger_mechanism is not None:
+    args.finger_mechanism=args.finger_mechanism.resolve()
+    finger_mechanism_document=json.loads(args.finger_mechanism.read_text())
+    if (finger_mechanism_document.get('schema')!='kcg.hand.fourbar.v1'
+            or not finger_mechanism_document.get('mechanism_id')):
+        parser.error('A named measured four-bar mechanism contract is required')
+    if not args.robot_state_before_reset or args.interface_grasp_relation is None:
+        parser.error('Four-bar candidates require a matching CAD grasp and pre-reset robot initialization')
+    if (args.probe_additional_turn_deg is not None or args.mounted_grasp_recipe is not None
+            or args.wrist_reference_loads or args.probe_open_grasp_recipe is not None or args.replay_source_drive_targets):
+        parser.error('Four-bar updates are integrated only in this local interface loop; delegated legacy probes and replay are not supported')
+    if args.interface_force_following and args.interface_grip_recipe is None:
+        parser.error('Four-bar force following requires a mechanism-matched grip recipe')
+    candidate_geometry=json.loads(args.interface_grasp_relation.read_text())
+    if candidate_geometry.get('finger_mechanism_id')!=finger_mechanism_document['mechanism_id']:
+        parser.error('The CAD grasp was generated for a different finger mechanism; legacy grasp reuse is prohibited')
+if not math.isfinite(args.hand_stiffness_nm_rad) or not 0<args.hand_stiffness_nm_rad<=500.:
+    parser.error('Hand position-drive stiffness must be finite and at most500Nm/rad')
+if not math.isfinite(args.hand_damping_nm_s_rad) or not 0<=args.hand_damping_nm_s_rad<=5.:
+    parser.error('Hand drive damping must be finite and within the declared0to5Nm*s/rad comparison range')
+if args.mimic_natural_frequency is not None and not (math.isfinite(args.mimic_natural_frequency) and 0<args.mimic_natural_frequency<=20000):
+    parser.error('Mimic natural frequency must be finite and within the bounded comparison range')
+diagnostic_started=time.monotonic()
+frozen_requirements=None
+if args.frozen_connector_model is not None:
+    manifest_path=args.frozen_connector_model.resolve().with_name('validation_manifest.json')
+    if manifest_path.is_file():
+        frozen_requirements=json.loads(manifest_path.read_text()).get('runtime_requirements')
+if args.connector_initial_pose is not None and (args.frozen_connector_model is None or not args.free_plug_in_socket):
+    parser.error('The declared benchmark pose requires the full free connector and its frozen model')
+if args.interface_twist_deg is not None and (args.connector_initial_pose is None or
+        not ((0 < args.interface_twist_deg <= 360.) or (args.interface_grip_only and args.interface_twist_deg==0.))
+        or args.probe_additional_turn_deg is not None or args.replay_source_drive_targets):
+    parser.error('The local grasp comparison requires a declared assembled pose and a finite stroke no larger than360degrees')
+wall_cap=1080. if args.interface_regrasp_stroke_deg is not None else 600.
+if not 0<args.interface_wall_limit_s<=wall_cap:
+    parser.error('The local test exceeds its finite wall-time range')
+if args.interface_release_at_end and args.interface_grasp_relation is None:
+    parser.error('A physical release requires the declared original-CAD open-hand posture')
+if args.interface_regrasp_stroke_deg is not None and not (args.interface_force_following
+        and args.interface_grip_recipe and args.interface_release_at_end
+        and 0<args.interface_regrasp_stroke_deg<=120.):
+    parser.error('Physical regrasp requires a finite stroke, root-load recipe, force following and final release')
+if args.interface_motion_duration_s is not None and not 0 < args.interface_motion_duration_s <= 20.:
+    parser.error('The local comparison motion duration must be finite and at most20seconds')
+if args.interface_start_open and args.interface_twist_deg is None:
+    parser.error('The open-hand initialization is scoped to the minimal interface test')
+if args.interface_grasp_relation is not None and not args.interface_start_open:
+    parser.error('The declared CAD grasp relation requires the open-hand local interface test')
+if args.interface_force_following and not args.interface_start_open:
+    parser.error('Force following requires the declared open-hand interface test')
+if args.interface_control_decimation!=1 and not args.interface_force_following:
+    parser.error('Controller decimation is scoped to the explicit force-following interface test')
+interface_grip_recipe=None
+# User explicitly removed the contact-normal15N restriction. Force targets
+# are experimental commands, with finite motor effort and travel limits;
+# the directional tip-rope test is not a universal contact-force capacity.
+if args.interface_grip_recipe is not None:
+    interface_grip_recipe=json.loads(args.interface_grip_recipe.read_text())
+    if finger_mechanism_document is not None:
+        geometry_path=Path(interface_grip_recipe['source_geometry_plan'])
+        if not geometry_path.is_absolute():geometry_path=Path(__file__).resolve().parents[3]/geometry_path
+        recipe_geometry=json.loads(geometry_path.read_text())
+        if recipe_geometry.get('finger_mechanism_id')!=finger_mechanism_document['mechanism_id']:
+            parser.error('The force-feedback geometry belongs to a different finger mechanism')
+    if float(interface_grip_recipe.get('hand_position_stiffness_nm_rad',12.))!=args.hand_stiffness_nm_rad:
+        parser.error('Hand force-controller conversion must match the finite position-drive stiffness')
+    if (not args.interface_force_following or not args.interface_grasp_relation
+            or len(interface_grip_recipe.get('source_normal_targets_n',[]))!=3
+            or not all(math.isfinite(x) and x>0 for x in interface_grip_recipe['source_normal_targets_n'])):
+        parser.error('A grasp recipe requires force following, its CAD relation, and three finite positive force references')
+    if interface_grip_recipe.get('sidewall_sequence') and (
+            len(interface_grip_recipe.get('sidewall_targets_n',[]))!=3 or not all(
+            math.isfinite(x) and x>0 for x in interface_grip_recipe.get('sidewall_targets_n',[]))):
+        parser.error('Sidewall force references must be finite and positive')
+    if args.interface_regrasp_stroke_deg is not None and (not interface_grip_recipe.get('root_moment_control')
+            or interface_grip_recipe.get('sidewall_sequence')):
+        parser.error('The regrasp comparison uses the direct root-load controller')
+    if not 0<float(interface_grip_recipe.get('planned_wrist_force_limit_n',3.0400615))<=20.:
+        parser.error('The local planned-contact force must stay within the validated10N connector-load envelope')
+if not 0. <= args.interface_extra_closure_deg <= 2. or (args.interface_extra_closure_deg and not args.interface_start_open):
+    parser.error('Extra closure requires the open-hand interface mode and is bounded to2degrees')
+if args.interface_source_pad_material and args.interface_twist_deg is None:
+    parser.error('Source-pad material selection belongs to the explicit interface baseline')
 if not 1 <= args.position_iterations <= 255:parser.error('position iterations out of range')
-if not 0 < args.closing_drive_cap_nm <= 2.7:parser.error('closing motor cap outside the bounded simulation diagnostic range')
+if not 0 < args.closing_drive_cap_nm <= (3.5 if args.finite_drive_sensitivity else 2.7):
+    parser.error('closing motor cap outside the bounded simulation diagnostic range')
+if args.finite_drive_sensitivity and args.interface_twist_deg is None:
+    parser.error('Finite actuator-reference sensitivity is scoped to the declared local assembly test')
 if args.contact_convergence_check and (args.velocity_iterations!=4 or args.physics_device!='cpu'
         or (args.frozen_connector_model is None and not args.wrist_reference_loads)
         or args.solver_type!='TGS' or not args.external_forces_every_iteration):
     parser.error('the explicit convergence check changes only CPU TGS velocity iterations from 1 to 4')
-if args.velocity_iterations==4 and not args.contact_convergence_check:
+if args.velocity_iterations==4 and not args.contact_convergence_check and not frozen_requirements:
     parser.error('four velocity iterations require the explicit unvalidated convergence diagnostic')
 if args.probe_visual_position_feedback and not args.probe_visual_alignment_feedback:
     parser.error('actual centre feedback requires the current RGBD alignment-feedback mode')
@@ -152,9 +347,24 @@ if args.probe_additional_turn_deg is not None and (not args.free_plug_in_socket 
     parser.error("a turn probe requires the free plug scene and an explicit completed source step")
 if args.probe_additional_turn_deg is not None and args.physics_hz != 240 and args.frozen_connector_model is None:
     parser.error("the time-resolution check currently applies only to the fixed-target diagnostic")
-if args.frozen_connector_model is not None and (not args.free_plug_in_socket or args.physics_device!='cpu'
-        or args.physics_hz!=960 or args.position_iterations!=128 or args.cpu_wrist_reference is None):
-    parser.error('the delivered connector requires its validated CPU/960Hz/128 configuration and a CPU wrist reference')
+if args.frozen_connector_model is not None:
+    required=frozen_requirements or dict(physics_hz=960,position_iterations=128,
+                                       velocity_iterations=4 if args.contact_convergence_check else 1)
+    experimental_gpu=(args.experimental_connector_gpu_comparison and args.physics_device=='cuda:0'
+                      and args.gpu_host_readback and args.interface_twist_deg is not None)
+    experimental_rate=(args.experimental_connector_time_resolution and args.physics_device=='cpu'
+                       and args.physics_hz==480 and args.interface_control_decimation==2
+                       and args.interface_twist_deg is not None)
+    if (not args.free_plug_in_socket or (args.physics_device!='cpu' and not experimental_gpu) or args.cpu_wrist_reference is None
+            or (args.physics_hz!=required['physics_hz'] and not experimental_rate)
+            or any(getattr(args,k)!=required[k] for k in ('position_iterations','velocity_iterations'))):
+        parser.error('The delivered connector requires its declared CPU runtime configuration and a CPU wrist reference')
+if args.experimental_connector_gpu_comparison and not (args.frozen_connector_model and args.physics_device=='cuda:0'
+        and args.gpu_host_readback and args.interface_twist_deg is not None):
+    parser.error('Experimental GPU comparison requires the frozen connector, local interface probe, CUDA and host readback')
+if args.experimental_connector_time_resolution and not (args.frozen_connector_model and args.physics_device=='cpu'
+        and args.physics_hz==480 and args.interface_control_decimation==2 and args.interface_twist_deg is not None):
+    parser.error('Time-resolution comparison requires the frozen connector, CPU480Hz and unchanged240Hz control')
 if args.audit_source_key_sdf and (not args.free_plug_in_socket or args.physics_device == "cpu" or args.probe_additional_turn_deg is not None):
     parser.error("the source-key SDF audit is a post-measurement read on the static GPU/free-connector diagnostic")
 if args.replay_source_drive_targets and (args.probe_additional_turn_deg is not None or args.source_step is None):
@@ -167,10 +377,28 @@ args.output.mkdir(parents=True,exist_ok=False)
     'argv':[sys.executable,*sys.argv],
     'configuration':{k:str(v) if isinstance(v,Path) else v for k,v in vars(args).items()}},indent=2)+'\n')
 (args.output/'driver_snapshot.py').write_bytes(Path(__file__).read_bytes())
+if finger_mechanism_document is not None:
+    (args.output/'finger_mechanism_contract.json').write_text(json.dumps(finger_mechanism_document,indent=2)+'\n')
+    (args.output/'finger_mechanism_candidate.json').write_text(json.dumps({
+        'scope':'MECHANISM_CANDIDATE_NOT_PRODUCTION_ASSEMBLY_ACCEPTANCE',
+        'mechanism_id':finger_mechanism_document['mechanism_id'],
+        'contract_path':str(args.finger_mechanism),'representation':'tangent',
+        'grasp_geometry_path':str(args.interface_grasp_relation.resolve()),
+        'production_acceptance_eligible':False,
+        'finger_self_lock_and_complete_assembly_still_require_verification':True,
+        'warmup':'INITIAL_EXACT_CLOSURE_AND_FIXED_TANGENT_DURING_RESET_TWO_TICKS',
+        'main_loop':'RELINEARIZE_FROM_ROBOT_ENCODERS_BEFORE_EVERY_PHYSICS_STEP'},indent=2)+'\n')
+    for relative in ('isaac/te_hand_fourbar.py','isaac/te_worm_drive.py','isaac/carts_v2/controller.py',
+                     'kcg_connector/grasp/robust/finger_fourbar.py'):
+        source=Path(__file__).resolve().parents[1]/relative
+        (args.output/('candidate_'+source.name)).write_bytes(source.read_bytes())
+for module_name in ('te_local_interface_following.py','te_interface_stroke_schedule.py'):
+    module_path=Path(__file__).with_name(module_name)
+    (args.output/module_name).write_bytes(module_path.read_bytes())
 sys.path.insert(0,str(Path(__file__).with_name("carts_v2")))
 from isaacsim import SimulationApp
 app = SimulationApp({"headless":args.probe_additional_turn_deg is None,"multi_gpu":False,
-                     "active_gpu":0,"physics_gpu":0,"fast_shutdown":True,
+                     "active_gpu":0,"physics_gpu":0,"fast_shutdown":True,"shutdown_watchdog_timeout":10.,
                      "extra_args":((["--/rtx/hydra/supportMultiTickRate=false"]
                                     if args.probe_additional_turn_deg is not None else [])
                                    +(["--/physics/fabricUseGPUInterop=true"] if args.fabric_gpu_interop else []))})
@@ -180,7 +408,7 @@ try:
     import numpy as np
     import omni.usd
     from scipy.spatial.transform import Rotation
-    from pxr import Gf, PhysxSchema, Usd, UsdGeom, UsdPhysics, UsdShade, Vt
+    from pxr import Gf, PhysxSchema, Sdf, Usd, UsdGeom, UsdPhysics, UsdShade, Vt
     from isaacsim.core.api import World
     from isaacsim.core.prims import SingleArticulation
     from isaacsim.core.experimental.prims import RigidPrim
@@ -188,6 +416,10 @@ try:
     from isaacsim.core.simulation_manager import SimulationManager
     from omni.physx.bindings._physx import SETTING_DISABLE_CONTACT_PROCESSING
     import controller
+    fourbar_couplings={};fourbar_authoring=None;fourbar_initial_targets=None
+    if args.finger_mechanism is not None:
+        from te_hand_fourbar import load_fourbar_contract,author_fourbar_rods,update_fourbar_tangents
+        finger_mechanism_document,fourbar_couplings=load_fourbar_contract(args.finger_mechanism)
 
     repo=Path(__file__).resolve().parents[3]
     local_metadata=json.loads((args.run/"trace_metadata.json").read_text())
@@ -216,6 +448,32 @@ try:
     if physical_sample is None:
         raise ValueError(f"the declared source step {sample_step} is absent from the sealed trace")
     lab_recipe=None;lab_fixture_pose=None
+    interface_final_hand_targets=None
+    if args.interface_start_open:
+        import copy,yaml
+        from kcg_connector.robot_model import expand_active_hand_positions
+        interface_final_hand_targets=np.asarray(sensor_sample['active_targets_rad'][7:],float).copy()
+        interface_source_hand_targets=interface_final_hand_targets.copy()
+        # Active hand coordinates are shared preshape plus f1j2/f2j1/f3j2.
+        # Source closure directions are all positive; retain the preshape.
+        interface_final_hand_targets[1:]+=np.deg2rad(args.interface_extra_closure_deg)
+        recipe=yaml.safe_load((repo/'src/kcg_connector/config/te_transport_grasp_relation_q70_4p5_v1.yaml').read_text())
+        hand=np.asarray(recipe['hand_contract']['pregrasp_joint_positions_rad'],float)
+        hand[0]=sensor_sample['active_positions_rad'][7]
+        if interface_grip_recipe is not None or fourbar_couplings:
+            geometry=json.loads(args.interface_grasp_relation.read_text())
+            hand=np.asarray(geometry['open_hand_positions_rad'],float)
+            interface_final_hand_targets=np.asarray(geometry['first_contact_hand_positions_rad'],float)
+            interface_final_hand_targets[1:]+=.002
+        sensor_sample=copy.deepcopy(sensor_sample);physical_sample=copy.deepcopy(physical_sample)
+        sensor_sample['active_positions_rad'][7:]=hand.tolist();sensor_sample['active_targets_rad'][7:]=hand.tolist()
+        for name,value in expand_active_hand_positions(hand).items():
+            physical_sample['arm_control']['hand_joint_diagnostic']['joints'][name]['position_rad']=float(value)
+        (args.output/'interface_open_start.json').write_text(json.dumps({'open_positions_rad':hand.tolist(),
+            'final_source_drive_targets_rad':interface_source_hand_targets.tolist(),
+            'final_commanded_drive_targets_rad':interface_final_hand_targets.tolist(),
+            'extra_closure_deg':args.interface_extra_closure_deg,
+            'finite_closure_duration_s':.8,'connector_and_robot_arm_initial_pose_unchanged':True})+'\n')
     if args.probe_open_grasp_recipe is not None:
         import copy
         from kcg_connector.robot_model import expand_active_hand_positions
@@ -263,7 +521,48 @@ try:
     scene.CreateMinVelocityIterationCountAttr(args.velocity_iterations)
     scene.CreateMaxVelocityIterationCountAttr(args.velocity_iterations)
     robot_root=UsdGeom.Xform.Define(stage,"/World/HandArm")
-    robot_root.GetPrim().GetReferences().AddReference(metadata["robot_asset"])
+    robot_asset_path=args.robot_asset.resolve() if args.robot_asset else Path(metadata['robot_asset'])
+    robot_asset_path=robot_asset_path.resolve()
+    if not robot_asset_path.is_file():raise FileNotFoundError(robot_asset_path)
+    production_robot_asset=(repo/'artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda').resolve()
+    if args.hand_role=='production-nails' and robot_asset_path!=production_robot_asset:
+        raise ValueError('Production requires the verified original nail-present asset; declare nail-free only as comparison')
+    if args.interface_grasp_relation is not None:
+        selected_geometry=json.loads(args.interface_grasp_relation.read_text())
+        if args.hand_role=='production-nails' and selected_geometry.get('hand_variant')!='LEGACY_NAIL_PRESENT':
+            raise ValueError('Production grasp geometry must be checked with the nail-present source meshes')
+    robot_root.GetPrim().GetReferences().AddReference(str(robot_asset_path))
+    (args.output/'robot_asset_selection.json').write_text(json.dumps({'selected_asset':str(robot_asset_path),
+        'source_record_asset':metadata['robot_asset'],'explicit_asset_override':args.robot_asset is not None,
+        'hand_role':args.hand_role,'production_acceptance_eligible':args.hand_role=='production-nails' and not fourbar_couplings,
+        'finger_mechanism_id':None if not fourbar_couplings else finger_mechanism_document['mechanism_id'],
+        'authored_before_physics':True})+'\n')
+    if args.mimic_natural_frequency is not None:
+        mimic_rows=[]
+        for follower,leader in controller.MIMIC_HAND_JOINTS.items():
+            if follower in fourbar_couplings:continue
+            if args.palm_layout_mechanism=='self-lock' and follower=='f3j1':continue
+            prim=stage.GetPrimAtPath('/World/HandArm/Physics/'+follower)
+            old_reference=prim.GetRelationship('newton:mimicJoint').GetTargets()
+            coefficient=float(prim.GetAttribute('newton:mimicCoef1').Get())
+            offset=float(prim.GetAttribute('newton:mimicCoef0').Get())
+            if coefficient!=1. or offset!=0. or len(old_reference)!=1 or old_reference[0].name!=leader:
+                raise ValueError('Unexpected source mimic relation; refusing to replace it')
+            prim.RemoveAPI('NewtonMimicAPI')
+            prim.GetAttribute('newton:mimicEnabled').Set(False)
+            mimic=PhysxSchema.PhysxMimicJointAPI.Apply(prim,UsdPhysics.Tokens.rotX)
+            mimic.CreateReferenceJointRel().SetTargets(old_reference)
+            mimic.CreateReferenceJointAxisAttr(UsdPhysics.Tokens.rotX)
+            mimic.CreateGearingAttr(-coefficient);mimic.CreateOffsetAttr(-offset)
+            mimic.CreateNaturalFrequencyAttr(args.mimic_natural_frequency)
+            mimic.CreateDampingRatioAttr(2.)
+            mimic_rows.append({'follower':follower,'leader':leader,'nominal_multiplier':coefficient,
+                'nominal_offset':offset,'natural_frequency':float(mimic.GetNaturalFrequencyAttr().Get()),
+                'damping_ratio':float(mimic.GetDampingRatioAttr().Get())})
+        (args.output/'hand_mimic_compliance_authoring.json').write_text(json.dumps({
+            'scope':'FINITE_TRANSMISSION_COMPLIANCE_REFERENCE_NOT_HARDWARE_CALIBRATION',
+            'geometry_mass_joint_limits_and_nominal_coupling_unchanged':True,
+            'physx_single_dof_joint_axis_is_implicit':True,'joints':mimic_rows},indent=2)+'\n')
     if args.independent_robot_rigid_frames:
         from te_hand_rigid_transform_scene import author_independent_robot_rigid_frames
         frame_report=author_independent_robot_rigid_frames(stage,"/World/HandArm",
@@ -274,6 +573,39 @@ try:
         from te_hand_joint_friction import author_urdf_hand_friction_efforts
         hand_friction_report = author_urdf_hand_friction_efforts(repo,stage,"/World/HandArm")
         (args.output/"hand_joint_friction_authoring.json").write_text(json.dumps(hand_friction_report,indent=2)+"\n")
+    worm_friction_authoring=[]
+    if args.finger_worm_self_lock:
+        from omni.physx.bindings._physx import (JOINT_AXIS_API,JOINT_AXIS_ATTR_STATIC_FRICTION_EFFORT_ANGULAR,
+            JOINT_AXIS_ATTR_DYNAMIC_FRICTION_EFFORT_ANGULAR,JOINT_AXIS_ATTR_VISCOUS_FRICTION_COEFFICIENT_ANGULAR)
+        for name in dict.fromkeys(n for follower,coupling in fourbar_couplings.items() for n in (coupling.source_joint,follower)):
+            joint=stage.GetPrimAtPath('/World/HandArm/Physics/'+name)
+            api=PhysxSchema.PhysxJointAPI.Apply(joint)
+            before=api.GetJointFrictionAttr().Get();api.CreateJointFrictionAttr(0.)
+            joint.ApplyAPI(JOINT_AXIS_API,UsdPhysics.Tokens.angular)
+            for attr in (JOINT_AXIS_ATTR_STATIC_FRICTION_EFFORT_ANGULAR,JOINT_AXIS_ATTR_DYNAMIC_FRICTION_EFFORT_ANGULAR,
+                         JOINT_AXIS_ATTR_VISCOUS_FRICTION_COEFFICIENT_ANGULAR):
+                joint.CreateAttribute(attr,Sdf.ValueTypeNames.Float).Set(0.)
+            worm_friction_authoring.append({'joint':name,'previous_legacy_load_coefficient':before,
+                'preserved_source_urdf_friction':joint.GetAttribute('urdf:dynamics:friction').Get(),
+                'additional_native_friction':0.,'replacement':'PASSIVE_SPLIT_MOTOR_FRICTION_AND_OUTPUT_DAMPING'})
+        (args.output/'worm_friction_authoring.json').write_text(json.dumps(worm_friction_authoring,indent=2)+'\n')
+    native_velocity_bounds=None
+    if args.native_model_velocity_limits:
+        from kcg_connector.grasp.robust.hand_contract import load_carts_hand_contract
+        from kcg_connector.grasp.robust.collision_roster import load_authoritative_collision_link_roster
+        from kcg_connector.grasp.carts_v2.models import _build_verified_robot_model
+        velocity_model=_build_verified_robot_model(
+            load_carts_hand_contract('src/kcg_connector/config/carts_hand_contact_v1.yaml',repository_root=repo),
+            load_authoritative_collision_link_roster('src/kcg_connector/config/carts_collision_roster_v1.yaml',repository_root=repo),
+            finger_mechanism_path=args.finger_mechanism)
+        native_velocity_bounds={}
+        for prim in stage.Traverse():
+            name=prim.GetName()
+            if str(prim.GetPath()).startswith('/World/HandArm/') and name in velocity_model.joints and prim.IsA(UsdPhysics.RevoluteJoint):
+                speed=float(velocity_model.joints[name].limit.velocity)
+                if not math.isfinite(speed) or speed<=0:raise ValueError('Invalid declared joint velocity reference')
+                PhysxSchema.PhysxJointAPI.Apply(prim).CreateMaxJointVelocityAttr(float(np.degrees(speed)))
+                native_velocity_bounds[name]=speed
     for prim in stage.Traverse():
         if prim.HasAPI(PhysxSchema.PhysxArticulationAPI):
             a=PhysxSchema.PhysxArticulationAPI(prim);a.CreateSolverPositionIterationCountAttr(args.position_iterations)
@@ -290,6 +622,8 @@ try:
     m.CreateDynamicFrictionAttr(.45);m.CreateRestitutionAttr(0.)
     PhysxSchema.PhysxMaterialAPI.Apply(material.GetPrim()).CreateFrictionCombineModeAttr("min")
     fingertip=stage.GetPrimAtPath("/World/HandArm/PhysicsMaterials/fingertip_pad")
+    source_pad_parameters={name:fingertip.GetAttribute(name).Get() for name in
+        ('physics:staticFriction','physics:dynamicFriction','physxMaterial:frictionCombineMode')}
     fm=UsdPhysics.MaterialAPI(fingertip);fm.CreateStaticFrictionAttr(.45);fm.CreateDynamicFrictionAttr(.45)
     PhysxSchema.PhysxMaterialAPI.Apply(fingertip).CreateFrictionCombineModeAttr("min")
 
@@ -397,6 +731,38 @@ try:
             module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
             frozen_install=module.install_model(stage,model_path=args.frozen_connector_model,prepared=prepared)
             (args.output/'frozen_model_installation.json').write_text(json.dumps(frozen_install,indent=2)+'\n')
+            if args.connector_initial_pose is not None:
+                observed=json.loads(args.connector_initial_pose.read_text())
+                bench_parts=[]
+                for p,q in zip(observed['positions_world_m'],observed['quaternions_wxyz']):
+                    T=np.eye(4);T[:3,3]=p;T[:3,:3]=Rotation.from_quat(np.asarray(q)[[1,2,3,0]]).as_matrix();bench_parts.append(T)
+                if args.interface_grasp_relation is not None:
+                    grasp=json.loads(args.interface_grasp_relation.read_text())
+                    if not grasp.get('terminal_original_surface_geometry') or any(
+                            not c['nearest_original_source_face_is_pad'] for c in grasp['first_contacts']):
+                        raise ValueError('The declared relation must use verified original fingertip surfaces')
+                    hand_T=np.eye(4)
+                    hand_T[:3,:3]=np.asarray(sensor_sample['handbase_rotation_world_row_major']).reshape(3,3)
+                    hand_T[:3,3]=sensor_sample['handbase_position_world_m']
+                    nut_T=hand_T@np.linalg.inv(np.asarray(grasp['canonical_body_from_hand_for_nut_grasp']))
+                placement=nut_T@np.linalg.inv(bench_parts[1])
+                frozen_stage=Usd.Stage.Open(str(args.frozen_connector_model.resolve()))
+                socket_root='/World/TEVisualHandoff/FixedReceptaclePose'
+                bench_socket=np.asarray(UsdGeom.Xformable(frozen_stage.GetPrimAtPath(socket_root)).ComputeLocalToWorldTransform(Usd.TimeCode.Default())).T
+                def cold_world_pose(path,T):
+                    prim=stage.GetPrimAtPath(path);parent=np.asarray(UsdGeom.Xformable(prim.GetParent()).ComputeLocalToWorldTransform(Usd.TimeCode.Default())).T
+                    x=UsdGeom.Xformable(prim);x.ClearXformOpOrder();x.AddTransformOp().Set(Gf.Matrix4d(*(np.linalg.inv(parent)@T).T.ravel().tolist()))
+                body_T,nut_T=(placement@T for T in bench_parts)
+                cold_world_pose(body_path,body_T);cold_world_pose(fixture_path,nut_T);cold_world_pose(socket_root,placement@bench_socket)
+                for path in (body_path,fixture_path):
+                    rb=UsdPhysics.RigidBodyAPI(stage.GetPrimAtPath(path));rb.CreateVelocityAttr(Gf.Vec3f(0.));rb.CreateAngularVelocityAttr(Gf.Vec3f(0.))
+                (args.output/'declared_connector_initialization.json').write_text(json.dumps({
+                    'source_pose':str(args.connector_initial_pose.resolve()),
+                    'saved_hand_and_nut_grasp_relation_preserved':args.interface_grasp_relation is None,
+                    'declared_cad_grasp_relation':str(args.interface_grasp_relation) if args.interface_grasp_relation else None,
+                    'world_from_benchmark':placement.tolist(),'body_world':body_T.tolist(),'nut_world':nut_T.tolist(),
+                    'socket_world':(placement@bench_socket).tolist(),'all_parts_and_fixture_relocated_before_physics':True,
+                    'post_start_object_pose_writes':False,'socket_placement_is_test_initial_condition_not_robot_alignment':True},indent=2)+'\n')
         (args.output/"assembly_scene.json").write_text(json.dumps(prepared["report"],indent=2)+"\n")
         fixture_sensor_path=body_path
         contact_filters=list(dict.fromkeys([body_path,fixture_path,prepared["receptacle_collision_path"],
@@ -450,6 +816,15 @@ try:
         UsdPhysics.ArticulationRootAPI.Apply(clamp.GetPrim())
         fixture_sensor_path=fixture_path
         contact_filters=[fixture_path]
+    if args.interface_source_pad_material:
+        for name,value in source_pad_parameters.items():fingertip.GetAttribute(name).Set(value)
+    if args.interface_twist_deg is not None:
+        (args.output/'pad_material_mode.json').write_text(json.dumps({
+            'mode':'UNVALIDATED_LEGACY_PAD_SENSITIVITY' if args.interface_source_pad_material else 'DECLARED_UNCALIBRATED_DEVELOPMENT_VALUE',
+            'source_asset_parameters':source_pad_parameters,
+            'actual_parameters':{name:fingertip.GetAttribute(name).Get() for name in source_pad_parameters},
+            'hardware_calibrated':False,'real_pad_material_applicability_verified':False,
+            'formal_material_acceptance':False,'connector_material_changed':False},indent=2)+'\n')
     if args.nut_fingertip_sdf:
         from te_nut_fingertip_sdf import author_nut_only_fingertip_sdf
         fingertip_sdf_report=author_nut_only_fingertip_sdf(stage,"/World/HandArm",fixture_path,
@@ -464,15 +839,20 @@ try:
             PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr(0.)
     contact_capacity=(max(4096,int(prepared["contact_recording"].get("minimum_contact_records",4096)))
                       if args.free_plug_in_socket else 4096)
-    contacts=RigidPrim(hand_paths,resolve_paths=False,contact_filter_paths=contact_filters,max_contact_count=contact_capacity)
+    contact_filter_arguments={} if args.raw_contact_only else {'contact_filter_paths':contact_filters}
+    (args.output/'contact_recording_layout.json').write_text(json.dumps({
+        'raw_unfiltered_records_only':args.raw_contact_only,'sensor_count':len(hand_paths),
+        'legacy_filter_count':len(contact_filters),'record_capacity':contact_capacity,
+        'collision_filters_and_contact_materials_changed':False},indent=2)+'\n')
+    contacts=RigidPrim(hand_paths,resolve_paths=False,**contact_filter_arguments,max_contact_count=contact_capacity)
     probe_contact_paths=([str(p.GetPath()) for p in stage.Traverse() if p.HasAPI(UsdPhysics.RigidBodyAPI)
                           and str(p.GetPath()).startswith("/World/HandArm/")] + [body_path,fixture_path]
                          if args.probe_additional_turn_deg is not None else [])
-    probe_contacts=(RigidPrim(probe_contact_paths,resolve_paths=False,contact_filter_paths=contact_filters,max_contact_count=contact_capacity)
+    probe_contacts=(RigidPrim(probe_contact_paths,resolve_paths=False,**contact_filter_arguments,max_contact_count=contact_capacity)
                     if probe_contact_paths else None)
     static_part_contact_recording = args.free_plug_in_socket and args.probe_additional_turn_deg is None
     parts=RigidPrim([body_path,fixture_path] if args.free_plug_in_socket else [fixture_path],resolve_paths=False,
-        **({'contact_filter_paths':contact_filters,'max_contact_count':contact_capacity}
+        **({**contact_filter_arguments,'max_contact_count':contact_capacity}
            if static_part_contact_recording else {}))
     tree=(None if args.robot_state_before_reset else world.scene.add(
         SingleArticulation("/World/HandArm/Geometry/world",name="wrist",reset_xform_properties=False)))
@@ -489,6 +869,34 @@ try:
         source_positions.update({k:v["position_rad"] for k,v in physical_sample["arm_control"]["hand_joint_diagnostic"]["joints"].items()})
         active_names=controller.ARM_JOINT_NAMES+controller.ACTIVE_HAND_JOINT_NAMES
         source_targets=dict(zip(active_names,np.r_[sensor_sample["arm_control"]["drive_target_rad"],sensor_sample["active_targets_rad"][7:]]))
+        fourbar_initialization=None
+        if fourbar_couplings:
+            finger_joint_names={name for follower,coupling in fourbar_couplings.items()
+                                for name in (follower,coupling.source_joint)}
+            fourbar_joint_limits={}
+            for name in finger_joint_names:
+                joint=UsdPhysics.RevoluteJoint(stage.GetPrimAtPath('/World/HandArm/Physics/'+name))
+                fourbar_joint_limits[name]=(math.radians(float(joint.GetLowerLimitAttr().Get())),
+                                           math.radians(float(joint.GetUpperLimitAttr().Get())))
+            original_positions=dict(source_positions)
+            source_positions,position_rows=initialize_fourbar_pose(source_positions,fourbar_couplings,
+                fourbar_joint_limits,float(finger_mechanism_document['geometry_uncertainty_m']))
+            full_targets={**source_positions,**source_targets}
+            fourbar_initial_targets,target_rows=initialize_fourbar_pose(full_targets,fourbar_couplings,
+                fourbar_joint_limits,float(finger_mechanism_document['geometry_uncertainty_m']))
+            source_targets={name:fourbar_initial_targets[name] for name in source_targets}
+            for index,name in enumerate(active_names):
+                sensor_sample['active_positions_rad'][index]=source_positions[name]
+                sensor_sample['active_targets_rad'][index]=fourbar_initial_targets[name]
+            for name,row in physical_sample['arm_control']['hand_joint_diagnostic']['joints'].items():
+                row['position_rad']=source_positions[name]
+            fourbar_initialization={'scope':'NEW_MECHANISM_PRE_RESET_INITIAL_CONDITION_NOT_HISTORICAL_STATE_REPLAY',
+                'mechanism_id':finger_mechanism_document['mechanism_id'],
+                'original_source_record_positions_rad':original_positions,
+                'position_resolution':position_rows,'target_resolution':target_rows,
+                'geometry_alignment_uncertainty_m':finger_mechanism_document['geometry_uncertainty_m'],
+                'native_original_joint_limits_rad':fourbar_joint_limits,
+                'after_reset_physical_position_or_velocity_writes':False}
         source_arm_damping=(float(physical_sample["arm_control"]["effective_arm_damping_nm_s_rad"])
                             if args.arm_damping is None else args.arm_damping)
         authored=[]
@@ -501,14 +909,18 @@ try:
             state.CreateVelocityAttr(0.)
             drive=UsdPhysics.DriveAPI.Apply(prim,"angular")
             is_active=name in source_targets;is_arm=name in controller.ARM_JOINT_NAMES
-            kp=(2500. if is_arm else 12.) if is_active else 0.
-            kd=(source_arm_damping if is_arm else 2.) if is_active else 0.
+            kp=(2500. if is_arm else args.hand_stiffness_nm_rad) if is_active else 0.
+            kd=(source_arm_damping if is_arm else args.hand_damping_nm_s_rad) if is_active else 0.
             cap=(100. if is_arm else args.closing_drive_cap_nm if name in ('f1j2','f2j1','f3j2') else 1.) if is_active else 0.
+            if args.palm_layout_mechanism=='self-lock' and name in ('f1j1','f3j1'):
+                kp=kd=cap=0.
             drive.CreateTypeAttr("force")
             drive.CreateStiffnessAttr(float(np.radians(kp)))
             drive.CreateDampingAttr(float(np.radians(kd)))
             drive.CreateMaxForceAttr(cap)
-            drive.CreateTargetPositionAttr(float(np.degrees(source_targets.get(name,source_positions[name]))))
+            target=(fourbar_initial_targets[name] if fourbar_initial_targets is not None else
+                    source_targets.get(name,source_positions[name]))
+            drive.CreateTargetPositionAttr(float(np.degrees(target)))
             drive.CreateTargetVelocityAttr(0.)
             authored.append(name)
         if set(authored)!=set(source_positions):
@@ -516,9 +928,59 @@ try:
         robot_initialization_report={"authored_before_world_reset":True,"source_positions_rad":source_positions,
             "source_applied_drive_targets_rad":source_targets,"all_fifteen_joints_authored":True,
             "angular_drive_usd_conversion":"Nm/rad to Nm/degree by pi/180; finite caps retained",
-            "legacy_robot_reset_writer_attached":False,"object_pose_modified":False}
+            "legacy_robot_reset_writer_attached":False,"object_pose_modified":False,
+            "finger_mechanism_initialization":fourbar_initialization}
+        if fourbar_couplings:
+            fourbar_authoring=author_fourbar_rods(stage,'/World/HandArm/Physics',args.finger_mechanism,
+                                                 representation='tangent')
+            fourbar_authoring.update(
+                scope='MECHANISM_CANDIDATE_NOT_PRODUCTION_ASSEMBLY_ACCEPTANCE',
+                reset_warmup_uses_initial_tangent_without_per_tick_relinearization=True,
+                main_loop_relinearizes_from_robot_encoders_before_every_step=True)
+            (args.output/'finger_fourbar_authoring.json').write_text(json.dumps(fourbar_authoring,indent=2)+'\n')
         (args.output/"robot_initialization_before_reset.json").write_text(json.dumps(robot_initialization_report,indent=2)+"\n")
+        if args.palm_layout_mechanism=='self-lock':
+            # The user confirmed the adjustable palm is mechanically locked by
+            # its worm drive. Lock only the two hand layout joints at setup;
+            # preserve every finger-closing DOF and all connector freedoms.
+            palm_rows=[]
+            for name in ('f1j1','f3j1'):
+                joint=UsdPhysics.RevoluteJoint(stage.GetPrimAtPath('/World/HandArm/Physics/'+name))
+                prim=joint.GetPrim();angle_deg=float(np.degrees(source_positions[name]))
+                before=[float(joint.GetLowerLimitAttr().Get()),float(joint.GetUpperLimitAttr().Get())]
+                if not before[0]<=angle_deg<=before[1]:raise ValueError('Palm lock angle outside source mechanism range')
+                if prim.HasAPI('NewtonMimicAPI'):
+                    prim.RemoveAPI('NewtonMimicAPI');prim.GetAttribute('newton:mimicEnabled').Set(False)
+                if prim.HasAPI(PhysxSchema.PhysxMimicJointAPI,UsdPhysics.Tokens.rotX):
+                    prim.RemoveAPI(PhysxSchema.PhysxMimicJointAPI,UsdPhysics.Tokens.rotX)
+                joint.CreateLowerLimitAttr(angle_deg);joint.CreateUpperLimitAttr(angle_deg)
+                palm_rows.append({'joint':name,'source_limits_deg':before,'locked_angle_deg':angle_deg,
+                    'limits_deg':[joint.GetLowerLimitAttr().Get(),joint.GetUpperLimitAttr().Get()],
+                    'body0':[str(x) for x in joint.GetBody0Rel().GetTargets()],
+                    'body1':[str(x) for x in joint.GetBody1Rel().GetTargets()]})
+            if abs(palm_rows[0]['locked_angle_deg']-palm_rows[1]['locked_angle_deg'])>1e-4:
+                raise ValueError('Source palm layout leader and follower disagree before locking')
+            (args.output/'palm_self_lock_authoring.json').write_text(json.dumps({
+                'basis':'USER_CONFIRMED_WORM_DRIVE_MECHANICAL_SELF_LOCK_20260912',
+                'representation':'ZERO_WIDTH_REVOLUTE_LIMITS_AT_SELECTED_LAYOUT_NO_ACTIVE_SERVO',
+                'elasticity_backlash_and_failure_load_unmeasured':True,
+                'only_hand_layout_joints_changed':True,'authored_before_physics':True,'joints':palm_rows},indent=2)+'\n')
+    if args.sdf_resolution_override is not None:
+        sdf_rows=[]
+        for prim in stage.Traverse():
+            attr=prim.GetAttribute('physxSDFMeshCollision:sdfResolution')
+            if prim.HasAPI(UsdPhysics.CollisionAPI) and attr and attr.Get():
+                before=int(attr.Get());attr.Set(args.sdf_resolution_override)
+                pts=np.asarray(UsdGeom.Mesh(prim).GetPointsAttr().Get())
+                sdf_rows.append({'path':str(prim.GetPath()),'before':before,'after':int(attr.Get()),
+                    'maximum_grid_spacing_m':float(np.ptp(pts,axis=0).max()/args.sdf_resolution_override)})
+        (args.output/'sdf_resolution_comparison.json').write_text(json.dumps({
+            'scope':'UNVALIDATED_COLLISION_DISCRETIZATION_COMPARISON','source_CAD_vertices_unchanged':True,
+            'rows':sdf_rows},indent=2)+'\n')
+    print(json.dumps({'stage':'begin_physics_reset','wall_seconds':time.monotonic()-diagnostic_started,
+                      'device':args.physics_device}),flush=True)
     world.reset();world.pause()
+    print(json.dumps({'stage':'physics_reset_complete','wall_seconds':time.monotonic()-diagnostic_started}),flush=True)
     if args.physics_device=='cpu' and args.frozen_connector_model is not None:
         import carb.logging
         carb.logging.acquire_logging().set_level_threshold_for_source(
@@ -596,11 +1058,11 @@ try:
             raise RuntimeError(f"local passive-joint initial phase differs: source={source_passive_angle}, native={observed_passive_angle}")
     elif args.free_plug_in_socket:
         fixture_tree=None
-        passive_initialization={'representation':'VALIDATED_REGULAR_REVOLUTE_WITH_FINITE_PASSIVE_RESISTANCE',
+        passive_initialization={'representation':stage.GetPrimAtPath(prepared['report']['passive_joint_solver']['internal_joint_path']).GetTypeName(),
             'frozen_model':str(args.frozen_connector_model.resolve()),'object_articulation_reader_used':False,
             'source_pose_is_declared_cold_initial_state_not_restored_contact_history':True}
     settings={"arm_control_law":"NATIVE_FORCE_DRIVE_GRAVITY_EQUIVALENT_POSITION_BIAS_V1",
-              "arm_stiffness":2500.,"arm_damping":60.,"hand_stiffness":12.,"hand_damping":2.,
+              "arm_stiffness":2500.,"arm_damping":60.,"hand_stiffness":args.hand_stiffness_nm_rad,"hand_damping":args.hand_damping_nm_s_rad,
               "arm_drive_maximum_effort_nm":100.,"hand_drive_maximum_effort_nm":1.}
     settings['closing_drive_maximum_effort_nm']=args.closing_drive_cap_nm
     settings["arm_damping"] = (float(physical_sample["arm_control"]["effective_arm_damping_nm_s_rad"])
@@ -609,8 +1071,43 @@ try:
     robot_data=controller.create_native_gravity_compensated_robot(
         "/World/HandArm/Geometry/world",names,settings,
         initial_arm_positions=sensor_sample["active_positions_rad"][:7],
-        initial_hand_positions=sensor_sample["active_positions_rad"][7:])
+        initial_hand_positions=sensor_sample["active_positions_rad"][7:],
+        preserve_authored_state=bool(fourbar_couplings),initial_named_positions=fourbar_initial_targets)
     robot,active,*_=robot_data
+    palm_lock_native_angle=None
+    if args.palm_layout_mechanism=='self-lock':
+        lock_indices=[robot.dof_names.index(n) for n in ('f1j1','f3j1')]
+        zeros=np.zeros((1,2),dtype=np.float32)
+        robot.set_dof_gains(zeros,zeros,indices=0,dof_indices=lock_indices)
+        robot.set_dof_max_efforts(zeros,indices=0,dof_indices=lock_indices)
+        lock_lo,lock_hi=robot.get_dof_limits(indices=0,dof_indices=lock_indices)
+        locked=lock_lo.numpy()[0]
+        if not np.allclose(locked,lock_hi.numpy()[0],rtol=0,atol=1e-7):
+            raise RuntimeError('Native palm joint limits do not implement the authored mechanical lock')
+        palm_lock_native_angle=float(locked[0])
+        lock_kp,lock_kd=robot.get_dof_gains(indices=0,dof_indices=lock_indices)
+        (args.output/'palm_self_lock_native_readback.json').write_text(json.dumps({
+            'joint_names':['f1j1','f3j1'],'lower_rad':locked.tolist(),'upper_rad':lock_hi.numpy()[0].tolist(),
+            'stiffness':lock_kp.numpy()[0].tolist(),'damping':lock_kd.numpy()[0].tolist(),
+            'drive_caps_nm':robot.get_dof_max_efforts(indices=0,dof_indices=lock_indices).numpy()[0].tolist(),
+            'active_servo_disabled':True,'loaded_motion_still_requires_measurement':True},indent=2)+'\n')
+    if native_velocity_bounds is not None:
+        before=robot.get_dof_max_velocities(indices=0).numpy()[0].copy()
+        specified=np.asarray([native_velocity_bounds[n] for n in robot.dof_names])
+        robot.set_dof_max_velocities(specified[None,:],indices=0)
+        after=robot.get_dof_max_velocities(indices=0).numpy()[0].copy()
+        if not np.allclose(after,specified,rtol=1e-6,atol=1e-7):raise RuntimeError('Native joint velocity readback differs from the model references')
+        (args.output/'native_velocity_limit_readback.json').write_text(json.dumps({
+            'joint_names':list(robot.dof_names),'before_rad_s':before.tolist(),'after_rad_s':after.tolist(),
+            'scope':'DECLARED_MODEL_VELOCITY_REFERENCE_NOT_NEW_HARDWARE_CALIBRATION',
+            'source':'Existing verified kinematic model; hand4rad/s remains an uncalibrated reference',
+            'motor_force_caps_and_position_limits_unchanged':True},indent=2)+'\n')
+    if args.interface_twist_deg is not None:
+        native_kp,native_kd=robot.get_dof_gains(indices=0,dof_indices=active)
+        native_caps=robot.get_dof_max_efforts(indices=0,dof_indices=active)
+        (args.output/'active_drive_readback.json').write_text(json.dumps({
+            'stiffness_nm_rad':native_kp.numpy()[0].tolist(),'damping_nm_s_rad':native_kd.numpy()[0].tolist(),
+            'effort_caps_nm':native_caps.numpy()[0].tolist(),'force_drives_not_kinematic_constraints':True},indent=2)+'\n')
     if args.gpu_host_readback:
         readback={"gpu_dynamics_enabled":bool(scene.GetEnableGPUDynamicsAttr().Get()),
             "broadphase":str(scene.GetBroadphaseTypeAttr().Get()),
@@ -635,8 +1132,16 @@ try:
         (args.output/"hand_joint_friction_authoring.json").write_text(json.dumps(hand_friction_report,indent=2)+"\n")
     actual={f"iiwa_joint_{i+1}":x for i,x in enumerate(sensor_sample["active_positions_rad"][:7])}
     actual.update({k:x["position_rad"] for k,x in physical_sample["arm_control"]["hand_joint_diagnostic"]["joints"].items()})
-    robot.set_dof_positions(np.array([[actual[n] for n in robot.dof_names]]))
+    if not fourbar_couplings:
+        robot.set_dof_positions(np.array([[actual[n] for n in robot.dof_names]]))
     targets=np.r_[sensor_sample["arm_control"]["drive_target_rad"],sensor_sample["active_targets_rad"][7:]]
+    if palm_lock_native_angle is not None:targets[7]=palm_lock_native_angle
+    if interface_grip_recipe and interface_grip_recipe.get('recompute_initial_arm_bias'):
+        targets[:7],bias_readback=controller.gravity_biased_arm_target(robot,robot_data[2],
+            sensor_sample['active_positions_rad'][:7],robot_data[3],robot_data[4],settings)
+        (args.output/'initial_native_gravity_compensation.json').write_text(json.dumps({
+            'scope':'NEW_DECLARED_ARM_POSTURE_NATIVE_GRAVITY_BIAS_BEFORE_MEASUREMENT',
+            'connector_pose_changed':False,'readback':bias_readback},indent=2)+'\n')
     robot.set_dof_position_targets(targets[None,:],indices=0,dof_indices=active)
     replay_targets=np.asarray([np.r_[s["arm_control"]["drive_target_rad"],s["active_targets_rad"][7:]] for s in replay_records])
     if replay_records:
@@ -675,9 +1180,230 @@ try:
         print(json.dumps(result,indent=2),flush=True)
         raise SystemExit(0)
     def host(v):return v.detach().cpu().numpy() if hasattr(v,"detach") else v.numpy() if hasattr(v,"numpy") else np.asarray(v)
+    interface_images=[];interface_movie=None;interface_abort=None;interface_following=None
+    if args.interface_twist_deg is not None:
+        import cv2
+        import omni.replicator.core as rep
+        from pxr import UsdLux
+        from te_foundationpose_handoff_runtime import _author_camera,_camera_cv_pose_from_eye_target
+        camera='/World/HandInterfaceEvidenceCamera';focus=nut_T[:3,3]+[0.,0.,.035]
+        _author_camera(stage,camera,_camera_cv_pose_from_eye_target(focus+[.15,-.18,.12],focus),
+                       resolution=(800,600),focal_length_mm=32.,horizontal_aperture_mm=36.,clipping_range_m=(.01,5.),Gf=Gf,UsdGeom=UsdGeom)
+        UsdLux.DomeLight.Define(stage,'/World/HandInterfaceEvidenceLight').CreateIntensityAttr(1000.)
+        product=rep.create.render_product(camera,(800,600));rgb=rep.AnnotatorRegistry.get_annotator('rgb');rgb.attach([product.path])
+        interface_movie=cv2.VideoWriter(str(args.output/'hand_interface.mp4'),cv2.VideoWriter_fourcc(*'mp4v'),4.,(800,600))
+        # The source URDF has coaxial joint7/link_ee/hand2arm Z axes. Check
+        # actual frame alignment before commanding the finite joint stroke.
+        _,hq=contacts.get_world_poses();hand_axis=Rotation.from_quat(host(hq)[hb,[1,2,3,0]]).as_matrix()[:,2]
+        if not args.interface_force_following and float(hand_axis@nut_T[:3,2]) < .999:
+            raise RuntimeError('Saved hand wrist axis does not align with declared Nut axis')
+        target_end=targets.copy()
+        if not args.interface_force_following:target_end[6]+=np.deg2rad(args.interface_twist_deg)
+        if args.interface_start_open:target_end[7:]=interface_final_hand_targets
+        if palm_lock_native_angle is not None:target_end[7]=palm_lock_native_angle
+        lo,hi=robot.get_dof_limits(indices=0,dof_indices=active)
+        if np.any(target_end<host(lo)[0]) or np.any(target_end>host(hi)[0]):
+            raise RuntimeError('Interface target exceeds original joint limits')
+        if args.interface_force_following:
+            from te_local_interface_following import LocalInterfaceFollowing
+            interface_following=LocalInterfaceFollowing(repo,
+                host(robot.get_dof_positions(indices=0,dof_indices=active))[0],
+                nut_T,body_T,placement@bench_socket,dt*args.interface_control_decimation,
+                grip_recipe=interface_grip_recipe,finger_mechanism_path=args.finger_mechanism)
     rows=[];read_deltas=[];joint_rows=[];part_rows=[];normal_load_rows=[];part_contact_rows=[];render_audit=None
+    interface_command_rows=[];projected_joint_reaction_rows=[]
+    fourbar_step_rows=[]
+    fourbar_follower_order=tuple(fourbar_couplings)
+    fourbar_source_indices=[robot.dof_names.index(fourbar_couplings[name].source_joint) for name in fourbar_follower_order]
+    fourbar_follower_indices=[robot.dof_names.index(name) for name in fourbar_follower_order]
+    worm_drives={};worm_records=[];worm_stream=None
+    if args.finger_worm_self_lock:
+        from te_worm_drive import WormDrive,WormReference
+        reference=WormReference(transmission_stiffness=args.hand_stiffness_nm_rad,transmission_damping=0.,
+            output_viscosity=args.hand_damping_nm_s_rad,output_active_effort_reference=args.closing_drive_cap_nm,
+            transmission_effort_boundary=args.closing_drive_cap_nm)
+        motor_position_kp=(1+reference.load_friction_ratio)*args.hand_stiffness_nm_rad
+        motor_position_kd=(1+reference.load_friction_ratio)*args.hand_damping_nm_s_rad
+        initial_q=host(robot.get_dof_positions(indices=0))[0]
+        for follower,index in zip(fourbar_follower_order,fourbar_source_indices):
+            worm_drives[follower]=WormDrive(float(initial_q[index]),reference=reference,integration='passive_split')
+        friction=[host(x)[0] for x in robot.get_dof_friction_properties(indices=0)]
+        finger_indices=fourbar_source_indices+fourbar_follower_indices
+        if any(np.max(np.abs(x[finger_indices]))>1e-12 for x in friction):
+            raise RuntimeError('The integrated worm has duplicate native joint friction')
+        (args.output/'finger_worm_reference.json').write_text(json.dumps({
+            'scope':'WHOLE_ROBOT_INTEGRATION_CANDIDATE_NOT_HARDWARE_IDENTIFICATION','reference':vars(reference),
+            'input_effort_cap_nm':reference.input_effort_boundary,
+            'motor_position_kp_input_referred':motor_position_kp,'motor_position_kd_input_referred':motor_position_kd,
+            'position_reference_is_input_angle_referred_to_output':True,'follower_order':list(fourbar_follower_order),
+            'native_friction_readback':[[float(v[i]) for i in finger_indices] for v in friction],
+            'position_state_written_after_reset':False,'online_contact_or_object_truth_used':False},indent=2)+'\n')
+        worm_stream=(args.output/'finger_worm_samples.jsonl').open('w')
+    hand_normal_wrench_rows=[];native_joint_wrench_rows=[]
+    hand_link_pose_rows=[];hand_contact_point_records=[]
     contact_component_rows=[];contact_actor_pairs=set();world.play()
-    for step in range(round(2./dt)):
+    actor_path_cache={}
+    performance={'physics_s':0.,'readback_s':0.,'evidence_s':0.}
+    def recorded_actor_paths(ids):
+        ids=ids.to('cpu');array=ids.numpy();key=(tuple(array.shape),array.tobytes())
+        if key not in actor_path_cache:
+            actor_path_cache[key]=tuple(map(str,contacts.get_actor_paths_from_ids(ids)))
+        return actor_path_cache[key]
+    turn_start=3.0 if interface_grip_recipe else 1.6 if args.interface_start_open else .3
+    turn_duration=1.875 if interface_grip_recipe else 1.
+    interface_duration=5.275 if interface_grip_recipe else 2.9 if args.interface_start_open else 2.
+    if args.interface_motion_duration_s is not None:
+        turn_duration=args.interface_motion_duration_s
+        interface_duration=turn_start+turn_duration+.4
+    side_sequence=bool(interface_grip_recipe and interface_grip_recipe.get('sidewall_sequence'))
+    if side_sequence:
+        interface_duration=float(interface_grip_recipe.get('probe_duration_s',6.9))
+        turn_start=float(interface_grip_recipe.get('preindex_start_s',3.))
+    last_following_arm_drive=None
+    release_base_command=None;release_start=interface_duration
+    if args.interface_release_at_end:
+        release_start=interface_duration;interface_duration+=1.3
+    stroke_schedule=None
+    if args.interface_regrasp_stroke_deg is not None:
+        from te_interface_stroke_schedule import InterfaceStrokeSchedule
+        stroke_schedule=InterfaceStrokeSchedule(args.interface_twist_deg,args.interface_regrasp_stroke_deg,
+                                               turn_duration,release=True,
+                                               reindex_speed_rad_s=float(interface_grip_recipe.get('reindex_speed_rad_s',.8)),
+                                               preload_duration_s=float(interface_grip_recipe.get('regrasp_preload_duration_s',2.)))
+        interface_duration=stroke_schedule.duration
+        release_start=next(p.start for p in stroke_schedule.phases if p.name=='opening')
+        (args.output/'stroke_schedule.json').write_text(json.dumps(stroke_schedule.as_dict(),indent=2)+'\n')
+    previous_scheduled_phase=None;regrasp_base_command=None;remembered_grip_goal=None
+    phase_rows=[];final_contact_snapshots=[]
+    release_open_target=(np.asarray(json.loads(args.interface_grasp_relation.read_text())['open_hand_positions_rad']) if args.interface_release_at_end else None)
+    final_release_open_target=None
+    if args.interface_release_at_end:
+        extra=float((interface_grip_recipe or {}).get('final_release_extra_opening_rad',0.))
+        if not math.isfinite(extra) or not 0<=extra<=.1:
+            raise ValueError('Final release opening adjustment must stay within0to0.1rad')
+        final_release_open_target=release_open_target.copy();final_release_open_target[1:]-=extra
+        lo,hi=robot.get_dof_limits(indices=0,dof_indices=active)
+        if np.any(final_release_open_target[1:]<host(lo)[0,8:]) or np.any(final_release_open_target[1:]>host(hi)[0,8:]):
+            raise ValueError('Final release target exceeds original finger travel')
+        (args.output/'final_release_plan.json').write_text(json.dumps({
+            'extra_opening_rad':extra,'final_open_target_rad':final_release_open_target.tolist(),
+            'regrasp_open_targets_unchanged':True,'finite_drive_caps_unchanged':True,
+            'basis':'SOURCE_CAD_CLEARANCE_AT_OBSERVED_LOADED_POSTURE' if extra else 'ORIGINAL_PREGRASP_POSTURE'},indent=2)+'\n')
+    for step in range(round(interface_duration/dt)):
+        if step%240==0 and (args.output/'STOP_REQUEST.json').exists():
+            requested=json.loads((args.output/'STOP_REQUEST.json').read_text())
+            interface_abort='EXTERNAL_EXPERIMENT_STOP: '+str(requested.get('reason','requested for physical review'))
+            break
+        if args.interface_twist_deg is not None and time.monotonic()-diagnostic_started>args.interface_wall_limit_s:
+            interface_abort='DECLARED_WALL_TIME_LIMIT';break
+        if args.interface_twist_deg is not None:
+            elapsed=step*dt;releasing=args.interface_release_at_end and elapsed>=release_start
+            phase=('free_hold' if releasing and elapsed>=release_start+.8 else 'opening' if releasing
+                   else 'loaded_hold' if elapsed>=turn_start+turn_duration else 'turn' if elapsed>=turn_start else 'grip')
+            phase_rows.append(phase)
+            u=np.clip((step*dt-turn_start)/turn_duration,0.,1.);blend=10*u**3-15*u**4+6*u**5
+            angular_rate=np.deg2rad(args.interface_twist_deg)*30*u**2*(1-u)**2/turn_duration
+            angle_rad=np.deg2rad(args.interface_twist_deg)*blend
+            scheduled_phase=None;grip_clock=None;grip_enabled=True;force_follow_enabled=True
+            if args.interface_grip_only:
+                force_follow_enabled=False
+                if not releasing:
+                    phase='loaded_hold' if elapsed>=turn_start else 'grip';phase_rows[-1]=phase
+            if stroke_schedule is not None:
+                scheduled_phase,angle_rad,angular_rate,phase_blend=stroke_schedule.sample(elapsed)
+                phase=scheduled_phase.name;phase_rows[-1]=phase
+                releasing=phase in ('opening','free_hold')
+                grip_enabled=phase in ('grip','regrasp_preload','turn','loaded_hold')
+                force_follow_enabled=phase in ('turn','loaded_hold')
+                if phase=='regrasp_preload':
+                    grip_clock=(2.5 if interface_grip_recipe.get('reuse_grip_targets') else 1.)+elapsed-scheduled_phase.start
+                elif scheduled_phase.stroke>0:grip_clock=3.
+                if phase!=previous_scheduled_phase:
+                    regrasp_base_command=None
+                    if phase=='regrasp_open':remembered_grip_goal=interface_following.hand_goal.copy()
+                    if phase=='regrasp_preload':
+                        if interface_grip_recipe.get('reuse_grip_targets'):
+                            interface_following.hand_goal=remembered_grip_goal.copy()
+                        else:
+                            interface_following.hand_goal=interface_following.contact_q.copy()
+                            interface_following.hand_goal[1:]+=.002
+                    previous_scheduled_phase=phase
+            if side_sequence:
+                v=np.clip(step*dt-turn_start,0.,1.);v2=np.clip(step*dt-5.5,0.,1.)
+                second_duration=1.
+                if interface_grip_recipe.get('sidewall_measured_balance') or interface_grip_recipe.get('coupled_contact_forces'):
+                    second_duration=float(interface_grip_recipe.get('post_index_turn_duration_s',2.5))
+                    second_start=float(interface_grip_recipe.get('sidewall_start_s',4.))
+                    v2=np.clip((step*dt-second_start)/second_duration,0.,1.)
+                blend=.5*(10*v**3-15*v**4+6*v**5+10*v2**3-15*v2**4+6*v2**5)
+                angular_rate=np.deg2rad(args.interface_twist_deg)*.5*(30*v**2*(1-v)**2+30*v2**2*(1-v2)**2/second_duration)
+                angle_rad=np.deg2rad(args.interface_twist_deg)*blend
+            command=targets.copy();command[6]+=np.deg2rad(args.interface_twist_deg)*blend
+            if args.interface_start_open:
+                g=np.clip((step*dt-.2)/.8,0.,1.);g=10*g**3-15*g**4+6*g**5
+                command[7:]=targets[7:]+g*(interface_final_hand_targets-targets[7:])
+            if interface_following is not None and not releasing and step%args.interface_control_decimation==0:
+                q_online=host(robot.get_dof_positions(indices=0,dof_indices=active))[0]
+                raw_online=host(tree.get_measured_joint_forces())[row_index]
+                current_reaction=host(robot.get_dof_projected_joint_forces(indices=0))[0]
+                grip_reaction=current_reaction[[robot.dof_names.index(n) for n in ('f1j2','f2j1','f3j2')]]
+                lower_now,upper_now=robot.get_dof_limits(indices=0,dof_indices=active)
+                lower_now=host(lower_now)[0];upper_now=host(upper_now)[0]
+                if (not np.isfinite(q_online).all() or np.any(q_online<lower_now-.02)
+                        or np.any(q_online>upper_now+.02)):
+                    interface_abort='ACTUAL_ROBOT_JOINT_STATE_OUTSIDE_FINITE_MODEL_LIMITS'
+                    (args.output/'abnormal_joint_state.json').write_text(json.dumps({
+                        'step':step,'time_s':elapsed,'positions_rad':q_online.tolist(),
+                        'lower_rad':lower_now.tolist(),'upper_rad':upper_now.tolist(),
+                        'wrist_raw':raw_online.tolist(),'projected_reactions':grip_reaction.tolist()},indent=2)+'\n')
+                    break
+                try:
+                    nominal=interface_following.update(q_online,raw_online,step*dt,
+                        angle_rad,
+                        angular_rate,
+                        projected_reactions=grip_reaction,grip_elapsed=grip_clock,
+                        grip_enabled=grip_enabled,force_follow_enabled=force_follow_enabled,
+                        arm_speed_override=(float(interface_grip_recipe.get('reindex_speed_rad_s',.8)) if scheduled_phase is not None and phase=='reindex' else None),
+                        entry_assist_enabled=not args.interface_grip_only and (scheduled_phase is None or scheduled_phase.stroke==0))
+                    if nominal is not None:
+                        last_following_arm_drive,_=controller.gravity_biased_arm_target(robot,robot_data[2],nominal,
+                            robot_data[3],robot_data[4],settings)
+                        if side_sequence and interface_following.side_grip is not None:
+                            cap=interface_following.side_grip['third_actuator_cap_nm']
+                            robot.set_dof_max_efforts(np.array([[cap]]),indices=0,
+                                dof_indices=[robot.dof_names.index('f3j2')])
+                except (RuntimeError,ValueError) as error:
+                    interface_abort='FORCE_FOLLOWING: '+str(error);break
+            if interface_following is not None and last_following_arm_drive is not None:
+                command[:7]=last_following_arm_drive
+                if interface_grip_recipe is not None:command[7:]=interface_following.hand_goal
+            if stroke_schedule is not None and phase in ('regrasp_open','reindex','regrasp_close'):
+                if regrasp_base_command is None:regrasp_base_command=command.copy()
+                if phase=='regrasp_open':
+                    command[7:]=(1.-phase_blend)*regrasp_base_command[7:]+phase_blend*release_open_target
+                elif phase=='reindex':command[7:]=release_open_target
+                else:
+                    if interface_grip_recipe.get('reuse_grip_targets'):
+                        contact_goal=remembered_grip_goal.copy()
+                    else:
+                        contact_goal=interface_following.contact_q.copy();contact_goal[1:]+=.002
+                    command[7:]=(1.-phase_blend)*release_open_target+phase_blend*contact_goal
+            if releasing:
+                if release_base_command is None:release_base_command=command.copy()
+                command=release_base_command.copy();opening=final_release_open_target
+                x=np.clip((elapsed-release_start)/.8,0.,1.);x=10*x**3-15*x**4+6*x**5
+                command[7:]=(1.-x)*release_base_command[7:]+x*opening
+            if palm_lock_native_angle is not None:
+                command[7]=palm_lock_native_angle
+            if fourbar_couplings:
+                command_by_name=dict(zip(controller.ARM_JOINT_NAMES+controller.ACTIVE_HAND_JOINT_NAMES,command))
+                for follower,coupling in fourbar_couplings.items():
+                    commanded_follower,_=coupling.position_and_derivative(command_by_name[coupling.source_joint])
+                    lower,upper=fourbar_joint_limits[follower]
+                    if not lower-1e-12<=commanded_follower<=upper+1e-12:
+                        raise ValueError('Four-bar command exceeds the original follower travel: '+follower)
+            robot.set_dof_position_targets(command[None,:],indices=0,dof_indices=active)
+            interface_command_rows.append(command.copy())
         if replay_records and step<len(replay_records):
             robot.set_dof_position_targets(replay_targets[step][None,:],indices=0,dof_indices=active)
         if step==round(1./dt) and args.paused_world_render:
@@ -692,7 +1418,49 @@ try:
             robot.get_dof_positions(indices=0).numpy()
             robot.get_dof_velocities(indices=0).numpy()
             robot.get_dof_gravity_compensation_forces(indices=0).numpy()
-        world.step(render=False)
+        if fourbar_couplings:
+            # Run at the physics rate, including controller-decimation skips.
+            # Only constraint tangent coefficients change; no physical q/qd or
+            # object/contact truth is used to overwrite the realized motion.
+            measured_joints=host(robot.get_dof_positions(indices=0))[0]
+            measured_sources={fourbar_couplings[name].source_joint:float(measured_joints[index])
+                              for name,index in zip(fourbar_follower_order,fourbar_source_indices)}
+            tangent_rows=update_fourbar_tangents(stage,'/World/HandArm/Physics',fourbar_couplings,measured_sources)
+            if len(tangent_rows)!=len(fourbar_couplings):raise RuntimeError('Incomplete four-bar tangent update')
+            for finger_index,(follower,source_index,follower_index,row) in enumerate(zip(
+                    fourbar_follower_order,fourbar_source_indices,fourbar_follower_indices,tangent_rows)):
+                q_source=float(measured_joints[source_index]);q_follower=float(measured_joints[follower_index])
+                fourbar_step_rows.append([step,float(world.current_time),finger_index,q_source,q_follower,
+                    fourbar_couplings[follower].closure_error(q_source,q_follower),row['slope'],row['offset_rad']])
+        if worm_drives:
+            measured_velocity=host(robot.get_dof_velocities(indices=0))[0]
+            worm_targets=[]
+            try:
+                for follower,index in zip(fourbar_follower_order,fourbar_source_indices):
+                    source=fourbar_couplings[follower].source_joint
+                    target=float(command[7+controller.ACTIVE_HAND_JOINT_NAMES.index(source)])
+                    law=worm_drives[follower].prepare_position(float(measured_joints[index]),float(measured_velocity[index]),
+                        target,dt,stiffness=motor_position_kp,damping=motor_position_kd)
+                    worm_targets.append(law['position_target'])
+                # These replace the three output PD targets before the one
+                # physical step. Arm, locked palm and passive followers retain
+                # their existing control/constraint roles.
+                robot.set_dof_position_targets(np.asarray([worm_targets]),indices=0,dof_indices=fourbar_source_indices)
+            except (ValueError,RuntimeError) as error:
+                interface_abort='WORM_MOTOR_COMMAND: '+str(error);break
+        tick=time.monotonic();world.step(render=False);performance['physics_s']+=time.monotonic()-tick
+        if worm_drives:
+            worm_q=host(robot.get_dof_positions(indices=0))[0];worm_velocity=host(robot.get_dof_velocities(indices=0))[0]
+            projected=host(robot.get_dof_projected_joint_forces(indices=0))[0]
+            for follower,pi,di,tangent in zip(fourbar_follower_order,fourbar_source_indices,fourbar_follower_indices,tangent_rows):
+                observed=float(projected[pi]+tangent['slope']*projected[di])
+                row=worm_drives[follower].complete(float(worm_q[pi]),float(worm_velocity[pi]),observed_drive_effort=observed)
+                row.update(step=step,time_s=float(world.current_time),follower_joint=follower,phase=phase)
+                worm_records.append(row);worm_stream.write(json.dumps(row)+'\n')
+                if row['elastic_effort_boundary_exceeded'] or row['drive_saturation'] or row['friction_heat_j'] < -1e-9:
+                    interface_abort='WORM_PHYSICAL_PORT_BOUNDARY: '+follower
+            if step%240==0:worm_stream.flush()
+        readback_started=time.monotonic()
         if args.main_read_sequence:
             before_queries=host(tree.get_measured_joint_forces())[row_index].copy()
             robot.get_dof_positions(indices=0).numpy()
@@ -705,12 +1473,15 @@ try:
         with use_backend("tensor",raise_on_unsupported=True,raise_on_fallback=True):
             pos,ori=contacts.get_world_poses();vel,angvel=contacts.get_velocities()
         pos=pos.numpy();rot=Rotation.from_quat(ori.numpy()[:,[1,2,3,0]]).as_matrix();origin=pos[hb]
+        hand_link_pose_rows.append(np.c_[pos,ori.numpy()])
         centers=pos+np.einsum("nij,nj->ni",rot,coms);gravity=masses[:,None]*np.array([0.,0.,-9.81])
         expected=np.r_[gravity.sum(0),np.cross(centers-origin,gravity).sum(0)]
         gravity_wrench=expected.copy();normal_wrench=np.zeros(6);friction_wrench=np.zeros(6)
-        normal,points,normals,_,counts,starts,actor_ids=contacts.get_raw_contact_data()
+        normal,points,normals,hand_separation,counts,starts,actor_ids=contacts.get_raw_contact_data()
         normal=normal.numpy().ravel();points=points.numpy();normals=normals.numpy()
+        hand_separation=hand_separation.numpy().ravel()
         normal_load=np.zeros(len(hand_paths))
+        hand_normal_wrenches=np.zeros((len(hand_paths),6))
         # Starts/counts have one row per sensor and one column per filter.
         # A free connector uses multiple filters; flattened indices are not
         # hand-link indices and must not be used to label force records.
@@ -721,19 +1492,36 @@ try:
                 sl=slice(int(start),int(start+count));F=normal[sl,None]*normals[sl]/dt
                 wrench=np.r_[F.sum(0),np.cross(points[sl]-origin,F).sum(0)]
                 expected+=wrench;normal_wrench+=wrench
+                hand_normal_wrenches[sensor_index]+=wrench
                 normal_load[sensor_index]+=float(np.linalg.norm(F,axis=1).sum())
+                partner_paths=recorded_actor_paths(actor_ids[sl]) if count else ()
+                if count and step%args.contact_record_stride==0:
+                    hand_contact_point_records.append({'step':step,'sensor_path':hand_paths[sensor_index],
+                        'points_world_m':points[sl].tolist(),'normal_world':normals[sl].tolist(),
+                        'normal_force_n':(normal[sl]/dt).tolist(),
+                        'separation_m':hand_separation[sl].tolist(),
+                        'partner_paths':list(partner_paths)})
                 if count:
-                    for partner in contacts.get_actor_paths_from_ids(actor_ids[sl].to("cpu")):
+                    for partner in partner_paths:
                         contact_actor_pairs.add((hand_paths[sensor_index],partner))
-        friction,points,counts,starts=contacts.get_friction_data();friction=friction.numpy()/dt;points=points.numpy()
-        for start,count in zip(starts.numpy().ravel(),counts.numpy().ravel()):
-            sl=slice(int(start),int(start+count));F=friction[sl]
-            wrench=np.r_[F.sum(0),np.cross(points[sl]-origin,F).sum(0)]
-            expected+=wrench;friction_wrench+=wrench
+        if not args.raw_contact_only:
+            friction,points,counts,starts=contacts.get_friction_data();friction=friction.numpy()/dt;points=points.numpy()
+            for start,count in zip(starts.numpy().ravel(),counts.numpy().ravel()):
+                if not count:continue
+                sl=slice(int(start),int(start+count));F=friction[sl]
+                wrench=np.r_[F.sum(0),np.cross(points[sl]-origin,F).sum(0)]
+                expected+=wrench;friction_wrench+=wrench
+        else:
+            # Missing friction measurements are not zero physical friction.
+            # NaN is retained in the raw NPZ; JSON summaries use null.
+            friction_wrench[:]=np.nan;expected[:]=np.nan
         net_force=contacts.get_net_contact_forces(dt=dt).numpy().sum(axis=0)
-        filtered_force=contacts.get_contact_force_matrix(dt=dt).numpy().sum(axis=(0,1))
+        filtered_force=(np.full(3,np.nan) if args.raw_contact_only else contacts.get_contact_force_matrix(dt=dt).numpy().sum(axis=(0,1)))
         contact_component_rows.append(np.r_[gravity_wrench,normal_wrench,friction_wrench,net_force,filtered_force])
-        raw=host(tree.get_measured_joint_forces())[row_index];canonical=np.r_[-rot[hb]@raw[:3],-rot[hb]@raw[3:]]
+        native_wrenches=host(tree.get_measured_joint_forces()).copy()
+        raw=native_wrenches[row_index];canonical=np.r_[-rot[hb]@raw[:3],-rot[hb]@raw[3:]]
+        hand_normal_wrench_rows.append(hand_normal_wrenches)
+        native_joint_wrench_rows.append(native_wrenches)
         momentum=(masses[:,None]*vel.numpy()).sum(0)
         rows.append([*canonical,*expected,*(canonical-expected),*momentum,*origin])
         joint_rows.append([*robot.get_dof_positions(indices=0).numpy()[0],
@@ -753,6 +1541,66 @@ try:
                     minimum=min(minimum,float(separation[sl].min()));number+=int(count)
                 stats.append([force,minimum,number])
             part_contact_rows.append(stats)
+        if args.interface_twist_deg is not None and (step==round(interface_duration/dt)-1 or (args.interface_release_at_end and step==round(release_start/dt)-1)):
+            from omni.physx import get_physx_simulation_interface
+            from pxr import PhysicsSchemaTools
+            from te_fast_contact_reading import read_shape_contact_pairs_fast
+            decoded={}
+            def decode_id(value):
+                key=int(value)
+                if key not in decoded:decoded[key]=str(PhysicsSchemaTools.intToSdfPath(key))
+                return decoded[key]
+            class ContactSnapshot:
+                def __init__(self,data):self.data=data
+                def get_full_contact_report(self):return self.data
+            snapshot=ContactSnapshot(get_physx_simulation_interface().get_full_contact_report())
+            contact_rows=[read_shape_contact_pairs_fast(snapshot,dt,p,host(part_pos)[i],decode_path=decode_id) for i,p in enumerate([body_path,fixture_path])]
+            for actor_rows in contact_rows:
+                for row in actor_rows:row.pop('friction_wrench_n_nm',None)
+            final_contact_snapshots.append({'step':step,'phase':phase,'shape_contacts':contact_rows,'raw_sdk_friction_not_used':True})
+        performance['readback_s']+=time.monotonic()-readback_started
+        if args.interface_twist_deg is not None:
+            if step % 240 == 0 or step == round(interface_duration/dt)-1:
+                evidence_started=time.monotonic()
+                world.pause();before_time=float(world.current_time)
+                timeline=omni.timeline.get_timeline_interface();auto=timeline.is_auto_updating()
+                settings_api=carb.settings.get_settings();play=settings_api.get('/app/player/playSimulations')
+                try:
+                    timeline.set_auto_update(False);timeline.commit_silently();settings_api.set('/app/player/playSimulations',False)
+                    for _ in range(3):omni.kit.app.get_app().update()
+                    settings_api.set('/app/player/playSimulations',play)
+                    rep.orchestrator.step(rt_subframes=1,delta_time=0.,pause_timeline=False)
+                finally:
+                    settings_api.set('/app/player/playSimulations',play);timeline.set_auto_update(auto);timeline.commit_silently()
+                frame=np.asarray(rgb.get_data()).copy();world.play()
+                if abs(float(world.current_time)-before_time)>1e-9:raise RuntimeError('Evidence capture advanced physics')
+                if frame.size:
+                    image=cv2.cvtColor(frame[:,:,:3],cv2.COLOR_RGB2BGR);path=args.output/f'interface_{step:04d}.png';cv2.imwrite(str(path),image);interface_movie.write(image);interface_images.append(str(path))
+                (args.output/'interface_progress.json').write_text(json.dumps({'step':step,'time_s':float(world.current_time),
+                    'phase':phase,
+                    'positions_world_m':host(part_pos).tolist(),'quaternions_wxyz':host(part_ori).tolist(),
+                    'hand_normal_load_n':normal_load.tolist(),'hand_wrist_position_world_m':origin.tolist()})+'\n')
+                performance['evidence_s']+=time.monotonic()-evidence_started
+            qforce=host(robot.get_dof_projected_joint_forces(indices=0))[0]
+            projected_joint_reaction_rows.append(qforce.copy())
+            # Preserve the source check's1.2Nm finger protection and finite
+            # model excursion stop. These measurements only abort the run.
+            closing_indices=[robot.dof_names.index(n) for n in ('f1j2','f2j1','f3j2')]
+            if not args.closing_reaction_record_only and np.max(np.abs(qforce[closing_indices]))>args.closing_reaction_stop_nm:
+                interface_abort='ORIGINAL_FINGER_REACTION_LIMIT';break
+            delta=host(part_pos)-np.array([body_T[:3,3],nut_T[:3,3]])
+            axial_axis=(placement@bench_socket)[:3,2] if args.connector_initial_pose else nut_T[:3,2]
+            along=delta@axial_axis;lateral=delta-along[:,None]*axial_axis
+            travel=max(.003,abs(args.interface_twist_deg)*.00762/360.+.002)
+            if not np.isfinite(host(part_pos)).all() or np.max(np.linalg.norm(lateral,axis=1))>.003 or np.max(np.abs(along))>travel:
+                interface_abort='FINITE_CONNECTOR_DISPLACEMENT_LIMIT';break
+        if interface_abort is not None:break
+    if worm_stream is not None:worm_stream.flush();worm_stream.close();worm_stream=None
+    if interface_movie is not None:interface_movie.release()
+    if interface_following is not None:
+        (args.output/'force_following.json').write_text(json.dumps(interface_following.report(),indent=2)+'\n')
+        (args.output/'force_following_samples.json').write_text(json.dumps(interface_following.records)+'\n')
+    half_second=min(half_second,len(rows))
     a=np.array(rows);result={"scope":("LOCAL_FREE_BODY_NUT_SOCKET_CONTACT_WITH_ORIGINAL_HAND_NOT_FULL_ASSEMBLY"
         if args.free_plug_in_socket else "STATIC_ORIGINAL_HAND_WITH_EXPLICITLY_MOUNTED_NUT_FIXTURE_NOT_ASSEMBLY"),
       "source_run":str(args.run),"source_step":sample_step,"velocity_iterations":args.velocity_iterations,
@@ -762,6 +1610,8 @@ try:
       "position_iterations":args.position_iterations,"external_forces_every_iteration":bool(args.external_forces_every_iteration),"hand_paths":hand_paths,
       "native_drive_settings":settings,
       "robot_dof_names":list(robot.dof_names),
+      "native_joint_wrench_indices":dict(tree._articulation_view._metadata.joint_indices),
+      "additional_force_logging_role":"OFFLINE_EVALUATION_ONLY_NO_CONTROL_INPUT",
       "hand_joint_friction_authoring":hand_friction_report,
       "robot_initialization_before_reset":robot_initialization_report,
       "passive_joint_initialization":passive_initialization,
@@ -775,10 +1625,31 @@ try:
       "connector_pose_changed_after_measurement_start":False,
       "nut_fixture_mount_added":not args.free_plug_in_socket,
       "last_half_second_mean":a[-half_second:].mean(0).tolist(),"columns":"canonical_wrist_world[6],gravity_plus_contact_world[6],difference[6],hand_linear_momentum[3],wrist_position[3]",
-      "half_second_before_midpoint_mean":a[half_second:2*half_second].mean(0).tolist(),
+      "half_second_before_midpoint_mean":a[half_second:2*half_second].mean(0).tolist() if len(a)>half_second else None,
       "last_half_second_wrist_position_range_m":np.ptp(a[-half_second:,-3:],axis=0).tolist(),
-      "native_momentum_change_per_second_n":((a[-1,18:21]-a[-half_second,18:21])/((half_second-1)*dt)).tolist()}
+      "native_momentum_change_per_second_n":((a[-1,18:21]-a[-half_second,18:21])/(max(1,half_second-1)*dt)).tolist()}
+    if args.interface_twist_deg is not None:
+        result['interface_check']={'requested_wrist_joint7_deg':args.interface_twist_deg,'abort':interface_abort,
+            'additional_closing_target_deg':args.interface_extra_closure_deg,
+            'unvalidated_legacy_pad_sensitivity':args.interface_source_pad_material,
+            'duration_s':len(rows)*dt,'images':interface_images,'no_connector_fixture_or_external_tool_added':True,
+            'complete_robot_assembly_verified':False,'declared_bench_initial_pose':str(args.connector_initial_pose)}
     result["last_half_second_hand_normal_load_n"]=np.mean(normal_load_rows[-half_second:],axis=0).tolist()
+    result['performance_timing_s']=performance
+    result['diagnostic_actor_decode_cache_entries']=len(actor_path_cache)
+    result['physical_release_requested']=args.interface_release_at_end
+    (args.output/'phase_records.json').write_text(json.dumps(phase_rows)+'\n')
+    (args.output/'final_normal_contact_snapshots.json').write_text(json.dumps(final_contact_snapshots)+'\n')
+    result['force_limit_interpretation']={
+        'user_measurement':'approximately16N weight lifted through a tip rope; nominal15N directional operating force',
+        'measurement_record':'src/kcg_connector/config/hand_tip_pull_measurement_20260911.yaml',
+        'contact_normal_force_limit_n':None,
+        'normal15N_is_calibrated_hardware_capacity':False,
+        'tip_test_to_current_contact_actuator_mapping_complete':False,
+        'contact_force_exceedance_alone_establishes_hardware_overload':False,
+        'contact_normal15Nrestriction_removed_by_explicit_user_request':True,
+        'projected_reaction_reference_record_only':args.closing_reaction_record_only,
+        'finite_closing_drive_cap_nm':args.closing_drive_cap_nm}
     if replay_records:
         result["scope"]="BOUNDED_SEALED_ROBOT_COMMAND_REPLAY_THEN_STATIC_HOLD_NOT_ASSEMBLY"
         result["source_command_replay"]={"source_step_ids":[s["step"] for s in replay_records],
@@ -792,9 +1663,21 @@ try:
     result["all_raw_hand_contact_actor_pairs"]=sorted(contact_actor_pairs)
     result["contact_component_columns"]="gravity[6],raw_normal_wrench[6],filtered_friction_wrench[6],native_net_contact_force[3],native_filtered_contact_force_matrix_sum[3]"
     result["last_half_second_contact_component_mean"]=np.mean(contact_component_rows[-half_second:],axis=0).tolist()
+    if args.frozen_connector_model is not None:
+        result['contact_readback_validity']={
+            'raw_sdk_multi_patch_friction_is_validated_ground_truth':False,
+            'gravity_plus_raw_contact_balance_is_validated_ground_truth':False,
+            'reason':'Installed PhysX multi-patch friction writeback can overwrite patch records; preserve raw arrays for diagnostics only',
+            'canonical_wrist_and_projected_joint_sensor_data_modified':False,
+            'online_control_uses_raw_contact_friction':False}
     np.savez_compressed(args.output/"samples.npz",values=a,joints=np.array(joint_rows),
                         parts=np.array(part_rows),hand_normal_load=np.array(normal_load_rows),
-                        contact_components=np.array(contact_component_rows),part_contact_stats=np.array(part_contact_rows))
+                        contact_components=np.array(contact_component_rows),part_contact_stats=np.array(part_contact_rows),
+                        interface_commands=np.array(interface_command_rows),projected_joint_reactions=np.array(projected_joint_reaction_rows),
+                        hand_normal_wrenches_world_about_handbase=np.array(hand_normal_wrench_rows),
+                        native_joint_wrenches=np.array(native_joint_wrench_rows),
+                        hand_link_poses=np.array(hand_link_pose_rows))
+    (args.output/'hand_contact_point_records.json').write_text(json.dumps(hand_contact_point_records)+'\n')
     if static_part_contact_recording:
         result['part_contact_stats_columns']='positive_normal_force_sum_n,minimum_separation_m,contact_count'
         result['maximum_part_contact_normal_sum_n']=np.max(np.array(part_contact_rows)[:,:,0],axis=0).tolist()
@@ -853,10 +1736,52 @@ try:
         result["post_measurement_source_key_sdf_audit"]=sdf_report
     if read_deltas:
         np.savez_compressed(args.output/"native_query_changes.npz",values=np.array(read_deltas))
+    result['raw_contact_only']=args.raw_contact_only
+    result['hand_role']=args.hand_role
+    result['production_acceptance_eligible']=args.hand_role=='production-nails' and not fourbar_couplings
+    result['palm_layout_mechanism']=args.palm_layout_mechanism
+    result['interface_grip_only']=args.interface_grip_only
+    if worm_drives:
+        result['finger_worm_integration']={
+            'mode':'PASSIVE_SPLIT_WITH_IMPLICIT_MOTOR_POSITION_PD','records':len(worm_records),
+            'maximum_motor_substep_energy_residual_j':max((abs(r['motor_substep_energy_residual_j']) for r in worm_records),default=None),
+            'motor_effort_saturated_steps':sum(r['motor_effort_at_boundary'] for r in worm_records),
+            'maximum_input_effort_nm':max((abs(r['input_effort']) for r in worm_records),default=None),
+            'maximum_transmission_effort_nm':max((abs(r['transmission_effort']) for r in worm_records),default=None),
+            'physical_position_or_velocity_overwrites':False,'full_assembly_verified':False}
+    if fourbar_couplings:
+        samples=np.asarray(fourbar_step_rows,dtype=float).reshape(-1,8)
+        np.savez_compressed(args.output/'finger_fourbar_step_samples.npz',values=samples)
+        result['finger_mechanism_candidate']={
+            'mechanism_id':finger_mechanism_document['mechanism_id'],
+            'status':'MECHANISM_CANDIDATE_NOT_PRODUCTION_ASSEMBLY_ACCEPTANCE',
+            'finger_self_lock_and_complete_assembly_still_require_verification':True,
+            'physical_steps_with_tangent_update':len(samples)//len(fourbar_couplings),
+            'reset_warmup_uses_fixed_initial_tangent':True,
+            'maximum_recorded_rod_length_error_m':float(np.abs(samples[:,5]).max()) if len(samples) else None,
+            'sample_follower_order':list(fourbar_follower_order),
+            'sample_columns':['step','physical_time_s','finger_index','source_rad','follower_rad',
+                              'rod_length_error_m','dp_dq','tangent_offset_rad'],
+            'physical_position_and_velocity_overwrites_after_reset':False}
+    if args.raw_contact_only:
+        result['unavailable_record_fields']=['friction contact wrench','filtered contact force matrix','gravity plus complete contact support wrench']
+        def finite_json(value):
+            if isinstance(value,float) and not math.isfinite(value):return None
+            if isinstance(value,dict):return {k:finite_json(v) for k,v in value.items()}
+            if isinstance(value,list):return [finite_json(v) for v in value]
+            return value
+        result=finite_json(result)
     (args.output/"result.json").write_text(json.dumps(result,indent=2)+"\n");print(json.dumps(result,indent=2),flush=True)
 except Exception:
     failed=True
     import traceback
     error=traceback.format_exc();(args.output/"error.txt").write_text(error);print(error,flush=True)
 finally:
-    app.close(exit_code=1 if failed else 0)
+    if locals().get('worm_stream') is not None:worm_stream.flush();worm_stream.close()
+    # The finite interface check saves its frames, video and samples itself.
+    # Do not wait on stage teardown after those artifacts are complete.
+    if args.interface_twist_deg is not None:
+        if locals().get('interface_movie') is not None:interface_movie.release()
+        app.close(wait_for_replicator=False,skip_cleanup=True,exit_code=1 if failed else 0)
+    else:
+        app.close(exit_code=1 if failed else 0)

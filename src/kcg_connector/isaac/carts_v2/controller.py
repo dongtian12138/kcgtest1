@@ -67,6 +67,8 @@ def create_native_gravity_compensated_robot(
     initial_arm_positions: Sequence[float] | None = None,
     initial_hand_positions: Sequence[float] | None = None,
     command_api_counter: dict[str, int] | None = None,
+    preserve_authored_state: bool = False,
+    initial_named_positions: Mapping[str, float] | None = None,
 ):
     """Create the only robot view and configure its bounded native drives."""
 
@@ -88,7 +90,14 @@ def create_native_gravity_compensated_robot(
     active_indices = np.concatenate((arm_indices, hand_indices))
     if (initial_arm_positions is None) != (initial_hand_positions is None):
         raise RuntimeError("initial arm and hand positions must be provided together")
-    initial_positions = (
+    if preserve_authored_state and initial_named_positions is None:
+        raise ValueError("Preserving the pre-reset mechanism requires explicit named initial targets")
+    if initial_named_positions is not None and (
+        set(initial_named_positions) != set(dof_names)
+        or not all(np.isfinite(float(value)) for value in initial_named_positions.values())
+    ):
+        raise ValueError("Named initial targets must cover all fifteen finite joint positions")
+    initial_positions = np.asarray([initial_named_positions[name] for name in dof_names]) if initial_named_positions is not None else (
         np.zeros(robot.num_dofs, dtype=np.float64)
         if initial_arm_positions is None
         else named_joint_target(
@@ -99,12 +108,20 @@ def create_native_gravity_compensated_robot(
         if command_api_counter is not None:
             command_api_counter[name] = int(command_api_counter.get(name, 0)) + 1
 
-    count("set_dof_positions")
-    robot.set_dof_positions(initial_positions.reshape(1, -1))
+    preserved_positions = robot.get_dof_positions(indices=0).numpy()[0].copy() if preserve_authored_state else None
+    preserved_velocities = robot.get_dof_velocities(indices=0).numpy()[0].copy() if preserve_authored_state else None
+    if preserve_authored_state and not (
+        np.isfinite(preserved_positions).all() and np.isfinite(preserved_velocities).all()
+    ):
+        raise ValueError("The pre-reset authored robot state became nonfinite")
+    if not preserve_authored_state:
+        count("set_dof_positions")
+        robot.set_dof_positions(initial_positions.reshape(1, -1))
     count("set_dof_position_targets")
     robot.set_dof_position_targets(initial_positions.reshape(1, -1))
-    count("set_dof_velocities")
-    robot.set_dof_velocities(np.zeros((1, robot.num_dofs)))
+    if not preserve_authored_state:
+        count("set_dof_velocities")
+        robot.set_dof_velocities(np.zeros((1, robot.num_dofs)))
     count("set_dof_velocity_targets")
     robot.set_dof_velocity_targets(np.zeros((1, robot.num_dofs)))
     stiffnesses = np.asarray(
@@ -163,6 +180,9 @@ def create_native_gravity_compensated_robot(
         "active_maximum_efforts": observed_caps.numpy()[0].tolist(),
         "initialized_at_pregrasp": initial_arm_positions is not None,
         "initial_positions_rad": initial_positions.tolist(),
+        "preserved_pre_reset_authored_state": preserve_authored_state,
+        "physical_positions_after_warmup_rad": None if preserved_positions is None else preserved_positions.tolist(),
+        "physical_velocities_after_warmup_rad_s": None if preserved_velocities is None else preserved_velocities.tolist(),
     }
     return robot, active_indices, arm_indices, lower_values, upper_values, audit
 

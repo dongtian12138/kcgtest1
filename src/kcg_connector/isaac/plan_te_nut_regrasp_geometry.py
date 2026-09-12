@@ -14,7 +14,11 @@ import fcl
 import numpy as np
 import yaml
 
-from kcg_connector.grasp.carts_v2.models import load_v2_inputs
+from types import SimpleNamespace
+from kcg_connector.grasp.carts_v2.models import _build_verified_robot_model, _load_hand_collision_triangles
+from kcg_connector.grasp.robust.hand_contract import load_carts_hand_contract
+from kcg_connector.grasp.robust.collision_roster import load_authoritative_collision_link_roster
+from kcg_connector.grasp.carts_v2.task_grip_surface import bind_task_hand_variant
 from build_te_free_split_plug import _load_single_usd_mesh, BODY_VISUAL, NUT_VISUAL
 
 
@@ -27,38 +31,66 @@ def bvh(vertices, faces):
 
 
 def plan(repository: Path, output: Path, axial_shift_m: float, *, base_geometry=None,
-         layout_deg=None, yaw_deg=0., source_joint_range=False):
+         layout_deg=None, yaw_deg=0., source_joint_range=False, terminal_source_meshes=False,
+         tilt_deg=0.,tilt_axis_deg=0.,lateral_offset_m=(0.,0.),config_path=None,
+         finger_mechanism_path=None):
     output.mkdir(parents=True, exist_ok=False)
-    config = repository / "src/kcg_connector/config/te_nail_tip_body_grasp_v1.yaml"
+    config = Path(config_path).resolve() if config_path else repository / "src/kcg_connector/config/te_nail_tip_body_grasp_v1.yaml"
     document = yaml.safe_load(config.read_text())
-    inputs = load_v2_inputs(repository, config_path=config, object_id="te_deutsch_d38999_26fj35pn_step")
-    source_plan = document["dynamic"]["nail_body_grasp_control_plan"]
-    original_hand = np.asarray(source_plan["object_from_hand_row_major"]).reshape(4, 4)
-    pregrasp = np.asarray(source_plan["pregrasp_joint_positions_rad"])
-    open_hand = pregrasp - np.array([0.0, 0.08, 0.08, 0.08])
-    closing_upper = np.asarray(source_plan["final_joint_positions_rad"])
+    # This entry needs kinematics and source triangles only. Avoid rebuilding
+    # unrelated object surface-role tables for every local CAD candidate.
+    settings=document['inputs']
+    hc=load_carts_hand_contract(settings['hand_contract'],repository_root=repository)
+    roster=load_authoritative_collision_link_roster(settings['collision_roster'],repository_root=repository)
+    surfaces,triangles,variant=bind_task_hand_variant(repository,settings,
+        _load_hand_collision_triangles(roster,hc.build_hand_model()))
+    mechanism_path=finger_mechanism_path or settings.get('finger_mechanism')
+    mechanism_id='LEGACY_LINEAR_MIMIC'
+    if mechanism_path is not None:
+        mechanism_path=repository/Path(mechanism_path)
+        from kcg_connector.grasp.robust.finger_fourbar import load_finger_fourbars
+        mechanism_id=load_finger_fourbars(mechanism_path)[0]['mechanism_id']
+    inputs=SimpleNamespace(robot_model=_build_verified_robot_model(hc,roster,finger_mechanism_path=mechanism_path),
+        hand_collision_triangles_by_link=triangles,task_grip_surfaces=surfaces,hand_variant=variant)
     if base_geometry is not None:
         base=json.loads(Path(base_geometry).read_text())
         original_hand=np.asarray(base["canonical_body_from_hand_for_nut_grasp"])
         open_hand=np.asarray(base["open_hand_positions_rad"])
-        closing_upper=np.asarray(base.get("finite_closing_goal_rad",closing_upper))
+        closing_upper=np.asarray(base.get("finite_closing_goal_rad",[open_hand[0],1.3963,1.3963,1.3963]))
+    else:
+        source_plan = document["dynamic"]["nail_body_grasp_control_plan"]
+        original_hand = np.asarray(source_plan["object_from_hand_row_major"]).reshape(4, 4)
+        pregrasp = np.asarray(source_plan["pregrasp_joint_positions_rad"])
+        open_hand = pregrasp - np.array([0.0, 0.08, 0.08, 0.08])
+        closing_upper = np.asarray(source_plan["final_joint_positions_rad"])
     if layout_deg is not None:
         open_hand[0]=np.deg2rad(layout_deg);closing_upper[0]=open_hand[0]
     if source_joint_range:
         for i,name in enumerate(("f1j2","f2j1","f3j2"),start=1):
-            closing_upper[i]=inputs.robot_model.joints[name].limit.upper
+            closing_upper[i]=inputs.robot_model.independent_joint_limits[name].upper
         if not np.isfinite(closing_upper).all():raise ValueError("finite source joint limits required")
     target_hand = original_hand.copy()
-    target_hand[:3, 3] += np.array([0.0, 0.0, axial_shift_m])
+    translation=np.array([*lateral_offset_m,axial_shift_m],float)
+    target_hand[:3, 3] += translation
     angle=np.deg2rad(yaw_deg)
     turn=np.eye(4);turn[:2,:2]=[[np.cos(angle),-np.sin(angle)],[np.sin(angle),np.cos(angle)]]
     target_hand=turn@target_hand
+    from scipy.spatial.transform import Rotation
+    ta=np.deg2rad(tilt_axis_deg);tilt_axis=np.array([np.cos(ta),np.sin(ta),0.])
+    tilt=np.eye(4);tilt[:3,:3]=Rotation.from_rotvec(tilt_axis*np.deg2rad(tilt_deg)).as_matrix()
+    target_hand=tilt@target_hand
     parts = {}
     for name, path in (("body", BODY_VISUAL), ("nut", NUT_VISUAL)):
         vertices, faces = _load_single_usd_mesh(path)
         parts[name] = bvh(vertices, faces)
     hand_objects = {}
     for name, triangles in inputs.hand_collision_triangles_by_link.items():
+        if terminal_source_meshes and inputs.hand_variant == 'LEGACY_NAIL_PRESENT' and name in ('f1Link3','f2Link2','f3Link3'):
+            import trimesh
+            # Match the existing Nut-only original-finger SDF surfaces.
+            # Preserve other links' conservative collision representations.
+            raw=trimesh.load(repository/f'src/iiwa_description/meshes/hand/{name}.STL',force='mesh',process=False)
+            triangles=raw.triangles
         triangles = np.asarray(triangles)
         hand_objects[name] = bvh(triangles.reshape(-1, 3), np.arange(triangles.size // 3).reshape(-1, 3))
 
@@ -79,9 +111,11 @@ def plan(repository: Path, output: Path, axial_shift_m: float, *, base_geometry=
     approach = []
     for fraction in np.linspace(0, 1, 49):
         pose = original_hand.copy()
-        pose[:3, 3] += fraction * np.array([0.0, 0.0, axial_shift_m])
+        pose[:3, 3] += fraction * translation
         a=angle*fraction;R=np.eye(4);R[:2,:2]=[[np.cos(a),-np.sin(a)],[np.sin(a),np.cos(a)]]
         pose=R@pose
+        Rt=np.eye(4);Rt[:3,:3]=Rotation.from_rotvec(tilt_axis*np.deg2rad(tilt_deg)*fraction).as_matrix()
+        pose=Rt@pose
         update(open_hand, pose)
         distances = [(distance(obj, part), link, part_name) for link, obj in hand_objects.items()
                      for part_name, part in parts.items()]
@@ -134,11 +168,18 @@ def plan(repository: Path, output: Path, axial_shift_m: float, *, base_geometry=
         near_hand=np.asarray(nearest.nearest_points[0]);near_nut=np.asarray(nearest.nearest_points[1])
         local=poses[name][:3,:3].T@(near_hand-poses[name][:3,3])
         import trimesh
-        raw=trimesh.load(repository/f"src/iiwa_description/meshes/hand/{name}.STL",force="mesh",process=False)
-        raw.vertices*=1000.
+        if inputs.task_grip_surfaces is not None:
+            triangles=np.asarray(inputs.hand_collision_triangles_by_link[name])
+            raw=trimesh.Trimesh(vertices=triangles.reshape(-1,3)*1000.,faces=np.arange(triangles.size//3).reshape(-1,3),process=False)
+            surface=next(s for s in inputs.task_grip_surfaces.values() if s.link_name==name)
+            pad_faces=surface.source_face_indices
+        else:
+            raw=trimesh.load(repository/f"src/iiwa_description/meshes/hand/{name}.STL",force="mesh",process=False)
+            raw.vertices*=1000.
+            pad=np.load(repository/f"artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TERMINAL_PAD_EXACT_SOURCE_V2/{name}_PAD_BODY_raw_source_local_m.npz")
+            pad_faces=pad['source_face_indices']
         _,source_distance,source_face=trimesh.proximity.closest_point(raw,local[None,:]*1000.)
-        pad=np.load(repository/f"artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TERMINAL_PAD_EXACT_SOURCE_V2/{name}_PAD_BODY_raw_source_local_m.npz")
-        pad_hit=bool(np.isin(source_face,pad["source_face_indices"])[0])
+        pad_hit=bool(np.isin(source_face,pad_faces)[0])
         q[index] = high + 1e-6
         update(q, target_hand)
         hit = fcl.CollisionResult()
@@ -157,6 +198,10 @@ def plan(repository: Path, output: Path, axial_shift_m: float, *, base_geometry=
                    if name not in {"f1Link3", "f2Link2", "f3Link3"}}
     result = {"scope": "OFFLINE_NUT_REGRASP_RELATIVE_GEOMETRY_NOT_DYNAMIC_SUCCESS",
         "source_config": str(config), "hand_variant": inputs.hand_variant,
+        "finger_mechanism_id":mechanism_id,"finger_mechanism_path":str(mechanism_path) if mechanism_path else None,
+        "terminal_original_surface_geometry":terminal_source_meshes,
+        "hand_tilt_deg":tilt_deg,"hand_tilt_axis_azimuth_deg":tilt_axis_deg,
+        "hand_lateral_offset_m":list(lateral_offset_m),
         "base_nut_geometry_plan":str(base_geometry) if base_geometry else None,
         "hand_yaw_about_canonical_nut_axis_deg":yaw_deg,
         "source_joint_range_contact_search":source_joint_range,
@@ -179,10 +224,19 @@ if __name__ == "__main__":
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--axial-shift-mm", type=float, default=12.0)
     parser.add_argument("--base-geometry",type=Path)
+    parser.add_argument('--config',type=Path,help='Explicit existing hand variant and source geometry configuration')
+    parser.add_argument('--finger-mechanism',type=Path,help='Measured four-bar contract; omitted only for historical linear-model comparison')
     parser.add_argument("--layout-deg",type=float)
     parser.add_argument("--yaw-deg",type=float,default=0.)
     parser.add_argument("--source-joint-range",action="store_true")
+    parser.add_argument('--terminal-source-meshes',action='store_true')
+    parser.add_argument('--tilt-deg',type=float,default=0.)
+    parser.add_argument('--tilt-axis-deg',type=float,default=0.)
+    parser.add_argument('--lateral-offset-mm',nargs=2,type=float,default=(0.,0.))
     args = parser.parse_args()
     plan(Path(__file__).resolve().parents[3], args.output.resolve(), args.axial_shift_mm * .001,
          base_geometry=args.base_geometry,layout_deg=args.layout_deg,yaw_deg=args.yaw_deg,
-         source_joint_range=args.source_joint_range)
+         source_joint_range=args.source_joint_range,terminal_source_meshes=args.terminal_source_meshes,
+         tilt_deg=args.tilt_deg,tilt_axis_deg=args.tilt_axis_deg,
+         lateral_offset_m=np.asarray(args.lateral_offset_mm)*.001,config_path=args.config,
+         finger_mechanism_path=args.finger_mechanism)

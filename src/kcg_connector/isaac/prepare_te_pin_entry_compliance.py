@@ -22,8 +22,11 @@ def prepare(source_model, output):
     source = Usd.Stage.Open(str(source_model))
     stage = Usd.Stage.Open(source.Flatten())
     body = '/World/TE_J35FreeSplitPlug/Body'
-    pin_prims = [p for p in Usd.PrimRange(stage.GetPrimAtPath(body)) if p.GetName().startswith('SourcePinSdf_')]
-    pin_ids = [int(i) for p in pin_prims for i in p.GetAttribute('kcg:sourcePinIndices').Get()]
+    official = [p for p in Usd.PrimRange(stage.GetPrimAtPath(body))
+                if p.GetName().startswith(('OfficialPinShaft_', 'OfficialPinNose_'))]
+    pin_prims = official or [p for p in Usd.PrimRange(stage.GetPrimAtPath(body)) if p.GetName().startswith('SourcePinSdf_')]
+    pin_ids = ([int(p.GetAttribute('kcg:sourcePinIndex').Get()) for p in official if p.GetName().startswith('OfficialPinNose_')]
+               if official else [int(i) for p in pin_prims for i in p.GetAttribute('kcg:sourcePinIndices').Get()])
     if sorted(pin_ids) != list(range(128)):
         raise ValueError('All original 128 pins must be present exactly once')
     repo = Path(__file__).resolve().parents[3]
@@ -97,6 +100,7 @@ def prepare(source_model, output):
             'Isotropic native contact spring also acts on tip/end-face normals; deeper insertion/axial bottoming is not validated by an entry test',
             'Exact alloy, retention compliance and elastic limit are unknown; do not infer hardware allowable loads'],
         'pin_count': 128, 'collider_count': len(pin_prims), 'changed_properties': changed,
+        'official_rounded_pin_geometry_retained': bool(official),
         'material_path': destination, 'source_mesh_mass_inertia_joints_filters_friction_unchanged': True,
         'external_constraints_added': False, 'post_start_pose_writes': False,
         'physical_validation': 'PENDING_SHORT_COMPARISON', 'source_assets_overwritten': False}

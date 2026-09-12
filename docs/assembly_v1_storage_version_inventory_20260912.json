@@ -1,0 +1,721 @@
+{
+  "checked_at_utc": "2026-09-12T10:21:35.890221+00:00",
+  "repository": "/home/noob/WorkPlace/kcgtest1",
+  "git_branch": "codex/connector-assembly-recovery-20260909",
+  "git_head": "68b51f8659c2918e243b10d7f4cc5e01fb7290ac",
+  "status_counts": {
+    " D": 2,
+    " M": 16,
+    "??": 113
+  },
+  "working_tree_status": [
+    {
+      "status": " D",
+      "path": "ACADEMIC_RESEARCH_COMPARISON_CN.md"
+    },
+    {
+      "status": " M",
+      "path": "AGENTS.md"
+    },
+    {
+      "status": " M",
+      "path": "CURRENT_CONTEXT_CN.md"
+    },
+    {
+      "status": " D",
+      "path": "GRASP_SELECTION_AND_DISTURBANCE_REPORT_CN.md"
+    },
+    {
+      "status": " M",
+      "path": "artifacts/README.md"
+    },
+    {
+      "status": " M",
+      "path": "artifacts/kcg_connector/force_to_hand_20260908/step3_preparation/assembly_preflight.yaml"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/config/carts_hand_contact_v1.yaml"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/isaac/carts_v2/controller.py"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/isaac/carts_v2/run_grasp_lift.py"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/isaac/diagnose_saved_hand_wrench.py"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/isaac/plan_te_nut_regrasp_geometry.py"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/isaac/prepare_te_pin_entry_compliance.py"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/isaac/run_isaac_python.sh"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/isaac/te_engagement_wrench_probe.py"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/isaac/te_three_finger_wrench_observer.py"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/isaac/verify_connector_engagement.sh"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/kcg_connector/grasp/carts_v2/models.py"
+    },
+    {
+      "status": " M",
+      "path": "src/kcg_connector/kcg_connector/grasp/robust/hand_model.py"
+    },
+    {
+      "status": "??",
+      "path": "HANDOFF_CN.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/20260910_key_antirotation_audit_CN.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/assembly_manuscript_draft.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/assembly_references.bib"
+    },
+    {
+      "status": "??",
+      "path": "docs/full_assembly_research_notes_CN.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/20260909_short_experiment_plan_before_user_priority_correction.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260906_1145.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260907_0043.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260907_0426.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260907_0450.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260907_0749.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260907_1540.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260907_1853.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260907_1949.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260907_2049.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260907_2247.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260907_2350.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_0206.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_0338.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_0420.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_0717.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_112332_before_connector_takeover.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_131531_before_model_delivery.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_141228_before_three_steps.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_145454_three_steps_update.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_155459_step2_grip_update.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_162806_before_visual_feedback.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_165317_before_higher_load.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_172337_before_velocity_check.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_181337_before_fixed_hold.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_185455_before_actual_centring.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_193143_centring_history.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_210138_before_pixel_fix.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260908_before_stop_handoff.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260909_001819_before_turn_result.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260909_020302_before_mechanism_execution.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260909_041635_mechanism_progress.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260909_062345_before_load_diagnosis.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260909_0806_before_first_observed_robot_trial.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260909_082309_before_user_discussion_pause.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260909_104501_before_authorized_recovery.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260909_123522_before_strict_short_plan.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260910_0500_before_key_backlash_audit.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260910_0627_before_identity_correction.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260910_065320_before_te_simulation_goal_clarification.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260910_071444_before_realistic_te_acceptance.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260910_before_180_and_ratchet.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260910_before_final_connector_delivery.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260910_before_freecad_repair.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260910_before_verified_mating_consolidation.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260910_internal_mechanism_validation_history.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260911_before_acceptance_followup.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260911_before_continuous_release_check.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260911_before_hand_photo_followup.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260911_before_internal_proxy_fix.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260911_before_low_speed_sampling_fix.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260911_before_model_acceptance_complete.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260911_before_robot_execution.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260911_before_solver_report_fix.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260911_before_tip_pull_semantics.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260911_before_two_doubts_audit.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260911_contact_repair_working_history.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260912_0812_pause.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260912_before_actual_fourbar_takeover.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260912_before_gpu_comparison.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260912_before_production_nail_correction.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/CURRENT_CONTEXT_CN_20260912_before_source_mechanism_implementation.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/HANDOFF_CN_20260908_before_model_acceptance.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/assembly_plan_before_reobservation_20260905.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/grasp_run_status_20260912_through21_CN.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/grasp_status_20260912_before_verified_full_mating.md"
+    },
+    {
+      "status": "??",
+      "path": "docs/history/grasp_status_20260912_through24_CN.md"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/config/hand_fourbar_20260912.json"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/config/hand_tip_pull_measurement_20260911.yaml"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/prepare_te_axial_twist_joint.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/prepare_te_ratchet_contact.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/prepare_te_thread_surface_contact.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/prepare_te_thrust_contact.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/probe_fourbar_distance.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/probe_source_finger_fourbar.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/te_complete_mating_probe.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/te_fast_contact_reading.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/te_hand_fourbar.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/te_interface_stroke_schedule.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/te_local_interface_following.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/te_rotary_contact_transducer.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/te_worm_drive.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/verify_te_connector_assembly.sh"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/verify_te_connector_release.sh"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/isaac/verify_te_connector_retention.sh"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/kcg_connector/grasp/robust/finger_fourbar.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/test/test_hand_fourbar_kinematics.py"
+    },
+    {
+      "status": "??",
+      "path": "src/kcg_connector/test/test_worm_passive_split.py"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/glenair_performance.txt"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/glenair_socket.txt"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/glenair_socket_page1.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/m39029d.txt"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/m39029d_table9.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/precidip_clip_page2.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/precidip_contacts.txt"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/te_catalog.txt"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/te_exploded_page9.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/te_materials_page31.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/te_page31_render.log"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/assembly_contact_reference/te_page9_render.log"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/te_spec/figure3-085.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/te_spec/figure3-086.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/te_spec/figure3-087.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/te_spec/figure3-088.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/te_spec/figure3-089.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/te_spec/figure3-090.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/te_spec/plug_detail-086.png"
+    },
+    {
+      "status": "??",
+      "path": "tmp/pdfs/te_spec/te_pin_drawing.png"
+    }
+  ],
+  "artifacts_allocated_bytes": 596259520512,
+  "artifacts_apparent_file_bytes_without_deduplicating_hardlinks": 596012925968,
+  "file_count": 71940,
+  "largest_files": [
+    {
+      "bytes": 12399678582,
+      "path": "artifacts/kcg_connector/assembly_recovery_20260909/hand_observed_twenty_degree_ui_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 4733133022,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260907/gpu_wrist_force_consistent_assembly_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 4202962350,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/tgs_external_force_iterations_02/trace.json"
+    },
+    {
+      "bytes": 4147473369,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/tgs_external_force_iterations_02/truth_samples.jsonl"
+    },
+    {
+      "bytes": 3904613847,
+      "path": "artifacts/kcg_connector/force_to_hand_20260908/hand_twenty_degree_hold_grip_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 3840397553,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/second_turn_60deg_01/trace.json"
+    },
+    {
+      "bytes": 3795919106,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/second_turn_60deg_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 3770050920,
+      "path": "artifacts/kcg_connector/force_to_hand_20260908/hand_twenty_degree_all_pad_sdf_02/truth_samples.jsonl"
+    },
+    {
+      "bytes": 3737283979,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_preparation_planar_admittance_01/trace.json"
+    },
+    {
+      "bytes": 3700324569,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_reindex_01/trace.json"
+    },
+    {
+      "bytes": 3694679274,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_preparation_planar_admittance_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 3663427920,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_reindex_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 3525792644,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260907/gpu_alignment_force_feedback_assembly_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 3508721690,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260907/gpu_pair_scoped_band_no_continuous_video_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 3329479027,
+      "path": "artifacts/kcg_connector/force_to_hand_20260908/hand_twenty_degree_feature_budget65_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 3201786102,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_weight_load_01/trace.json"
+    },
+    {
+      "bytes": 3172825697,
+      "path": "artifacts/kcg_connector/mechanism_to_assembly_20260909/hand_observed_twenty_degree_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 3164844560,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_weight_load_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 3107561362,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/key_full_stroke_01/trace.json"
+    },
+    {
+      "bytes": 3071923414,
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/key_full_stroke_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 2954577448,
+      "path": "artifacts/kcg_connector/force_to_hand_20260908/hand_twenty_degree_visual_feedback_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 2806221125,
+      "path": "artifacts/kcg_connector/force_to_hand_20260908/hand_twenty_degree_center_net_budget_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 2727959496,
+      "path": "artifacts/kcg_connector/force_to_hand_20260908/hand_twenty_degree_feature_fit_01/truth_samples.jsonl"
+    },
+    {
+      "bytes": 2685173972,
+      "path": "artifacts/kcg_connector/isaac/te_body_assembly_20260905/key_entry_02/trace.json"
+    },
+    {
+      "bytes": 2672496983,
+      "path": "artifacts/kcg_connector/d38999_keyed_v2_yaw_collision_sweep_v2/samples.jsonl"
+    }
+  ],
+  "extensions_by_apparent_size": [
+    {
+      "extension": ".json",
+      "bytes": 296504975864,
+      "files": 18781
+    },
+    {
+      "extension": ".jsonl",
+      "bytes": 175126954398,
+      "files": 1149
+    },
+    {
+      "extension": ".usda",
+      "bytes": 47492512686,
+      "files": 651
+    },
+    {
+      "extension": ".log",
+      "bytes": 25336824092,
+      "files": 5279
+    },
+    {
+      "extension": ".usdc",
+      "bytes": 16547501154,
+      "files": 403
+    },
+    {
+      "extension": ".npy",
+      "bytes": 9791203536,
+      "files": 3136
+    },
+    {
+      "extension": ".json.gz",
+      "bytes": 9263301459,
+      "files": 741
+    },
+    {
+      "extension": ".png",
+      "bytes": 7514130952,
+      "files": 24324
+    },
+    {
+      "extension": ".gz",
+      "bytes": 1704060172,
+      "files": 14
+    },
+    {
+      "extension": ".84",
+      "bytes": 1302215064,
+      "files": 59
+    },
+    {
+      "extension": ".npz",
+      "bytes": 865370834,
+      "files": 11367
+    },
+    {
+      "extension": ".mp4",
+      "bytes": 685296819,
+      "files": 352
+    },
+    {
+      "extension": ".csv",
+      "bytes": 629961937,
+      "files": 269
+    },
+    {
+      "extension": ".stl",
+      "bytes": 470953172,
+      "files": 180
+    },
+    {
+      "extension": ".run",
+      "bytes": 423524924,
+      "files": 1
+    }
+  ],
+  "deletion_authorized_or_performed": false,
+  "large_history_directories_may_contain_active_dependencies": true
+}

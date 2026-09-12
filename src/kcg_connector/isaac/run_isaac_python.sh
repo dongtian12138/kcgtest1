@@ -23,7 +23,17 @@ if [[ ! -x "${isaac_python}" ]]; then
   exit 2
 fi
 
-export LD_LIBRARY_PATH="${isaac_env_prefix}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+# An unattended driver update can replace userspace libraries while its old
+# kernel module remains loaded. Optional, version-scoped private libraries
+# restore this process without replacing a system driver or rebooting. A new
+# kernel version naturally stops selecting the old private directory.
+nvidia_kernel_version="$(cat /sys/module/nvidia/version 2>/dev/null || true)"
+isaac_nvidia_libraries="${workspace_root}/isaacsim/.nvidia-userspace/${nvidia_kernel_version}"
+if [[ -n "${nvidia_kernel_version}" && -f "${isaac_nvidia_libraries}/libcuda.so.1" && -f "${isaac_nvidia_libraries}/libnvidia-ml.so.1" ]]; then
+  export LD_LIBRARY_PATH="${isaac_env_prefix}/lib:${isaac_nvidia_libraries}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+else
+  export LD_LIBRARY_PATH="${isaac_env_prefix}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+fi
 export OMNI_KIT_ACCEPT_EULA="${OMNI_KIT_ACCEPT_EULA:-YES}"
 
 exec "${isaac_python}" "$@"

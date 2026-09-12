@@ -1,4 +1,9 @@
 schema_version: carts_hand_contact_v1
+# 2026-09-11 correction: the user's 15 N is a rounded ~16 N directional
+# tip-rope lifting result, not a universal contact-normal capacity. The legacy
+# numeric normal_force_capacity_n fields below remain development references
+# for compatibility; they must not certify hardware capability or reject a
+# grasp as physically impossible. See hand_tip_pull_measurement_20260911.yaml.
 method: CARTS-Grasp
 hardware_authorized: false
 
@@ -76,6 +81,7 @@ pads:
     normal_force_capacity_n: 15.0
 
 force_capacity:
+  # These v1 enum labels are historical; no tip-to-normal mapping is calibrated.
   value_source: USER_PROVIDED_HARDWARE_CAPABILITY_PENDING_CALIBRATION
   role: OPTIMIZATION_UPPER_BOUND_NOT_BINARY_GRASP_THRESHOLD
   physical_tactile_or_load_cell_calibration_complete: false

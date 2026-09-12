@@ -11,6 +11,10 @@ subset of a terminal collision mesh is allowed to transmit grasp forces.
 geometry contract.  When it is omitted, terminal collision geometry is
 reported as an unlabelled geometric reference and no contact normal is
 invented.  Force-bearing planning should always supply the explicit contract.
+
+Historical URDF mimic relations remain the default. Measured finger linkages
+can be enabled explicitly with ``with_fourbar_couplings`` without changing
+the source URDF or the independent control coordinates.
 """
 
 from __future__ import annotations
@@ -25,6 +29,8 @@ from typing import Any, Mapping, Sequence
 import xml.etree.ElementTree as ET
 
 import numpy as np
+
+from .finger_fourbar import FingerFourBar
 
 
 _DEFAULT_FINGER_PATTERN = re.compile(r"^(f\d+)j\d+$")
@@ -437,6 +443,7 @@ class ThreeFingerHandModel:
         joint_order: Sequence[str],
         finger_joint_names: Mapping[str, Sequence[str]],
         pads: Mapping[str, PadGeometry],
+        fourbar_couplings: Mapping[str, FingerFourBar] | None = None,
     ) -> None:
         self.base_link = base_link
         self.joints = MappingProxyType(dict(joints))
@@ -458,6 +465,33 @@ class ThreeFingerHandModel:
         if not independent:
             raise HandModelError("hand has no independently actuated joints")
         self.independent_joint_names = independent
+        self.fourbar_couplings = MappingProxyType(dict(fourbar_couplings or {}))
+        for follower, coupling in self.fourbar_couplings.items():
+            if not isinstance(coupling, FingerFourBar):
+                raise HandModelError(f"four-bar {follower} requires FingerFourBar geometry")
+            if follower != coupling.follower_joint or follower not in self.joints:
+                raise HandModelError(f"four-bar follower does not match a hand joint: {follower}")
+            joint = self.joints[follower]
+            source = self.joints.get(coupling.source_joint)
+            if (
+                source is None
+                or source.name not in independent
+                or joint.mimic is None
+                or joint.mimic.source_joint != source.name
+                or joint.joint_type != "revolute"
+                or source.joint_type != "revolute"
+                or joint.parent_link != source.child_link
+                or joint.limit is None
+                or source.limit is None
+            ):
+                raise HandModelError(
+                    f"four-bar {follower} must replace an existing mimic between "
+                    "adjacent revolute hinges with an independent source"
+                )
+            if not all(math.isfinite(bound) for bound in (
+                source.limit.lower, source.limit.upper, joint.limit.lower, joint.limit.upper
+            )):
+                raise HandModelError(f"four-bar {follower} requires finite hinge limits")
 
         pad_by_finger = {pad.finger_name: pad for pad in self.pads.values()}
         chains: dict[str, FingerChain] = {}
@@ -478,8 +512,27 @@ class ThreeFingerHandModel:
             raise HandModelError(f"expected exactly three fingers, found {len(chains)}")
         self.fingers = MappingProxyType(chains)
 
-        self._independent_affine_limits = MappingProxyType(
-            self._compute_independent_affine_limits()
+        self._independent_limits = MappingProxyType(
+            self._compute_independent_limits()
+        )
+
+    def with_fourbar_couplings(
+        self, couplings: Mapping[str, FingerFourBar]
+    ) -> "ThreeFingerHandModel":
+        """Return a new model using exactly these measured finger closures.
+
+        The original URDF and this instance stay unchanged. An empty mapping
+        restores the historical affine mimic interpretation. Sources remain
+        the same independent coordinates; this adds no hand or arm DOFs.
+        """
+
+        return type(self)(
+            base_link=self.base_link,
+            joints=self.joints,
+            joint_order=self.joint_order,
+            finger_joint_names={name: chain.joint_names for name, chain in self.fingers.items()},
+            pads=self.pads,
+            fourbar_couplings=couplings,
         )
 
     @classmethod
@@ -789,7 +842,7 @@ class ThreeFingerHandModel:
             raise HandModelError("cyclic mimic relation in URDF")
         active.add(joint_name)
         joint = self.joints[joint_name]
-        if joint.mimic is None:
+        if joint.mimic is None or joint_name in self.fourbar_couplings:
             result = (joint_name, 1.0, 0.0)
         else:
             source, multiplier, offset = self._joint_affine_map(
@@ -804,10 +857,30 @@ class ThreeFingerHandModel:
         cache[joint_name] = result
         return result
 
-    def _compute_independent_affine_limits(self) -> dict[str, JointLimit]:
+    def _joint_position_and_derivative(
+        self,
+        joint_name: str,
+        positions: Mapping[str, float],
+        affine_cache: dict[str, tuple[str, float, float]],
+    ) -> tuple[str, float, float]:
+        """Map to one independent coordinate and its current chain-rule slope."""
+
+        source, multiplier, offset = self._joint_affine_map(joint_name, affine_cache, set())
+        coupling = self.fourbar_couplings.get(source)
+        if coupling is None:
+            return source, multiplier * positions[source] + offset, multiplier
+        try:
+            value, derivative = coupling.position_and_derivative(positions[coupling.source_joint])
+        except ValueError as exc:
+            raise HandModelError(f"four-bar {source}: {exc}") from exc
+        return coupling.source_joint, multiplier * value + offset, multiplier * derivative
+
+    def _compute_independent_limits(self) -> dict[str, JointLimit]:
+        # Affine descendants first bound either an independent coordinate or
+        # a four-bar follower. Then invert each measured closure on its branch.
         bounds = {
             name: [-math.inf, math.inf]
-            for name in self.independent_joint_names
+            for name in (*self.independent_joint_names, *self.fourbar_couplings)
         }
         cache: dict[str, tuple[str, float, float]] = {}
         for name in self.joint_order:
@@ -827,8 +900,18 @@ class ThreeFingerHandModel:
             bounds[source][0] = max(bounds[source][0], allowed_lower)
             bounds[source][1] = min(bounds[source][1], allowed_upper)
 
+        for follower, coupling in self.fourbar_couplings.items():
+            source = coupling.source_joint
+            try:
+                bounds[source] = list(coupling.source_interval(
+                    tuple(bounds[source]), tuple(bounds[follower])
+                ))
+            except ValueError as exc:
+                raise HandModelError(f"four-bar {follower} limits: {exc}") from exc
+
         result: dict[str, JointLimit] = {}
-        for name, (lower, upper) in bounds.items():
+        for name in self.independent_joint_names:
+            lower, upper = bounds[name]
             if lower > upper:
                 raise HandModelError(f"mimic limits leave no feasible interval for {name}")
             source_limit = self.joints[name].limit
@@ -842,7 +925,7 @@ class ThreeFingerHandModel:
 
     @property
     def independent_joint_limits(self) -> Mapping[str, JointLimit]:
-        return self._independent_affine_limits
+        return self._independent_limits
 
     def joint_limit_vectors(self) -> tuple[np.ndarray, np.ndarray]:
         lower = np.asarray(
@@ -897,8 +980,7 @@ class ThreeFingerHandModel:
             if not joint.movable:
                 resolved[name] = 0.0
                 continue
-            source, multiplier, offset = self._joint_affine_map(name, cache, set())
-            value = multiplier * supplied[source] + offset
+            source, value, _derivative = self._joint_position_and_derivative(name, supplied, cache)
             limit_values: tuple[float, ...] = ()
             if joint.limit is not None:
                 limit_values = (joint.limit.lower, joint.limit.upper)
@@ -940,9 +1022,22 @@ class ThreeFingerHandModel:
         self,
         velocities: Mapping[str, float] | Sequence[float],
         *,
+        positions: Mapping[str, float] | Sequence[float] | None = None,
         enforce_limits: bool = True,
     ) -> Mapping[str, float]:
-        """Resolve independent and mimic velocities using URDF couplings."""
+        """Resolve velocities; measured four-bars require their current pose.
+
+        ``enforce_limits=False`` permits measured finite overshoot, while
+        impossible or singular four-bar geometry still raises an error.
+        """
+
+        if self.fourbar_couplings and positions is None:
+            raise HandModelError("joint positions are required for four-bar velocities")
+        resolved_positions = (
+            None if positions is None else self.resolve_joint_positions(
+                positions, enforce_limits=enforce_limits
+            )
+        )
 
         if isinstance(velocities, Mapping):
             supplied = {str(name): float(value) for name, value in velocities.items()}
@@ -973,7 +1068,12 @@ class ThreeFingerHandModel:
             if not joint.movable:
                 resolved[name] = 0.0
                 continue
-            source, multiplier, _offset = self._joint_affine_map(name, cache, set())
+            if resolved_positions is None:
+                source, multiplier, _offset = self._joint_affine_map(name, cache, set())
+            else:
+                source, _position, multiplier = self._joint_position_and_derivative(
+                    name, resolved_positions, cache
+                )
             value = multiplier * supplied[source]
             if name in supplied and name not in self.independent_joint_names:
                 scale = max(abs(value), abs(supplied[name]), np.finfo(np.float64).tiny)
@@ -1065,7 +1165,7 @@ class ThreeFingerHandModel:
     ) -> Mapping[str, KinematicNormalDomain]:
         """Derive feasible object-normal half-spaces from closing kinematics."""
 
-        velocities = self.resolve_joint_velocities(closing_joint_velocities)
+        velocities = self.resolve_joint_velocities(closing_joint_velocities, positions=positions)
         independent_velocity = np.asarray(
             [velocities[name] for name in self.independent_joint_names],
             dtype=np.float64,
@@ -1114,6 +1214,7 @@ class ThreeFingerHandModel:
 
         transforms = self.forward_kinematics(
             positions, base_transform=base_transform, enforce_limits=enforce_limits)
+        resolved_positions = self.resolve_joint_positions(positions, enforce_limits=enforce_limits)
         if link_name not in transforms:
             raise HandModelError(f"link is outside hand subtree: {link_name}")
         point_local = np.asarray(
@@ -1151,8 +1252,8 @@ class ThreeFingerHandModel:
                 continue
             joint_frame = transforms[joint.parent_link] @ joint.origin_transform()
             axis_base = joint_frame[:3, :3] @ np.asarray(joint.axis, dtype=np.float64)
-            source, multiplier, _offset = self._joint_affine_map(
-                name, affine_cache, set()
+            source, _position, multiplier = self._joint_position_and_derivative(
+                name, resolved_positions, affine_cache
             )
             column = column_by_name[source]
             if joint.joint_type in ("revolute", "continuous"):

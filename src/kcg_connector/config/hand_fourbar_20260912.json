@@ -1,0 +1,129 @@
+{
+  "schema": "kcg.hand.fourbar.v1",
+  "mechanism_id": "source_nails_fourbar_20260912",
+  "source_alignment": "artifacts/hand_mechanism_audit_20260912/alignment_fourbar_contract.json",
+  "representation": "Two existing revolute joints plus an internal constant-length rod. Linear URDF mimic is historical approximation.",
+  "geometry_uncertainty_m": 6e-06,
+  "geometry_uncertainty_basis": "Conservative CAD/STL alignment scale, not manufactured tolerance.",
+  "finger_joints": {
+    "f1": {
+      "source_joint": "f1j2",
+      "follower_joint": "f1j3",
+      "parent_link": "f1Link1",
+      "proximal_link": "f1Link2",
+      "distal_link": "f1Link3",
+      "base_anchor_xy_m": [
+        0.009204611942286157,
+        -0.0039082476969934015
+      ],
+      "distal_joint_xy_m": [
+        -0.049957,
+        -0.049034
+      ],
+      "distal_anchor_xy_m": [
+        0.0009644201522869135,
+        0.009953386073477108
+      ],
+      "rod_length_m": 0.068,
+      "branch_sign": 1,
+      "base_anchor_parent_local_m": [
+        -0.015458256480125224,
+        0.00892486748262148,
+        0.009907379049370363
+      ],
+      "distal_anchor_local_m": [
+        0.0009644201522869135,
+        0.009953386073477108,
+        0.012
+      ],
+      "source_limits_rad": [
+        0.0,
+        1.3963
+      ],
+      "follower_limits_rad": [
+        0.0,
+        1.3963
+      ]
+    },
+    "f2": {
+      "source_joint": "f2j1",
+      "follower_joint": "f2j2",
+      "parent_link": "handbase_link",
+      "proximal_link": "f2Link1",
+      "distal_link": "f2Link2",
+      "base_anchor_xy_m": [
+        0.009205033861046543,
+        -0.003906508764745942
+      ],
+      "distal_joint_xy_m": [
+        -0.04499,
+        -0.053627
+      ],
+      "distal_anchor_xy_m": [
+        -0.000963740072571305,
+        0.009953451888445911
+      ],
+      "rod_length_m": 0.068,
+      "branch_sign": 1,
+      "base_anchor_parent_local_m": [
+        0.03255837131873956,
+        -0.018797202405443997,
+        0.2992073781540204
+      ],
+      "distal_anchor_local_m": [
+        -0.000963740072571305,
+        0.009953451888445911,
+        -0.012
+      ],
+      "source_limits_rad": [
+        0.0,
+        1.3963
+      ],
+      "follower_limits_rad": [
+        0.0,
+        1.3963
+      ]
+    },
+    "f3": {
+      "source_joint": "f3j2",
+      "follower_joint": "f3j3",
+      "parent_link": "f3Link1",
+      "proximal_link": "f3Link2",
+      "distal_link": "f3Link3",
+      "base_anchor_xy_m": [
+        0.009204740348219487,
+        -0.003908116841380555
+      ],
+      "distal_joint_xy_m": [
+        -0.049957,
+        -0.049034
+      ],
+      "distal_anchor_xy_m": [
+        0.0009644201522869135,
+        0.009953386073477108
+      ],
+      "rod_length_m": 0.068,
+      "branch_sign": 1,
+      "base_anchor_parent_local_m": [
+        0.015458239067822614,
+        0.008924902362158153,
+        -0.009907378948653725
+      ],
+      "distal_anchor_local_m": [
+        0.0009644201522869135,
+        0.009953386073477108,
+        0.012
+      ],
+      "source_limits_rad": [
+        0.0,
+        1.3963
+      ],
+      "follower_limits_rad": [
+        0.0,
+        1.3963
+      ]
+    }
+  },
+  "mass_inertia_mesh_changes": false,
+  "hardware_calibrated": false
+}

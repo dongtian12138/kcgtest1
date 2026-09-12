@@ -1,0 +1,38 @@
+[
+  {
+    "root": "artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc",
+    "layers": [
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc"
+    ],
+    "assets": [],
+    "unresolved": []
+  },
+  {
+    "root": "artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda",
+    "layers": [
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/handarm.usda",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/Physics/mujoco.usda",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/Physics/physics.usda",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/Physics/physx.usda",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/base.usda",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/geometries.usd",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/instances.usda",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/materials.usda",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/robot.usda",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_sdf.usda"
+    ],
+    "assets": [],
+    "unresolved": []
+  },
+  {
+    "root": "artifacts/kcg_connector/isaac/te_j35_free_split_tabletop_real_mass_resistance_0p020_v2/TE_J35_FREE_SPLIT_PLUG_V1.usdc",
+    "layers": [
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/te_j35_free_split_tabletop_real_mass_resistance_0p020_v2/TE_J35_FREE_SPLIT_PLUG_V1.usdc",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_BODY_VISUAL.usdc",
+      "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_COUPLING_NUT_VISUAL.usdc"
+    ],
+    "assets": [],
+    "unresolved": []
+  }
+]

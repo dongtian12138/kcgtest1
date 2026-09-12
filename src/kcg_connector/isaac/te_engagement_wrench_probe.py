@@ -35,16 +35,35 @@ def main():
     parser.add_argument('--retention-load-set', choices=('all','body_torsion','side_pair','challenge','reverse_torsion'), default='all')
     parser.add_argument('--retention-hold-s', type=float, default=.06,
                         help='Full-load plateau, with the original30ms loading/unloading ramps.')
+    parser.add_argument('--velocity-iterations', type=int, choices=(1, 4), default=1,
+                        help='Bounded solver-convergence diagnostic; changes no material or load.')
+    parser.add_argument('--continue-tightening', action='store_true',
+                        help='After the existing 260deg profile, diagnose another 70deg with a 0.6Nm cap; stop at 5N total pin contact.')
+    parser.add_argument('--continued-retention', action='store_true',
+                        help='After reviewing first pin entry, continue only 30deg then test Body retention; keep a 20N pin-load review stop.')
+    parser.add_argument('--record-pin-entry', action='store_true',
+                        help='After offline entry review, record its load-threshold event without treating it as a physical jam; all input/state/time limits remain.')
+    parser.add_argument('--direct-retention', action='store_true',
+                        help='One bounded velocity stroke with nominal40-to-290deg travel and0.6Nm cap, then the declared retention test; avoids position-error catch-up.')
     args = parser.parse_args()
     if not (0 <= args.first_turn_deg <= 60 and .3 <= args.first_turn_duration_s <= 1.5
             and 0 < args.first_turn_torque_cap_nm <= .25 and 0 < args.oscillation_deg <= 10
             and .1 <= args.release_hold_s <= 3.):
         parser.error('Finite first-turn load and duration required')
-    if args.loaded_retention and not (args.first_turn_deg==40. and 60.<=args.tighten_deg<=260.
+    if args.loaded_retention and not (args.first_turn_deg==40. and 60.<=args.tighten_deg<=(290. if args.direct_retention else 260.)
                                      and 1.5<=args.tighten_duration_s<=3. and .06<=args.retention_hold_s<=.6):
         parser.error('Loaded retention requires the existing first40deg and a finite additional profile')
+    if args.continue_tightening and not (args.loaded_retention and args.tighten_deg==260.):
+        parser.error('Continuation requires the existing 40deg then 260deg profile')
+    if args.continued_retention and not args.continue_tightening:
+        parser.error('Continued retention requires the finite continuation profile')
+    if args.record_pin_entry and not args.continue_tightening:
+        parser.error('Pin-entry event recording is only for the reviewed continuation diagnostic')
+    if args.direct_retention and not (args.loaded_retention and args.tighten_deg==290. and not args.continue_tightening):
+        parser.error('Direct retention requires a single loaded 40-to-290deg stroke')
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output/'driver_snapshot.py').write_bytes(Path(__file__).read_bytes())
+    (args.output/'contact_reader_snapshot.py').write_bytes(Path(__file__).with_name('te_fast_contact_reading.py').read_bytes())
     started = time.monotonic()
     from isaacsim import SimulationApp
     app = SimulationApp({'headless': True, 'multi_gpu': False, 'fast_shutdown': True})
@@ -67,6 +86,7 @@ def main():
         repo = Path(__file__).resolve().parents[3]
         sys.path.insert(0, str(repo/'artifacts/kcg_connector/model_delivery_20260908/src'))
         from contact_reading import read_shape_contact_pairs
+        from te_fast_contact_reading import read_shape_contact_pairs_fast
 
         dt = 1/960.
         SimulationManager.set_physics_sim_device('cpu')
@@ -94,8 +114,8 @@ def main():
         scene.CreateBroadphaseTypeAttr('MBP')
         scene.CreateSolverTypeAttr('TGS')
         scene.CreateEnableExternalForcesEveryIterationAttr(True)
-        scene.CreateMinVelocityIterationCountAttr(1)
-        scene.CreateMaxVelocityIterationCountAttr(1)
+        scene.CreateMinVelocityIterationCountAttr(args.velocity_iterations)
+        scene.CreateMaxVelocityIterationCountAttr(args.velocity_iterations)
         body = '/World/TE_J35FreeSplitPlug/Body'
         nut = '/World/TE_J35FreeSplitPlug/CouplingNut'
         socket = '/World/TEVisualHandoff/FixedReceptaclePose/OfficialVisual/Geometry'
@@ -114,14 +134,15 @@ def main():
             if prim.HasAPI(UsdPhysics.ArticulationRootAPI): prim.RemoveAPI(UsdPhysics.ArticulationRootAPI)
             if prim.HasAPI(PhysxSchema.PhysxArticulationAPI): prim.RemoveAPI(PhysxSchema.PhysxArticulationAPI)
             rb = PhysxSchema.PhysxRigidBodyAPI.Apply(prim)
-            rb.CreateSolverPositionIterationCountAttr(128); rb.CreateSolverVelocityIterationCountAttr(1)
+            rb.CreateSolverPositionIterationCountAttr(128); rb.CreateSolverVelocityIterationCountAttr(args.velocity_iterations)
             rb.CreateSleepThresholdAttr(0.)
             PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr(0.)
         joint = stage.GetPrimAtPath('/World/TE_J35FreeSplitPlug/Joints/CouplingNutRevolute')
         captive_play=joint.GetAttribute('kcg:captiveNutAxialPlayM').Get()
         resistance = float(joint.GetAttribute('kcg:passiveResistanceNm' if captive_play else 'physxJointAxis:angular:dynamicFrictionEffort').Get())
         if abs(resistance-.02) > 1e-6: raise ValueError('Unexpected passive resistance')
-        drive = UsdPhysics.DriveAPI.Apply(joint, 'rotZ' if captive_play else 'angular')
+        bearing_rotation_axis = joint.GetAttribute('kcg:rotationCoordinate').Get() or ('rotZ' if captive_play else 'angular')
+        drive = UsdPhysics.DriveAPI.Apply(joint, bearing_rotation_axis)
         drive.CreateTypeAttr('force'); drive.CreateStiffnessAttr(0.)
         drive.CreateDampingAttr(100.*np.pi/180.); drive.CreateMaxForceAttr(resistance)
         drive.CreateTargetVelocityAttr(0.)
@@ -169,6 +190,7 @@ def main():
             data = None
             def get_full_contact_report(self): return self.data
         snapshot=ContactSnapshot();decoded_paths={}
+        contact_reader_checks=[]
         def decode_path(value):
             key=int(value)
             if key not in decoded_paths:decoded_paths[key]=str(PhysicsSchemaTools.intToSdfPath(value))
@@ -221,17 +243,45 @@ def main():
                 sequence=sequence[:6]
                 for name in load_cases:sequence.extend([(name,.06+args.retention_hold_s),(name+'_unload',.06)])
             sequence.append(('free_hold',.20))
+        if args.continue_tightening:
+            # A 1.5 s quintic 70deg stroke has a 1.53 rad/s maximum target
+            # speed. The initial 0.75 s diagnostic exceeded the independent
+            # 5 rad/s measured-speed stop during stick/slip, before pin entry.
+            continuation_delta=30. if args.continued_retention else 70.
+            continuation_duration=.75 if args.continued_retention else 1.5
+            pin_review_stop=20. if args.continued_retention else 5.
+            sequence=sequence[:6]+[('continue_tighten',continuation_duration),('continue_hold',.10)]
+            if args.continued_retention:
+                sequence.append(('continued_preload_release',.15))
+                load_cases={'moment_z_plus':('moment',2,.2)}
+                sequence.extend([('moment_z_plus',.06+args.retention_hold_s),('moment_z_plus_unload',.06)])
+            else:load_cases={}
+            sequence.append(('free_hold',.20))
+            (args.output/'continuation_scope.json').write_text(json.dumps({
+                'scope':'FINITE_CONTINUATION_DIAGNOSTIC_NOT_MATING_QUALIFICATION',
+                'unchanged_prefix_target_deg':260.,'continuation_target_deg':260.+continuation_delta,
+                'continuation_duration_s':continuation_duration,
+                'continuation_torque_cap_nm':.6,'total_pin_normal_load_review_stop_n':pin_review_stop,
+                'retention_after_reviewed_pin_entry':args.continued_retention,
+                'pin_threshold_is_record_only':args.record_pin_entry,
+                'cap_basis':'Bounded diagnostic input below the project primary-source MIL-DTL-38999N table VI shell25 4.6Nm maximum; 0.6Nm is not a recommended mating torque or specimen calibration.',
+                'reference':'artifacts/kcg_connector/reference/full_assembly_20260905/dtl38999.txt',
+                'geometry_material_joint_mass_and_robot_controls_changed':False},indent=2)+'\n')
         rows = []; previous = None
+        pin_entry_event_recorded=False
+        previous_nut_wrapped=0.;continuous_nut_angle=0.
         initial_nut_rotation=Rotation.from_quat(np.asarray(pose['quaternions_wxyz'][1])[[1,2,3,0]]).as_matrix()
         measured_wall={'physics_s':0.,'readback_s':0.,'evidence_s':0.}
         with (args.output/'samples.jsonl').open('x', buffering=1) as stream:
             for phase, duration in sequence:
                 if turn_joint:
-                    rotating = phase in ('first_turn', 'first_turn_hold', 'tighten', 'tighten_hold', 'nut_reverse', 'nut_forward')
+                    rotating = phase in ('first_turn', 'first_turn_hold', 'tighten', 'tighten_hold', 'continue_tighten', 'continue_hold', 'nut_reverse', 'nut_forward')
+                    velocity_stroke=args.direct_retention and phase in ('tighten','tighten_hold')
                     turn_joint.CreateJointEnabledAttr(rotating)
-                    turn_drive.GetStiffnessAttr().Set(30.*np.pi/180. if rotating else 0.)
-                    turn_drive.GetDampingAttr().Set(.1*np.pi/180. if rotating else 0.)
-                    cap=(.25 if phase in ('tighten','tighten_hold') else args.first_turn_torque_cap_nm if phase in ('first_turn','first_turn_hold') else .05)
+                    turn_drive.GetStiffnessAttr().Set(30.*np.pi/180. if rotating and not velocity_stroke else 0.)
+                    turn_drive.GetDampingAttr().Set((10. if velocity_stroke else .1)*np.pi/180. if rotating else 0.)
+                    turn_drive.GetTargetVelocityAttr().Set(0.)
+                    cap=(.6 if phase in ('continue_tighten','continue_hold') or (args.direct_retention and phase in ('tighten','tighten_hold')) else .25 if phase in ('tighten','tighten_hold') else args.first_turn_torque_cap_nm if phase in ('first_turn','first_turn_hold') else .05)
                     turn_drive.GetMaxForceAttr().Set(cap if rotating else 0.)
                     interface.flush_changes()
                 for i in range(round(duration/dt)):
@@ -253,10 +303,19 @@ def main():
                         u = (i+1)/round(duration/dt); blend = 10*u**3-15*u**4+6*u**5
                         if phase == 'first_turn': target = args.first_turn_deg*blend
                         elif phase == 'tighten': target = args.first_turn_deg+(args.tighten_deg-args.first_turn_deg)*blend
+                        elif phase == 'continue_tighten': target = args.tighten_deg+continuation_delta*blend
                         elif phase == 'nut_reverse': target = args.first_turn_deg-args.oscillation_deg*blend
                         elif phase == 'nut_forward': target = args.first_turn_deg-args.oscillation_deg+args.oscillation_deg*blend
                         else: target = float(turn_drive.GetTargetPositionAttr().Get())
                         turn_drive.GetTargetPositionAttr().Set(target)
+                        if velocity_stroke and phase=='tighten':
+                            # Time-only finite motor command, no accumulated
+                            # position error after a frictional pause. Its
+                            # integrated free travel is the declared angle;
+                            # actual advance still depends on native contacts.
+                            elapsed=(i+1)*dt;edge=min(1.,elapsed/.1,max(0.,(duration-elapsed)/.1))
+                            blend_velocity=edge*edge*(3.-2.*edge)
+                            turn_drive.GetTargetVelocityAttr().Set((args.tighten_deg-args.first_turn_deg)/(duration-.1)*blend_velocity)
                     elif phase in ('nut_forward', 'nut_reverse'): torques[1, 2] = (-1 if phase == 'nut_forward' else 1)*.05*ramp
                     view.apply_forces_and_torques_at_pos(forces=forces, torques=torques)
                     tick=time.monotonic()
@@ -269,32 +328,64 @@ def main():
                     relative = rotation[0].inv()*rotation[1]
                     nut_from_initial=initial_nut_rotation.T@rotation[1].as_matrix()
                     nut_angle=float(np.degrees(np.arctan2(nut_from_initial[1,0],nut_from_initial[0,0])))
-                    if args.loaded_retention and nut_angle< -30.:nut_angle+=360.
+                    if args.continue_tightening:
+                        continuous_nut_angle+=(nut_angle-previous_nut_wrapped+180.)%360.-180.
+                        previous_nut_wrapped=nut_angle;nut_angle=continuous_nut_angle
+                    elif args.loaded_retention and nut_angle< -30.:nut_angle+=360.
                     angle_error=(float(turn_drive.GetTargetPositionAttr().Get())-nut_angle) if turn_joint else 0.
                     spring_estimate=(float(np.clip(30.*2.*np.sin(np.radians(angle_error)/2.),
                                       -float(turn_drive.GetMaxForceAttr().Get()),float(turn_drive.GetMaxForceAttr().Get())))
-                                     if turn_joint and turn_joint.GetJointEnabledAttr().Get() else 0.)
+                                     if turn_joint and turn_joint.GetJointEnabledAttr().Get() and not velocity_stroke else 0.)
                     snapshot.data=interface.get_full_contact_report()
+                    shape_pairs=[read_shape_contact_pairs_fast(snapshot,dt,path,pos[j],decode_path=decode_path)
+                                 for j,path in enumerate((body,nut))]
+                    if i==0:
+                        difference=0.
+                        for j,path in enumerate((body,nut)):
+                            legacy=read_shape_contact_pairs(snapshot,dt,path,pos[j],decode_path=decode_path)
+                            if len(legacy)!=len(shape_pairs[j]):raise RuntimeError('Contact reader lost a shape pair')
+                            for old,new in zip(legacy,shape_pairs[j]):
+                                for key,value in old.items():
+                                    if key in ('normal_wrench_n_nm','friction_wrench_n_nm','normal_load_n'):
+                                        difference=max(difference,float(np.max(np.abs(np.asarray(value)-new[key]))))
+                                    elif value!=new[key]:raise RuntimeError('Contact reader metadata changed: '+key)
+                        if difference>1e-9:raise RuntimeError('Contact reader wrench mismatch')
+                        contact_reader_checks.append({'phase':phase,'maximum_absolute_numeric_difference':difference})
+                        (args.output/'contact_reader_crosscheck.json').write_text(json.dumps(contact_reader_checks,indent=2)+'\n')
                     row = {'time_s': float(world.current_time), 'phase': phase, 'positions_world_m': pos.tolist(), 'quaternions_wxyz': quat.tolist(),
                            'applied_forces_world_n': forces.tolist(), 'applied_torques_world_nm': torques.tolist(),
                            'lateral_m': float(np.linalg.norm(pos[0, :2]-socket_origin[:2])), 'depth_m': float(socket_origin[2]-pos[0, 2]),
                            'tilt_deg': float(np.degrees(np.arccos(np.clip(-rotation[0].as_matrix()[2, 2], -1, 1)))),
                            'nut_relative_deg': float(np.degrees(np.arctan2(relative.as_matrix()[1, 0], relative.as_matrix()[0, 0]))),
                            'nut_axial_offset_in_body_m': float((rotation[0].as_matrix().T@(pos[1]-pos[0]))[2]),
-                           'shape_contacts': read_shape_contact_pairs(snapshot, dt, body, pos[0],decode_path=decode_path),
-                           'nut_shape_contacts': read_shape_contact_pairs(snapshot, dt, nut, pos[1],decode_path=decode_path),
+                           'shape_contacts': shape_pairs[0],
+                           'nut_shape_contacts': shape_pairs[1],
                            'nut_angle_about_socket_axis_deg':nut_angle,
                            'rotary_spring_effort_estimate_nm':spring_estimate,
-                           'effort_scope':'Drive spring-law estimate excluding damping/implicit-solver effects; not a force sensor',
+                           'effort_scope':'Position-spring term only (zero during velocity stroke); excludes damping/implicit effects, not a force sensor',
                            'pose_increment_speed_rad_s':None if speed is None else speed.tolist(),
                            'native_linear_velocity_m_s': host(view.get_velocities()[0]).tolist(),
                            'native_angular_velocity_rad_s': host(view.get_velocities()[1]).tolist(),
                            'rotary_actuator_enabled': bool(turn_joint.GetJointEnabledAttr().Get()) if turn_joint else False,
+                           'rotary_actuator_mode': 'velocity' if turn_joint and velocity_stroke else 'position' if turn_joint and rotating else 'disabled',
+                           'rotary_actuator_target_velocity_deg_s':float(turn_drive.GetTargetVelocityAttr().Get()) if turn_joint else 0.,
                            'rotary_actuator_target_deg': float(turn_drive.GetTargetPositionAttr().Get()) if turn_joint else None,
                            'rotary_actuator_cap_nm': float(turn_drive.GetMaxForceAttr().Get()) if turn_joint else 0.}
                     stream.write(json.dumps(row, separators=(',', ':'))+'\n'); rows.append(row)
                     measured_wall['readback_s']+=time.monotonic()-tick
+                    if args.continue_tightening:
+                        pin_load=sum(c['normal_load_n'] for c in row['shape_contacts'] if 'SourcePinSdf_' in c['own_collider'])
+                        if pin_load>pin_review_stop and not pin_entry_event_recorded:
+                            capture('pin_contact_review_stop')
+                            (args.output/'pin_contact_review_stop.json').write_text(json.dumps({
+                                'time_s':row['time_s'],'phase':phase,'pin_normal_load_sum_n':pin_load,'review_stop_n':pin_review_stop,
+                                'body_depth_mm':row['depth_m']*1000.,'nut_angle_deg':nut_angle,
+                                'record_only':args.record_pin_entry,
+                                'reason':'Pin-entry load reached the declared diagnostic review threshold; not a hardware rating or successful mating.'},indent=2)+'\n')
+                            pin_entry_event_recorded=True
+                            if not args.record_pin_entry:raise RuntimeError('Declared pin-entry contact review stop')
                     if not np.isfinite(pos).all() or (speed is not None and max(speed)>5.) or row['lateral_m']>.002 or row['tilt_deg']>5.:
+                        if np.isfinite(pos).all():capture('independent_state_stop')
                         raise RuntimeError('Independent finite state / speed / displacement stop')
                     if time.monotonic()-started > 155.: raise RuntimeError('Internal wall-clock stop; reserve time for output')
                     if phase in load_cases and i==round((duration-.03)/dt)-1:
@@ -308,9 +399,10 @@ def main():
                   'nut_torque_cap_nm': .05, 'wall_seconds': time.monotonic()-started, 'images': image_rows,
                   'maximum_lateral_m': max(r['lateral_m'] for r in rows), 'maximum_tilt_deg': max(r['tilt_deg'] for r in rows)}
         result['measured_wall_time_s']=measured_wall
-        result['loaded_retention_protocol']={'enabled':args.loaded_retention,'tightening_torque_cap_nm':.25,
+        result['loaded_retention_protocol']={'enabled':args.loaded_retention,'tightening_torque_cap_nm':.6 if args.direct_retention else .25,
             'load_cases':load_cases,'rotary_actuator_disabled_during_all_loads':True,
             'state_reset_or_retighten_between_load_cases':False,
+            'preload_scope':'AXIAL_ENDSTOP_AND_FINITE_TURN_DRIVER_ONLY_NOT_CALIBRATED_AXIAL_PRELOAD_OR_FULL_MATING',
             'preload_eligibility_requires_postrun_review':True}
         (args.output/'result.json').write_text(json.dumps(result, indent=2)+'\n')
     except Exception:

@@ -1,0 +1,310 @@
+{
+  "schema": "assembly_v1_route_audit_v1",
+  "checked_at_utc": "2026-09-12T10:31:08.477735+00:00",
+  "status": "AUDITED_COMPONENT_ROUTE_AND_EXECUTION_PLAN_NOT_WORKING_END_TO_END_RELEASE",
+  "acceptance_chain": [
+    "fresh visual plug localization",
+    "original three fingernails grasp Body",
+    "fresh body-key and socket-slot vision",
+    "key alignment and insertion",
+    "release Body only after natural socket support",
+    "reobserve and regrasp Nut",
+    "robot-driven tightening and regrasp",
+    "seated release and retention"
+  ],
+  "repository": "/home/noob/WorkPlace/kcgtest1",
+  "git_head": "68b51f8659c2918e243b10d7f4cc5e01fb7290ac",
+  "components": [
+    {
+      "role": "visual_assembly_wrapper",
+      "path": "src/kcg_connector/isaac/run_body_assembly_with_video.py",
+      "exists": true,
+      "bytes": 3417,
+      "sha256": "b7f91566d5dc10c3244f114799b5bc6a0fb4bed33302572a4004c148f2f17312",
+      "tracked": true,
+      "ignored": false,
+      "git_status": ""
+    },
+    {
+      "role": "main_runtime_to_join_branches",
+      "path": "src/kcg_connector/isaac/carts_v2/run_grasp_lift.py",
+      "exists": true,
+      "bytes": 487047,
+      "sha256": "f3f8aa1f879d3da1f4e206b3ff1d490ad3a0132cc7154d75044cae20bde88ed7",
+      "tracked": true,
+      "ignored": false,
+      "git_status": "M src/kcg_connector/isaac/carts_v2/run_grasp_lift.py"
+    },
+    {
+      "role": "common_robot_stepper_to_integrate_mechanism",
+      "path": "src/kcg_connector/isaac/carts_v2/controller.py",
+      "exists": true,
+      "bytes": 72501,
+      "sha256": "89e75f04f178dd914c958b96d515104236664386fb39dae7c93affbb76e7945f",
+      "tracked": true,
+      "ignored": false,
+      "git_status": "M src/kcg_connector/isaac/carts_v2/controller.py"
+    },
+    {
+      "role": "ordinary_rgbd_provider",
+      "path": "src/kcg_connector/kcg_connector/te_rgbd_pose_provider.py",
+      "exists": true,
+      "bytes": 82578,
+      "sha256": "dd5fc2485150307c8af0a0f8f52774a0f01072370a72611bbe8fd1597668c0f9",
+      "tracked": true,
+      "ignored": false,
+      "git_status": ""
+    },
+    {
+      "role": "body_and_socket_observation",
+      "path": "src/kcg_connector/isaac/te_body_socket_observation.py",
+      "exists": true,
+      "bytes": 18746,
+      "sha256": "0f0462746f0546e8f2c17e862ef43022d0fb7afc9fb9635338f7bc48e14e47f5",
+      "tracked": true,
+      "ignored": false,
+      "git_status": ""
+    },
+    {
+      "role": "body_transport_and_assembly_orchestration",
+      "path": "src/kcg_connector/isaac/te_body_assembly_motion.py",
+      "exists": true,
+      "bytes": 28968,
+      "sha256": "bb37c628900e1f6e099ff3696a5a55678a874e7588f0b8dc38121262621d310b",
+      "tracked": true,
+      "ignored": false,
+      "git_status": ""
+    },
+    {
+      "role": "key_entry",
+      "path": "src/kcg_connector/isaac/te_body_key_entry.py",
+      "exists": true,
+      "bytes": 17341,
+      "sha256": "742d03593f72aa5cc41112334850d75b18992b0f0034b182437bc55fbd7240c1",
+      "tracked": true,
+      "ignored": false,
+      "git_status": ""
+    },
+    {
+      "role": "body_support_and_release",
+      "path": "src/kcg_connector/isaac/te_body_support_release.py",
+      "exists": true,
+      "bytes": 12124,
+      "sha256": "0bc7502ee0ad6aef4b6d9fb5a73318d5ee2c515b55933497d22bed2ed2b8e8e6",
+      "tracked": true,
+      "ignored": false,
+      "git_status": ""
+    },
+    {
+      "role": "nut_regrasp",
+      "path": "src/kcg_connector/isaac/te_body_nut_regrasp.py",
+      "exists": true,
+      "bytes": 23655,
+      "sha256": "76a20e7b1b9c9bece444cd191e52fca53a0211d3a1b11c5f2ca096ed8abfb144",
+      "tracked": true,
+      "ignored": false,
+      "git_status": ""
+    },
+    {
+      "role": "legacy_nut_rotation_to_replace_local_control",
+      "path": "src/kcg_connector/isaac/te_body_nut_rotation.py",
+      "exists": true,
+      "bytes": 70942,
+      "sha256": "aa23eb3fc7995ce56faf356a191c9fb577cdebe8305b28d28af0bcedf429addf",
+      "tracked": true,
+      "ignored": false,
+      "git_status": ""
+    },
+    {
+      "role": "rotation_controller_candidate",
+      "path": "src/kcg_connector/isaac/te_local_interface_following.py",
+      "exists": true,
+      "bytes": 28718,
+      "sha256": "ede8682c2b733b18ab2fba702500645515efcabe853128cb1be97d718cde3c40",
+      "tracked": false,
+      "ignored": false,
+      "git_status": "?? src/kcg_connector/isaac/te_local_interface_following.py"
+    },
+    {
+      "role": "stroke_schedule_candidate",
+      "path": "src/kcg_connector/isaac/te_interface_stroke_schedule.py",
+      "exists": true,
+      "bytes": 3031,
+      "sha256": "1464e47dfa9fcc883cfc5ff9962878c8b1c1e3ce7f3774f9f836f99fb2af33d4",
+      "tracked": false,
+      "ignored": false,
+      "git_status": "?? src/kcg_connector/isaac/te_interface_stroke_schedule.py"
+    },
+    {
+      "role": "current_diagnostic_only_entry",
+      "path": "src/kcg_connector/isaac/diagnose_saved_hand_wrench.py",
+      "exists": true,
+      "bytes": 142505,
+      "sha256": "ad9907b685f78385cf2b7ca4698c06e8b878e7effd99e72d16f0e54fe6fbd63d",
+      "tracked": true,
+      "ignored": false,
+      "git_status": "M src/kcg_connector/isaac/diagnose_saved_hand_wrench.py"
+    },
+    {
+      "role": "measured_fourbar",
+      "path": "src/kcg_connector/config/hand_fourbar_20260912.json",
+      "exists": true,
+      "bytes": 3227,
+      "sha256": "9a1a92d50328a037a2036180eb1154f6f9c7fa39bf43cfe4c8858ab86c88d5f6",
+      "tracked": false,
+      "ignored": false,
+      "git_status": "?? src/kcg_connector/config/hand_fourbar_20260912.json"
+    },
+    {
+      "role": "fourbar_kinematics",
+      "path": "src/kcg_connector/kcg_connector/grasp/robust/finger_fourbar.py",
+      "exists": true,
+      "bytes": 6033,
+      "sha256": "4982f28965f46e7229369899f4314a62f7b188f2e7b8c9a0aa1d5497501f2fb9",
+      "tracked": false,
+      "ignored": false,
+      "git_status": "?? src/kcg_connector/kcg_connector/grasp/robust/finger_fourbar.py"
+    },
+    {
+      "role": "fourbar_physics",
+      "path": "src/kcg_connector/isaac/te_hand_fourbar.py",
+      "exists": true,
+      "bytes": 8604,
+      "sha256": "759454ed920df897900a80b111aadc9ac21947d4a6f7cd28ad6792013fe74567",
+      "tracked": false,
+      "ignored": false,
+      "git_status": "?? src/kcg_connector/isaac/te_hand_fourbar.py"
+    },
+    {
+      "role": "worm_candidate",
+      "path": "src/kcg_connector/isaac/te_worm_drive.py",
+      "exists": true,
+      "bytes": 18863,
+      "sha256": "f9c1b895d17b21b7949a2eeef871a79e1595028a88d2457bdd1d12b75bcdb903",
+      "tracked": false,
+      "ignored": false,
+      "git_status": "?? src/kcg_connector/isaac/te_worm_drive.py"
+    },
+    {
+      "role": "hand_robot_asset",
+      "path": "artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda",
+      "exists": true,
+      "bytes": 6112,
+      "sha256": "4e220d97f3e12594c82dd6879cb584fd79cfd9264289a71e2383e43f53e6d46e",
+      "tracked": false,
+      "ignored": true,
+      "git_status": ""
+    },
+    {
+      "role": "connector_model",
+      "path": "artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc",
+      "exists": true,
+      "bytes": 81603949,
+      "sha256": "234b7c0f14caeae1b8dffeabb8bae5a63e8b05d2463f3a7ff3e0c0d1d53f9eb6",
+      "tracked": false,
+      "ignored": true,
+      "git_status": ""
+    },
+    {
+      "role": "connector_installer",
+      "path": "artifacts/kcg_connector/te_connector_contact_repaired_20260911/install_model.py",
+      "exists": true,
+      "bytes": 20676,
+      "sha256": "ddbb79aee999a8f375556d1ba0c9e4dc2462059ccb7186d04738983ea2c80260",
+      "tracked": false,
+      "ignored": true,
+      "git_status": ""
+    },
+    {
+      "role": "connector_evidence_manifest",
+      "path": "artifacts/kcg_connector/te_connector_contact_repaired_20260911/validation_manifest.json",
+      "exists": true,
+      "bytes": 296266,
+      "sha256": "444a5da83602eff26c3c72552a90afb8a1b1deff249bed37ed2ee01d437e4219",
+      "tracked": false,
+      "ignored": true,
+      "git_status": ""
+    },
+    {
+      "role": "body_grasp_seed_not_yet_verified_nail_only",
+      "path": "src/kcg_connector/config/te_nail_tip_body_grasp_v1.yaml",
+      "exists": true,
+      "bytes": 20074,
+      "sha256": "2467fc7c365927fa74c729834cbe178eac8432b4b54aaa081343395c743fd568",
+      "tracked": true,
+      "ignored": false,
+      "git_status": ""
+    },
+    {
+      "role": "nut_grasp_geometry_candidate",
+      "path": "artifacts/hand_mechanism_audit_20260912/fourbar_flank60_geometry/geometry_plan.json",
+      "exists": true,
+      "bytes": 15999,
+      "sha256": "97c8f1743a5409be3a1ef738820d3647c9dc6f6a0b3ae1d1e4179da493f3576e",
+      "tracked": false,
+      "ignored": true,
+      "git_status": ""
+    },
+    {
+      "role": "nut_grip_control_reference",
+      "path": "artifacts/hand_mechanism_audit_20260912/fourbar_worm_grip_recipe.json",
+      "exists": true,
+      "bytes": 2385,
+      "sha256": "9115d8b949cc53f162f94a9b2f98df605b4555d96c67081a7ef8a598a23e028c",
+      "tracked": false,
+      "ignored": true,
+      "git_status": ""
+    },
+    {
+      "role": "latest_limited_grip_evidence",
+      "path": "artifacts/hand_mechanism_audit_20260912/whole_hand_worm_grip_trial25/physical_grip_review.json",
+      "exists": true,
+      "bytes": 2413,
+      "sha256": "70fb363e786872d5b715786ee6ae56d45146d08eb7a21386bbebd4b9435b8d8c",
+      "tracked": false,
+      "ignored": true,
+      "git_status": ""
+    },
+    {
+      "role": "source_pad_surface_manifest",
+      "path": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TERMINAL_PAD_EXACT_SOURCE_V2/TERMINAL_PAD_SOURCE_MANIFEST.json",
+      "exists": true,
+      "bytes": 4626,
+      "sha256": "b5867108850ee34c4f28eedb948bef8ad33112cddbb0e7a414a9d3cc0e15edf0",
+      "tracked": false,
+      "ignored": true,
+      "git_status": ""
+    },
+    {
+      "role": "legacy_settings_dependency_to_extract",
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260907/gpu_wrist_force_consistent_assembly_01/socket_transport/nut_rotation/nut_rotation_controller_result.json",
+      "exists": true,
+      "bytes": 47293725,
+      "sha256": "ba821b78ca0683a2b70655628ba0f47e19b9643704ee3590df7c89ef58287f79",
+      "tracked": false,
+      "ignored": true,
+      "git_status": ""
+    }
+  ],
+  "usd_dependency_audit": "docs/assembly_v1_usd_dependencies_20260912.json",
+  "storage_inventory": "docs/assembly_v1_storage_version_inventory_20260912.json",
+  "runtime_artifact_dependency_closure_complete": false,
+  "remaining_dependency_closure": [
+    "Python/config artifact paths and conditional resources",
+    "SAM6D and planner environment/model versions",
+    "phase-specific source nail surface definition"
+  ],
+  "full_chain_verified": false,
+  "source_files_or_artifacts_deleted": false,
+  "plan": "docs/FIRST_VISUAL_ASSEMBLY_V1_PLAN_CN.md",
+  "identified_gaps": [
+    "visual-grasp-servo returns before the assembly continuation",
+    "new finger mechanism not in shared main stepper",
+    "70deg Body seed versus60deg Nut seed and palm currently fixed at startup angle",
+    "old Body acceptance not restricted to fingernails",
+    "located vision-grasp attempts12-19 did not lift",
+    "historical settings and snapshot initialization still used in local diagnostics",
+    "diagnostic displacement abort uses simulator object pose; do not copy to formal online control"
+  ],
+  "controller_choice": "TASK_DRIVEN; ADMITTANCE_NOT_MANDATORY"
+}

@@ -24,6 +24,7 @@ from kcg_connector.grasp.robust.collision_roster import (
     load_authoritative_collision_link_roster,
 )
 from kcg_connector.grasp.robust.hand_model import ThreeFingerHandModel, rpy_rotation
+from kcg_connector.grasp.robust.finger_fourbar import load_finger_fourbars
 from kcg_connector.grasp.robust.object_contract import (
     LoadedObjectContract,
     load_object_contract,
@@ -158,6 +159,7 @@ class V2Inputs:
     table_top_z_m: float
     task_grip_surfaces: Mapping[str, TaskGripSurface] | None = None
     hand_variant: str = "LEGACY_NAIL_PRESENT"
+    finger_mechanism_id: str = "LEGACY_LINEAR_MIMIC"
 
 
 @dataclass(frozen=True)
@@ -454,6 +456,8 @@ def _load_hand_collision_triangles(
 def _build_verified_robot_model(
     hand_contract: CARTSHandContract,
     roster: AuthoritativeCollisionLinkRoster,
+    *,
+    finger_mechanism_path: Path | str | None = None,
 ) -> ThreeFingerHandModel:
     model = ThreeFingerHandModel.from_urdf(
         build_verified_aggregate_robot_xml(roster),
@@ -462,6 +466,9 @@ def _build_verified_robot_model(
     )
     if tuple(model.independent_joint_names) != EXPECTED_INDEPENDENT_JOINTS:
         raise ValueError("verified aggregate robot independent joints changed")
+    if finger_mechanism_path is not None:
+        _document, couplings = load_finger_fourbars(finger_mechanism_path)
+        model = model.with_fourbar_couplings(couplings)
     return model
 
 
@@ -494,6 +501,7 @@ def load_v2_inputs(
     *,
     config_path: Path | str,
     object_id: str,
+    finger_mechanism_path: Path | str | None = None,
 ) -> V2Inputs:
     root = Path(repository_root).resolve()
     config = load_v2_config(config_path)
@@ -509,10 +517,17 @@ def load_v2_inputs(
     if hand_contract.hardware_authorized or not hand_contract.truth_firewall_all_false:
         raise ValueError("hand safety/truth firewall contract changed")
     hand_model = hand_contract.build_hand_model()
+    mechanism = finger_mechanism_path or inputs.get("finger_mechanism")
+    mechanism_id = "LEGACY_LINEAR_MIMIC"
+    if mechanism is not None:
+        mechanism = root / Path(mechanism)
+        mechanism_document, couplings = load_finger_fourbars(mechanism)
+        hand_model = hand_model.with_fourbar_couplings(couplings)
+        mechanism_id = mechanism_document["mechanism_id"]
     roster = load_authoritative_collision_link_roster(
         inputs["collision_roster"], repository_root=root
     )
-    robot_model = _build_verified_robot_model(hand_contract, roster)
+    robot_model = _build_verified_robot_model(hand_contract, roster, finger_mechanism_path=mechanism)
     closing = hand_contract.closing_actuation_directions_unit(hand_model)
     closing = _readonly(closing, np.float64, ndim=2)
     face_roles = build_face_role_map(object_contract, config)
@@ -610,4 +625,5 @@ def load_v2_inputs(
         table_top_z_m=table_top,
         task_grip_surfaces=task_surfaces,
         hand_variant=hand_variant,
+        finger_mechanism_id=mechanism_id,
     )

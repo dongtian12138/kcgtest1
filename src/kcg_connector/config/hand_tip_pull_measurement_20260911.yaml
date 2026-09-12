@@ -1,0 +1,32 @@
+# User-described bench measurement; not an actuator calibration or normal-force cap.
+schema_version: hand_directional_tip_pull_measurement_v1
+hardware_authorized: false
+source: USER_DESCRIPTION_20260911
+fixture: HAND_FIXED_TO_TEST_FIXTURE
+procedure: OPEN_FINGER_TIP_KEVLAR_ROPE_VIA_PULLEY_TO_WEIGHTS_THEN_MOTOR_CLOSE
+reported_lift_scope: ENTIRE_CLOSING_STROKE
+pulley: FIXED_PULLEY_DIRECTION_CHANGE_ONLY
+reported_rope_direction: APPROXIMATELY_PERPENDICULAR_TO_FINGERTIP_FACE
+motor_pwm_command: 600
+motor_pwm_full_scale: 750
+motor_pwm_command_fraction: 0.8
+motor_current_limit_a: null
+maximum_reported_lifted_weight_n_approx: 16.0
+user_nominal_tip_operating_force_n_approx: 15.0
+quantity: DIRECTIONAL_TIP_PULL_CAPABILITY_IN_THE_TEST_CONFIGURATION
+universal_contact_normal_force_limit_n: null
+calibrated_actuator_torque_limit_nm: null
+calibrated_continuous_contact_force_limit_n: null
+unresolved:
+  - exact_joint_trajectory_and_tip_attachment_point
+  - pulley_position_and_rope_direction_over_the_stroke_and_losses
+  - motor_current_voltage_speed_and_test_duration
+  - individual_fingers_tested
+interpretation:
+  - Use the actual test configuration and coupled finger Jacobian to map rope load to actuator effort.
+  - Include gravity, transmission losses and dynamics appropriate to the measurement.
+  - Normal load scalar sum, resultant contact force and joint moment are different quantities.
+  - A 15 N directional tip test does not establish a universal 15 N contact-pressure limit.
+  - This measurement alone neither authorizes nor calibrates a 30 N contact-force target.
+  - Full-stroke success establishes lifted-load capability along that test trajectory; it does not identify all directional force maxima.
+  - PWM600 of750 is an80percent command ratio, not a measured current limit or80percent rated torque.

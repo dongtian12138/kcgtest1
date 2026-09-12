@@ -9350,16 +9350,35 @@ def _create_runtime(
             # Use the same physical connector and hand friction as the local
             # CPU tests, while retaining this episode's tabletop initial pose.
             import importlib.util
+            model_path = (repository / frozen["model_path"]).resolve()
+            connector_manifest_path = model_path.with_name("validation_manifest.json")
+            connector_model_manifest = json.loads(connector_manifest_path.read_text()) if connector_manifest_path.exists() else {}
+            connector_runtime_requirements = connector_model_manifest.get("runtime_requirements", frozen.get("runtime_requirements", {}))
+            if (connector_model_manifest.get("runtime_requirements") is not None
+                    and frozen.get("runtime_requirements") is not None
+                    and frozen["runtime_requirements"] != connector_runtime_requirements):
+                raise ValueError("assembly configuration and frozen model runtime requirements disagree")
+            connector_position_iterations = connector_runtime_requirements.get("position_iterations", 128)
+            connector_velocity_iterations = connector_runtime_requirements.get("velocity_iterations", 1)
+            connector_physics_hz = connector_runtime_requirements.get("physics_hz", 960)
+            if (any(isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 255
+                    for value in (connector_position_iterations, connector_velocity_iterations))
+                    or isinstance(connector_physics_hz, bool)
+                    or not isinstance(connector_physics_hz, (int, float))
+                    or not math.isfinite(connector_physics_hz) or connector_physics_hz <= 0):
+                raise ValueError("validated connector runtime requirements are invalid")
             if (arguments.physics_device != "cpu"
-                    or not math.isclose(float(dynamic["physics_dt_s"]), 1. / 960., rel_tol=0., abs_tol=1e-12)
-                    or numerical.get("position_iterations") != 128
-                    or numerical.get("velocity_iterations") != 1
+                    or not math.isclose(float(dynamic["physics_dt_s"]), 1. / connector_physics_hz, rel_tol=0., abs_tol=1e-12)
+                    or numerical.get("position_iterations") != connector_position_iterations
+                    or numerical.get("velocity_iterations") != connector_velocity_iterations
                     or numerical.get("external_forces_every_iteration") is not True):
-                raise ValueError("validated connector requires CPU 960 Hz, 128/1 iterations and per-iteration external forces")
+                raise ValueError(
+                    f"validated connector requires CPU {connector_physics_hz} Hz, "
+                    f"{connector_position_iterations}/{connector_velocity_iterations} iterations "
+                    "and per-iteration external forces")
             physics_scene_api.CreateSolverTypeAttr("TGS")
             physics_scene_api.CreateEnableGPUDynamicsAttr(False)
             physics_scene_api.CreateBroadphaseTypeAttr("MBP")
-            model_path = (repository / frozen["model_path"]).resolve()
             installer = model_path.with_name("install_model.py")
             spec = importlib.util.spec_from_file_location("validated_connector_installer", installer)
             module = importlib.util.module_from_spec(spec)
@@ -9385,14 +9404,21 @@ def _create_runtime(
             for prim in stage.Traverse():
                 if prim.HasAPI(PhysxSchema.PhysxArticulationAPI):
                     api = PhysxSchema.PhysxArticulationAPI(prim)
-                    api.CreateSolverPositionIterationCountAttr(128)
-                    api.CreateSolverVelocityIterationCountAttr(1)
+                    api.CreateSolverPositionIterationCountAttr(connector_position_iterations)
+                    api.CreateSolverVelocityIterationCountAttr(connector_velocity_iterations)
                 if prim.HasAPI(UsdPhysics.RigidBodyAPI):
                     api = PhysxSchema.PhysxRigidBodyAPI.Apply(prim)
-                    api.CreateSolverPositionIterationCountAttr(128)
-                    api.CreateSolverVelocityIterationCountAttr(1)
+                    api.CreateSolverPositionIterationCountAttr(connector_position_iterations)
+                    api.CreateSolverVelocityIterationCountAttr(connector_velocity_iterations)
             trace["validated_connector_integration"] = {
-                "model_path": str(model_path), "ordinary_passive_revolute": True,
+                "model_path": str(model_path),
+                "passive_joint_type": stage.GetPrimAtPath(installed["passive_joint_path"]).GetTypeName(),
+                "ordinary_passive_revolute": stage.GetPrimAtPath(installed["passive_joint_path"]).GetTypeName() == "PhysicsRevoluteJoint",
+                "position_iterations": connector_position_iterations,
+                "velocity_iterations": connector_velocity_iterations,
+                "physics_hz": connector_physics_hz,
+                "passive_resistance_model": frozen.get("passive_resistance_model", "source_joint"),
+                "legacy_split_manifest_resistance_is_current": not frozen.get("legacy_0p02_nm_is_not_current_resistance", False),
                 "solver": str(physics_scene_api.GetSolverTypeAttr().Get()),
                 "broadphase": str(physics_scene_api.GetBroadphaseTypeAttr().Get()),
                 "original_tabletop_initial_poses_preserved": True,
