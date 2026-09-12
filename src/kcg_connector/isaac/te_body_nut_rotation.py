@@ -127,6 +127,20 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
     preparation_force_reference = float(settings["axial_force_reference_n"])
     turn_force_reference = float(settings.get("turn_axial_force_reference_n", preparation_force_reference))
     force_reference_ramp_s = float(settings.get("turn_force_reference_ramp_duration_s", 0.5))
+    engagement = settings.get("engagement_axial_assist", {})
+    engagement_enabled = bool(engagement.get("enabled", False))
+    engagement_start_deg = 0.
+    engagement_applied_deg = 0.
+    if engagement_enabled:
+        engagement_force = float(engagement["additional_downward_force_n"])
+        engagement_end_deg = float(engagement["ending_cumulative_command_deg"])
+        engagement_fade_deg = float(engagement["ramp_out_angle_deg"])
+        engagement_start_deg = float(runtime.get("engagement_loaded_turn_command_deg",
+            engagement.get("initial_cumulative_command_deg", 0.)))
+        if not (0 < engagement_force <= 3.0400615 + 1e-9
+                and 0 < engagement_fade_deg <= engagement_end_deg <= 40.
+                and np.isfinite(engagement_start_deg) and engagement_start_deg >= 0.):
+            raise ValueError("engagement assistance exceeds the declared finite source-bench input")
     effort_tau = float(settings.get("finger_effort_regulation_time_constant_s", 0.0))
     if not np.isfinite(effort_tau) or effort_tau < 0:
         raise ValueError("finger effort regulation time constant must be finite and nonnegative")
@@ -571,6 +585,11 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
         while index < count:
             if stepper.abort_reason is not None:
                 raise RuntimeError(f"existing joint/FT protection: {stepper.abort_reason}")
+            stop_request = runtime.get("simulation_stop_request_path")
+            if (stop_request and index % max(1, round(.1 / dt)) == 0
+                    and Path(stop_request).exists()):
+                record["explicit_pause_request"] = str(stop_request)
+                raise RuntimeError("explicit simulation pause requested; preserve the incomplete episode")
             q, hand, current, wrench, raw_wrench = observe()
             elapsed = index * dt
             if maximum_execution_s is not None and elapsed>=float(maximum_execution_s)-dt/10:
@@ -768,6 +787,14 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             force_fraction = 10*force_u**3 - 15*force_u**4 + 6*force_u**5
             force_reference = preparation_force_reference + force_fraction*(
                 turn_force_reference-preparation_force_reference)
+            engagement_reference = 0.
+            engagement_progress_deg = engagement_start_deg + abs(float(np.degrees(angle*fraction)))
+            if engagement_enabled:
+                fade = float(np.clip((engagement_progress_deg
+                    - (engagement_end_deg-engagement_fade_deg))/engagement_fade_deg, 0., 1.))
+                engagement_reference = engagement_force*force_fraction*(
+                    1. - (10*fade**3-15*fade**4+6*fade**5))
+                force_reference += engagement_reference
             if observation_session is not None:observation_session['last_force_reference_n']=float(force_reference)
             velocity_z = np.clip(
                 (wrench[2] - force_reference)
@@ -913,6 +940,8 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             control_sample = _json_ready({"step": int(stepper.step_index), "elapsed_s": elapsed,
                 "commanded_rotation_deg": float(np.rad2deg(angle * fraction)),
                 "axial_force_reference_n": float(force_reference),
+                "engagement_additional_downward_reference_n": float(engagement_reference),
+                "engagement_cumulative_loaded_turn_command_deg": engagement_progress_deg if engagement_enabled else None,
                 "pre_turn_yaw_correction_deg": float(np.rad2deg(yaw_offset)),
                 "pre_turn_yaw_velocity_deg_s": float(np.rad2deg(yaw_compliance_velocity)),
                 "planar_force_offset_socket_m": planar_offset.tolist(),
@@ -1034,7 +1063,10 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                      "axial_settle" if elapsed < preparation_end else
                      "turn" if elapsed < preparation_end + duration else "hold")
             if settings.get('observed_hold_only',False) and initial_fit_accepted:phase='hold'
+            before_step = int(stepper.step_index)
             stepper.advance("key_probe_nut_rotation_" + phase, arm.copy(), hand_target.copy())
+            if engagement_enabled and int(stepper.step_index) > before_step:
+                engagement_applied_deg = abs(float(np.degrees(angle*fraction)))
             index += 1
         if stepper.abort_reason is not None:
             raise RuntimeError(stepper.abort_reason)
@@ -1045,6 +1077,15 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
         record.update(failure_stage=record["stage"], stage="STOPPED", failure_reason=str(error))
     finally:
         world.pause()
+        if engagement_enabled:
+            runtime["engagement_loaded_turn_command_deg"] = engagement_start_deg + engagement_applied_deg
+            record["engagement_assistance"] = {
+                **engagement, "starting_cumulative_command_deg": engagement_start_deg,
+                "final_cumulative_command_deg": runtime["engagement_loaded_turn_command_deg"],
+                "angle_is_command_budget_not_actual_nut_rotation": True,
+                "applied_through_wrist_force_control_and_original_robot": True,
+                "direct_object_force_used": False,
+                "source_bench_input_is_not_a_hardware_rating": True}
         if observation_session is not None and 'filtered_at_fixed_origin' in locals():
             observation_session['filtered_wrench_at_fixed_origin']=(filtered_at_fixed_origin.tolist() if filtered_at_fixed_origin is not None else None)
             observation_session['filtered_last_step']=filtered_last_step

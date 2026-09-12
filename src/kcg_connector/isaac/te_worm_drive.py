@@ -133,11 +133,19 @@ class WormDrive:
         split_loss=.5*K*dz*dz
         spring_change=.5*K*((z-q)**2-(s["z"]-s["q"])**2)
         output_heat=p.output_viscosity*dq*dq/h
+        # Native efforts arrive as float32 projections of active and mimic
+        # joint reactions. Preserve the readback, but allow their few-ULP
+        # rounding at the unchanged finite drive cap. Analytic-only updates
+        # retain the previous double-precision comparison tolerance.
+        effort_tolerance=(8.*2.**-23*max(1.,p.transmission_effort_boundary)
+                          if observed is not None else 1e-7)
         return {"input_angle":z,"input_velocity":v,"output_angle":q,"output_velocity":w,
                 "input_effort":s["u"],"transmission_effort":tau,"friction_effort":s["friction"],
                 "input_substep_spring_effort_nm":s["input_spring_effort"],
                 "predicted_branch_consistent":True,
-                "drive_saturation":abs(tau)>p.transmission_effort_boundary+1e-7,
+                "drive_saturation":abs(tau)>p.transmission_effort_boundary+effort_tolerance,
+                "native_effort_readback_tolerance_nm":effort_tolerance,
+                "observed_effort_at_finite_limit":observed is not None and abs(tau)>=p.transmission_effort_boundary-effort_tolerance,
                 "elastic_effort_boundary_exceeded":abs(K*(z-q))>p.transmission_effort_boundary,
                 "spring_law_residual_nm":endpoint-tau,
                 "motor_work_j":motor,"joint_work_j":tau*dq,"spring_energy_change_j":spring_change,

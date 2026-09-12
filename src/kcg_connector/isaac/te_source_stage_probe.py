@@ -85,6 +85,7 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
     runtime={'world':world,'inputs':inputs,'scene':scene,'auditor':recorder,'robot_data':robot_data,
         'object_parts':parts,'nail_body_ft_auditor':ft,'body_assembly_control_config':str(assembly_path),
         'body_assembly_scene':prepared,'robot_asset':metadata['robot_asset']}
+    runtime['simulation_stop_request_path']=str(output/'STOP_REQUEST')
     _install_rgbd_resume_sync(world,stage)
     light=UsdLux.DomeLight.Define(stage,'/World/SourceStageDiagnosticLighting')
     light.CreateIntensityAttr(float(scene['render'].dome_light_intensity))
@@ -129,6 +130,8 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             settings['arm_kinematic_reference']=recipe['arm_kinematic_reference']
         if 'grip_lateral_balance' in recipe:
             settings['grip_lateral_balance']=copy.deepcopy(recipe['grip_lateral_balance'])
+        if 'engagement_axial_assist' in recipe:
+            settings['engagement_axial_assist']=copy.deepcopy(recipe['engagement_axial_assist'])
         result['rotation']=run_body_nut_rotation(repository,runtime,stepper,dynamic,grip,socket,
             settings,output/'rotation',initial_position_axis_observation=observation)
     except Exception as error:

@@ -92,3 +92,23 @@ def test_motor_position_reversal_can_release_a_loaded_output():
     assert law["position_target"]<.5025
     assert r["input_velocity"]<0.
     assert r["input_effort"]<0.
+
+
+@pytest.mark.parametrize("readback,output_delta,effort_violation,elastic_violation",[
+    (3.500000476837158,0.,False,False),
+    (3.5001,0.,True,False),
+    (3.5,-.001,False,True),
+])
+def test_native_cap_roundoff_preserves_both_real_effort_and_elastic_guards(
+        readback,output_delta,effort_violation,elastic_violation):
+    # Captured adjacent F3 samples34994/34995 from the actual assisted turn17.
+    # The first case previously stopped with only two float32 ULPs of excess.
+    motor=drive(.6971159962427167)
+    law=motor.prepare_position(.668010950088501,.015775898471474648,
+        .7253195615420972,1/960,stiffness=264.,damping=4.4)
+    result=motor.complete(.6680055260658264+output_delta,.03799189627170563,
+        observed_drive_effort=readback)
+    assert law["max_effort"]==3.5
+    assert result["transmission_effort"]==readback
+    assert result["drive_saturation"] is effort_violation
+    assert result["elastic_effort_boundary_exceeded"] is elastic_violation
