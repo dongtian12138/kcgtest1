@@ -11019,6 +11019,10 @@ def _execute(
                         (output / "transport_failure.json").write_text(
                             json.dumps({"error": str(error), "traceback": traceback.format_exc()}, indent=2) + "\n")
                     posthoc_started = perf_counter()
+                    # Motion has returned. Seal the last raw block before any
+                    # postprocessing so an evaluator failure cannot lose it.
+                    if runtime.get("truth_stream") is not None and not runtime["truth_stream"].closed:
+                        runtime["truth_stream"].close()
                     runtime["wall_timing"]["execution_through_transport_s"] = perf_counter() - execution_started
                     from trace_metadata import without_cyclic_gc
                     without_cyclic_gc(_evaluate_body_memory_after_motion,

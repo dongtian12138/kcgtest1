@@ -610,7 +610,11 @@ def _run_light_contact_key_search(
 
 def _evaluate_key_entry_after_motion(truth_samples, controller_record, true_socket, probe):
     """Read simulator truth only after the complete bounded motion has stopped."""
-    by_step = {int(row["step"]) + 1: row for row in truth_samples}
+    # Both streams have increasing global step indices. Keep only the current
+    # raw row instead of reconstructing the complete episode in RAM.
+    actual_stream=iter(truth_samples)
+    current_actual=None
+    previous_command_step=-1
     socket = np.asarray(true_socket)
     mating = Rotation.from_euler("y", 180, degrees=True).as_matrix()
     keys = np.asarray([10.0, 90.0, 157.0, 254.0, 308.0])
@@ -623,9 +627,17 @@ def _evaluate_key_entry_after_motion(truth_samples, controller_record, true_sock
     rows, max_penetration, robot_socket_contacts = [], 0.0, 0
     unauthorized, table_contacts = 0, 0
     for commanded in controller_record["samples"]:
-        actual = by_step.get(int(commanded["step"]))
-        if actual is None:
+        command_step=int(commanded["step"])
+        if command_step<previous_command_step:
+            raise ValueError("key-entry controller samples are not in chronological order")
+        previous_command_step=command_step
+        while current_actual is None or int(current_actual['step'])+1<command_step:
+            current_actual=next(actual_stream,None)
+            if current_actual is None:break
+        if current_actual is None:break
+        if int(current_actual['step'])+1!=command_step:
             continue
+        actual=current_actual
         rotations = [Rotation.from_quat(np.roll(q, -1)).as_matrix()
                      for q in actual["object_part_orientations_wxyz"]]
         positions = np.asarray(actual["object_part_positions_m"])

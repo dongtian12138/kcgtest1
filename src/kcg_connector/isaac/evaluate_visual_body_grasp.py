@@ -18,10 +18,13 @@ def review(run, repository):
     contract=json.loads(contract_path.read_text())
     names=list(contract['bindings']);lo,hi=contract['nail_shell_face_range_zero_based_half_open']
     points={name:[] for name in names};metadata={name:[] for name in names};states=[]
-    stream=run/'truth_samples.jsonl.gz'
+    stream=run/'truth_samples.jsonl.gz';body_grasp_ended=False
     with gzip.open(stream,'rt') as handle:
         for line in handle:
             row=json.loads(line)
+            if row['phase'].startswith('key_probe_body_support_'):
+                body_grasp_ended=True
+            if body_grasp_ended:break
             states.append({'step':row['step'],'t':row['simulation_time_s'],'phase':row['phase'],
                 'body_z':row['object_part_positions_m'][0][2],
                 'table_impulse':row['contacts']['object_table_positive_normal_impulse_n_s']})
@@ -78,6 +81,15 @@ def review(run, repository):
         all_three_nails_body_contact_fraction_in_hold=(sum(s['step'] in common for s in hold)/len(hold) if hold else None),
         each_nail_body_contact_fraction_in_hold={name:(sum(s['step'] in nail_steps[name] for s in hold)/len(hold) if hold else None) for name in names})
     result['fresh_image_motion_consumption_record_present']=(run/'initial_rgbd/consumed_grasp_plan.json').is_file()
+    result['contact_scope']='INITIAL_BODY_GRASP_AND_CARRY_BEFORE_INTENTIONAL_BODY_UNLOAD'
+    result['accepted']=bool(result['fresh_image_motion_consumption_record_present']
+        and result['hold_duration_s']>=2.-interval/2
+        and result['minimum_body_lift_during_hold_m'] is not None
+        and result['minimum_body_lift_during_hold_m']>=.05
+        and result['table_contact_samples_in_hold']==0
+        and result['all_three_nails_body_contact_fraction_in_hold']==1.
+        and all(v['counts']['nail_body']>0 and sum(c for k,c in v['counts'].items() if k!='nail_body')==0
+                for v in result['fingers'].values()))
     (run/'source_nail_body_review.json').write_text(json.dumps(result,indent=2)+'\n')
     return result
 
