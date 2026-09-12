@@ -15,6 +15,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).with_name("carts_v2")))
 import run_grasp_lift as runner
 
+invocation_arguments = list(sys.argv)
 video_parser = argparse.ArgumentParser(add_help=False)
 video_parser.add_argument("--assembly-video-fps", type=int, choices=(5, 10, 15, 30), default=15)
 video_options, runner_arguments = video_parser.parse_known_args()
@@ -32,6 +33,12 @@ def recorded_controller(runtime, arguments, motion_plan, dynamic):
     original_stepper = runner.control.JointSignalStepper
     repository = Path(__file__).resolve().parents[3]
     output = Path(arguments.output_directory).resolve()
+    # Retain video options removed by this wrapper as well as runner options.
+    (output / "run_invocation.json").write_text(json.dumps({
+        "executable": sys.executable, "argv": invocation_arguments,
+        "working_directory": str(Path.cwd()), "simulation_only": True,
+        "hardware_authorized": False,
+    }, ensure_ascii=False, indent=2) + "\n")
 
     class RecordedStepper(original_stepper):
         def __init__(self, **kwargs):

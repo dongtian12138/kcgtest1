@@ -62,6 +62,8 @@ parser.add_argument('--palm-layout-mechanism',choices=('self-lock','legacy-servo
                     help='User-confirmed worm self-lock is the production default; legacy servo is comparison-only')
 parser.add_argument('--shared-hand-mechanism',type=Path,
                     help='Use the same four-motor runtime as the visual assembly path, including the actively driven palm')
+parser.add_argument('--source-stage-probe',type=Path,
+                    help='Bounded current-controller diagnostic from a sealed source-stage state')
 parser.add_argument('--finger-mechanism',type=Path,
                     help='Explicit measured four-bar candidate contract; default retains historical linear mimic')
 parser.add_argument('--finger-worm-self-lock',action='store_true',
@@ -197,7 +199,7 @@ parser.add_argument("--probe-force-consistent-planar-range",action='store_true')
 parser.add_argument("--probe-guided-socket-pivot", action="store_true")
 args = parser.parse_args()
 if args.shared_hand_mechanism:
-    if not args.robot_state_before_reset or not args.finger_mechanism or args.interface_twist_deg is None or args.finger_worm_self_lock:
+    if not args.robot_state_before_reset or not args.finger_mechanism or (args.interface_twist_deg is None and args.source_stage_probe is None) or args.finger_worm_self_lock:
         parser.error('Shared hand requires pre-reset source state, fourbar contract and interface mode, without a second worm integrator')
     args.palm_layout_mechanism='shared-worm-pd'
 if args.palm_layout_mechanism is None:
@@ -212,6 +214,10 @@ if args.finger_worm_self_lock and (args.finger_mechanism is None or args.interfa
 if args.interface_grip_only and (args.interface_twist_deg!=0. or not args.interface_force_following
         or args.interface_regrasp_stroke_deg is not None):
     parser.error('Grip-only requires zero requested twist and the existing force-feedback grip controller')
+if args.source_stage_probe and (not args.shared_hand_mechanism or not args.free_plug_in_socket
+        or args.interface_twist_deg is not None or args.probe_additional_turn_deg is not None):
+    parser.error('Source-stage diagnosis requires the shared hand and free connector; other probe modes are mutually exclusive')
+source_stage_recipe=json.loads(args.source_stage_probe.read_text()) if args.source_stage_probe else None
 finger_mechanism_document=None
 if args.finger_mechanism is not None:
     args.finger_mechanism=args.finger_mechanism.resolve()
@@ -260,7 +266,7 @@ if args.interface_motion_duration_s is not None and not 0 < args.interface_motio
     parser.error('The local comparison motion duration must be finite and at most20seconds')
 if args.interface_start_open and args.interface_twist_deg is None:
     parser.error('The open-hand initialization is scoped to the minimal interface test')
-if args.interface_grasp_relation is not None and not args.interface_start_open:
+if args.interface_grasp_relation is not None and not args.interface_start_open and not args.source_stage_probe:
     parser.error('The declared CAD grasp relation requires the open-hand local interface test')
 if args.interface_force_following and not args.interface_start_open:
     parser.error('Force following requires the declared open-hand interface test')
@@ -300,7 +306,7 @@ if args.interface_source_pad_material and args.interface_twist_deg is None:
 if not 1 <= args.position_iterations <= 255:parser.error('position iterations out of range')
 if not 0 < args.closing_drive_cap_nm <= (3.5 if args.finite_drive_sensitivity else 2.7):
     parser.error('closing motor cap outside the bounded simulation diagnostic range')
-if args.finite_drive_sensitivity and args.interface_twist_deg is None:
+if args.finite_drive_sensitivity and args.interface_twist_deg is None and not args.source_stage_probe:
     parser.error('Finite actuator-reference sensitivity is scoped to the declared local assembly test')
 if args.contact_convergence_check and (args.velocity_iterations!=4 or args.physics_device!='cpu'
         or (args.frozen_connector_model is None and not args.wrist_reference_loads)
@@ -361,7 +367,8 @@ if args.frozen_connector_model is not None:
     experimental_rate=(args.experimental_connector_time_resolution and args.physics_device=='cpu'
                        and args.physics_hz==480 and args.interface_control_decimation==2
                        and args.interface_twist_deg is not None)
-    if (not args.free_plug_in_socket or (args.physics_device!='cpu' and not experimental_gpu) or args.cpu_wrist_reference is None
+    if (not args.free_plug_in_socket or (args.physics_device!='cpu' and not experimental_gpu)
+            or (args.cpu_wrist_reference is None and not args.source_stage_probe)
             or (args.physics_hz!=required['physics_hz'] and not experimental_rate)
             or any(getattr(args,k)!=required[k] for k in ('position_iterations','velocity_iterations'))):
         parser.error('The delivered connector requires its declared CPU runtime configuration and a CPU wrist reference')
@@ -438,20 +445,27 @@ try:
     with gzip.open(args.run/"socket_transport"/args.sensor_stage/"joint_ft_samples.json.gz","rt") as f:
         source_sensor_records=json.load(f)
         sensor_sample=next(s for s in source_sensor_records if s["step"]==sample_step)
+    source_nominal_arm_targets=list(sensor_sample['active_targets_rad'][:7])
     replay_records=([s for s in source_sensor_records if sample_step<s["step"]<=sample_step+2*args.physics_hz]
                     if args.replay_source_drive_targets else [])
     del source_sensor_records
     if args.replay_source_drive_targets and (not replay_records or [s["step"] for s in replay_records]!=list(range(sample_step+1,replay_records[-1]["step"]+1))):
         raise ValueError("the sealed source command interval is empty or discontinuous")
     trace=args.run/"truth_samples.jsonl"
-    with trace.open() as f:
-        f.seek(max(0,trace.stat().st_size-64000000));f.readline()
-        physical_sample=next((json.loads(line) for line in f if f'"step":{sample_step},' in line[:100]),None)
+    physical_sample=None
+    if (args.run/'truth_samples.jsonl.gz').exists():
+        with gzip.open(args.run/'truth_samples.jsonl.gz','rt') as f:
+            physical_sample=next((json.loads(line) for line in f if f'"step":{sample_step},' in line[:100]),None)
+    elif trace.exists():
+        with trace.open() as f:
+            f.seek(max(0,trace.stat().st_size-64000000));f.readline()
+            physical_sample=next((json.loads(line) for line in f if f'"step":{sample_step},' in line[:100]),None)
     if physical_sample is None:
         # An earlier completed open-hand boundary need not be in the tail.
         # Scan prefixes only, avoiding decoding unrelated large contact arrays.
-        with trace.open() as f:
-            physical_sample=next((json.loads(line) for line in f if f'"step":{sample_step},' in line[:100]),None)
+        if trace.exists():
+            with trace.open() as f:
+                physical_sample=next((json.loads(line) for line in f if f'"step":{sample_step},' in line[:100]),None)
     if physical_sample is None:
         raise ValueError(f"the declared source step {sample_step} is absent from the sealed trace")
     lab_recipe=None;lab_fixture_pose=None
@@ -640,9 +654,12 @@ try:
         from run_grasp_lift import prepare_dynamic_scene, _apply_contact_friction_perturbation
         from te_body_assembly_scene import prepare_body_assembly_scene
         from te_grounding_band_scene import install_grounding_band_contact_model
-        launch=json.loads(base_run.with_suffix(".launch.json").read_text())["argv"]
-        config=yaml.safe_load((repo/launch[launch.index("--config")+1]).read_text())
-        assembly_path=(args.run/"local_assembly_control.yaml" if (args.run/"local_assembly_control.yaml").exists()
+        launch=(None if source_stage_recipe else json.loads(base_run.with_suffix(".launch.json").read_text())["argv"])
+        base_config=(repo/source_stage_recipe['base_config'] if source_stage_recipe
+                     else repo/launch[launch.index("--config")+1])
+        config=yaml.safe_load(base_config.read_text())
+        assembly_path=(repo/source_stage_recipe['assembly_config'] if source_stage_recipe else
+                       args.run/"local_assembly_control.yaml" if (args.run/"local_assembly_control.yaml").exists()
                        else Path(local_metadata["body_assembly_control_config"])
                        if "body_assembly_control_config" in local_metadata
                        else repo/launch[launch.index("--body-assembly-collision-config")+1])
@@ -854,7 +871,7 @@ try:
     contacts=RigidPrim(hand_paths,resolve_paths=False,**contact_filter_arguments,max_contact_count=contact_capacity)
     probe_contact_paths=([str(p.GetPath()) for p in stage.Traverse() if p.HasAPI(UsdPhysics.RigidBodyAPI)
                           and str(p.GetPath()).startswith("/World/HandArm/")] + [body_path,fixture_path]
-                         if args.probe_additional_turn_deg is not None else [])
+                         if args.probe_additional_turn_deg is not None or args.source_stage_probe else [])
     probe_contacts=(RigidPrim(probe_contact_paths,resolve_paths=False,**contact_filter_arguments,max_contact_count=contact_capacity)
                     if probe_contact_paths else None)
     static_part_contact_recording = args.free_plug_in_socket and args.probe_additional_turn_deg is None
@@ -988,6 +1005,10 @@ try:
         from te_hand_mechanism_runtime import author_hand_mechanism
         shared_hand_setup=author_hand_mechanism(stage,repo,args.shared_hand_mechanism.resolve(),
             '/World/HandArm/Physics',source_positions)
+        if source_stage_recipe and source_stage_recipe.get('motor_input_state'):
+            for name,state in source_stage_recipe['motor_input_state'].items():
+                drive=UsdPhysics.DriveAPI(stage.GetPrimAtPath('/World/HandArm/Physics/'+name),'angular')
+                drive.CreateTargetPositionAttr(float(np.degrees(state['input_angle'])))
     print(json.dumps({'stage':'begin_physics_reset','wall_seconds':time.monotonic()-diagnostic_started,
                       'device':args.physics_device}),flush=True)
     world.reset();world.pause()
@@ -1089,6 +1110,14 @@ try:
         from te_hand_mechanism_runtime import HandMechanismRuntime
         shared_hand_runtime=HandMechanismRuntime(world,robot,shared_hand_setup,args.output,
             active_effort_caps=[1.,args.closing_drive_cap_nm,args.closing_drive_cap_nm,args.closing_drive_cap_nm])
+        if source_stage_recipe and source_stage_recipe.get('motor_input_state'):
+            for name,state in source_stage_recipe['motor_input_state'].items():
+                shared_hand_runtime.drives[name].input_angle=float(state['input_angle'])
+                shared_hand_runtime.drives[name].input_velocity=float(state['input_velocity'])
+            (args.output/'initial_internal_motor_state.json').write_text(json.dumps({
+                'scope':'DECLARED_DIAGNOSTIC_INITIAL_CONTROLLER_STATE_ONLY',
+                'source_step':args.source_step,'state':source_stage_recipe['motor_input_state'],
+                'physical_joint_pose_written_after_reset':False},indent=2)+'\n')
     palm_lock_native_angle=None
     if args.palm_layout_mechanism=='self-lock':
         lock_indices=[robot.dof_names.index(n) for n in ('f1j1','f3j1')]
@@ -1168,6 +1197,19 @@ try:
     with use_backend("tensor",raise_on_unsupported=True,raise_on_fallback=True):
         masses=contacts.get_masses().numpy().reshape(-1);coms=contacts.get_coms()[0].numpy()
     stage.GetRootLayer().Export(str(args.output/"calibration_after_initialization.usda"))
+    if args.source_stage_probe:
+        from te_source_stage_probe import run_source_stage_probe
+        import copy
+        probe_sensor=copy.deepcopy(sensor_sample)
+        # The initializer's fourbar target map contains native gravity-biased
+        # arm drive targets. A JointSignalStepper needs the nominal references
+        # so gravity compensation is not applied a second time.
+        probe_sensor['active_targets_rad'][:7]=source_nominal_arm_targets
+        result=run_source_stage_probe(repository=repo,args=args,world=world,robot_data=robot_data,
+            ft_tree=tree,contact_view=probe_contacts,contact_paths=probe_contact_paths,prepared=prepared,
+            metadata=metadata,sensor_sample=probe_sensor,source_rotation=control_record,recipe=source_stage_recipe)
+        print(json.dumps(result,indent=2),flush=True)
+        raise SystemExit(0)
     if args.wrist_reference_loads:
         from te_robot_wrist_reference_loads import run_robot_wrist_reference_loads
         result=run_robot_wrist_reference_loads(repository=repo,world=world,robot_data=robot_data,

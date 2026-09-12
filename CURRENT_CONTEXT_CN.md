@@ -1,106 +1,84 @@
-# 当前任务：第一版视觉全链路装配
+# 当前任务：Isaac Sim第一版视觉全链路装配
 
-核验：2026-09-12 15:39 UTC。用户已明确授权按详细计划自主执行、可据证据修改安排并持续反馈。唯一目标仍为同一回合完成Isaac Sim视觉取件到完整装配；不在局部阶段结束任务。simulation-only，hardware_authorized=false。
+核验：2026-09-12T21:25:58.264884+00:00。用户已授权执行`docs/FIRST_VISUAL_ASSEMBLY_V1_PLAN_CN.md`，可按证据修订并持续反馈。任务未完成，不在局部旋拧成功处结束。simulation-only，hardware_authorized=false。
 
-## 用户最新验收与工作边界
+## 唯一验收边界
 
-唯一目标是：**本回合视觉识别桌面插头 → 原三指手用指甲抓本体并离桌 → 视觉识别本体键与插座键槽 → 搬运、对键插入 → 自然支承后真实换抓螺母 → 原臂旋拧及必要换抓 → 装配到位、松手保持。** 必须同一物理回合，不以已预插入初态、局部PASS、退出码或拼接片段代替。
+同一物理回合：当前桌面RGB-D识别 → 原三指甲抓Body、离桌和保持 → 当前本体键与插座槽视觉 → 搬运/重观察/对键 → 实际插入与自然支承 → 真实松Body、掌面换位、抓Nut → 原臂旋拧和必要换抓 → 原机械到位 → 手脱离并保持至少2s。
 
-用户明确“能否导纳”只是问题，并未强制必须采用导纳。控制方法服从上述链路，不把二阶导纳、导纳扰动试验、电路仿真或参数辨识另立为阻挡第一版的目标。保留有限驱动、原几何/质量/惯量/限位和实际安全边界；15N指—螺母法向上限已取消，16N提砝码与PWM600/750不等于通用接触容量或80%力矩。
+预插入初态、跨回合拼接、命令转角完成、PASS或程序退出均不等于完成。在线只用当前图像、编码器、腕部与底座应变桥对应信号；对象/接触真值只作后评估。禁止隐藏固定、磁吸、启动后改物体/关节实际状态、无限增力、盲扫。导纳不是额外验收要求。
 
-详细计划：[FIRST_VISUAL_ASSEMBLY_V1_PLAN_CN.md](/home/noob/WorkPlace/kcgtest1/docs/FIRST_VISUAL_ASSEMBLY_V1_PLAN_CN.md)。用户已批准执行该计划；当前已完成新版同回合视觉指甲取件、56 mm抬升/2 s保持及抓后识键；正在继续搬运、对键插入和自然支承验证，不在局部阶段结束。
+旧任务“修复J599旋拧后仿真偏斜”01a088b0-0c88-76e0-ac61-1fc9e31682e7已停止，本任务为唯一实施方；不自行恢复旧任务，不主动派子代理。只有一个主要物理试验。无硬件、推送、删除原始artifacts授权。
 
-旧“修复J599旋拧后仿真偏斜”任务01a088b0-0c88-76e0-ac61-1fc9e31682e7已停止交接，最近app核验completed/notLoaded，不自行恢复。本任务为唯一实施方；不主动创建子代理。硬件与推送未授权。
+## 已实际完成的最远阶段
 
-## 已核实的路线和缺口
+R=`artifacts/visual_assembly_v1`。
 
-正式入口候选：`src/kcg_connector/isaac/run_body_assembly_with_video.py`包装`carts_v2/run_grasp_lift.py`；复用已有视觉、Body抓取、搬运/重新观察、入槽/支承、Nut换抓/旋拧/续拧模块，在同一runtime、stepper和场景内连接。不要另写一套大型框架。
+**08 `visual_complete_candidate08`为完整流程的有效比较基线。** 同一回合已完成新视觉指甲取件、约56mm抬升、搬运、两端识键、实际插入7.91056mm、完全卸指后的自然支承、主动掌面70→60、抬高3.5mm的Nut抓位、首20°、松Nut/回腕/再次复抓。第二个90°段在elapsed21.8135s、仅转动约3°时耗尽0.5mm横向力反馈行程；未到位、未最终松手，不能验收。
 
-当前已接通视觉取件、共享机构、搬运和对键的正式路径；最初断点已移入历史。尚需解决：
-1. 新模型无接触探入已到旧6mm深度上限，12mm总行程修改待验证。
-2. 新Nut抓位已解决抽样末段几何干涉，但局部握持的横向合力导致导向摩擦承重、螺纹未充分承载；正在做有界XY力反馈对照。
-3. 同一视觉回合中的主动掌面70→60、正式根力矩夹紧/保持、连续旋拧及安全松手仍待贯通。
-4. 到位必须由实际原止挡、接触和松手保持独立验收；预插入局部试验和转角完成都不能替代。
+08独立结果：
+- `recovered_physical_key_entry_result.json`：真实深度7.91056mm，五键入槽，手—插座正载0，Body—Socket最大穿透约0.394µm。
+- Body自然支承：最终深度7.965875mm，最后0.5s全部手接触0、深度范围0、五键前端在槽内。
+- `source_key_containment_review.json`：已保存范围五键源侧壁最小残差约−0.910µm，在原模型1µm数值参考内。
+- `actual_turn_endpoint_review.json`：首段实际Nut19.4795°、Body−0.0116°、手19.7109°；Body后退0.1468mm、Nut前进0.0912mm。第二段已保存前缀Nut2.3775°、Body0.6787°，均略后退。
 
-## 当前执行进展与最早阻塞
+08控制停机后退出137；旧后处理重建全raw字典可能耗尽内存，但未取得OS直接证明。已保存269824行至step269823，相对控制结束step270165缺341步尾段。各阶段FT/命令/结果完整，不能补造缺失真值。见`interrupted_postprocessing_review.json`。
 
-R=`artifacts/visual_assembly_v1`。当前分支`codex/visual-assembly-v1`，先前基线提交`c928aa7`。无关用户修改、删除标记和原始数据保留。没有推送、硬件动作或删除旧artifacts。旧源码/工作区快照在R/checkpoints/20260912T112851Z。
+04 `visual_body_grasp04`独立证明当前原指甲取件：保持每步三指甲承载Body、无桌面和非NAIL承载、最低抬升56.0199mm；2s保持相对变化1.30µm/0.00349°。抬升过程中抓内变动0.351mm/2.197°，故仍保留搬运后重新观察。抓后主键视觉误差0.013509°仅作后评价。04外部900s超时发生在物理和后评估结束后、最终汇总前，不能冒充正常evaluation；以后无该外部总超时。
 
-**最近完成的有效阶段：`visual_body_grasp04`已实际完成本回合RGB-D定位→三指甲抓Body→抬升约56.02mm→保持2s→抓后新图像识别本体键。** 当前手机构、连接器、原指甲和有限驱动均保持。独立`source_nail_body_review.json`确认保持每一步三根指甲均接触Body；三指所有正载触点投影到原STL指甲shell，无PAD/安装柱/其他物体承载，源面投影最大约.291mm（当前烘焙表示近似，不冒称零几何误差）。保持阶段无桌面接触，最低抬升56.0199mm，手—Body相对变化约1.30µm/.00349°。抬升过程抓内变化约.351mm/2.197°，因此仍保留搬运后重观察。
+05完成全前缀但旧9mm总探入包含3mm空隙，实际只到5.9954mm，探入段无插座接触。canonical改12mm总行程后已在08验证解决。0.20N/0.3mm/s没增加。
 
-04抓后识键误差仅用于独立评价：位置.02968mm，轴角约1.36e-5°，主键角.013509°。初始视觉仅用普通RGB-D、冻结背景/CAD与桌面支承先验，明确没有测键yaw；抓后才测键。初始226个离散检查姿态覆盖17link、所有Body yaw包络、桌面/夹具/插座搜索体积；没有读真实物体位姿来生成动作。
+## 当前最早阻塞与唯一在跑试验
 
-04程序外部900s超时发生在物理动作及独立评价已完成后的最后汇总阶段，退出124，**没有最终evaluation.json，不能伪造它为正常结束**。已保存完整35389步压缩truth、手传动记录、FT、RGB-D、成品mp4和日志中的NAIL_BODY_STABILITY；`physical_stage_review.json`明确记录从这些独立证据恢复阶段结论及超时限制。视频R/visual_body_grasp04/video/assembly_four_view.mp4已给用户打开。下一回合不再附加该不合适的总wall timeout。
+**目前阻塞在第二段旋拧的受载运动控制，尚无连续推进到位证据。** 不重建手或连接器。
 
-已解决的前置故障：01/02按旧Cube桌面时手未靠近插头已漂移约8mm并摇动，下降提前碰到Body；源四杆闭环杆长误差<.3µm，原开手几何下降最小间隙约4.58mm，故没有盲改开手或提高腕门限。03仅换同尺寸、同材质、同变换的12三角面桌面，整个13.03s最大漂移约.007mm，空手接近无碰撞通过；04同样稳定。使用现有`visual_assembly_v1_table_mesh_trial.yaml`保留03物理配置身份，待整合时正式收敛到canonical task配置。不要误切回未启用该选项的旧表面。
+12 `source_stage_restoring12`：相对08加入XY恢复刚度2000N/m，仍在23.6979s耗尽0.5mm，候选无效，不继续增刚度或行程。
 
-已接入：
-- `te_hand_mechanism_runtime.py`将4个电机和非线性四杆包在同一world.step前后，所有共同JointSignalStepper名义目标均由它驱动；初始化后不写实际q/qd或物体位姿。掌面保留全行程和1:1两个支路，已替换局部零宽限位；70→60主动换位仍待换抓时实证。
-- `te_visual_body_start.py`在主`grasp-lift`流程的FTtare/桌面停稳后采图、生成抓取计划并继续原后段。`--visual-body-start`不能初始化到预抓/载入旧视觉。当前视觉轨迹有独立几何检查，03只作为名义物理比较，accepted_preflight_bound=false，不冒充旧preflight验证了新图像。
-- Controller的mimic诊断已由q2−q1改为q2−f(q1)和实际局部导数速度误差。Body夹紧算法/目标保持原设定；原电机K264/D4.4+输出弹性120/黏性2，自锁c1.2等仍开发参考。Body主动cap1Nm，指传动边界3.5Nm、掌面1Nm。
-- 指甲源面定义见`visual_assembly_v1_contact_regions.json`：[11836,12912)指甲shell，后续两安装柱不算NAIL；独立评价入口`evaluate_visual_body_grasp.py`只运行后读取实际体姿态/触点。
-- LocalInterfaceFollowing已改为读正式`visual_assembly_v1_rotation_reference.json`中提取的旧settings，不再依赖9月7日大型结果作为执行输入。
-- 后续Nut接口已修正两个确定性旧假设：开手60°时关闭目标不再携带Body70°；对于新约5°绕轴偏转的canonical抓位，先把平移转成Hand局部量再按当次观察轴/当前手横向基生成目标，不再要求canonical旋转为单位阵。这些仅逻辑/语法检查，尚未动态执行。
+13 `source_stage_xy_hold13`：相对08只在视觉/力准备结束后固定XY参考（偏移范数0.05844mm），恢复刚度回0；越过旧行程停止，29.5375s、命令9.37°时避碰停止，Fxy约10.25N，未完成90°。
 
-**05已结束，当前最早全链阻塞是探入行程不足。** `visual_to_key_entry05`完成新视觉取件、抓后识键、48.69s原臂搬运、搬运后重观察、侧方插座键槽观察及两次图像对准；图像估计的最终对准误差约2.86µm/.0124°。低速探入30s后触发`AXIAL_TRAVEL_LIMIT`，并主动退回3mm前间隙；没有执行松Body或Nut换抓。总180903步，simulation时间188.44s；进程已退出2，最终evaluation、视频、完整压缩truth/FT均保存，identity_hash_check_pass与engine_health_pass都为true。旧evaluation中的controller_completed仅指初始抓起，旧transport.completed也曾错误保留carry成功，不能当全链完成；新代码已修正key-entry失败传播。
+**13最早原因已区分：实际第一指距原Body约4.44mm，距0.8mm保守包络约3.54mm；当前FK和原生位置相差小于0.2µm，手机构不是这次停止原因。名义臂位置与实际受载位置差最多0.00221rad，导致第一指的名义位置相对实际偏出约3.4mm，名义姿态进入Body避碰包络。** 见`body_bound_reference_review.json`和`target_body_bound_review.json`。原旋拧微分IK按受载编码器误差不断积分名义目标，积累对抗接触的目标偏移。不能删除避碰检查来绕过。
 
-`probe_travel_boundary_review.json`独立确认：最大/最后实际Body深度5.9954mm、横向43.79µm、轴倾.1954°、键前端重叠5.17mm、最小槽角余量.1018°、径向余量.1698mm；整个探入段插头—插座正载接触0。旧9mm行程包含起始3mm间隙，因此只能到6mm。已有新模型局部试验初始支承深度约7.963mm。下一正式配置已将有限行程改为12mm（最多约9mm深），0.20N参考/.3mm每秒及其他试探限制不变；该改动待动态验证。
+**14 `source_stage_nominal_ik14`已结束，未完成90°。** 以名义指令姿态积分IK后，原9.4°停止点已越过；同4.2°指令处横向力从13的5.05N降到1.92N。但16.50°指令又在“名义臂+实测手型”的Body包络检查停止。后验记录：实际手转16.56°、Nut8.18°、Body0.545°；Body后退0.434mm，Nut后退0.245mm，说明抓内滑移明显，不只是显示问题。Body估计横向偏差2.684mm、轴向0.688mm；原生Body处名义第一指距0.8mm包络仍有2.07mm，而错误地跟随手的虚拟Body发生碰撞。实际FK仍与原生姿态一致。见14/target_body_bound_review.json及local_motion_review.json。全过程35,485条记录完整，进程已退出0但控制未完成，不能以退出码称成功。
 
-**末段几何阻塞已有候选修正，未改原物理几何。** 使用最新受载手指编码器和当前4bar/绑定烘焙凸块，对要求的旋转及松手姿态做离线CAD检查，原Nut抓位在到位深度第三指碰安装法兰；`loaded_nut_end_clearance_review.json`记录132/1656采样姿态碰撞。上移2.3mm可清除受载干涉，但在最不利轴向位置松手20–30%时仍有32处碰撞。上移3.5mm候选`R/nut_grasp_raise_3p5mm/geometry_plan.json`保持60°掌面、相同三指首次接触角，均为原PAD，Body最小间隙约3.755mm；完整抽样的±.5mm轴向位置均无碰撞，最小手—Socket间隙.7425mm（负轴端）/.9707mm（正轴端）。这是离散几何检查，不是连续或动态到位保证；动态腕偏移还需计入。
+**15 `source_stage_xy_follow15`已结束，仍未完成。** 在名义姿态IK基础上恢复原有XY跟随，elapsed22.4552s、命令约3.15°时用尽0.5mm；滤后Fxy[0.603,-0.312]N，峰侧力约1.008N。实际手3.155°、Nut2.341°、Body0.644°，Body/Nut均退约0.115mm；Body估计横向误差约0.429mm。原生/名义指位对真实Body包络均仍有约3mm间隙，没有实际碰撞。完整23,477行，进程退出0但控制失败。
 
-**06局部20°试验已完成，但不算螺纹推进通过。** `raised_nut_twist06`使用上述抬高抓位、正式`HandMechanismRuntime`四个电机（包含完整行程、非零宽限位的主动掌面）和已验证根力矩候选。22512步/23.45s，无传动失败，实际Nut约19.675°、Body约.375°；所有记录的手接触对象只有三末节—Nut，按每8物理步保存的正载触点全为源PAD（最大投影残差8.32µm），最终.5s所有手接触负载0。独立`local_physical_review.json`保存这些边界。
+14离线进一步确认：准备结束实际Body倾角0.0817°（旧刚性关系估计0.00145°），转动末实际0.5176°。主要偏斜在受载旋拧中发展。当前实际PAD/Nut材料均µ0.45，combine=max（源配置嵌套历史估计1.4不代表当前材质）。14末三指正法向合量约[7.12,25.76,18.83]N，第三指传动3.470Nm逼近3.5边界。离线8接触点库仑锥、零合力/零弯矩与既有4驱动cap的静态纯扭容量：起始约0.702–0.739Nm，末约0.785–0.829Nm；限制到实测各指正常载荷时更低。只是当前接触布局的静态估计，不是全抓法不可能或硬件额定。记录在14/grasp_torque_capacity*.json与contact_material_review.json。
 
-06揭示实际推进问题：转动期间Nut仅前进.1724mm，Body反而后退.0201mm；末段握持时Nut—Socket法向接触为0，松手后Body/Nut又自然下降约.252mm才形成Nut—Socket承载。腕部横向合力峰13.21N、末段约7.14N，轴向约.597N已接近自重参考.613N。主要假设是偏心夹持造成导向侧摩擦承重，使自重参考满足而螺母尚未充分入扣；不能把转角完成叫装配推进成功。
+**当前唯一主要试验16 `source_stage_grip_balance16`，exec session40178。** 相对14固定XY/名义IK，只启用已有腕部横向力驱动三指载荷重分配分支，适配当前原PAD CAD点和共享机构。模型增量和为0，各指幅度8N，响应1/s；不声称实际总法向力严格恒定。以当前电机264、载荷摩擦1.2和传动K120推得闭合方向等效位置刚度60Nm/rad，替代旧分支误用的legacy K12换算；8N对应约0.020–0.023rad位置调整，分配矩阵条件数1.45。源驱动cap、夹紧预加载基准、力/速度/行程/几何边界不变。用于检验主动指间分配能否减少偏载和滑移，不扩大XY范围。源码/配方/命令均有同名绑定，恢复先核对实际进程。
 
-**07已完成，准备下一次正式全链执行。** `raised_nut_xy_follow07`仅启用现有有界XY力反馈（.15mm/s、.5mm范围），其他参数同06；无中止，实际Nut转19.643°，转动期间Body后退.0290mm、Nut前进.2230mm，Nut—Body轴向相对位移约.252mm。横向力峰由13.21N降至2.908N、末段由约7.14N降至.872N，实际腕偏移最大.286mm；握持末段Nut—Socket法向承载约2.862N，松手后约.663N。几何/短转允许继续检查间隙消除后的推进，但不能称Body装配推进已通过。结果见07/local_physical_review.json。两个局部试验都不是视觉验收回合。
+12–16使用`te_source_stage_probe.py`：从08已结束的step249224冷初始化作局部诊断，复用正式`run_body_nut_rotation`/共享机构/当前RGB-D/同一传感器，不可当完整视觉验收。保留源空载FT零点与四电机输入角/速度；初始化后不回写实际q/qd/对象姿态。09–11只是入口问题：FT阶段合同、缺照明、观测标签及重复重力补偿，不能作物理控制结论。修复后预热腕位置变动8µm横向/39µm轴向。
 
-下一正式入口拟输出`visual_complete_candidate08`，从新视觉取件起点连续运行：12mm有限探入、自然支承、主动掌面换位、抬高3.5mm的Nut夹持、20°首段及90°分段和最终释放。全部姿态/力控制仍需该回合实际验证。Canonical的Nut几何已提取到`config/visual_assembly_v1_nut_geometry.json`并绑定源计算/短转证据，不再把历史Body配置当作其关闭端点来源。正式转动启用.5mm有界XY跟随，增益/速度与已有对照一致，轴向自重参考不增加。
+下一步：读取16实际结果；按真实螺母转动、本体推进、抓内滑移与源接触决定后续。14也证明旧手—Body刚性关系不能长时间用于避碰位置，应在需要时使用当前RGB-D更新，而不能放宽包络或读真值代替。尚未把候选提升到canonical；准备的完整回合命令仅为draft，未执行。
 
-`diagnose_saved_hand_wrench.py`新增`--shared-hand-mechanism`以使用同一四电机模型；不再给这两个局部试验使用零宽掌面锁。局部入口仍有真值位移护栏和历史快照初始化，只允许诊断，正式路径不依赖它。06首次命令因本工具wall限制最大600s被参数校验拒绝、未启动物理；该日志独立保留。修正为600s内部循环限制后正常完成，没有外部强杀计时器。
+## 主线和控制事实
 
-**当前源码/配置未全部提交。** 最近提交`744cdd1`保存共享机构＋视觉指甲抓取及压缩记录；`c928aa7`为更早检查点。之后新增/修改包括：
-- Canonical`visual_assembly_v1_task.yaml`采用已通过的同形三角桌面、12mm探入、抬高3.5mm的60°Nut抓位，以及待验证的正式根力矩夹紧（1.7571/1.25/1.2535Nm，1.5s渐升/2s总时长，120Nm/rad换算、1/6s修正时间尺度、3.5Nm有限电机）。夹紧后冻结目标。未来20°首段＋90°分段＋最终松手，尚未实际贯通。
-- 新的`run_body_nut_regrasp`根力矩分支已写好，使用底座力矩定义及姿态重力差；只在Nut阶段将旧.9Nm观测参考改为record_only，驱动仍有限。Nut受载阶段观测20N/.4Nm/4.6Nm取自已用局部参考和新模型记录，旧.04Nm源于已淘汰.02Nm阻力，不再作为新版拧紧门。均不是厂家手/传感器额定。实际正式夹紧/旋拧尚未运行。
-- 原Nut接口旋转5°/掌面70→60错误已修正并提交；受载力矩新分支仍待验证。根据07结果再决定正式XY力反馈范围/启用时刻，不要盲加轴向力。
-- `compare_nominal_scene_scope`允许canonical配置路径及后段控制设置更新时复用03的名义物理比较；严格核对collision、physics_numerics、passive_joint_solver、grounding_band_contact_model、validated_connector及所有其他绑定。新视觉轨迹依旧独立检查，accepted_preflight_bound=false；不伪造旧preflight覆盖新任务。
-- 正式初始/抓后观测现在只保存RGB-D/编码器及对应步号，真值误差比较统一移到所有动作结束后从原始归档读取。旧04/05保存方式不回改。
-- `trace_metadata.py`添加兼容普通/压缩truth的流读取及逐行gzip JSON数组写入；已有support/full-key评价器已适配压缩流。`GzipSampleStore`控制原始流内存已在05验证，取件轨迹与04完全重现。但05旧FT整体转换/汇总曾临时升至约49GB、随后回落；现改为逐条JSON序列化，避免整体深拷贝。旧evaluation内约399MB的大数组将单独无损压缩保存、汇总只留索引；既有05两个399MB文件保留。
-- 保存后处理微基准发现GC扫描使读取2400条约.86s，对比关闭循环GC约.51s；只在运行后JSON树分析中临时关闭循环GC，不改变物理步或运行中GC。格式兼容/无损小检查已通过，相关源码语法通过，下一回合将验证长流程输出。
+正式入口：`src/kcg_connector/isaac/run_body_assembly_with_video.py` → `carts_v2/run_grasp_lift.py --visual-body-start`。复用同一world/stepper的视觉、Body抓取、搬运、观察、入槽、支承、换抓、旋拧、续拧。
 
-下一步：收07实际转角、Body/Nut推进、接触和横向力变化，必要时只做能区分原因的局部动作；确定Nut夹持/跟随方式后，尽快用canonical配置从新视觉起点执行完整链。不要把局部诊断的初态、真值护栏或姿态读回接入正式控制；完整装配、终止/松手保持、主动70→60转换仍未取得同一视觉回合证据。
+- `visual_assembly_v1_body.yaml`和`visual_assembly_v1_task.yaml`为canonical。任务采用同形12三角桌面（Cube导致接近前漂移约8mm；同形mesh约0.007mm）、12mm总探入、3.5mm上移Nut抓位、首20°后90°分段。XY参数仍是08的原模式，尚未提升失败诊断候选。
+- 原Body控制保留底座力矩误差修正位置参考；目标约[0.489391,0.432955,0.407838]Nm，掌面70°。NuT根力矩目标[1.7570975,1.25,1.2535247]Nm，1.5s渐升/2s夹紧，120Nm/rad换算、1/6s修正尺度、0.15rad/s；之后冻结位置目标。08夹紧实际根力矩约[1.62,1.14,1.15]Nm，不冒称精确力矩伺服。
+- `te_hand_mechanism_runtime.py`共享4电机PD+有限passive_split蜗杆等效模型；4bar每步硬切线mimic，掌面保留完整限位及1:1两支路。Body输出等效主动cap1Nm，Nut掌1/指3.5Nm；传动结构边界掌1/指3.5Nm。输入等效cap=(1+c)*输出cap。Ktrans120、Dout2、PD264/4.4、c1.2均开发参考，未硬件辨识。初始化后不写实际状态。
+- 力桥贴底座双桥，标定M=F*l绕根轴，不是电机转矩；无需先仿真ADC电路。原驱动模式仍可通过改位置参考主动退让，用户不要求强制导纳。
+- NuT准备轴向0.20N，转动0.612729N对应原自重，未额外加压；轴向0.3mm/s/4mm范围，臂0.075rad/s，转动2°/s。Nut观测20N/弯矩0.4Nm/扭矩4.6Nm，源于当前模型和局部候选，不是厂家额定；原0.04Nm来自淘汰模型。
+- 末段原抓位第三指碰Socket法兰。3.5mm上移只改抓位；离散覆盖旋角0–355°、深度4/9/14.605mm、轴向±0.5mm及松手路径，最小间隙0.7425mm。不是连续动态保证。canonical geometry：`src/kcg_connector/config/visual_assembly_v1_nut_geometry.json`。
+- 06/07局部20°相同新抓位对照：启用XY力跟随后横向峰13.21→2.908N、末段7.14→0.872N，最大偏移0.286mm，握持末端产生Nut—Socket承载；Body尚未向前推进，不能冒称旋合完成。
 
-## 有效资产与证据边界
+## 当前有效模型与运行条件
 
-M=`artifacts/kcg_connector/te_connector_contact_repaired_20260911`：connector_model.usdc、install_model.py、validation_manifest.json为有效连接器。CPU/TGS960Hz、64位置/4速度迭代、每迭代外力、至少32768接触记录；安装在第一次reset/张量读者创建前，保留原质量和位姿，不安装验收转台。模型已自包含USD且无未解析依赖。单体完整旋紧/旋开、键槽、止挡、簧套、保持与错误接触过滤证据可复用，未测参数边界仍保留。
+M=`artifacts/kcg_connector/te_connector_contact_repaired_20260911`：自包含`connector_model.usdc`、安装器、validation_manifest；保留原几何、质量、质心、惯量、限位。单体原机构已完整旋紧/旋开，约355.7°/14.605mm/128簧套，正向峰3.0816Nm、反向4.2118Nm。原止挡`SourceMetalStopBox`，簧套按`/Leaf_`前唯一组计128。
 
-正式机器人资产：`artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda`，另外依赖10个USD层，主要位于旧robot/handarm_keyed_v3_physical_r7目录，不能按日期整目录删。源手STL/URDF未改。
+Body—Nut工作轴隙±0.5mm，数值备份±0.6mm，后验拒绝≥0.5999mm；正常基线最大约0.553mm。原五键总角间隙约0.85118°，侧壁评价数值参考1µm。源内部摩擦0.20、外部0.45，不冒称厂家测定。
 
-A=`artifacts/hand_mechanism_audit_20260912`。SW包完整，原件及提取在A/source/1。手指外部传动240:1、掌面每支66⅔:1；不代表额定或效率。四杆10–70–10–68mm，约0–80°累计角差f1 .471°/f2 .751°/f3 .472°，.876是局部导数。共享FK/Jacobian/速度和约束候选已有测试和单指实际运动证据；物理参数仍是开发参考，不是硬件辨识。
+原指甲机器人：`artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda`，SHA256 4e220d97f3e12594c82dd6879cb584fd79cfd9264289a71e2383e43f53e6d46e；仍依赖10个旧层，见`docs/assembly_v1_usd_dependencies_20260912.json`，不能按旧目录删除。NAIL源面[11836,12912)，安装柱不算指甲。
 
-手指应变片在底座双桥，标定量为绕O外载力矩M=F*l。正反5N单指检查支持当前根力矩语义；无需ADC电路仿真。WormDrive的passive_split＋电机PD在局部整机whole_hand_worm_grip_trial25完成预插入起点5.7s抓持/保持/松手：正载接触均Nut原PAD，保持相对变化约0.025mm/0.054°，末0.5s手接触0。**这不是指甲抓Body、视觉取件或旋拧通过。** 该试验约1–3s更新手指力反馈目标，随后冻结；最终打开是预设轨迹，不能当导纳扰动退让验证。
+SW完整包在`artifacts/hand_mechanism_audit_20260912/source/1`；四杆10–70–10–68mm，真实非线性函数在`finger_fourbar.py`和`hand_fourbar_20260912.json`。外部指传动240:1、掌面每支66⅔:1；不表示硬件效率/额定。
 
-旧Body证据：isaac/te_body_assembly_20260905/grasp_assembly_01抬升约56.27mm、保持2s；key_entry_02有当前图像对键并实际入槽证据。均旧模型条件，且初始抓取不能自动算视觉指甲抓取。旧transport_03抓内记忆漂移约1.2mm/6.3°，因此保留搬运后重新观察。
+CPU/TGS960Hz、64位置/4速度迭代、每迭代外力、contact cap32768；原安装器在第一次reset前运行。启动：`PYTHONPATH=src/kcg_connector src/kcg_connector/isaac/run_isaac_python.sh ...`。离线环境`.venv/bin/python`有ijson/fcl等；不要用系统python假定有ijson。
 
-旧无指甲G/segmented_full_mating_release_trial33仅作分段流程对照；旧有指甲N/successful60_full_mating03虽至约353.64°/14.604856mm，但第三指碰插座5.649N、松手第二指回碰.752N且手机构旧，未验收。G=artifacts/kcg_connector/grasp_comparison_20260911；N=artifacts/kcg_connector/nail_present_grasp_20260912。
+## 记录、后评价与版本
 
-## 实施顺序
-
-0. 固定审阅后的代码/配置/资产清单与可复现环境；新日志止增，旧压缩不成为前置大工程。
-1. 将新机构及电机驱动放到正式公共步进器，解决主动掌面换位与分阶段接触面，衔接视觉抓取返回和后续装配。
-2. 新图像定位→指甲抓Body→离桌/保持；失败就在此修复，不跳过验收第一段。
-3. 抓后键位识别→搬运→本体重观察＋插座槽观测。
-4. 当前图像对键→有界低速插入→确认自然支承。
-5. 真实松Body/改布局/重观察→抓Nut，并预查完整轴向范围及最后松手的手—插座间隙。
-6. 短段实际旋拧→必要分段/换抓→继续推进；主要未知是有限驱动下的后段扭矩传递与干涉，不凭腕角/力升高算成功。
-7. 在线可用信号判断终止、实际松手保持；真值只作运行后完整机械验收。
-8. 同一新回合从视觉起点贯通全部链路，冻结首次成功版本及原始证据。随机统计、泛化、硬件和论文均后置。
-
-## 版本和存储核验
-
-盘点开始时HEAD68b51f8（9月10日），分支codex/connector-assembly-recovery-20260909；16个tracked修改、2个tracked删除、113个untracked文件。本轮又新增计划/索引文档。新四杆、自锁和较新旋拧控制文件有未跟踪项，HEAD不能代表当前工作区。
-
-artifacts实占596259520512字节≈555.31GiB、71940文件；JSON/JSONL逻辑大小≈439.24GiB。旧大trace和jsonl可能重复但未逐项证明；无损压缩归档/引用解除后才能按具体清单处理。磁盘约998GiB可用，不是当前执行硬阻塞。原数据、失败证据和未提交用户资产保留；当前只做了盘点。
-
-审计文件：`docs/assembly_v1_route_manifest_20260912.json`（27项主组件、hash、git状态）；`assembly_v1_storage_version_inventory_20260912.json`（文件/空间/版本）；`assembly_v1_usd_dependencies_20260912.json`（USD依赖）。全部Python/配置的条件依赖与视觉模型环境版本尚未封闭，不冒称发布包已完成。
-
-前一完整工作状态保存在`docs/history/CURRENT_CONTEXT_CN_20260912_before_full_visual_route_plan.md`；其他历史继续只作追溯，不恢复旧参数/局部目标为当前验收。
+- `GzipSampleStore`每512行独立gzip块，缓存2块，完整保留原始采样；长实验不整体复制raw。08后已修正`_evaluate_key_entry_after_motion`按step有序流合并，恢复08峰内存约290MB；物理结束立即封存raw，再进入后评价，避免再次丢尾段。
+- 当前视觉在线记录仅图像、编码器和步号；GT误差分析统一在运动后读取归档。FT逐行gzip输出和大型评价数组外置无损gzip，旧证据不改。
+- 独立脚本：`evaluate_visual_body_grasp.py`、`evaluate_body_support.py`、`evaluate_source_nut_pad.py`、`evaluate_source_key_containment.py`、`evaluate_visual_assembly_v1.py`。最终综合脚本尚未得到成功回合；最终红带/到位可见性审阅尚未落盘，不能假设已有。
+- 当前分支`codex/visual-assembly-v1`，最近提交0db8f15（封存raw/流式后评价），前2f8f436（探入/Nut候选），前744cdd1（共享机构/视觉取件）、c928aa7。之后后评价/流式收尾/局部诊断和此次IK修正未全部提交。仅暂存本任务源码和文档；无关修改/删除标记/未跟踪文件属于用户资产。
+- 初始快照R/checkpoints/20260912T112851Z。路线清单`docs/assembly_v1_route_manifest_20260912.json`、存储版本盘点同目录。旧artifacts约555GiB，不作为当前前置清理任务；无删除。
+- 本次收敛前的完整活动文档：docs/history/CURRENT_CONTEXT_CN_20260912T202917Z_before_nominal_ik_diagnosis.md。更早历史仅供追溯，不恢复旧参数/授权。

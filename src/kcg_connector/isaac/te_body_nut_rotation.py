@@ -382,16 +382,38 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 raise ValueError("grip redistribution requires the retained preparation pose and its own finger-position feedback")
             balance_rate = float(balance["response_rate_s_inv"])
             balance_bound = float(balance["maximum_model_normal_redistribution_n"])
-            if not (0 < balance_rate <= 1. and 0 < balance_bound <= 1.):
-                raise ValueError("this load-distribution diagnostic is bounded to 1/s and 1 N per modeled contact")
+            mechanism = getattr(world, "hand_mechanism", None)
+            balance_bound_limit = 8. if mechanism is not None else 1.
+            if not (0 < balance_rate <= 1. and 0 < balance_bound <= balance_bound_limit):
+                raise ValueError("load redistribution exceeds its declared response or per-finger range")
+            if mechanism is not None:
+                # Closing-side static series compliance of the existing motor
+                # PD and worm output spring. This is a model conversion, not a
+                # claim that distributed contact-normal forces are measured.
+                ms = mechanism.settings
+                balance_stiffness = 1. / (1. / float(ms["transmission_stiffness_nm_rad"])
+                    + (1. + float(ms["load_friction_ratio"])) / float(ms["motor_position_kp"]))
+            else:
+                balance_stiffness = float(dynamic["hand_stiffness"])
             balance_geometry = json.loads((repository / balance["geometry_plan"]).read_text())
-            balance_rows = balance_geometry["rows"]
+            if "first_contacts" in balance_geometry:
+                from te_three_finger_wrench_observer import ThreeFingerWrenchObserver
+                cad_points = ThreeFingerWrenchObserver(repository, inputs.robot_model,
+                    repository / balance["geometry_plan"],
+                    sensor_semantics="BASE_BRIDGE_EXTERNAL_MOMENT_ABOUT_O")
+                balance_rows = balance_geometry["first_contacts"]
+                balance_points_local = cad_points.points_local
+                balance_points_body = [row["nearest_nut_point_before_contact_body_frame_m"] for row in balance_rows]
+            else:
+                balance_rows = balance_geometry["rows"]
+                balance_points_local = {row["link"]: row["first_contacts"]["full_cooked_fingertip"]["point_in_link_m"] for row in balance_rows}
+                balance_points_body = [row["first_contacts"]["full_cooked_fingertip"]["approach_side_nearest_point_object_m"] for row in balance_rows]
             if tuple(row["link"] for row in balance_rows) != ("f1Link3", "f2Link2", "f3Link3"):
                 raise ValueError("expected the existing three-finger CAD contact plan")
             body_from_hand = np.asarray(balance_geometry["canonical_body_from_hand_for_nut_grasp"])
             normals_hand = []
-            for row in balance_rows:
-                point = np.asarray(row["first_contacts"]["full_cooked_fingertip"]["approach_side_nearest_point_object_m"])
+            for point in balance_points_body:
+                point = np.asarray(point)
                 radial = np.r_[point[:2]/np.linalg.norm(point[:2]), 0.]
                 normals_hand.append(body_from_hand[:3, :3].T @ radial)
             normals_hand = np.asarray(normals_hand)
@@ -400,6 +422,8 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 **balance, "source": "WRIST_FT_CURRENT_ENCODERS_AND_EXISTING_OFFLINE_CAD",
                 "normal_directions_hand": normals_hand.tolist(),
                 "sum_model_normal_corrections_reference_n": 0.,
+                "closing_side_model_position_stiffness_nm_rad": balance_stiffness,
+                "actual_total_normal_force_preservation_claimed": False,
                 "model_normal_force_mapping_calibrated": False,
                 "object_or_contact_truth_used": False,
                 "original_motor_wrench_and_position_limits_retained": True}
@@ -861,7 +885,7 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                     balance_reference = hand_target.copy()
                     levers = []
                     for row, normal, joint in zip(balance_rows, normals_hand, ("f1j2", "f2j1", "f3j2")):
-                        point = row["first_contacts"]["full_cooked_fingertip"]["point_in_link_m"]
+                        point = balance_points_local[row["link"]]
                         J = inputs.robot_model.geometric_jacobian(row["link"], tuple(q),
                             point_local_m=point, enforce_limits=False)
                         col = inputs.robot_model.independent_joint_names.index(joint)
@@ -884,7 +908,7 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 # Positive closing motion raises outward pad normal reaction.
                 # This uses the existing finite native spring, not an object force.
                 balance_target = balance_reference.copy()
-                balance_target[1:] += balance_levers/float(dynamic["hand_stiffness"])*balance_offset_n
+                balance_target[1:] += balance_levers/balance_stiffness*balance_offset_n
                 balance_target = np.clip(balance_target, lower_hand, upper_hand)
             control_sample = _json_ready({"step": int(stepper.step_index), "elapsed_s": elapsed,
                 "commanded_rotation_deg": float(np.rad2deg(angle * fraction)),
@@ -942,12 +966,27 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 (output / "nut_rotation_progress.json").write_text(json.dumps({
                     "stage": record["stage"], "sample_count": record["sample_count"],
                     "latest_control_sample": control_sample}, ensure_ascii=False) + "\n")
-            jacobian = np.asarray(inputs.robot_model.geometric_jacobian("handbase_link", tuple(q)))[:, :7]
-            radius = current[:3, 3] - hand[:3, 3]
+            ik_reference = settings.get("arm_kinematic_reference", "measured_pose")
+            if ik_reference not in ("measured_pose", "commanded_pose"):
+                raise ValueError("unsupported arm kinematic integration reference")
+            if ik_reference == "commanded_pose":
+                # Integrate the kinematic trajectory from its own nominal
+                # configuration. Feeding the loaded encoder deflection back
+                # into this integrator would continuously wind up the native
+                # PD position target against a constrained connector. Actual
+                # encoder motion still drives force/travel/geometry checks.
+                ik_q = np.r_[arm, q[7:]]
+                ik_hand = np.asarray(inputs.robot_model.forward_kinematics(
+                    tuple(ik_q), enforce_limits=False)["handbase_link"])
+                ik_pivot = ik_hand @ hand_from_pivot
+            else:
+                ik_q, ik_hand, ik_pivot = q, hand, current
+            jacobian = np.asarray(inputs.robot_model.geometric_jacobian("handbase_link", tuple(ik_q)))[:, :7]
+            radius = ik_pivot[:3, 3] - ik_hand[:3, 3]
             skew = np.asarray([[0., -radius[2], radius[1]], [radius[2], 0., -radius[0]], [-radius[1], radius[0], 0.]])
             point_jacobian = np.vstack((jacobian[:3] - skew @ jacobian[3:], .05 * jacobian[3:]))
-            error = np.r_[desired_pivot[:3, 3] - current[:3, 3],
-                .05 * Rotation.from_matrix(desired_pivot[:3, :3] @ current[:3, :3].T).as_rotvec()]
+            error = np.r_[desired_pivot[:3, 3] - ik_pivot[:3, 3],
+                .05 * Rotation.from_matrix(desired_pivot[:3, :3] @ ik_pivot[:3, :3].T).as_rotvec()]
             lateral_feedforward = (combined_alignment_velocity_world
                 if combined_alignment_velocity_world is not None else
                 lateral_delta*align_rate + socket[:3, :2] @ planar_velocity)
@@ -965,9 +1004,15 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             # the body avoidance mesh already covers every unobserved body yaw.
             body_bound[:3, :3] = predicted_body_rotation
             locate_bounds(body_bound)
-            hit = check(q[:7], q[7:], nut_contact=True) or check(arm, q[7:], nut_contact=True)
+            hit = check(q[:7], q[7:], nut_contact=True)
+            checked_pose = "measured_pose"
+            if hit is None:
+                hit = check(arm, q[7:], nut_contact=True)
+                checked_pose = "commanded_arm_with_measured_hand"
             if hit is not None:
-                record["geometry_stop"] = hit
+                record["geometry_stop"] = {**hit, "checked_pose": checked_pose,
+                    "step": int(stepper.step_index), "measured_joints_rad": q.tolist(),
+                    "commanded_arm_rad": arm.tolist(), "visual_body_bound": body_bound.tolist()}
                 raise RuntimeError(f"current robot or visual Body avoidance check: {hit}")
             # Retain the grip reference and finite preload interval. Optional
             # relaxation slows target corrections driven by raw projected
