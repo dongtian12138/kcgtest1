@@ -100,3 +100,8 @@ def test_moving_position_reference_damps_velocity_error_instead_of_the_trajector
     _,offset=gravity_biased_arm_target(*args,velocity_reference_rad_s=v[0]-.01)
     assert np.allclose(offset['pd_effort_nm'],-1.6)
     assert held['drive_target_rad']==moving['drive_target_rad']
+    target,loaded=gravity_biased_arm_target(*args,velocity_reference_rad_s=v[0],load_feedforward_nm=[10.]*7)
+    assert np.allclose(target,.004)
+    assert loaded['pd_effort_nm']==[0.]*7
+    assert np.allclose(loaded['load_feedforward_nm'],10.)
+    assert np.allclose(loaded['applied_gravity_equivalent_nm'],0.)

@@ -74,7 +74,7 @@ parser.add_argument("--assembly-config",type=Path,
                     help="Explicit local physical-model configuration; defaults to the sealed source configuration.")
 parser.add_argument("--mounted-grasp-recipe",type=Path,
                     help="Explicit fixed-Nut laboratory grasp/torque recipe, not an assembly run.")
-parser.add_argument("--velocity-iterations", type=int, choices=(0,1,4), default=1)
+parser.add_argument("--velocity-iterations", type=int, choices=(0,1,4,16), default=1)
 parser.add_argument("--contact-convergence-check", action="store_true")
 parser.add_argument("--diagnostic-center-socket-before-start", action="store_true")
 parser.add_argument("--main-read-sequence", action="store_true",
@@ -370,10 +370,13 @@ if args.frozen_connector_model is not None:
                        and ((args.physics_hz==480 and args.interface_control_decimation==2
                              and args.interface_twist_deg is not None)
                             or (args.source_stage_probe is not None and args.physics_hz in (240,480))))
+    balanced_iterations=bool(experimental_rate and source_stage_recipe
+        and source_stage_recipe.get('balanced_cpu_iteration_budget',False)
+        and (args.physics_hz,args.position_iterations,args.velocity_iterations)==(240,255,16))
     if (not args.free_plug_in_socket or (args.physics_device!='cpu' and not experimental_gpu)
             or (args.cpu_wrist_reference is None and not args.source_stage_probe)
             or (args.physics_hz!=required['physics_hz'] and not experimental_rate)
-            or any(getattr(args,k)!=required[k] for k in ('position_iterations','velocity_iterations'))):
+            or (not balanced_iterations and any(getattr(args,k)!=required[k] for k in ('position_iterations','velocity_iterations')))):
         parser.error('The delivered connector requires its declared CPU runtime configuration and a CPU wrist reference')
 if args.experimental_connector_gpu_comparison and not (args.frozen_connector_model and args.physics_device=='cuda:0'
         and args.gpu_host_readback and args.interface_twist_deg is not None):
@@ -419,6 +422,7 @@ app = SimulationApp({"headless":args.probe_additional_turn_deg is None,"multi_gp
                                    +(["--/physics/fabricUseGPUInterop=true"] if args.fabric_gpu_interop else []))})
 failed=False
 requested_exit_code=0
+previous_physics_dispatch_settings=None
 try:
     import carb
     import numpy as np
@@ -527,6 +531,20 @@ try:
             physical_sample["arm_control"]["hand_joint_diagnostic"]["joints"][name]["position_rad"]=float(value)
     dt=1/float(args.physics_hz)
     half_second=round(.5/dt)
+    if source_stage_recipe and source_stage_recipe.get('serial_physx_dispatcher',False):
+        from omni.physx import get_physx_interface
+        from omni.physx.bindings._physx import SETTING_NUM_THREADS,SETTING_PHYSX_DISPATCHER
+        if args.physics_device!='cpu':raise ValueError('the local serial dispatcher comparison requires CPU physics')
+        settings_store=carb.settings.get_settings()
+        previous_physics_dispatch_settings={SETTING_NUM_THREADS:settings_store.get(SETTING_NUM_THREADS),
+            SETTING_PHYSX_DISPATCHER:settings_store.get(SETTING_PHYSX_DISPATCHER)}
+        settings_store.set_bool(SETTING_PHYSX_DISPATCHER,True)
+        settings_store.set_int(SETTING_NUM_THREADS,0)
+        get_physx_interface().set_thread_count(0)
+        (args.output/'physics_dispatcher_comparison.json').write_text(json.dumps({
+            'previous':previous_physics_dispatch_settings,
+            'actual':{k:settings_store.get(k) for k in previous_physics_dispatch_settings},
+            'restore_before_application_close':True,'physics_model_timestep_iterations_unchanged':True},indent=2)+'\n')
     SimulationManager.set_physics_sim_device(args.physics_device)
     carb.settings.get_settings().set_bool(SETTING_DISABLE_CONTACT_PROCESSING,False)
     world=World(stage_units_in_meters=1.,physics_dt=dt,rendering_dt=dt if args.standard_render_steps else 1/60,
@@ -864,6 +882,26 @@ try:
             PhysxSchema.PhysxArticulationAPI(prim).CreateSolverVelocityIterationCountAttr(args.velocity_iterations)
         if prim.HasAPI(UsdPhysics.RigidBodyAPI):
             PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr(0.)
+    if source_stage_recipe and source_stage_recipe.get('balanced_cpu_iteration_budget',False):
+        if not balanced_iterations:raise ValueError('the declared balanced iteration comparison must be CPU240Hz/255/16')
+        scene.CreateMinPositionIterationCountAttr(args.position_iterations)
+        scene.CreateMaxPositionIterationCountAttr(args.position_iterations)
+        counts={'rigid_bodies':0,'articulations':0}
+        for prim in stage.Traverse():
+            if prim.HasAPI(UsdPhysics.RigidBodyAPI):
+                api=PhysxSchema.PhysxRigidBodyAPI(prim);counts['rigid_bodies']+=1
+                api.CreateSolverPositionIterationCountAttr(args.position_iterations)
+                api.CreateSolverVelocityIterationCountAttr(args.velocity_iterations)
+            if prim.HasAPI(PhysxSchema.PhysxArticulationAPI):
+                api=PhysxSchema.PhysxArticulationAPI(prim);counts['articulations']+=1
+                api.CreateSolverPositionIterationCountAttr(args.position_iterations)
+                api.CreateSolverVelocityIterationCountAttr(args.velocity_iterations)
+        (args.output/'balanced_iteration_comparison.json').write_text(json.dumps({
+            'baseline_hz_position_velocity':[960,64,4],'actual_hz_position_velocity':[240,255,16],
+            'baseline_position_iterations_per_second':61440,'actual_position_iterations_per_second':61200,
+            'velocity_iterations_per_second':3840,'configured_actor_counts':counts,
+            'geometry_material_inertia_effort_boundaries_changed':False,
+            'accuracy_requires_current_physical_review':True},indent=2)+'\n')
     contact_capacity=(max(4096,int(prepared["contact_recording"].get("minimum_contact_records",4096)))
                       if args.free_plug_in_socket else 4096)
     contact_filter_arguments={} if args.raw_contact_only else {'contact_filter_paths':contact_filters}
@@ -871,13 +909,15 @@ try:
         'raw_unfiltered_records_only':args.raw_contact_only,'sensor_count':len(hand_paths),
         'legacy_filter_count':len(contact_filters),'record_capacity':contact_capacity,
         'collision_filters_and_contact_materials_changed':False},indent=2)+'\n')
-    contacts=RigidPrim(hand_paths,resolve_paths=False,**contact_filter_arguments,max_contact_count=contact_capacity)
+    efficient_probe_views=bool(source_stage_recipe and source_stage_recipe.get('omit_unused_contact_collectors',False))
+    contacts=RigidPrim(hand_paths,resolve_paths=False,
+        **({} if efficient_probe_views else {**contact_filter_arguments,'max_contact_count':contact_capacity}))
     probe_contact_paths=([str(p.GetPath()) for p in stage.Traverse() if p.HasAPI(UsdPhysics.RigidBodyAPI)
                           and str(p.GetPath()).startswith("/World/HandArm/")] + [body_path,fixture_path]
                          if args.probe_additional_turn_deg is not None or args.source_stage_probe else [])
     probe_contacts=(RigidPrim(probe_contact_paths,resolve_paths=False,**contact_filter_arguments,max_contact_count=contact_capacity)
                     if probe_contact_paths else None)
-    static_part_contact_recording = args.free_plug_in_socket and args.probe_additional_turn_deg is None
+    static_part_contact_recording = args.free_plug_in_socket and args.probe_additional_turn_deg is None and not efficient_probe_views
     parts=RigidPrim([body_path,fixture_path] if args.free_plug_in_socket else [fixture_path],resolve_paths=False,
         **({**contact_filter_arguments,'max_contact_count':contact_capacity}
            if static_part_contact_recording else {}))
@@ -1855,6 +1895,10 @@ except Exception:
 finally:
     if locals().get('shared_hand_runtime') is not None:shared_hand_runtime.close()
     if locals().get('worm_stream') is not None:worm_stream.flush();worm_stream.close()
+    if previous_physics_dispatch_settings is not None:
+        for name,value in previous_physics_dispatch_settings.items():
+            if value is None:carb.settings.get_settings().destroy_item(name)
+            else:carb.settings.get_settings().set(name,value)
     # The finite interface check saves its frames, video and samples itself.
     # Do not wait on stage teardown after those artifacts are complete.
     if args.interface_twist_deg is not None:

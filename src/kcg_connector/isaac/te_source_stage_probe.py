@@ -108,6 +108,8 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         'experimental_comparison':bool(args.experimental_connector_time_resolution),
         'validated_960hz_connector_results_transfer_automatically':False}
     started=perf_counter()
+    if recipe.get('adaptive_fourbar_updates',False):
+        world.hand_mechanism.adaptive_tangent_settings={'closure_tolerance_m':1e-8,'maximum_slope_error':1e-4}
     try:
         world.play()
         warmup=float(recipe.get('warmup_s',2.))
@@ -209,16 +211,18 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             speed=float(profile['maximum_rotation_speed_deg_s'])
             acceleration=float(profile['maximum_rotation_acceleration_deg_s2'])
             arm_speed=float(profile['maximum_arm_speed_rad_s'])
-            axial_headroom=float(settings['maximum_axial_speed_m_s'])-.00762*speed/360.
-            if not (0<speed<=10. and 0<acceleration<=8.75 and 0<arm_speed<=.2 and axial_headroom>=.00008):
+            axial_speed=float(profile.get('maximum_axial_speed_m_s',settings['maximum_axial_speed_m_s']))
+            axial_headroom=axial_speed-.00762*speed/360.
+            if not (0<speed<=30. and 0<acceleration<=90. and 0<arm_speed<=.65 and 0<axial_speed<=.002 and axial_headroom>=.00008):
                 raise ValueError('local loaded profile exceeds arm/axial speed reserve or acceleration range')
             settings.update(maximum_rotation_speed_deg_s=speed,
-                maximum_rotation_acceleration_deg_s2=acceleration,maximum_arm_speed_rad_s=arm_speed)
+                maximum_rotation_acceleration_deg_s2=acceleration,maximum_arm_speed_rad_s=arm_speed,
+                maximum_axial_speed_m_s=axial_speed)
             result['loaded_motion_profile']={**profile,'axial_speed_headroom_m_s':axial_headroom,
                 'physical_motor_wrench_geometry_boundaries_changed':False}
         if 'rotation_degrees' in recipe:
             degrees=float(recipe['rotation_degrees'])
-            if not 0<degrees<=15.:raise ValueError('a short local control check is bounded to fifteen degrees')
+            if not 0<degrees<=90.:raise ValueError('a local control stroke is bounded to ninety degrees')
             settings['rotation_about_socket_plus_z_deg']=-degrees
         if recipe.get('single_attempt_diagnostic',False):settings['recovery']={'enabled':False}
         if recipe.get('already_loaded_short_window',False):
@@ -238,6 +242,8 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         settings['planar_force_admittance']['virtual_restoring_stiffness_n_m']=float(recipe['virtual_restoring_stiffness_n_m'])
         if 'freeze_planar_after_preparation' in recipe:
             settings['planar_force_admittance']['freeze_after_preparation']=bool(recipe['freeze_planar_after_preparation'])
+        if recipe.get('continuous_planar_force_admittance',False):
+            settings['planar_force_admittance'].update(enabled=True,freeze_after_preparation=False)
         if 'arm_kinematic_reference' in recipe:
             settings['arm_kinematic_reference']=recipe['arm_kinematic_reference']
         if 'grip_lateral_balance' in recipe:
@@ -250,6 +256,17 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             settings['regulate_finger_effort_during_rotation']=bool(recipe['regulate_finger_effort_during_rotation'])
         if 'finger_motor_force_control' in recipe:
             settings['finger_motor_force_control']=copy.deepcopy(recipe['finger_motor_force_control'])
+        if 'loaded_preparation_s' in recipe:
+            period=float(recipe['loaded_preparation_s'])
+            if not .5<=period<=2.:raise ValueError('local force preparation is bounded to0.5..2seconds')
+            settings.update(axial_settle_duration_s=period,regulate_finger_effort_during_preparation=True,
+                require_preparation_ready=True)
+        if 'visual_progress_period_s' in recipe:
+            period=float(recipe['visual_progress_period_s'])
+            if not .1<=period<=1.:raise ValueError('local current-image period must be0.1..1second')
+            settings['visual_progress']['observation_period_s']=period
+        if 'arm_transverse_load_compensation' in recipe:
+            settings['arm_transverse_load_compensation']=copy.deepcopy(recipe['arm_transverse_load_compensation'])
         result['rotation']=run_body_nut_rotation(repository,runtime,stepper,dynamic,grip,socket,
             settings,output/'rotation',initial_position_axis_observation=observation)
     except Exception as error:
@@ -265,5 +282,6 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             'hand_mechanism':dict(getattr(world.hand_mechanism,'wall_times',{})),
             'truth_capture':dict(recorder.capture_wall_times)}
         result['scene_output_backend']=getattr(world,'_kcg_rgbd_resume_sync_backend',None)
+        result['fourbar_tangent_updates']=getattr(world.hand_mechanism,'tangent_update_stats',None)
         (output/'source_stage_probe_result.json').write_text(json.dumps(_json_ready(result),indent=2)+'\n')
     return _json_ready(result)

@@ -120,7 +120,9 @@ def author_fourbar_rods(stage, joint_parent_path, contract_path, *, finger_names
             "constraint_error_requires_physical_run_review":True,"rods":records}
 
 
-def update_fourbar_tangents(stage, joint_parent_path, couplings, measured_source_angles):
+def update_fourbar_tangents(stage, joint_parent_path, couplings, measured_source_angles, *,
+                           cache=None, closure_tolerance_m=0., maximum_slope_error=0.,
+                           lookahead_source_angle_rad=0.):
     """Linearize fixed CAD closure at measured robot angles before a step.
 
     p - f'(q0)*q + f'(q0)*q0 - f(q0) = 0 has exactly the constraint
@@ -128,6 +130,7 @@ def update_fourbar_tangents(stage, joint_parent_path, couplings, measured_source
     this does not command a distal motor or overwrite either actual angle.
     """
     import math
+    import struct
     from pxr import PhysxSchema
     rows=[]
     for follower,coupling in couplings.items():
@@ -135,6 +138,31 @@ def update_fourbar_tangents(stage, joint_parent_path, couplings, measured_source
             continue
         q=float(measured_source_angles[coupling.source_joint])
         value,slope=coupling.position_and_derivative(q)
+        if cache is not None:
+            entry=cache.get(follower)
+            refresh=entry is None
+            if entry is not None:
+                a,b=entry['slope'],entry['offset_rad']
+                refresh=(abs(slope-a)>maximum_slope_error or max(
+                    abs(coupling.closure_error(x,a*x-b))
+                    for x in (q-lookahead_source_angle_rad,q,q+lookahead_source_angle_rad))>closure_tolerance_m)
+            if refresh:
+                if entry is None:
+                    api=PhysxSchema.PhysxMimicJointAPI(stage.GetPrimAtPath(joint_parent_path+'/'+follower),'rotX')
+                    if not api:raise ValueError('The tangent constraint was not created before physics')
+                    entry={'gearing_attribute':api.GetGearingAttr(),'offset_attribute':api.GetOffsetAttr()}
+                    cache[follower]=entry
+                quantize=lambda x:struct.unpack('f',struct.pack('f',x))[0]
+                a=quantize(slope)
+                offset_degrees=quantize(math.degrees(a*q-value))
+                entry['gearing_attribute'].Set(-a)
+                entry['offset_attribute'].Set(offset_degrees)
+                entry.update(slope=a,offset_rad=math.radians(offset_degrees))
+            a,b=entry['slope'],entry['offset_rad']
+            rows.append({'source':coupling.source_joint,'q_rad':q,'slope':a,'exact_slope':slope,
+                         'offset_rad':b,'relinearized':refresh,
+                         'predicted_rod_error_m':abs(coupling.closure_error(q,a*q-b))})
+            continue
         api=PhysxSchema.PhysxMimicJointAPI(stage.GetPrimAtPath(joint_parent_path+"/"+follower),"rotX")
         if not api:
             raise ValueError("The tangent constraint was not created before physics")

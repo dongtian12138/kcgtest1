@@ -190,6 +190,9 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
     visual_follow_translation=np.zeros(3);visual_follow_rotvec=np.zeros(3)
     motor_force_control=settings.get('finger_motor_force_control',{})
     root_moment_filtered=None
+    from collections import deque
+    preparation_moment_history=deque(maxlen=max(2,round(.25/dt)))
+    preparation_ready_checked=False
     axial_lead=settings.get('axial_lead_following',{})
     axial_lead_enabled=bool(axial_lead.get('enabled',False))
     turn_axial_origin=None
@@ -690,6 +693,7 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 if motor_force_control.get('enabled',False):
                     if root_moment_filtered is None:root_moment_filtered=root_moments.copy()
                     else:root_moment_filtered+=dt/(float(motor_force_control['signal_filter_time_s'])+dt)*(root_moments-root_moment_filtered)
+                preparation_moment_history.append(root_moments.copy())
             elapsed = index * dt
             if progress_enabled and elapsed>=next_observation_s:
                 from te_body_socket_observation import observe_tracked_plug_from_rgbd
@@ -710,10 +714,13 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                     raise RuntimeError('recoverable nut turn stop: VISUAL_TRACKING_LOST')
                 from te_nut_motion import grasp_relation_residual
                 relation_error=observed_body[:3,3]-current[:3,3]
-                relation_components=grasp_relation_residual(relation_error,axis,
+                compliance_world=socket[:3,:2]@planar_offset
+                uncommanded_relation_error=relation_error+compliance_world
+                relation_components=grasp_relation_residual(uncommanded_relation_error,axis,
                     progress_settings.get('captive_nut_axial_travel_m',0.))
                 if relation_components['unexplained_norm_m']>float(progress_settings['maximum_grasp_relation_error_m']):
                     record['grasp_relation_stop']={'step':int(stepper.step_index),'error_world_m':relation_error.tolist(),
+                        'commanded_compliance_world_m':compliance_world.tolist(),
                         'relation_components':relation_components,'current_observation':observed}
                     raise RuntimeError('recoverable nut turn stop: GRASP_RELATION_CHANGED')
                 # Observe the changed relation without redefining the desired
@@ -727,6 +734,7 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                     'command_deg':current_command,'torsion_nm':float(wrench[5]),
                     'grasp_relation_error_m':relation_components['unexplained_norm_m'],
                     'grasp_relation_components':relation_components,
+                    'commanded_compliance_world_m':compliance_world.tolist(),
                     'relation_update_world_m':relation_error.tolist(),'observation':observed}
                 previous=runtime.get('last_nut_progress_observation')
                 observation_row['state']=classify_observed_progress(previous,observation_row,progress_settings,
@@ -1064,7 +1072,7 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                         "maximum_offset_m": maximum_planar_offset,
                         "filtered_force_socket_xy_n": wrench[:2].tolist(),
                     }
-                    raise RuntimeError("bounded planar force-admittance travel exhausted")
+                    raise RuntimeError("recoverable nut turn stop: PLANAR_COMPLIANCE_TRAVEL")
             previous_align_fraction = align_fraction
             desired_pivot[:3, 3] = (original_pivot[:3, 3] + align_fraction*lateral_delta
                 + axis*axial_offset + socket[:3, :2] @ planar_offset + reference_rebase)
@@ -1101,7 +1109,9 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 # Move the world reference using independently observed Body
                 # motion. Keep hand_from_pivot fixed: measured hand errors must
                 # not redefine the desired grip or disappear on observation.
-                target=last_observed_body[:3,3]-desired_pivot[:3,3]
+                # Vision updates the object reference; it must not cancel the
+                # independently commanded force-compliance displacement.
+                target=last_observed_body[:3,3]-(desired_pivot[:3,3]-socket[:3,:2]@planar_offset)
                 target-=axis*(axis@target)
                 expected_axis=desired_pivot[:3,:3]@original_pivot[:3,:3].T@body_axis_rotation[:,2]
                 observed_axis=last_observed_body[:3,2]
@@ -1279,6 +1289,19 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                     record['tracking_stop']={'step':int(stepper.step_index),'error_world_m':physical_error.tolist()}
                     raise RuntimeError('recoverable nut turn stop: LOADED_POSE_ERROR')
                 error=np.r_[physical_error,.05*Rotation.from_matrix(desired_pivot[:3,:3]@current[:3,:3].T).as_rotvec()]
+            if settings.get('require_preparation_ready',False) and elapsed>=preparation_end and not preparation_ready_checked:
+                from te_nut_motion import preload_readiness
+                if root_moments is None or len(preparation_moment_history)<preparation_moment_history.maxlen:
+                    raise RuntimeError('preparation lacks its current base-moment history')
+                margins=[]
+                for name,position in zip(('f1j2','f2j1','f3j2'),q[8:]):
+                    drive=world.hand_mechanism.drives[name]
+                    margins.append(drive.reference.transmission_effort_boundary-abs(
+                        drive.reference.transmission_stiffness*(drive.input_angle-position)))
+                readiness=preload_readiness(np.array(preparation_moment_history),desired_effort,margins)
+                record['pre_turn_grip_readiness']=readiness
+                if not readiness['ready']:raise RuntimeError('recoverable nut turn stop: PREPARATION_NOT_READY')
+                preparation_ready_checked=True
             lateral_feedforward = (combined_alignment_velocity_world
                 if combined_alignment_velocity_world is not None else
                 lateral_delta*align_rate + socket[:3, :2] @ planar_velocity)
@@ -1357,6 +1380,30 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             advance_options={}
             if settings.get('arm_trajectory_velocity_feedforward',False):
                 advance_options['arm_velocity_target']=joint_velocity.copy()
+            load_compensation=settings.get('arm_transverse_load_compensation',{})
+            if load_compensation.get('enabled',False):
+                gain=float(load_compensation['gain']);limit=float(load_compensation['maximum_joint_torque_nm'])
+                if not 0<gain<=.5 or not 0<limit<=20.:
+                    raise ValueError('transverse load compensation exceeds its bounded gain or torque range')
+                if load_compensation.get('full_wrench',False):
+                    gravity_force=np.array([0.,0.,-mass*abs(float(runtime['scene']['gravity_m_s2']))])
+                    force_world=socket[:3,:3]@wrench[:3]+gravity_force
+                    moment_world=socket[:3,:3]@wrench[3:]+np.cross(current[:3,:3]@com_from_pivot,gravity_force)
+                    measured_J=inputs.robot_model.geometric_jacobian('handbase_link',tuple(q),
+                        point_local_m=hand_from_pivot[:3,3])[:,:7]
+                    compensation=-gain*(measured_J.T@np.r_[force_world,moment_world])
+                    if stepper.payload_model is not None:
+                        compensation-=gain*control.payload_compensation_joint_torque(inputs.robot_model,
+                            np.r_[arm,hand_target],stepper.payload_model,stepper.payload_compensation_fraction)
+                    record['load_compensation_scope']='FILTERED_FULL_WRIST_LOAD_WITH_PAYLOAD_GRAVITY_RESTORED_AND_EXISTING_PAYLOAD_SUPPORT_DEDUPLICATED'
+                else:
+                    force_world=socket[:3,:2]@wrench[:2]
+                    moment_world=socket[:3,:2]@wrench[3:5]+np.cross(current[:3,3]-hand[:3,3],force_world)
+                    measured_J=inputs.robot_model.geometric_jacobian('handbase_link',tuple(q))[:,:7]
+                    compensation=-gain*(measured_J.T@np.r_[force_world,moment_world])
+                compensation*=min(1.,limit/max(float(np.max(np.abs(compensation))),1e-15))
+                advance_options['arm_load_compensation_nm']=compensation
+                record['last_transverse_load_compensation_nm']=compensation.tolist()
             stepper.advance("key_probe_nut_rotation_" + phase, arm.copy(), hand_target.copy(),**advance_options)
             if int(stepper.step_index)>before_step:
                 record['last_applied_rotation_command_deg']=float(np.rad2deg(angle*fraction))

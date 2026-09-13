@@ -130,6 +130,8 @@ class HandMechanismRuntime:
         self.phase="initial_hold";self.steps=0;self.failure=None
         self.last_time=float(world.current_time)
         self.settings=setup["settings"];self.drives={}
+        self.adaptive_tangent_settings=None;self.tangent_cache={}
+        self.tangent_update_stats={'samples':0,'relinearizations':0,'maximum_predicted_rod_error_m':0.}
         self.contract=json.loads(Path(setup["contract_path"]).read_text())
         wanted={row[k] for row in self.contract["finger_joints"].values()
                 for k in ("parent_link","proximal_link","distal_link")}
@@ -185,8 +187,21 @@ class HandMechanismRuntime:
             q=host(self.robot.get_dof_positions(indices=0))[0];v=host(self.robot.get_dof_velocities(indices=0))[0]
         if not np.isfinite(np.r_[q,v]).all():raise RuntimeError("Nonfinite hand state before physical step")
         before_fourbar=perf_counter();self.wall_times['read_before_s']+=before_fourbar-started
+        tangent_options={}
+        if self.adaptive_tangent_settings is not None:
+            tolerance=float(self.adaptive_tangent_settings['closure_tolerance_m'])
+            slope_error=float(self.adaptive_tangent_settings['maximum_slope_error'])
+            if not 0<tolerance<=float(self.contract['geometry_uncertainty_m'])/100 or not 0<slope_error<=1e-4:
+                raise ValueError('adaptive tangent update exceeds its geometric or derivative error budget')
+            tangent_options=dict(cache=self.tangent_cache,closure_tolerance_m=tolerance,
+                maximum_slope_error=slope_error,lookahead_source_angle_rad=3.*h)
         tangents=update_fourbar_tangents(self.stage,self.setup["joint_parent"],self.setup["couplings"],
-                                       {name:float(q[index]) for name,index in zip(ACTIVE_HAND,self.indices)})
+                                       {name:float(q[index]) for name,index in zip(ACTIVE_HAND,self.indices)},**tangent_options)
+        for row in tangents:
+            self.tangent_update_stats['samples']+=1
+            self.tangent_update_stats['relinearizations']+=int(row.get('relinearized',True))
+            self.tangent_update_stats['maximum_predicted_rod_error_m']=max(
+                self.tangent_update_stats['maximum_predicted_rod_error_m'],row.get('predicted_rod_error_m',0.))
         slopes={row["source"]:row["slope"] for row in tangents};slopes["f1j1"]=1.
         before_motor=perf_counter();self.wall_times['fourbar_update_s']+=before_motor-before_fourbar
         laws=[]
@@ -226,6 +241,8 @@ class HandMechanismRuntime:
             row=self.drives[name].complete(float(after[self.indices[i]]),float(velocity[self.indices[i]]),observed_drive_effort=measured)
             row.update(step=self.steps,physics_time_s=float(self.world.current_time),phase=self.phase,joint=name)
             row["rod_length_error_from_actual_body_poses_m"]=closure.get(name)
+            if self.adaptive_tangent_settings is not None and name in closure and abs(closure[name])>float(self.contract['geometry_uncertainty_m']):
+                self.failure='Source fourbar closure error: '+name
             if name=="f1j1":
                 row["source_link_pose_witnesses"]={n:{"position_m":p[j].tolist(),"orientation_wxyz":r[j].tolist()}
                                                     for j,n in enumerate(self.pose_names)}

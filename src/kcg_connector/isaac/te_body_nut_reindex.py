@@ -60,6 +60,8 @@ def can_recover_rotation_stop(rotation_record,latest_sensor_phase,step_index,out
         'recoverable nut turn stop: NO_OBSERVED_AXIAL_PROGRESS',
         'recoverable nut turn stop: OBSERVED_GRIP_SLIP',
         'recoverable nut turn stop: OBSERVED_CONTACT_STALL',
+        'recoverable nut turn stop: PLANAR_COMPLIANCE_TRAVEL',
+        'recoverable nut turn stop: PREPARATION_NOT_READY',
         'recoverable nut turn stop: VISUAL_TRACKING_LOST'}
     return bool(not rotation_record.get('completed') and rotation_record.get('failure_reason') in reasons
         and latest_sensor_phase.startswith('key_probe_nut_rotation_')

@@ -7,7 +7,7 @@ from scipy.spatial.transform import Rotation
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'isaac'))
 
 
-def setup_plant(monkeypatch,*,seated=False,moving_body=False):
+def setup_plant(monkeypatch,*,seated=False,moving_body=False,lateral_force_n=0.):
     def module(name,**items):
         value=types.ModuleType(name);value.__dict__.update(items);monkeypatch.setitem(sys.modules,name,value);return value
     usd=module('omni.usd',get_context=lambda:types.SimpleNamespace(get_stage=lambda:None))
@@ -38,7 +38,7 @@ def setup_plant(monkeypatch,*,seated=False,moving_body=False):
     def sensor(step,phase,q):
         H=model.forward_kinematics(q)['handbase_link']
         return dict(step=step,phase=phase,handbase_rotation_world_row_major=H[:3,:3].tolist(),
-            handbase_position_world_m=H[:3,3].tolist(),gravity_and_dynamic_compensated_task_wrench=[0,0,0,0,0,.7 if seated else 0],
+            handbase_position_world_m=H[:3,3].tolist(),gravity_and_dynamic_compensated_task_wrench=[lateral_force_n,0,0,0,0,.7 if seated else 0],
             dynamic_inertia_prediction={'ready':True,'applied_to_safety_residual':True},active_targets_rad=list(q))
     q=np.zeros(11);ft.samples=[sensor(i,'key_probe_nut_grip_hold',q) for i in range(-120,0)]
     class Stepper:
@@ -110,6 +110,25 @@ def test_turn_base_moment_feedback_can_relax_overloaded_fingers_and_close_underl
     assert np.max(np.abs(stepper.latest[2][8:]-targets))<1e-6
     final=np.asarray(result['final_hand_target_rad'])[1:]
     assert final[0]>0 and final[1]<0 and final[2]<0
+
+
+def test_visual_updates_preserve_force_compliance_and_still_correct_encoder_bias(monkeypatch,tmp_path):
+    from te_body_nut_rotation import _run_body_nut_rotation_interval
+    runtime,stepper,settings,grip,dt=setup_plant(monkeypatch,lateral_force_n=.3)
+    settings['planar_force_admittance']=dict(enabled=True,freeze_after_preparation=False,
+        admittance_m_per_n_s=.0002,maximum_speed_m_s=.00015,maximum_offset_m=.0005,
+        virtual_restoring_stiffness_n_m=13000.)
+    settings['visual_progress']=dict(enabled=True,observation_period_s=.25,maximum_grasp_relation_error_m=.0002,
+        nominal_seated_depth_m=.014605,visual_seating_tolerance_m=.00002,stable_depth_tolerance_m=.000005,
+        seating_minimum_torque_nm=.4,seating_confirmations=2,minimum_loaded_command_deg=40.,
+        minimum_progress_check_angle_deg=.75,minimum_observed_progress_m=.00001,
+        reference_following=dict(enabled=True,maximum_lateral_motion_m=.0005,maximum_axis_motion_deg=1.,
+            maximum_lateral_speed_m_s=.00015,maximum_axis_speed_rad_s=.002,smoothing_time_s=.2))
+    result=_run_body_nut_rotation_interval(tmp_path,runtime,stepper,{'physics_dt_s':dt,'finger_maximum_speed_rad_s':.18,'hand_stiffness':12.},
+        grip,np.eye(4),settings,tmp_path/'compliance')
+    assert result['completed'],result.get('failure_reason')
+    assert abs(stepper.latest[0][0]-.3/13000)<2e-6
+    assert abs(stepper.targets[-1][0]-(.0001+.3/13000))<2e-6
 
 
 @pytest.mark.parametrize('with_vision',[False,True])

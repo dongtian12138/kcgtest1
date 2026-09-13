@@ -198,6 +198,7 @@ def gravity_biased_arm_target(
     arm_damping_nm_s_rad: float | None = None,
     payload_feedforward_nm: Sequence[float] | None = None,
     velocity_reference_rad_s: Sequence[float] | None = None,
+    load_feedforward_nm: Sequence[float] | None = None,
 ) -> tuple[np.ndarray, dict[str, object]]:
     """Express bounded model compensation as a native-drive target offset."""
 
@@ -227,12 +228,15 @@ def gravity_biased_arm_target(
         raise RuntimeError("effective arm damping must be finite and nonnegative")
     if not np.all(np.isfinite(payload)):
         raise RuntimeError("payload feedforward must be finite")
+    load=(np.zeros((1,7),dtype=np.float64) if load_feedforward_nm is None
+        else np.asarray(load_feedforward_nm,dtype=np.float64).reshape(1,7))
+    if not np.isfinite(load).all():raise RuntimeError('load feedforward must be finite')
     velocity_reference=(np.zeros((1,7),dtype=np.float64) if velocity_reference_rad_s is None
         else np.asarray(velocity_reference_rad_s,dtype=np.float64).reshape(1,7))
     if not np.isfinite(velocity_reference).all():
         raise RuntimeError('arm velocity reference must be finite')
     pd_effort = kp * (target - position) + kd * (velocity_reference-velocity)
-    requested_drive_target = target + (gravity + payload) / kp
+    requested_drive_target = target + (gravity + payload + load) / kp
     nominal_limit_margin = np.minimum(
         target[0] - lower_limits, upper_limits - target[0]
     )
@@ -265,11 +269,12 @@ def gravity_biased_arm_target(
         "pd_effort_nm": pd_effort[0].tolist(),
         "gravity_compensation_nm": gravity[0].tolist(),
         "payload_feedforward_nm": payload[0].tolist(),
+        "load_feedforward_nm":load[0].tolist(),
         "applied_gravity_equivalent_nm": (
-            applied_compensation - payload
+            applied_compensation - payload - load
         )[0].tolist(),
         "applied_payload_equivalent_nm": (
-            applied_compensation - gravity
+            applied_compensation - gravity - load
         )[0].tolist(),
         "applied_total_compensation_nm": applied_compensation[0].tolist(),
         "raw_total_effort_nm": raw_effort[0].tolist(),
@@ -918,7 +923,7 @@ class JointSignalStepper:
 
     def advance(
         self, phase: str, arm_target: np.ndarray, hand_target: np.ndarray,
-        *, pre_step_hook=None, arm_velocity_target=None,
+        *, pre_step_hook=None, arm_velocity_target=None, arm_load_compensation_nm=None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
         if self.abort_reason is not None:
             return self.latest
@@ -955,6 +960,7 @@ class JointSignalStepper:
             arm_damping_nm_s_rad=self.effective_arm_damping_nm_s_rad,
             payload_feedforward_nm=payload_feedforward,
             velocity_reference_rad_s=velocity_reference,
+            load_feedforward_nm=arm_load_compensation_nm,
         )
         arm_control["payload_compensation_fraction"] = (
             self.payload_compensation_fraction
