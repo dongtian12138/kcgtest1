@@ -446,6 +446,32 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
                 "final_measured_external_moment_nm":measured.tolist(),
                 "relative_reference_error":((measured-desired)/desired).tolist(),
                 "exact_target_reached_claimed":False,"motor_targets_frozen_for_next_rotation":True}
+            refinement=root_preload.get("task_refinement")
+            if refinement:
+                initial_stage=dict(record["root_moment_preload"])
+                desired=np.asarray(refinement["targets_nm"],float)
+                ramp=float(refinement["ramp_duration_s"]);duration=float(refinement["total_duration_s"])
+                if desired.shape!=(3,) or not np.isfinite(desired).all() or np.any(desired<=0) or not 0<ramp<=duration<=3.:
+                    raise ValueError("the task root-moment refinement requires three finite targets and at most three seconds")
+                encoder=np.asarray(stepper.latest[0])
+                start_moment=np.asarray(stepper.latest[2])[8:]-root_observer.tare_reaction-(
+                    root_observer._system(encoder)[2]-root_observer.tare_gravity)
+                record["stage"]="ESTABLISHING_TASK_TORQUE_PRELOAD_ON_NUT"
+                save()
+                for index in range(round(duration/dt)):
+                    encoder=np.asarray(stepper.latest[0]);raw=np.asarray(stepper.latest[2])[8:]
+                    measured=raw-root_observer.tare_reaction-(root_observer._system(encoder)[2]-root_observer.tare_gravity)
+                    blend=control.minimum_jerk_blend(min(1.,(index+1)*dt/ramp))
+                    reference=start_moment+(desired-start_moment)*blend
+                    q[1:]=np.clip(q[1:]+np.clip(relaxation*(reference-measured)/stiffness,-limit,limit),lower[1:],upper[1:])
+                    advance("key_probe_nut_grip_hold",held_arm,q,nut_contact=True)
+                    command_rows[-1].update(base_bridge_external_moment_nm=measured.tolist(),
+                        base_bridge_reference_nm=reference.tolist(),task_torque_refinement=True)
+                record["root_moment_preload"]={**initial_stage,"targets_nm":desired.tolist(),
+                    "establishment_stage":initial_stage,"task_refinement":refinement,
+                    "final_measured_external_moment_nm":measured.tolist(),
+                    "relative_reference_error":((measured-desired)/desired).tolist(),
+                    "normal_force_achievement_claimed":False}
             record.update(finite_preload_bounds_rad=[lower.tolist(),upper.tolist()],effort_reference_nm=desired.tolist())
         else:
             for _ in range(round((float(dynamic["preload_duration_s"]) + float(dynamic["hold_duration_s"])) / dt)):

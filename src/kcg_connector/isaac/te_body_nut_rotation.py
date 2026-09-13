@@ -147,6 +147,22 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
     effort_gain = dt/(effort_tau+dt) if effort_tau > 0 else 1.
     regulate_finger_effort = bool(settings.get("regulate_finger_effort_during_rotation", True))
     regulate_preparation_effort = bool(settings.get("regulate_finger_effort_during_preparation", True))
+    rate_guard = settings.get("finger_effort_limited_turn", {})
+    rate_guard_enabled = bool(rate_guard.get("enabled", False))
+    rate_extra_time = float(rate_guard.get("maximum_extra_turn_time_s", 20.)) if rate_guard_enabled else 0.
+    rate_slow_margin = float(rate_guard.get("begin_slowing_reserve_nm", .5))
+    rate_stop_margin = float(rate_guard.get("hold_reserve_nm", .1))
+    rate_hold_limit = float(rate_guard.get("maximum_near_hold_s", 2.))
+    rate_lost_time = 0.
+    rate_near_hold_time = 0.
+    rate_turn_finished_s = None
+    rate_cycle_finished = False
+    turn_rate_scale = 1.
+    model_elastic_efforts = None
+    model_effort_margin = None
+    release_reserve = settings.get("controlled_release_effort_reserve_nm")
+    if release_reserve is not None and not 0 < float(release_reserve) <= .1:
+        raise ValueError("controlled release reserve must be positive and no greater than0.1Nm")
     if (not all(np.isfinite(v) and v >= 0 for v in
                 (preparation_force_reference, turn_force_reference))
             or not np.isfinite(force_reference_ramp_s) or force_reference_ramp_s <= 0):
@@ -193,6 +209,20 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
     try:
         if not grip["completed"] or stepper.abort_reason is not None:
             raise RuntimeError("the current nut grip controller is not ready")
+        if rate_guard_enabled:
+            rate_mechanism = getattr(world, "hand_mechanism", None)
+            if (rate_mechanism is None or not 0 < rate_extra_time <= 20.
+                    or not 0 < rate_stop_margin < rate_slow_margin <= .5
+                    or not 0 < rate_hold_limit <= 2.):
+                raise ValueError("effort-limited turning requires the shared mechanism and finite timing/reserve bounds")
+            rate_names = ("f1j2", "f2j1", "f3j2")
+            rate_caps = np.array([rate_mechanism.drives[n].reference.transmission_effort_boundary for n in rate_names])
+            record["finger_effort_limited_turn"] = {
+                **rate_guard, "finite_transmission_caps_nm": rate_caps.tolist(),
+                "effort_source": "ELASTIC_TRANSMISSION_MODEL_STATE_AND_MEASURED_OUTPUT_ENCODERS",
+                "object_or_contact_truth_used": False,
+                "native_force_caps_changed": False,
+                "reported_nominal_profile_acceleration_is_not_an_adaptive_acceleration_bound": True}
         if not runtime["body_assembly_scene"]["report"].get("representative_inner_thread"):
             raise ValueError("this thread-contact pilot requires the authored inner thread")
         world.pause()
@@ -530,7 +560,7 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
         world.play()
         record["stage"] = "VISUAL_AXIS_ALIGNMENT_FORCE_SETTLE_AND_ONE_SMOOTH_ROTATION"
         save()
-        count = round((alignment_duration + settle_s + duration + hold_s) / dt)
+        count = round((alignment_duration + settle_s + duration + hold_s + rate_extra_time) / dt)
         preparation_end = alignment_duration + settle_s
         visual_feedback = None if initial_fit_accepted else settings.get("pre_turn_visual_feedback")
         feedback_verified = visual_feedback is None
@@ -592,6 +622,26 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 raise RuntimeError("explicit simulation pause requested; preserve the incomplete episode")
             q, hand, current, wrench, raw_wrench = observe()
             elapsed = index * dt
+            if release_reserve is not None and elapsed >= preparation_end:
+                release_mechanism=getattr(world,"hand_mechanism",None)
+                if release_mechanism is None:
+                    raise ValueError("controlled transmission-reserve stop requires the shared hand")
+                release_efforts=[];release_margins=[]
+                for name,position in zip(("f1j2","f2j1","f3j2"),q[8:]):
+                    drive=release_mechanism.drives[name]
+                    value=drive.reference.transmission_stiffness*(drive.input_angle-float(position))
+                    release_efforts.append(value)
+                    release_margins.append(drive.reference.transmission_effort_boundary-abs(value))
+                if min(release_margins) <= float(release_reserve):
+                    record["transmission_reserve_stop"]={"step":int(stepper.step_index),
+                        "modeled_elastic_efforts_nm":release_efforts,"effort_margins_nm":release_margins,
+                        "reserve_nm":float(release_reserve),"hard_boundary_violated":min(release_margins)<0.,
+                        "action":"CURRENT_VISUAL_GUIDE_CHECK_THEN_CONTROLLED_RELEASE; NOT_A_SEATING_CLAIM"}
+                    raise RuntimeError("bounded thread pilot stop: TRANSMISSION_RESERVE")
+            if (rate_guard_enabled and rate_turn_finished_s is not None
+                    and elapsed-rate_turn_finished_s >= hold_s):
+                rate_cycle_finished = True
+                break
             if maximum_execution_s is not None and elapsed>=float(maximum_execution_s)-dt/10:
                 interval_paused=True
                 break
@@ -720,7 +770,7 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                         "translation_delta": translation_delta,
                     }
                     preparation_end = elapsed + correction_s + settle_s
-                    count = round((preparation_end + duration + hold_s) / dt)
+                    count = round((preparation_end + duration + hold_s + rate_extra_time) / dt)
                     feedback_corrections += 1
                     observation_record.update(
                         correction_world_rotvec_rad=correction_rotvec.tolist(),
@@ -767,9 +817,31 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             align_u = np.clip(elapsed / alignment_duration, 0., 1.) if alignment_duration > 0 else 1.0
             align_fraction = 10*align_u**3 - 15*align_u**4 + 6*align_u**5
             align_rate = 30*align_u**2*(1-align_u)**2/alignment_duration if alignment_duration > 0 else 0.0
-            u = np.clip((elapsed - preparation_end) / duration, 0.0, 1.0)
+            effective_turn_time = max(0., elapsed-preparation_end-rate_lost_time)
+            if rate_guard_enabled and elapsed >= preparation_end:
+                model_elastic_efforts = np.array([
+                    rate_mechanism.drives[n].reference.transmission_stiffness
+                    * (rate_mechanism.drives[n].input_angle-float(position))
+                    for n, position in zip(rate_names, q[8:])])
+                model_effort_margin = float(np.min(rate_caps-np.abs(model_elastic_efforts)))
+                turn_rate_scale = float(np.clip((model_effort_margin-rate_stop_margin)
+                    / (rate_slow_margin-rate_stop_margin), 0., 1.))
+                if turn_rate_scale < .05:
+                    rate_near_hold_time += dt
+                elif turn_rate_scale > .1:
+                    rate_near_hold_time = 0.
+                if rate_near_hold_time > rate_hold_limit:
+                    record["effort_margin_hold_stop"] = {
+                        "step": int(stepper.step_index), "elapsed_s": elapsed,
+                        "modeled_elastic_efforts_nm": model_elastic_efforts.tolist(),
+                        "minimum_effort_margin_nm": model_effort_margin,
+                        "near_hold_duration_s": rate_near_hold_time}
+                    raise RuntimeError("finger effort margin did not recover within the bounded rotation hold")
+            u = np.clip(effective_turn_time / duration, 0.0, 1.0)
             fraction = 10*u**3 - 15*u**4 + 6*u**5
-            rotation_velocity = angle * 30*u**2*(1-u)**2 / duration
+            rotation_velocity = angle * 30*u**2*(1-u)**2 / duration * turn_rate_scale
+            if rate_guard_enabled and u >= 1. and rate_turn_finished_s is None:
+                rate_turn_finished_s = elapsed
             yaw_compliance_velocity = 0.0
             if torsion_enabled and elapsed < preparation_end:
                 # The online circle estimator measures centre and axis only.
@@ -939,6 +1011,10 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 balance_target = np.clip(balance_target, lower_hand, upper_hand)
             control_sample = _json_ready({"step": int(stepper.step_index), "elapsed_s": elapsed,
                 "commanded_rotation_deg": float(np.rad2deg(angle * fraction)),
+                "turn_reference_rate_scale": turn_rate_scale,
+                "turn_reference_time_lost_s": rate_lost_time,
+                "modeled_elastic_efforts_for_turn_rate_nm": model_elastic_efforts.tolist() if model_elastic_efforts is not None else None,
+                "minimum_modeled_effort_margin_nm": model_effort_margin,
                 "axial_force_reference_n": float(force_reference),
                 "engagement_additional_downward_reference_n": float(engagement_reference),
                 "engagement_cumulative_loaded_turn_command_deg": engagement_progress_deg if engagement_enabled else None,
@@ -1061,15 +1137,20 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             phase = ("visual_align" if elapsed < alignment_duration else
                      "visual_refine" if visual_refinement_active else
                      "axial_settle" if elapsed < preparation_end else
-                     "turn" if elapsed < preparation_end + duration else "hold")
+                     "turn" if effective_turn_time < duration else "hold")
             if settings.get('observed_hold_only',False) and initial_fit_accepted:phase='hold'
             before_step = int(stepper.step_index)
             stepper.advance("key_probe_nut_rotation_" + phase, arm.copy(), hand_target.copy())
             if engagement_enabled and int(stepper.step_index) > before_step:
                 engagement_applied_deg = abs(float(np.degrees(angle*fraction)))
+            if (rate_guard_enabled and int(stepper.step_index) > before_step
+                    and elapsed >= preparation_end and u < 1.):
+                rate_lost_time += dt*(1.-turn_rate_scale)
             index += 1
         if stepper.abort_reason is not None:
             raise RuntimeError(stepper.abort_reason)
+        if rate_guard_enabled and not interval_paused and not rate_cycle_finished:
+            raise RuntimeError("bounded effort-limited turn duration exhausted before completing the turn and hold")
         record.update(completed=not interval_paused, needs_fresh_observation=interval_paused,
             stage="PAUSED_FOR_FRESH_OBSERVATION" if interval_paused else "ROTATION_COMMAND_FINISHED_REQUIRES_CONTACT_EVALUATION",
             final_arm_target_rad=arm.tolist(), final_hand_target_rad=hand_target.tolist())
@@ -1077,6 +1158,8 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
         record.update(failure_stage=record["stage"], stage="STOPPED", failure_reason=str(error))
     finally:
         world.pause()
+        if rate_guard_enabled:
+            record["effort_limited_turn_time_lost_s"] = rate_lost_time
         if engagement_enabled:
             runtime["engagement_loaded_turn_command_deg"] = engagement_start_deg + engagement_applied_deg
             record["engagement_assistance"] = {

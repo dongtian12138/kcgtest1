@@ -12,7 +12,8 @@ def continue_nut_strokes_and_release(repository, runtime, stepper, dynamic, reco
     from te_body_nut_regrasp import run_body_nut_regrasp
     from te_body_nut_rotation import run_body_nut_rotation
     from te_body_nut_reindex import (
-        run_nut_release_and_reindex, can_unload_after_torsional_pilot_stop)
+        run_nut_release_and_reindex, can_unload_after_torsional_pilot_stop,
+        can_unload_after_transmission_reserve_stop)
 
     settings = assembly["continued_nut_strokes"]
     maximum = settings["maximum_additional_strokes"]
@@ -82,6 +83,8 @@ def continue_nut_strokes_and_release(repository, runtime, stepper, dynamic, reco
     latest_phase = runtime["nail_body_ft_auditor"].samples[-1]["phase"]
     pilot_stop = can_unload_after_torsional_pilot_stop(
         last_rotation, latest_phase, int(stepper.step_index), stepper.abort_reason)
+    pilot_stop = pilot_stop or can_unload_after_transmission_reserve_stop(
+        last_rotation, latest_phase, int(stepper.step_index), stepper.abort_reason)
     release_eligible = (stepper.abort_reason is None
         and last_rotation.get("last_step") == int(stepper.step_index)
         and ((record.get("completed") and last_rotation.get("completed")) or pilot_stop))
@@ -89,7 +92,8 @@ def continue_nut_strokes_and_release(repository, runtime, stepper, dynamic, reco
     if settings.get("release_at_end", True) and release_eligible:
         release_settings = copy.deepcopy(assembly["nut_reindex"])
         release_settings.update(release_only=True, open_hold_duration_s=3.,
-            rotation_about_socket_plus_z_deg=0., allow_release_after_torsional_pilot_stop=True)
+            rotation_about_socket_plus_z_deg=0., allow_release_after_torsional_pilot_stop=True,
+            allow_release_after_transmission_reserve_stop=True)
         record["stage"] = "TERMINAL_CURRENT_VISION_CHECK_AND_NUT_RELEASE"
         save_record()
         series["terminal_release"] = run_nut_release_and_reindex(

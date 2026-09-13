@@ -124,7 +124,19 @@ nut_regrasp:
       outer loop was 240 Hz. Stage revalidation required.
     claim: finite position target hold after preload; no generic admittance validation
       claimed
-  end_clearance_geometry_evidence: artifacts/visual_assembly_v1/nut_grasp_raise_3p5mm/end_clearance_lower_axial.json
+    task_refinement:
+      targets_nm:
+      - 2.085566865538565
+      - 2.2503397335976487
+      - 2.145754682300982
+      ramp_duration_s: 1.5
+      total_duration_s: 3.0
+      source_estimate: artifacts/visual_assembly_v1/task_torque_preload_estimate.json
+      dynamic_evidence: artifacts/visual_assembly_v1/source_stage_task_preload20/local_motion_review.json
+      normal_force_target_is_model_based_not_sensor_readback: true
+  end_clearance_geometry_evidence:
+  - artifacts/visual_assembly_v1/task_preload20_end_clearance_plus.json
+  - artifacts/visual_assembly_v1/task_preload20_end_clearance_minus.json
 nut_rotation:
   enabled: true
   rotation_about_socket_plus_z_deg: -20.0
@@ -191,6 +203,7 @@ nut_rotation:
     rationale: 共享机构局部20度对照仅启用有界XY反馈后，横向合力峰由13.21N降至2.91N、末段约0.872N，最大横向偏移0.286mm；Nut—Socket在握持末段产生实际承载。保留原增益0.0002和速度0.15mm/s，行程0.5mm小于源Body间隙四分之一0.939mm。根力矩、轴向参考及有限驱动未增加；正式连续旋合仍待验证。
     activate_during_axial_preparation: true
     activate_during_visual_alignment: true
+    freeze_after_preparation: true
   turn_axial_force_reference_n: 0.61272935631369
   turn_force_reference_ramp_duration_s: 0.5
   turn_force_reference_rationale: 120度回合在7.791 mm末段无Nut/Socket接触，Body/Socket承受0.199
@@ -200,11 +213,31 @@ nut_rotation:
   pose_observation_scope: 入槽前识别Body键角；可靠导向后旋拧只使用当前位置、轴线与六维力。没有后端孔阵列要求，不从Nut或Hand角推断Body角。判断真实螺纹推进和壳体到底，键槽导向丢失时停止并重新插入。
   regulate_finger_effort_during_rotation: false
   regulate_finger_effort_during_preparation: false
-  controller_version: shared source-hand fixed motor targets after base-bridge moment
-    preload
-  development_purpose: First bounded20degree stroke, then existing reindex/90degree
-    strokes if robot and visual checks permit; no truth-based online completion.
+  controller_version: task-moment two-stage preload; fixed motor positions; nominal
+    IK; bounded first40-degree engagement preload
+  development_purpose: Whole visual assembly candidate based on actual87.85degree
+    Nut turn and1.26mm Body advance; full mating and release remain postrun checks.
   planar_force_following_evidence: artifacts/visual_assembly_v1/raised_nut_xy_follow07/local_physical_review.json
+  arm_kinematic_reference: commanded_pose
+  grip_lateral_balance:
+    enabled: false
+  finger_effort_limited_turn:
+    enabled: false
+  engagement_axial_assist:
+    enabled: true
+    additional_downward_force_n: 3.0400615
+    initial_cumulative_command_deg: 0.0
+    ending_cumulative_command_deg: 40.0
+    ramp_out_angle_deg: 5.0
+    source: artifacts/kcg_connector/contact_consistency_20260911/free_guide_32_final/result.json
+      and driver_snapshot.py engagement_axial_assist; source benchmark applied the
+      same finite extra force until40degrees
+    implementation: Same-episode accumulated loaded turn commands start at zero. Add
+      the finite reference through wrist force control and the original arm; smoothly
+      remove it by40commanded degrees. No actual Nut angle or object/contact truth
+      is used.
+    hardware_rating_claimed: false
+  controlled_release_effort_reserve_nm: 0.05
 passive_joint_solver:
   representation: floating_reduced_coordinate_articulation
   position_iterations: 32
@@ -326,14 +359,15 @@ nut_rotation_after_index:
     rationale: 共享机构局部20度对照仅启用有界XY反馈后，横向合力峰由13.21N降至2.91N、末段约0.872N，最大横向偏移0.286mm；Nut—Socket在握持末段产生实际承载。保留原增益0.0002和速度0.15mm/s，行程0.5mm小于源Body间隙四分之一0.939mm。根力矩、轴向参考及有限驱动未增加；正式连续旋合仍待验证。
     activate_during_axial_preparation: true
     activate_during_visual_alignment: true
+    freeze_after_preparation: true
   turn_axial_force_reference_n: 0.61272935631369
   turn_force_reference_ramp_duration_s: 0.5
   turn_force_reference_rationale: 120度回合在7.791 mm末段无Nut/Socket接触，Body/Socket承受0.199
     N轴向力，其中法向0.058 N、摩擦0.141 N；全部末段触点投影于源键面，未碰接地弹片。原0.20 N参考使机械臂托住约0.413 N重量。仅正式旋拧以0.5
     s平滑转到原质量乘9.81的0.6127293563 N，目标对应约零净手指轴向支承，检验自重能否克服键侧摩擦；不是厂家插入力或安全额定。准备阶段0.20
     N、120度转角、速度、4 mm轴向/100 um横向边界及所有保护保持。
-  development_purpose: First bounded20degree stroke, then existing reindex/90degree
-    strokes if robot and visual checks permit; no truth-based online completion.
+  development_purpose: Whole visual assembly candidate based on actual87.85degree
+    Nut turn and1.26mm Body advance; full mating and release remain postrun checks.
   finger_effort_regulation_time_constant_s: 0.16666666666666666
   finger_effort_regulation_rationale: 上轮第二段旋拧约8度时第一指接触法向冲量由常见约0.011 Ns跃升到0.04648 Ns，腕矩1.57674
     Nm触发原1.38058 Nm停止，三指仍仅Nut接触。原始投影关节力误差逐步直接换算位置修正，局部目标来回变化约0.03..0.12 rad/s。只在第二旋拧阶段将修正乘dt/(tau+dt)，tau采用现有主动手指驱动D/K=2/12秒作为保守控制时间尺度；这是待检验的带宽选择，不是已辨识最优值。保留原0.326/0.346/0.326
@@ -341,9 +375,29 @@ nut_rotation_after_index:
   pose_observation_scope: 入槽前识别Body键角；可靠导向后旋拧只使用当前位置、轴线与六维力。没有后端孔阵列要求，不从Nut或Hand角推断Body角。判断真实螺纹推进和壳体到底，键槽导向丢失时停止并重新插入。
   regulate_finger_effort_during_rotation: false
   regulate_finger_effort_during_preparation: false
-  controller_version: shared source-hand fixed motor targets after base-bridge moment
-    preload
+  controller_version: task-moment two-stage preload; fixed motor positions; nominal
+    IK; bounded first40-degree engagement preload
   planar_force_following_evidence: artifacts/visual_assembly_v1/raised_nut_xy_follow07/local_physical_review.json
+  arm_kinematic_reference: commanded_pose
+  grip_lateral_balance:
+    enabled: false
+  finger_effort_limited_turn:
+    enabled: false
+  engagement_axial_assist:
+    enabled: true
+    additional_downward_force_n: 3.0400615
+    initial_cumulative_command_deg: 0.0
+    ending_cumulative_command_deg: 40.0
+    ramp_out_angle_deg: 5.0
+    source: artifacts/kcg_connector/contact_consistency_20260911/free_guide_32_final/result.json
+      and driver_snapshot.py engagement_axial_assist; source benchmark applied the
+      same finite extra force until40degrees
+    implementation: Same-episode accumulated loaded turn commands start at zero. Add
+      the finite reference through wrist force control and the original arm; smoothly
+      remove it by40commanded degrees. No actual Nut angle or object/contact truth
+      is used.
+    hardware_rating_claimed: false
+  controlled_release_effort_reserve_nm: 0.05
 task_acceptance: 实际对键入槽、螺母相对本体旋合产生真实轴向推进、最终壳体到位及卸手保持；仅转角或程序完成不构成装配成功。
 wrist_planned_contact_torque_monitor:
   action: record_only

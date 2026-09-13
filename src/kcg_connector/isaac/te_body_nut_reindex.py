@@ -41,6 +41,19 @@ def can_unload_after_torsional_pilot_stop(rotation_record, latest_sensor_phase,
         and outer_abort_reason is None)
 
 
+def can_unload_after_transmission_reserve_stop(rotation_record, latest_sensor_phase,
+                                              step_index, outer_abort_reason):
+    """A pre-boundary controller stop permits observation and monotonic unload."""
+    event=rotation_record.get("transmission_reserve_stop",{})
+    return bool(not rotation_record.get("completed")
+        and rotation_record.get("failure_reason")=="bounded thread pilot stop: TRANSMISSION_RESERVE"
+        and event.get("hard_boundary_violated") is False
+        and event.get("effort_margins_nm") and min(event["effort_margins_nm"])>=0.
+        and latest_sensor_phase in ("key_probe_nut_rotation_turn","key_probe_nut_rotation_hold")
+        and rotation_record.get("last_step")==step_index
+        and rotation_record.get("outer_abort_reason") is None and outer_abort_reason is None)
+
+
 def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
                                rotation_record, world_from_socket, settings, output):
     import omni.replicator.core as rep
@@ -135,13 +148,18 @@ def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
             and settings.get("allow_release_after_torsional_pilot_stop", False)
             and can_unload_after_torsional_pilot_stop(rotation_record, ft.samples[-1]["phase"],
                 int(stepper.step_index), stepper.abort_reason))
-        stopped_unload = stopped_hold_unload or stopped_torsion_unload
+        stopped_reserve_unload=bool(settings.get("release_only",False)
+            and settings.get("allow_release_after_transmission_reserve_stop",False)
+            and can_unload_after_transmission_reserve_stop(rotation_record,ft.samples[-1]["phase"],
+                int(stepper.step_index),stepper.abort_reason))
+        stopped_unload = stopped_hold_unload or stopped_torsion_unload or stopped_reserve_unload
         if ((not rotation_record.get("completed") and not stopped_unload)
                 or stepper.abort_reason is not None):
             raise RuntimeError("the current bounded rotation did not finish")
         record["preceding_rotation_controller_completed"] = bool(rotation_record.get("completed"))
         record["unload_after_additional_lateral_hold_stop"] = stopped_hold_unload
         record["release_after_additional_torsional_pilot_stop"] = stopped_torsion_unload
+        record["release_after_transmission_reserve_stop"] = stopped_reserve_unload
         if stopped_unload:
             record["preceding_stop_preserved"] = {
                 "reason": rotation_record["failure_reason"],
