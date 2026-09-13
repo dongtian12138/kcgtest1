@@ -372,7 +372,8 @@ def run_to_socket_observation(
                                 record["completed_scope"] = "CONTROLLER_ONLY_THREAD_PILOT_REQUIRES_POSTRUN_EVALUATION"
                                 if not record["completed"]:
                                     record["failure_reason"] = record["nut_rotation"].get("failure_reason")
-                                elif assembly_config.get("nut_reindex", {}).get("enabled"):
+                                elif (assembly_config.get("nut_reindex", {}).get("enabled")
+                                      and not record['nut_rotation'].get('seating_candidate')):
                                     from te_body_nut_reindex import run_nut_release_and_reindex
                                     record["stage"] = "RELEASING_NUT_AND_REINDEXING_OPEN_HAND"
                                     save_record()

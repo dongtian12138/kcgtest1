@@ -54,6 +54,19 @@ def can_unload_after_transmission_reserve_stop(rotation_record, latest_sensor_ph
         and rotation_record.get("outer_abort_reason") is None and outer_abort_reason is None)
 
 
+def can_recover_rotation_stop(rotation_record,latest_sensor_phase,step_index,outer_abort_reason):
+    reasons={'recoverable nut turn stop: LOADED_POSE_ERROR',
+        'recoverable nut turn stop: GRASP_RELATION_CHANGED',
+        'recoverable nut turn stop: NO_OBSERVED_AXIAL_PROGRESS',
+        'recoverable nut turn stop: OBSERVED_GRIP_SLIP',
+        'recoverable nut turn stop: OBSERVED_CONTACT_STALL',
+        'recoverable nut turn stop: VISUAL_TRACKING_LOST'}
+    return bool(not rotation_record.get('completed') and rotation_record.get('failure_reason') in reasons
+        and latest_sensor_phase.startswith('key_probe_nut_rotation_')
+        and rotation_record.get('last_step')==step_index
+        and rotation_record.get('outer_abort_reason') is None and outer_abort_reason is None)
+
+
 def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
                                rotation_record, world_from_socket, settings, output):
     import omni.replicator.core as rep
@@ -61,8 +74,12 @@ def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
     from scipy.spatial.transform import Rotation
 
     from kcg_connector.grasp.robust.bounded_hand_base_ik import solve_bounded_hand_base_ik
-    from te_body_socket_observation import observe_released_plug_from_rgbd
+    from te_body_socket_observation import observe_current_plug_from_rgbd
+    def observe_released_plug_from_rgbd(*args):
+        return observe_current_plug_from_rgbd(*args,runtime)
     from te_foundationpose_handoff_runtime import _json_ready, MOVEIT_SOFT_ARM_BOUNDS_RAD, control
+    from carts_v2.fast_json import dump_array
+    grip=rotation_record.get('continuation_grip',grip)
 
     repository, output = Path(repository).resolve(), Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -152,7 +169,10 @@ def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
             and settings.get("allow_release_after_transmission_reserve_stop",False)
             and can_unload_after_transmission_reserve_stop(rotation_record,ft.samples[-1]["phase"],
                 int(stepper.step_index),stepper.abort_reason))
-        stopped_unload = stopped_hold_unload or stopped_torsion_unload or stopped_reserve_unload
+        recovery_unload=bool(settings.get('allow_recovery_reindex',False) and (
+            can_recover_rotation_stop(rotation_record,ft.samples[-1]['phase'],int(stepper.step_index),stepper.abort_reason)
+            or can_unload_after_transmission_reserve_stop(rotation_record,ft.samples[-1]['phase'],int(stepper.step_index),stepper.abort_reason)))
+        stopped_unload = stopped_hold_unload or stopped_torsion_unload or stopped_reserve_unload or recovery_unload
         if ((not rotation_record.get("completed") and not stopped_unload)
                 or stepper.abort_reason is not None):
             raise RuntimeError("the current bounded rotation did not finish")
@@ -160,6 +180,7 @@ def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
         record["unload_after_additional_lateral_hold_stop"] = stopped_hold_unload
         record["release_after_additional_torsional_pilot_stop"] = stopped_torsion_unload
         record["release_after_transmission_reserve_stop"] = stopped_reserve_unload
+        record['recovery_reindex_after_soft_stop']=recovery_unload
         if stopped_unload:
             record["preceding_stop_preserved"] = {
                 "reason": rotation_record["failure_reason"],
@@ -185,6 +206,9 @@ def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
             raise ValueError("this nut release requires the established positive closing directions")
         increment = float(dynamic["finger_maximum_speed_rad_s"])*dt
         stiffness = float(dynamic["hand_stiffness"])
+        root_observer=runtime.get('nut_root_moment_observer')
+        if root_observer is not None:
+            stiffness=float(grip.get('root_moment_preload',{}).get('position_stiffness_reference_nm_rad',120.))
         count = max(1, round(float(dynamic["hold_duration_s"])/dt))
         record.update(initial_arm_target_rad=arm.tolist(), initial_hand_target_rad=hand.tolist(),
                       open_hand_target_rad=open_hand.tolist(), unload_duration_s=count*dt,
@@ -194,6 +218,9 @@ def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
         for index in range(count):
             reference = effort*(1.-(index+1)/count)
             loaded = np.asarray(stepper.latest[2])[8:]-tare[1:]
+            if root_observer is not None:
+                loaded=np.asarray(stepper.latest[2])[8:]-root_observer.tare_reaction-(
+                    root_observer._system(np.asarray(stepper.latest[0]))[2]-root_observer.tare_gravity)
             hand[1:] = np.clip(hand[1:]+np.clip((reference-loaded)/stiffness, -increment, 0.),
                                lower[1:], upper[1:])
             advance("key_probe_nut_index_unload", arm, hand, nut_contact=True, unloading=True)
@@ -224,58 +251,91 @@ def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
             q, initial_hand = measured()
             angle = np.deg2rad(float(settings["rotation_about_socket_plus_z_deg"]))
             bounds = np.asarray([MOVEIT_SOFT_ARM_BOUNDS_RAD[name] for name in control.ARM_JOINT_NAMES])
-            waypoints = [q[:7].copy()]
-            count = max(1, int(np.ceil(abs(np.rad2deg(angle)))))
-            for fraction in np.linspace(0., 1., count+1)[1:]:
-                R = Rotation.from_rotvec(socket[:3, 2]*angle*fraction).as_matrix()
-                target = initial_hand.copy()
-                target[:3, :3] = R @ initial_hand[:3, :3]
-                target[:3, 3] = body[:3, 3]+R @ (initial_hand[:3, 3]-body[:3, 3])
-                solved, pe, ae, _ = solve_bounded_hand_base_ik(inputs.config.section("ik")["solver"],
-                    model=inputs.robot_model, hand_positions=open_hand, target_world_from_hand_base=target,
-                    seed_arm_positions=(waypoints[-1],), label="CURRENT_VISION_OPEN_HAND_NUT_REINDEX")
-                if pe > .0001 or ae > .001:
-                    raise RuntimeError("open-hand reindex IK did not reach its target")
-                waypoints.append(np.asarray(solved))
-            waypoints = np.asarray(waypoints)
-            offset = np.asarray(ft.samples[-1]["active_targets_rad"][:7])-q[:7]
-            waypoints += offset
-            maximum_speed = float(settings["maximum_arm_speed_rad_s"])
-            duration = max(1., 1.875*len(waypoints[:-1])*float(np.max(np.abs(np.diff(waypoints, axis=0))))/maximum_speed)
-            count = int(np.ceil(duration/dt))
-            states = np.asarray([control.piecewise_waypoint(waypoints, control.minimum_jerk_blend(i/count))
-                                 for i in range(count+1)])
-            peak = float(np.max(np.abs(np.diff(states, axis=0)))/dt)
-            if peak > maximum_speed*(1.+1e-6) or np.any(states < bounds[:, 0]) or np.any(states > bounds[:, 1]):
-                raise RuntimeError("open-hand reindex exceeds its joint speed or position bounds")
-            for candidate in states:
-                hit = check(candidate, open_hand)
-                if hit is not None:
-                    record["planned_geometry_stop"] = hit
-                    raise RuntimeError(f"planned open-hand reindex collision: {hit}")
-            np.save(output / "open_hand_arm_path_rad.npy", states)
-            record.update(stage="REINDEXING_WITH_OPEN_HAND", reindex_first_step=int(stepper.step_index),
-                          path_duration_s=count*dt, maximum_planned_arm_speed_rad_s=peak,
-                          arm_target_offset_rad=offset.tolist(), body_yaw_inferred_from_hand_or_nut=False)
-            save()
-            world.play()
-            for candidate in states:
-                advance("nut_index_free_rotate", candidate, open_hand)
-            for _ in range(round(float(settings["open_hold_duration_s"])/dt)):
-                advance("nut_index_free_final_hold", states[-1], open_hand)
-            record["reindex_last_step"] = int(stepper.step_index)
-            fresh, _ = observe("after_open_hand_reindex")
-            record.update(completed=True, stage="OPEN_HAND_REINDEX_FINISHED_REQUIRES_RETENTION_EVALUATION",
-                          final_observation=fresh, final_arm_target_rad=states[-1].tolist(),
-                          final_hand_target_rad=open_hand.tolist())
+            if settings.get('joint7_only',False):
+                from te_nut_motion import joint7_return_path
+                held=np.asarray(ft.samples[-1]['active_targets_rad'][:7]).copy()
+                initial_encoder=rotation_record.get('initial_arm_encoder_rad')
+                if initial_encoder is None:
+                    initial_encoder=grip['fixed_arm_target_rad']
+                target_joint7=float(initial_encoder[6])
+                source_speed=float(inputs.robot_model.joints[control.ARM_JOINT_NAMES[6]].limit.velocity)
+                speed=min(source_speed,float(settings.get('maximum_joint7_speed_rad_s',1.)))
+                states,details=joint7_return_path(held,target_joint7,bounds[:,0],bounds[:,1],dt,
+                    maximum_speed=speed,maximum_acceleration=float(settings.get('maximum_joint7_acceleration_rad_s2',2.)))
+                for candidate in states:
+                    hit=check(candidate,open_hand)
+                    if hit is not None:raise RuntimeError(f'joint7-only return path is not clear: {hit}')
+                record.update(stage='REINDEXING_JOINT7_WITH_OPEN_HAND',reindex_first_step=int(stepper.step_index),
+                    path_duration_s=details['duration_s'],maximum_planned_arm_speed_rad_s=details['maximum_planned_speed_rad_s'],
+                    arm_target_offset_rad=(held-q[:7]).tolist(),joint7_return=details)
+                np.save(output/'open_hand_arm_path_rad.npy',states);save();world.play()
+                for candidate in states[1:]:advance('nut_index_free_rotate',candidate,open_hand)
+                settle_limit=float(settings.get('joint7_settle_timeout_s',.5))
+                tolerance=float(settings.get('joint7_position_tolerance_rad',.003))
+                for _ in range(max(1,round(settle_limit/dt))):
+                    advance('nut_index_free_final_hold',states[-1],open_hand)
+                    actual=np.asarray(stepper.latest[0])
+                    if abs(actual[6]-target_joint7)<=tolerance and abs(stepper.latest[1][6])<=.02:break
+                if abs(stepper.latest[0][6]-target_joint7)>tolerance:
+                    raise RuntimeError('joint7 return did not reach its measured endpoint within the settle budget')
+                record['joint7_return']['actual_final_error_rad']=float(stepper.latest[0][6]-target_joint7)
+                record['reindex_last_step']=int(stepper.step_index)
+                fresh,_=observe('after_open_hand_reindex')
+                record.update(completed=True,stage='OPEN_HAND_REINDEX_FINISHED_REQUIRES_RETENTION_EVALUATION',
+                    final_observation=fresh,final_arm_target_rad=states[-1].tolist(),final_hand_target_rad=open_hand.tolist())
+            else:
+                waypoints = [q[:7].copy()]
+                count = max(1, int(np.ceil(abs(np.rad2deg(angle)))))
+                for fraction in np.linspace(0., 1., count+1)[1:]:
+                    R = Rotation.from_rotvec(socket[:3, 2]*angle*fraction).as_matrix()
+                    target = initial_hand.copy()
+                    target[:3, :3] = R @ initial_hand[:3, :3]
+                    target[:3, 3] = body[:3, 3]+R @ (initial_hand[:3, 3]-body[:3, 3])
+                    solved, pe, ae, _ = solve_bounded_hand_base_ik(inputs.config.section("ik")["solver"],
+                        model=inputs.robot_model, hand_positions=open_hand, target_world_from_hand_base=target,
+                        seed_arm_positions=(waypoints[-1],), label="CURRENT_VISION_OPEN_HAND_NUT_REINDEX")
+                    if pe > .0001 or ae > .001:
+                        raise RuntimeError("open-hand reindex IK did not reach its target")
+                    waypoints.append(np.asarray(solved))
+                waypoints = np.asarray(waypoints)
+                offset = np.asarray(ft.samples[-1]["active_targets_rad"][:7])-q[:7]
+                waypoints += offset
+                maximum_speed = float(settings["maximum_arm_speed_rad_s"])
+                duration = max(1., 1.875*len(waypoints[:-1])*float(np.max(np.abs(np.diff(waypoints, axis=0))))/maximum_speed)
+                count = int(np.ceil(duration/dt))
+                states = np.asarray([control.piecewise_waypoint(waypoints, control.minimum_jerk_blend(i/count))
+                                     for i in range(count+1)])
+                peak = float(np.max(np.abs(np.diff(states, axis=0)))/dt)
+                if peak > maximum_speed*(1.+1e-6) or np.any(states < bounds[:, 0]) or np.any(states > bounds[:, 1]):
+                    raise RuntimeError("open-hand reindex exceeds its joint speed or position bounds")
+                for candidate in states:
+                    hit = check(candidate, open_hand)
+                    if hit is not None:
+                        record["planned_geometry_stop"] = hit
+                        raise RuntimeError(f"planned open-hand reindex collision: {hit}")
+                np.save(output / "open_hand_arm_path_rad.npy", states)
+                record.update(stage="REINDEXING_WITH_OPEN_HAND", reindex_first_step=int(stepper.step_index),
+                              path_duration_s=count*dt, maximum_planned_arm_speed_rad_s=peak,
+                              arm_target_offset_rad=offset.tolist(), body_yaw_inferred_from_hand_or_nut=False)
+                save()
+                world.play()
+                for candidate in states:
+                    advance("nut_index_free_rotate", candidate, open_hand)
+                for _ in range(round(float(settings["open_hold_duration_s"])/dt)):
+                    advance("nut_index_free_final_hold", states[-1], open_hand)
+                record["reindex_last_step"] = int(stepper.step_index)
+                fresh, _ = observe("after_open_hand_reindex")
+                record.update(completed=True, stage="OPEN_HAND_REINDEX_FINISHED_REQUIRES_RETENTION_EVALUATION",
+                              final_observation=fresh, final_arm_target_rad=states[-1].tolist(),
+                              final_hand_target_rad=open_hand.tolist())
     except Exception as error:
         record.update(failure_stage=record["stage"], stage="STOPPED", failure_reason=str(error))
     finally:
         world.pause()
         record.update(last_step=int(stepper.step_index), outer_abort_reason=stepper.abort_reason)
-        with gzip.open(output / "joint_ft_samples.json.gz", "wt", encoding="utf-8") as stream:
-            json.dump(_json_ready(ft.samples[first_ft:]), stream, separators=(",", ":"))
-        with gzip.open(output / "commands.json.gz", "wt", encoding="utf-8") as stream:
-            json.dump(commands, stream, separators=(",", ":"))
+        with gzip.open(output / "joint_ft_samples.json.gz", "wt", encoding="utf-8",compresslevel=1) as stream:
+            dump_array(stream,ft.samples[first_ft:])
+        with gzip.open(output / "commands.json.gz", "wt", encoding="utf-8",compresslevel=1) as stream:
+            dump_array(stream,commands)
         save()
     return _json_ready(record)

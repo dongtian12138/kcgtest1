@@ -83,6 +83,12 @@ class BodyAssemblyVideo:
         else:
             target = np.asarray([.45, -.02, .45])
             eye = np.asarray([1.15, -.9, .8])
+        progress=self.runtime.get('last_nut_progress_observation')
+        if phase=='nut_index_free_open_hold' and progress is not None:
+            # A side close-up uses the current visual estimate, never truth or
+            # an assembly-status-dependent change to the connector's red band.
+            target=np.asarray(progress['observation']['world_from_plug_five_dof'])[:3,3]
+            eye=target+np.asarray([.10,-.08,.015])
         self.author_camera(self.stage, self.paths["main"], self.eye_target(eye, target),
             resolution=self.main_resolution, focal_length_mm=24.0, horizontal_aperture_mm=36.0,
             clipping_range_m=(.02, 10.0), Gf=self.Gf, UsdGeom=self.UsdGeom)

@@ -342,6 +342,9 @@ class TruthAuditRecorder:
         self.Gf, self.Usd, self.UsdGeom = stage_modules
         self.contact_interface = contact_interface
         self.path_decoder = path_decoder
+        self._decoded_paths = {}
+        self.capture_wall_times = {name:0. for name in ('contact_callback_s','engine_and_body_s',
+            'robot_poses_s','contact_counts_s','archive_append_s')}
         # Read-only evidence: a pose plateau may otherwise hide actor sleep.
         # This state is never supplied to the online controller.
         from pxr import PhysicsSchemaTools, Sdf, UsdUtils
@@ -398,13 +401,20 @@ class TruthAuditRecorder:
     def _decode_headers(self, headers) -> list[tuple[tuple[str, ...], int]]:
         return [
             (
-                tuple(str(self.path_decoder(value)) for value in (
+                tuple(self._decode_path(value) for value in (
                     header.actor0, header.actor1, header.collider0, header.collider1
                 )),
                 int(header.num_contact_data),
             )
             for header in headers
         ]
+
+    def _decode_path(self,value):
+        # The scene's native path IDs are stable; decoded strings are immutable.
+        cache=getattr(self,'_decoded_paths',None)
+        if cache is None:self._decoded_paths=cache={}
+        if value not in cache:cache[value]=str(self.path_decoder(value))
+        return cache[value]
 
     def _decode_full_report(self, headers, contact_data) -> list[dict[str, object]]:
         decoded: list[dict[str, object]] = []
@@ -415,7 +425,7 @@ class TruthAuditRecorder:
             if offset < 0 or offset + count > contact_data_count:
                 raise RuntimeError("contact header data range is invalid")
             paths = tuple(
-                str(self.path_decoder(value))
+                self._decode_path(value)
                 for value in (
                     header.actor0,
                     header.actor1,
@@ -426,10 +436,11 @@ class TruthAuditRecorder:
             contacts = []
             for index in range(offset, offset + count):
                 record = contact_data[index]
+                position,normal,impulse=record.position,record.normal,record.impulse
                 contacts.append({
-                    "position_m": [float(record.position[axis]) for axis in range(3)],
-                    "normal": [float(record.normal[axis]) for axis in range(3)],
-                    "impulse_n_s": [float(record.impulse[axis]) for axis in range(3)],
+                    "position_m": [float(position[axis]) for axis in range(3)],
+                    "normal": [float(normal[axis]) for axis in range(3)],
+                    "impulse_n_s": [float(impulse[axis]) for axis in range(3)],
                     "separation_m": float(record.separation),
                 })
             decoded.append({
@@ -444,10 +455,13 @@ class TruthAuditRecorder:
         self._event_headers.extend(self._decode_headers(headers))
 
     def _on_physics_step(self, _dt) -> None:
+        from time import perf_counter
+        started=perf_counter()
         headers, contact_data, _ = self.contact_interface.get_full_contact_report()
         self._physics_step_reports.append(
             self._decode_full_report(headers, contact_data)
         )
+        if hasattr(self,'capture_wall_times'):self.capture_wall_times['contact_callback_s']+=perf_counter()-started
 
     def _tensor_contact_rows(self) -> list[dict[str, object]]:
         import warp as wp
@@ -808,6 +822,8 @@ class TruthAuditRecorder:
         active_targets: Sequence[float],
         arm_control: Mapping[str, object],
     ) -> None:
+        from time import perf_counter
+        started=perf_counter()
         self.engine_monitor.sample()
         internal_joint = None
         if self.object_articulation is not None:
@@ -836,6 +852,7 @@ class TruthAuditRecorder:
             dtype=np.float64,
         )
         center = np.average(centers, axis=0, weights=self.masses)
+        body_done=perf_counter()
         link_poses = self._robot_link_poses(
             active_positions, ("handbase_link", *TERMINAL_LINK_NAMES)
         )
@@ -848,6 +865,9 @@ class TruthAuditRecorder:
             float(position[2]) + offset
             for position, offset in zip(positions, self.bottom_offsets)
         )
+        poses_done=perf_counter()
+        contacts=self._contact_counts()
+        contacts_done=perf_counter()
         self.samples.append(
             {
                 "step": int(step),
@@ -888,9 +908,13 @@ class TruthAuditRecorder:
                 "object_center_in_hand_base_m": _relative_position(
                     center, hand_position, hand_orientation
                 ),
-                "contacts": self._contact_counts(),
+                "contacts": contacts,
             }
         )
+        self.capture_wall_times['engine_and_body_s']+=body_done-started
+        self.capture_wall_times['robot_poses_s']+=poses_done-body_done
+        self.capture_wall_times['contact_counts_s']+=contacts_done-poses_done
+        self.capture_wall_times['archive_append_s']+=perf_counter()-contacts_done
 
 
 def _motion_metrics(samples, criteria, physics_dt_s: float) -> dict[str, object]:

@@ -916,6 +916,12 @@ class JointSignalStepper:
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
         if self.abort_reason is not None:
             return self.latest
+        import os
+        from time import monotonic
+        deadline=os.environ.get('KCG_EXPERIMENT_ACTION_DEADLINE')
+        if deadline and monotonic()>=float(deadline):
+            self.abort_reason='EXPERIMENT_WALL_BUDGET_REACHED'
+            return self.latest
         started = perf_counter()
         active_target = np.concatenate((arm_target, hand_target))
         payload_feedforward = (
@@ -967,9 +973,14 @@ class JointSignalStepper:
         self.world.step(render=False)
         after_physics = perf_counter()
         self.wall_times["physics_step_s"] += after_physics - before_physics
-        all_positions = self.robot.get_dof_positions(indices=0).numpy()[0]
-        all_velocities = self.robot.get_dof_velocities(indices=0).numpy()[0]
-        all_efforts = self.robot.get_dof_projected_joint_forces(indices=0).numpy()[0]
+        native_state=(getattr(self.hand_mechanism,'last_native_state',None)
+            if getattr(self.hand_mechanism,'last_native_state_time',None)==float(self.world.current_time) else None)
+        if native_state is not None:
+            all_positions,all_velocities,all_efforts=native_state
+        else:
+            all_positions = self.robot.get_dof_positions(indices=0).numpy()[0]
+            all_velocities = self.robot.get_dof_velocities(indices=0).numpy()[0]
+            all_efforts = self.robot.get_dof_projected_joint_forces(indices=0).numpy()[0]
         positions, velocities = all_positions[self.active_indices], all_velocities[self.active_indices]
         efforts = all_efforts[self.active_indices]
         arm_control["projected_joint_force_nm"] = efforts[:7].tolist()

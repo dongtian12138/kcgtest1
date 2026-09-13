@@ -45,18 +45,31 @@ def iter_truth_samples(directory):
         yield from ijson.items(stream,"samples.item",use_float=True)
 
 
+def read_truth_sample(directory,step):
+    """Read one sealed indexed block instead of scanning a multi-GB episode."""
+    from carts_v2.fast_json import loads
+    directory=Path(directory);path=directory/'truth_samples.jsonl.gz'
+    index_path=Path(str(path)+'.index.json')
+    if index_path.exists():
+        index=json.loads(index_path.read_text())
+        if not 0<=step<index['sample_count']:raise IndexError(step)
+        block=index['blocks'][step//index['block_size']]
+        with path.open('rb') as f:
+            f.seek(block['offset']);data=gzip.decompress(f.read(block['end']-block['offset']))
+        row=loads(data.splitlines()[step-block['first']])
+        if row['step']!=step:raise ValueError('indexed sample does not match requested physical step')
+        return row
+    return next((row for row in iter_truth_samples(directory) if row['step']==step),None)
+
+
 def write_gzip_array(path,rows,*,mode="x",prepare=None):
     """Write one ordinary JSON array without duplicating all rows in memory."""
-    def encode_extra(value):
-        if hasattr(value,"tolist"):return value.tolist()
-        if isinstance(value,Path):return str(value)
-        raise TypeError(f"unsupported archived value: {type(value).__name__}")
+    from carts_v2.fast_json import dumps
     with gzip.open(path,mode+"t",encoding="utf-8",compresslevel=1) as stream:
         stream.write('[')
         for index,row in enumerate(rows):
             if index:stream.write(',')
-            stream.write(json.dumps(prepare(row) if prepare else row,ensure_ascii=False,
-                                    separators=(',',':'),default=encode_extra))
+            stream.write(dumps(prepare(row) if prepare else row))
         stream.write(']\n')
 
 

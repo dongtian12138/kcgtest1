@@ -36,4 +36,11 @@ else
 fi
 export OMNI_KIT_ACCEPT_EULA="${OMNI_KIT_ACCEPT_EULA:-YES}"
 
+case "${1:-}" in
+  */run_body_assembly_with_video.py|*/diagnose_saved_hand_wrench.py|*/carts_v2/run_grasp_lift.py)
+    if [[ "${KCG_BOUNDED_EXPERIMENT:-0}" != "1" ]]; then
+      exec python3 "${script_dir}/bounded_experiment.py" "${isaac_python}" "$@"
+    fi
+    ;;
+esac
 exec "${isaac_python}" "$@"

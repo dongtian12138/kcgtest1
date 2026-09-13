@@ -14,6 +14,7 @@ import json
 import math
 from pathlib import Path
 import time
+from functools import lru_cache
 
 import cv2
 import numpy as np
@@ -21,6 +22,7 @@ from scipy.optimize import least_squares
 import trimesh
 
 
+@lru_cache(maxsize=8)
 def _visible_face_geometry(mesh_path: Path) -> tuple[float, float]:
     """Return visible-face radius and its distance to local z=0, in metres."""
     mesh = trimesh.load(mesh_path, process=False)
@@ -338,6 +340,7 @@ def estimate_plug_rear_circle_from_float_depth(
     *, depth_m: np.ndarray, mask: np.ndarray, intrinsics: np.ndarray,
     mesh_path: Path, plane_residual_limit_m: float = 0.00002,
     pixel_center_offset_px: float = 0.0,
+    plane_iterations: int = 700,
 ) -> dict[str, object]:
     """Locate the rear circular face using float depth, independent of shadows.
 
@@ -362,8 +365,10 @@ def estimate_plug_rear_circle_from_float_depth(
     points = np.column_stack(((xx - K[0, 2]) * z / K[0, 0],
                              (yy - K[1, 2]) * z / K[1, 1], z))
     radius, axial_offset = _visible_face_geometry(mesh_path)
+    if not isinstance(plane_iterations,int) or not 16<=plane_iterations<=700:
+        raise ValueError('plane iteration count must remain between16and700')
     normal, offset, inliers, fraction = _fit_visible_plane(
-        points, residual_limit_m=plane_residual_limit_m, iterations=700)
+        points, residual_limit_m=plane_residual_limit_m, iterations=plane_iterations)
     center_2d, first, second, circle_rms, pixels = _coarse_face_center(
         mask=valid, image_points=(yy, xx), point_cloud=points, normal=normal,
         offset=offset, intrinsics=K, face_radius_m=radius,

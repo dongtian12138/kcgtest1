@@ -95,6 +95,11 @@ boundaries:
   passive_nut_resistance_source: validated_connector.model_path native ratchet and
     thrust contacts
 nut_regrasp:
+  readiness:
+    window_s: 0.25
+    relative_tolerance: 0.05
+    relative_range: 0.15
+    minimum_margin_nm: 0.1
   geometry_plan: src/kcg_connector/config/visual_assembly_v1_nut_geometry.json
   scope: one_finite_regrasp_from_current_palm_position_and_axis
   torque_rotation_in_this_experiment: true
@@ -138,6 +143,33 @@ nut_regrasp:
   - artifacts/visual_assembly_v1/task_preload20_end_clearance_plus.json
   - artifacts/visual_assembly_v1/task_preload20_end_clearance_minus.json
 nut_rotation:
+  rotation_profile: trapezoid
+  maximum_rotation_acceleration_deg_s2: 0.35
+  measured_tracking:
+    enabled: true
+    maximum_lateral_error_m: 0.00025
+  axial_lead_following:
+    enabled: true
+    lead_m: 0.00762
+    maximum_correction_m: 0.0001
+    restoring_rate_s_inv: 1.0
+    source: validated TE three-start thread lead; robot reference only
+  visual_progress:
+    enabled: true
+    observation_period_s: 1.0
+    maximum_grasp_relation_error_m: 0.0002
+    nominal_seated_depth_m: 0.014605
+    visual_seating_tolerance_m: 0.00002
+    stable_depth_tolerance_m: 0.000005
+    seating_minimum_torque_nm: 0.4
+    seating_confirmations: 2
+    minimum_loaded_command_deg: 40.0
+    minimum_progress_check_angle_deg: 0.75
+    minimum_observed_progress_m: 0.00001
+  recovery:
+    enabled: true
+    maximum_regrasps: 1
+  finger_position_stiffness_reference_nm_rad: 120.0
   enabled: true
   rotation_about_socket_plus_z_deg: -20.0
   rotation_direction_source: RIGHT_HAND_THREE_START_THREAD; clockwise viewed from
@@ -164,7 +196,7 @@ nut_rotation:
     torsional_moment_nm: 4.6
   stop_rationale: 新模型单体前向实测力矩均值约0.42至1.07 Nm、峰3.08 Nm；旧0.04 Nm是旧0.02 Nm阻力的试探参考，已不适用。沿用新手局部候选的20
     N、0.4 Nm和4.6 Nm观测范围及有限传动，原始力矩完整保留。均为仿真研究参考，不是硬件额定；物理到位和松手保持仍需独立验收。
-  no_lead_based_position_command: true
+  no_lead_based_position_command: false
   no_loaded_wrench_rezeroing: true
   verified_pad_grasp_reference: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_pad_regrasp_filter_01/nut_pad_surface_posthoc_v1.json
   axial_protection: EXISTING_PLANNED_CONTACT_50_MS_WRIST_FORCE_LIMIT_AND_RAW_TORQUE_FINGER_COLLISION_PROTECTIONS
@@ -280,6 +312,11 @@ wrist_planned_contact_force_monitor:
   existing_force_limit_values_unchanged: true
   new_force_or_torque_command_added: false
 nut_reindex:
+  joint7_only: true
+  maximum_joint7_speed_rad_s: 1.0
+  maximum_joint7_acceleration_rad_s2: 2.0
+  joint7_settle_timeout_s: 0.5
+  joint7_position_tolerance_rad: 0.003
   enabled: true
   rotation_about_socket_plus_z_deg: 20.0
   maximum_arm_speed_rad_s: 0.075
@@ -294,6 +331,33 @@ nut_reindex:
   offline_path_reference: artifacts/kcg_connector/isaac/te_full_assembly_20260905/key_full_stroke_01/open_hand_reindex_geometry_v1.json
   minimum_observed_key_guide_overlap_m: 0.0001
 nut_rotation_after_index:
+  rotation_profile: trapezoid
+  maximum_rotation_acceleration_deg_s2: 0.35
+  measured_tracking:
+    enabled: true
+    maximum_lateral_error_m: 0.00025
+  axial_lead_following:
+    enabled: true
+    lead_m: 0.00762
+    maximum_correction_m: 0.0001
+    restoring_rate_s_inv: 1.0
+    source: validated TE three-start thread lead; robot reference only
+  visual_progress:
+    enabled: true
+    observation_period_s: 1.0
+    maximum_grasp_relation_error_m: 0.0002
+    nominal_seated_depth_m: 0.014605
+    visual_seating_tolerance_m: 0.00002
+    stable_depth_tolerance_m: 0.000005
+    seating_minimum_torque_nm: 0.4
+    seating_confirmations: 2
+    minimum_loaded_command_deg: 40.0
+    minimum_progress_check_angle_deg: 0.75
+    minimum_observed_progress_m: 0.00001
+  recovery:
+    enabled: true
+    maximum_regrasps: 1
+  finger_position_stiffness_reference_nm_rad: 120.0
   enabled: true
   rotation_about_socket_plus_z_deg: -90.0
   rotation_direction_source: RIGHT_HAND_THREE_START_THREAD; clockwise viewed from
@@ -320,7 +384,7 @@ nut_rotation_after_index:
     torsional_moment_nm: 4.6
   stop_rationale: 新模型单体前向实测力矩均值约0.42至1.07 Nm、峰3.08 Nm；旧0.04 Nm是旧0.02 Nm阻力的试探参考，已不适用。沿用新手局部候选的20
     N、0.4 Nm和4.6 Nm观测范围及有限传动，原始力矩完整保留。均为仿真研究参考，不是硬件额定；物理到位和松手保持仍需独立验收。
-  no_lead_based_position_command: true
+  no_lead_based_position_command: false
   no_loaded_wrench_rezeroing: true
   verified_pad_grasp_reference: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_pad_regrasp_filter_01/nut_pad_surface_posthoc_v1.json
   axial_protection: EXISTING_PLANNED_CONTACT_50_MS_WRIST_FORCE_LIMIT_AND_RAW_TORQUE_FINGER_COLLISION_PROTECTIONS
@@ -443,6 +507,7 @@ validated_connector:
     velocity_iterations: 4
   minimum_contact_records: 32768
 continued_nut_strokes:
+  maximum_total_command_deg: 380.0
   enabled: true
   maximum_additional_strokes: 3
   release_at_end: true

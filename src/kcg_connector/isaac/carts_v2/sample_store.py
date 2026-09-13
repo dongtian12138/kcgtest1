@@ -9,6 +9,10 @@ from collections.abc import Sequence
 import gzip
 import json
 from pathlib import Path
+try:
+    from .fast_json import dumps as encode_row, loads as decode_row
+except ImportError:
+    from fast_json import dumps as encode_row, loads as decode_row
 
 
 class _SampleSlice(Sequence):
@@ -48,7 +52,7 @@ class GzipSampleStore(Sequence):
         # can be read without retaining or decompressing previous samples.
         with gzip.GzipFile(fileobj=self._file,mode='wb',compresslevel=1,mtime=0) as member:
             for row in self._live:
-                member.write((json.dumps(row,ensure_ascii=False,separators=(',',':'))+'\n').encode())
+                member.write((encode_row(row)+'\n').encode())
         self._file.flush()
         self._blocks.append({'first':self._count-len(self._live),'count':len(self._live),
                              'offset':offset,'end':self._file.tell()})
@@ -66,7 +70,7 @@ class GzipSampleStore(Sequence):
         block=self._blocks[index]
         with open(self.name,'rb') as stream:
             stream.seek(block['offset']);data=stream.read(block['end']-block['offset'])
-        rows=[json.loads(line) for line in gzip.decompress(data).splitlines()]
+        rows=[decode_row(line) for line in gzip.decompress(data).splitlines()]
         if len(rows)!=block['count']:raise ValueError('sample archive block count differs')
         return self._remember(index,rows)
 

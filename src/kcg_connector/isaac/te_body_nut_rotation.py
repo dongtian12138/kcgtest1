@@ -83,6 +83,10 @@ def interface_wrench_from_sensor_sample(sample, task_axes_world, hand_world,
 
 def run_body_nut_rotation(repository, runtime, stepper, dynamic, grip,
                           world_from_socket, settings, output, *, initial_position_axis_observation=None):
+    if settings.get('recovery',{}).get('enabled',False):
+        from te_body_nut_continuation import run_nut_rotation_with_recovery
+        return run_nut_rotation_with_recovery(repository,runtime,stepper,dynamic,grip,
+            world_from_socket,settings,output,initial_position_axis_observation=initial_position_axis_observation)
     if settings.get('in_turn_feedback', {}).get('enabled', False):
         from te_observed_nut_rotation import run_observed_nut_rotation
         return run_observed_nut_rotation(repository,runtime,stepper,dynamic,grip,
@@ -97,8 +101,15 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
     import omni.replicator.core as rep
     import omni.usd
     from scipy.spatial.transform import Rotation
+    from te_nut_motion import ScalarMotion,limit_joint_velocity_without_changing_direction,classify_observed_progress
+    from carts_v2.fast_json import dumps as encode_row,dump_array
 
-    from te_body_socket_observation import observe_released_plug_from_rgbd
+    from te_body_socket_observation import observe_released_plug_from_rgbd as full_observe_released_plug
+    observe_released_plug_from_rgbd=full_observe_released_plug
+    if settings.get('visual_progress',{}).get('enabled',False):
+        from te_body_socket_observation import observe_current_plug_from_rgbd
+        def observe_released_plug_from_rgbd(*args):
+            return observe_current_plug_from_rgbd(*args,runtime)
     from te_foundationpose_handoff_runtime import (
         MOVEIT_SOFT_ARM_BOUNDS_RAD, _json_ready, control,
     )
@@ -119,6 +130,11 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
         if not np.isfinite(maximum_acceleration) or maximum_acceleration <= 0:
             raise ValueError("rotation acceleration reference must be finite and positive")
         duration = max(duration, np.sqrt((10. / np.sqrt(3.)) * abs(angle) / maximum_acceleration))
+    scalar_profile=None
+    if settings.get('rotation_profile')=='trapezoid':
+        if maximum_acceleration is None:raise ValueError('the cruise profile needs a declared acceleration limit')
+        scalar_profile=ScalarMotion(angle,maximum_speed,maximum_acceleration)
+        duration=max(dt,scalar_profile.duration)
     settle_s = float(settings["axial_settle_duration_s"])
     hold_s = float(settings["post_rotation_hold_s"])
     filter_tau = float(settings.get("contact_estimate_filter_time_constant_s", 0.0))
@@ -161,6 +177,18 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
     model_elastic_efforts = None
     model_effort_margin = None
     release_reserve = settings.get("controlled_release_effort_reserve_nm")
+    measured_tracking=settings.get('measured_tracking',{})
+    tracking_enabled=bool(measured_tracking.get('enabled',False))
+    progress_settings=settings.get('visual_progress',{})
+    progress_enabled=bool(progress_settings.get('enabled',False))
+    tracking_context=runtime.setdefault('plug_visual_tracking_context',{}) if progress_enabled else {}
+    last_observed_body=None
+    next_observation_s=0.
+    seating_count=0
+    axial_lead=settings.get('axial_lead_following',{})
+    axial_lead_enabled=bool(axial_lead.get('enabled',False))
+    turn_axial_origin=None
+    axial_correction=0.
     if release_reserve is not None and not 0 < float(release_reserve) <= .1:
         raise ValueError("controlled release reserve must be positive and no greater than0.1Nm")
     if (not all(np.isfinite(v) and v >= 0 for v in
@@ -180,7 +208,7 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
         "simulation_only": True, "hardware_authorized": False,
         "online_object_or_contact_truth_used": False,
         "direct_object_force_or_pose_command_used": False,
-        "thread_lead_used_for_axial_commands": False,
+        "thread_lead_used_for_axial_commands": axial_lead_enabled,
         "physical_thread_progress_verified": False,
         "physical_result": "REQUIRES_POSTRUN_NUT_ROTATION_KEY_REACTION_AND_THREAD_ADVANCE",
         "first_step": int(stepper.step_index), "settings": settings,
@@ -207,6 +235,8 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
         return q, np.asarray(inputs.robot_model.forward_kinematics(tuple(q), enforce_limits=False)["handbase_link"])
 
     try:
+        initial_q,_=measured_hand()
+        record['initial_arm_encoder_rad']=initial_q[:7].tolist()
         if not grip["completed"] or stepper.abort_reason is not None:
             raise RuntimeError("the current nut grip controller is not ready")
         if rate_guard_enabled:
@@ -255,6 +285,13 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 record["local_diagnostic_scope"] = "INITIAL_CONDITION_FROM_COMPLETED_EPISODE_NOT_FULL_ASSEMBLY"
         if not fresh.get("position_and_axis_measured"):
             raise RuntimeError("the post-grip palm image did not measure position and directed axis")
+        if progress_enabled:
+            tracking_context['last_observation']=fresh
+            if fresh.get('tracking_seed_mask'):tracking_context['mask_path']=fresh['tracking_seed_mask']
+            last_observed_body=np.asarray(fresh['world_from_plug_five_dof']).copy()
+            next_observation_s=float(progress_settings['observation_period_s'])
+            record['current_visual_progress']=[]
+            record['desired_grasp_relation_held_between_regrasps']=True
         body = np.asarray(fresh["world_from_plug_five_dof"]).reshape(4, 4)
         record['initial_hand_world_from_encoders']=hand.tolist()
         if observation_session is not None:
@@ -476,8 +513,10 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
         record.update(postgrip_palm_observation=fresh,
             hand_from_virtual_nut_axis_frame=hand_from_pivot.tolist(),
             commanded_rotation_duration_s=duration,
-            planned_peak_rotation_speed_deg_s=float(np.rad2deg(1.875*abs(angle)/duration)),
-            planned_peak_rotation_acceleration_deg_s2=float(np.rad2deg((10./np.sqrt(3.))*abs(angle)/duration**2)),
+            planned_peak_rotation_speed_deg_s=float(np.rad2deg(
+                scalar_profile.maximum_acceleration*scalar_profile.ramp_time if scalar_profile else 1.875*abs(angle)/duration)),
+            planned_peak_rotation_acceleration_deg_s2=float(np.rad2deg(
+                scalar_profile.maximum_acceleration if scalar_profile else (10./np.sqrt(3.))*abs(angle)/duration**2)),
             modeled_gravity_acceleration_world_m_s2=[0., 0., -abs(float(runtime["scene"]["gravity_m_s2"]))],
             grip_effort_reference_nm=desired_effort.tolist(),
             new_pose_relation_scope="CURRENT_PALM_CENTER_AND_CURRENT_ENCODER_GRIP_YAW_GAUGE",
@@ -622,6 +661,56 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 raise RuntimeError("explicit simulation pause requested; preserve the incomplete episode")
             q, hand, current, wrench, raw_wrench = observe()
             elapsed = index * dt
+            if progress_enabled and elapsed>=next_observation_s:
+                from te_body_socket_observation import observe_tracked_plug_from_rgbd
+                world.pause()
+                folder=output/f'turn_observation_{int(stepper.step_index):08d}'
+                try:
+                    observed=observe_tracked_plug_from_rgbd(repository,omni.usd.get_context().get_stage(),
+                        world,rep,hand,folder,tracking_context)
+                except (RuntimeError,ValueError) as tracking_error:
+                    observed=full_observe_released_plug(repository,omni.usd.get_context().get_stage(),
+                        world,rep,hand,output/f'turn_reacquire_{int(stepper.step_index):08d}')
+                    if not observed.get('position_and_axis_measured'):
+                        raise RuntimeError('recoverable nut turn stop: VISUAL_TRACKING_LOST') from tracking_error
+                    tracking_context.update(last_observation=observed)
+                    tracking_context.pop('mask_path',None)
+                observed_body=np.asarray(observed['world_from_plug_five_dof'])
+                if -axis@observed_body[:3,2]<=0:
+                    raise RuntimeError('recoverable nut turn stop: VISUAL_TRACKING_LOST')
+                relation_error=observed_body[:3,3]-current[:3,3]
+                if np.linalg.norm(relation_error)>float(progress_settings['maximum_grasp_relation_error_m']):
+                    record['grasp_relation_stop']={'step':int(stepper.step_index),'error_world_m':relation_error.tolist(),
+                        'current_observation':observed}
+                    raise RuntimeError('recoverable nut turn stop: GRASP_RELATION_CHANGED')
+                # Observe the changed relation without redefining the desired
+                # grasp to that error. Otherwise a fresh image would cancel
+                # the measured tracking correction and accept a displaced hand.
+                last_observed_body=observed_body.copy()
+                record['observed_hand_from_body']=(np.linalg.inv(hand)@observed_body).tolist()
+                current_command=engagement_start_deg+abs(float(record.get('last_loaded_command_deg',0.)))
+                observation_row={'step':int(stepper.step_index),'time_s':float(world.current_time),
+                    'depth_m':float(-axis@(observed_body[:3,3]-socket[:3,3])),
+                    'command_deg':current_command,'torsion_nm':float(wrench[5]),
+                    'grasp_relation_error_m':float(np.linalg.norm(relation_error)),
+                    'relation_update_world_m':relation_error.tolist(),'observation':observed}
+                previous=runtime.get('last_nut_progress_observation')
+                observation_row['state']=classify_observed_progress(previous,observation_row,progress_settings)
+                runtime['last_nut_progress_observation']=observation_row
+                record['current_visual_progress'].append(observation_row)
+                seating_count=seating_count+1 if observation_row['state']=='VISUAL_SEATING_CANDIDATE' else 0
+                next_observation_s=elapsed+float(progress_settings['observation_period_s'])
+                if seating_count>=int(progress_settings.get('seating_confirmations',2)):
+                    record['seating_candidate']=True
+                    record['normal_stop_reason']='CURRENT_VISUAL_DEPTH_STABILITY_AND_TORQUE'
+                    break
+                if observation_row['state'] in ('RECOVERABLE_NO_PROGRESS','RECOVERABLE_GRIP_SLIP','RECOVERABLE_CONTACT_STALL'):
+                    reason={'RECOVERABLE_NO_PROGRESS':'NO_OBSERVED_AXIAL_PROGRESS',
+                        'RECOVERABLE_GRIP_SLIP':'OBSERVED_GRIP_SLIP','RECOVERABLE_CONTACT_STALL':'OBSERVED_CONTACT_STALL'}[observation_row['state']]
+                    raise RuntimeError('recoverable nut turn stop: '+reason)
+                if observation_row['state']=='OBSERVED_DEPTH_OVERRUN':
+                    raise RuntimeError('current visual depth exceeds the bounded source seating range')
+                world.play()
             if release_reserve is not None and elapsed >= preparation_end:
                 release_mechanism=getattr(world,"hand_mechanism",None)
                 if release_mechanism is None:
@@ -840,6 +929,11 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             u = np.clip(effective_turn_time / duration, 0.0, 1.0)
             fraction = 10*u**3 - 15*u**4 + 6*u**5
             rotation_velocity = angle * 30*u**2*(1-u)**2 / duration * turn_rate_scale
+            if scalar_profile is not None:
+                displacement,profile_speed=scalar_profile.at(effective_turn_time)
+                fraction=displacement/angle if abs(angle)>1e-15 else 1.
+                rotation_velocity=profile_speed*turn_rate_scale
+            record['last_loaded_command_deg']=float(np.rad2deg(angle*fraction))
             if rate_guard_enabled and u >= 1. and rate_turn_finished_s is None:
                 rate_turn_finished_s = elapsed
             yaw_compliance_velocity = 0.0
@@ -872,6 +966,16 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 (wrench[2] - force_reference)
                 * float(settings["axial_admittance_m_per_n_s"]),
                 -float(settings["maximum_axial_speed_m_s"]), float(settings["maximum_axial_speed_m_s"]))
+            if axial_lead_enabled and elapsed>=preparation_end:
+                if turn_axial_origin is None:turn_axial_origin=axial_offset
+                lead=float(axial_lead['lead_m'])
+                correction_velocity=(wrench[2]-force_reference)*float(settings['axial_admittance_m_per_n_s'])
+                correction_velocity-=float(axial_lead['restoring_rate_s_inv'])*axial_correction
+                bound=float(axial_lead['maximum_correction_m'])
+                next_correction=float(np.clip(axial_correction+correction_velocity*dt,-bound,bound))
+                nominal_axial=turn_axial_origin+lead*angle*fraction/(2*np.pi)
+                velocity_z=float(np.clip((nominal_axial+next_correction-axial_offset)/dt,
+                    -float(settings['maximum_axial_speed_m_s']),float(settings['maximum_axial_speed_m_s'])))
             visual_refinement_active = position_feedback and feedback_segment is not None and not feedback_verified
             unconstrained_axial_velocity_z = float(velocity_z)
             if visual_refinement_active:
@@ -884,6 +988,8 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                     velocity_z = max(0., velocity_z)
             axial_reference_held = bool(visual_refinement_active and velocity_z == 0.)
             axial_offset += velocity_z * dt
+            if axial_lead_enabled and turn_axial_origin is not None:
+                axial_correction=axial_offset-nominal_axial
             planar_velocity = np.zeros(2)
             planar_restoring_force = np.zeros(2)
             combined_alignment_velocity_world = None
@@ -973,10 +1079,14 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             # the current palm axis and encoder translation. Preserve a small
             # positive guide overlap while allowing force-controlled retreat.
             predicted_body_rotation = current[:3, :3] @ original_pivot[:3, :3].T @ body_axis_rotation
+            geometry_origin=current[:3,3]
+            if progress_enabled and last_observed_body is not None:
+                predicted_body_rotation=last_observed_body[:3,:3]
+                geometry_origin=last_observed_body[:3,3]
             axis_cosine = abs(float(axis @ predicted_body_rotation[:, 2]))
-            estimated_key_depth = (-float(axis @ (current[:3, 3] - socket[:3, 3]))
+            estimated_key_depth = (-float(axis @ (geometry_origin - socket[:3, 3]))
                 - .000762 * axis_cosine - .0188214 * np.sqrt(max(0., 1.-axis_cosine**2)))
-            estimated_key_rear_depth = (-float(axis @ (current[:3, 3] - socket[:3, 3]))
+            estimated_key_rear_depth = (-float(axis @ (geometry_origin - socket[:3, 3]))
                 - .007645401*axis_cosine - .018821401*np.sqrt(max(0., 1.-axis_cosine**2)))
             balance_target = None
             if balance_enabled and elapsed >= preparation_end:
@@ -1046,7 +1156,9 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 "estimated_minimum_key_rear_depth_m": estimated_key_rear_depth,
                 "axial_velocity_command_m_s": float(velocity_z),
                 "encoder_pivot_world_m": current[:3, 3].tolist()})
-            sample_stream.write(json.dumps(control_sample, ensure_ascii=False, separators=(",", ":")) + "\n")
+            control_sample.update(axial_lead_following_enabled=axial_lead_enabled,
+                bounded_axial_correction_m=axial_correction if axial_lead_enabled else None)
+            sample_stream.write(encode_row(control_sample) + "\n")
             record["sample_count"] += 1
             limits = settings["stops"]
             # A null axial entry retires only the additional probe-style stop.
@@ -1092,6 +1204,15 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             point_jacobian = np.vstack((jacobian[:3] - skew @ jacobian[3:], .05 * jacobian[3:]))
             error = np.r_[desired_pivot[:3, 3] - ik_pivot[:3, 3],
                 .05 * Rotation.from_matrix(desired_pivot[:3, :3] @ ik_pivot[:3, :3].T).as_rotvec()]
+            if tracking_enabled:
+                # Keep the nominal joint integrator; feedback uses the real
+                # encoder pose, without resetting that integrator to loaded q.
+                physical_error=desired_pivot[:3,3]-current[:3,3]
+                lateral_error=physical_error-axis*(axis@physical_error)
+                if elapsed>=preparation_end and np.linalg.norm(lateral_error)>float(measured_tracking['maximum_lateral_error_m']):
+                    record['tracking_stop']={'step':int(stepper.step_index),'error_world_m':physical_error.tolist()}
+                    raise RuntimeError('recoverable nut turn stop: LOADED_POSE_ERROR')
+                error=np.r_[physical_error,.05*Rotation.from_matrix(desired_pivot[:3,:3]@current[:3,:3].T).as_rotvec()]
             lateral_feedforward = (combined_alignment_velocity_world
                 if combined_alignment_velocity_world is not None else
                 lateral_delta*align_rate + socket[:3, :2] @ planar_velocity)
@@ -1101,10 +1222,17 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                        + alignment_angular_velocity_world)]
             joint_velocity = point_jacobian.T @ np.linalg.solve(
                 point_jacobian @ point_jacobian.T + .0005**2 * np.eye(6), twist + 3.0 * error)
-            arm += np.clip(joint_velocity, -settings["maximum_arm_speed_rad_s"], settings["maximum_arm_speed_rad_s"]) * dt
+            if tracking_enabled:
+                joint_velocity,velocity_scale=limit_joint_velocity_without_changing_direction(joint_velocity,settings['maximum_arm_speed_rad_s'])
+                record['minimum_joint_velocity_scale']=min(record.get('minimum_joint_velocity_scale',1.),velocity_scale)
+                arm+=joint_velocity*dt
+            else:
+                arm += np.clip(joint_velocity, -settings["maximum_arm_speed_rad_s"], settings["maximum_arm_speed_rad_s"]) * dt
             if np.any(arm < bounds[:, 0]) or np.any(arm > bounds[:, 1]):
                 raise RuntimeError("the original arm soft limit bounds the nut rotation")
             body_bound = current.copy()
+            if progress_enabled and last_observed_body is not None:
+                body_bound[:3,3]=last_observed_body[:3,3]
             # The coaxial body/nut axis follows the measured grip orientation;
             # the body avoidance mesh already covers every unobserved body yaw.
             body_bound[:3, :3] = predicted_body_rotation
@@ -1124,11 +1252,15 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             # effort; it does not replace the measurement with a drive-torque
             # estimate or alter any measured-effort protection.
             effort = np.asarray(stepper.latest[2])[8:] - tare[1:]
+            root_observer=runtime.get('nut_root_moment_observer')
+            if root_observer is not None and (regulate_preparation_effort if elapsed<preparation_end else regulate_finger_effort):
+                effort=np.asarray(stepper.latest[2])[8:]-root_observer.tare_reaction-(
+                    root_observer._system(q)[2]-root_observer.tare_gravity)
             if balance_target is not None:
                 hand_target[1:] += np.clip(balance_target[1:]-hand_target[1:], -increment, increment)
             elif regulate_preparation_effort if elapsed < preparation_end else regulate_finger_effort:
                 hand_target[1:] = np.clip(hand_target[1:] + np.clip(
-                    effort_gain*(desired_effort - effort) / float(dynamic["hand_stiffness"]), -increment, increment),
+                    effort_gain*(desired_effort - effort) / float(settings.get('finger_position_stiffness_reference_nm_rad',dynamic["hand_stiffness"])), -increment, increment),
                     lower_hand[1:], upper_hand[1:])
             else:
                 key = ("held_initial_grip_target_rad" if elapsed < preparation_end
@@ -1141,6 +1273,9 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             if settings.get('observed_hold_only',False) and initial_fit_accepted:phase='hold'
             before_step = int(stepper.step_index)
             stepper.advance("key_probe_nut_rotation_" + phase, arm.copy(), hand_target.copy())
+            if int(stepper.step_index)>before_step:
+                record['last_applied_rotation_command_deg']=float(np.rad2deg(angle*fraction))
+                record['last_applied_control_step']=before_step
             if engagement_enabled and int(stepper.step_index) > before_step:
                 engagement_applied_deg = abs(float(np.degrees(angle*fraction)))
             if (rate_guard_enabled and int(stepper.step_index) > before_step
@@ -1158,6 +1293,9 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
         record.update(failure_stage=record["stage"], stage="STOPPED", failure_reason=str(error))
     finally:
         world.pause()
+        if tracking_context.get('resources'):
+            from te_foundationpose_handoff_runtime import _close_rgbd_resources
+            _close_rgbd_resources(tracking_context['resources'])
         if rate_guard_enabled:
             record["effort_limited_turn_time_lost_s"] = rate_lost_time
         if engagement_enabled:
@@ -1174,7 +1312,7 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             observation_session['filtered_last_step']=filtered_last_step
         sample_stream.close()
         record.update(last_step=int(stepper.step_index), outer_abort_reason=stepper.abort_reason)
-        with gzip.open(output / "joint_ft_samples.json.gz", "wt", encoding="utf-8") as stream:
-            json.dump(_json_ready(ft.samples[first_ft:]), stream, ensure_ascii=False, separators=(",", ":"))
+        with gzip.open(output / "joint_ft_samples.json.gz", "wt", encoding="utf-8",compresslevel=1) as stream:
+            dump_array(stream,ft.samples[first_ft:])
         save()
     return _json_ready(record)

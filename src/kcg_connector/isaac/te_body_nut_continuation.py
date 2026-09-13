@@ -7,13 +7,90 @@ the original stop remains recorded. Final seating is a separate physical audit.
 import copy
 
 
+def run_nut_rotation_with_recovery(repository,runtime,stepper,dynamic,grip,socket,settings,output,
+                                   *,initial_position_axis_observation=None):
+    """Continue the same physical episode after a bounded, recoverable stop."""
+    import gzip,json
+    from pathlib import Path
+    import yaml
+    from carts_v2.fast_json import dumps,dump_array
+    from te_body_nut_rotation import _run_body_nut_rotation_interval
+    from te_body_nut_reindex import run_nut_release_and_reindex,can_recover_rotation_stop,can_unload_after_transmission_reserve_stop
+    from te_body_nut_regrasp import run_body_nut_regrasp
+    output=Path(output);output.mkdir(parents=True,exist_ok=False)
+    assembly=yaml.safe_load((Path(repository)/runtime['body_assembly_control_config']).read_text())
+    ft=runtime['nail_body_ft_auditor'];first_ft=len(ft.samples)
+    requested=float(settings['rotation_about_socket_plus_z_deg']);remaining=requested;sent=0.
+    limit=int(settings['recovery'].get('maximum_regrasps',1))
+    if not 0<=limit<=2:raise ValueError('at most two current-state regrasp recoveries are allowed')
+    record={'completed':False,'stage':'BOUNDED_ROTATION_WITH_RECOVERY','settings':settings,
+        'first_step':int(stepper.step_index),'attempts':[],'control_samples_file':str(output/'nut_rotation_control_samples.jsonl'),
+        'sample_count':0,'online_object_or_contact_truth_used':False,'physical_thread_progress_verified':False,
+        'hardware_authorized':False,'simulation_only':True,'requested_rotation_is_not_actual_nut_rotation':True}
+    current_grip=grip;last=None
+    with (output/'nut_rotation_control_samples.jsonl').open('x') as stream:
+        try:
+            for attempt in range(limit+1):
+                child=copy.deepcopy(settings);child['recovery']['enabled']=False
+                child['rotation_about_socket_plus_z_deg']=remaining
+                last=_run_body_nut_rotation_interval(repository,runtime,stepper,dynamic,current_grip,socket,child,
+                    output/f'attempt_{attempt:02d}',initial_position_axis_observation=initial_position_axis_observation if attempt==0 else None)
+                record['attempts'].append({'rotation':last})
+                last_command=0.
+                with Path(last['control_samples_file']).open() as source:
+                    for line in source:
+                        sample=json.loads(line);last_command=float(sample['commanded_rotation_deg'])
+                        sample.update(attempt_index=attempt,attempt_elapsed_s=sample['elapsed_s'],
+                            elapsed_s=(sample['step']-record['first_step'])*float(dynamic['physics_dt_s']),
+                            attempt_commanded_rotation_deg=last_command,commanded_rotation_deg=sent+last_command)
+                        stream.write(dumps(sample)+'\n');record['sample_count']+=1
+                sent+=float(last.get('last_applied_rotation_command_deg',last_command));remaining=requested-sent
+                record.pop('transmission_reserve_stop',None)
+                for key in ('initial_arm_encoder_rad','final_arm_target_rad','final_hand_target_rad',
+                            'held_initial_grip_target_rad','held_hand_target_after_preparation_rad',
+                            'transmission_reserve_stop','finger_effort_regulation','postgrip_palm_observation',
+                            'hand_from_virtual_nut_axis_frame','seating_candidate','normal_stop_reason',
+                            'commanded_rotation_duration_s','planned_peak_rotation_speed_deg_s','planned_peak_rotation_acceleration_deg_s2'):
+                    if key in last:record[key]=last[key]
+                if last.get('completed'):
+                    record.update(completed=True,stage='ROTATION_COMMAND_FINISHED_REQUIRES_CONTACT_EVALUATION')
+                    break
+                phase=ft.samples[-1]['phase']
+                recoverable=(can_recover_rotation_stop(last,phase,int(stepper.step_index),stepper.abort_reason)
+                    or can_unload_after_transmission_reserve_stop(last,phase,int(stepper.step_index),stepper.abort_reason))
+                if not recoverable or attempt==limit or abs(remaining)<.01:
+                    record.update(stage='STOPPED',failure_reason=last.get('failure_reason'))
+                    break
+                release=copy.deepcopy(assembly['nut_reindex'])
+                release.update(release_only=False,allow_recovery_reindex=True)
+                reindex=run_nut_release_and_reindex(repository,runtime,stepper,dynamic,current_grip,last,socket,release,
+                    output/f'recovery_reindex_{attempt:02d}')
+                record['attempts'][-1]['reindex']=reindex
+                if not reindex.get('completed'):raise RuntimeError(reindex.get('failure_reason'))
+                collision_scene,obstacles=runtime['nut_regrasp_collision_context']
+                current_grip=run_body_nut_regrasp(repository,runtime,stepper,dynamic,reindex['final_observation'],socket,
+                    collision_scene,obstacles,output/f'recovery_grip_{attempt:02d}')
+                record['attempts'][-1]['regrasp']=current_grip
+                if not current_grip.get('completed'):raise RuntimeError(current_grip.get('failure_reason'))
+        except Exception as error:
+            record.update(completed=False,stage='STOPPED',failure_reason=str(error))
+        finally:
+            record.update(last_step=int(stepper.step_index),outer_abort_reason=stepper.abort_reason,
+                continuation_grip=current_grip,executed_loaded_command_deg=sent,
+                recovery_count=sum('regrasp' in a for a in record['attempts']),
+                control_samples_exclude_separately_recorded_recovery_motion=True)
+            with gzip.open(output/'joint_ft_samples.json.gz','wt',compresslevel=1) as f:dump_array(f,ft.samples[first_ft:])
+            (output/'nut_rotation_controller_result.json').write_text(dumps(record)+'\n')
+    return record
+
+
 def continue_nut_strokes_and_release(repository, runtime, stepper, dynamic, record,
         socket, assembly, collision_scene, obstacles, output, save_record):
     from te_body_nut_regrasp import run_body_nut_regrasp
     from te_body_nut_rotation import run_body_nut_rotation
     from te_body_nut_reindex import (
         run_nut_release_and_reindex, can_unload_after_torsional_pilot_stop,
-        can_unload_after_transmission_reserve_stop)
+        can_unload_after_transmission_reserve_stop,can_recover_rotation_stop)
 
     settings = assembly["continued_nut_strokes"]
     maximum = settings["maximum_additional_strokes"]
@@ -36,9 +113,12 @@ def continue_nut_strokes_and_release(repository, runtime, stepper, dynamic, reco
         "online_object_or_contact_truth_used": False,
     }
     for index in range(maximum):
+        if last_rotation.get('seating_candidate'):
+            series['termination']='CURRENT_VISUAL_SEATING_CANDIDATE'
+            break
         if not record.get("completed") or not last_rotation.get("completed"):
             break
-        if total_requested + abs(angle) > 600.:
+        if total_requested + abs(angle) > float(settings.get('maximum_total_command_deg',380.)):
             series["termination"] = "REQUESTED_ROTATION_BUDGET_REACHED"
             break
         entry = {"index": index + 1, "requested_rotation_deg": angle}
@@ -85,6 +165,8 @@ def continue_nut_strokes_and_release(repository, runtime, stepper, dynamic, reco
         last_rotation, latest_phase, int(stepper.step_index), stepper.abort_reason)
     pilot_stop = pilot_stop or can_unload_after_transmission_reserve_stop(
         last_rotation, latest_phase, int(stepper.step_index), stepper.abort_reason)
+    pilot_stop = pilot_stop or can_recover_rotation_stop(
+        last_rotation,latest_phase,int(stepper.step_index),stepper.abort_reason)
     release_eligible = (stepper.abort_reason is None
         and last_rotation.get("last_step") == int(stepper.step_index)
         and ((record.get("completed") and last_rotation.get("completed")) or pilot_stop))
@@ -93,7 +175,7 @@ def continue_nut_strokes_and_release(repository, runtime, stepper, dynamic, reco
         release_settings = copy.deepcopy(assembly["nut_reindex"])
         release_settings.update(release_only=True, open_hold_duration_s=3.,
             rotation_about_socket_plus_z_deg=0., allow_release_after_torsional_pilot_stop=True,
-            allow_release_after_transmission_reserve_stop=True)
+            allow_release_after_transmission_reserve_stop=True,allow_recovery_reindex=True)
         record["stage"] = "TERMINAL_CURRENT_VISION_CHECK_AND_NUT_RELEASE"
         save_record()
         series["terminal_release"] = run_nut_release_and_reindex(

@@ -454,8 +454,8 @@ try:
     trace=args.run/"truth_samples.jsonl"
     physical_sample=None
     if (args.run/'truth_samples.jsonl.gz').exists():
-        with gzip.open(args.run/'truth_samples.jsonl.gz','rt') as f:
-            physical_sample=next((json.loads(line) for line in f if f'"step":{sample_step},' in line[:100]),None)
+        from trace_metadata import read_truth_sample
+        physical_sample=read_truth_sample(args.run,sample_step)
     elif trace.exists():
         with trace.open() as f:
             f.seek(max(0,trace.stat().st_size-64000000));f.readline()
@@ -1209,7 +1209,9 @@ try:
             ft_tree=tree,contact_view=probe_contacts,contact_paths=probe_contact_paths,prepared=prepared,
             metadata=metadata,sensor_sample=probe_sensor,source_rotation=control_record,recipe=source_stage_recipe)
         print(json.dumps(result,indent=2),flush=True)
-        raise SystemExit(0)
+        passed=(result.get('free_return_completed') if 'free_joint7_return' in result
+                else bool(result.get('rotation',{}).get('completed')))
+        raise SystemExit(0 if passed and not result.get('error') else 2)
     if args.wrist_reference_loads:
         from te_robot_wrist_reference_loads import run_robot_wrist_reference_loads
         result=run_robot_wrist_reference_loads(repository=repo,world=world,robot_data=robot_data,

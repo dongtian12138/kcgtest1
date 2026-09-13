@@ -6,6 +6,7 @@ a visual assembly acceptance episode.
 """
 import copy
 import json
+from time import perf_counter
 from pathlib import Path
 import numpy as np
 import yaml
@@ -86,6 +87,8 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         'object_parts':parts,'nail_body_ft_auditor':ft,'body_assembly_control_config':str(assembly_path),
         'body_assembly_scene':prepared,'robot_asset':metadata['robot_asset']}
     runtime['simulation_stop_request_path']=str(output/'STOP_REQUEST')
+    if 'initial_loaded_command_deg' in recipe:
+        runtime['engagement_loaded_turn_command_deg']=float(recipe['initial_loaded_command_deg'])
     _install_rgbd_resume_sync(world,stage)
     light=UsdLux.DomeLight.Define(stage,'/World/SourceStageDiagnosticLighting')
     light.CreateIntensityAttr(float(scene['render'].dome_light_intensity))
@@ -100,10 +103,13 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         'source_step':args.source_step,'source_setup_uses_recorded_pose':True,
         'post_start_object_pose_or_contact_truth_used_for_control':False,'source_free_space_tare_preserved':True,
         'hardware_authorized':False,'full_visual_assembly_success':False,'recipe':recipe}
+    started=perf_counter()
     try:
         world.play()
-        for _ in range(round(2./dynamic['physics_dt_s'])):
-            stepper.advance('key_probe_nut_grip_hold',arm,hand)
+        warmup=float(recipe.get('warmup_s',2.))
+        if not .5<=warmup<=2.:raise ValueError('local warmup must be between0.5and2seconds')
+        for _ in range(round(warmup/dynamic['physics_dt_s'])):
+            stepper.advance('nut_index_free_open_hold' if 'free_joint7_delta_rad' in recipe else 'key_probe_nut_grip_hold',arm,hand)
             if stepper.abort_reason:raise RuntimeError(stepper.abort_reason)
         world.pause()
         q=stepper.latest[0];H=inputs.robot_model.forward_kinematics(tuple(q),enforce_limits=False)['handbase_link']
@@ -122,6 +128,30 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         geometry=run_body_nut_regrasp(repository,runtime,stepper,dynamic,observation,socket,
             collision,obstacles,output/'geometry',prepare_geometry_only=True)
         if not geometry.get('geometry_only'):raise RuntimeError(geometry.get('failure_reason','Geometry preparation failed'))
+        if 'free_joint7_delta_rad' in recipe:
+            from te_nut_motion import joint7_return_path
+            delta=float(recipe['free_joint7_delta_rad'])
+            if abs(delta)>np.pi/2+1e-12:raise ValueError('this free-return probe is bounded to90degrees')
+            states,details=joint7_return_path(arm,arm[6]+delta,lower,upper,dynamic['physics_dt_s'])
+            check=runtime['nut_regrasp_geometry_check']
+            for state in states:
+                hit=check(state,hand,nut_contact=False)
+                if hit:raise RuntimeError('free joint7 path is obstructed: '+str(hit))
+            np.save(output/'joint7_only_path_rad.npy',states)
+            world.play()
+            initial_encoder=float(stepper.latest[0][6])
+            for state in states[1:]:
+                stepper.advance('nut_index_free_rotate',state,hand)
+                if stepper.abort_reason:raise RuntimeError(stepper.abort_reason)
+            for _ in range(round(.5/dynamic['physics_dt_s'])):
+                stepper.advance('nut_index_free_final_hold',states[-1],hand)
+                if stepper.abort_reason:raise RuntimeError(stepper.abort_reason)
+            details.update(actual_joint7_motion_rad=float(stepper.latest[0][6]-initial_encoder),
+                final_tracking_error_rad=float(stepper.latest[0][6]-states[-1,6]),
+                original_other_joint_targets_unchanged=True)
+            result['free_joint7_return']=details
+            result['free_return_completed']=abs(details['final_tracking_error_rad'])<.003
+            return result
         if recipe.get('task_root_preload'):
             from te_three_finger_wrench_observer import ThreeFingerWrenchObserver
             preload=recipe['task_root_preload'];targets=np.asarray(preload['targets_nm'],float)
@@ -163,7 +193,12 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             if not observation.get('position_and_axis_measured'):raise RuntimeError('Fresh axis observation failed after task preload')
             observation.update(source='CURRENT_SEGMENT_RGBD_AND_ENCODERS',encoder_step=int(stepper.step_index))
             runtime['nut_regrasp_locate_visual_bounds'](np.asarray(observation['world_from_plug_five_dof']))
-        settings=copy.deepcopy(source_rotation['settings'])
+        settings=copy.deepcopy(assembly['nut_rotation_after_index'] if recipe.get('use_current_rotation_config',False) else source_rotation['settings'])
+        if 'rotation_degrees' in recipe:
+            degrees=float(recipe['rotation_degrees'])
+            if not 0<degrees<=5.:raise ValueError('a short local control check is bounded to five degrees')
+            settings['rotation_about_socket_plus_z_deg']=-degrees
+        if recipe.get('single_attempt_diagnostic',False):settings['recovery']={'enabled':False}
         settings['planar_force_admittance']['virtual_restoring_stiffness_n_m']=float(recipe['virtual_restoring_stiffness_n_m'])
         if 'freeze_planar_after_preparation' in recipe:
             settings['planar_force_admittance']['freeze_after_preparation']=bool(recipe['freeze_planar_after_preparation'])
@@ -186,5 +221,8 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         write_gzip_array(output/'joint_ft_samples.json.gz',ft.samples,prepare=_json_ready)
         result.update(physical_steps=stepper.step_index,outer_abort=stepper.abort_reason,
             wrist_summary=ft.summary())
+        result['wall_timing']={'local_run_and_closeout_s':perf_counter()-started,'stepper':stepper.wall_times,
+            'hand_mechanism':dict(getattr(world.hand_mechanism,'wall_times',{})),
+            'truth_capture':dict(recorder.capture_wall_times)}
         (output/'source_stage_probe_result.json').write_text(json.dumps(_json_ready(result),indent=2)+'\n')
     return _json_ready(result)

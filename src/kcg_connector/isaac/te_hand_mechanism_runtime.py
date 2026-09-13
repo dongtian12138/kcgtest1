@@ -138,6 +138,11 @@ class HandMechanismRuntime:
         if set(paths)!=wanted:raise ValueError("Source link pose witnesses are incomplete")
         self.pose_names=sorted(paths);self.pose_view=RigidPrim([paths[n] for n in self.pose_names],resolve_paths=False)
         self.set_caps(active_effort_caps,initial=True)
+        self._authored_drive_properties=None
+        self.last_native_state=None
+        self.last_native_state_time=None
+        self.wall_times={name:0. for name in ('read_before_s','fourbar_update_s','motor_solve_s',
+            'native_physics_s','read_after_s','evidence_and_boundary_s')}
         self._original_step=world.step
         world.step=self.step
         world.hand_mechanism=self
@@ -167,29 +172,45 @@ class HandMechanismRuntime:
         self.phase=str(phase)
 
     def step(self, *args, **kwargs):
+        from time import perf_counter
+        from carts_v2.fast_json import dumps as encode_row
+        started=perf_counter()
         if self.failure:raise RuntimeError(self.failure)
         h=float(self.world.get_physics_dt())
         if abs(float(self.world.current_time)-self.last_time)>1e-7:
             raise RuntimeError("Physics advanced outside the shared hand integration")
-        q=host(self.robot.get_dof_positions(indices=0))[0];v=host(self.robot.get_dof_velocities(indices=0))[0]
+        if self.last_native_state is not None and self.last_native_state_time==float(self.world.current_time):
+            q,v,_=self.last_native_state
+        else:
+            q=host(self.robot.get_dof_positions(indices=0))[0];v=host(self.robot.get_dof_velocities(indices=0))[0]
         if not np.isfinite(np.r_[q,v]).all():raise RuntimeError("Nonfinite hand state before physical step")
+        before_fourbar=perf_counter();self.wall_times['read_before_s']+=before_fourbar-started
         tangents=update_fourbar_tangents(self.stage,self.setup["joint_parent"],self.setup["couplings"],
                                        {name:float(q[index]) for name,index in zip(ACTIVE_HAND,self.indices)})
         slopes={row["source"]:row["slope"] for row in tangents};slopes["f1j1"]=1.
+        before_motor=perf_counter();self.wall_times['fourbar_update_s']+=before_motor-before_fourbar
         laws=[]
         for i,name in enumerate(ACTIVE_HAND):
             laws.append(self.drives[name].prepare_position(float(q[self.indices[i]]),float(v[self.indices[i]]),
                 float(self.reference[i]),h,stiffness=self.settings["motor_position_kp"],damping=self.settings["motor_position_kd"]))
-        self.robot.set_dof_gains(np.array([[r["stiffness"] for r in laws]]),np.array([[r["damping"] for r in laws]]),indices=0,dof_indices=self.indices)
-        self.robot.set_dof_max_efforts(np.array([[r["max_effort"] for r in laws]]),indices=0,dof_indices=self.indices)
+        properties=tuple((r['stiffness'],r['damping'],r['max_effort']) for r in laws)
+        if properties!=self._authored_drive_properties:
+            self.robot.set_dof_gains(np.array([[r["stiffness"] for r in laws]]),np.array([[r["damping"] for r in laws]]),indices=0,dof_indices=self.indices)
+            self.robot.set_dof_max_efforts(np.array([[r["max_effort"] for r in laws]]),indices=0,dof_indices=self.indices)
+            self._authored_drive_properties=properties
         self.robot.set_dof_position_targets(np.array([[r["position_target"] for r in laws]]),indices=0,dof_indices=self.indices)
+        before_native=perf_counter();self.wall_times['motor_solve_s']+=before_native-before_motor
         result=self._original_step(*args,**kwargs)
+        after_native=perf_counter();self.wall_times['native_physics_s']+=after_native-before_native
         elapsed=float(self.world.current_time)-self.last_time
         if abs(elapsed-h)>1e-7:
             raise RuntimeError("Shared hand integration requires exactly one physical tick")
         self.last_time=float(self.world.current_time)
         after=host(self.robot.get_dof_positions(indices=0))[0];velocity=host(self.robot.get_dof_velocities(indices=0))[0]
         effort=host(self.robot.get_dof_projected_joint_forces(indices=0))[0]
+        self.last_native_state=(after,velocity,effort)
+        self.last_native_state_time=float(self.world.current_time)
+        after_read=perf_counter();self.wall_times['read_after_s']+=after_read-after_native
         from scipy.spatial.transform import Rotation
         p,r=self.pose_view.get_world_poses();p,r=host(p),host(r)
         rotations=Rotation.from_quat(r[:,[1,2,3,0]]).as_matrix()
@@ -208,10 +229,11 @@ class HandMechanismRuntime:
             if name=="f1j1":
                 row["source_link_pose_witnesses"]={n:{"position_m":p[j].tolist(),"orientation_wxyz":r[j].tolist()}
                                                     for j,n in enumerate(self.pose_names)}
-            self.stream.write(json.dumps(row,separators=(",",":"))+"\n")
+            self.stream.write(encode_row(row)+"\n")
             if row["elastic_effort_boundary_exceeded"] or row["drive_saturation"] or row["friction_heat_j"] < -1e-9:
                 self.failure="Finite hand transmission boundary: "+name
         self.steps+=1
+        self.wall_times['evidence_and_boundary_s']+=perf_counter()-after_read
         if self.steps%240==0:self.stream.flush()
         if self.failure:raise RuntimeError(self.failure)
         return result

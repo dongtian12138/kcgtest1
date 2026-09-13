@@ -376,3 +376,87 @@ def observe_released_plug_from_rgbd(
             json.dumps(_json_ready(record), ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
         )
     return _json_ready(record)
+
+
+def observe_tracked_plug_from_rgbd(repository,stage,world,rep,hand,output,context):
+    """Fresh depth-circle measurement, reusing a visual identity ROI and camera.
+
+    The previous image only locates a search region. Position and axis are fit
+    again from this frame; no simulator pose or contact record is read.
+    """
+    import cv2
+    from time import perf_counter
+    from pxr import Gf,UsdGeom
+    from te_foundationpose_handoff_runtime import _author_camera,_capture_rgbd,_json_ready
+    from te_plug_five_dof_geometry import estimate_plug_rear_circle_from_float_depth
+    repository,output=Path(repository).resolve(),Path(output).resolve()
+    output.mkdir(parents=True,exist_ok=False)
+    if world.is_playing():raise RuntimeError('tracked observation requires a paused physical state')
+    started=perf_counter();before=float(world.current_time)
+    seed=context['last_observation'];hand=np.asarray(hand).reshape(4,4)
+    mount=hand_camera_mount(repository,'palm');camera_pose=hand@np.asarray(mount['hand_from_camera_cv'])
+    camera={'resolution_px':mount['resolution_px'],'focal_length_mm':mount['focal_length_mm'],
+        'horizontal_aperture_mm':mount['horizontal_aperture_mm']}
+    K=_intrinsics(camera);path='/World/TrackedPlugPalmCaptureCamera'
+    resources=context.setdefault('resources',{})
+    _author_camera(stage,path,camera_pose,resolution=tuple(mount['resolution_px']),
+        focal_length_mm=mount['focal_length_mm'],horizontal_aperture_mm=mount['horizontal_aperture_mm'],
+        clipping_range_m=tuple(mount['clipping_range_m']),Gf=Gf,UsdGeom=UsdGeom)
+    world.render()
+    capture=_capture_rgbd(rep=rep,resources=resources,camera_path=path,resolution=tuple(mount['resolution_px']),
+        output_dir=output/'rgbd',warmup_frames=2 if len(resources)==0 else 1,rt_subframes=2)
+    depth=np.load(output/'rgbd/depth_m.npy')
+    mask_path=context.get('mask_path') or seed['measurement']['sam']['mask']
+    old_mask=cv2.imread(str(mask_path),cv2.IMREAD_GRAYSCALE)
+    if old_mask is None or old_mask.shape!=depth.shape:raise RuntimeError('visual tracking seed mask is unavailable')
+    old_pose=np.asarray(seed['world_from_plug_five_dof']);old_camera=np.asarray(seed['world_from_camera_cv'])
+    axial=float(seed['metrics']['visible_face_to_object_origin_m'])
+    face=np.r_[old_pose[:3,3]-axial*old_pose[:3,2],1.]
+    old=np.linalg.inv(old_camera)@face;new=np.linalg.inv(camera_pose)@face
+    if min(old[2],new[2])<=0:raise RuntimeError('tracked rear face is outside the calibrated camera')
+    old_uv=(K@old[:3])[:2]/old[2];new_uv=(K@new[:3])[:2]/new[2];scale=old[2]/new[2]
+    if not .9<=scale<=1.1:raise RuntimeError('visual search motion exceeds the short tracking range')
+    affine=np.array([[scale,0,new_uv[0]-scale*old_uv[0]],[0,scale,new_uv[1]-scale*old_uv[1]]])
+    mask=cv2.warpAffine(old_mask,affine,(depth.shape[1],depth.shape[0]),flags=cv2.INTER_NEAREST)
+    mask=cv2.dilate(mask,np.ones((25,25),np.uint8))>0
+    mask &= np.isfinite(depth)&(depth>0)&(np.abs(depth-new[2])<.006)
+    cad=repository/'artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/D38999_26FJ35PN_VISUAL.obj'
+    geometry=estimate_plug_rear_circle_from_float_depth(depth_m=depth,mask=mask,intrinsics=K,
+        mesh_path=cad,pixel_center_offset_px=.5,plane_iterations=128)
+    geometry['metrics']['mask_source']='PREVIOUS_VISUAL_IDENTITY_ROI_WITH_CURRENT_DEPTH_VALIDATION'
+    geometry['metrics']['previous_object_pose_used_only_for_search_region']=True
+    if geometry['metrics']['plane_ransac_sampled_inlier_fraction']<.45:
+        raise RuntimeError('current tracked face plane has insufficient support')
+    pose=camera_pose@np.asarray(geometry['camera_from_object'])
+    if np.linalg.norm(pose[:3,3]-old_pose[:3,3])>.002:
+        raise RuntimeError('tracked position change exceeds the bounded observation interval')
+    mask_file=output/'tracking_seed_mask.png';cv2.imwrite(str(mask_file),(mask.astype(np.uint8)*255))
+    if float(world.current_time)!=before:raise RuntimeError('tracking camera advanced physical time')
+    record=_json_ready({'status':'CURRENT_DEPTH_TRACKED_PLUG_POSE','position_and_axis_measured':True,
+        'physics_time_s':before,'capture_physics_time_s':before,'capture':capture,
+        'world_from_hand_encoder':hand.tolist(),'world_from_camera_cv':camera_pose.tolist(),
+        'world_from_plug_five_dof':pose.tolist(),'metrics':geometry['metrics'],
+        'axial_yaw_measured':False,'online_object_or_contact_truth_used':False,
+        'previous_hand_body_relation_used':False,'measurement':{'geometry':geometry},
+        'tracking_wall_s':perf_counter()-started,'tracking_seed_mask':str(mask_file)})
+    context.update(last_observation=record,mask_path=str(mask_file))
+    (output/'camera_and_estimate.json').write_text(json.dumps(record,indent=2)+'\n')
+    return record
+
+
+def observe_current_plug_from_rgbd(repository,stage,world,rep,hand,output,runtime):
+    """Reuse current-episode visual identity; reacquire when tracking is invalid."""
+    context=runtime.setdefault('plug_visual_tracking_context',{})
+    if context.get('last_observation') is not None:
+        try:
+            return observe_tracked_plug_from_rgbd(repository,stage,world,rep,hand,output,context)
+        except (RuntimeError,ValueError) as error:
+            fallback=Path(output).with_name(Path(output).name+'_reacquire')
+            observed=observe_released_plug_from_rgbd(repository,stage,world,rep,hand,fallback)
+            observed['full_reacquisition_reason']=str(error)
+    else:
+        observed=observe_released_plug_from_rgbd(repository,stage,world,rep,hand,output)
+    if observed.get('position_and_axis_measured'):
+        context.update(last_observation=observed)
+        context.pop('mask_path',None)
+    return observed

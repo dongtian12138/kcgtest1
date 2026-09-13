@@ -88,7 +88,9 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
     from scipy.spatial.transform import Rotation
 
     from build_te_free_split_plug import BODY_VISUAL, NUT_VISUAL, _load_single_usd_mesh
-    from te_body_socket_observation import SOCKET_CAD_MM, observe_released_plug_from_rgbd
+    from te_body_socket_observation import SOCKET_CAD_MM, observe_current_plug_from_rgbd
+    def observe_released_plug_from_rgbd(*args):
+        return observe_current_plug_from_rgbd(*args,runtime)
     from te_foundationpose_handoff_runtime import (
         _first_discrete_collision, _json_ready, _plan_key_probe_descent,
         MOVEIT_SOFT_ARM_BOUNDS_RAD, control,
@@ -97,6 +99,11 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
     repository, output = Path(repository).resolve(), Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
     config = yaml.safe_load((repository / runtime["body_assembly_control_config"]).read_text())
+    runtime['nut_regrasp_collision_context']=(collision_scene,obstacles)
+    context=runtime.setdefault('plug_visual_tracking_context',{})
+    if observation.get('position_and_axis_measured') and observation.get('measurement') and not context.get('last_observation'):
+        context['last_observation']=observation
+        if observation.get('tracking_seed_mask'):context['mask_path']=observation['tracking_seed_mask']
     geometry_path = repository / config["nut_regrasp"]["geometry_plan"]
     geometry = json.loads(geometry_path.read_text())
     canonical = np.asarray(geometry["canonical_body_from_hand_for_nut_grasp"]).copy()
@@ -388,6 +395,7 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
             root_observer=ThreeFingerWrenchObserver(repository,inputs.robot_model,geometry_path,
                 sensor_semantics="BASE_BRIDGE_EXTERNAL_MOMENT_ABOUT_O")
             root_observer.calibrate_free_space(tare_encoder_rows,np.asarray(tare_rows)[:,1:])
+            runtime['nut_root_moment_observer']=root_observer
         contact = control.ParallelEffortContactController(
             open_goal, close_goal, effort_rise_nm=float(dynamic["contact_effort_rise_nm"]),
             position_error_rad=float(dynamic["contact_position_error_rad"]),
@@ -479,6 +487,24 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
                 q[1:] = np.clip(q[1:] + direction[1:] * np.clip(
                     effort_gain*(desired - measured) / float(dynamic["hand_stiffness"]), -increment, increment), lower[1:], upper[1:])
                 advance("key_probe_nut_grip_hold", held_arm, q, nut_contact=True)
+        ready_settings=config['nut_regrasp'].get('readiness')
+        if ready_settings and root_preload:
+            from te_nut_motion import preload_readiness
+            window=max(2,round(float(ready_settings['window_s'])/dt))
+            recent=[r['base_bridge_external_moment_nm'] for r in command_rows
+                if 'base_bridge_external_moment_nm' in r][-window:]
+            if len(recent)!=window:raise RuntimeError('grip readiness window is incomplete')
+            encoder=np.asarray(stepper.latest[0]);margins=[]
+            for name,position in zip(('f1j2','f2j1','f3j2'),encoder[8:]):
+                drive=mechanism.drives[name]
+                margins.append(drive.reference.transmission_effort_boundary-abs(
+                    drive.reference.transmission_stiffness*(drive.input_angle-float(position))))
+            readiness=preload_readiness(recent,desired,margins,
+                relative_tolerance=float(ready_settings['relative_tolerance']),
+                relative_range=float(ready_settings['relative_range']),
+                minimum_margin_nm=float(ready_settings['minimum_margin_nm']))
+            record['readiness']=readiness
+            if not readiness['ready']:raise RuntimeError('nut grip is not ready: '+','.join(readiness['reasons']))
         record.update(completed=True, stage="NUT_GRIP_CONTROLLER_FINISHED_REQUIRES_PHYSICAL_EVALUATION",
                       final_hand_target_rad=q.tolist(), fixed_arm_target_rad=held_arm.tolist())
         # Carry only robot-model geometry checks into the immediately following
@@ -491,9 +517,10 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
         world.pause()
         record.update(last_step=int(stepper.step_index), executed_command_steps=len(command_rows),
                       outer_abort_reason=stepper.abort_reason)
-        with gzip.open(output / "joint_ft_samples.json.gz", "wt", encoding="utf-8") as stream:
-            json.dump(_json_ready(ft.samples[first_ft:]), stream, ensure_ascii=False, separators=(",", ":"))
-        with gzip.open(output / "commands.json.gz", "wt", encoding="utf-8") as stream:
-            json.dump(command_rows, stream, separators=(",", ":"))
+        from carts_v2.fast_json import dump_array
+        with gzip.open(output / "joint_ft_samples.json.gz", "wt", encoding="utf-8",compresslevel=1) as stream:
+            dump_array(stream,ft.samples[first_ft:])
+        with gzip.open(output / "commands.json.gz", "wt", encoding="utf-8",compresslevel=1) as stream:
+            dump_array(stream,command_rows)
         save()
     return _json_ready(record)

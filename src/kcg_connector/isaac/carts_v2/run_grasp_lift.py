@@ -11042,6 +11042,10 @@ def _execute(
                             json.dumps(rows, indent=2) + "\n")
                     runtime["wall_timing"]["body_memory_and_key_evaluation_s"] = perf_counter() - posthoc_started
     runtime["wall_timing"]["stepper"] = dict(stepper.wall_times, physical_step_count=stepper.step_index)
+    if getattr(runtime['world'],'hand_mechanism',None) is not None:
+        runtime['wall_timing']['hand_mechanism']=dict(runtime['world'].hand_mechanism.wall_times)
+    if hasattr(runtime['auditor'],'capture_wall_times'):
+        runtime['wall_timing']['truth_capture']=dict(runtime['auditor'].capture_wall_times)
     runtime["wall_timing"]["truth_jsonl"] = runtime["truth_write_timing"]
     (output / "run_timing.json").write_text(json.dumps(runtime["wall_timing"], indent=2) + "\n")
     from trace_metadata import without_cyclic_gc
