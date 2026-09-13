@@ -343,6 +343,9 @@ class TruthAuditRecorder:
         self.contact_interface = contact_interface
         self.path_decoder = path_decoder
         self._decoded_paths = {}
+        self._tensor_actor_paths={}
+        from isaacsim.core.simulation_manager import SimulationManager
+        self.usd_pose_output_enabled=not SimulationManager.is_fabric_enabled()
         self.capture_wall_times = {name:0. for name in ('contact_callback_s','engine_and_body_s',
             'robot_poses_s','contact_counts_s','archive_append_s')}
         # Read-only evidence: a pose plateau may otherwise hide actor sleep.
@@ -510,26 +513,25 @@ class TruthAuditRecorder:
             if not count:
                 continue
             ids = np.ascontiguousarray(actor_ids_array[start:end])
-            ids_cpu = wp.array(ids, dtype=wp.uint64, device="cpu")
-            other_paths = self.tensor_contact_prim.get_actor_paths_from_ids(
-                ids_cpu
-            )
+            missing=np.array([i for i in np.unique(ids) if int(i) not in self._tensor_actor_paths],dtype=np.uint64)
+            if len(missing):
+                paths=self.tensor_contact_prim.get_actor_paths_from_ids(wp.array(missing,dtype=wp.uint64,device='cpu'))
+                if len(paths)!=len(missing) or any(not str(p) for p in paths):
+                    raise RuntimeError('tensor actor ID did not resolve to a path')
+                self._tensor_actor_paths.update({int(i):str(p) for i,p in zip(missing,paths)})
+            other_paths=[self._tensor_actor_paths[int(i)] for i in ids]
             if len(other_paths) != count or any(not str(path) for path in other_paths):
                 raise RuntimeError("tensor contact actor ID did not resolve to a USD path")
             grouped: dict[str, list[dict[str, object]]] = {}
+            if not (np.isfinite(forces_array[start:end]).all() and np.isfinite(points_array[start:end]).all()
+                    and np.isfinite(normals_array[start:end]).all() and np.isfinite(separations_array[start:end]).all()):
+                raise RuntimeError('tensor contact data is not finite')
             for offset, other_path_value in enumerate(other_paths):
                 index = start + offset
                 impulse = float(forces_array[index])
                 point = points_array[index]
                 normal = normals_array[index]
                 separation = float(separations_array[index])
-                if not (
-                    math.isfinite(impulse)
-                    and math.isfinite(separation)
-                    and np.all(np.isfinite(point))
-                    and np.all(np.isfinite(normal))
-                ):
-                    raise RuntimeError("tensor contact data is not finite")
                 other_path = str(other_path_value)
                 grouped.setdefault(other_path, []).append({
                     "other_actor_id": int(ids[offset]),
@@ -593,14 +595,11 @@ class TruthAuditRecorder:
                 if not count:
                     continue
                 records = []
+                if not (np.isfinite(forces_array[start:end]).all() and np.isfinite(points_array[start:end]).all()):
+                    raise RuntimeError('tensor friction data is not finite')
                 for index in range(start, end):
                     impulse = forces_array[index]
                     point = points_array[index]
-                    if not (
-                        np.all(np.isfinite(impulse))
-                        and np.all(np.isfinite(point))
-                    ):
-                        raise RuntimeError("tensor friction data is not finite")
                     records.append({
                         "position_m": point.tolist(),
                         "tangential_impulse_n_s": impulse.tolist(),
@@ -905,6 +904,7 @@ class TruthAuditRecorder:
                 },
                 "usd_hand_base_diagnostic_position_m": usd_hand_position,
                 "usd_hand_base_diagnostic_orientation_wxyz": usd_hand_orientation,
+                "usd_diagnostic_pose_is_current_physics_output":self.usd_pose_output_enabled,
                 "object_center_in_hand_base_m": _relative_position(
                     center, hand_position, hand_orientation
                 ),

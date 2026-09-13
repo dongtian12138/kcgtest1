@@ -130,6 +130,8 @@ parser.add_argument("--probe-open-grasp-recipe",type=Path,
                     help="Declared pre-physics open-hand joint state for a fresh grasp on the free connector")
 parser.add_argument("--fabric-gpu-interop",action="store_true",
                     help="Explicitly request GPU-resident Fabric output at process startup for the bounded rendering consistency check.")
+parser.add_argument('--cpu-fabric-output',action='store_true',
+                    help='Keep CPU physics and its parameters; publish transforms through Fabric instead of per-tick USD writes.')
 parser.add_argument("--gpu-host-readback",action="store_true",
                     help="Retain GPU dynamics but allow host result readback before initialization; a bounded physics-output/data-path diagnostic.")
 parser.add_argument('--experimental-connector-gpu-comparison',action='store_true',
@@ -528,7 +530,7 @@ try:
     carb.settings.get_settings().set_bool(SETTING_DISABLE_CONTACT_PROCESSING,False)
     world=World(stage_units_in_meters=1.,physics_dt=dt,rendering_dt=dt if args.standard_render_steps else 1/60,
                 backend="numpy",device=args.physics_device,
-                sim_params={"use_gpu_pipeline":args.physics_device!="cpu"})
+                sim_params={"use_gpu_pipeline":args.physics_device!="cpu","use_fabric":args.cpu_fabric_output})
     if args.gpu_host_readback:
         # SimulationManager.set_device('cuda') has already enabled GPU
         # dynamics. Change only suppression of host output, before reset;

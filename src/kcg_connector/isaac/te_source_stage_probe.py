@@ -224,5 +224,6 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         result['wall_timing']={'local_run_and_closeout_s':perf_counter()-started,'stepper':stepper.wall_times,
             'hand_mechanism':dict(getattr(world.hand_mechanism,'wall_times',{})),
             'truth_capture':dict(recorder.capture_wall_times)}
+        result['scene_output_backend']=getattr(world,'_kcg_rgbd_resume_sync_backend',None)
         (output/'source_stage_probe_result.json').write_text(json.dumps(_json_ready(result),indent=2)+'\n')
     return _json_ready(result)
