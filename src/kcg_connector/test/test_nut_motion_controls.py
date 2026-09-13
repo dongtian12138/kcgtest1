@@ -61,3 +61,42 @@ def test_observed_progress_distinguishes_seating_stall_and_slip():
     assert classify_observed_progress(near,dict(now,depth_m=.014602,torsion_nm=.7),s)=='VISUAL_SEATING_CANDIDATE'
     assert classify_observed_progress(near,dict(now,depth_m=.0147,torsion_nm=.7),s)=='OBSERVED_DEPTH_OVERRUN'
     assert classify_observed_progress(dict(p,command_deg=0),dict(now,command_deg=2),s)=='OBSERVING'
+
+
+def test_body_nut_working_play_does_not_erase_lateral_grip_error():
+    from te_nut_motion import grasp_relation_residual
+    axial=grasp_relation_residual([0,0,.0008],[0,0,1],.001)
+    assert axial['unexplained_norm_m']==0
+    lateral=grasp_relation_residual([.00025,0,.0008],[0,0,1],.001)
+    assert lateral['unexplained_norm_m']>.0002
+    escaped=grasp_relation_residual([0,0,.00125],[0,0,1],.001)
+    assert escaped['unexplained_norm_m']>.0002
+
+
+def test_progress_uses_whole_grip_window_after_allowing_captive_nut_play():
+    s=dict(progress_settings(),captive_nut_axial_travel_m=.001,thread_lead_m=.00762,
+           maximum_grasp_relation_error_m=.0002)
+    anchor=dict(depth_m=.010,time_s=0,command_deg=100.,torsion_nm=.3)
+    assert classify_observed_progress(anchor,dict(anchor,time_s=1,command_deg=120.),s,anchor)=='OBSERVING'
+    previous=dict(anchor,time_s=10,command_deg=179.5,depth_m=.01005)
+    now=dict(previous,time_s=11,command_deg=180.,depth_m=.01006)
+    assert classify_observed_progress(previous,now,s,anchor)=='RECOVERABLE_NO_PROGRESS'
+    assert classify_observed_progress(previous,dict(now,depth_m=.011),s,anchor)=='ADVANCING'
+
+
+def test_moving_position_reference_damps_velocity_error_instead_of_the_trajectory():
+    from types import SimpleNamespace as N
+    from carts_v2.controller import gravity_biased_arm_target
+    q=np.zeros((1,7));v=np.full((1,7),.08)
+    wrap=lambda a:N(numpy=lambda:a)
+    robot=N(get_dof_positions=lambda **k:wrap(q),get_dof_velocities=lambda **k:wrap(v),
+            get_dof_gravity_compensation_forces=lambda **k:wrap(q))
+    s={'arm_stiffness':2500.,'arm_damping':160.,'arm_drive_maximum_effort_nm':100.}
+    args=(robot,np.arange(7),q[0],np.full(7,-3.),np.full(7,3.),s)
+    _,held=gravity_biased_arm_target(*args)
+    _,moving=gravity_biased_arm_target(*args,velocity_reference_rad_s=v[0])
+    assert np.allclose(held['pd_effort_nm'],-12.8)
+    assert moving['pd_effort_nm']==[0.]*7
+    _,offset=gravity_biased_arm_target(*args,velocity_reference_rad_s=v[0]-.01)
+    assert np.allclose(offset['pd_effort_nm'],-1.6)
+    assert held['drive_target_rad']==moving['drive_target_rad']

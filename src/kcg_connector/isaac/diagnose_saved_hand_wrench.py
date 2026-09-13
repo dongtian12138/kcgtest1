@@ -137,7 +137,7 @@ parser.add_argument("--gpu-host-readback",action="store_true",
 parser.add_argument('--experimental-connector-gpu-comparison',action='store_true',
                     help='Explicit CPU/GPU comparison of the unchanged connector; does not transfer CPU model validation to GPU')
 parser.add_argument('--experimental-connector-time-resolution',action='store_true',
-                    help='Explicit480Hz CPU comparison with unchanged solver iterations and geometry; default960Hz validation remains separate')
+                    help='Explicit CPU rate comparison: mounted interface480Hz or source-stage240/480Hz; default960Hz validation remains separate')
 parser.add_argument("--independent-robot-rigid-frames",action="store_true",
                     help="Before reset, give nested robot rigid bodies independent transform stacks while preserving all source world poses and joint properties.")
 parser.add_argument("--standard-render-steps",action="store_true",
@@ -367,8 +367,9 @@ if args.frozen_connector_model is not None:
     experimental_gpu=(args.experimental_connector_gpu_comparison and args.physics_device=='cuda:0'
                       and args.gpu_host_readback and args.interface_twist_deg is not None)
     experimental_rate=(args.experimental_connector_time_resolution and args.physics_device=='cpu'
-                       and args.physics_hz==480 and args.interface_control_decimation==2
-                       and args.interface_twist_deg is not None)
+                       and ((args.physics_hz==480 and args.interface_control_decimation==2
+                             and args.interface_twist_deg is not None)
+                            or (args.source_stage_probe is not None and args.physics_hz in (240,480))))
     if (not args.free_plug_in_socket or (args.physics_device!='cpu' and not experimental_gpu)
             or (args.cpu_wrist_reference is None and not args.source_stage_probe)
             or (args.physics_hz!=required['physics_hz'] and not experimental_rate)
@@ -377,9 +378,8 @@ if args.frozen_connector_model is not None:
 if args.experimental_connector_gpu_comparison and not (args.frozen_connector_model and args.physics_device=='cuda:0'
         and args.gpu_host_readback and args.interface_twist_deg is not None):
     parser.error('Experimental GPU comparison requires the frozen connector, local interface probe, CUDA and host readback')
-if args.experimental_connector_time_resolution and not (args.frozen_connector_model and args.physics_device=='cpu'
-        and args.physics_hz==480 and args.interface_control_decimation==2 and args.interface_twist_deg is not None):
-    parser.error('Time-resolution comparison requires the frozen connector, CPU480Hz and unchanged240Hz control')
+if args.experimental_connector_time_resolution and not (args.frozen_connector_model and experimental_rate):
+    parser.error('Time-resolution comparison requires the frozen connector and the declared bounded CPU interface or source-stage probe')
 if args.audit_source_key_sdf and (not args.free_plug_in_socket or args.physics_device == "cpu" or args.probe_additional_turn_deg is not None):
     parser.error("the source-key SDF audit is a post-measurement read on the static GPU/free-connector diagnostic")
 if args.replay_source_drive_targets and (args.probe_additional_turn_deg is not None or args.source_step is None):
@@ -418,6 +418,7 @@ app = SimulationApp({"headless":args.probe_additional_turn_deg is None,"multi_gp
                                     if args.probe_additional_turn_deg is not None else [])
                                    +(["--/physics/fabricUseGPUInterop=true"] if args.fabric_gpu_interop else []))})
 failed=False
+requested_exit_code=0
 try:
     import carb
     import numpy as np
@@ -1213,7 +1214,8 @@ try:
         print(json.dumps(result,indent=2),flush=True)
         passed=(result.get('free_return_completed') if 'free_joint7_return' in result
                 else bool(result.get('rotation',{}).get('completed')))
-        raise SystemExit(0 if passed and not result.get('error') else 2)
+        requested_exit_code=0 if passed and not result.get('error') else 2
+        raise SystemExit(requested_exit_code)
     if args.wrist_reference_loads:
         from te_robot_wrist_reference_loads import run_robot_wrist_reference_loads
         result=run_robot_wrist_reference_loads(repository=repo,world=world,robot_data=robot_data,
@@ -1857,6 +1859,6 @@ finally:
     # Do not wait on stage teardown after those artifacts are complete.
     if args.interface_twist_deg is not None:
         if locals().get('interface_movie') is not None:interface_movie.release()
-        app.close(wait_for_replicator=False,skip_cleanup=True,exit_code=1 if failed else 0)
+        app.close(wait_for_replicator=False,skip_cleanup=True,exit_code=1 if failed else requested_exit_code)
     else:
-        app.close(exit_code=1 if failed else 0)
+        app.close(exit_code=1 if failed else requested_exit_code)

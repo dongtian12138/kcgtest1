@@ -577,43 +577,28 @@ class TruthAuditRecorder:
         total_count = int(np.sum(counts_array))
         if total_count >= self.tensor_contact_max_count:
             raise RuntimeError("tensor friction buffer capacity was reached")
+        capacity=min(len(forces_array),len(points_array))
+        if (np.any(starts_array<0) or np.any(counts_array<0)
+                or np.any(starts_array>capacity) or np.any(counts_array>capacity-starts_array)):
+            raise RuntimeError("tensor friction data range is invalid")
         rows = []
-        for sensor_index, sensor_path in enumerate(
-            self.tensor_contact_sensor_paths
-        ):
-            for filter_index, filter_path in enumerate(filter_paths):
-                start = int(starts_array[sensor_index, filter_index])
-                count = int(counts_array[sensor_index, filter_index])
-                end = start + count
-                if (
-                    start < 0
-                    or count < 0
-                    or end > len(forces_array)
-                    or end > len(points_array)
-                ):
-                    raise RuntimeError("tensor friction data range is invalid")
-                if not count:
-                    continue
-                records = []
-                if not (np.isfinite(forces_array[start:end]).all() and np.isfinite(points_array[start:end]).all()):
-                    raise RuntimeError('tensor friction data is not finite')
-                for index in range(start, end):
-                    impulse = forces_array[index]
-                    point = points_array[index]
-                    records.append({
-                        "position_m": point.tolist(),
-                        "tangential_impulse_n_s": impulse.tolist(),
-                        "tangential_impulse_magnitude_n_s": float(
-                            np.linalg.norm(impulse)
-                        ),
-                    })
-                rows.append({
-                    "sensor_index": sensor_index,
-                    "filter_index": filter_index,
-                    "paths": (sensor_path, filter_path),
-                    "records": count,
-                    "contacts": records,
-                })
+        # The frozen scene has thousands of possible pairs and only a few
+        # occupied pairs per tick. Check every range, then visit occupied ones.
+        for sensor_index,filter_index in zip(*np.nonzero(counts_array)):
+            sensor_index,filter_index=int(sensor_index),int(filter_index)
+            sensor_path=self.tensor_contact_sensor_paths[sensor_index]
+            filter_path=filter_paths[filter_index]
+            start=int(starts_array[sensor_index,filter_index])
+            count=int(counts_array[sensor_index,filter_index]);end=start+count
+            records=[]
+            if not (np.isfinite(forces_array[start:end]).all() and np.isfinite(points_array[start:end]).all()):
+                raise RuntimeError('tensor friction data is not finite')
+            for index in range(start,end):
+                impulse=forces_array[index];point=points_array[index]
+                records.append({"position_m":point.tolist(),"tangential_impulse_n_s":impulse.tolist(),
+                    "tangential_impulse_magnitude_n_s":float(np.linalg.norm(impulse))})
+            rows.append({"sensor_index":sensor_index,"filter_index":filter_index,
+                "paths":(sensor_path,filter_path),"records":count,"contacts":records})
         return rows
 
     def _usd_hand_pose(self) -> tuple[list[float], list[float]]:

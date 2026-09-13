@@ -143,6 +143,7 @@ nut_regrasp:
   - artifacts/visual_assembly_v1/task_preload20_end_clearance_plus.json
   - artifacts/visual_assembly_v1/task_preload20_end_clearance_minus.json
 nut_rotation:
+  arm_trajectory_velocity_feedforward: true
   rotation_profile: trapezoid
   maximum_rotation_acceleration_deg_s2: 0.35
   measured_tracking:
@@ -156,6 +157,16 @@ nut_rotation:
     source: validated TE three-start thread lead; robot reference only
   visual_progress:
     enabled: true
+    captive_nut_axial_travel_m: 0.001
+    thread_lead_m: 0.00762
+    passive_travel_source: frozen connector_model_assembly_scene.json captive_nut_axial_play; working travel, excluding backup margin
+    reference_following:
+      enabled: true
+      maximum_lateral_motion_m: 0.0005
+      maximum_axis_motion_deg: 1.0
+      maximum_lateral_speed_m_s: 0.00015
+      maximum_axis_speed_rad_s: 0.002
+      smoothing_time_s: 0.2
     observation_period_s: 1.0
     maximum_grasp_relation_error_m: 0.0002
     nominal_seated_depth_m: 0.014605
@@ -331,6 +342,7 @@ nut_reindex:
   offline_path_reference: artifacts/kcg_connector/isaac/te_full_assembly_20260905/key_full_stroke_01/open_hand_reindex_geometry_v1.json
   minimum_observed_key_guide_overlap_m: 0.0001
 nut_rotation_after_index:
+  arm_trajectory_velocity_feedforward: true
   rotation_profile: trapezoid
   maximum_rotation_acceleration_deg_s2: 0.35
   measured_tracking:
@@ -344,6 +356,16 @@ nut_rotation_after_index:
     source: validated TE three-start thread lead; robot reference only
   visual_progress:
     enabled: true
+    captive_nut_axial_travel_m: 0.001
+    thread_lead_m: 0.00762
+    passive_travel_source: frozen connector_model_assembly_scene.json captive_nut_axial_play; working travel, excluding backup margin
+    reference_following:
+      enabled: true
+      maximum_lateral_motion_m: 0.0005
+      maximum_axis_motion_deg: 1.0
+      maximum_lateral_speed_m_s: 0.00015
+      maximum_axis_speed_rad_s: 0.002
+      smoothing_time_s: 0.2
     observation_period_s: 1.0
     maximum_grasp_relation_error_m: 0.0002
     nominal_seated_depth_m: 0.014605

@@ -185,6 +185,11 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
     last_observed_body=None
     next_observation_s=0.
     seating_count=0
+    visual_follow=progress_settings.get('reference_following',{})
+    visual_follow_enabled=progress_enabled and bool(visual_follow.get('enabled',False))
+    visual_follow_translation=np.zeros(3);visual_follow_rotvec=np.zeros(3)
+    motor_force_control=settings.get('finger_motor_force_control',{})
+    root_moment_filtered=None
     axial_lead=settings.get('axial_lead_following',{})
     axial_lead_enabled=bool(axial_lead.get('enabled',False))
     turn_axial_origin=None
@@ -255,6 +260,20 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 "reported_nominal_profile_acceleration_is_not_an_adaptive_acceleration_bound": True}
         if not runtime["body_assembly_scene"]["report"].get("representative_inner_thread"):
             raise ValueError("this thread-contact pilot requires the authored inner thread")
+        root_observer=runtime.get('nut_root_moment_observer')
+        if (regulate_finger_effort or regulate_preparation_effort) and getattr(world,'hand_mechanism',None) is not None:
+            if root_observer is None:
+                from te_three_finger_wrench_observer import ThreeFingerWrenchObserver
+                calibration=grip.get('root_moment_preload',{})
+                if not calibration.get('gravity_compensated') or 'tare_gravity_nm' not in calibration:
+                    raise ValueError('the current grip lacks its original free-space base-moment calibration')
+                root_observer=ThreeFingerWrenchObserver(repository,inputs.robot_model,grip['geometry_plan'],
+                    sensor_semantics='BASE_BRIDGE_EXTERNAL_MOMENT_ABOUT_O')
+                root_observer.tare_reaction=np.asarray(grip['new_grasp_effort_tare_nm'][1:],dtype=float)
+                root_observer.tare_gravity=np.asarray(calibration['tare_gravity_nm'],dtype=float)
+                runtime['nut_root_moment_observer']=root_observer
+            record['finger_force_feedback_source']='CURRENT_BASE_BRIDGE_WITH_POSE_GRAVITY_AND_ORIGINAL_FREE_SPACE_TARE'
+            record['active_finger_reference_can_open_and_close']=True
         world.pause()
         if settings.get("grip_hold_impedance"):
             if regulate_finger_effort or regulate_preparation_effort or settings.get("grip_lateral_balance", {}).get("enabled"):
@@ -293,6 +312,10 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             record['current_visual_progress']=[]
             record['desired_grasp_relation_held_between_regrasps']=True
         body = np.asarray(fresh["world_from_plug_five_dof"]).reshape(4, 4)
+        if progress_enabled:
+            runtime.pop('last_nut_progress_observation',None)
+            record['visual_progress_anchor']={'depth_m':float(-axis@(body[:3,3]-socket[:3,3])),
+                'command_deg':engagement_start_deg,'time_s':float(world.current_time)}
         record['initial_hand_world_from_encoders']=hand.tolist()
         if observation_session is not None:
             observation_session.setdefault('original_body_origin_world_m',body[:3,3].tolist())
@@ -660,6 +683,13 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 record["explicit_pause_request"] = str(stop_request)
                 raise RuntimeError("explicit simulation pause requested; preserve the incomplete episode")
             q, hand, current, wrench, raw_wrench = observe()
+            root_moments=None
+            if root_observer is not None and (regulate_finger_effort or regulate_preparation_effort):
+                root_moments=np.asarray(stepper.latest[2])[8:]-root_observer.tare_reaction-(
+                    root_observer._system(q)[2]-root_observer.tare_gravity)
+                if motor_force_control.get('enabled',False):
+                    if root_moment_filtered is None:root_moment_filtered=root_moments.copy()
+                    else:root_moment_filtered+=dt/(float(motor_force_control['signal_filter_time_s'])+dt)*(root_moments-root_moment_filtered)
             elapsed = index * dt
             if progress_enabled and elapsed>=next_observation_s:
                 from te_body_socket_observation import observe_tracked_plug_from_rgbd
@@ -678,10 +708,13 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 observed_body=np.asarray(observed['world_from_plug_five_dof'])
                 if -axis@observed_body[:3,2]<=0:
                     raise RuntimeError('recoverable nut turn stop: VISUAL_TRACKING_LOST')
+                from te_nut_motion import grasp_relation_residual
                 relation_error=observed_body[:3,3]-current[:3,3]
-                if np.linalg.norm(relation_error)>float(progress_settings['maximum_grasp_relation_error_m']):
+                relation_components=grasp_relation_residual(relation_error,axis,
+                    progress_settings.get('captive_nut_axial_travel_m',0.))
+                if relation_components['unexplained_norm_m']>float(progress_settings['maximum_grasp_relation_error_m']):
                     record['grasp_relation_stop']={'step':int(stepper.step_index),'error_world_m':relation_error.tolist(),
-                        'current_observation':observed}
+                        'relation_components':relation_components,'current_observation':observed}
                     raise RuntimeError('recoverable nut turn stop: GRASP_RELATION_CHANGED')
                 # Observe the changed relation without redefining the desired
                 # grasp to that error. Otherwise a fresh image would cancel
@@ -692,10 +725,12 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 observation_row={'step':int(stepper.step_index),'time_s':float(world.current_time),
                     'depth_m':float(-axis@(observed_body[:3,3]-socket[:3,3])),
                     'command_deg':current_command,'torsion_nm':float(wrench[5]),
-                    'grasp_relation_error_m':float(np.linalg.norm(relation_error)),
+                    'grasp_relation_error_m':relation_components['unexplained_norm_m'],
+                    'grasp_relation_components':relation_components,
                     'relation_update_world_m':relation_error.tolist(),'observation':observed}
                 previous=runtime.get('last_nut_progress_observation')
-                observation_row['state']=classify_observed_progress(previous,observation_row,progress_settings)
+                observation_row['state']=classify_observed_progress(previous,observation_row,progress_settings,
+                    progress_anchor=record['visual_progress_anchor'])
                 runtime['last_nut_progress_observation']=observation_row
                 record['current_visual_progress'].append(observation_row)
                 seating_count=seating_count+1 if observation_row['state']=='VISUAL_SEATING_CANDIDATE' else 0
@@ -1061,6 +1096,33 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 if actual_reference_angle > np.deg2rad(axis_budget_deg) + 1e-10:
                     raise RuntimeError("actual preparation reference exceeds the bounded orientation region")
             actual_depth_change = -float(axis @ (current[:3, 3] - original_pivot[:3, 3]))
+            follow_velocity=np.zeros(3);follow_angular_velocity=np.zeros(3);follow_rotation=np.eye(3)
+            if visual_follow_enabled and elapsed>=preparation_end:
+                # Move the world reference using independently observed Body
+                # motion. Keep hand_from_pivot fixed: measured hand errors must
+                # not redefine the desired grip or disappear on observation.
+                target=last_observed_body[:3,3]-desired_pivot[:3,3]
+                target-=axis*(axis@target)
+                expected_axis=desired_pivot[:3,:3]@original_pivot[:3,:3].T@body_axis_rotation[:,2]
+                observed_axis=last_observed_body[:3,2]
+                cross=np.cross(expected_axis,observed_axis);sine=float(np.linalg.norm(cross))
+                theta=float(np.arctan2(sine,expected_axis@observed_axis))
+                rotation_target=cross*(theta/sine) if sine>1e-12 else np.zeros(3)
+                if (np.linalg.norm(target)>float(visual_follow['maximum_lateral_motion_m'])
+                        or theta>np.deg2rad(float(visual_follow['maximum_axis_motion_deg']))):
+                    raise RuntimeError('recoverable nut turn stop: VISUAL_TRACKING_LOST')
+                tau=float(visual_follow['smoothing_time_s'])
+                follow_velocity=(target-visual_follow_translation)/(tau+dt)
+                follow_velocity*=min(1.,float(visual_follow['maximum_lateral_speed_m_s'])/max(float(np.linalg.norm(follow_velocity)),1e-15))
+                rotation_velocity_follow=(rotation_target-visual_follow_rotvec)/(tau+dt)
+                rotation_velocity_follow*=min(1.,float(visual_follow['maximum_axis_speed_rad_s'])/max(float(np.linalg.norm(rotation_velocity_follow)),1e-15))
+                old_rotation=Rotation.from_rotvec(visual_follow_rotvec).as_matrix()
+                visual_follow_translation+=follow_velocity*dt
+                visual_follow_rotvec+=rotation_velocity_follow*dt
+                follow_rotation=Rotation.from_rotvec(visual_follow_rotvec).as_matrix()
+                follow_angular_velocity=Rotation.from_matrix(follow_rotation@old_rotation.T).as_rotvec()/dt
+                desired_pivot[:3,3]+=visual_follow_translation
+                desired_pivot[:3,:3]=follow_rotation@desired_pivot[:3,:3]
             commanded_depth_change = -float(axis @ (desired_pivot[:3, 3] - original_pivot[:3, 3]))
             if observation_session is not None:
                 origin=np.asarray(observation_session['original_body_origin_world_m'])
@@ -1157,7 +1219,11 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                 "axial_velocity_command_m_s": float(velocity_z),
                 "encoder_pivot_world_m": current[:3, 3].tolist()})
             control_sample.update(axial_lead_following_enabled=axial_lead_enabled,
-                bounded_axial_correction_m=axial_correction if axial_lead_enabled else None)
+                bounded_axial_correction_m=axial_correction if axial_lead_enabled else None,
+                visual_reference_translation_m=visual_follow_translation.tolist(),
+                visual_reference_rotation_rad=visual_follow_rotvec.tolist(),
+                measured_base_moments_nm=None if root_moments is None else root_moments.tolist(),
+                desired_pivot_world_m=desired_pivot[:3,3].tolist())
             sample_stream.write(encode_row(control_sample) + "\n")
             record["sample_count"] += 1
             limits = settings["stops"]
@@ -1216,10 +1282,10 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             lateral_feedforward = (combined_alignment_velocity_world
                 if combined_alignment_velocity_world is not None else
                 lateral_delta*align_rate + socket[:3, :2] @ planar_velocity)
-            lateral_feedforward += feedback_translation_velocity_world
+            lateral_feedforward += feedback_translation_velocity_world+follow_velocity
             twist = np.r_[axis * velocity_z + lateral_feedforward,
-                .05 * (axis * (rotation_velocity+yaw_compliance_velocity)
-                       + alignment_angular_velocity_world)]
+                .05 * (follow_rotation@(axis * (rotation_velocity+yaw_compliance_velocity)
+                       + alignment_angular_velocity_world)+follow_angular_velocity)]
             joint_velocity = point_jacobian.T @ np.linalg.solve(
                 point_jacobian @ point_jacobian.T + .0005**2 * np.eye(6), twist + 3.0 * error)
             if tracking_enabled:
@@ -1252,16 +1318,32 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
             # effort; it does not replace the measurement with a drive-torque
             # estimate or alter any measured-effort protection.
             effort = np.asarray(stepper.latest[2])[8:] - tare[1:]
-            root_observer=runtime.get('nut_root_moment_observer')
-            if root_observer is not None and (regulate_preparation_effort if elapsed<preparation_end else regulate_finger_effort):
-                effort=np.asarray(stepper.latest[2])[8:]-root_observer.tare_reaction-(
-                    root_observer._system(q)[2]-root_observer.tare_gravity)
+            if root_moments is not None and (regulate_preparation_effort if elapsed<preparation_end else regulate_finger_effort):
+                effort=root_moments
+                if np.any(effort<.1*desired_effort):
+                    raise RuntimeError('recoverable nut turn stop: OBSERVED_GRIP_SLIP')
             if balance_target is not None:
                 hand_target[1:] += np.clip(balance_target[1:]-hand_target[1:], -increment, increment)
             elif regulate_preparation_effort if elapsed < preparation_end else regulate_finger_effort:
-                hand_target[1:] = np.clip(hand_target[1:] + np.clip(
-                    effort_gain*(desired_effort - effort) / float(settings.get('finger_position_stiffness_reference_nm_rad',dynamic["hand_stiffness"])), -increment, increment),
-                    lower_hand[1:], upper_hand[1:])
+                if motor_force_control.get('enabled',False):
+                    from te_worm_drive import position_reference_for_input_velocity
+                    mechanism=world.hand_mechanism
+                    velocity=(desired_effort-root_moment_filtered)/(
+                        float(settings['finger_position_stiffness_reference_nm_rad'])*max(effort_tau,dt))
+                    velocity[np.abs(desired_effort-root_moment_filtered)<=float(motor_force_control['moment_deadband_nm'])]=0.
+                    velocity=np.clip(velocity,-float(dynamic['finger_maximum_speed_rad_s']),float(dynamic['finger_maximum_speed_rad_s']))
+                    motor_rows=[]
+                    for i,name in enumerate(('f1j2','f2j1','f3j2')):
+                        hand_target[i+1],motor_row=position_reference_for_input_velocity(mechanism.drives[name],q[i+8],
+                            velocity[i],dt,mechanism.settings['motor_position_kp'],mechanism.settings['motor_position_kd'],
+                            lower_hand[i+1],upper_hand[i+1])
+                        motor_rows.append(motor_row)
+                    record['last_friction_aware_finger_command']=motor_rows
+                    record['finger_command_semantics']='TORQUE_EQUIVALENT_MOTOR_REFERENCE_WITH_BOUNDED_INPUT_SPEED_AND_UNCHANGED_EFFORT_CAPS'
+                else:
+                    hand_target[1:] = np.clip(hand_target[1:] + np.clip(
+                        effort_gain*(desired_effort - effort) / float(settings.get('finger_position_stiffness_reference_nm_rad',dynamic["hand_stiffness"])), -increment, increment),
+                        lower_hand[1:], upper_hand[1:])
             else:
                 key = ("held_initial_grip_target_rad" if elapsed < preparation_end
                        else "held_hand_target_after_preparation_rad")
@@ -1272,7 +1354,10 @@ def _run_body_nut_rotation_interval(repository, runtime, stepper, dynamic, grip,
                      "turn" if effective_turn_time < duration else "hold")
             if settings.get('observed_hold_only',False) and initial_fit_accepted:phase='hold'
             before_step = int(stepper.step_index)
-            stepper.advance("key_probe_nut_rotation_" + phase, arm.copy(), hand_target.copy())
+            advance_options={}
+            if settings.get('arm_trajectory_velocity_feedforward',False):
+                advance_options['arm_velocity_target']=joint_velocity.copy()
+            stepper.advance("key_probe_nut_rotation_" + phase, arm.copy(), hand_target.copy(),**advance_options)
             if int(stepper.step_index)>before_step:
                 record['last_applied_rotation_command_deg']=float(np.rad2deg(angle*fraction))
                 record['last_applied_control_step']=before_step

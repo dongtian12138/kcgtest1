@@ -28,6 +28,34 @@ class WormReference:
         return (1+self.load_friction_ratio)*self.output_active_effort_reference+self.no_load_friction_effort
 
 
+def position_reference_for_input_velocity(drive, output_angle, desired_velocity, dt,
+                                          motor_stiffness, motor_damping, lower, upper):
+    """Invert the existing passive-split motor PD/friction law, without state writes.
+
+    The returned angle is a torque-equivalent motor reference, not an output
+    position jump. The desired input velocity and native effort remain bounded.
+    At zero requested speed, zero motor effort uses the existing self-lock.
+    """
+    q,v,h,kp,kd,low,high=map(float,(output_angle,desired_velocity,dt,motor_stiffness,motor_damping,lower,upper))
+    if (drive.integration!='passive_split' or not all(map(math.isfinite,(q,v,h,kp,kd,low,high)))
+            or h<=0 or kp<=0 or kd<0 or low>high):
+        raise ValueError('finite passive-split motor command parameters required')
+    p=drive.reference;z=float(drive.input_angle)
+    next_z=z+h*v;spring=p.transmission_stiffness*(next_z-q)
+    if abs(spring)>p.transmission_effort_boundary:
+        raise ValueError('requested input motion exceeds the unchanged elastic boundary')
+    friction=math.copysign(p.no_load_friction_effort+p.load_friction_ratio*abs(spring),v) if v else 0.
+    effort=p.input_viscosity*v+spring+friction if v else 0.
+    if abs(effort)>p.input_effort_boundary:
+        raise ValueError('requested input motion exceeds the unchanged motor effort boundary')
+    target=next_z+(effort+kd*v)/kp
+    if not low<=target<=high:
+        raise ValueError('friction-aware motor reference exceeds the unchanged grip position interval')
+    return target,{'desired_input_velocity_rad_s':v,'requested_motor_effort_nm':effort,
+        'predicted_spring_effort_nm':spring,'friction_feedforward_nm':friction,
+        'motor_position_reference_rad':target,'output_position_or_velocity_written':False}
+
+
 class WormDrive:
     def __init__(self, initial_output_angle, *, reference=None, integration="endpoint",
                  friction_step="tangent"):

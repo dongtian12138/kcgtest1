@@ -48,7 +48,8 @@ class BodyAssemblyVideo:
         self._set_poses("initialization", np.zeros(11))
         self.recorder = MultiViewVideoRecorder(rep=rep, world=self.world, camera_paths=self.paths,
             output_path=self.output / "assembly_four_view.mp4", physics_hz=round(1.0/self.physics_dt_s), fps=self.fps)
-        self.inspection_camera = create_inspection_camera(self.world, self.paths['global'])
+        self.inspection_camera = (create_inspection_camera(self.world, self.paths['global'])
+            if runtime.get('inspection_ui_enabled',True) else None)
         self.refresh_inspection_view = refresh_inspection_view
         self.next_ui_refresh_wall_s = perf_counter()
         self.last_ui_refresh_wall_s = None

@@ -197,6 +197,7 @@ def gravity_biased_arm_target(
     *,
     arm_damping_nm_s_rad: float | None = None,
     payload_feedforward_nm: Sequence[float] | None = None,
+    velocity_reference_rad_s: Sequence[float] | None = None,
 ) -> tuple[np.ndarray, dict[str, object]]:
     """Express bounded model compensation as a native-drive target offset."""
 
@@ -226,7 +227,11 @@ def gravity_biased_arm_target(
         raise RuntimeError("effective arm damping must be finite and nonnegative")
     if not np.all(np.isfinite(payload)):
         raise RuntimeError("payload feedforward must be finite")
-    pd_effort = kp * (target - position) - kd * velocity
+    velocity_reference=(np.zeros((1,7),dtype=np.float64) if velocity_reference_rad_s is None
+        else np.asarray(velocity_reference_rad_s,dtype=np.float64).reshape(1,7))
+    if not np.isfinite(velocity_reference).all():
+        raise RuntimeError('arm velocity reference must be finite')
+    pd_effort = kp * (target - position) + kd * (velocity_reference-velocity)
     requested_drive_target = target + (gravity + payload) / kp
     nominal_limit_margin = np.minimum(
         target[0] - lower_limits, upper_limits - target[0]
@@ -256,6 +261,7 @@ def gravity_biased_arm_target(
         ),
         "minimum_drive_target_limit_margin_rad": float(np.min(limit_margin)),
         "effective_arm_damping_nm_s_rad": kd,
+        "velocity_reference_rad_s":velocity_reference[0].tolist(),
         "pd_effort_nm": pd_effort[0].tolist(),
         "gravity_compensation_nm": gravity[0].tolist(),
         "payload_feedforward_nm": payload[0].tolist(),
@@ -912,7 +918,7 @@ class JointSignalStepper:
 
     def advance(
         self, phase: str, arm_target: np.ndarray, hand_target: np.ndarray,
-        *, pre_step_hook=None,
+        *, pre_step_hook=None, arm_velocity_target=None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
         if self.abort_reason is not None:
             return self.latest
@@ -924,6 +930,11 @@ class JointSignalStepper:
             return self.latest
         started = perf_counter()
         active_target = np.concatenate((arm_target, hand_target))
+        velocity_reference=(np.zeros(7) if arm_velocity_target is None else np.asarray(arm_velocity_target,dtype=float))
+        if (velocity_reference.shape!=(7,) or not np.isfinite(velocity_reference).all()
+                or np.max(np.abs(velocity_reference))>float(self.settings['maximum_joint_speed_rad_s'])):
+            self.abort_reason='ARM_VELOCITY_REFERENCE_OUTSIDE_LIMIT'
+            return self.latest
         payload_feedforward = (
             np.zeros(7, dtype=np.float64)
             if self.payload_model is None
@@ -943,6 +954,7 @@ class JointSignalStepper:
             self.settings,
             arm_damping_nm_s_rad=self.effective_arm_damping_nm_s_rad,
             payload_feedforward_nm=payload_feedforward,
+            velocity_reference_rad_s=velocity_reference,
         )
         arm_control["payload_compensation_fraction"] = (
             self.payload_compensation_fraction
@@ -963,6 +975,25 @@ class JointSignalStepper:
             indices=0,
             dof_indices=self.active_indices,
         )
+        # Position and velocity describe the same moving reference. A zero
+        # velocity target would oppose it with D*qdot and create a D/K lag.
+        # Other stages explicitly receive zero, so the last turn velocity
+        # cannot leak into a subsequent hold or release.
+        if not np.array_equal(getattr(self,'_last_arm_velocity_reference',None),velocity_reference):
+            self.robot.set_dof_velocity_targets(velocity_reference.reshape(1,7),
+                indices=0,dof_indices=self.arm_indices)
+            if (not getattr(self,'_nonzero_velocity_reference_verified',False)
+                    or not np.any(velocity_reference)):
+                observed=self.robot.get_dof_velocity_targets(indices=0,dof_indices=self.arm_indices).numpy()[0]
+                if not np.array_equal(observed.astype(np.float32),velocity_reference.astype(np.float32)):
+                    self.abort_reason='ARM_VELOCITY_REFERENCE_READBACK_MISMATCH'
+                    return self.latest
+                arm_control['native_velocity_reference_readback_rad_s']=observed.tolist()
+                if np.any(velocity_reference):self._nonzero_velocity_reference_verified=True
+            self._last_arm_velocity_reference=velocity_reference.copy()
+            if self.command_api_counter is not None:
+                name='set_dof_velocity_targets'
+                self.command_api_counter[name]=int(self.command_api_counter.get(name,0))+1
         if pre_step_hook is not None:
             pre_step_hook()
         # Isaac's rendered step advances to the rendering time step (four

@@ -82,7 +82,26 @@ def preload_readiness(moments, targets, elastic_margins, *, relative_tolerance=.
         'elastic_margins_nm':margins.tolist(),'window_samples':len(values)}
 
 
-def classify_observed_progress(previous, current, settings):
+def grasp_relation_residual(error_world, axis_world, passive_axial_travel_m=0.):
+    """Separate pad displacement from the captive nut's permitted axial play.
+
+    The camera observes Body while the fingers hold Nut. Their initial axial
+    coordinate is unobserved, so its possible change spans the working travel.
+    This only changes interpretation of the image, never the physical limits.
+    """
+    error=np.asarray(error_world,dtype=float);axis=np.asarray(axis_world,dtype=float)
+    travel=float(passive_axial_travel_m)
+    if error.shape!=(3,) or axis.shape!=(3,) or not np.isfinite(np.r_[error,axis,travel]).all() or travel<0:
+        raise ValueError('finite relative displacement, axis and nonnegative axial travel required')
+    norm=float(np.linalg.norm(axis))
+    if norm<1e-12:raise ValueError('nonzero connector axis required')
+    axis=axis/norm;axial=float(axis@error);lateral=float(np.linalg.norm(error-axis*axial))
+    unexplained_axial=max(0.,abs(axial)-travel)
+    return {'lateral_m':lateral,'axial_m':axial,'unexplained_axial_m':unexplained_axial,
+            'unexplained_norm_m':math.hypot(lateral,unexplained_axial)}
+
+
+def classify_observed_progress(previous, current, settings, progress_anchor=None):
     """Classify current visual progress; seating is a candidate for final audit."""
     depth=float(current['depth_m']);torque=abs(float(current['torsion_nm']))
     if depth>float(settings['nominal_seated_depth_m'])+float(settings['visual_seating_tolerance_m']):
@@ -97,9 +116,22 @@ def classify_observed_progress(previous, current, settings):
             and abs(advance)<=float(settings['stable_depth_tolerance_m'])
             and torque>=float(settings['seating_minimum_torque_nm'])):
         return 'VISUAL_SEATING_CANDIDATE'
+    anchor=progress_anchor if progress_anchor is not None else previous
+    progress=depth-float(anchor['depth_m'])
+    progress_angle=abs(float(current['command_deg'])-float(anchor['command_deg']))
+    play=float(settings.get('captive_nut_axial_travel_m',0.))
+    minimum_progress=float(settings['minimum_observed_progress_m'])
+    if play>0:
+        # A stationary Body cannot distinguish lost grip from clearance takeup
+        # until the commanded lead exceeds the entire permitted relative travel.
+        predicted=float(settings['thread_lead_m'])*progress_angle/360.
+        unexplained=predicted-play-float(settings['maximum_grasp_relation_error_m'])
+        enough_motion=unexplained>=minimum_progress
+        minimum_progress=max(minimum_progress,unexplained)
+    else:
+        enough_motion=progress_angle>=float(settings['minimum_progress_check_angle_deg'])
     if (total>=float(settings.get('minimum_loaded_command_deg',40.))
-            and angle>=float(settings['minimum_progress_check_angle_deg'])
-            and advance<float(settings['minimum_observed_progress_m'])):
+            and enough_motion and progress<minimum_progress):
         if float(current.get('grasp_relation_error_m',0.))>float(settings.get('slip_relation_error_m',.0001)):
             return 'RECOVERABLE_GRIP_SLIP'
         if torque>=float(settings.get('stall_torque_nm',.8)):

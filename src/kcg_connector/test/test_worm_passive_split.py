@@ -9,6 +9,57 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"isaac"))
 from te_worm_drive import WormDrive,WormReference
 
 
+@pytest.mark.parametrize('load',[3.,-1.])
+@pytest.mark.parametrize('velocity',[-.005,0.,.005])
+def test_motor_reference_inverse_reaches_both_directions_through_existing_self_lock(load,velocity):
+    from te_worm_drive import position_reference_for_input_velocity
+    motor=drive(.7);q=.7-load/120.;h=1/960
+    target,request=position_reference_for_input_velocity(motor,q,velocity,h,264.,4.4,.6,.9)
+    motor.prepare_position(q,0.,target,h,stiffness=264.,damping=4.4)
+    result=motor.complete(q,0.)
+    assert result['input_velocity']==pytest.approx(velocity,abs=1e-11)
+    assert abs(result['input_effort'])<=motor.reference.input_effort_boundary
+    assert abs(result['motor_substep_energy_residual_j'])<1e-12
+    assert request['output_position_or_velocity_written'] is False
+
+
+def test_smaller_motor_position_reference_can_still_be_inside_worm_stiction_band():
+    from te_worm_drive import position_reference_for_input_velocity
+    motor=drive(.7);q=.675;h=1/960
+    motor.prepare_position(q,0.,.716,h,stiffness=264.,damping=4.4)
+    held=motor.complete(q,0.)
+    assert held['input_velocity']==0.
+    target,_=position_reference_for_input_velocity(motor,q,-.005,h,264.,4.4,.637,.917)
+    motor.prepare_position(q,0.,target,h,stiffness=264.,damping=4.4)
+    released=motor.complete(q,0.)
+    assert released['input_velocity']<0.
+    assert released['input_substep_spring_effort_nm']<held['input_substep_spring_effort_nm']
+
+
+def test_inverse_command_regulates_contact_load_after_both_load_changes():
+    from te_worm_drive import position_reference_for_input_velocity
+    target_moment=2.14;ratio=.7;contact_q=.65;h=1/960;K=120.;I=.0002;D=2.
+    q=contact_q+target_moment/(ratio*K);motor=drive(q+target_moment/(ratio*K));w=0.
+    filtered=target_moment;input_velocities=[];errors=[]
+    for step in range(1800):
+        if step==300:contact_q-=.001
+        if step==1000:contact_q+=.002
+        measured=ratio*K*(q-contact_q)
+        filtered+=h/(.05+h)*(measured-filtered)
+        error=target_moment-filtered
+        desired=0. if abs(error)<=.02 else np.clip(error/(120/6),-.18,.18)
+        ref,_=position_reference_for_input_velocity(motor,q,desired,h,264.,4.4,.6,.9)
+        law=motor.prepare_position(q,w,ref,h,stiffness=264.,damping=4.4)
+        next_q=(I*(q+h*w)/h**2+D*q/h+K*law['position_target']+K*contact_q)/(I/h**2+D/h+2*K)
+        w=(next_q-q)/h;q=next_q
+        row=motor.complete(q,w);input_velocities.append(row['input_velocity']);errors.append(measured-target_moment)
+        assert abs(row['input_effort'])<=motor.reference.input_effort_boundary
+        assert abs(120*(motor.input_angle-q))<3.5
+    assert max(abs(np.asarray(errors)[850:1000]))<.022
+    assert max(abs(np.asarray(errors)[1650:]))<.022
+    assert min(input_velocities)<0<max(input_velocities)
+
+
 def drive(z):
     return WormDrive(z,reference=WormReference(transmission_damping=0.,output_viscosity=2.),
                      integration="passive_split")

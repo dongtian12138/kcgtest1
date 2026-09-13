@@ -86,6 +86,7 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
     runtime={'world':world,'inputs':inputs,'scene':scene,'auditor':recorder,'robot_data':robot_data,
         'object_parts':parts,'nail_body_ft_auditor':ft,'body_assembly_control_config':str(assembly_path),
         'body_assembly_scene':prepared,'robot_asset':metadata['robot_asset']}
+    runtime['inspection_ui_enabled']=args.probe_additional_turn_deg is not None
     runtime['simulation_stop_request_path']=str(output/'STOP_REQUEST')
     if 'initial_loaded_command_deg' in recipe:
         runtime['engagement_loaded_turn_command_deg']=float(recipe['initial_loaded_command_deg'])
@@ -103,12 +104,21 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         'source_step':args.source_step,'source_setup_uses_recorded_pose':True,
         'post_start_object_pose_or_contact_truth_used_for_control':False,'source_free_space_tare_preserved':True,
         'hardware_authorized':False,'full_visual_assembly_success':False,'recipe':recipe}
+    result['time_resolution']={'physics_hz':1./dynamic['physics_dt_s'],
+        'experimental_comparison':bool(args.experimental_connector_time_resolution),
+        'validated_960hz_connector_results_transfer_automatically':False}
     started=perf_counter()
     try:
         world.play()
         warmup=float(recipe.get('warmup_s',2.))
         if not .5<=warmup<=2.:raise ValueError('local warmup must be between0.5and2seconds')
-        for _ in range(round(warmup/dynamic['physics_dt_s'])):
+        warmup_steps=round(warmup/dynamic['physics_dt_s'])
+        if 'free_joint7_delta_rad' not in recipe:
+            history_s=float(assembly['nut_rotation_after_index'].get('contact_filter_initialization_history_s',.5))
+            # The first sample has no preceding state for causal acceleration.
+            warmup_steps=max(warmup_steps,1+round(history_s/dynamic['physics_dt_s']))
+        result['warmup_physical_steps']=warmup_steps
+        for _ in range(warmup_steps):
             stepper.advance('nut_index_free_open_hold' if 'free_joint7_delta_rad' in recipe else 'key_probe_nut_grip_hold',arm,hand)
             if stepper.abort_reason:raise RuntimeError(stepper.abort_reason)
         world.pause()
@@ -194,11 +204,37 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             observation.update(source='CURRENT_SEGMENT_RGBD_AND_ENCODERS',encoder_step=int(stepper.step_index))
             runtime['nut_regrasp_locate_visual_bounds'](np.asarray(observation['world_from_plug_five_dof']))
         settings=copy.deepcopy(assembly['nut_rotation_after_index'] if recipe.get('use_current_rotation_config',False) else source_rotation['settings'])
+        if recipe.get('loaded_motion_profile'):
+            profile=recipe['loaded_motion_profile']
+            speed=float(profile['maximum_rotation_speed_deg_s'])
+            acceleration=float(profile['maximum_rotation_acceleration_deg_s2'])
+            arm_speed=float(profile['maximum_arm_speed_rad_s'])
+            axial_headroom=float(settings['maximum_axial_speed_m_s'])-.00762*speed/360.
+            if not (0<speed<=10. and 0<acceleration<=8.75 and 0<arm_speed<=.2 and axial_headroom>=.00008):
+                raise ValueError('local loaded profile exceeds arm/axial speed reserve or acceleration range')
+            settings.update(maximum_rotation_speed_deg_s=speed,
+                maximum_rotation_acceleration_deg_s2=acceleration,maximum_arm_speed_rad_s=arm_speed)
+            result['loaded_motion_profile']={**profile,'axial_speed_headroom_m_s':axial_headroom,
+                'physical_motor_wrench_geometry_boundaries_changed':False}
         if 'rotation_degrees' in recipe:
             degrees=float(recipe['rotation_degrees'])
-            if not 0<degrees<=5.:raise ValueError('a short local control check is bounded to five degrees')
+            if not 0<degrees<=15.:raise ValueError('a short local control check is bounded to fifteen degrees')
             settings['rotation_about_socket_plus_z_deg']=-degrees
         if recipe.get('single_attempt_diagnostic',False):settings['recovery']={'enabled':False}
+        if recipe.get('already_loaded_short_window',False):
+            # This diagnostic starts inside an established guided, loaded turn.
+            # Repeating acquisition/alignment would test a different transition.
+            from te_nut_motion import ScalarMotion
+            motion=ScalarMotion(float(recipe.get('rotation_degrees',0)),
+                float(settings['maximum_rotation_speed_deg_s']),float(settings['maximum_rotation_acceleration_deg_s2']))
+            if not recipe.get('single_attempt_diagnostic') or not 0<motion.duration<=12.:
+                raise ValueError('the already-loaded window requires one turn lasting at most12simulation seconds')
+            for name in ('pre_turn_visual_alignment','pre_turn_torsional_compliance','planar_force_admittance'):
+                settings.setdefault(name,{})['enabled']=False
+            settings.pop('pre_turn_visual_feedback',None)
+            settings['axial_settle_duration_s']=0.
+            settings['post_rotation_hold_s']=.25
+            result['local_preparation_scope']='CURRENT_RGBD_GUIDE_CHECK; NO_NEW_GRASP_OR_ALIGNMENT'
         settings['planar_force_admittance']['virtual_restoring_stiffness_n_m']=float(recipe['virtual_restoring_stiffness_n_m'])
         if 'freeze_planar_after_preparation' in recipe:
             settings['planar_force_admittance']['freeze_after_preparation']=bool(recipe['freeze_planar_after_preparation'])
@@ -210,6 +246,10 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             settings['engagement_axial_assist']=copy.deepcopy(recipe['engagement_axial_assist'])
         if 'finger_effort_limited_turn' in recipe:
             settings['finger_effort_limited_turn']=copy.deepcopy(recipe['finger_effort_limited_turn'])
+        if 'regulate_finger_effort_during_rotation' in recipe:
+            settings['regulate_finger_effort_during_rotation']=bool(recipe['regulate_finger_effort_during_rotation'])
+        if 'finger_motor_force_control' in recipe:
+            settings['finger_motor_force_control']=copy.deepcopy(recipe['finger_motor_force_control'])
         result['rotation']=run_body_nut_rotation(repository,runtime,stepper,dynamic,grip,socket,
             settings,output/'rotation',initial_position_axis_observation=observation)
     except Exception as error:

@@ -49,3 +49,23 @@ def test_source_snapshot_uses_the_sealed_block_index(tmp_path):
     for i in range(11):store.append({'step':i,'value':i/3,'contact':[i,i+1]})
     store.close()
     assert read_truth_sample(tmp_path,9)=={'step':9,'value':3.,'contact':[9,10]}
+
+
+def test_sparse_friction_records_preserve_pair_order_values_and_empty_range_checks():
+    from types import SimpleNamespace as N
+    import pytest
+    from carts_v2.evaluate_run import TruthAuditRecorder
+    counts=np.zeros((3,1400),dtype=np.int64);starts=np.zeros_like(counts)
+    counts[0,1380]=1;counts[2,4]=1;starts[2,4]=1
+    force=np.array([[.03,.04,0.],[0,0,.02]]);point=np.array([[1.,2.,3.],[4.,5.,6.]])
+    wrap=lambda a:N(numpy=lambda:a)
+    r=TruthAuditRecorder.__new__(TruthAuditRecorder)
+    r.tensor_contact_sensor_paths=('finger1','finger2','finger3');r.tensor_contact_max_count=32768
+    r.tensor_contact_prim=N(_contact_filter_paths=tuple('p'+str(i) for i in range(1400)),
+        get_friction_data=lambda **k:tuple(map(wrap,(force,point,counts,starts))))
+    rows=r._tensor_friction_rows()
+    assert [(d['sensor_index'],d['filter_index']) for d in rows]==[(0,1380),(2,4)]
+    assert rows[0]['contacts']==[{'position_m':[1.,2.,3.],'tangential_impulse_n_s':[.03,.04,0.],
+                                'tangential_impulse_magnitude_n_s':.05}]
+    starts[1,100]=3
+    with pytest.raises(RuntimeError,match='range is invalid'):r._tensor_friction_rows()
