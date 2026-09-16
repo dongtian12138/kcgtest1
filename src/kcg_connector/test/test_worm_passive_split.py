@@ -163,3 +163,63 @@ def test_native_cap_roundoff_preserves_both_real_effort_and_elastic_guards(
     assert result["transmission_effort"]==readback
     assert result["drive_saturation"] is effort_violation
     assert result["elastic_effort_boundary_exceeded"] is elastic_violation
+
+
+@pytest.mark.parametrize('output_angle,output_velocity,elastic_excess',[
+    (.7270070910453796,-.18478606641292572,False),
+    (.7200,0.,True),
+])
+def test_native_capped_pd_estimate_preserves_independent_elastic_guard(output_angle,output_velocity,elastic_excess):
+    # Joint-reaction projections are not supplied as an isolated drive sensor.
+    motor=WormDrive(.7578673218175987,reference=WormReference(transmission_damping=0.,
+        output_viscosity=2.,output_active_effort_reference=4.,transmission_effort_boundary=4.),
+        integration='passive_split')
+    law=motor.prepare_position(.7271814942359924,-.17669999599456787,
+        motor.input_angle,1/960,stiffness=264.,damping=4.4)
+    result=motor.complete(output_angle,output_velocity,native_capped_drive=True)
+    assert law['max_effort']==4.
+    assert abs(result['transmission_effort'])<=4.
+    assert result['observed_drive_effort_nm'] is None
+    assert result['drive_effort_source']=='CAPPED_ENDPOINT_PD_ESTIMATE_NOT_SENSOR'
+    assert result['output_drive_work_is_estimate'] is True
+    assert result['elastic_effort_boundary_exceeded'] is elastic_excess
+
+
+def test_captured_constraint_reaction_must_not_be_a_motor_drive_measurement():
+    motor=WormDrive(.7552633369376072,reference=WormReference(transmission_damping=0.,
+        output_viscosity=2.,output_active_effort_reference=4.,transmission_effort_boundary=4.),
+        integration='passive_split')
+    before=motor.input_angle-3.0205832053400083/120
+    motor.prepare_position(before,0.,motor.input_angle,1/960,stiffness=264.,damping=4.4)
+    result=motor.complete(.7291678786277771,.16318921744823456,native_capped_drive=True)
+    assert result['transmission_effort']==pytest.approx(2.8050765622831388)
+    assert result['observed_drive_effort_nm'] is None
+    assert not result['elastic_effort_boundary_exceeded']
+
+
+def test_captured_open_target_sticks_but_friction_aware_release_moves():
+    from te_worm_drive import position_reference_for_input_velocity
+    reference=WormReference(transmission_damping=0.,output_viscosity=2.,
+        output_active_effort_reference=4.,transmission_effort_boundary=4.)
+    z=.6653666302891776;q=.6970000267028809;h=1/960
+    stuck=WormDrive(z,reference=reference,integration='passive_split')
+    stuck.prepare_position(q,0.,.6345330734252933,h,stiffness=264.,damping=4.4)
+    assert stuck.complete(q,0.)['input_velocity']==0.
+    moving=WormDrive(z,reference=reference,integration='passive_split')
+    target,request=position_reference_for_input_velocity(moving,q,-.15,h,264.,4.4,0.,1.3963,clip_to_feasible=True)
+    moving.prepare_position(q,0.,target,h,stiffness=264.,damping=4.4)
+    row=moving.complete(q,0.)
+    assert row['input_velocity']==pytest.approx(-.15,abs=1e-11)
+    assert abs(request['requested_motor_effort_nm'])<=8.8
+
+
+def test_speed_request_saturates_without_raising_either_effort_limit():
+    from te_worm_drive import position_reference_for_input_velocity
+    motor=drive(.7361341063890952);q=.7070005536079407;h=1/960
+    target,request=position_reference_for_input_velocity(motor,q,.0088024469,h,264.,4.4,.6,.9,clip_to_feasible=True)
+    assert request['input_velocity_limited']
+    assert 0<request['desired_input_velocity_rad_s']<.0088024469
+    assert abs(request['requested_motor_effort_nm'])<=7.7
+    motor.prepare_position(q,0.,target,h,stiffness=264.,damping=4.4)
+    row=motor.complete(q,0.)
+    assert row['input_velocity']==pytest.approx(request['desired_input_velocity_rad_s'],abs=1e-11)

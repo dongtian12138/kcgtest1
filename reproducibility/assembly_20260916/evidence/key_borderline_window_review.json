@@ -1,0 +1,108 @@
+{
+  "scope": "POSTRUN_961_SAMPLE_WINDOW_AROUND_ORIGINAL_KEY_WITNESS",
+  "online_control_used": false,
+  "original_tolerance_um_unchanged": 2.0,
+  "whole_stream_original_review_still_failed": true,
+  "window_sample_count": 961,
+  "samples_beyond_original_band": 4,
+  "longest_consecutive_beyond_band_samples": 2,
+  "witness": {
+    "step": 228525,
+    "minimum_gaps_um": [
+      123.03984965931713,
+      102.10258401379747,
+      -2.14765949235185,
+      104.83470126564477,
+      -0.20061891484568495
+    ],
+    "body_depth_mm": 10.145020931959126,
+    "body_tilt_deg": 0.17033622353233788,
+    "next_decision_wrist_angle_deg": 53.68746806287056,
+    "next_decision_force_n": 48.62048589123958,
+    "position_float32_spacing_um": [
+      0.059604644775390625,
+      0.014901161193847656,
+      0.029802322387695312
+    ]
+  },
+  "beyond_band_samples": [
+    {
+      "step": 228381,
+      "minimum_gaps_um": [
+        125.33725525701279,
+        100.7153890905077,
+        -2.0226644269829563,
+        106.26314604250764,
+        -0.15105898733036582
+      ],
+      "body_depth_mm": 9.987366646528217,
+      "body_tilt_deg": 0.1681472435805411,
+      "next_decision_wrist_angle_deg": 46.24981711309439,
+      "next_decision_force_n": 42.008107216607904,
+      "position_float32_spacing_um": [
+        0.059604644775390625,
+        0.014901161193847656,
+        0.029802322387695312
+      ]
+    },
+    {
+      "step": 228524,
+      "minimum_gaps_um": [
+        123.36435699734328,
+        101.93793361652016,
+        -2.0053950038347867,
+        105.00440692084335,
+        -0.3221639982857738
+      ],
+      "body_depth_mm": 10.143858641386005,
+      "body_tilt_deg": 0.16967826974423086,
+      "next_decision_wrist_angle_deg": 53.6364923780492,
+      "next_decision_force_n": 48.578626310158626,
+      "position_float32_spacing_um": [
+        0.059604644775390625,
+        0.014901161193847656,
+        0.029802322387695312
+      ]
+    },
+    {
+      "step": 228525,
+      "minimum_gaps_um": [
+        123.03984965931713,
+        102.10258401379747,
+        -2.14765949235185,
+        104.83470126564477,
+        -0.20061891484568495
+      ],
+      "body_depth_mm": 10.145020931959126,
+      "body_tilt_deg": 0.17033622353233788,
+      "next_decision_wrist_angle_deg": 53.68746806287056,
+      "next_decision_force_n": 48.62048589123958,
+      "position_float32_spacing_um": [
+        0.059604644775390625,
+        0.014901161193847656,
+        0.029802322387695312
+      ]
+    },
+    {
+      "step": 228601,
+      "minimum_gaps_um": [
+        122.58575809957362,
+        102.17267695491029,
+        -2.0638968714334904,
+        104.73118668370284,
+        -0.08435391273509119
+      ],
+      "body_depth_mm": 10.226202458143208,
+      "body_tilt_deg": 0.17137848163959363,
+      "next_decision_wrist_angle_deg": 57.51744420544984,
+      "next_decision_force_n": 52.166076891057735,
+      "position_float32_spacing_um": [
+        0.059604644775390625,
+        0.014901161193847656,
+        0.029802322387695312
+      ]
+    }
+  ],
+  "float32_spacing_is_context_not_proof_of_roundoff_cause": true,
+  "second_stroke_completed90_without_normal_reserve_trigger": true
+}

@@ -1,0 +1,543 @@
+{
+  "scope": "POSTRUN_SAME_EPISODE_VISUAL_ASSEMBLY_REVIEW",
+  "online_control_used": false,
+  "complete_visual_assembly_verified": false,
+  "required_final_observation_s": 2.0,
+  "nominal_source_stop_depth_m": 0.014605,
+  "source_stop_depth_review_tolerance_m": 1e-05,
+  "thrust_backup_limit_m": 0.0005999,
+  "sample_count": 279682,
+  "continuous_step_sequence": true,
+  "phase_counts": {
+    "ft_free_space_tare": 480,
+    "initial_rgbd_settle": 1440,
+    "settle": 1920,
+    "preshape_at_home": 2880,
+    "approach_above": 2880,
+    "wait_above_settled": 30,
+    "approach_descent": 3840,
+    "pregrasp_hold": 480,
+    "tare": 480,
+    "parallel_contact_approach": 300,
+    "parallel_contact_contact_confirmed": 3,
+    "preload": 480,
+    "prelift_effort_check": 311,
+    "lift": 18240,
+    "hold": 1920,
+    "key_probe_body_carry_observation": 48666,
+    "key_probe_body_side_observation": 4308,
+    "key_probe_body_align_1": 4910,
+    "key_probe_body_align_2": 2881,
+    "key_probe_body_align_3": 2881,
+    "key_probe_body_precontact": 44222,
+    "key_probe_body_precontact_correct_1": 2881,
+    "key_probe_contact": 35831,
+    "key_probe_body_support_unload": 1920,
+    "key_probe_body_support_open": 251,
+    "key_probe_body_support_hold": 480,
+    "key_probe_nut_open": 939,
+    "key_probe_nut_open_hold": 2400,
+    "key_probe_nut_transfer": 26383,
+    "key_probe_nut_transfer_hold": 4320,
+    "key_probe_nut_tare": 2400,
+    "key_probe_nut_contact": 2893,
+    "key_probe_nut_grip_hold": 18000,
+    "key_probe_nut_rotation_turn": 12365,
+    "key_probe_nut_index_unload": 960,
+    "key_probe_nut_index_open": 3840,
+    "nut_index_free_open_hold": 4800,
+    "nut_index_free_rotate": 13547,
+    "nut_index_free_final_hold": 1920
+  },
+  "stage_order": [
+    {
+      "phase": "ft_free_space_tare",
+      "step": 0
+    },
+    {
+      "phase": "initial_rgbd_settle",
+      "step": 480
+    },
+    {
+      "phase": "settle",
+      "step": 1920
+    },
+    {
+      "phase": "preshape_at_home",
+      "step": 3840
+    },
+    {
+      "phase": "approach_above",
+      "step": 6720
+    },
+    {
+      "phase": "wait_above_settled",
+      "step": 9600
+    },
+    {
+      "phase": "approach_descent",
+      "step": 9630
+    },
+    {
+      "phase": "pregrasp_hold",
+      "step": 13470
+    },
+    {
+      "phase": "tare",
+      "step": 13950
+    },
+    {
+      "phase": "parallel_contact_approach",
+      "step": 14430
+    },
+    {
+      "phase": "parallel_contact_contact_confirmed",
+      "step": 14725
+    },
+    {
+      "phase": "parallel_contact_approach",
+      "step": 14726
+    },
+    {
+      "phase": "parallel_contact_contact_confirmed",
+      "step": 14727
+    },
+    {
+      "phase": "parallel_contact_approach",
+      "step": 14728
+    },
+    {
+      "phase": "parallel_contact_contact_confirmed",
+      "step": 14732
+    },
+    {
+      "phase": "preload",
+      "step": 14733
+    },
+    {
+      "phase": "prelift_effort_check",
+      "step": 15213
+    },
+    {
+      "phase": "lift",
+      "step": 15524
+    },
+    {
+      "phase": "hold",
+      "step": 33764
+    },
+    {
+      "phase": "key_probe_body_carry_observation",
+      "step": 35684
+    },
+    {
+      "phase": "key_probe_body_side_observation",
+      "step": 84350
+    },
+    {
+      "phase": "key_probe_body_align_1",
+      "step": 88658
+    },
+    {
+      "phase": "key_probe_body_align_2",
+      "step": 93568
+    },
+    {
+      "phase": "key_probe_body_align_3",
+      "step": 96449
+    },
+    {
+      "phase": "key_probe_body_precontact",
+      "step": 99330
+    },
+    {
+      "phase": "key_probe_body_precontact_correct_1",
+      "step": 143552
+    },
+    {
+      "phase": "key_probe_contact",
+      "step": 146433
+    },
+    {
+      "phase": "key_probe_body_support_unload",
+      "step": 182264
+    },
+    {
+      "phase": "key_probe_body_support_open",
+      "step": 184184
+    },
+    {
+      "phase": "key_probe_body_support_hold",
+      "step": 184435
+    },
+    {
+      "phase": "key_probe_nut_open",
+      "step": 184915
+    },
+    {
+      "phase": "key_probe_nut_open_hold",
+      "step": 185846
+    },
+    {
+      "phase": "key_probe_nut_transfer",
+      "step": 186326
+    },
+    {
+      "phase": "key_probe_nut_transfer_hold",
+      "step": 205021
+    },
+    {
+      "phase": "key_probe_nut_tare",
+      "step": 205501
+    },
+    {
+      "phase": "key_probe_nut_contact",
+      "step": 205981
+    },
+    {
+      "phase": "key_probe_nut_grip_hold",
+      "step": 206556
+    },
+    {
+      "phase": "key_probe_nut_rotation_turn",
+      "step": 210156
+    },
+    {
+      "phase": "key_probe_nut_index_unload",
+      "step": 213396
+    },
+    {
+      "phase": "key_probe_nut_index_open",
+      "step": 213588
+    },
+    {
+      "phase": "nut_index_free_open_hold",
+      "step": 214356
+    },
+    {
+      "phase": "nut_index_free_rotate",
+      "step": 214836
+    },
+    {
+      "phase": "nut_index_free_final_hold",
+      "step": 218238
+    },
+    {
+      "phase": "key_probe_nut_open",
+      "step": 218718
+    },
+    {
+      "phase": "key_probe_nut_open_hold",
+      "step": 218720
+    },
+    {
+      "phase": "key_probe_nut_transfer",
+      "step": 219200
+    },
+    {
+      "phase": "key_probe_nut_transfer_hold",
+      "step": 220161
+    },
+    {
+      "phase": "key_probe_nut_transfer",
+      "step": 220641
+    },
+    {
+      "phase": "key_probe_nut_transfer_hold",
+      "step": 221602
+    },
+    {
+      "phase": "key_probe_nut_tare",
+      "step": 222082
+    },
+    {
+      "phase": "key_probe_nut_contact",
+      "step": 222562
+    },
+    {
+      "phase": "key_probe_nut_grip_hold",
+      "step": 223138
+    },
+    {
+      "phase": "key_probe_nut_rotation_turn",
+      "step": 226738
+    },
+    {
+      "phase": "key_probe_nut_index_unload",
+      "step": 229978
+    },
+    {
+      "phase": "key_probe_nut_index_open",
+      "step": 230170
+    },
+    {
+      "phase": "nut_index_free_open_hold",
+      "step": 230938
+    },
+    {
+      "phase": "nut_index_free_rotate",
+      "step": 231418
+    },
+    {
+      "phase": "nut_index_free_final_hold",
+      "step": 234821
+    },
+    {
+      "phase": "key_probe_nut_open",
+      "step": 235301
+    },
+    {
+      "phase": "key_probe_nut_open_hold",
+      "step": 235303
+    },
+    {
+      "phase": "key_probe_nut_transfer",
+      "step": 235783
+    },
+    {
+      "phase": "key_probe_nut_transfer_hold",
+      "step": 236744
+    },
+    {
+      "phase": "key_probe_nut_transfer",
+      "step": 237224
+    },
+    {
+      "phase": "key_probe_nut_transfer_hold",
+      "step": 238185
+    },
+    {
+      "phase": "key_probe_nut_tare",
+      "step": 238665
+    },
+    {
+      "phase": "key_probe_nut_contact",
+      "step": 239145
+    },
+    {
+      "phase": "key_probe_nut_grip_hold",
+      "step": 239726
+    },
+    {
+      "phase": "key_probe_nut_rotation_turn",
+      "step": 243326
+    },
+    {
+      "phase": "key_probe_nut_index_unload",
+      "step": 245388
+    },
+    {
+      "phase": "key_probe_nut_index_open",
+      "step": 245580
+    },
+    {
+      "phase": "nut_index_free_open_hold",
+      "step": 246348
+    },
+    {
+      "phase": "nut_index_free_rotate",
+      "step": 246828
+    },
+    {
+      "phase": "nut_index_free_final_hold",
+      "step": 250218
+    },
+    {
+      "phase": "key_probe_nut_open",
+      "step": 250698
+    },
+    {
+      "phase": "key_probe_nut_open_hold",
+      "step": 250700
+    },
+    {
+      "phase": "key_probe_nut_transfer",
+      "step": 251180
+    },
+    {
+      "phase": "key_probe_nut_transfer_hold",
+      "step": 252141
+    },
+    {
+      "phase": "key_probe_nut_transfer",
+      "step": 252621
+    },
+    {
+      "phase": "key_probe_nut_transfer_hold",
+      "step": 253582
+    },
+    {
+      "phase": "key_probe_nut_tare",
+      "step": 254062
+    },
+    {
+      "phase": "key_probe_nut_contact",
+      "step": 254542
+    },
+    {
+      "phase": "key_probe_nut_grip_hold",
+      "step": 255122
+    },
+    {
+      "phase": "key_probe_nut_rotation_turn",
+      "step": 258722
+    },
+    {
+      "phase": "key_probe_nut_index_unload",
+      "step": 260042
+    },
+    {
+      "phase": "key_probe_nut_index_open",
+      "step": 260234
+    },
+    {
+      "phase": "nut_index_free_open_hold",
+      "step": 261002
+    },
+    {
+      "phase": "nut_index_free_rotate",
+      "step": 261482
+    },
+    {
+      "phase": "nut_index_free_final_hold",
+      "step": 264834
+    },
+    {
+      "phase": "key_probe_nut_open",
+      "step": 265314
+    },
+    {
+      "phase": "key_probe_nut_open_hold",
+      "step": 265316
+    },
+    {
+      "phase": "key_probe_nut_transfer",
+      "step": 265796
+    },
+    {
+      "phase": "key_probe_nut_transfer_hold",
+      "step": 266757
+    },
+    {
+      "phase": "key_probe_nut_transfer",
+      "step": 267237
+    },
+    {
+      "phase": "key_probe_nut_transfer_hold",
+      "step": 268198
+    },
+    {
+      "phase": "key_probe_nut_tare",
+      "step": 268678
+    },
+    {
+      "phase": "key_probe_nut_contact",
+      "step": 269158
+    },
+    {
+      "phase": "key_probe_nut_grip_hold",
+      "step": 269739
+    },
+    {
+      "phase": "key_probe_nut_rotation_turn",
+      "step": 273339
+    },
+    {
+      "phase": "key_probe_nut_index_unload",
+      "step": 275842
+    },
+    {
+      "phase": "key_probe_nut_index_open",
+      "step": 276034
+    },
+    {
+      "phase": "nut_index_free_open_hold",
+      "step": 276802
+    }
+  ],
+  "first": {
+    "step": 0,
+    "phase": "ft_free_space_tare",
+    "body_depth_m": 0.0716229949891567,
+    "nut_depth_m": 0.0716229949891567,
+    "body_lateral_m": 0.39613759726232245,
+    "body_axis_tilt_deg": 1.9090959104164224e-06,
+    "thrust_coordinate_m": 0.0,
+    "hand_positive_normal_impulse_n_s": 0.0,
+    "loaded_clip_count": 0,
+    "stop_contact": false,
+    "artificial_sector_contact": false
+  },
+  "final": {
+    "step": 279681,
+    "phase": "nut_index_free_open_hold",
+    "body_depth_m": 0.014604491442441914,
+    "nut_depth_m": 0.015119803398847553,
+    "body_lateral_m": 1.2244785160459877e-05,
+    "body_axis_tilt_deg": 0.0016386320809883318,
+    "thrust_coordinate_m": 0.0005153120760145414,
+    "hand_positive_normal_impulse_n_s": 0.0,
+    "loaded_clip_count": 128,
+    "stop_contact": true,
+    "artificial_sector_contact": false
+  },
+  "final_release_window_sample_count": 1920,
+  "source_stop_positive_contact_samples": 4040,
+  "maximum_absolute_thrust_coordinate_m": 0.0005159379891211702,
+  "loaded_clip_union_count": 128,
+  "nut_stage_hand_contact_actor_pairs": [
+    [
+      "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3",
+      "/World/TE_J35FreeSplitPlug/CouplingNut"
+    ],
+    [
+      "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2",
+      "/World/TE_J35FreeSplitPlug/CouplingNut"
+    ],
+    [
+      "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3",
+      "/World/TE_J35FreeSplitPlug/CouplingNut"
+    ]
+  ],
+  "mechanical_conditions": {
+    "final_hand_detached": true,
+    "full_two_second_window": true,
+    "source_stop_contact_in_final_window": true,
+    "body_at_source_stop": true,
+    "all128_sockets_simultaneously_loaded": true,
+    "no_artificial_sector_contact_in_final_window": true,
+    "thrust_backup_limit_not_reached": true,
+    "support_had_actual_hand_separation": true
+  },
+  "final_body_depth_range_m": [
+    0.014604491442441914,
+    0.014604521244764301
+  ],
+  "final_body_axial_range_m": 2.9802322387695312e-08,
+  "final_source_stop_gap_range_m": [
+    4.787552356985691e-07,
+    5.085575580862645e-07
+  ],
+  "final_window_maximum_simultaneous_loaded_clips": 128,
+  "visual_stage_conditions": {
+    "fresh_image_plan_consumed": true,
+    "current_held_body_key_observed": true,
+    "body_key_reobserved_after_carry": true,
+    "current_wrist_socket_observed": true
+  },
+  "required_additional_reviews": {
+    "nail_body_source_faces": "artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14/source_nail_body_review.json",
+    "nut_pad_source_faces": "artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14/source_nut_pad_review.json",
+    "final_red_band_visibility": "artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14/final_mating_visibility_review.json",
+    "source_key_containment": "artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14/source_key_containment_review.json"
+  },
+  "additional_review_conditions": {
+    "nail_body_source_faces": true,
+    "nut_pad_source_faces": true,
+    "final_red_band_visibility": true,
+    "source_key_containment": false
+  },
+  "status": "REVIEW_REQUIRED",
+  "recorded_turn_interval_relative_nut_rotation_range_deg": 353.69234478892207,
+  "turn_angles_are_measured_pose_results_not_controller_commands": true
+}

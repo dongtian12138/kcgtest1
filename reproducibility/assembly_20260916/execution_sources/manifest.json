@@ -1,0 +1,151 @@
+{
+  "created_utc": "2026-09-16T12:52:50.309019+00:00",
+  "scope": "FULL14_ACTUAL_UNIFORM_WRIST_AND_ELASTIC_RESERVE_SOURCES",
+  "files": [
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_coaxial_nut_interval.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_coaxial_nut_interval.py",
+      "sha256": "eae9406d05de34f25ef5f6f155ef1af6dd1c04e3bb3d716d1b727492a058be5d"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_body_nut_rotation.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_body_nut_rotation.py",
+      "sha256": "99ab766d4fd086612dc5be07818b2507aaf9450118c18e98dc27e467ad689789"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_body_nut_regrasp.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_body_nut_regrasp.py",
+      "sha256": "5380a90713b65475d5577c74a36155350c116f989d30b8014a91b0e461e01606"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_body_nut_reindex.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_body_nut_reindex.py",
+      "sha256": "691f06fce1a763c2856ec8631f6babc0d73a2ab1be5648d29ed0956b530810ef"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_body_nut_continuation.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_body_nut_continuation.py",
+      "sha256": "899e6b7e44d7ed66cde5e2f496b618420cbdd32f4d82ad535516dd811867096e"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_nut_motion.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_nut_motion.py",
+      "sha256": "f655d24831a01ddea0e08000cd88e8f06a44a9b17919bfc417a249e6f7983f9a"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_local_interface_following.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_local_interface_following.py",
+      "sha256": "259cf01593a19bbed0a4d9c4660c2a08aea7907183402c71273b7bca67ea6594"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_body_socket_observation.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_body_socket_observation.py",
+      "sha256": "c3f95b2ee61d5b8c383c76827c25977daec6d3a5ed67ef8bce706d4462104c8e"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_foundationpose_handoff_runtime.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_foundationpose_handoff_runtime.py",
+      "sha256": "c481e9fc41f5066a54ff641dc7407f186de7833c76373b2cf7ca445f0df22447"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_hand_mechanism_runtime.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_hand_mechanism_runtime.py",
+      "sha256": "d617fb2c50333e940b50157b6615b29498f305b5a35e5d9a59cd1fc091114693"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_worm_drive.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_worm_drive.py",
+      "sha256": "e63d91f2273075a75e9ea035f2e9c237d8d0f1f07738c19f7d71c69bff034dfb"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/two_nail_all_reserves_recipe.json",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/artifacts/full_rotation_20260914/visual_integration/two_nail_all_reserves_recipe.json",
+      "sha256": "95c51f9e1f21a32c3e510d04f7a318f5947fada6cb237491943fca49c88c0748"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/wrist_all_reserves_no_angle_gate_recipe.json",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/artifacts/full_rotation_20260914/visual_integration/wrist_all_reserves_no_angle_gate_recipe.json",
+      "sha256": "7a467c09a5657b4ba2a7ab4000b09cb2cfe122bc9aa597875db408b33e36d33c"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/bounded_experiment.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/bounded_experiment.py",
+      "sha256": "d4bf437aeb223704e7209467634137bfa4146f92d7e521ff027ad3fba5ff2315"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/run_body_assembly_with_video.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/run_body_assembly_with_video.py",
+      "sha256": "3fec2357c4e4a7d78066203bd0d7567cea2e2b8852385ea002f54312b0e4db6f"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/carts_v2/run_grasp_lift.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/carts_v2/run_grasp_lift.py",
+      "sha256": "672d65a3ae09fa8523595d2ad1c13563921a6c29cb0958bd2fc1c8556f05bc76"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/carts_v2/controller.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/carts_v2/controller.py",
+      "sha256": "be2039ba64225c76b33007ae73be4306992e1cbc416bbed09527f096a5a84bd1"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/carts_v2/sample_store.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/carts_v2/sample_store.py",
+      "sha256": "c7f3ebf233d20aff062b3700305df33d4106c065b0cff11c11d588365550223d"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_common_all_reserves_task.yaml",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/artifacts/full_rotation_20260914/visual_integration/visual_common_all_reserves_task.yaml",
+      "sha256": "0002010dc1275c284ceeac6cf93385e5606a828146b4807b0980f6a877a1930a"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_command.json",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_command.json",
+      "sha256": "bbdf51a96e6fa2b1586ec0c74c7a673f762d0eb50e85654b0da1cea179e08219"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_nut_phase_vision.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_nut_phase_vision.py",
+      "sha256": "58a2a90fc3b0d2889b36cc92c9dae10de28eded8a769c47b0ef71f38533306b7"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_body_assembly_video.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_body_assembly_video.py",
+      "sha256": "26920739afcff8480adc8a2aa310f74d44fc3802ac511f519419303dcafa5fee"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_body_assembly_motion.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_body_assembly_motion.py",
+      "sha256": "8c4d749365aca0793a50aa835a2dac86a8a252508fae7a95f5a70d8c5bf64564"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_body_key_entry.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_body_key_entry.py",
+      "sha256": "742d03593f72aa5cc41112334850d75b18992b0f0034b182437bc55fbd7240c1"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/te_body_support_release.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/te_body_support_release.py",
+      "sha256": "0bc7502ee0ad6aef4b6d9fb5a73318d5ee2c515b55933497d22bed2ed2b8e8e6"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/carts_v2/evaluate_run.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/carts_v2/evaluate_run.py",
+      "sha256": "2ffda8171480c435b64d91d989a736f39054f3dc720770981999f2503b1a13fa"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/isaac/trace_metadata.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/isaac/trace_metadata.py",
+      "sha256": "ce1089602e77112e15d24f60330d7f91be9b3e7f49ea782e6e32005a1ec5b6a7"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/src/kcg_connector/test/test_coaxial_force_reserve.py",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/src/kcg_connector/test/test_coaxial_force_reserve.py",
+      "sha256": "1ac30eb682b6d5e229ecb1668f66640f11949b0a08d21409e24161e745ca75e0"
+    },
+    {
+      "source_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/contact_decoder_offline_20260916/candidate_equivalence_and_timing.json",
+      "snapshot_path": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14_prelaunch_sources/artifacts/full_rotation_20260914/contact_decoder_offline_20260916/candidate_equivalence_and_timing.json",
+      "sha256": "5545c10f1d1e022cd413beef7f2a134942de21722d7b7249aa915ae79717c22d"
+    }
+  ]
+}

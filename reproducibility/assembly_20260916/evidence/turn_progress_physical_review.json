@@ -1,0 +1,159 @@
+{
+  "scope": "POSTRUN_SAME_EPISODE_TURN_ENDPOINT_CHECKPOINTS",
+  "online_control_used": false,
+  "source_archive_sample_count": 279682,
+  "endpoint_yaw_differences_use_nearest_signed_angle": true,
+  "full_stream_contact_and_key_reviews_still_required": true,
+  "complete_assembly_success_claimed": false,
+  "turns": [
+    {
+      "stage_directory": "socket_transport/nut_rotation",
+      "controller_completed": true,
+      "normal_stop_reason": null,
+      "failure_reason": null,
+      "last_applied_wrist_command_deg": 89.99999997355123,
+      "before": {
+        "step": 210155,
+        "phase": "key_probe_nut_grip_hold",
+        "body_depth_mm": 7.917029112577412,
+        "body_tilt_deg": 0.40370737017063935,
+        "nut_body_yaw_deg": -9.39883112192478e-05,
+        "hand_nut_yaw_deg": 4.950122766158206,
+        "nut_body_axial_offset_mm": -0.0001485757125581814
+      },
+      "end": {
+        "step": 213395,
+        "phase": "key_probe_nut_rotation_turn",
+        "body_depth_mm": 9.32563588023183,
+        "body_tilt_deg": 0.13437674673932143,
+        "nut_body_yaw_deg": 89.19526680267859,
+        "hand_nut_yaw_deg": 5.427507331211145,
+        "nut_body_axial_offset_mm": 0.5003701328000654
+      },
+      "actual_nut_body_rotation_deg": 89.19536079098981,
+      "hand_nut_yaw_change_deg": 0.4773845650529438,
+      "body_depth_increase_mm": 1.408606767654419
+    },
+    {
+      "stage_directory": "socket_transport/nut_rotation_after_index",
+      "controller_completed": true,
+      "normal_stop_reason": null,
+      "failure_reason": null,
+      "last_applied_wrist_command_deg": 89.99999997355123,
+      "before": {
+        "step": 226737,
+        "phase": "key_probe_nut_grip_hold",
+        "body_depth_mm": 9.056759327650044,
+        "body_tilt_deg": 0.16073696583897132,
+        "nut_body_yaw_deg": 89.19325953293637,
+        "hand_nut_yaw_deg": -84.54944892855171,
+        "nut_body_axial_offset_mm": 0.4995777935726383
+      },
+      "end": {
+        "step": 229977,
+        "phase": "key_probe_nut_rotation_turn",
+        "body_depth_mm": 11.075270622968647,
+        "body_tilt_deg": 0.3588268321204807,
+        "nut_body_yaw_deg": 179.99703145495303,
+        "hand_nut_yaw_deg": -85.40097735609787,
+        "nut_body_axial_offset_mm": 0.5001105680326232
+      },
+      "actual_nut_body_rotation_deg": 90.80377192201667,
+      "hand_nut_yaw_change_deg": -0.8515284275461568,
+      "body_depth_increase_mm": 2.0185112953186035
+    },
+    {
+      "stage_directory": "socket_transport/nut_rotation_continued_01",
+      "controller_completed": true,
+      "normal_stop_reason": "ELASTIC_RESERVE_EARLY_REGRASP",
+      "failure_reason": null,
+      "last_applied_wrist_command_deg": 66.85924490321003,
+      "before": {
+        "step": 243325,
+        "phase": "key_probe_nut_grip_hold",
+        "body_depth_mm": 10.936779230833027,
+        "body_tilt_deg": 0.1707028381686337,
+        "nut_body_yaw_deg": 179.99198179427782,
+        "hand_nut_yaw_deg": -174.5122270688043,
+        "nut_body_axial_offset_mm": 0.5010074688509442
+      },
+      "end": {
+        "step": 245387,
+        "phase": "key_probe_nut_rotation_turn",
+        "body_depth_mm": 12.44477674365041,
+        "body_tilt_deg": 0.28603618112661455,
+        "nut_body_yaw_deg": -112.1503677460352,
+        "hand_nut_yaw_deg": -175.6383425670818,
+        "nut_body_axial_offset_mm": 0.5044844049497271
+      },
+      "actual_nut_body_rotation_deg": 67.85765045968697,
+      "hand_nut_yaw_change_deg": -1.1261154982774997,
+      "body_depth_increase_mm": 1.5079975128173828
+    },
+    {
+      "stage_directory": "socket_transport/nut_rotation_continued_02",
+      "controller_completed": true,
+      "normal_stop_reason": "ELASTIC_RESERVE_EARLY_REGRASP",
+      "failure_reason": null,
+      "last_applied_wrist_command_deg": 29.679988529459415,
+      "before": {
+        "step": 258721,
+        "phase": "key_probe_nut_grip_hold",
+        "body_depth_mm": 12.443495243787739,
+        "body_tilt_deg": 0.24280368672062824,
+        "nut_body_yaw_deg": -112.13880235892805,
+        "hand_nut_yaw_deg": 95.25005150764743,
+        "nut_body_axial_offset_mm": 0.5014029493862159
+      },
+      "end": {
+        "step": 260041,
+        "phase": "key_probe_nut_rotation_turn",
+        "body_depth_mm": 12.98348352313039,
+        "body_tilt_deg": 0.03468107568774382,
+        "nut_body_yaw_deg": -83.4073015402075,
+        "hand_nut_yaw_deg": 96.07178746445763,
+        "nut_body_axial_offset_mm": 0.504108737347775
+      },
+      "actual_nut_body_rotation_deg": 28.731500818720548,
+      "hand_nut_yaw_change_deg": 0.821735956810187,
+      "body_depth_increase_mm": 0.5399882793426514
+    },
+    {
+      "stage_directory": "socket_transport/nut_rotation_continued_03",
+      "controller_completed": true,
+      "normal_stop_reason": "ELASTIC_RESERVE_EARLY_REGRASP",
+      "failure_reason": null,
+      "last_applied_wrist_command_deg": 78.74788850178093,
+      "before": {
+        "step": 273338,
+        "phase": "key_probe_nut_grip_hold",
+        "body_depth_mm": 12.983602732419941,
+        "body_tilt_deg": 0.02930412535428482,
+        "nut_body_yaw_deg": -83.29174426037629,
+        "hand_nut_yaw_deg": 5.35623013641776,
+        "nut_body_axial_offset_mm": 0.5022880167937563
+      },
+      "end": {
+        "step": 275841,
+        "phase": "key_probe_nut_rotation_turn",
+        "body_depth_mm": 14.60440203547475,
+        "body_tilt_deg": 0.0006659708080577358,
+        "nut_body_yaw_deg": -6.307956137150863,
+        "hand_nut_yaw_deg": 6.88132381536443,
+        "nut_body_axial_offset_mm": 0.5157889124319364
+      },
+      "actual_nut_body_rotation_deg": 76.9837881232254,
+      "hand_nut_yaw_change_deg": 1.5250936789466607,
+      "body_depth_increase_mm": 1.6207993030548096
+    }
+  ],
+  "final_archived_state": {
+    "step": 279681,
+    "phase": "nut_index_free_open_hold",
+    "body_depth_mm": 14.604491442441914,
+    "body_tilt_deg": 0.0016386320809883318,
+    "nut_body_yaw_deg": -6.317822026951871,
+    "hand_nut_yaw_deg": 6.892366426927594,
+    "nut_body_axial_offset_mm": 0.5153120760145414
+  }
+}

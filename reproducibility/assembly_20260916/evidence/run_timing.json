@@ -1,0 +1,37 @@
+{
+  "runtime_setup_s": 50.6844875740353,
+  "execution_through_transport_s": 14527.866017255,
+  "body_memory_and_key_evaluation_s": 67.48140825500013,
+  "stepper": {
+    "command_and_sensor_s": 391.69485623098444,
+    "physics_step_s": 9703.167850235652,
+    "audit_and_record_s": 3631.2933581561083,
+    "viewport_render_s": 0.0,
+    "physical_step_count": 279682
+  },
+  "hand_mechanism": {
+    "read_before_s": 25.38769657292869,
+    "fourbar_update_s": 112.92176846647635,
+    "motor_solve_s": 64.54960815777304,
+    "native_physics_s": 9289.904161775252,
+    "read_after_s": 101.45826458052034,
+    "evidence_and_boundary_s": 101.28603527205996
+  },
+  "truth_capture": {
+    "contact_callback_s": 5155.943449655024,
+    "engine_and_body_s": 90.7948306002072,
+    "robot_poses_s": 287.0508541613235,
+    "contact_counts_s": 1743.740956783935,
+    "archive_append_s": 884.6157618273865
+  },
+  "truth_jsonl": {
+    "serialization_and_write_s": 0.14735576999373734,
+    "sample_count": 279682
+  },
+  "sensor_archive_and_runtime_summary_s": 708.2073253290146,
+  "evaluate_trace_s": 20.63044651900418,
+  "split_contact_and_grasp_evaluation_s": 16.12269077001838,
+  "final_output_s": 0.2514099199906923,
+  "total_before_shutdown_s": 15418.769369921996,
+  "duplicate_trace_json_written": false
+}

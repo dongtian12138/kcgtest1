@@ -1,0 +1,43 @@
+{
+  "scope": "POSTRUN_ORIGINAL_MATING_INDICATOR_VISIBILITY_REVIEW",
+  "accepted": true,
+  "online_control_used": false,
+  "physics_executed": false,
+  "original_model_or_paint_visibility_changed": false,
+  "actual_episode_frames_reviewed": [
+    {
+      "label": "rotation_end_close_view",
+      "image": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14/postrun_evidence/rotation_end_actual_frame.png",
+      "frame": 1436,
+      "step_label": 275712,
+      "phase": "key_probe_nut_rotation_turn",
+      "world_time_before_render_s": 287.2031399788102,
+      "world_time_after_render_s": 287.2031399788102
+    },
+    {
+      "label": "released_hold_overview",
+      "image": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14/postrun_evidence/released_hold_actual_frame.png",
+      "frame": 1442,
+      "step_label": 276864,
+      "phase": "nut_index_free_open_hold",
+      "world_time_before_render_s": 288.4031400413951,
+      "world_time_after_render_s": 288.4031400413951
+    },
+    {
+      "label": "final_overview",
+      "image": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14/postrun_evidence/final_released_actual_frame.jpg",
+      "frame": 1456,
+      "step_label": 279552,
+      "phase": "nut_index_free_open_hold",
+      "world_time_before_render_s": 291.20314018742647,
+      "world_time_after_render_s": 291.20314018742647
+    }
+  ],
+  "actual_image_observation": "The previously exposed red ring is absent in the late-turn close view and not visible in the released overviews. The late-turn close view is explicitly before final release; the hold views are wider.",
+  "original_final_geometry_review": "source_band_radial_occlusion_review.json",
+  "final_source_band_sample_count": 1024,
+  "final_samples_occluded_by_original_nut_geometry": 1024,
+  "paint_only_source_band_remains_visible_in_source_model": true,
+  "video_metadata_and_container_frame_count": 1457,
+  "evidence_boundary": "Combines actual episode images with the preserved final geometry. Wide hold frames alone are not a precise pixel measurement, and sampled radial rays do not prove every possible camera view. No synthetic seated rendering or hidden paint is used."
+}

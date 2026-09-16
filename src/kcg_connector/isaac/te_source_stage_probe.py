@@ -5,6 +5,7 @@ sensors. The cold scene comes from a stopped run for diagnosis only; it is not
 a visual assembly acceptance episode.
 """
 import copy
+import gzip
 import json
 from time import perf_counter
 from pathlib import Path
@@ -13,7 +14,8 @@ import yaml
 
 
 def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_view,
-                          contact_paths,prepared,metadata,sensor_sample,source_rotation,recipe):
+                          contact_paths,prepared,metadata,sensor_sample,source_rotation,recipe,
+                          source_visual_context_run=None):
     import omni.usd
     import omni.replicator.core as rep
     from pxr import Gf,Usd,UsdGeom,UsdLux,PhysicsSchemaTools
@@ -31,14 +33,17 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
     from te_body_nut_rotation import run_body_nut_rotation
     from te_body_socket_observation import observe_released_plug_from_rgbd
     from te_body_assembly_video import BodyAssemblyVideo
+    from te_nut_motion import source_probe_rotation_degrees
     from trace_metadata import write_gzip_array
     import fcl
 
+    degrees=source_probe_rotation_degrees(recipe)
     repository=Path(repository);output=args.output;stage=omni.usd.get_context().get_stage()
     inputs=load_v2_inputs(repository,config_path=repository/recipe['base_config'],
         object_id=metadata['object_id'],finger_mechanism_path=args.finger_mechanism)
     dynamic=copy.deepcopy(yaml.safe_load((repository/recipe['base_config']).read_text())['dynamic'])
-    dynamic.update(physics_dt_s=float(world.get_physics_dt()),closing_drive_maximum_effort_nm=3.5,
+    dynamic.update(physics_dt_s=float(world.get_physics_dt()),
+                   closing_drive_maximum_effort_nm=float(world.hand_mechanism.settings['finger_transmission_boundary_nm']),
                    measured_effort_abort_action='record_only',arm_damping=float(metadata['effective_lift_arm_damping_nm_s_rad']))
     assembly_path=repository/recipe['assembly_config'];assembly=yaml.safe_load(assembly_path.read_text())
     scene=prepared['scene'];parts=[]
@@ -53,8 +58,10 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         part_bottom_offsets_m=scene['part_bottom_offsets_m'],table_top_z_m=scene['table_top_z_m'],
         physics_dt_s=dynamic['physics_dt_s'],engine_monitor=PhysxStatsMonitor(world.get_physics_context()),
         physics_step_interface=get_physx_interface(),tensor_contact_prim=contact_view,
-        tensor_contact_sensor_paths=contact_paths,tensor_contact_max_count=32768)
-    recorder.samples=GzipSampleStore(output/'truth_samples.jsonl.gz')
+        tensor_contact_sensor_paths=contact_paths,tensor_contact_max_count=32768,
+        contact_audit_mode=args.contact_audit_mode)
+    codec=args.truth_archive_codec
+    recorder.samples=GzipSampleStore(output/f'truth_samples.{codec}.gz',block_size=64,cache_blocks=1,codec=codec)
     ft_doc=json.loads((repository/'src/kcg_connector/config/te_visual_high_reobserve_v1.json').read_text())
     safety=ft_doc['wrist_ft_safety'];monitor=assembly['wrist_planned_contact_torque_monitor']
     phases=('visual_align','visual_refine','axial_settle','turn','hold')
@@ -86,18 +93,27 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
     runtime={'world':world,'inputs':inputs,'scene':scene,'auditor':recorder,'robot_data':robot_data,
         'object_parts':parts,'nail_body_ft_auditor':ft,'body_assembly_control_config':str(assembly_path),
         'body_assembly_scene':prepared,'robot_asset':metadata['robot_asset']}
-    runtime['inspection_ui_enabled']=args.probe_additional_turn_deg is not None
+    runtime['declared_source_stage_diagnostic']=True
+    runtime['inspection_ui_enabled']=bool(recipe.get('inspection_ui_enabled',False))
     runtime['simulation_stop_request_path']=str(output/'STOP_REQUEST')
+    stepper.diagnostic_stop_request_path=runtime['simulation_stop_request_path']
+    if 'maximum_physical_steps' in recipe:
+        count=recipe['maximum_physical_steps']
+        if isinstance(count,bool) or not isinstance(count,int) or not 1<=count<=200000:
+            raise ValueError('diagnostic physical step limit must be a positive bounded integer')
+        stepper.diagnostic_step_limit=count
     if 'initial_loaded_command_deg' in recipe:
         runtime['engagement_loaded_turn_command_deg']=float(recipe['initial_loaded_command_deg'])
+        runtime['coaxial_nut_commanded_degrees']=float(recipe['initial_loaded_command_deg'])
     _install_rgbd_resume_sync(world,stage)
     light=UsdLux.DomeLight.Define(stage,'/World/SourceStageDiagnosticLighting')
     light.CreateIntensityAttr(float(scene['render'].dome_light_intensity))
     video=BodyAssemblyVideo(repository,runtime,output/'video',dynamic['physics_dt_s'],fps=5)
-    source_transport=json.loads((args.run/'socket_transport/transport_and_observation.json').read_text())
+    source_transport=json.loads((Path(source_visual_context_run or args.run)/'socket_transport/transport_and_observation.json').read_text())
     socket=np.asarray(source_transport['world_from_socket_wrist_visual']).reshape(4,4)
     video.freeze_main_target(socket[:3,3])
-    grip=json.loads((args.run/'socket_transport'/args.source_grip_stage/'nut_regrasp_controller_result.json').read_text())
+    grip=json.loads((args.run/args.source_stage_root/args.source_grip_stage/'nut_regrasp_controller_result.json').read_text())
+    runtime['nut_grasp_yaw_bias_deg']=float(grip.get('grasp_yaw_bias',{}).get('desired_total_bias_deg',0.))
     arm=np.asarray(sensor_sample['active_targets_rad'][:7]);hand=np.asarray(sensor_sample['active_targets_rad'][7:])
     grip.update(fixed_arm_target_rad=arm.tolist(),final_hand_target_rad=hand.tolist())
     result={'scope':'LOCAL_SOURCE_STAGE_DIAGNOSIS_NOT_VISUAL_ASSEMBLY','source_run':str(args.run),
@@ -108,6 +124,10 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         'experimental_comparison':bool(args.experimental_connector_time_resolution),
         'validated_960hz_connector_results_transfer_automatically':False}
     started=perf_counter()
+    profiler=None
+    if recipe.get('profile_controller',False):
+        import cProfile
+        profiler=cProfile.Profile();profiler.enable()
     if recipe.get('adaptive_fourbar_updates',False):
         world.hand_mechanism.adaptive_tangent_settings={'closure_tolerance_m':1e-8,'maximum_slope_error':1e-4}
     try:
@@ -121,7 +141,9 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             warmup_steps=max(warmup_steps,1+round(history_s/dynamic['physics_dt_s']))
         result['warmup_physical_steps']=warmup_steps
         for _ in range(warmup_steps):
-            stepper.advance('nut_index_free_open_hold' if 'free_joint7_delta_rad' in recipe else 'key_probe_nut_grip_hold',arm,hand)
+            warm_phase=('nut_index_free_open_hold' if 'free_joint7_delta_rad' in recipe
+                else 'key_probe_nut_open_hold' if recipe.get('perform_current_regrasp') else 'key_probe_nut_grip_hold')
+            stepper.advance(warm_phase,arm,hand)
             if stepper.abort_reason:raise RuntimeError(stepper.abort_reason)
         world.pause()
         q=stepper.latest[0];H=inputs.robot_model.forward_kinematics(tuple(q),enforce_limits=False)['handbase_link']
@@ -137,9 +159,32 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         fixture=prepared['fixture']
         obstacles={'table':fcl.CollisionObject(fcl.Box(*(np.r_[box[:,1]-box[:,0],1.])),fcl.Transform(np.r_[box.mean(axis=1),inputs.table_top_z_m-.5])),
             'fixture':fcl.CollisionObject(fcl.Box(*fixture['size_m']),fcl.Transform(fixture['center_world_m']))}
+        perform_grip=bool(recipe.get('perform_current_regrasp',False))
         geometry=run_body_nut_regrasp(repository,runtime,stepper,dynamic,observation,socket,
-            collision,obstacles,output/'geometry',prepare_geometry_only=True)
-        if not geometry.get('geometry_only'):raise RuntimeError(geometry.get('failure_reason','Geometry preparation failed'))
+            collision,obstacles,output/('current_grip' if perform_grip else 'geometry'),
+            prepare_geometry_only=not perform_grip)
+        if perform_grip:
+            result['current_grip']=geometry
+            if not geometry.get('completed'):raise RuntimeError(geometry.get('failure_reason','Current regrasp failed'))
+            grip=geometry
+        elif not geometry.get('geometry_only'):raise RuntimeError(geometry.get('failure_reason','Geometry preparation failed'))
+        if recipe.get('preserve_source_grip_state'):
+            if perform_grip or not recipe.get('motor_input_state'):
+                raise ValueError('Preserving a cold source grip requires its recorded finite motor state and no regrasp')
+            source_file=args.run/args.source_stage_root/args.source_grip_stage/'joint_ft_samples.json.gz'
+            with gzip.open(source_file,'rt') as stream:source_rows=json.load(stream)
+            opened=[r for r in source_rows if r['phase']=='key_probe_nut_tare']
+            if len(opened)<20:raise ValueError('Declared source grip has no open-hand calibration')
+            runtime['coaxial_declared_cold_grip_calibration']={
+                'source_file':str(source_file.resolve()),'open_history':opened}
+            history_path=output/'diagnostic_loaded_robot_history.json.gz'
+            write_gzip_array(history_path,ft.samples,prepare=_json_ready)
+            grip.update(robot_sensor_history_file=str(history_path.resolve()),
+                world_from_body_palm_five_dof=observation['world_from_plug_five_dof'])
+            result['preserved_source_grip_diagnostic']={
+                'motor_state_source_step':args.source_step,'earlier_robot_sensor_zero':str(source_file),
+                'new_loaded_sensor_history':str(history_path),'new_regrasp_performed':False,
+                'native_contact_warm_start_restored':False,'same_episode_visual_success_claimed':False}
         if 'free_joint7_delta_rad' in recipe:
             from te_nut_motion import joint7_return_path
             delta=float(recipe['free_joint7_delta_rad'])
@@ -220,9 +265,7 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
                 maximum_axial_speed_m_s=axial_speed)
             result['loaded_motion_profile']={**profile,'axial_speed_headroom_m_s':axial_headroom,
                 'physical_motor_wrench_geometry_boundaries_changed':False}
-        if 'rotation_degrees' in recipe:
-            degrees=float(recipe['rotation_degrees'])
-            if not 0<degrees<=90.:raise ValueError('a local control stroke is bounded to ninety degrees')
+        if degrees is not None:
             settings['rotation_about_socket_plus_z_deg']=-degrees
         if recipe.get('single_attempt_diagnostic',False):settings['recovery']={'enabled':False}
         if recipe.get('already_loaded_short_window',False):
@@ -237,6 +280,9 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
                 settings.setdefault(name,{})['enabled']=False
             settings.pop('pre_turn_visual_feedback',None)
             settings['axial_settle_duration_s']=0.
+            # A restored local window does not create a fresh preparation history.
+            # Explicit loaded_preparation_s below can request and validate one.
+            settings['require_preparation_ready']=False
             settings['post_rotation_hold_s']=.25
             result['local_preparation_scope']='CURRENT_RGBD_GUIDE_CHECK; NO_NEW_GRASP_OR_ALIGNMENT'
         settings['planar_force_admittance']['virtual_restoring_stiffness_n_m']=float(recipe['virtual_restoring_stiffness_n_m'])
@@ -256,6 +302,9 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             settings['regulate_finger_effort_during_rotation']=bool(recipe['regulate_finger_effort_during_rotation'])
         if 'finger_motor_force_control' in recipe:
             settings['finger_motor_force_control']=copy.deepcopy(recipe['finger_motor_force_control'])
+        if 'loaded_coordination' in recipe:
+            settings['loaded_coordination']=copy.deepcopy(recipe['loaded_coordination'])
+            settings['continue_established_axial_force_reference']=bool(recipe.get('continue_established_axial_force_reference',False))
         if 'loaded_preparation_s' in recipe:
             period=float(recipe['loaded_preparation_s'])
             if not .5<=period<=2.:raise ValueError('local force preparation is bounded to0.5..2seconds')
@@ -267,17 +316,57 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             settings['visual_progress']['observation_period_s']=period
         if 'arm_transverse_load_compensation' in recipe:
             settings['arm_transverse_load_compensation']=copy.deepcopy(recipe['arm_transverse_load_compensation'])
+        if recipe.get('successful_stroke_motion',{}).get('enabled',False):
+            # Transfer the proved arm-motion policy, while the current hand's
+            # observer and finite self-lock motor inverse remain authoritative.
+            settings['successful_stroke_motion']=copy.deepcopy(recipe['successful_stroke_motion'])
+            settings['loaded_coordination']={'enabled':False}
+            settings['axial_lead_following']={'enabled':False}
+            settings['arm_kinematic_reference']='measured_pose'
+            settings['visual_progress']['reference_following']={'enabled':False}
+            settings['planar_force_admittance']['enabled']=False
+            settings['arm_transverse_load_compensation']={'enabled':False}
+            settings['rotation_profile']='minimum_jerk'
+            if recipe.get('already_loaded_short_window',False):
+                settings['axial_force_reference_n']=settings['turn_axial_force_reference_n']
         result['rotation']=run_body_nut_rotation(repository,runtime,stepper,dynamic,grip,socket,
             settings,output/'rotation',initial_position_axis_observation=observation)
+        if (recipe.get('additional_strokes',0) or recipe.get('release_after_rotation')) and result['rotation'].get('completed'):
+            from te_body_nut_continuation import continue_nut_strokes_and_release
+            additional=int(recipe['additional_strokes'])
+            if not 0<=additional<=3:raise ValueError('Local continuation is bounded to three additional strokes')
+            series_config=copy.deepcopy(assembly)
+            origin=float(recipe.get('initial_loaded_command_deg',0.))
+            command_budget=float(recipe.get('maximum_total_command_deg',
+                origin+abs(float(settings['rotation_about_socket_plus_z_deg']))+90.*additional
+                if series_config['continued_nut_strokes'].get('complete_remaining_command_on_last_stroke')
+                else 90.*(1+additional)))
+            if not np.isfinite(command_budget) or not origin<command_budget<=380.:
+                raise ValueError('Local continuation needs a finite cumulative command budget within380degrees')
+            series_config['continued_nut_strokes'].update(maximum_additional_strokes=additional,
+                maximum_total_command_deg=command_budget,release_at_end=True)
+            sequence=output/'sequence';sequence.mkdir(exist_ok=False)
+            record={'completed':True,'nut_regrasp':grip,'nut_rotation':result['rotation']}
+            def save_sequence():(sequence/'sequence_controller_result.json').write_text(json.dumps(_json_ready(record),indent=2)+'\n')
+            continue_nut_strokes_and_release(repository,runtime,stepper,dynamic,record,socket,
+                series_config,collision,obstacles,sequence,save_sequence)
+            result['sequence']=record
     except Exception as error:
         result['error']=str(error)
         import traceback
         result['traceback']=traceback.format_exc()
     finally:
-        world.pause();recorder.samples.close();video.close()
+        if profiler is not None:
+            profiler.disable();profiler.dump_stats(str(output/'python_controller.prof'))
+        world.pause();recorder.samples.close()
+        # Preserve the first failure even when a zero-frame video cannot be
+        # finalized. Encoding must not replace the physical/adapter error.
+        (output/'source_stage_probe_result.json').write_text(json.dumps(_json_ready(result),indent=2)+'\n')
+        try:video.close()
+        except Exception as error:result['video_close_error']=str(error)
         write_gzip_array(output/'joint_ft_samples.json.gz',ft.samples,prepare=_json_ready)
         result.update(physical_steps=stepper.step_index,outer_abort=stepper.abort_reason,
-            wrist_summary=ft.summary())
+            wrist_summary=ft.summary() if len(ft.samples) else {'status':'NO_RECORDED_SAMPLES'})
         result['wall_timing']={'local_run_and_closeout_s':perf_counter()-started,'stepper':stepper.wall_times,
             'hand_mechanism':dict(getattr(world.hand_mechanism,'wall_times',{})),
             'truth_capture':dict(recorder.capture_wall_times)}

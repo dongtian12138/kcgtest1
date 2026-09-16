@@ -127,8 +127,7 @@ nut_regrasp:
     control_quantity: BASE_BRIDGE_EXTERNAL_MOMENT_ABOUT_O_WITH_POSE_DEPENDENT_GRAVITY_COMPENSATION
     integration_note: Same source root-moment law at the common 960 Hz; prior trial25
       outer loop was 240 Hz. Stage revalidation required.
-    claim: finite position target hold after preload; no generic admittance validation
-      claimed
+    claim: finite shared motor feedback; physical full-sequence validation remains pending
     task_refinement:
       targets_nm:
       - 2.085566865538565
@@ -143,9 +142,10 @@ nut_regrasp:
   - artifacts/visual_assembly_v1/task_preload20_end_clearance_plus.json
   - artifacts/visual_assembly_v1/task_preload20_end_clearance_minus.json
 nut_rotation:
+  require_preparation_ready: true
   arm_trajectory_velocity_feedforward: true
   rotation_profile: trapezoid
-  maximum_rotation_acceleration_deg_s2: 0.35
+  maximum_rotation_acceleration_deg_s2: 8.75
   measured_tracking:
     enabled: true
     maximum_lateral_error_m: 0.00025
@@ -185,14 +185,14 @@ nut_rotation:
   rotation_about_socket_plus_z_deg: -20.0
   rotation_direction_source: RIGHT_HAND_THREE_START_THREAD; clockwise viewed from
     plug rear advances toward socket
-  maximum_rotation_speed_deg_s: 2.0
+  maximum_rotation_speed_deg_s: 5.0
   axial_settle_duration_s: 2.0
   post_rotation_hold_s: 1.0
   axial_force_reference_n: 0.2
   axial_admittance_m_per_n_s: 0.0015
   maximum_axial_speed_m_s: 0.0003
   maximum_axial_travel_m: 0.004
-  maximum_arm_speed_rad_s: 0.075
+  maximum_arm_speed_rad_s: 0.2
   payload_mass_kg: 0.062459669349
   payload_com_body_m:
   - 3.365477557677864e-06
@@ -241,12 +241,13 @@ nut_rotation:
   planar_force_admittance:
     enabled: true
     admittance_m_per_n_s: 0.0002
+    virtual_restoring_stiffness_n_m: 13000.0
     maximum_speed_m_s: 0.00015
     maximum_offset_m: 0.0005
     rationale: 共享机构局部20度对照仅启用有界XY反馈后，横向合力峰由13.21N降至2.91N、末段约0.872N，最大横向偏移0.286mm；Nut—Socket在握持末段产生实际承载。保留原增益0.0002和速度0.15mm/s，行程0.5mm小于源Body间隙四分之一0.939mm。根力矩、轴向参考及有限驱动未增加；正式连续旋合仍待验证。
     activate_during_axial_preparation: true
     activate_during_visual_alignment: true
-    freeze_after_preparation: true
+    freeze_after_preparation: false
   turn_axial_force_reference_n: 0.61272935631369
   turn_force_reference_ramp_duration_s: 0.5
   turn_force_reference_rationale: 120度回合在7.791 mm末段无Nut/Socket接触，Body/Socket承受0.199
@@ -254,10 +255,9 @@ nut_rotation:
     s平滑转到原质量乘9.81的0.6127293563 N，目标对应约零净手指轴向支承，检验自重能否克服键侧摩擦；不是厂家插入力或安全额定。准备阶段0.20
     N、120度转角、速度、4 mm轴向/100 um横向边界及所有保护保持。
   pose_observation_scope: 入槽前识别Body键角；可靠导向后旋拧只使用当前位置、轴线与六维力。没有后端孔阵列要求，不从Nut或Hand角推断Body角。判断真实螺纹推进和壳体到底，键槽导向丢失时停止并重新插入。
-  regulate_finger_effort_during_rotation: false
-  regulate_finger_effort_during_preparation: false
-  controller_version: task-moment two-stage preload; fixed motor positions; nominal
-    IK; bounded first40-degree engagement preload
+  regulate_finger_effort_during_rotation: true
+  regulate_finger_effort_during_preparation: true
+  controller_version: shared finite motor feedback and coordinated loaded progress
   development_purpose: Whole visual assembly candidate based on actual87.85degree
     Nut turn and1.26mm Body advance; full mating and release remain postrun checks.
   planar_force_following_evidence: artifacts/visual_assembly_v1/raised_nut_xy_follow07/local_physical_review.json
@@ -281,6 +281,20 @@ nut_rotation:
       is used.
     hardware_rating_claimed: false
   controlled_release_effort_reserve_nm: 0.05
+  finger_effort_regulation_time_constant_s: 0.16666666666666666
+  finger_motor_force_control:
+    enabled: true
+    signal_filter_time_s: 0.05
+    moment_deadband_nm: 0.02
+  loaded_coordination:
+    enabled: true
+    begin_slowing_error_m: 0.000125
+    outward_unload_threshold_m_s: 0.00003
+    maximum_extra_time_s: 0.5
+    maximum_total_linear_speed_m_s: 0.001
+    maximum_total_angular_speed_rad_s: 0.15
+  integration_evidence: artifacts/rotation_coordination_20260914/coordinated_turn_02
+  integration_validation_scope: Local12degree cold-state window only; newly integrated full sequence is not physically validated.
 passive_joint_solver:
   representation: floating_reduced_coordinate_articulation
   position_iterations: 32
@@ -323,6 +337,7 @@ wrist_planned_contact_force_monitor:
   existing_force_limit_values_unchanged: true
   new_force_or_torque_command_added: false
 nut_reindex:
+  require_release_load_observation: true
   joint7_only: true
   maximum_joint7_speed_rad_s: 1.0
   maximum_joint7_acceleration_rad_s2: 2.0
@@ -342,9 +357,10 @@ nut_reindex:
   offline_path_reference: artifacts/kcg_connector/isaac/te_full_assembly_20260905/key_full_stroke_01/open_hand_reindex_geometry_v1.json
   minimum_observed_key_guide_overlap_m: 0.0001
 nut_rotation_after_index:
+  require_preparation_ready: true
   arm_trajectory_velocity_feedforward: true
   rotation_profile: trapezoid
-  maximum_rotation_acceleration_deg_s2: 0.35
+  maximum_rotation_acceleration_deg_s2: 8.75
   measured_tracking:
     enabled: true
     maximum_lateral_error_m: 0.00025
@@ -384,14 +400,14 @@ nut_rotation_after_index:
   rotation_about_socket_plus_z_deg: -90.0
   rotation_direction_source: RIGHT_HAND_THREE_START_THREAD; clockwise viewed from
     plug rear advances toward socket
-  maximum_rotation_speed_deg_s: 2.0
+  maximum_rotation_speed_deg_s: 5.0
   axial_settle_duration_s: 2.0
   post_rotation_hold_s: 1.0
   axial_force_reference_n: 0.2
   axial_admittance_m_per_n_s: 0.0015
   maximum_axial_speed_m_s: 0.0003
   maximum_axial_travel_m: 0.004
-  maximum_arm_speed_rad_s: 0.075
+  maximum_arm_speed_rad_s: 0.2
   payload_mass_kg: 0.062459669349
   payload_com_body_m:
   - 3.365477557677864e-06
@@ -440,12 +456,13 @@ nut_rotation_after_index:
   planar_force_admittance:
     enabled: true
     admittance_m_per_n_s: 0.0002
+    virtual_restoring_stiffness_n_m: 13000.0
     maximum_speed_m_s: 0.00015
     maximum_offset_m: 0.0005
     rationale: 共享机构局部20度对照仅启用有界XY反馈后，横向合力峰由13.21N降至2.91N、末段约0.872N，最大横向偏移0.286mm；Nut—Socket在握持末段产生实际承载。保留原增益0.0002和速度0.15mm/s，行程0.5mm小于源Body间隙四分之一0.939mm。根力矩、轴向参考及有限驱动未增加；正式连续旋合仍待验证。
     activate_during_axial_preparation: true
     activate_during_visual_alignment: true
-    freeze_after_preparation: true
+    freeze_after_preparation: false
   turn_axial_force_reference_n: 0.61272935631369
   turn_force_reference_ramp_duration_s: 0.5
   turn_force_reference_rationale: 120度回合在7.791 mm末段无Nut/Socket接触，Body/Socket承受0.199
@@ -455,14 +472,11 @@ nut_rotation_after_index:
   development_purpose: Whole visual assembly candidate based on actual87.85degree
     Nut turn and1.26mm Body advance; full mating and release remain postrun checks.
   finger_effort_regulation_time_constant_s: 0.16666666666666666
-  finger_effort_regulation_rationale: 上轮第二段旋拧约8度时第一指接触法向冲量由常见约0.011 Ns跃升到0.04648 Ns，腕矩1.57674
-    Nm触发原1.38058 Nm停止，三指仍仅Nut接触。原始投影关节力误差逐步直接换算位置修正，局部目标来回变化约0.03..0.12 rad/s。只在第二旋拧阶段将修正乘dt/(tau+dt)，tau采用现有主动手指驱动D/K=2/12秒作为保守控制时间尺度；这是待检验的带宽选择，不是已辨识最优值。保留原0.326/0.346/0.326
-    Nm抓持参考、12/2原驱动增益、1.0 Nm驱动上限、0.9 Nm测量停止与全部腕力/矩及几何保护；不将投影关节力误当瞬时PD驱动转矩。
+  finger_effort_regulation_rationale: Shared bounded motor inverse; 50ms signal filtering and 1/6s response reference; root moments are not direct pad normal forces. Full sequence remains unverified.
   pose_observation_scope: 入槽前识别Body键角；可靠导向后旋拧只使用当前位置、轴线与六维力。没有后端孔阵列要求，不从Nut或Hand角推断Body角。判断真实螺纹推进和壳体到底，键槽导向丢失时停止并重新插入。
-  regulate_finger_effort_during_rotation: false
-  regulate_finger_effort_during_preparation: false
-  controller_version: task-moment two-stage preload; fixed motor positions; nominal
-    IK; bounded first40-degree engagement preload
+  regulate_finger_effort_during_rotation: true
+  regulate_finger_effort_during_preparation: true
+  controller_version: shared finite motor feedback and coordinated loaded progress
   planar_force_following_evidence: artifacts/visual_assembly_v1/raised_nut_xy_follow07/local_physical_review.json
   arm_kinematic_reference: commanded_pose
   grip_lateral_balance:
@@ -484,6 +498,19 @@ nut_rotation_after_index:
       is used.
     hardware_rating_claimed: false
   controlled_release_effort_reserve_nm: 0.05
+  finger_motor_force_control:
+    enabled: true
+    signal_filter_time_s: 0.05
+    moment_deadband_nm: 0.02
+  loaded_coordination:
+    enabled: true
+    begin_slowing_error_m: 0.000125
+    outward_unload_threshold_m_s: 0.00003
+    maximum_extra_time_s: 0.5
+    maximum_total_linear_speed_m_s: 0.001
+    maximum_total_angular_speed_rad_s: 0.15
+  integration_evidence: artifacts/rotation_coordination_20260914/coordinated_turn_02
+  integration_validation_scope: Local12degree cold-state window only; newly integrated full sequence is not physically validated.
 task_acceptance: 实际对键入槽、螺母相对本体旋合产生真实轴向推进、最终壳体到位及卸手保持；仅转角或程序完成不构成装配成功。
 wrist_planned_contact_torque_monitor:
   action: record_only

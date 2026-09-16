@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -10,6 +9,7 @@ from pathlib import Path
 import numpy as np
 import trimesh
 from scipy.spatial.transform import Rotation
+from trace_metadata import iter_truth_samples, truth_archive_path
 
 
 def review(run, repository):
@@ -18,31 +18,29 @@ def review(run, repository):
     contract=json.loads(contract_path.read_text())
     names=list(contract['bindings']);lo,hi=contract['nail_shell_face_range_zero_based_half_open']
     points={name:[] for name in names};metadata={name:[] for name in names};states=[]
-    stream=run/'truth_samples.jsonl.gz';body_grasp_ended=False
-    with gzip.open(stream,'rt') as handle:
-        for line in handle:
-            row=json.loads(line)
-            if row['phase'].startswith('key_probe_body_support_'):
-                body_grasp_ended=True
-            if body_grasp_ended:break
-            states.append({'step':row['step'],'t':row['simulation_time_s'],'phase':row['phase'],
-                'body_z':row['object_part_positions_m'][0][2],
-                'table_impulse':row['contacts']['object_table_positive_normal_impulse_n_s']})
-            for header in row['contacts'].get('poll_headers',[]):
-                paths=header.get('paths',[])
-                if len(paths)!=4:continue
-                for i,name in enumerate(names):
-                    side=0 if paths[0].endswith('/'+name) else 1 if paths[1].endswith('/'+name) else None
-                    if side is None:continue
-                    other=paths[1-side];body=other.endswith('/TE_J35FreeSplitPlug/Body')
-                    pose=row['native_robot_link_pose_audit']['poses'][name]
-                    R=Rotation.from_quat(np.asarray(pose['orientation_world_wxyz'])[[1,2,3,0]]).as_matrix()
-                    for contact in header['contacts']:
-                        magnitude=float(np.linalg.norm(contact['impulse_n_s']))
-                        if magnitude<=0:continue
-                        p=(np.asarray(contact['position_m'])-pose['position_world_m'])@R
-                        points[name].append(p)
-                        metadata[name].append((row['step'],magnitude,body,other))
+    stream=truth_archive_path(run);body_grasp_ended=False
+    for row in iter_truth_samples(run):
+        if row['phase'].startswith('key_probe_body_support_'):
+            body_grasp_ended=True
+        if body_grasp_ended:break
+        states.append({'step':row['step'],'t':row['simulation_time_s'],'phase':row['phase'],
+            'body_z':row['object_part_positions_m'][0][2],
+            'table_impulse':row['contacts']['object_table_positive_normal_impulse_n_s']})
+        for header in row['contacts'].get('poll_headers',[]):
+            paths=header.get('paths',[])
+            if len(paths)!=4:continue
+            for i,name in enumerate(names):
+                side=0 if paths[0].endswith('/'+name) else 1 if paths[1].endswith('/'+name) else None
+                if side is None:continue
+                other=paths[1-side];body=other.endswith('/TE_J35FreeSplitPlug/Body')
+                pose=row['native_robot_link_pose_audit']['poses'][name]
+                R=Rotation.from_quat(np.asarray(pose['orientation_world_wxyz'])[[1,2,3,0]]).as_matrix()
+                for contact in header['contacts']:
+                    magnitude=float(np.linalg.norm(contact['impulse_n_s']))
+                    if magnitude<=0:continue
+                    p=(np.asarray(contact['position_m'])-pose['position_world_m'])@R
+                    points[name].append(p)
+                    metadata[name].append((row['step'],magnitude,body,other))
     result={'scope':'POSTRUN_ONLY_SOURCE_NAIL_CONTACT_AND_LIFT','online_control_used':False,
         'classification':'nearest original STL face at native rigid-link contact position',
         'maximum_source_projection_residual_m':.0005,'source_face_range':[lo,hi],

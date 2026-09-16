@@ -1,0 +1,505 @@
+{
+  "scope": "POSTRUN_FOURTH_STROKE_TRANSIENT_CHECKPOINT_ALIGNMENT_ONLY",
+  "online_control_used": false,
+  "source_archive_samples": 279682,
+  "physics_executed": false,
+  "full_assembly_success_claimed": false,
+  "controller_stop": {
+    "step": 260042,
+    "elastic_margins_nm": {
+      "f1j2": 0.49889529083060413,
+      "f2j1": 1.0524539200445968,
+      "f3j2": 1.030645971988867
+    },
+    "threshold_nm": 0.5,
+    "last_applied_rotation_deg": 29.679988529459415,
+    "all_original_force_and_transmission_limits_retained": true
+  },
+  "interpretation_limits": [
+    "Checkpoints do not replace full stream source-face, key, stop and release reviews.",
+    "Saved control rows are paired with the preceding sensed raw frame. The final no-advance normal-stop decision has no control-stream row; its final physical state is reported separately by turn_progress_physical_review.json.",
+    "Hand/Nut angle change includes finger compliance and relative motion; it alone does not prove contact sliding.",
+    "Summed raw impulse magnitudes are not full friction-inclusive wrench measurements.",
+    "Rate clipping is observed; its causal effect requires a controlled comparison, not an assumption."
+  ],
+  "checkpoints": [
+    {
+      "robot_decision_step": 258722,
+      "matching_precommand_raw_step": 258721,
+      "phase": "key_probe_nut_grip_hold",
+      "next_command_deg": 0.0,
+      "robot_pivot_xy_error_mm": 7.701709626517582e-11,
+      "requested_xy_speed_mm_s": 7.555914410496123e-08,
+      "unlimited_xy_speed_mm_s": 7.555914410539577e-08,
+      "filtered_wrist_wrench_n_nm": [
+        -0.11502053709761148,
+        -0.5066802373062875,
+        2.768663957277307,
+        -0.11329671146556064,
+        0.19622012220405136,
+        -0.0035686988499704342
+      ],
+      "body_depth_mm": 12.443495243787739,
+      "body_lateral_mm": 0.07600802464508387,
+      "nut_lateral_mm": 0.07902374192623697,
+      "body_tilt_deg": 0.24280368672062824,
+      "nut_body_yaw_deg": -112.13880235892805,
+      "hand_nut_yaw_deg": 95.25005150764743,
+      "nut_body_axial_offset_mm": 0.5014029493862159,
+      "hand_raw_impulse_norm_sums_n_s": {
+        "f2Link2": 0.02200791927507076,
+        "f3Link3": 0.01693503985283635,
+        "f1Link3": 0.014989652387090525
+      },
+      "positive_hand_actor_pairs": [
+        {
+          "hand": "f2Link2",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.02200791927507076
+        },
+        {
+          "hand": "f3Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.01693503985283635
+        },
+        {
+          "hand": "f1Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.014989652387090525
+        }
+      ]
+    },
+    {
+      "robot_decision_step": 259555,
+      "matching_precommand_raw_step": 259554,
+      "phase": "key_probe_nut_rotation_turn",
+      "next_command_deg": 10.002948020787445,
+      "robot_pivot_xy_error_mm": 0.01536864946977823,
+      "requested_xy_speed_mm_s": 0.3073754943267761,
+      "unlimited_xy_speed_mm_s": 0.3073754943267761,
+      "filtered_wrist_wrench_n_nm": [
+        -23.11376323587394,
+        -16.09735848083613,
+        37.38914735527098,
+        0.09359130950916209,
+        0.089643445674945,
+        0.7716728462551371
+      ],
+      "body_depth_mm": 12.583983391523335,
+      "body_lateral_mm": 0.02727675016028785,
+      "nut_lateral_mm": 0.0344293605200311,
+      "body_tilt_deg": 0.040867605876673804,
+      "nut_body_yaw_deg": -102.318422306997,
+      "hand_nut_yaw_deg": 95.32418519724118,
+      "nut_body_axial_offset_mm": 0.5037835589072762,
+      "hand_raw_impulse_norm_sums_n_s": {
+        "f3Link3": 0.07670502000790241,
+        "f2Link2": 0.04337455687833284,
+        "f1Link3": 0.0194640906959095
+      },
+      "positive_hand_actor_pairs": [
+        {
+          "hand": "f3Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.07670502000790241
+        },
+        {
+          "hand": "f2Link2",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.04337455687833284
+        },
+        {
+          "hand": "f1Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.0194640906959095
+        }
+      ],
+      "nut_rotation_from_first_checkpoint_deg": 9.820380051931068,
+      "hand_nut_yaw_change_from_first_checkpoint_deg": 0.07413368959373656
+    },
+    {
+      "robot_decision_step": 259829,
+      "matching_precommand_raw_step": 259828,
+      "phase": "key_probe_nut_rotation_turn",
+      "next_command_deg": 20.013713129340278,
+      "robot_pivot_xy_error_mm": 0.01992146242991587,
+      "requested_xy_speed_mm_s": 0.3984334933391791,
+      "unlimited_xy_speed_mm_s": 0.39843349333917943,
+      "filtered_wrist_wrench_n_nm": [
+        -25.08230621221765,
+        -19.63787597442481,
+        23.670176681717138,
+        0.08911028771069723,
+        0.03859452552459426,
+        0.8947154162035695
+      ],
+      "body_depth_mm": 12.795818299055073,
+      "body_lateral_mm": 0.03352505960807512,
+      "nut_lateral_mm": 0.04118619296348549,
+      "body_tilt_deg": 0.04781734357146158,
+      "nut_body_yaw_deg": -92.2706718784733,
+      "hand_nut_yaw_deg": 95.29802905890776,
+      "nut_body_axial_offset_mm": 0.5038442896227153,
+      "hand_raw_impulse_norm_sums_n_s": {
+        "f3Link3": 0.05685363787549946,
+        "f2Link2": 0.03477153304511175,
+        "f1Link3": 0.01832107000252862
+      },
+      "positive_hand_actor_pairs": [
+        {
+          "hand": "f3Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.05685363787549946
+        },
+        {
+          "hand": "f2Link2",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.03477153304511175
+        },
+        {
+          "hand": "f1Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.01832107000252862
+        }
+      ],
+      "nut_rotation_from_first_checkpoint_deg": 19.868130480454738,
+      "hand_nut_yaw_change_from_first_checkpoint_deg": 0.047977551260316886
+    },
+    {
+      "robot_decision_step": 259876,
+      "matching_precommand_raw_step": 259875,
+      "phase": "key_probe_nut_rotation_turn",
+      "next_command_deg": 22.034791672082637,
+      "robot_pivot_xy_error_mm": 0.01950042373240636,
+      "requested_xy_speed_mm_s": 0.39001670920152265,
+      "unlimited_xy_speed_mm_s": 0.390016709201523,
+      "filtered_wrist_wrench_n_nm": [
+        -24.42863840349806,
+        -19.75030518158316,
+        19.08188232757957,
+        0.1617716134260399,
+        0.048674190912547696,
+        0.9512055677082444
+      ],
+      "body_depth_mm": 12.838256806135151,
+      "body_lateral_mm": 0.029102110740273093,
+      "nut_lateral_mm": 0.0367850610475719,
+      "body_tilt_deg": 0.0417056814741993,
+      "nut_body_yaw_deg": -90.27008171928242,
+      "hand_nut_yaw_deg": 95.29922044287511,
+      "nut_body_axial_offset_mm": 0.5041415953364632,
+      "hand_raw_impulse_norm_sums_n_s": {
+        "f3Link3": 0.04741709292401143,
+        "f2Link2": 0.040935356404971535,
+        "f1Link3": 0.016305464004634243
+      },
+      "positive_hand_actor_pairs": [
+        {
+          "hand": "f3Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.04741709292401143
+        },
+        {
+          "hand": "f2Link2",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.040935356404971535
+        },
+        {
+          "hand": "f1Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.016305464004634243
+        }
+      ],
+      "nut_rotation_from_first_checkpoint_deg": 21.86872063964563,
+      "hand_nut_yaw_change_from_first_checkpoint_deg": 0.04916893522766941
+    },
+    {
+      "robot_decision_step": 259921,
+      "matching_precommand_raw_step": 259920,
+      "phase": "key_probe_nut_rotation_turn",
+      "next_command_deg": 24.040156736434145,
+      "robot_pivot_xy_error_mm": 0.02424600142027824,
+      "requested_xy_speed_mm_s": 0.48492719182101474,
+      "unlimited_xy_speed_mm_s": 0.48492719182101535,
+      "filtered_wrist_wrench_n_nm": [
+        -23.796982223864408,
+        -19.68027086004864,
+        14.520140031267967,
+        0.19748922152769144,
+        0.014897489721587283,
+        0.9362706874435791
+      ],
+      "body_depth_mm": 12.881052941083881,
+      "body_lateral_mm": 0.029211303225926806,
+      "nut_lateral_mm": 0.03581634445549061,
+      "body_tilt_deg": 0.0420833610343578,
+      "nut_body_yaw_deg": -88.25960909714259,
+      "hand_nut_yaw_deg": 95.29883695354143,
+      "nut_body_axial_offset_mm": 0.5037831769649319,
+      "hand_raw_impulse_norm_sums_n_s": {
+        "f3Link3": 0.03792131037886383,
+        "f2Link2": 0.030467276514347157,
+        "f1Link3": 0.017311683593441887
+      },
+      "positive_hand_actor_pairs": [
+        {
+          "hand": "f3Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.03792131037886383
+        },
+        {
+          "hand": "f2Link2",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.030467276514347157
+        },
+        {
+          "hand": "f1Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.017311683593441887
+        }
+      ],
+      "nut_rotation_from_first_checkpoint_deg": 23.879193261785474,
+      "hand_nut_yaw_change_from_first_checkpoint_deg": 0.0487854458939978
+    },
+    {
+      "robot_decision_step": 259943,
+      "matching_precommand_raw_step": 259942,
+      "phase": "key_probe_nut_rotation_turn",
+      "next_command_deg": 25.043875169743018,
+      "robot_pivot_xy_error_mm": 0.04675200706554235,
+      "requested_xy_speed_mm_s": 0.9350511741577276,
+      "unlimited_xy_speed_mm_s": 0.9350511741577288,
+      "filtered_wrist_wrench_n_nm": [
+        -23.574974687840335,
+        -19.502951199689086,
+        12.32113200407275,
+        0.17174479613414795,
+        0.022553300690274926,
+        0.9651392319321183
+      ],
+      "body_depth_mm": 12.901258915662739,
+      "body_lateral_mm": 0.030925031840885492,
+      "nut_lateral_mm": 0.038417029933385076,
+      "body_tilt_deg": 0.04439061604330157,
+      "nut_body_yaw_deg": -87.28690585512255,
+      "hand_nut_yaw_deg": 95.329447336011,
+      "nut_body_axial_offset_mm": 0.5039330895762946,
+      "hand_raw_impulse_norm_sums_n_s": {
+        "f3Link3": 0.06054137607078114,
+        "f2Link2": 0.030470048940329546,
+        "f1Link3": 0.0182545072356389
+      },
+      "positive_hand_actor_pairs": [
+        {
+          "hand": "f3Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.06054137607078114
+        },
+        {
+          "hand": "f2Link2",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.030470048940329546
+        },
+        {
+          "hand": "f1Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.0182545072356389
+        }
+      ],
+      "nut_rotation_from_first_checkpoint_deg": 24.851896503805506,
+      "hand_nut_yaw_change_from_first_checkpoint_deg": 0.07939582836357317
+    },
+    {
+      "robot_decision_step": 259964,
+      "matching_precommand_raw_step": 259963,
+      "phase": "key_probe_nut_rotation_turn",
+      "next_command_deg": 26.01541180555556,
+      "robot_pivot_xy_error_mm": 0.18744308749961422,
+      "requested_xy_speed_mm_s": 2.000010547760593,
+      "unlimited_xy_speed_mm_s": 3.74887465761681,
+      "filtered_wrist_wrench_n_nm": [
+        -23.710588198126455,
+        -18.63320968423118,
+        10.512823871779515,
+        0.04353200517486288,
+        -0.00020725029443833913,
+        1.0064208639639127
+      ],
+      "body_depth_mm": 12.917501181364033,
+      "body_lateral_mm": 0.029196053876441717,
+      "nut_lateral_mm": 0.03637438834173005,
+      "body_tilt_deg": 0.042146623325954605,
+      "nut_body_yaw_deg": -86.52660239901871,
+      "hand_nut_yaw_deg": 95.52140163485538,
+      "nut_body_axial_offset_mm": 0.5038729850635312,
+      "hand_raw_impulse_norm_sums_n_s": {
+        "f3Link3": 0.06843480827258923,
+        "f2Link2": 0.03159442476211619,
+        "f1Link3": 0.023234572415227042
+      },
+      "positive_hand_actor_pairs": [
+        {
+          "hand": "f3Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.06843480827258923
+        },
+        {
+          "hand": "f2Link2",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.03159442476211619
+        },
+        {
+          "hand": "f1Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.023234572415227042
+        }
+      ],
+      "nut_rotation_from_first_checkpoint_deg": 25.612199959909333,
+      "hand_nut_yaw_change_from_first_checkpoint_deg": 0.2713501272079384
+    },
+    {
+      "robot_decision_step": 259986,
+      "matching_precommand_raw_step": 259985,
+      "phase": "key_probe_nut_rotation_turn",
+      "next_command_deg": 27.046620869103283,
+      "robot_pivot_xy_error_mm": 0.4013853461245121,
+      "requested_xy_speed_mm_s": 2.0000122806660663,
+      "unlimited_xy_speed_mm_s": 8.0277201684893,
+      "filtered_wrist_wrench_n_nm": [
+        -24.200988247442282,
+        -17.56726791585984,
+        8.672366959270203,
+        -0.10455951101321719,
+        -0.08411901431930469,
+        1.0337767998559049
+      ],
+      "body_depth_mm": 12.932879179716084,
+      "body_lateral_mm": 0.025702546508211868,
+      "nut_lateral_mm": 0.02986075062653965,
+      "body_tilt_deg": 0.03672847405350991,
+      "nut_body_yaw_deg": -85.82524807121719,
+      "hand_nut_yaw_deg": 95.82898827884273,
+      "nut_body_axial_offset_mm": 0.5038107833757142,
+      "hand_raw_impulse_norm_sums_n_s": {
+        "f3Link3": 0.04896672881391736,
+        "f2Link2": 0.02359986812974507,
+        "f1Link3": 0.023295471104767
+      },
+      "positive_hand_actor_pairs": [
+        {
+          "hand": "f3Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.04896672881391736
+        },
+        {
+          "hand": "f2Link2",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.02359986812974507
+        },
+        {
+          "hand": "f1Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.023295471104767
+        }
+      ],
+      "nut_rotation_from_first_checkpoint_deg": 26.313554287710872,
+      "hand_nut_yaw_change_from_first_checkpoint_deg": 0.5789367711952877
+    },
+    {
+      "robot_decision_step": 260007,
+      "matching_precommand_raw_step": 260006,
+      "phase": "key_probe_nut_rotation_turn",
+      "next_command_deg": 28.043109287708816,
+      "robot_pivot_xy_error_mm": 0.476473581303082,
+      "requested_xy_speed_mm_s": 2.0000151557046206,
+      "unlimited_xy_speed_mm_s": 9.52948422468525,
+      "filtered_wrist_wrench_n_nm": [
+        -24.553854966237896,
+        -16.6758143922894,
+        6.868279675491969,
+        -0.13499663596508502,
+        -0.18920810159547408,
+        0.9932345006409402
+      ],
+      "body_depth_mm": 12.951952666044209,
+      "body_lateral_mm": 0.026036035573178302,
+      "nut_lateral_mm": 0.031557108910787626,
+      "body_tilt_deg": 0.0371501739035591,
+      "nut_body_yaw_deg": -84.91536335584814,
+      "hand_nut_yaw_deg": 95.91009517685795,
+      "nut_body_axial_offset_mm": 0.5041395513676873,
+      "hand_raw_impulse_norm_sums_n_s": {
+        "f3Link3": 0.058398685931594516,
+        "f2Link2": 0.027158364782114128,
+        "f1Link3": 0.02353234638527062
+      },
+      "positive_hand_actor_pairs": [
+        {
+          "hand": "f3Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.058398685931594516
+        },
+        {
+          "hand": "f2Link2",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.027158364782114128
+        },
+        {
+          "hand": "f1Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.02353234638527062
+        }
+      ],
+      "nut_rotation_from_first_checkpoint_deg": 27.223439003079903,
+      "hand_nut_yaw_change_from_first_checkpoint_deg": 0.6600436692105234
+    },
+    {
+      "robot_decision_step": 260041,
+      "matching_precommand_raw_step": 260040,
+      "phase": "key_probe_nut_rotation_turn",
+      "next_command_deg": 29.679988529459415,
+      "robot_pivot_xy_error_mm": 0.6078438713171745,
+      "requested_xy_speed_mm_s": 2.0000193090583234,
+      "unlimited_xy_speed_mm_s": 12.15688949196692,
+      "filtered_wrist_wrench_n_nm": [
+        -25.30108339122252,
+        -14.98024731791658,
+        4.246333887050629,
+        -0.15911444088397916,
+        -0.27242782645481206,
+        0.992918329607232
+      ],
+      "body_depth_mm": 12.983245104551289,
+      "body_lateral_mm": 0.024470973036357476,
+      "nut_lateral_mm": 0.02961827978907205,
+      "body_tilt_deg": 0.035119216905656093,
+      "nut_body_yaw_deg": -83.4475638235686,
+      "hand_nut_yaw_deg": 96.06386892928954,
+      "nut_body_axial_offset_mm": 0.5037815061051316,
+      "hand_raw_impulse_norm_sums_n_s": {
+        "f3Link3": 0.05822474365515519,
+        "f2Link2": 0.01754792542254334,
+        "f1Link3": 0.024514664282424492
+      },
+      "positive_hand_actor_pairs": [
+        {
+          "hand": "f3Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.05822474365515519
+        },
+        {
+          "hand": "f2Link2",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.01754792542254334
+        },
+        {
+          "hand": "f1Link3",
+          "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "raw_impulse_norm_sum_n_s": 0.024514664282424492
+        }
+      ],
+      "nut_rotation_from_first_checkpoint_deg": 28.691238535359446,
+      "hand_nut_yaw_change_from_first_checkpoint_deg": 0.8138174216421135
+    }
+  ]
+}

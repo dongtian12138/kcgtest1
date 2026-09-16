@@ -40,7 +40,7 @@ def evaluate(directory: Path, phase_kind: str = "support", stage_name: str | Non
     edges = np.column_stack((0.0188214 * np.cos(angles), 0.0188214 * np.sin(angles),
                             np.full(len(angles), -0.000762)))
     rows, final_truth, preclose_truth = [], None, None
-    trace_path=next(directory/name for name in ('truth_samples.jsonl.gz','truth_samples.jsonl','trace.json')
+    trace_path=next(directory/name for name in ('truth_samples.msgpack.gz','truth_samples.jsonl.gz','truth_samples.jsonl','trace.json')
                     if (directory/name).exists())
     for actual in iter_truth_samples(directory):
         step = int(actual["step"])

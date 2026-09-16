@@ -64,6 +64,12 @@ parser.add_argument('--shared-hand-mechanism',type=Path,
                     help='Use the same four-motor runtime as the visual assembly path, including the actively driven palm')
 parser.add_argument('--source-stage-probe',type=Path,
                     help='Bounded current-controller diagnostic from a sealed source-stage state')
+parser.add_argument('--source-stage-root',choices=('socket_transport','sequence','.'),default='socket_transport',
+                    help='Recorded stage layout: a full visual episode or a declared local continuation')
+parser.add_argument('--truth-archive-codec',choices=('jsonl','msgpack'),default='jsonl',
+                    help='lossless raw observation codec for source-stage diagnostics')
+parser.add_argument('--contact-audit-mode',choices=('full','native-report'),default='full',
+                    help='retain all native contact points, optionally omitting duplicate tensor/friction diagnostics')
 parser.add_argument('--finger-mechanism',type=Path,
                     help='Explicit measured four-bar candidate contract; default retains historical linear mimic')
 parser.add_argument('--finger-worm-self-lock',action='store_true',
@@ -84,11 +90,13 @@ parser.add_argument("--wrist-reference-loads",action="store_true",
 parser.add_argument("--position-iterations",type=int,default=32)
 parser.add_argument("--closing-drive-cap-nm",type=float,default=1.)
 parser.add_argument('--finite-drive-sensitivity',action='store_true',
-                    help='Explicit bounded actuator-reference sensitivity up to3.5Nm; not a hardware rating')
+                    help='Explicit bounded actuator-reference sensitivity up to4Nm; not a hardware rating')
 parser.add_argument('--native-model-velocity-limits',action='store_true',
                     help='Enforce the kinematic model joint velocity references in native physics as well as controller commands')
 parser.add_argument('--hand-stiffness-nm-rad',type=float,default=12.,help='Finite hand position-drive gain; torque caps remain independent')
 parser.add_argument('--hand-damping-nm-s-rad',type=float,default=2.,help='Finite hand drive damping for explicit coupled-contact stability comparisons')
+parser.add_argument('--arm-stiffness-nm-rad',type=float,choices=(2500.,10000.),default=2500.,
+                    help='Declared arm position-bandwidth comparison; original100Nm effort boundary retained')
 parser.add_argument('--mimic-natural-frequency',type=float,
                     help='Explicit finite PhysX mimic compliance preserving source1:1 coupling; uncalibrated transmission stiffness reference')
 parser.add_argument("--frozen-connector-model",type=Path)
@@ -220,6 +228,12 @@ if args.source_stage_probe and (not args.shared_hand_mechanism or not args.free_
         or args.interface_twist_deg is not None or args.probe_additional_turn_deg is not None):
     parser.error('Source-stage diagnosis requires the shared hand and free connector; other probe modes are mutually exclusive')
 source_stage_recipe=json.loads(args.source_stage_probe.read_text()) if args.source_stage_probe else None
+if source_stage_recipe is not None:
+    from te_nut_motion import source_probe_rotation_degrees
+    try:
+        source_probe_rotation_degrees(source_stage_recipe)
+    except (TypeError, ValueError) as error:
+        parser.error(str(error))
 finger_mechanism_document=None
 if args.finger_mechanism is not None:
     args.finger_mechanism=args.finger_mechanism.resolve()
@@ -255,7 +269,7 @@ if args.interface_twist_deg is not None and (args.connector_initial_pose is None
         not ((0 < args.interface_twist_deg <= 360.) or (args.interface_grip_only and args.interface_twist_deg==0.))
         or args.probe_additional_turn_deg is not None or args.replay_source_drive_targets):
     parser.error('The local grasp comparison requires a declared assembled pose and a finite stroke no larger than360degrees')
-wall_cap=1080. if args.interface_regrasp_stroke_deg is not None else 600.
+wall_cap=(2400. if args.shared_hand_mechanism else 1080.) if args.interface_regrasp_stroke_deg is not None else 600.
 if not 0<args.interface_wall_limit_s<=wall_cap:
     parser.error('The local test exceeds its finite wall-time range')
 if args.interface_release_at_end and args.interface_grasp_relation is None:
@@ -299,14 +313,14 @@ if args.interface_grip_recipe is not None:
     if args.interface_regrasp_stroke_deg is not None and (not interface_grip_recipe.get('root_moment_control')
             or interface_grip_recipe.get('sidewall_sequence')):
         parser.error('The regrasp comparison uses the direct root-load controller')
-    if not 0<float(interface_grip_recipe.get('planned_wrist_force_limit_n',3.0400615))<=20.:
+    if not 0<float(interface_grip_recipe.get('planned_wrist_force_limit_n',3.0400615))<=(110. if interface_grip_recipe.get('capacity_tested_wrench_envelope') else 20.):
         parser.error('The local planned-contact force must stay within the validated10N connector-load envelope')
 if not 0. <= args.interface_extra_closure_deg <= 2. or (args.interface_extra_closure_deg and not args.interface_start_open):
     parser.error('Extra closure requires the open-hand interface mode and is bounded to2degrees')
 if args.interface_source_pad_material and args.interface_twist_deg is None:
     parser.error('Source-pad material selection belongs to the explicit interface baseline')
 if not 1 <= args.position_iterations <= 255:parser.error('position iterations out of range')
-if not 0 < args.closing_drive_cap_nm <= (3.5 if args.finite_drive_sensitivity else 2.7):
+if not 0 < args.closing_drive_cap_nm <= (4.1 if args.finite_drive_sensitivity else 2.7):
     parser.error('closing motor cap outside the bounded simulation diagnostic range')
 if args.finite_drive_sensitivity and args.interface_twist_deg is None and not args.source_stage_probe:
     parser.error('Finite actuator-reference sensitivity is scoped to the declared local assembly test')
@@ -447,9 +461,18 @@ try:
     base_run=(args.run if "motion_plan" in local_metadata
               else Path(local_metadata.get("base_run",local_metadata["source_run"])))
     metadata=(local_metadata if base_run==args.run else json.loads((base_run/"trace_metadata.json").read_text()))
-    control_record=json.loads((args.run/"socket_transport"/args.source_rotation_stage/"nut_rotation_controller_result.json").read_text())
+    source_rotation_file=args.run/args.source_stage_root/args.source_rotation_stage/"nut_rotation_controller_result.json"
+    if source_rotation_file.is_file():
+        control_record=json.loads(source_rotation_file.read_text())
+    elif (source_stage_recipe and source_stage_recipe.get('use_current_rotation_config')
+            and args.source_step is not None):
+        # A source may have completed its grip but never started its turn.
+        # Its physical state is still explicit; do not invent a turn record.
+        control_record=None
+    else:
+        raise FileNotFoundError(source_rotation_file)
     sample_step=int(control_record["first_step"])-1 if args.source_step is None else args.source_step
-    with gzip.open(args.run/"socket_transport"/args.sensor_stage/"joint_ft_samples.json.gz","rt") as f:
+    with gzip.open(args.run/args.source_stage_root/args.sensor_stage/"joint_ft_samples.json.gz","rt") as f:
         source_sensor_records=json.load(f)
         sensor_sample=next(s for s in source_sensor_records if s["step"]==sample_step)
     source_nominal_arm_targets=list(sensor_sample['active_targets_rad'][:7])
@@ -460,7 +483,7 @@ try:
         raise ValueError("the sealed source command interval is empty or discontinuous")
     trace=args.run/"truth_samples.jsonl"
     physical_sample=None
-    if (args.run/'truth_samples.jsonl.gz').exists():
+    if any((args.run/name).exists() for name in ('truth_samples.jsonl.gz','truth_samples.msgpack.gz')):
         from trace_metadata import read_truth_sample
         physical_sample=read_truth_sample(args.run,sample_step)
     elif trace.exists():
@@ -531,16 +554,19 @@ try:
             physical_sample["arm_control"]["hand_joint_diagnostic"]["joints"][name]["position_rad"]=float(value)
     dt=1/float(args.physics_hz)
     half_second=round(.5/dt)
-    if source_stage_recipe and source_stage_recipe.get('serial_physx_dispatcher',False):
+    if source_stage_recipe and (source_stage_recipe.get('serial_physx_dispatcher',False)
+                               or 'physics_worker_threads' in source_stage_recipe):
         from omni.physx import get_physx_interface
         from omni.physx.bindings._physx import SETTING_NUM_THREADS,SETTING_PHYSX_DISPATCHER
-        if args.physics_device!='cpu':raise ValueError('the local serial dispatcher comparison requires CPU physics')
+        if args.physics_device!='cpu':raise ValueError('the local dispatcher configuration requires CPU physics')
+        workers=int(source_stage_recipe.get('physics_worker_threads',0))
+        if not 0<=workers<=28:raise ValueError('bounded CPU simulation worker count required')
         settings_store=carb.settings.get_settings()
         previous_physics_dispatch_settings={SETTING_NUM_THREADS:settings_store.get(SETTING_NUM_THREADS),
             SETTING_PHYSX_DISPATCHER:settings_store.get(SETTING_PHYSX_DISPATCHER)}
-        settings_store.set_bool(SETTING_PHYSX_DISPATCHER,True)
-        settings_store.set_int(SETTING_NUM_THREADS,0)
-        get_physx_interface().set_thread_count(0)
+        if source_stage_recipe.get('serial_physx_dispatcher',False):settings_store.set_bool(SETTING_PHYSX_DISPATCHER,True)
+        settings_store.set_int(SETTING_NUM_THREADS,workers)
+        get_physx_interface().set_thread_count(workers)
         (args.output/'physics_dispatcher_comparison.json').write_text(json.dumps({
             'previous':previous_physics_dispatch_settings,
             'actual':{k:settings_store.get(k) for k in previous_physics_dispatch_settings},
@@ -675,7 +701,12 @@ try:
         from run_grasp_lift import prepare_dynamic_scene, _apply_contact_friction_perturbation
         from te_body_assembly_scene import prepare_body_assembly_scene
         from te_grounding_band_scene import install_grounding_band_contact_model
-        launch=(None if source_stage_recipe else json.loads(base_run.with_suffix(".launch.json").read_text())["argv"])
+        launch=None
+        if not source_stage_recipe:
+            launch_path=base_run.with_suffix('.launch.json')
+            if not launch_path.is_file():launch_path=base_run.parent/(base_run.name+'_command.json')
+            launch_document=json.loads(launch_path.read_text())
+            launch=launch_document['argv'] if isinstance(launch_document,dict) else launch_document
         base_config=(repo/source_stage_recipe['base_config'] if source_stage_recipe
                      else repo/launch[launch.index("--config")+1])
         config=yaml.safe_load(base_config.read_text())
@@ -783,8 +814,9 @@ try:
                     T=np.eye(4);T[:3,3]=p;T[:3,:3]=Rotation.from_quat(np.asarray(q)[[1,2,3,0]]).as_matrix();bench_parts.append(T)
                 if args.interface_grasp_relation is not None:
                     grasp=json.loads(args.interface_grasp_relation.read_text())
+                    from te_three_finger_wrench_observer import source_grasp_contact_allowed
                     if not grasp.get('terminal_original_surface_geometry') or any(
-                            not c['nearest_original_source_face_is_pad'] for c in grasp['first_contacts']):
+                            not source_grasp_contact_allowed(grasp,c) for c in grasp['first_contacts']):
                         raise ValueError('The declared relation must use verified original fingertip surfaces')
                     hand_T=np.eye(4)
                     hand_T[:3,:3]=np.asarray(sensor_sample['handbase_rotation_world_row_major']).reshape(3,3)
@@ -976,7 +1008,7 @@ try:
             state.CreateVelocityAttr(0.)
             drive=UsdPhysics.DriveAPI.Apply(prim,"angular")
             is_active=name in source_targets;is_arm=name in controller.ARM_JOINT_NAMES
-            kp=(2500. if is_arm else args.hand_stiffness_nm_rad) if is_active else 0.
+            kp=(args.arm_stiffness_nm_rad if is_arm else args.hand_stiffness_nm_rad) if is_active else 0.
             kd=(source_arm_damping if is_arm else args.hand_damping_nm_s_rad) if is_active else 0.
             cap=(100. if is_arm else args.closing_drive_cap_nm if name in ('f1j2','f2j1','f3j2') else 1.) if is_active else 0.
             if args.palm_layout_mechanism=='self-lock' and name in ('f1j1','f3j1'):
@@ -1137,7 +1169,7 @@ try:
             'frozen_model':str(args.frozen_connector_model.resolve()),'object_articulation_reader_used':False,
             'source_pose_is_declared_cold_initial_state_not_restored_contact_history':True}
     settings={"arm_control_law":"NATIVE_FORCE_DRIVE_GRAVITY_EQUIVALENT_POSITION_BIAS_V1",
-              "arm_stiffness":2500.,"arm_damping":60.,"hand_stiffness":args.hand_stiffness_nm_rad,"hand_damping":args.hand_damping_nm_s_rad,
+              "arm_stiffness":args.arm_stiffness_nm_rad,"arm_damping":60.,"hand_stiffness":args.hand_stiffness_nm_rad,"hand_damping":args.hand_damping_nm_s_rad,
               "arm_drive_maximum_effort_nm":100.,"hand_drive_maximum_effort_nm":1.}
     settings['closing_drive_maximum_effort_nm']=args.closing_drive_cap_nm
     settings["arm_damping"] = (float(physical_sample["arm_control"]["effective_arm_damping_nm_s_rad"])
@@ -1243,6 +1275,11 @@ try:
     if args.source_stage_probe:
         from te_source_stage_probe import run_source_stage_probe
         import copy
+        (args.output/'trace_metadata.json').write_text(json.dumps({
+            'scope':'LOCAL_SOURCE_DIAGNOSTIC_METADATA_POINTERS_NOT_VISUAL_ASSEMBLY',
+            'source_run':str(args.run.resolve()),'base_run':str(base_run.resolve()),
+            'object_id':metadata['object_id'],'robot_asset':metadata['robot_asset'],
+            'physics_dt_s':1./args.physics_hz},indent=2)+'\n')
         probe_sensor=copy.deepcopy(sensor_sample)
         # The initializer's fourbar target map contains native gravity-biased
         # arm drive targets. A JointSignalStepper needs the nominal references
@@ -1250,7 +1287,8 @@ try:
         probe_sensor['active_targets_rad'][:7]=source_nominal_arm_targets
         result=run_source_stage_probe(repository=repo,args=args,world=world,robot_data=robot_data,
             ft_tree=tree,contact_view=probe_contacts,contact_paths=probe_contact_paths,prepared=prepared,
-            metadata=metadata,sensor_sample=probe_sensor,source_rotation=control_record,recipe=source_stage_recipe)
+            metadata=metadata,sensor_sample=probe_sensor,source_rotation=control_record,recipe=source_stage_recipe,
+            source_visual_context_run=base_run)
         print(json.dumps(result,indent=2),flush=True)
         passed=(result.get('free_return_completed') if 'free_joint7_return' in result
                 else bool(result.get('rotation',{}).get('completed')))
@@ -1312,7 +1350,8 @@ try:
             interface_following=LocalInterfaceFollowing(repo,
                 host(robot.get_dof_positions(indices=0,dof_indices=active))[0],
                 nut_T,body_T,placement@bench_socket,dt*args.interface_control_decimation,
-                grip_recipe=interface_grip_recipe,finger_mechanism_path=args.finger_mechanism)
+                grip_recipe=interface_grip_recipe,finger_mechanism_path=args.finger_mechanism,
+                hand_mechanism=shared_hand_runtime,arm_position_stiffness=float(settings['arm_stiffness']))
     rows=[];read_deltas=[];joint_rows=[];part_rows=[];normal_load_rows=[];part_contact_rows=[];render_audit=None
     interface_command_rows=[];projected_joint_reaction_rows=[]
     fourbar_step_rows=[]
@@ -1353,6 +1392,9 @@ try:
             actor_path_cache[key]=tuple(map(str,contacts.get_actor_paths_from_ids(ids)))
         return actor_path_cache[key]
     turn_start=3.0 if interface_grip_recipe else 1.6 if args.interface_start_open else .3
+    if interface_grip_recipe and interface_grip_recipe.get('validated_grip_helical_following'):
+        turn_start=float(interface_grip_recipe.get('preindex_start_s',3.))
+        if not 3.<=turn_start<=4.:raise ValueError('the capacity-tested grip uses a bounded3..4second preparation')
     turn_duration=1.875 if interface_grip_recipe else 1.
     interface_duration=5.275 if interface_grip_recipe else 2.9 if args.interface_start_open else 2.
     if args.interface_motion_duration_s is not None:
@@ -1362,21 +1404,44 @@ try:
     if side_sequence:
         interface_duration=float(interface_grip_recipe.get('probe_duration_s',6.9))
         turn_start=float(interface_grip_recipe.get('preindex_start_s',3.))
+    seating_alignment_schedule=(interface_grip_recipe or {}).get('seating_alignment_stage')
+    if seating_alignment_schedule and args.interface_regrasp_stroke_deg is None:
+        if side_sequence:
+            raise ValueError('Local seating alignment has one explicit two-part turn')
+        first_angle=float(seating_alignment_schedule['first_turn_deg'])
+        first_duration=float(seating_alignment_schedule['first_turn_duration_s'])
+        align_duration=float(seating_alignment_schedule['alignment_hold_s'])
+        final_duration=float(seating_alignment_schedule['final_turn_duration_s'])
+        if (not np.isfinite([first_angle,first_duration,align_duration,final_duration]).all()
+                or not 0<first_angle<args.interface_twist_deg or min(first_duration,align_duration,final_duration)<=0):
+            raise ValueError('Finite positive seating-alignment phases required')
+        turn_duration=first_duration+align_duration+final_duration
+        interface_duration=turn_start+turn_duration+.4
+        (args.output/'seating_alignment_schedule.json').write_text(json.dumps(seating_alignment_schedule,indent=2)+'\n')
     last_following_arm_drive=None
     release_base_command=None;release_start=interface_duration
+    release_relax_duration=float((interface_grip_recipe or {}).get('release_relax_duration_s',0.))
+    if not math.isfinite(release_relax_duration) or not 0<=release_relax_duration<=.5:
+        raise ValueError('Release load-relaxation interval must be finite and at most0.5s')
     if args.interface_release_at_end:
-        release_start=interface_duration;interface_duration+=1.3
+        release_start=interface_duration;interface_duration+=1.3+release_relax_duration
     stroke_schedule=None
     if args.interface_regrasp_stroke_deg is not None:
         from te_interface_stroke_schedule import InterfaceStrokeSchedule
         stroke_schedule=InterfaceStrokeSchedule(args.interface_twist_deg,args.interface_regrasp_stroke_deg,
                                                turn_duration,release=True,
                                                reindex_speed_rad_s=float(interface_grip_recipe.get('reindex_speed_rad_s',.8)),
-                                               preload_duration_s=float(interface_grip_recipe.get('regrasp_preload_duration_s',2.)))
+                                               preload_duration_s=float(interface_grip_recipe.get('regrasp_preload_duration_s',2.)),
+                                               grip_duration_s=turn_start,relax_duration_s=release_relax_duration,
+                                               opening_duration_s=.8 if interface_grip_recipe.get('friction_aware_release') else .6,
+                                               open_hold_duration_s=.5 if interface_grip_recipe.get('friction_aware_release') else 0.,
+                                               seating_alignment=seating_alignment_schedule,
+                                               post_turn_hold_s=float(interface_grip_recipe.get('post_stroke_loaded_hold_s',.2)))
         interface_duration=stroke_schedule.duration
-        release_start=next(p.start for p in stroke_schedule.phases if p.name=='opening')
+        release_start=next(p.start for p in stroke_schedule.phases if p.name in ('torque_relaxation','opening'))
         (args.output/'stroke_schedule.json').write_text(json.dumps(stroke_schedule.as_dict(),indent=2)+'\n')
     previous_scheduled_phase=None;regrasp_base_command=None;remembered_grip_goal=None
+    release_readiness_records=[];open_moment_samples=[]
     phase_rows=[];final_contact_snapshots=[]
     release_open_target=(np.asarray(json.loads(args.interface_grasp_relation.read_text())['open_hand_positions_rad']) if args.interface_release_at_end else None)
     final_release_open_target=None
@@ -1392,7 +1457,25 @@ try:
             'extra_opening_rad':extra,'final_open_target_rad':final_release_open_target.tolist(),
             'regrasp_open_targets_unchanged':True,'finite_drive_caps_unchanged':True,
             'basis':'SOURCE_CAD_CLEARANCE_AT_OBSERVED_LOADED_POSTURE' if extra else 'ORIGINAL_PREGRASP_POSTURE'},indent=2)+'\n')
+    def finite_output_posture(command,opening,*,allow_closing=False):
+        """Use the same finite motor inverse for final and intermediate release."""
+        if shared_hand_runtime is None or shared_hand_runtime.last_native_state is None:
+            raise RuntimeError('Friction-aware posture needs the current finite hand runtime')
+        from te_worm_drive import position_reference_for_input_velocity
+        measured=shared_hand_runtime.last_native_state[0]
+        for hi,name in enumerate(('f1j2','f2j1','f3j2'),start=1):
+            output_angle=float(measured[shared_hand_runtime.indices[hi]])
+            error=float(opening[hi]-output_angle)
+            speed=0. if abs(error)<.0002 else float(np.clip(4.*error,-.15,.15 if allow_closing else 0.))
+            low,high=shared_hand_runtime.setup['intervals'][name]
+            command[7+hi],_=position_reference_for_input_velocity(
+                shared_hand_runtime.drives[name],output_angle,speed,dt,
+                shared_hand_runtime.settings['motor_position_kp'],shared_hand_runtime.settings['motor_position_kd'],
+                low,high,clip_to_feasible=True)
     for step in range(round(interface_duration/dt)):
+        if (interface_grip_recipe and interface_grip_recipe.get('validated_grip_helical_following')
+                and args.interface_release_at_end and step*dt>=release_start+1.3+release_relax_duration):
+            break
         if step%240==0 and (args.output/'STOP_REQUEST.json').exists():
             requested=json.loads((args.output/'STOP_REQUEST.json').read_text())
             interface_abort='EXTERNAL_EXPERIMENT_STOP: '+str(requested.get('reason','requested for physical review'))
@@ -1401,29 +1484,48 @@ try:
             interface_abort='DECLARED_WALL_TIME_LIMIT';break
         if args.interface_twist_deg is not None:
             elapsed=step*dt;releasing=args.interface_release_at_end and elapsed>=release_start
-            phase=('free_hold' if releasing and elapsed>=release_start+.8 else 'opening' if releasing
+            phase=('free_hold' if releasing and elapsed>=release_start+release_relax_duration+.8
+                   else 'torque_relaxation' if releasing and elapsed<release_start+release_relax_duration else 'opening' if releasing
                    else 'loaded_hold' if elapsed>=turn_start+turn_duration else 'turn' if elapsed>=turn_start else 'grip')
             phase_rows.append(phase)
             u=np.clip((step*dt-turn_start)/turn_duration,0.,1.);blend=10*u**3-15*u**4+6*u**5
             angular_rate=np.deg2rad(args.interface_twist_deg)*30*u**2*(1-u)**2/turn_duration
             angle_rad=np.deg2rad(args.interface_twist_deg)*blend
+            if seating_alignment_schedule and stroke_schedule is None:
+                t=elapsed-turn_start
+                if t<first_duration:
+                    u=np.clip(t/first_duration,0.,1.);b=10*u**3-15*u**4+6*u**5
+                    angle_rad=np.deg2rad(first_angle)*b
+                    angular_rate=np.deg2rad(first_angle)*30*u**2*(1-u)**2/first_duration
+                elif t<first_duration+align_duration:
+                    angle_rad=np.deg2rad(first_angle);angular_rate=0.
+                    if not releasing:phase='alignment_hold';phase_rows[-1]=phase
+                else:
+                    u=np.clip((t-first_duration-align_duration)/final_duration,0.,1.);b=10*u**3-15*u**4+6*u**5
+                    angle_rad=np.deg2rad(first_angle+(args.interface_twist_deg-first_angle)*b)
+                    angular_rate=np.deg2rad(args.interface_twist_deg-first_angle)*30*u**2*(1-u)**2/final_duration
+                blend=angle_rad/np.deg2rad(args.interface_twist_deg)
             scheduled_phase=None;grip_clock=None;grip_enabled=True;force_follow_enabled=True
+            progress_angle_rad=angle_rad;check_release_now=False
             if args.interface_grip_only:
                 force_follow_enabled=False
                 if not releasing:
                     phase='loaded_hold' if elapsed>=turn_start else 'grip';phase_rows[-1]=phase
             if stroke_schedule is not None:
                 scheduled_phase,angle_rad,angular_rate,phase_blend=stroke_schedule.sample(elapsed)
-                phase=scheduled_phase.name;phase_rows[-1]=phase
-                releasing=phase in ('opening','free_hold')
-                grip_enabled=phase in ('grip','regrasp_preload','turn','loaded_hold')
-                force_follow_enabled=phase in ('turn','loaded_hold')
+                progress_angle_rad=stroke_schedule.commanded_progress(scheduled_phase,phase_blend)
+                if not releasing:phase=scheduled_phase.name
+                phase_rows[-1]=phase
+                grip_enabled=phase in ('grip','regrasp_preload','turn','alignment_hold','loaded_hold')
+                force_follow_enabled=phase in ('turn','alignment_hold','loaded_hold')
                 if phase=='regrasp_preload':
                     grip_clock=(2.5 if interface_grip_recipe.get('reuse_grip_targets') else 1.)+elapsed-scheduled_phase.start
-                elif scheduled_phase.stroke>0:grip_clock=3.
+                elif scheduled_phase.stroke>0:grip_clock=turn_start
                 if phase!=previous_scheduled_phase:
                     regrasp_base_command=None
-                    if phase=='regrasp_open':remembered_grip_goal=interface_following.hand_goal.copy()
+                    if phase in ('regrasp_relax','regrasp_open'):
+                        remembered_grip_goal=interface_following.hand_goal.copy();open_moment_samples=[]
+                    check_release_now=phase=='reindex'
                     if phase=='regrasp_preload':
                         if interface_grip_recipe.get('reuse_grip_targets'):
                             interface_following.hand_goal=remembered_grip_goal.copy()
@@ -1445,7 +1547,8 @@ try:
             if args.interface_start_open:
                 g=np.clip((step*dt-.2)/.8,0.,1.);g=10*g**3-15*g**4+6*g**5
                 command[7:]=targets[7:]+g*(interface_final_hand_targets-targets[7:])
-            if interface_following is not None and not releasing and step%args.interface_control_decimation==0:
+            capacity_motion=bool(interface_grip_recipe and interface_grip_recipe.get('validated_grip_helical_following'))
+            if interface_following is not None and (not releasing or capacity_motion) and step%args.interface_control_decimation==0:
                 q_online=host(robot.get_dof_positions(indices=0,dof_indices=active))[0]
                 raw_online=host(tree.get_measured_joint_forces())[row_index]
                 current_reaction=host(robot.get_dof_projected_joint_forces(indices=0))[0]
@@ -1461,16 +1564,48 @@ try:
                         'wrist_raw':raw_online.tolist(),'projected_reactions':grip_reaction.tolist()},indent=2)+'\n')
                     break
                 try:
+                    if phase in ('regrasp_open','regrasp_open_hold') and interface_following.bias is not None:
+                        observer=interface_following.grip_observer
+                        moments=grip_reaction-observer.tare_reaction-(observer._system(q_online)[2]-observer.tare_gravity)
+                        open_moment_samples.append(moments.copy())
+                    if check_release_now:
+                        from te_nut_motion import released_grip_readiness
+                        if not open_moment_samples:raise RuntimeError('NO_MEASURED_RELEASE_HISTORY')
+                        moments=np.mean(open_moment_samples[-max(2,round(.1/dt)):],axis=0)
+                        clear=bool(np.all(q_online[8:11]<=release_open_target[1:]+.002))
+                        ready=released_grip_readiness(clear,moments,.02)
+                        ready.update(time_s=elapsed,stroke=scheduled_phase.stroke,
+                            output_positions_rad=q_online[8:11].tolist(),open_output_target_rad=release_open_target[1:].tolist(),
+                            geometry_basis='ACTUAL_OUTPUT_ENCODERS_AT_SOURCE_OPEN_POSTURE_WITH_0.002_RAD_TOLERANCE; SOURCE_CLEARANCE_REVIEW_AFTER_RUN')
+                        release_readiness_records.append(ready)
+                        (args.output/'regrasp_release_readiness.json').write_text(json.dumps(release_readiness_records,indent=2)+'\n')
+                        if not ready['ready']:raise RuntimeError('REGRASP_OUTPUT_OPENING_OR_UNLOADING_NOT_CONFIRMED')
                     nominal=interface_following.update(q_online,raw_online,step*dt,
                         angle_rad,
                         angular_rate,
                         projected_reactions=grip_reaction,grip_elapsed=grip_clock,
-                        grip_enabled=grip_enabled,force_follow_enabled=force_follow_enabled,
+                        grip_enabled=grip_enabled and not releasing,force_follow_enabled=force_follow_enabled and not releasing,
                         arm_speed_override=(float(interface_grip_recipe.get('reindex_speed_rad_s',.8)) if scheduled_phase is not None and phase=='reindex' else None),
-                        entry_assist_enabled=not args.interface_grip_only and (scheduled_phase is None or scheduled_phase.stroke==0))
+                        entry_assist_enabled=not args.interface_grip_only and (scheduled_phase is None or scheduled_phase.stroke==0),
+                        hold_pose=capacity_motion and (releasing or phase in
+                            ('regrasp_relax','regrasp_open','regrasp_open_hold','regrasp_close','regrasp_preload')),
+                        regulate_static_grip=(phase=='regrasp_preload' or bool(seating_alignment_schedule and phase=='alignment_hold'
+                            and interface_grip_recipe.get('regulate_grip_while_aligning'))),
+                        progress_angle_rad=progress_angle_rad,
+                        stroke_index=scheduled_phase.stroke if scheduled_phase else 0,
+                        preserve_stroke_pose=stroke_schedule is not None)
                     if nominal is not None:
-                        last_following_arm_drive,_=controller.gravity_biased_arm_target(robot,robot_data[2],nominal,
-                            robot_data[3],robot_data[4],settings)
+                        velocity_reference=interface_following.last_joint_velocity if capacity_motion else None
+                        last_following_arm_drive,load_audit=controller.gravity_biased_arm_target(robot,robot_data[2],nominal,
+                            robot_data[3],robot_data[4],settings,
+                            velocity_reference_rad_s=velocity_reference,
+                            load_feedforward_nm=interface_following.last_contact_compensation)
+                        if capacity_motion and load_audit['saturated']:raise RuntimeError('ORIGINAL_ARM_DRIVE_EFFORT_BOUNDARY')
+                        if velocity_reference is not None:
+                            robot.set_dof_velocity_targets(np.asarray(velocity_reference)[None,:],indices=0,dof_indices=robot_data[2])
+                        if interface_following.seating_torque_candidate is not None and args.interface_release_at_end:
+                            release_start=min(release_start,elapsed+dt)
+                            (args.output/'seating_torque_candidate.json').write_text(json.dumps(interface_following.seating_torque_candidate,indent=2)+'\n')
                         if side_sequence and interface_following.side_grip is not None:
                             cap=interface_following.side_grip['third_actuator_cap_nm']
                             robot.set_dof_max_efforts(np.array([[cap]]),indices=0,
@@ -1480,22 +1615,36 @@ try:
             if interface_following is not None and last_following_arm_drive is not None:
                 command[:7]=last_following_arm_drive
                 if interface_grip_recipe is not None:command[7:]=interface_following.hand_goal
-            if stroke_schedule is not None and phase in ('regrasp_open','reindex','regrasp_close'):
+            if stroke_schedule is not None and phase in ('regrasp_open','regrasp_open_hold','reindex','regrasp_close'):
                 if regrasp_base_command is None:regrasp_base_command=command.copy()
                 if phase=='regrasp_open':
                     command[7:]=(1.-phase_blend)*regrasp_base_command[7:]+phase_blend*release_open_target
-                elif phase=='reindex':command[7:]=release_open_target
+                elif phase in ('reindex','regrasp_open_hold'):command[7:]=release_open_target
                 else:
                     if interface_grip_recipe.get('reuse_grip_targets'):
                         contact_goal=remembered_grip_goal.copy()
                     else:
                         contact_goal=interface_following.contact_q.copy();contact_goal[1:]+=.002
                     command[7:]=(1.-phase_blend)*release_open_target+phase_blend*contact_goal
+                if interface_grip_recipe.get('friction_aware_release'):
+                    try:
+                        finite_output_posture(command,contact_goal if phase=='regrasp_close' else release_open_target,
+                                              allow_closing=phase=='regrasp_close')
+                    except (ValueError,RuntimeError) as error:
+                        interface_abort='REGRASP_MOTOR_INTERFACE: '+str(error);break
             if releasing:
                 if release_base_command is None:release_base_command=command.copy()
+                current_loaded_arm=command[:7].copy()
                 command=release_base_command.copy();opening=final_release_open_target
-                x=np.clip((elapsed-release_start)/.8,0.,1.);x=10*x**3-15*x**4+6*x**5
+                if capacity_motion:command[:7]=current_loaded_arm
+                x=np.clip((elapsed-release_start-release_relax_duration)/.8,0.,1.);x=10*x**3-15*x**4+6*x**5
                 command[7:]=(1.-x)*release_base_command[7:]+x*opening
+                if (interface_grip_recipe and interface_grip_recipe.get('friction_aware_release')
+                        and elapsed>=release_start+release_relax_duration):
+                    try:
+                        finite_output_posture(command,opening)
+                    except (ValueError,RuntimeError) as error:
+                        interface_abort='RELEASE_MOTOR_INTERFACE: '+str(error);break
             if palm_lock_native_angle is not None:
                 command[7]=palm_lock_native_angle
             if fourbar_couplings:
@@ -1706,11 +1855,33 @@ try:
             if not np.isfinite(host(part_pos)).all() or np.max(np.linalg.norm(lateral,axis=1))>.003 or np.max(np.abs(along))>travel:
                 interface_abort='FINITE_CONNECTOR_DISPLACEMENT_LIMIT';break
         if interface_abort is not None:break
+    if (args.interface_twist_deg is not None and rows
+            and not any(r['step']==len(rows)-1 for r in final_contact_snapshots)):
+        # An observation stop can precede the scheduled final snapshot. Record
+        # the last actual contacts after motion ends; never feed them to control.
+        try:
+            from types import SimpleNamespace
+            from omni.physx import get_physx_simulation_interface
+            from pxr import PhysicsSchemaTools
+            from te_fast_contact_reading import read_shape_contact_pairs_fast
+            terminal_report=get_physx_simulation_interface().get_full_contact_report()
+            terminal_reader=SimpleNamespace(get_full_contact_report=lambda:terminal_report)
+            terminal_contacts=[read_shape_contact_pairs_fast(terminal_reader,dt,p,host(part_pos)[i],
+                decode_path=lambda value:str(PhysicsSchemaTools.intToSdfPath(int(value))))
+                for i,p in enumerate([body_path,fixture_path])]
+            for actor_rows in terminal_contacts:
+                for contact_row in actor_rows:contact_row.pop('friction_wrench_n_nm',None)
+            final_contact_snapshots.append({'step':len(rows)-1,'phase':phase_rows[len(rows)-1],
+                'shape_contacts':terminal_contacts,'raw_sdk_friction_not_used':True,
+                'postrun_terminal_snapshot':True,'abort':interface_abort})
+        except Exception as error:
+            (args.output/'terminal_contact_snapshot_error.json').write_text(json.dumps({'error':str(error)})+'\n')
     if worm_stream is not None:worm_stream.flush();worm_stream.close();worm_stream=None
     if interface_movie is not None:interface_movie.release()
     if interface_following is not None:
         (args.output/'force_following.json').write_text(json.dumps(interface_following.report(),indent=2)+'\n')
         (args.output/'force_following_samples.json').write_text(json.dumps(interface_following.records)+'\n')
+        (args.output/'release_wrench_samples.json').write_text(json.dumps(interface_following.release_records)+'\n')
     half_second=min(half_second,len(rows))
     a=np.array(rows);result={"scope":("LOCAL_FREE_BODY_NUT_SOCKET_CONTACT_WITH_ORIGINAL_HAND_NOT_FULL_ASSEMBLY"
         if args.free_plug_in_socket else "STATIC_ORIGINAL_HAND_WITH_EXPLICITLY_MOUNTED_NUT_FIXTURE_NOT_ASSEMBLY"),

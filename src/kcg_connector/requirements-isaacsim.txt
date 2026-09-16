@@ -8,3 +8,4 @@ manifold3d==3.5.2
 matplotlib==3.7.5
 rtree==1.4.1
 ujson==5.13.0
+msgpack==1.2.2

@@ -5,6 +5,7 @@ import argparse
 import ast
 from collections import Counter,deque
 import json
+from math import hypot
 from pathlib import Path
 
 import numpy as np
@@ -54,18 +55,20 @@ def review(directory):
             angle_rows.append((step,float(np.arctan2(relative_rotation[1,0],relative_rotation[0,0])),float(-local[0,2])))
         hand_impulse=0.;loaded_clips=set();stop=False;bad_sector=False
         for header in row['contacts']['poll_headers']:
-            paths=header['paths'];impulse=sum(float(np.linalg.norm(c['impulse_n_s'])) for c in header['contacts'])
-            if impulse<=1e-10:continue
+            paths=header['paths'];impulse=sum(hypot(*c['impulse_n_s']) for c in header['contacts'])
             hand=any('/handbase_link' in p for p in paths[:2])
+            # Release means no recorded hand impulse, including values below
+            # the threshold used to identify positively loaded internal parts.
+            if hand:hand_impulse+=impulse
+            if impulse<=1e-10:continue
             fixed=any('FixedReceptaclePose' in p for p in paths[:2])
             plug=any('TE_J35FreeSplitPlug' in p for p in paths[:2])
-            if hand:hand_impulse+=impulse
             if hand and 'key_probe_nut' in phase:
                 nut_pairs.add(tuple(paths[:2]))
             if plug and fixed:
+                stop|=sum('SourceMetalStopBox' in path for path in paths[2:])==2
                 for path in paths[2:]:
                     if '/Leaf_' in path:loaded_clips.add(path.split('/Leaf_')[0])
-                    if 'SourceMetalStopBox' in path:stop=True
                     if 'SocketSector_' in path:bad_sector=True
         all_clips.update(loaded_clips)
         if stop:stop_steps.append(step)

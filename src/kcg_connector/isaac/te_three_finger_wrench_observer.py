@@ -13,13 +13,82 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 
-class ThreeFingerWrenchObserver:
-    links=("f1Link3","f2Link2","f3Link3")
+def source_grasp_contact_allowed(geometry,row):
+    """Keep the original PAD rule; explicit original nail-shell contacts may opt in."""
+    if row.get('positive_gap_before_first_contact_m',0.)<=0:return False
+    if row.get('nearest_original_source_face_is_pad',False):return True
+    return (row.get('source_contact_region')=='NAIL'
+        and 'NAIL' in geometry.get('allowed_contact_regions',{}).get(row['link'],[])
+        and isinstance(row.get('source_contact_face'),int)
+        and 11836<=row['source_contact_face']<12912)
+
+
+class FingerRootMomentObserver:
+    """Source-mass gravity compensation for existing robot-side joint moments."""
     joints=("f1j2","f2j1","f3j2")
     subtrees=(("f1Link2","f1Link3"),("f2Link1","f2Link2"),("f3Link2","f3Link3"))
 
+    def __init__(self,repository,model):
+        self.model=model;self.inertials={}
+        for link in ET.parse(Path(repository)/'src/iiwa_description/urdf/hand.xacro').getroot().findall('link'):
+            i=link.find('inertial')
+            if i is not None:
+                self.inertials[link.get('name')]=(float(i.find('mass').get('value')),
+                    np.fromstring(i.find('origin').get('xyz'),sep=' '))
+        self.joint_origins={name:model.joints[name].origin_transform() for name in self.joints}
+        self.tare_reaction=None;self.tare_gravity=None
+        self._control_step=None;self._control_moments=None
+
+    def gravity_moments(self,q,*,fk=None):
+        if fk is None:fk=self.model.forward_kinematics(q,enforce_limits=False)
+        gravity=[]
+        for name,subtree in zip(self.joints,self.subtrees):
+            joint=self.model.joints[name];frame=np.asarray(fk[joint.parent_link])@self.joint_origins[name]
+            axis=frame[:3,:3]@joint.axis;origin=frame[:3,3];g=0.
+            for child in subtree:
+                mass,com=self.inertials[child];pose=np.asarray(fk[child]);point=pose[:3,:3]@com+pose[:3,3]
+                g-=float(np.cross(point-origin,[0.,0.,-9.81*mass])@axis)
+            gravity.append(g)
+        return np.asarray(gravity)
+
+    def calibrate_free_space(self,encoders,reactions):
+        q=np.asarray(encoders,float);r=np.asarray(reactions,float)
+        if q.ndim!=2 or q.shape[1]!=11 or r.shape!=(len(q),3) or not len(q) or not np.isfinite(np.r_[q.ravel(),r.ravel()]).all():
+            raise ValueError('matching finite free-space encoders and reactions required')
+        self.tare_reaction=r.mean(0);self.tare_gravity=np.mean([self.gravity_moments(v) for v in q],axis=0)
+        self._control_step=None;self._control_moments=None
+
+    def observe(self,q,reactions):
+        if self.tare_reaction is None:raise RuntimeError('free-space moment reference is missing')
+        r=np.asarray(reactions,float)
+        if r.shape!=(3,) or not np.isfinite(r).all():raise ValueError('three finite joint moments required')
+        return r-self.tare_reaction-(self.gravity_moments(q)-self.tare_gravity)
+
+    def control_moments(self,q,reactions,step,dt,time_constant=.05):
+        return self.filter_moments(self.observe(q,reactions),step,dt,time_constant)
+
+    def filter_moments(self,measured,step,dt,time_constant=.05):
+        """Preserve one causal filter across stages; repeated reads do not advance it."""
+        if dt<=0 or time_constant<0:raise ValueError('valid filter timing required')
+        measured=np.asarray(measured,float)
+        if measured.shape!=(3,) or not np.isfinite(measured).all():raise ValueError('three finite corrected moments required')
+        step=int(step)
+        if self._control_step is not None and step<self._control_step:
+            raise ValueError('finger measurement step moved backwards without a new calibration')
+        if self._control_step!=step:
+            if self._control_moments is None:self._control_moments=measured.copy()
+            else:
+                elapsed=(step-self._control_step)*dt
+                self._control_moments+=elapsed/(time_constant+elapsed)*(measured-self._control_moments)
+            self._control_step=step
+        return self._control_moments.copy()
+
+
+class ThreeFingerWrenchObserver(FingerRootMomentObserver):
+    links=("f1Link3","f2Link2","f3Link3")
+
     def __init__(self,repository,model,source_geometry_plan,*,sensor_semantics=None):
-        self.model=model
+        super().__init__(repository,model)
         self.sensor_semantics=sensor_semantics or 'LEGACY_PROXIMAL_JOINT_REACTION'
         if self.sensor_semantics not in ('LEGACY_PROXIMAL_JOINT_REACTION','BASE_BRIDGE_EXTERNAL_MOMENT_ABOUT_O'):
             raise ValueError('Unknown finger torque-signal definition')
@@ -35,8 +104,8 @@ class ThreeFingerWrenchObserver:
         self.points_local={};self.source_normals_local={}
         for name in self.links:
             r=records[name]
-            if not r["nearest_original_source_face_is_pad"] or r["positive_gap_before_first_contact_m"]<=0:
-                raise ValueError("source CAD positive-gap pad points are required")
+            if not source_grasp_contact_allowed(geometry,r):
+                raise ValueError("source CAD positive-gap points on the declared grasp region are required")
             point=np.asarray(r["nearest_nut_point_before_contact_body_frame_m"],float)
             world=body[:3,:3]@point+body[:3,3];link=fk[name]
             self.points_local[name]=link[:3,:3].T@(world-link[:3,3])
@@ -47,14 +116,6 @@ class ThreeFingerWrenchObserver:
                 if outward.shape!=(3,) or not np.isfinite(outward).all() or abs(np.linalg.norm(outward)-1.)>1e-6:
                     raise ValueError('A source-CAD force reference normal must be a finite unit vector')
             self.source_normals_local[name]=link[:3,:3].T@body[:3,:3]@outward
-        self.inertials={}
-        for link in ET.parse(Path(repository)/"src/iiwa_description/urdf/hand.xacro").getroot().findall("link"):
-            i=link.find("inertial")
-            if i is not None:
-                self.inertials[link.get("name")]=(float(i.find("mass").get("value")),
-                    np.fromstring(i.find("origin").get("xyz"),sep=" "))
-        self.joint_origins={name:model.joints[name].origin_transform() for name in self.joints}
-        self.tare_reaction=None;self.tare_gravity=None
         # Characteristic geometry length only normalizes mixed force/moment
         # units when reporting matrix condition; it does not change the solve.
         self.row_scale=np.r_[np.ones(3),np.full(6,1/.15)]
@@ -73,7 +134,7 @@ class ThreeFingerWrenchObserver:
             )
         if fk is None:fk=self.model.forward_kinematics(q,enforce_limits=False)
         fk={k:np.asarray(v) for k,v in fk.items()};hand=fk["handbase_link"]
-        A=np.zeros((9,9));points=[];gravity=[]
+        A=np.zeros((9,9));points=[]
         body=hand@self.hand_from_body
         axis=body[:3,2];origin=body[:3,3]
         for i,(name,jname,subtree) in enumerate(zip(self.links,self.joints,self.subtrees)):
@@ -83,16 +144,11 @@ class ThreeFingerWrenchObserver:
             A[:3,3*i:3*i+3]=np.eye(3)
             A[3:6,3*i:3*i+3]=self._cross_matrix(point-hand[:3,3])
             A[6+i,3*i:3*i+3]=-np.cross(joint_axis,point-joint_origin)
-            g=0.
-            for child in subtree:
-                mass,com=self.inertials[child];position=fk[child][:3,:3]@com+fk[child][:3,3]
-                g-=float(np.cross(position-joint_origin,[0.,0.,-9.81*mass])@joint_axis)
-            gravity.append(g)
         points=np.asarray(points);normals=points-origin
         normals-=np.outer(normals@axis,axis);radius=np.linalg.norm(normals,axis=1)
         if np.any(radius<1e-6):raise ValueError("CAD force point lies on the planned grasp axis")
         normals/=radius[:,None]
-        return A,points,np.asarray(gravity),normals
+        return A,points,self.gravity_moments(q,fk=fk),normals
 
     def calibrate_free_space(self,encoder_samples,projected_reaction_samples):
         q=np.asarray(encoder_samples,float);reaction=np.asarray(projected_reaction_samples,float)
@@ -102,6 +158,7 @@ class ThreeFingerWrenchObserver:
             raise ValueError("nonfinite free-space sensor data")
         self.tare_reaction=reaction.mean(0)
         self.tare_gravity=np.mean([self._system(row)[2] for row in q],axis=0)
+        self._control_step=None;self._control_moments=None
 
     def estimate(self,encoder_positions,projected_reactions,external_hand_wrench_world,*,fk=None):
         """Return estimated radial pad loads; retain negative/uncertain results.

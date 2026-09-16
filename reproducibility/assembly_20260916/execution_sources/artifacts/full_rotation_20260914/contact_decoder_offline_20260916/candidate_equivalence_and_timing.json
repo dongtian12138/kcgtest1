@@ -1,0 +1,90 @@
+{
+  "scope": "OFFLINE_RECONSTRUCTED_HEADERS_AND_RECORDS_WITH_NATIVE_FLOAT3",
+  "simulation_app_created": false,
+  "physics_executed": false,
+  "active_source_changed": false,
+  "contact_sampling_or_fields_changed": false,
+  "timing_excludes_native_report_acquisition_and_native_record_container": true,
+  "simulation_speedup_claimed": false,
+  "cases": [
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/third_phase_matched_grasp25",
+      "step": 13424,
+      "headers": 1810,
+      "points": 15224,
+      "zero_impulse_points": 12197,
+      "negative_separation_points": 3026,
+      "full_output_msgpack_bytes_identical_to_original_archive": true,
+      "owned_outputs_survive_source_mutation_and_clear": true,
+      "gc_enabled_during_timing": true,
+      "timings_s": {
+        "original": [
+          0.02649674896383658,
+          0.025919232051819563,
+          0.02657476405147463,
+          0.026576931995805353,
+          0.026414749037940055,
+          0.025586414034478366,
+          0.025696323020383716,
+          0.02585897099925205
+        ],
+        "candidate": [
+          0.020910856022965163,
+          0.020849747001193464,
+          0.023663683037739247,
+          0.021400720987003297,
+          0.02071053604595363,
+          0.02067143196472898,
+          0.020818218996282667,
+          0.020767508016433567
+        ]
+      },
+      "median_s": {
+        "original": 0.02616699054487981,
+        "candidate": 0.020833982998738065
+      }
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/second_visual_bending_grasp26",
+      "step": 8499,
+      "headers": 43,
+      "points": 243,
+      "zero_impulse_points": 129,
+      "negative_separation_points": 114,
+      "full_output_msgpack_bytes_identical_to_original_archive": true,
+      "owned_outputs_survive_source_mutation_and_clear": true,
+      "gc_enabled_during_timing": true,
+      "timings_s": {
+        "original": [
+          0.00039663200732320547,
+          0.0004196270019747317,
+          0.0003983480273745954,
+          0.00039418699452653527,
+          0.00040131097193807364,
+          0.0003962690243497491,
+          0.0003926280187442899,
+          0.0003807410248555243
+        ],
+        "candidate": [
+          0.0003051069797948003,
+          0.0003046169877052307,
+          0.0003242479870095849,
+          0.00031818600837141275,
+          0.0003240880323573947,
+          0.0003191920113749802,
+          0.00030611001420766115,
+          0.0003074250416830182
+        ]
+      },
+      "median_s": {
+        "original": 0.0003964505158364773,
+        "candidate": 0.0003128055250272155
+      }
+    }
+  ],
+  "header_and_record_container_types": "Python SimpleNamespace and list reconstructed from sealed raw headers; field vectors are actual carb.Float3",
+  "benchmark_ran_while_full12_physics_was_active": true,
+  "active_deployment_status": "DEPLOYED_AFTER_FULL12_EXIT_WITH_RELEVANT_TESTS",
+  "end_to_end_runtime_validation_completed": false,
+  "deployed_ast_matches_offline_candidate": true
+}

@@ -1,50 +1,27 @@
-# 当前任务：完成Isaac Sim电连接器装配，先解决控制问题
+# 当前任务结果：同回合机械装配与真实松手已实现，原数值检查未全通过
 
-核验：2026-09-13 20:22 UTC。**任务未完成，当前没有运行中的实验。** 用户最终验收是完成装配、不做动辄几十或上百分钟的实验、解决旋拧及其它控制问题。空手回转优化后置。继续本任务已有软件和仿真授权，不重复要求用户批准普通实现选择。
+核验时间：2026-09-16T18:03:46.964077+00:00。用户首要目标是当前连接器配当前三指手先装配成功，并已允许独立只读复核。本次完整14已在同一回合实现机械到位与3秒真实松手保持；原五键2µm数值比较带有超带，完整原检查没有全部通过。不得把两类结果混为一谈，不改原failed，不称所有原指标通过。simulation-only，hardware_authorized=false。
 
-## 实际结果
+本轮用户询问进度、完整视频、自行运行和GitHub复现。已核对完整视频291.4s/1457帧/5fps、初始视觉阶段也在同回合内；Git远端没有本地codex/visual-assembly-v1分支，HEAD409d5c2仍有大量未提交源码，关键artifacts配置/模型被忽略；本轮没有提交、建分支或推送。新增scripts/run_current_hand_assembly.py与docs/REPRODUCE_CURRENT_HAND_ASSEMBLY_CN.md，面向原本机目录，默认仅检查；--run先新预检再有界完整运行，--gui同时传给两阶段，自动新目录，保留所有原参数。54个已记录绑定文件检查一致；命令与原始记录逐项比对、拒绝覆盖和预检失败阻断/退出码保留的假执行检查通过，未启动新的物理实验；GUI完整复跑没有重复验证，且入口不是跨机器GitHub交付包。不能说现已上传或能任意机器一键复现。
 
-本版本仍没有新的完整装配成功回合。原最近完整视觉回合`artifacts/visual_assembly_v1/visual_complete_task_preload22`（8e92313）最终深度10.148mm，未到14.605mm原止挡。其拾取、抬升、运输、对键、插入、转抓和前段旋拧是已有证据。
+当前没有物理运行或后评进程。完整14 session60711/monitor2008已结束；包装器2026-09-16T17:09:50.296847 UTC退出2。279682 raw样本封存，归档19618739915字节与索引末偏移相等；execution_source_snapshots共30文件（含附带记录）。post endpoints16006、body37806、source76766、transient93320、whole57085均结束0，band与视频提取也结束。独立代理本次收尾复核已完成。不要继续等待旧session/cell，不自动再开整机仿真或扩大模型/参数来追逐内部比较带。
 
-本轮最有用的局部结果为`artifacts/rotation_repairs_20260913/loaded_control_11_late_compliance`：从原停止附近的明确冷初态，实际Nut再转10.897°、前进0.22927mm，Body达到约10.379mm；第三指模型弹性力矩3.44729→2.95361Nm，键槽与原PAD检查通过、无手与Body/Socket等其它对象的正载接触。它越过了旧停止附近，但仍差约4.226mm，不能拼接成从桌面开始的完整成功。
+唯一结果目录：artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14。新机械完整阶段基线是本回合的源码/配方快照与真实记录；不证明重复可靠性或硬件成功。配置visual_common_all_reserves_task.yaml，前段two_nail_all_reserves_recipe.json、后段wrist_all_reserves_no_angle_gate_recipe.json。所有段elastic0.5Nm/min0、合力90N正常/110N硬、弯矩1Nm/min0/1.2Nm硬；4Nm输出传动、8.8Nm输入、掌1Nm、臂100Nm、腕扭4.6Nm、累计360°/最多3附加段保持。2Nm且累计>=350°仅为到位候选，本次最终按正常弹性余量结束并执行原释放。未用真值在线控制。
 
-最新60°候选17和18都未完成，分别在已发送约4.34°、4.66°时触发原0.25mm末端偏差停止。没有提高力矩或偏差停止值来宣称成功。
+已验证的实际结果：最终Body14.604491442mm，最终倾角0.001638632°；raw276802..279681共2880拍=3s，手部raw冲量范数和每帧精确0，Body深度范围14.604461640..14.604521245mm，跨度0.059604645µm（不是逐帧恒定）。每帧原StopBox6—10组正接触、同一套128簧套同时承载，Body/Nut未休眠；释放3840帧报告点保留/通道一致/一拍一回调。全回合最大绝对Thrust0.515937989mm<0.5999mm，末窗无人工扇区。源指甲抓Body保持2s、最小抬升56.054339mm、无桌面承载、3指甲每帧有接触。入槽后Body实际与手分离通过。抓持/旋拧原两NAIL加一PAD检查通过；最终卸载/张手源面另由独立补核通过。
 
-## 已定位与实现
+五次腕指令/真实Nu转角/本体末深度：90/89.195361/9.325636；90/90.803772/11.075271；66.859245/67.857650/12.444777；29.679989/28.731501/12.983484；78.747889/76.983788/14.604402（角度deg、深度mm）。总已发355.287121882°。第3/4/5段分别f2/f1/f1余量约0.5Nm正常停，无硬abort；五抓图像校正都按原条件完成。各次之间有卸载回退，不能说未坐底阶段绝对不动。
 
-1. 旧末端误差使用名义关节位置，未纠正真实带载偏差；已接入编码器误差。旧完整回合末实际横向偏差约0.66mm，是第三指被撑开、触发余量停止的主要直接链条。
-2. 原生位置目标运动而速度目标为零；已接入同轨迹速度参考并核对原生读回。主要回转关节的运动跟踪差从约5.7mrad降到0.263mrad，但这没有单独解决整体抓持偏移。
-3. 已加入当前视觉参考、轴向导程与有界力修正、就绪检查、实际进度/到位候选及有限同回合恢复。均保留独立后评价；最终到位和恢复全链尚未验证。
-4. Body与Nut有1mm工作轴向游隙，已将其与横向抓持误差分开，避免把正常游隙直接判作打滑。工作游隙之外的物理后备限位未改。
-5. 手指位置参考降低不等于电机反转：08中第三指参考降低0.009rad，实际输入反向次数仍为0，输入力矩仍处于蜗杆自锁区间。已对原passive_split电机/摩擦方程求逆，产生有界双向输入速度；09实际反向开指得到验证，原3.5Nm传动边界与电机有限上限保留。
-6. 持续侧向力让位与视觉参考分开，避免视觉更新抵消主动让位。11中这一组合使旧停止附近的12°窗口完成。原始相对位移与主动让位分别记录，没有把主动偏移伪称为零误差。
+原标准未通过：source_key_containment_review.json第三键min−2.147659492µm（raw228525、第二旋拧），超过2µm比较带0.147659492µm；其他key min为−0.668403/−0.901160/+104.336300/−1.018564µm。最差点附近±480共961帧中4帧超带，最长连续2帧≈2.08ms，不是全回合超带总数。当时深度10.145021mm，下一决定腕角53.687468°/合力48.620486N。源码明确2µm由历史成功参考1.706µm残差外取整，是后评数值带；独立复核未找到用户亲定物理安全上限或厂家额定依据。负几何间隙仍是观测，不能称纯浮点噪声，也不能改failed。whole_assembly_review机械与视觉条件全true，额外检查仅source_key_containment=false，因此status=REVIEW_REQUIRED、complete_visual_assembly_verified=false。这不否定已经发生的机械到位和真实松手；也不允许声称全部原数值审核通过。
 
-## 尚未解决的重点
+相关报告：run14/whole_assembly_review.json、turn_progress_physical_review.json、source_nail_body_review.json、source_nut_pad_review.json、source_key_containment_review.json、key_borderline_window_review.json、final_mating_visibility_review.json。独立复核目录artifacts/full_rotation_20260914/independent_final_guard_review_20260916：full14_terminal_release_supplement.json、full14_terminal_release_review_CN.md、key_band_meaning_review_CN.md。原始评估与阈值均未修改。
 
-- **力矩就绪不等于抓位就绪。** 旧停止冷初态在新图像下，CAD目标手位姿与实测手位姿仍相差约[-1.22,+0.43,-1.63]mm，姿态约0.217°。此前局部入口把当前受载手姿态作为新旋拧基准；降低指力并不保证恢复了正确抓位。应在真实重抓/夹紧阶段闭合实际手位姿与指力控制，并在夹紧后检查当前几何，不能只检查夹紧前几何或末端力矩。
-- 高速/长角程仍未通过；增加视觉频率、加准备时间、局部/完整负载补偿都没有消除对应停止，不继续沿同一失败解释堆参数。
-- 当前主线Body运输执行器`_execute_held_plug_path`仍有旧12Nm/rad与未更新姿态重力的力调节路径；尚未完成统一和物理验证。不得声称所有控制器均已解决。
-- 轴向速度限制目前针对导程/力修正分量，误差反馈叠加后的总任务速度还需明确核对；不把局部分量限幅冒充总运动保证。
-- 正常到位判断、较高负载能力、同回合恢复、到位后完全松手保持以及新完整回合仍须实际验证。
+第4段跟踪瞬态已对齐：completed_stroke_robot_tracking_review.json与fourth_tracking_transient_physical_review.json。前20°机器人枢轴XY误差约0.020mm；约25.6°开始被2mm/s纠偏上限截断，末0.607844mm，仅最后87条控制行截断。实际Nu侧向约0.030mm、本体约0.024mm/倾角0.035°，手/Nu相对角变化0.82°；该段实际Nu仍转28.73°/本体前进0.540mm。1320机器人帧无arm_control.saturated。接触负载补偿沿原源码路径传递，并未遗漏开关；不能归因于速度上限一个参数，也不能把相对角变化全部称滑动。未为此新增物理实验。
 
-## 效率与冻结路线
+耗时：主动作279682/960=291.335417s，五段转动合计12.880208s；整次墙钟15419.988s≈257min。run_timing.json：contact_callback5155.943s包含在native_physics9289.904s内；contact_counts1743.741、archive_append884.616，不重复相加。sensor_archive_and_runtime_summary708.207s。整体效率仍待改进，不称此前Float3[:3]优化解决整体耗时。
 
-本轮共启动21次局部动态运行（含前面的2次空手检查），累计实验墙钟约4416.6秒，单次最长约272.11秒。虽然没有单次几十分钟，但串行试验过多、总工作耗时很长，未达到用户的总体效率预期。停止追加同类局部试验链；这一点不能由测试通过或文件数量替代。
+用户说明已重写docs/GRASP_PHASE_ROOT_CAUSE_20260915_CN.md，先讲本次实际结果和未过项。视频postrun_evidence/final_turn_and_release_actual_clip.mp4为原完整视频帧1409..1456的9.6s剪辑、5fps，无改模型/位姿；溯源final_clip_provenance.json。rotation_end_actual_frame.png是旋拧末段尚未张手的近景，released_hold_actual_frame.png与final_released_actual_frame.jpg是实际松手宽视图，不混标。原红带终态1024几何径向样本均由原Nu遮挡，与实际图像一同支持可见性报告，不宣称所有相机角度证明。
 
-240Hz/64/4的大角程超过原键槽数值比较线；240Hz/255/16虽保持近似相同的每秒位置迭代量，且局部键槽通过，但控制仍在约4°附近停止。加准备、加视觉频率及半负载补偿没有解决，未接纳为主运行配置。CPU单线程调度更慢，已恢复原设置。四杆按误差需要更新使10722次检查仅重设7次，实际闭合误差仍在原6µm范围内，但整体耗时几乎未改善。均保留证据，不能宣称实验成本已经解决。
+历史与早前失败依据完整保存在docs/history/CURRENT_CONTEXT_CN_20260916_before_full14_mechanical_result.md及GRASP_PHASE_ROOT_CAUSE_20260915_CN_before_full14_mechanical_result.md。保留13/27与此前失败资产。13曾到14.6042但硬停无松手，27是局部冷初始化并真实松手，本次14才是同回合机械结果。旧17.191125°只是13最后成功归档/记账命令，故障拍273525已推进但缺raw对象状态，不误写为物理最后下发角。旧FT原点漏换诊断已撤回，勿恢复；active轴线加硬旧分支不因历史恢复。
 
-当前生产任务配置持续手指力控制仍关闭；11的组合通过明确recipe运行，尚未将全部实验候选直接推广到完整流程。后续应先形成并落实一致的夹紧后抓位/受力控制目标，再做能验证剩余装配的受控运行；不要重启旧长回合或重复这批未成功的加速候选。
-
-## 模型、入口及证据
-
-保持simulation-only，hardware_authorized=false。在线只有当前图像、编码器和机器人侧力信号；对象/接触真值用于后评价。禁止隐藏固定、启动后改写实际位姿、无限增力或删除失败证据。
-
-连接器`artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc`为FreeCAD核对过的修改模型，SHA256为234b7c0f14caeae1b8dffeabb8bae5a63e8b05d2463f3a7ff3e0c0d1d53f9eb6；型号TE D38999/26FJ35PN + D38999/20FJ35SN。单体约355.7°/14.605mm/128簧套的完整旋合证据不等于机械臂全流程成功。
-
-原指甲机器人`artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda`，质量、惯量、源几何及材料事实保留。四杆10–70–10–68mm、有限蜗杆模型；Hand/Nut摩擦0.45、内部0.20，未因试验失败提高摩擦。
-
-正式入口为`run_body_assembly_with_video.py`→`carts_v2/run_grasp_lift.py --visual-body-start`。正式配置visual_assembly_v1_body.yaml与visual_assembly_v1_task.yaml。当前可信比较使用CPU/TGS960Hz、64位置/4速度迭代。
-
-证据入口：`docs/ROTATION_DIAGNOSIS_20260913_CN.md`、`docs/ROTATION_CONTROL_AUDIT_20260913_CN.md`、`docs/ROTATION_REPAIR_IMPLEMENTATION_20260913_CN.md`、`artifacts/rotation_repairs_20260913`。每个局部运行有command/recipe、launch绑定、源码差异、原始记录与结果；`experiment_cost_summary.json`保留全部计时。最后本轮收尾摘要见`docs/CONTROL_REPAIR_STATUS_20260913_CN.md`。
-
-本轮前一版状态已归档`docs/history/CURRENT_CONTEXT_CN_20260913_before_control_repair_closeout.md`，更早来源索引见该文件。用户已有未提交修改不清理、不回退、不推送。没有安排自动恢复或任何硬件动作。
+恢复后先核实用户当前目标。若继续处理数值质量或提速，围绕已保存的具体窗口做最小可归因诊断，保留本回合机械成功基线及原failed；不默认新开完整5小时实验，不把历史2µm数值带变成硬件事实，不放宽用户明确冻结或已验证的实际安全边界，不作硬件动作。
