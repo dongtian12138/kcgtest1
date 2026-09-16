@@ -1291,7 +1291,8 @@ def _bounded_pose_step(
 
 def _child_environment() -> dict[str, str]:
     environment = dict(os.environ)
-    isaac_library = "/home/noob/WorkPlace/isaacsim/.conda-env/lib"
+    from te_runtime_paths import isaac_environment_prefix
+    isaac_library = str(isaac_environment_prefix() / "lib")
     entries = [
         item
         for item in environment.get("LD_LIBRARY_PATH", "").split(":")
@@ -1449,6 +1450,8 @@ def _run_external_pose_plan(
         encoding="utf-8",
     )
     setup = repository / "install" / "setup.bash"
+    from te_runtime_paths import ros_setup_bash
+    ros_setup = ros_setup_bash()
     if backend == "moveit":
         local_pick_ik = (
             repository / ".deps" / "pick_ik" / "opt" / "ros" / "humble"
@@ -1462,7 +1465,7 @@ def _run_external_pose_plan(
             )
         shell_command = " && ".join(
             (
-                "source /opt/ros/humble/setup.bash",
+                f"source {shlex.quote(str(ros_setup))}",
                 f"source {shlex.quote(str(setup))}",
                 "export AMENT_PREFIX_PATH="
                 f"{shlex.quote(str(local_pick_ik))}:$AMENT_PREFIX_PATH",
@@ -1483,20 +1486,19 @@ def _run_external_pose_plan(
             / "scripts"
             / "plan_visual_pose_tesseract.py"
         )
-        python = repository / ".venv" / "bin" / "python"
-        isaac_library = Path(
-            "/home/noob/WorkPlace/isaacsim/.conda-env/lib"
-        )
+        from te_runtime_paths import isaac_environment_prefix, planner_python
+        python = planner_python(repository)
+        isaac_library = isaac_environment_prefix() / "lib"
         if not all(path.exists() for path in (setup, planner, python, isaac_library)):
             raise RuntimeError("Tesseract planner environment is missing")
-        tesseract_libraries = tuple((repository / ".venv" / "lib").glob(
+        tesseract_libraries = tuple((python.parent.parent / "lib").glob(
             "python*/site-packages/tesseract_robotics"))
         if len(tesseract_libraries) != 1:
             raise RuntimeError("Tesseract's bundled runtime library directory is ambiguous")
         planner_libraries = str(tesseract_libraries[0]) + ":" + str(isaac_library)
         shell_command = " && ".join(
             (
-                "source /opt/ros/humble/setup.bash",
+                f"source {shlex.quote(str(ros_setup))}",
                 f"source {shlex.quote(str(setup))}",
                 "export LD_LIBRARY_PATH="
                 f"{shlex.quote(planner_libraries)}:$LD_LIBRARY_PATH",

@@ -1,0 +1,509 @@
+{
+  "schema_version": "kcg_te_j35_step_geometry_audit_v1",
+  "scope": "supplier_step_topology_only",
+  "isaac_sim_loaded": false,
+  "usd_authored": false,
+  "assembly_validated": false,
+  "products": {
+    "plug": {
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/vendor_cad_reference/te_deutsch_j35_equivalent_step_multiview_v1/source/c-ydts26f25-35pnv001-99-3d.stp",
+      "sha256": "27a8125236894d01d48ac12f8f777a0951f1926c5ed62a210d05f092d575301c",
+      "size_bytes": 3139192,
+      "solid_count": 1,
+      "face_count": 2068,
+      "face_type_counts": {
+        "BSPLINE": 8,
+        "CONE": 281,
+        "CYLINDER": 815,
+        "PLANE": 436,
+        "TORUS": 528
+      },
+      "bounding_box_mm": {
+        "xmin": -23.458918124,
+        "xmax": 23.458918124,
+        "ymin": -23.458918124,
+        "ymax": 23.458918124,
+        "zmin": -31.0134,
+        "zmax": 0.0,
+        "size_x": 46.917836247,
+        "size_y": 46.917836247,
+        "size_z": 31.0134
+      },
+      "cylindrical_faces_by_radius": [
+        {
+          "radius_mm": 19.9644,
+          "face_count": 2,
+          "zmin_mm": -15.0114,
+          "zmax_mm": -3.8354,
+          "area_mm2": 1401.917716569
+        },
+        {
+          "radius_mm": 23.6728,
+          "face_count": 8,
+          "zmin_mm": -20.0279,
+          "zmax_mm": -7.2517,
+          "area_mm2": 1249.346814746
+        },
+        {
+          "radius_mm": 16.002,
+          "face_count": 2,
+          "zmin_mm": -14.5923,
+          "zmax_mm": -3.1369,
+          "area_mm2": 1151.766368288
+        },
+        {
+          "radius_mm": 0.37211,
+          "face_count": 256,
+          "zmin_mm": -13.2715,
+          "zmax_mm": -9.4615,
+          "area_mm2": 1140.213437764
+        },
+        {
+          "radius_mm": 17.83715,
+          "face_count": 2,
+          "zmin_mm": -7.6454,
+          "zmax_mm": 0.0,
+          "area_mm2": 802.978133691
+        },
+        {
+          "radius_mm": 0.8255,
+          "face_count": 256,
+          "zmin_mm": -31.0134,
+          "zmax_mm": -30.013402,
+          "area_mm2": 663.905164485
+        },
+        {
+          "radius_mm": 22.1996,
+          "face_count": 2,
+          "zmin_mm": -5.741830765,
+          "zmax_mm": -1.5494,
+          "area_mm2": 584.777853556
+        },
+        {
+          "radius_mm": 21.0693,
+          "face_count": 2,
+          "zmin_mm": -3.8354,
+          "zmax_mm": -1.5494,
+          "area_mm2": 302.625974816
+        },
+        {
+          "radius_mm": 0.6731,
+          "face_count": 256,
+          "zmin_mm": -13.7795,
+          "zmax_mm": -13.3477,
+          "area_mm2": 233.750240597
+        },
+        {
+          "radius_mm": 17.7292,
+          "face_count": 2,
+          "zmin_mm": -29.9974,
+          "zmax_mm": -28.0162,
+          "area_mm2": 220.697455936
+        },
+        {
+          "radius_mm": 17.1069,
+          "face_count": 2,
+          "zmin_mm": -2.032,
+          "zmax_mm": 0.0,
+          "area_mm2": 218.41119179
+        },
+        {
+          "radius_mm": 18.4531,
+          "face_count": 10,
+          "zmin_mm": -27.2923001,
+          "zmax_mm": -21.7677999,
+          "area_mm2": 179.509704728
+        },
+        {
+          "radius_mm": 17.4117,
+          "face_count": 2,
+          "zmin_mm": -14.7574,
+          "zmax_mm": -13.8684,
+          "area_mm2": 97.257433538
+        },
+        {
+          "radius_mm": 21.5011,
+          "face_count": 2,
+          "zmin_mm": -21.5138,
+          "zmax_mm": -21.0312,
+          "area_mm2": 65.197037921
+        },
+        {
+          "radius_mm": 18.8214,
+          "face_count": 5,
+          "zmin_mm": -7.6454,
+          "zmax_mm": -0.762,
+          "area_mm2": 53.870975839
+        },
+        {
+          "radius_mm": 19.1516,
+          "face_count": 2,
+          "zmin_mm": -21.6916,
+          "zmax_mm": -21.2598,
+          "area_mm2": 51.959811737
+        },
+        {
+          "radius_mm": 15.7734,
+          "face_count": 2,
+          "zmin_mm": -31.0134,
+          "zmax_mm": -30.6832,
+          "area_mm2": 32.72519583
+        },
+        {
+          "radius_mm": 19.5326,
+          "face_count": 2,
+          "zmin_mm": -21.4376,
+          "zmax_mm": -21.336,
+          "area_mm2": 12.469057646
+        }
+      ],
+      "axial_planar_faces_by_z": [
+        {
+          "z_mm": -31.0134,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 15.7734,
+          "area_mm2": 507.601311091
+        },
+        {
+          "z_mm": -14.5923,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 16.002,
+          "area_mm2": 296.613688558
+        },
+        {
+          "z_mm": -30.013402,
+          "face_count": 128,
+          "maximum_abs_xy_mm": 14.9225,
+          "area_mm2": 274.027404696
+        },
+        {
+          "z_mm": -15.0114,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 19.9644,
+          "area_mm2": 271.748741162
+        },
+        {
+          "z_mm": -21.5138,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 21.5011,
+          "area_mm2": 244.391604366
+        },
+        {
+          "z_mm": -30.6832,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 17.626706503,
+          "area_mm2": 194.466578888
+        },
+        {
+          "z_mm": -1.5494,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 22.1996,
+          "area_mm2": 153.645361934
+        },
+        {
+          "z_mm": -21.0312,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 22.446059905,
+          "area_mm2": 149.781327778
+        },
+        {
+          "z_mm": -3.8354,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 21.0693,
+          "area_mm2": 142.433952252
+        },
+        {
+          "z_mm": -13.2715,
+          "face_count": 128,
+          "maximum_abs_xy_mm": 14.6939,
+          "area_mm2": 87.592130252
+        },
+        {
+          "z_mm": 0.0,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 17.83715,
+          "area_mm2": 80.166823652
+        },
+        {
+          "z_mm": -21.7678,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 19.0754,
+          "area_mm2": 73.368709436
+        },
+        {
+          "z_mm": -9.4615,
+          "face_count": 128,
+          "maximum_abs_xy_mm": 14.46911,
+          "area_mm2": 55.680422877
+        },
+        {
+          "z_mm": -7.6454,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 18.8214,
+          "area_mm2": 52.99792244
+        },
+        {
+          "z_mm": -21.2598,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 19.4564,
+          "area_mm2": 36.969377675
+        },
+        {
+          "z_mm": -13.8684,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 17.487181324,
+          "area_mm2": 8.275626613
+        },
+        {
+          "z_mm": -0.762,
+          "face_count": 5,
+          "maximum_abs_xy_mm": 18.8214,
+          "area_mm2": 7.70311726
+        }
+      ]
+    },
+    "receptacle": {
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/vendor_cad_reference/te_deutsch_j35_equivalent_step_multiview_v1/source/c-ydts20f25-35snv001-99-3d.stp",
+      "sha256": "1b1b95cd439ab46e95fff80cee860d3ad97b09f8c853266e6077187b32e6ccdd",
+      "size_bytes": 2603210,
+      "solid_count": 1,
+      "face_count": 1458,
+      "face_type_counts": {
+        "BSPLINE": 17,
+        "CONE": 268,
+        "CYLINDER": 830,
+        "PLANE": 329,
+        "TORUS": 14
+      },
+      "bounding_box_mm": {
+        "xmin": -23.0124,
+        "xmax": 23.0124,
+        "ymin": -23.0124,
+        "ymax": 23.0124,
+        "zmin": -31.623,
+        "zmax": 1e-07,
+        "size_x": 46.0248,
+        "size_y": 46.0248,
+        "size_z": 31.6230001
+      },
+      "cylindrical_faces_by_radius": [
+        {
+          "radius_mm": 15.7353,
+          "face_count": 2,
+          "zmin_mm": -15.2908,
+          "zmax_mm": -0.7366,
+          "area_mm2": 1438.941818651
+        },
+        {
+          "radius_mm": 17.9705,
+          "face_count": 5,
+          "zmin_mm": -13.843,
+          "zmax_mm": -0.381,
+          "area_mm2": 1390.684107093
+        },
+        {
+          "radius_mm": 20.5994,
+          "face_count": 2,
+          "zmin_mm": -19.1135001,
+          "zmax_mm": -11.8998999,
+          "area_mm2": 785.115562235
+        },
+        {
+          "radius_mm": 0.8255,
+          "face_count": 256,
+          "zmin_mm": -31.623,
+          "zmax_mm": -30.623002,
+          "area_mm2": 663.905164485
+        },
+        {
+          "radius_mm": 19.5707,
+          "face_count": 4,
+          "zmin_mm": -8.6360001,
+          "zmax_mm": 1e-07,
+          "area_mm2": 426.100870649
+        },
+        {
+          "radius_mm": 19.7866,
+          "face_count": 2,
+          "zmin_mm": -11.2014001,
+          "zmax_mm": -8.6359999,
+          "area_mm2": 318.937901437
+        },
+        {
+          "radius_mm": 0.46355,
+          "face_count": 256,
+          "zmin_mm": -1.778,
+          "zmax_mm": -1.20015,
+          "area_mm2": 215.427698153
+        },
+        {
+          "radius_mm": 17.7292,
+          "face_count": 2,
+          "zmin_mm": -30.6578,
+          "zmax_mm": -28.850196904,
+          "area_mm2": 201.359481441
+        },
+        {
+          "radius_mm": 18.4531,
+          "face_count": 8,
+          "zmin_mm": -27.9527001,
+          "zmax_mm": -23.3044999,
+          "area_mm2": 141.041260429
+        },
+        {
+          "radius_mm": 19.0373,
+          "face_count": 5,
+          "zmin_mm": -13.880071396,
+          "zmax_mm": 0.0,
+          "area_mm2": 133.343993923
+        },
+        {
+          "radius_mm": 0.6985,
+          "face_count": 8,
+          "zmin_mm": -19.4437001,
+          "zmax_mm": -16.7639999,
+          "area_mm2": 126.678476726
+        },
+        {
+          "radius_mm": 1.9558,
+          "face_count": 16,
+          "zmin_mm": -22.733,
+          "zmax_mm": -19.685,
+          "area_mm2": 98.30923059
+        },
+        {
+          "radius_mm": 19.3548,
+          "face_count": 2,
+          "zmin_mm": -14.859,
+          "zmax_mm": -14.351,
+          "area_mm2": 61.777775852
+        },
+        {
+          "radius_mm": 0.8382,
+          "face_count": 256,
+          "zmin_mm": -0.8255,
+          "zmax_mm": -0.7366,
+          "area_mm2": 59.929306968
+        },
+        {
+          "radius_mm": 15.7734,
+          "face_count": 2,
+          "zmin_mm": -31.623,
+          "zmax_mm": -31.3436,
+          "area_mm2": 27.690550318
+        },
+        {
+          "radius_mm": 31.75,
+          "face_count": 4,
+          "zmin_mm": -22.733,
+          "zmax_mm": -19.685,
+          "area_mm2": 19.622588096
+        }
+      ],
+      "axial_planar_faces_by_z": [
+        {
+          "z_mm": -22.733,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 23.0124,
+          "area_mm2": 895.487081089
+        },
+        {
+          "z_mm": -19.685,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 23.0124,
+          "area_mm2": 624.456851132
+        },
+        {
+          "z_mm": -31.623,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 15.7734,
+          "area_mm2": 507.601311091
+        },
+        {
+          "z_mm": -0.7366,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 15.7353,
+          "area_mm2": 495.333416314
+        },
+        {
+          "z_mm": -30.623002,
+          "face_count": 128,
+          "maximum_abs_xy_mm": 14.9225,
+          "area_mm2": 274.027404696
+        },
+        {
+          "z_mm": -14.605,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 19.1008,
+          "area_mm2": 214.137333649
+        },
+        {
+          "z_mm": -31.3436,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 17.626706503,
+          "area_mm2": 194.466578889
+        },
+        {
+          "z_mm": 0.0,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 19.5707,
+          "area_mm2": 138.662204441
+        },
+        {
+          "z_mm": -13.843,
+          "face_count": 5,
+          "maximum_abs_xy_mm": 18.8468,
+          "area_mm2": 92.938169464
+        },
+        {
+          "z_mm": -1.778,
+          "face_count": 128,
+          "maximum_abs_xy_mm": 14.56055,
+          "area_mm2": 86.407812996
+        },
+        {
+          "z_mm": -21.733,
+          "face_count": 4,
+          "maximum_abs_xy_mm": 21.012774923,
+          "area_mm2": 83.19546814
+        },
+        {
+          "z_mm": -20.685,
+          "face_count": 4,
+          "maximum_abs_xy_mm": 21.012774923,
+          "area_mm2": 83.19546814
+        },
+        {
+          "z_mm": -8.636,
+          "face_count": 6,
+          "maximum_abs_xy_mm": 20.535901763,
+          "area_mm2": 49.416327226
+        },
+        {
+          "z_mm": -19.4437,
+          "face_count": 4,
+          "maximum_abs_xy_mm": 18.361501529,
+          "area_mm2": 31.854008284
+        },
+        {
+          "z_mm": -16.764,
+          "face_count": 4,
+          "maximum_abs_xy_mm": 18.107487143,
+          "area_mm2": 26.702347651
+        },
+        {
+          "z_mm": -15.2908,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 15.9004,
+          "area_mm2": 16.408708296
+        },
+        {
+          "z_mm": -11.8999,
+          "face_count": 1,
+          "maximum_abs_xy_mm": 20.5994,
+          "area_mm2": 14.752788254
+        }
+      ]
+    }
+  }
+}

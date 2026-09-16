@@ -1,0 +1,83 @@
+{
+  "schema_version": "te_representative_internal_thread_v1",
+  "status": "GEOMETRY_ONLY_NOT_YET_SIMULATED",
+  "source_npz": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_grasp/CARTS_GRASP_V1/object_models/te_j35/coupling_nut_visual_mesh.npz",
+  "source_sha256": "b57e516607d674bdaf8a4b79c84932e78e546af279b4714342e65778996a0023",
+  "source_modified": false,
+  "output_mesh": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/te_full_assembly_20260905/representative_thread_geometry_clean_01/coupling_nut_standard_inner_thread.npz",
+  "output_sha256": "3ccb12b0177fc2367eb8b901c9688a0db5337acadea4b8dde329a17670b79a8f",
+  "standard": "MIL-DTL-38999N w/AMENDMENT 2, 27 July 2026, Figure 3, printed pages 91-93",
+  "standard_local_copy": "artifacts/kcg_connector/reference/full_assembly_20260905/MIL-DTL-38999N_Amendment2_20260727.pdf",
+  "shell_size": 25,
+  "thread_starts": 3,
+  "pitch_m": 0.00254,
+  "lead_m": 0.00762,
+  "minor_diameter_m": 0.0399288,
+  "pitch_diameter_m": 0.0405638,
+  "major_diameter_m": 0.0416306,
+  "included_flank_angle_deg": 60,
+  "source_frame_helix_relation": "z - lead*theta/(2*pi) = constant",
+  "phase_zero_convention": "arbitrary representative thread datum; not tuned to online start pose",
+  "supplier_unverified_details": [
+    "exact female thread phase",
+    "approach relief",
+    "rear runout",
+    "self-locking detent",
+    "seal constitutive behavior"
+  ],
+  "representative_rear_runout_m": 0.0002,
+  "original_hidden_interface_caps_retained": [
+    {
+      "edge_count": 104,
+      "plane_z_m": -0.015011399984359741,
+      "radial_extent_m": 0.01996440106665559
+    },
+    {
+      "edge_count": 70,
+      "plane_z_m": -0.02176779881119728,
+      "radial_extent_m": 0.019075400651038906
+    }
+  ],
+  "watertight": true,
+  "positive_volume": true,
+  "original_bounds_m": [
+    [
+      -0.023458916693925858,
+      -0.023458916693925858,
+      -0.02176779881119728
+    ],
+    [
+      0.023458916693925858,
+      0.023458916693925858,
+      -0.0015493999235332012
+    ]
+  ],
+  "threaded_bounds_m": [
+    [
+      -0.023458916693925858,
+      -0.023458916693925858,
+      -0.02176779881119728
+    ],
+    [
+      0.023458916693925858,
+      0.023458916693925858,
+      -0.0015493999235332012
+    ]
+  ],
+  "original_volume_m3": 1.6065975275843533e-05,
+  "threaded_volume_m3": 1.5506462852702448e-05,
+  "removed_volume_m3": 5.595124231410854e-07,
+  "vertex_count": 326386,
+  "triangle_count": 652768,
+  "exact_degenerate_cleanup": {
+    "exact_duplicate_vertex_count": 6,
+    "zero_area_repeated_index_faces_removed": 12,
+    "vertex_position_change_m": 0.0,
+    "nonzero_surface_faces_removed": 0
+  },
+  "angular_sampling_deg": 0.5,
+  "main_axial_sampling_m": 2.5e-05,
+  "mass_inertia_material_joint_modified": false,
+  "online_pose_writes_or_thread_constraints_added": false,
+  "next_validation": "inspect actual thread clearance and contact-driven rotation/translation in Isaac Sim before assembly claims"
+}

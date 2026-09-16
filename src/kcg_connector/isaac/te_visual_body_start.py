@@ -163,7 +163,7 @@ def check_initial_approach(repository,runtime,plan,observed_body,initial_hand):
 
     scene=FullRobotCollisionScene(runtime["inputs"])
     geometry_path=repository/'artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_regrasp_01/cooked_finger_inspection/geometry_only_manifest.json'
-    geometry=json.loads(geometry_path.read_text());mesh_path=Path(geometry["mesh_data"])
+    geometry=json.loads(geometry_path.read_text());mesh_path=repository/geometry["mesh_data"]
     if digest(runtime["robot_asset"])!=geometry["source_robot_asset_sha256"] or digest(mesh_path)!=geometry["mesh_data_sha256"]:
         raise ValueError("Initial approach geometry differs from the original robot")
     with np.load(mesh_path) as meshes:

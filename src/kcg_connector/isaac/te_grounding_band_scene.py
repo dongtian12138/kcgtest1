@@ -35,7 +35,7 @@ def install_grounding_band_contact_model(stage, body_path, manifest_path, *,
     meshes = {}
     for label in ("rigid_body", "circumferential_band"):
         entry = manifest["meshes"][label]
-        path = Path(entry["path"])
+        path = Path(__file__).resolve().parents[3] / entry["path"]
         if hashlib.sha256(path.read_bytes()).hexdigest() != entry["sha256"]:
             raise ValueError(f"partition geometry differs: {label}")
         with np.load(path) as data:

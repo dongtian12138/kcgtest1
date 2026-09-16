@@ -1,0 +1,112 @@
+{
+  "source_geometry_plan": "/home/noob/WorkPlace/kcgtest1/artifacts/grasp_capacity_20260914/selected_two_nail_geometry.json",
+  "source_normal_targets_n": [
+    15.839768291581647,
+    10.440684774851203,
+    15.51598670055529
+  ],
+  "coupled_normal_effort_levers_m": [
+    0.15209544659092075,
+    0.1712562522309882,
+    0.1124129819805796
+  ],
+  "root_moment_control": true,
+  "root_moment_targets_nm": [
+    2.085566865538565,
+    2.2503397335976487,
+    2.145754682300982
+  ],
+  "planar_hold": true,
+  "planned_wrist_force_limit_n": 110.0,
+  "contact_normal_limit_n": null,
+  "finite_motor_cap_nm": 4.0,
+  "scope": "NORMAL_REGRASP_BEFORE_WRIST_FORCE_OR_BENDING_BOUND",
+  "target_basis": "Current root-moment references physically verified in the isolated current-hand torque test.",
+  "changed_variable": "Uniform half-Nm normal elastic reserve at all stroke angles, including the final short interval; existing force/bending gates and all hard limits retained.",
+  "angular_admittance_rad_per_nm_s": 0.0,
+  "maximum_angular_follow_speed_deg_s": 2.0,
+  "maximum_angular_follow_offset_deg": 0.75,
+  "maximum_arm_speed_rad_s": 0.9,
+  "planned_wrist_bending_observation_nm": 1.2,
+  "observation_change_basis": "Same two-nail source grip previously carried about102.746N additional fixture force at3.1Nm;110N is a bounded diagnostic observation value, not a calibrated robot/connector rating.",
+  "angular_stiffness_nm_rad": 40.0,
+  "bounded_angular_compliance": true,
+  "maximum_axial_speed_m_s": 0.0015,
+  "hand_position_stiffness_nm_rad": 120.0,
+  "wrist_force_observation_is_not_a_hardware_rating": true,
+  "hold_grip_positions_during_turn": false,
+  "maximum_axial_travel_m": 0.01,
+  "planned_wrist_twisting_stop_nm": 4.6,
+  "wrist_record_only_quantities": [],
+  "recompute_initial_arm_bias": true,
+  "pivot_position_error_gain_s_inv": 20.0,
+  "entry_axial_push_n": 0.0,
+  "joint_limit_aware_velocity": true,
+  "reindex_speed_rad_s": 1.6,
+  "regrasp_preload_duration_s": 2.0,
+  "reuse_grip_targets": false,
+  "preindex_start_s": 3.5,
+  "validated_grip_helical_following": true,
+  "compensate_measured_contact_load": true,
+  "capacity_tested_wrench_envelope": true,
+  "capacity_evidence": "/home/noob/WorkPlace/kcgtest1/artifacts/assembly_priority_20260914/two_nail_self_lock_capacity01/capacity_review.json",
+  "seating_torque_detection": {
+    "minimum_command_deg": 350.0,
+    "threshold_nm": 2.0,
+    "hold_s": 0.0010416666666666667,
+    "basis": "Same-run09 actual depth first entered the original10um band at34.65625s. At the first >=2.0Nm filtered wrist threshold after350command degrees (34.790625s), actual depth was14.60447183mm and f1 elastic3.54353Nm. Before entering the depth band, peak filtered torque was1.46451Nm. Threshold2.2 was not reached before f1 exceeded4Nm. This is an experimental stop reference, not a hardware tightening rating."
+  },
+  "stage_separated_capacity_grip": true,
+  "self_lock_grip_during_turn": true,
+  "planar_compliance_m_per_n": 2e-05,
+  "planar_compliance_time_constant_s": 0.1,
+  "maximum_planar_offset_m": 0.001,
+  "maximum_planar_speed_m_s": 0.001,
+  "loaded_axial_relief": {
+    "equilibrium_compliance_m_per_n": 1e-05,
+    "response_time_s": 0.2,
+    "maximum_offset_m": 0.0003,
+    "reference": "steady acquired-grip axial wrench; actual wrench retained",
+    "basis": "Five-axis run reduced bending to0.132Nm but retained71.6N axial force with only0.057mm correction. Increase only restoring axial compliance; retain0.2s response and cap travel at0.3mm. Unlike the failed integral, the offset decreases when force falls."
+  },
+  "development_reference_comparison": {
+    "hardware_calibrated": false,
+    "finger_output_before_nm": 3.5,
+    "finger_output_now_nm": 4.0,
+    "input_equivalent_before_nm": 7.7,
+    "input_equivalent_now_nm": 8.8,
+    "wrist_force_before_n": 85.0,
+    "wrist_force_now_n": 110.0,
+    "finger_reference_basis": "Prior untruncated simulation PD-demand record had95th percentile about3.912Nm; use4.0 as one bounded development comparison, not measured motor torque.",
+    "wrist_reference_basis": "Same-source two-nail bench at3.1Nm produced about102.746N peak extra fixture resultant."
+  },
+  "coaxial_rotation_reference": true,
+  "bound_total_interface_velocity": true,
+  "regulate_grip_while_aligning": false,
+  "hold_achieved_arm_pose_on_release": true,
+  "friction_aware_release": true,
+  "relax_contact_load_on_release": true,
+  "release_relax_duration_s": 0.2,
+  "constrained_direction_basis": {
+    "source": "artifacts/full_rotation_20260914/grip_intrinsic_load_review.json",
+    "stable_fixed_hand_at_1p9Nm_lateral_N": 60.645218892679644,
+    "stable_fixed_hand_at_1p9Nm_bending_Nm": 0.7167792212156289,
+    "implication": "These reactions occur during a stable fixed grasp; zero lateral force/moment is not the demonstrated grasp equilibrium. Keep coaxial robot targets and monitor actual six-axis loads."
+  },
+  "restore_coaxial_center_on_reindex": true,
+  "post_stroke_loaded_hold_s": 0.0,
+  "regrasp_bending_reserve": {
+    "minimum_stroke_deg": 0.0,
+    "bending_nm": 1.0,
+    "basis": "Apply the same existing1.0Nm normal bending reserve to the first two strokes. Ended full11 second stroke first reached1.003944Nm at223508, before its1.2Nm hard stop; the old early-stroke recipe had no reserve. Other early-stroke gains, speeds, geometry checks and physical limits are retained."
+  },
+  "regrasp_force_reserve": {
+    "force_n": 90.0,
+    "basis": "Ended full12 stopped at110.01027956N with only0.71745Nm twist before full seating. Its fourth-stroke90N crossing occurs at decision257475; last applied257474 is75.83304674degrees, with19.90634N margin and261steps before the hard stop. Use the same already exercised normal unload/open/reindex path. This is a bounded simulation handoff reference, not a hardware rating. No minimum-angle gate; original110N hard limit remains."
+  },
+  "regrasp_elastic_reserve": {
+    "minimum_stroke_deg": 0.0,
+    "minimum_margin_nm": 0.5,
+    "basis": "Full13 last19.249588degree interval could never satisfy the old60degree gate. At raw273413 the first0.5Nm margin crossing already had14.60431263mm depth, original metal-stop contacts and128loaded clips; normal stop would retain last applied15.38023876degrees. All first-four intervals replay unchanged with this gate. Preserve4Nm hard transmission, all other force/motion bounds,2Nm seating reference and original release."
+  }
+}

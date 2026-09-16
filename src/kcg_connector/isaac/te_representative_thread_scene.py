@@ -25,7 +25,7 @@ def install_representative_inner_thread(repository, stage, assembly_report, mani
     manifest_path = (repository / manifest_path).resolve()
     manifest_path.relative_to(repository)
     manifest = json.loads(manifest_path.read_text())
-    mesh_path = Path(manifest["output_mesh"]).resolve()
+    mesh_path = (repository / manifest["output_mesh"]).resolve()
     mesh_path.relative_to(repository)
     if (manifest["schema_version"] != "te_representative_internal_thread_v1"
             or not manifest["watertight"] or not manifest["positive_volume"]

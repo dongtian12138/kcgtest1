@@ -1,0 +1,82 @@
+{
+  "scope": "OFFLINE_GEOMETRY_PARTITION_FOR_LOCAL_COMPLIANCE_DEVELOPMENT_ONLY",
+  "source": "/home/noob/WorkPlace/kcgtest1/artifacts/carts_grasp/CARTS_GRASP_V1/object_models/te_j35/plug_body_visual_mesh.npz",
+  "source_sha256": "633a6adf0cc5e0398c4be76bb67215c31782c090ae337172e1fa0ab8a2f66116",
+  "original_asset_modified": false,
+  "installed_in_runtime": false,
+  "mass_inertia_joint_or_friction_changed": false,
+  "spring_law_assigned": false,
+  "component_identity": "Circumferential bulge is consistent with the manufacturer's grounding-finger location; source STEP supplies a continuous simplified surface.",
+  "internal_split_surface": "Representative cylindrical interior partition; not a supplier spring thickness or number of fingers.",
+  "internal_base_radius_m": 0.01735,
+  "axial_partition_m": [
+    -0.0141,
+    -0.00765
+  ],
+  "source_rear_neck_radius_m": 0.0174117,
+  "original_hidden_caps": [
+    {
+      "edge_count": 104,
+      "plane_z_m": -0.015011399984359741,
+      "radial_extent_m": 0.01996440106665559
+    },
+    {
+      "edge_count": 70,
+      "plane_z_m": -0.02176779881119728,
+      "radial_extent_m": 0.019075400651038906
+    }
+  ],
+  "original_volume_m3": 1.267780269405571e-05,
+  "partition_volume_error_m3": 6.181646449061884e-18,
+  "original_surface_sample_count": 2076,
+  "maximum_sample_to_partition_union_distance_m": 0.0,
+  "original_key_face_count": 106,
+  "maximum_key_vertex_to_rigid_partition_distance_m": 0.0,
+  "meshes": {
+    "rigid_body": {
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_geometry_03/rigid_body.npz",
+      "sha256": "7c4ae92b07db81765f66cea0bb6b122dfd01fedb755b1a0b5da00fb27d9f87f6",
+      "vertex_count": 336483,
+      "triangle_count": 672958,
+      "volume_m3": 1.2255958659081165e-05,
+      "bounds_m": [
+        [
+          -0.019944297149777412,
+          -0.019884029403328896,
+          -0.031013399362564087
+        ],
+        [
+          0.019944297149777412,
+          0.019964398816227913,
+          0.0
+        ]
+      ]
+    },
+    "circumferential_band": {
+      "path": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_geometry_03/circumferential_band.npz",
+      "sha256": "7bfed21f5df7aa0850ba8063d99dd8bec44a8f0886ba5f1952329824999d01e7",
+      "vertex_count": 2798,
+      "triangle_count": 5596,
+      "volume_m3": 4.218440349807263e-07,
+      "bounds_m": [
+        [
+          -0.018203752115368843,
+          -0.018222099170088768,
+          -0.014100000262260437
+        ],
+        [
+          0.018203752115368843,
+          0.018222099170088768,
+          -0.0076500000432133675
+        ]
+      ]
+    }
+  },
+  "unresolved": [
+    "effective stiffness and damping",
+    "physical spring thickness/cuts",
+    "contact-model resolution dependence",
+    "other missing pin socket and seal details"
+  ],
+  "physical_assembly_or_compliance_validated": false
+}

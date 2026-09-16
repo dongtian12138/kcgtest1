@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 import yaml
+from te_runtime_paths import sam6d_runtime
 
 
 GLOBAL_CAMERA_CONFIG = "src/kcg_connector/config/te_rgbd_camera_global_e50_v1.yaml"
@@ -78,10 +79,7 @@ def observe_socket_from_global_rgbd(
     camera = yaml.safe_load(camera_path.read_text(encoding="utf-8"))["camera"]
     if camera["channels_exactly"] != ["rgb", "distance_to_image_plane"]:
         raise ValueError("socket observation requires ordinary RGB and optical depth only")
-    sam_root = Path(sam6d_root or Path.home() / ".cache/kcgtest1-sam6d/SAM-6D").resolve()
-    # Keep the venv executable symlink: resolving it selects the system Python
-    # and loses the already-installed SAM-6D environment.
-    sam_python = Path(sam6d_python or Path.home() / ".cache/kcgtest1-sam6d/.venv/bin/python").expanduser().absolute()
+    sam_root, sam_python = sam6d_runtime(repository, root=sam6d_root, python=sam6d_python)
     templates, cad = repository / SOCKET_TEMPLATES, repository / SOCKET_CAD_MM
     intrinsics = _intrinsics(camera)
     world_from_camera = _camera_cv_pose_from_eye_target(camera["eye_world_m"], camera["target_world_m"])
@@ -309,8 +307,7 @@ def observe_released_plug_from_rgbd(
         }
         intrinsics = _intrinsics(camera)
         assets = repository / "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1"
-        sam_root = (Path.home() / ".cache/kcgtest1-sam6d/SAM-6D").resolve()
-        sam_python = (Path.home() / ".cache/kcgtest1-sam6d/.venv/bin/python").expanduser().absolute()
+        sam_root, sam_python = sam6d_runtime(repository)
         camera_json = output / "camera.json"
         camera_json.write_text(json.dumps({
             "cam_K": intrinsics.ravel().tolist(), "depth_scale": 1,

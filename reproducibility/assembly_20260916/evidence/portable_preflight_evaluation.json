@@ -1,0 +1,872 @@
+{
+  "schema_version": "carts_grasp_v2_dynamic_evaluation_v4",
+  "object_id": "te_deutsch_d38999_26fj35pn_step",
+  "candidate_id": "axial_full_pad_first_intersection_v1__te_deutsch_d38999_26fj35pn_step",
+  "mode": "preflight",
+  "physics_time_advanced_s": 13.03125,
+  "three_terminal_link_contacts_observed": false,
+  "terminal_link_contact_records": [
+    0,
+    0,
+    0
+  ],
+  "pad_surface_identity_verified": false,
+  "pad_surface_identity_evidence": {
+    "verified": false,
+    "method": "BOUND_TERMINAL_COLLIDER_PLUS_ALL_POSITIVE_CONTACT_POINTS_NEAREST_TO_USER_CONFIRMED_FULL_PAD",
+    "pad_nonpad_projection_tolerance_m": 1e-09,
+    "reason": "USER_CONFIRMED_FULL_PAD_GEOMETRY_NOT_PROVIDED",
+    "mappings": [],
+    "robot_asset_path": "/home/noob/WorkPlace/kcgtest1-baseline-20260916/artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda",
+    "trace_bound_robot_asset_sha256": "09e021d2d468ecbe9c22e41b6240e29ead7a199eb7252abebbe4df449a6b3c24",
+    "robot_asset_sha256": "09e021d2d468ecbe9c22e41b6240e29ead7a199eb7252abebbe4df449a6b3c24",
+    "evaluator_source_sha256": "2ffda8171480c435b64d91d989a736f39054f3dc720770981999f2503b1a13fa",
+    "asset_binding_matches": true,
+    "required_terminal_links": [
+      "f1Link3",
+      "f2Link2",
+      "f3Link3"
+    ],
+    "required_contact_scope": "ALL_THREE_TERMINAL_LINKS"
+  },
+  "maximum_consecutive_simultaneous_contact_samples": 0,
+  "maximum_lift_m": 0.0,
+  "lift_50mm_passed": false,
+  "hold_duration_s": 0.0,
+  "hold_2s_passed": false,
+  "table_contact_released_during_hold": false,
+  "maximum_relative_slip_m": 0.0,
+  "maximum_orientation_change_rad": 0.0,
+  "legacy_maximum_hand_base_to_object_center_drift_m": 0.0,
+  "legacy_maximum_object_world_orientation_change_rad": 0.0,
+  "legacy_motion_metric_semantics": {
+    "maximum_relative_slip_m": "HAND_BASE_TO_OBJECT_CENTER_DRIFT_NOT_CONTACT_SURFACE_SLIP",
+    "maximum_orientation_change_rad": "OBJECT_WORLD_ORIENTATION_CHANGE_NOT_HAND_OBJECT_RELATIVE_ROTATION"
+  },
+  "fingertip_contact_surface_slip": {
+    "status": "INCOMPLETE",
+    "measurement_complete": false,
+    "method": "POST_RUN_RIGID_MATERIAL_POINT_RELATIVE_MOTION_PROJECTED_ON_RECORDED_CONTACT_TANGENT",
+    "normal_impulse_weighting": true,
+    "mirror_deduplication": "TERMINAL_LINK_SENSOR_SIDE_ONLY",
+    "velocity_method": "CONSECUTIVE_1_OVER_240_S_BODY_POSE_DIFFERENCE",
+    "surface_material_projection_complete": false,
+    "surface_material_projection_reason": "FULL_PAD_SURFACES_REQUIRED",
+    "object_surface_projection_scope": "CONTACT_PATH_SELECTS_SPLIT_RIGID_PART;SUPPLIER_FULL_SURFACE_PROJECTED_IN_THAT_PART_LOCAL_FRAME",
+    "actual_tangential_friction_impulse_available": false,
+    "friction_buffer_saturation_policy": "RUNTIME_ERROR_BEFORE_EVALUATION",
+    "equivalent_contact_data": [
+      "contact_world_point",
+      "contact_world_normal",
+      "normal_impulse",
+      "fingertip_material_point_local",
+      "object_material_point_local",
+      "relative_tangential_speed"
+    ],
+    "online_control_used": false,
+    "per_finger": [
+      {
+        "terminal_link": "f1Link3",
+        "measurement_complete": false,
+        "contact_sample_count": 0,
+        "evaluated_interval_count": 0,
+        "excluded_contact_boundary_interval_count": 0,
+        "contacted_object_part_paths": [],
+        "contact_establishment_events": [],
+        "contact_loss_events": [],
+        "contact_patch_migration_events": [],
+        "cumulative_tangential_slip_m": 0.0,
+        "maximum_tangential_step_m": 0.0,
+        "maximum_tangential_speed_m_s": 0.0,
+        "normal_impulse_sum_n_s": 0.0,
+        "actual_tangential_impulse_magnitude_sum_n_s": 0.0,
+        "peak_actual_tangential_impulse_magnitude_n_s": 0.0,
+        "fingertip_patch_migration_cumulative_m": 0.0,
+        "object_patch_migration_cumulative_m": {
+          "/World/TE_J35FreeSplitPlug/Body": 0.0,
+          "/World/TE_J35FreeSplitPlug/CouplingNut": 0.0
+        },
+        "contact_material_point_trace": []
+      },
+      {
+        "terminal_link": "f2Link2",
+        "measurement_complete": false,
+        "contact_sample_count": 0,
+        "evaluated_interval_count": 0,
+        "excluded_contact_boundary_interval_count": 0,
+        "contacted_object_part_paths": [],
+        "contact_establishment_events": [],
+        "contact_loss_events": [],
+        "contact_patch_migration_events": [],
+        "cumulative_tangential_slip_m": 0.0,
+        "maximum_tangential_step_m": 0.0,
+        "maximum_tangential_speed_m_s": 0.0,
+        "normal_impulse_sum_n_s": 0.0,
+        "actual_tangential_impulse_magnitude_sum_n_s": 0.0,
+        "peak_actual_tangential_impulse_magnitude_n_s": 0.0,
+        "fingertip_patch_migration_cumulative_m": 0.0,
+        "object_patch_migration_cumulative_m": {
+          "/World/TE_J35FreeSplitPlug/Body": 0.0,
+          "/World/TE_J35FreeSplitPlug/CouplingNut": 0.0
+        },
+        "contact_material_point_trace": []
+      },
+      {
+        "terminal_link": "f3Link3",
+        "measurement_complete": false,
+        "contact_sample_count": 0,
+        "evaluated_interval_count": 0,
+        "excluded_contact_boundary_interval_count": 0,
+        "contacted_object_part_paths": [],
+        "contact_establishment_events": [],
+        "contact_loss_events": [],
+        "contact_patch_migration_events": [],
+        "cumulative_tangential_slip_m": 0.0,
+        "maximum_tangential_step_m": 0.0,
+        "maximum_tangential_speed_m_s": 0.0,
+        "normal_impulse_sum_n_s": 0.0,
+        "actual_tangential_impulse_magnitude_sum_n_s": 0.0,
+        "peak_actual_tangential_impulse_magnitude_n_s": 0.0,
+        "fingertip_patch_migration_cumulative_m": 0.0,
+        "object_patch_migration_cumulative_m": {
+          "/World/TE_J35FreeSplitPlug/Body": 0.0,
+          "/World/TE_J35FreeSplitPlug/CouplingNut": 0.0
+        },
+        "contact_material_point_trace": []
+      }
+    ],
+    "maximum_per_finger_cumulative_tangential_slip_m": 0.0
+  },
+  "hand_object_full_relative_pose": {
+    "status": "UNAVAILABLE",
+    "reason": "NO_TERMINAL_LINK_OBJECT_CONTACT",
+    "measurement_complete": false,
+    "online_control_used": false
+  },
+  "hand_grasp_part_relative_pose": {
+    "status": "UNAVAILABLE",
+    "reason": "NO_CONTINUOUS_THREE_FINGER_CONTACT_WINDOW",
+    "measurement_complete": false,
+    "online_control_used": false
+  },
+  "pregrasp_hold_hand_base_target_error": {
+    "status": "COMPLETE",
+    "measurement_complete": true,
+    "evaluated_postrun_only": true,
+    "online_control_used": false,
+    "truth_returned_to_controller": false,
+    "sample_selection_rule": "LAST_PREGRASP_HOLD_SAMPLE",
+    "reason": null,
+    "step": 12509,
+    "simulation_time_s": 13.03125,
+    "phase": "pregrasp_hold",
+    "actual_pose_source": "MEASURED_ACTIVE_JOINTS_FROZEN_ROBOT_MODEL_FK",
+    "target_world_from_hand_base_row_major": [
+      1.0,
+      0.0,
+      0.0,
+      0.52973253,
+      0.0,
+      -1.0,
+      0.0,
+      -0.20438092,
+      0.0,
+      0.0,
+      -1.0,
+      0.65243714,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "target_position_world_m": [
+      0.52973253,
+      -0.20438092,
+      0.65243714
+    ],
+    "target_orientation_world_wxyz": [
+      0.0,
+      1.0,
+      0.0,
+      0.0
+    ],
+    "actual_position_world_m": [
+      0.5297557796214027,
+      -0.2043966417737166,
+      0.6524227929663098
+    ],
+    "actual_orientation_world_wxyz": [
+      9.53614409113027e-05,
+      0.999999993417444,
+      -1.525411943341733e-05,
+      -6.195659295813782e-05
+    ],
+    "position_error_vector_world_m": [
+      2.324962140276554e-05,
+      -1.5721773716614873e-05,
+      -1.4347033690187416e-05
+    ],
+    "position_error_m": 3.152073031951748e-05,
+    "orientation_error_rad": 0.00022947864304965888
+  },
+  "postgrasp_disturbance": {
+    "status": "NOT_RUN",
+    "requested": false,
+    "online_object_or_contact_truth_used_for_control": false
+  },
+  "te_stability_recording_complete": false,
+  "actual_lift_peak_acceleration_m_s2": null,
+  "signed_lift_peak_acceleration_m_s2": null,
+  "lift_peak_acceleration_simulation_time_s": null,
+  "lift_peak_acceleration_elapsed_s": null,
+  "lift_peak_acceleration_fraction": null,
+  "lift_peak_acceleration_context": null,
+  "registered_lift_peak_acceleration_m_s2": 0.0008316402769490454,
+  "lift_acceleration_consistent": false,
+  "lift_acceleration_diagnostic_only": true,
+  "lift_acceleration_hard_gate_used": false,
+  "lift_acceleration_measurement": "FINITE_DIFFERENCE_OF_HAND_BASE_WORLD_Z_DURING_LIFT",
+  "lift_acceleration_safety_specification_source": null,
+  "maximum_table_penetration_m": 3.796815872203485e-06,
+  "maximum_post_settle_table_penetration_m": 3.796815872203485e-06,
+  "unauthorized_contact_records": {
+    "robot_object_unauthorized": 0,
+    "robot_table": 0,
+    "robot_fixture": 0,
+    "robot_unclassified": 0
+  },
+  "first_unauthorized_contact_paths": {},
+  "first_terminal_link_object_paths": [
+    null,
+    null,
+    null
+  ],
+  "contact_report_channels_agree": true,
+  "contact_report_api_complete": true,
+  "closing_order_finger_numbers": null,
+  "closing_order_evidence": {
+    "resolved": false,
+    "finger_numbers": null,
+    "source": null,
+    "reason": "INVALID_DECLARED_CLOSING_ORDER",
+    "declared": [
+      {
+        "source": "motion_plan",
+        "finger_numbers": [
+          1,
+          2,
+          3
+        ],
+        "valid": true
+      },
+      {
+        "source": "controller_outcome",
+        "finger_numbers": [],
+        "valid": false
+      }
+    ],
+    "observed_phase_prefix_finger_numbers": [],
+    "observed_phase_order_matches_declaration": true
+  },
+  "nominal_three_stage_closure_witness": {
+    "evaluated": false,
+    "passed": null,
+    "status": "NOT_APPLICABLE",
+    "evidence_class": "NOMINAL_DISCRETE_PHYSX_TRAJECTORY_WITNESS",
+    "physics_dt_s": 0.0010416666666666667,
+    "continuous_time_contact_order_proved": false,
+    "continuous_pose_or_friction_set_covered": false,
+    "finite_robust_UB_AE_registered": false,
+    "prior_contacts_forced_to_persist": false
+  },
+  "first_active_finger_number": null,
+  "first_finger_contact_classification": "NO_CONTACT_PROXY",
+  "first_finger_hold_duration_s": 0.0,
+  "first_finger_maximum_target_delta_rad": 0.0,
+  "only_first_finger_commanded": false,
+  "only_first_terminal_link_contacted": false,
+  "controller_first_finger_diagnostic_pass": false,
+  "first_finger_diagnostic_pass": false,
+  "finite_throughout": true,
+  "controller_completed": true,
+  "controller_failure_reason": null,
+  "maximum_joint_speed_rad_s": 1.6943552494049072,
+  "maximum_joint_speed_joint": "iiwa_joint_5",
+  "maximum_absolute_hand_effort_nm": 0.07273010164499283,
+  "maximum_payload_compensation_nm": 0.0,
+  "payload_compensation_model": {
+    "method": "CAD_MASS_COM_JACOBIAN_FEEDFORWARD_RAMPED_OVER_TABLE_CLEARANCE",
+    "mass_kg": 0.062459669349,
+    "gravity_m_s2": 9.81,
+    "center_of_mass_object_m": [
+      3.3654747537864324e-06,
+      1.4076390705697556e-06,
+      -0.018135482728838786
+    ],
+    "center_of_mass_from_hand_m": [
+      -0.009729164525246213,
+      0.00562048763907057,
+      0.4343016572711612
+    ],
+    "transfer_distance_m": 0.001,
+    "online_object_truth_used": false
+  },
+  "lift_arm_damping_switch_audit": null,
+  "finger_clamp_effort_nm": {
+    "preload": {
+      "finger_1": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_2": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_3": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      }
+    },
+    "lift": {
+      "finger_1": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_2": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_3": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      }
+    },
+    "hold": {
+      "finger_1": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_2": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      },
+      "finger_3": {
+        "median_tare_subtracted_nm": null,
+        "maximum_absolute_tare_subtracted_nm": null
+      }
+    }
+  },
+  "prelift_transition_effort_nm": {
+    "observed": false,
+    "reason": "NO_PRELIFT_OR_PRELOAD_SAMPLE"
+  },
+  "truth_isolation_pass": true,
+  "accepted_preflight_bound": false,
+  "accepted_preflight_evaluation_sha256": null,
+  "preflight_pass": true,
+  "controller_preflight_pass": true,
+  "engine_health_pass": true,
+  "accepted_preflight_pass": true,
+  "physx_capacity_warning_count": 0,
+  "configured_gpu_found_lost_aggregate_pairs_capacity": 8192,
+  "configured_gpu_total_aggregate_pairs_capacity": 16384,
+  "observed_gpu_found_lost_aggregate_pairs_peak": 0,
+  "observed_gpu_total_aggregate_pairs_peak": 0,
+  "engine_log_sha256": "d59b74f1e7457b245b77f9edf0febb311c6a075fe82c3c8f6bcb71bad6229dc9",
+  "engine_log_sync_marker": "CARTS_V2_ENGINE_LOG_SYNC_1789586132982450772",
+  "engine_log_marker_seen": true,
+  "engine_log_audit_byte_count": 1859843,
+  "engine_log_audit_boundary": "PROCESS_START_THROUGH_SYNC_MARKER",
+  "physx_error_lines": [],
+  "identity_hash_check_pass": true,
+  "nominal_diagnostic_pass": false,
+  "nominal_three_stage_dynamic_witness_pass": false,
+  "legacy_offline_task_gate_passed": false,
+  "legacy_offline_task_gate_used_for_nominal_witness": false,
+  "research_dynamic_pass": false,
+  "formal_dynamic_pass": false,
+  "hardware_authorized": false,
+  "evidence_binding": {
+    "config_sha256": "28282059efe7730cea5c87d93f689ebdaf08561d11064be1efba7093a6a6d31f",
+    "registered_grasp_sha256": "35da0f5c81eed996aae5c20be3e4b43240623972d0ea0341216b01b08d8e8ec2",
+    "control_plan_sha256": "4375732a9fb41e0a3646df6b2d4dd1d19161052a3d01bfdab01bd525b8dd3206",
+    "runtime_resources_sha256": "f47bf2c99bbcf1fe8c2dc3f19c7c18e0e9256ebca32966cadb7f468cfaec0ff3",
+    "capacity_audit_sha256": "f941c8d8d9326129a92ce0a9c0efc63336bad50e20b18895b08df021aa6045dc",
+    "scene_evidence_sha256": {
+      "artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/scene.yaml": "99b2dfec9a4b96ecacaff559e32d9605d74227cdbe13baaf9c954a0e74a3b809",
+      "artifacts/kcg_connector/isaac/te_j35_free_split_tabletop_real_mass_resistance_0p020_v2/MANIFEST.json": "a3b15290fd69dee109defd401e1b74afb6e68f150a3c4e66e02bb7ed13c0b2ea",
+      "artifacts/full_rotation_20260914/visual_integration/visual_common_all_reserves_task.yaml": "0002010dc1275c284ceeac6cf93385e5606a828146b4807b0980f6a877a1930a",
+      "src/kcg_connector/isaac/te_body_assembly_scene.py": "40b3a3909bf088ca657544937ce2066b83ef5b6b836ad35152324a893ac7ba07",
+      "src/kcg_connector/isaac/te_foundationpose_handoff_runtime.py": "26d08c6f4804dca5c2d1e80983f9510759b8bd7c4368f23870ac5a4f347e3ce7",
+      "src/kcg_connector/isaac/build_te_free_split_plug.py": "fafdc22bc6e6420332e582e1e2e5038e22c909405b22fcbe80223994e5b4ec60",
+      "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_BODY_VISUAL.usdc": "9449dfebc239a19ca844d994710582a404afb1a68aa454055bb614716f742874",
+      "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_20FJ35SN_VISUAL.usdc": "c13587de80483d3be26dd53c2e625e2b9f98fd628fc87de5b446beb0a32ef117",
+      "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/D38999_20FJ35SN_VISUAL.obj": "20cbe594d5a664430248ed9df25beeaebcdb381eba570e0243fee0297934f744",
+      "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_COUPLING_NUT_VISUAL.usdc": "7bf42ff2bfc07b8ecde271822b5ef030000745a7e86f923f28bf322b0fba727d",
+      "artifacts/kcg_connector/isaac/te_full_assembly_20260905/representative_thread_geometry_clean_01/geometry_manifest.json": "747704e26cccc1bef88b2afe8a781deca7734be732c74a99fbd9c24cea8b25e4",
+      "artifacts/kcg_connector/isaac/te_full_assembly_20260905/representative_thread_geometry_clean_01/coupling_nut_standard_inner_thread.npz": "3ccb12b0177fc2367eb8b901c9688a0db5337acadea4b8dde329a17670b79a8f",
+      "src/kcg_connector/isaac/te_representative_thread_scene.py": "45920ec850d4d6fc2b7d5abbbea0297f4445286d22c0c2aa967e1003d740c59c",
+      "artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_geometry_03/geometry_manifest.json": "9a5197d4169dcc401e1abd404018875f8c3c8b731e750a396755de23dc433c54",
+      "artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_representative_law_proposal_v1.json": "aca17f9020101fdf0b921ed7a0cd183261cbe7700952f4093dcdfdfe37cdfc0f",
+      "src/kcg_connector/isaac/te_grounding_band_scene.py": "d718603ab1bfbdca7594bf8f5f01cde179cf8f885ae769be5bfd916ab25aee9c",
+      "artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_geometry_03/rigid_body.npz": "7c4ae92b07db81765f66cea0bb6b122dfd01fedb755b1a0b5da00fb27d9f87f6",
+      "artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_geometry_03/circumferential_band.npz": "7bfed21f5df7aa0850ba8063d99dd8bec44a8f0886ba5f1952329824999d01e7",
+      "artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc": "234b7c0f14caeae1b8dffeabb8bae5a63e8b05d2463f3a7ff3e0c0d1d53f9eb6",
+      "artifacts/kcg_connector/te_connector_contact_repaired_20260911/install_model.py": "ddbb79aee999a8f375556d1ba0c9e4dc2462059ccb7186d04738983ea2c80260",
+      "src/kcg_connector/isaac/te_nut_fingertip_sdf.py": "652c94a1f58e9b3ea2a5a49445a759d5dd496c6350a4d484441d0fffcbacffc2",
+      "artifacts/assembly_priority_20260914/hand_runtime_reference4nm.json": "675345effed7946da77c4e170fb49995e36ea4d4910575ee197344f72040b229",
+      "src/kcg_connector/config/hand_fourbar_20260912.json": "9a1a92d50328a037a2036180eb1154f6f9c7fa39bf43cfe4c8858ab86c88d5f6",
+      "src/kcg_connector/isaac/te_hand_mechanism_runtime.py": "d617fb2c50333e940b50157b6615b29498f305b5a35e5d9a59cd1fc091114693",
+      "src/kcg_connector/isaac/te_hand_fourbar.py": "f7d1de78f2cdc762e211b0ad51d30f34c3126209105b1c8977a4659ce9b6a455",
+      "src/kcg_connector/isaac/te_worm_drive.py": "e63d91f2273075a75e9ea035f2e9c237d8d0f1f07738c19f7d71c69bff034dfb"
+    },
+    "environment_scope": "SHARED_FINITE_TABLE_FIXED_SOURCE_CAD_SOCKET_BODY_SDF",
+    "robustness_scenario": "friction_lower_0p45",
+    "robustness_perturbation": {
+      "contact_friction_coefficient": 0.45
+    },
+    "effective_finger_preload_scales": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "required_closing_joint_effort_nm": [
+      0.489391244043,
+      0.43295468874875,
+      0.4078378054775
+    ],
+    "predicted_unit_task_closing_joint_effort_nm": [
+      0.489391244043,
+      0.43295468874875,
+      0.4078378054775
+    ],
+    "prelift_contact_confirmation_effort_nm": 0.02,
+    "effort_regulation_tolerance_nm": 0.01,
+    "configured_closing_order": [
+      "finger_1",
+      "finger_2",
+      "finger_3"
+    ],
+    "effective_closing_order": [
+      "finger_1",
+      "finger_2",
+      "finger_3"
+    ],
+    "configured_contact_coordination_mode": "sequential",
+    "effective_contact_coordination_mode": "parallel_contact_latch",
+    "applied_initial_object_translation_delta_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "applied_initial_object_yaw_delta_rad": 0.0,
+    "contact_friction_material_audit": {
+      "applied": true,
+      "requested_coefficient": 0.45,
+      "fingertip_side": {
+        "material_prim_path": "/World/HandArm/PhysicsMaterials/fingertip_pad",
+        "before_static_friction": 1.399999976158142,
+        "before_dynamic_friction": 1.399999976158142,
+        "before_friction_combine_mode": "max",
+        "observed_static_friction": 0.44999998807907104,
+        "observed_dynamic_friction": 0.44999998807907104,
+        "observed_friction_combine_mode": "max",
+        "scope": "THREE_FULL_NAILFREE_FINGERTIP_PADS_SHARED_PHYSICS_MATERIAL"
+      },
+      "connector_side": {
+        "material_prim_path": "/World/CartsV2ConnectorContactMaterial",
+        "part_binding_roots": [
+          "/World/TE_J35FreeSplitPlug/Body",
+          "/World/TE_J35FreeSplitPlug/CouplingNut"
+        ],
+        "collision_surface_count": 113,
+        "observed_static_friction": 0.44999998807907104,
+        "observed_dynamic_friction": 0.44999998807907104,
+        "observed_friction_combine_mode": "max",
+        "resolved_bound_material_paths": [
+          "/World/CartsV2ConnectorContactMaterial"
+        ]
+      },
+      "contact_pair": {
+        "combine_rule": "max",
+        "effective_static_friction": 0.44999998807907104,
+        "effective_dynamic_friction": 0.44999998807907104,
+        "formula": "max(fingertip_side, connector_side)"
+      },
+      "table_side": {
+        "root_prim_path": "/World/D38999TabletopV1/Table",
+        "collision_surface_count": 1,
+        "resolved_bound_material_paths": [
+          "/World/D38999TabletopV1/TabletopMaterial"
+        ],
+        "materials": [
+          {
+            "material_prim_path": "/World/D38999TabletopV1/TabletopMaterial",
+            "observed_static_friction": 0.8999999761581421,
+            "observed_dynamic_friction": 0.75,
+            "observed_friction_combine_mode": null
+          }
+        ]
+      },
+      "connector_table_contact_pairs": [
+        {
+          "connector_material_prim_path": "/World/CartsV2ConnectorContactMaterial",
+          "table_material_prim_path": "/World/D38999TabletopV1/TabletopMaterial",
+          "effective_combine_rule": "max",
+          "effective_static_friction": 0.8999999761581421,
+          "effective_dynamic_friction": 0.75,
+          "formula": "max(connector_side, table_side)",
+          "connector_max_mode_dominates_pair": true
+        }
+      ]
+    },
+    "object_mass_audit": {
+      "applied": false,
+      "requested_scale": null,
+      "effective_scale": 1.0,
+      "parts": [
+        {
+          "rigid_prim_path": "/World/TE_J35FreeSplitPlug/Body",
+          "before_mass_kg": 0.027548618614673615,
+          "observed_mass_kg": 0.027548618614673615,
+          "before_diagonal_inertia_kg_m2": [
+            4.4160174184071366e-06,
+            4.426896794029744e-06,
+            5.161557510291459e-06
+          ],
+          "observed_diagonal_inertia_kg_m2": [
+            4.4160174184071366e-06,
+            4.426896794029744e-06,
+            5.161557510291459e-06
+          ]
+        },
+        {
+          "rigid_prim_path": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "before_mass_kg": 0.03491105139255524,
+          "observed_mass_kg": 0.03491105139255524,
+          "before_diagonal_inertia_kg_m2": [
+            6.522533567476785e-06,
+            6.522804142150562e-06,
+            1.139878440881148e-05
+          ],
+          "observed_diagonal_inertia_kg_m2": [
+            6.522533567476785e-06,
+            6.522804142150562e-06,
+            1.139878440881148e-05
+          ]
+        }
+      ]
+    },
+    "center_of_mass_audit": {
+      "applied": false,
+      "requested_delta_object_m": null,
+      "parts": [
+        {
+          "rigid_prim_path": "/World/TE_J35FreeSplitPlug/Body",
+          "before_center_of_mass_m": [
+            7.630388608959038e-06,
+            3.1914739793137414e-06,
+            -0.021424580365419388
+          ],
+          "observed_center_of_mass_m": [
+            7.630388608959038e-06,
+            3.1914739793137414e-06,
+            -0.021424580365419388
+          ]
+        },
+        {
+          "rigid_prim_path": "/World/TE_J35FreeSplitPlug/CouplingNut",
+          "before_center_of_mass_m": [
+            -1.3749419354794346e-12,
+            -1.4385862564126467e-13,
+            -0.015540027059614658
+          ],
+          "observed_center_of_mass_m": [
+            -1.3749419354794346e-12,
+            -1.4385862564126467e-13,
+            -0.015540027059614658
+          ]
+        }
+      ]
+    },
+    "finger_joint_target_audit": {
+      "applied": false,
+      "joint_name": "f3j2",
+      "requested_offset_rad": 0.0,
+      "before_pregrasp_rad": 0.667972525625,
+      "observed_pregrasp_target_rad": 0.667972525625,
+      "before_final_rad": 0.737972525625,
+      "observed_final_target_rad": 0.737972525625
+    },
+    "hand_tilt_about_object_pivot_audit": {
+      "schema_version": "carts_v2_hand_tilt_about_object_pivot_audit_v1",
+      "applied": false,
+      "requested": null,
+      "applied_axis_supplier_object": null,
+      "applied_angle_rad": 0.0,
+      "applied_pivot_supplier_object_m": null,
+      "before_object_from_hand_row_major": [
+        1.0,
+        0.0,
+        0.0,
+        0.00973253,
+        0.0,
+        1.0,
+        0.0,
+        -0.00561908,
+        0.0,
+        0.0,
+        1.0,
+        -0.45243714,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "left_multiplier_object_row_major": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "after_object_from_hand_row_major": [
+        1.0,
+        0.0,
+        0.0,
+        0.00973253,
+        0.0,
+        1.0,
+        0.0,
+        -0.00561908,
+        0.0,
+        0.0,
+        1.0,
+        -0.45243714,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "pivot_fixed_point_error_m": 0.0,
+      "left_multiplier_rotation_orthogonality_error": 0.0,
+      "left_multiplier_rotation_determinant": 1.0,
+      "before_rotation_orthogonality_error": 0.0,
+      "before_rotation_determinant": 1.0,
+      "after_rotation_orthogonality_error": 0.0,
+      "after_rotation_determinant": 1.0,
+      "object_scene_transform_modified": false,
+      "online_control_used": false,
+      "generated_contact_prediction_recomputed_after_tilt": false,
+      "pregrasp_hand_table_clearance": {
+        "status": "NOT_APPLICABLE_NO_HAND_TILT",
+        "required_m": 0.001,
+        "observed_m": null,
+        "margin_m": null,
+        "pass": null,
+        "limiting_link": null,
+        "comparison_tolerance_m": 1e-12,
+        "automatic_world_z_shift_applied": false,
+        "target_modified_after_check": false,
+        "behavior_unchanged": true
+      }
+    },
+    "object_asset_sha256": "182ffa9f9bbddf582c221eb46854751bbaaa9c6413d43aac1d3eb055ebbc6007",
+    "robot_asset_sha256": "09e021d2d468ecbe9c22e41b6240e29ead7a199eb7252abebbe4df449a6b3c24",
+    "controller_source_sha256": "be2039ba64225c76b33007ae73be4306992e1cbc416bbed09527f096a5a84bd1",
+    "runner_source_sha256": "8d12cc7e55c615c5621a255ee2f654db648703cfc44c9099ad100c8f1c3a580a",
+    "evaluator_source_sha256": "2ffda8171480c435b64d91d989a736f39054f3dc720770981999f2503b1a13fa",
+    "engine_health_source_sha256": "cb370d9d6d82f7ff1c7a57acbe22a4beccd716ed5220a498e9e4d27197ae997a"
+  },
+  "evidence_limit": "RESEARCH_ONLY_TERMINAL_LINK_CONTACT_PAD_IDENTITY_UNRESOLVED",
+  "evaluation_wall_timing_s": {
+    "_motion_metrics": 0.002684917999431491,
+    "_contact_metrics": 0.02238328696694225,
+    "_safety_metrics": 0.1723089680308476,
+    "_acceleration_metrics": 0.000764045980758965,
+    "_finger_clamp_effort_metrics": 0.0019158949726261199,
+    "_prelift_transition_effort_metrics": 0.001025612000375986,
+    "_contact_surface_slip_metrics": 0.01565072004450485,
+    "_hand_object_pose_metrics": 0.007420149981044233,
+    "_hand_grasp_part_pose_metrics": 0.0075141810229979455,
+    "_derive_pad_surface_identity": 0.008235248969867826,
+    "_postgrasp_disturbance_metrics": 0.00014871900202706456
+  },
+  "pickup_evaluation_sample_scope": {
+    "first": 0,
+    "count": 12510,
+    "full_episode_count": 12510,
+    "whole_assembly_acceptance": false
+  },
+  "split_plug_relative_motion": {
+    "status": "COMPLETE",
+    "part_order": [
+      "/World/TE_J35FreeSplitPlug/Body",
+      "/World/TE_J35FreeSplitPlug/CouplingNut"
+    ],
+    "reference_rule": "FIRST_POST_STEP_SAMPLE",
+    "sample_count": 12510,
+    "maximum_relative_translation_change_m": 2.146646614260215e-06,
+    "final_relative_translation_change_m": 2.5636927075116667e-07,
+    "maximum_relative_translation_components_m": [
+      2.1457687344739185e-06,
+      3.729197776691784e-07,
+      2.235423508245571e-07
+    ],
+    "maximum_noncoaxial_axis_tilt_rad": 4.862027635624385e-06,
+    "final_noncoaxial_axis_tilt_rad": 2.7717762049642705e-07,
+    "final_unwrapped_coaxial_rotation_rad": -2.831500044826942e-07,
+    "minimum_unwrapped_coaxial_rotation_rad": -2.1085292401192123e-06,
+    "maximum_unwrapped_coaxial_rotation_rad": 3.1589956358924078e-06,
+    "total_unwrapped_coaxial_rotation_range_rad": 5.2675248760116204e-06,
+    "joint_drive_or_friction_authored": true,
+    "rotational_resistance": {
+      "model": "NATIVE_STATIC_DYNAMIC_COULOMB_FRICTION",
+      "assumed_resisting_torque_nm": 0.02,
+      "static_friction_effort_nm": 0.02,
+      "dynamic_friction_effort_nm": 0.02,
+      "viscous_friction_coefficient_nm_s_per_deg": 0.0,
+      "disabled_velocity_drive_maximum_torque_nm": 0.0,
+      "disabled_velocity_drive_damping_nm_s_per_deg": 0.0,
+      "original_asset_drive_readback": {
+        "model": "SYMMETRIC_CAPPED_ZERO_VELOCITY_BRAKE",
+        "assumed_resisting_torque_nm": 0.02,
+        "drive_type": "force",
+        "target_velocity_deg_s": 0.0,
+        "stiffness_nm_per_deg": 0.0,
+        "damping_nm_s_per_deg": 10000000000.0,
+        "maximum_drive_torque_nm": 0.019999999552965164,
+        "angle_preference_or_limit_authored": false,
+        "physical_status": "ENGINEERING_ASSUMPTION_PUBLIC_NUMERIC_VALUE_UNAVAILABLE",
+        "asset_readback_matches_manifest": true
+      },
+      "source_asset_modified": false,
+      "hardware_resistance_calibrated": false
+    },
+    "online_control_used": false,
+    "evidence_limit": "MEASURES_RESPONSE_TO_AN_ASSUMED_SYMMETRIC_RESISTING_TORQUE;DOES_NOT_ESTABLISH_THIS_SPECIMENS_TRUE_UNLOADED_TORQUE"
+  },
+  "split_plug_grasp_contact_policy": {
+    "status": "NO_TERMINAL_CONTACT",
+    "required_contact_part_paths": [
+      "/World/TE_J35FreeSplitPlug/Body"
+    ],
+    "observed_contact_part_paths": [],
+    "per_finger": [
+      {
+        "terminal_link": "f1Link3",
+        "contacted_part_paths": [],
+        "contacted_coupling_nut": false,
+        "contacted_body_or_other_part": false,
+        "nut_only": false,
+        "body_only": false,
+        "requested_part_only": false
+      },
+      {
+        "terminal_link": "f2Link2",
+        "contacted_part_paths": [],
+        "contacted_coupling_nut": false,
+        "contacted_body_or_other_part": false,
+        "nut_only": false,
+        "body_only": false,
+        "requested_part_only": false
+      },
+      {
+        "terminal_link": "f3Link3",
+        "contacted_part_paths": [],
+        "contacted_coupling_nut": false,
+        "contacted_body_or_other_part": false,
+        "nut_only": false,
+        "body_only": false,
+        "requested_part_only": false
+      }
+    ],
+    "all_three_fingers_contacted_coupling_nut_only": false,
+    "body_contact_observed": false,
+    "all_three_fingers_contacted_body_only": false,
+    "all_three_fingers_contacted_requested_part_only": false,
+    "online_control_used": false
+  },
+  "nail_body_stability": {
+    "body_pickup_and_hold_observed": false,
+    "minimum_fingers_directly_contacting_body_during_lift_and_hold": 0,
+    "all_three_fingers_body_only": false,
+    "from_first_body_contact": null,
+    "from_first_three_contact": null,
+    "lift": null,
+    "hold": null,
+    "maximum_lift_m": 0.0,
+    "maximum_finger_effort_nm": 0.07273010164499283,
+    "maximum_wrist_force_n": 0.024344760494258152,
+    "maximum_wrist_moment_nm": 0.005681516599173862,
+    "controller_failure_reason": null,
+    "evaluation_only_no_online_truth": true,
+    "scope": "NOMINAL_NAIL_BODY_GRASP_STABILITY_NOT_ASSEMBLY_OR_GLOBAL_OPTIMALITY"
+  },
+  "detailed_timeseries_archives": {
+    "raw_values_preserved": true,
+    "files": [],
+    "empty_inline_arrays_with_archive_fields_mean_external_storage_not_absent_data": true
+  },
+  "engine_log_path": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/logs/Kit/Isaac-Sim Python/6.0/kit_20260916_191232.log",
+  "physx_capacity_warning_lines": [],
+  "all_physx_warning_lines": [
+    "2026-09-16T19:13:30Z [57,435ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,436ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,436ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,436ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,436ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,436ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,436ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,436ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,436ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,436ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,443ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,443ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,443ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,443ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,443ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,443ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,443ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,443ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,443ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598",
+    "2026-09-16T19:13:30Z [57,443ms] [Warning] [omni.physx.plugin] PhysX warning: PxShape::getMaterialFromInternalFaceIndex received 0xFFFFffff as input - returning NULL., FILE /builds/omniverse/physics/physx/source/physx/src/NpShape.cpp, LINE 598"
+  ],
+  "controller_nominal_physical_pass": false,
+  "nominal_research_dynamic_pass": false,
+  "engine_runtime": {
+    "configured_gpu_found_lost_aggregate_pairs_capacity": 8192,
+    "configured_gpu_total_aggregate_pairs_capacity": 16384,
+    "observed_gpu_found_lost_aggregate_pairs_peak": 0,
+    "observed_gpu_total_aggregate_pairs_peak": 0,
+    "physx_statistics_sample_count": 12511,
+    "physx_statistics_read_failures": 0,
+    "scene_counts": {
+      "rigid_body_count": 958,
+      "articulation_count": 1,
+      "aggregate_count": 1,
+      "physx_collision_shape_count": 2653
+    },
+    "physics_backend_pass": true,
+    "requested_physics_device": "cpu",
+    "gpu_backend_pass": false,
+    "cpu_backend_pass": true,
+    "engine_log_sync": {
+      "marker": "CARTS_V2_ENGINE_LOG_SYNC_1789586132982450772",
+      "marker_seen": true,
+      "audit_byte_count": 1859843,
+      "audit_boundary": "PROCESS_START_THROUGH_SYNC_MARKER"
+    }
+  }
+}

@@ -1,0 +1,2090 @@
+{
+  "schema": "assembly_runtime_assets_v1",
+  "release_tag": "assembly-baseline-20260916",
+  "archive_name": "assembly-runtime-assets.tar.gz",
+  "archive_sha256": "195e378646663803872f527c17afb1ee3541ce4af95cdb533e629112832d9e70",
+  "archive_bytes": 121458865,
+  "files": [
+    {
+      "path": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TERMINAL_PAD_EXACT_SOURCE_V2/TERMINAL_PAD_SOURCE_MANIFEST.json",
+      "original_sha256": "b5867108850ee34c4f28eedb948bef8ad33112cddbb0e7a414a9d3cc0e15edf0",
+      "sha256": "b5867108850ee34c4f28eedb948bef8ad33112cddbb0e7a414a9d3cc0e15edf0",
+      "bytes": 4626,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TERMINAL_PAD_EXACT_SOURCE_V2/f1Link3_PAD_BODY_raw_source_local_m.npz",
+      "original_sha256": "28fee4b392f7e817e0b414e8c2c44d578cbe294c53ba676e739a7d655efb9973",
+      "sha256": "28fee4b392f7e817e0b414e8c2c44d578cbe294c53ba676e739a7d655efb9973",
+      "bytes": 22377,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TERMINAL_PAD_EXACT_SOURCE_V2/f2Link2_PAD_BODY_raw_source_local_m.npz",
+      "original_sha256": "c6904e3c047e67ef6e8c96c031394f5308b7edeec2e4f96ca4fec1a503283740",
+      "sha256": "c6904e3c047e67ef6e8c96c031394f5308b7edeec2e4f96ca4fec1a503283740",
+      "bytes": 22416,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/agent_control/tasks/CARTS-GRASP-CROSS-OBJECT-V1/TERMINAL_PAD_EXACT_SOURCE_V2/f3Link3_PAD_BODY_raw_source_local_m.npz",
+      "original_sha256": "28fee4b392f7e817e0b414e8c2c44d578cbe294c53ba676e739a7d655efb9973",
+      "sha256": "28fee4b392f7e817e0b414e8c2c44d578cbe294c53ba676e739a7d655efb9973",
+      "bytes": 22377,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/assembly_priority_20260914/hand_runtime_reference4nm.json",
+      "original_sha256": "675345effed7946da77c4e170fb49995e36ea4d4910575ee197344f72040b229",
+      "sha256": "675345effed7946da77c4e170fb49995e36ea4d4910575ee197344f72040b229",
+      "bytes": 831,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/carts_grasp/CARTS_GRASP_V1/object_models/te_deutsch_d38999_26fj35pn/material_boundary/TE_D38999_SINGLE_SOLID_BOUNDARY_V1.json",
+      "original_sha256": "6f6a807e3099a83989e32a77a6cb5319e8b0100674974930a563bc0509d70103",
+      "sha256": "6f6a807e3099a83989e32a77a6cb5319e8b0100674974930a563bc0509d70103",
+      "bytes": 2833,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/full_rotation_20260914/visual_integration/two_nail_all_reserves_recipe.json",
+      "original_sha256": "95c51f9e1f21a32c3e510d04f7a318f5947fada6cb237491943fca49c88c0748",
+      "sha256": "e8c6da5c938a9c8815208de8acb769cb47bc740ff8ee5ad05b6e35ca4efa9a06",
+      "bytes": 6360,
+      "path_binding_changed": true
+    },
+    {
+      "path": "artifacts/full_rotation_20260914/visual_integration/visual_common_all_reserves_task.yaml",
+      "original_sha256": "0002010dc1275c284ceeac6cf93385e5606a828146b4807b0980f6a877a1930a",
+      "sha256": "0002010dc1275c284ceeac6cf93385e5606a828146b4807b0980f6a877a1930a",
+      "bytes": 36873,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/full_rotation_20260914/visual_integration/wrist_all_reserves_no_angle_gate_recipe.json",
+      "original_sha256": "7a467c09a5657b4ba2a7ab4000b09cb2cfe122bc9aa597875db408b33e36d33c",
+      "sha256": "c5e0ee36394624deae1fbec1d1f89e91820aa45bcb4e3db93eff4ade969788df",
+      "bytes": 6705,
+      "path_binding_changed": true
+    },
+    {
+      "path": "artifacts/grasp_capacity_20260914/selected_two_nail_geometry.json",
+      "original_sha256": "d52cf11868b43601579246dbaa1d334ab13263a57fb12ed3c7bc8498946829db",
+      "sha256": "6f33f4470644c37e852ac5eb5cfe072de58feddf8fd81e83c7137d67a34d65ab",
+      "bytes": 17142,
+      "path_binding_changed": true
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/keyed_v3_physical_r12/candidates/r12_candidate_02/scene.yaml",
+      "original_sha256": "99b2dfec9a4b96ecacaff559e32d9605d74227cdbe13baaf9c954a0e74a3b809",
+      "sha256": "99b2dfec9a4b96ecacaff559e32d9605d74227cdbe13baaf9c954a0e74a3b809",
+      "bytes": 3212,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/handarm.usda",
+      "original_sha256": "29ec40f5e52f29ad14d0dae5b841ce5702dd9c901ada964661b16dbcb74148d8",
+      "sha256": "29ec40f5e52f29ad14d0dae5b841ce5702dd9c901ada964661b16dbcb74148d8",
+      "bytes": 57206,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/Physics/mujoco.usda",
+      "original_sha256": "aa4a184e9cce3b89b1314619ed82177977d5e1e5c97a2deebb64e30e50402080",
+      "sha256": "aa4a184e9cce3b89b1314619ed82177977d5e1e5c97a2deebb64e30e50402080",
+      "bytes": 19796,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/Physics/physics.usda",
+      "original_sha256": "7d7175cad8b93a6bf90c45626bd43595eaf6a06962b65e82ed3c5c446a545d4e",
+      "sha256": "7d7175cad8b93a6bf90c45626bd43595eaf6a06962b65e82ed3c5c446a545d4e",
+      "bytes": 35380,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/Physics/physx.usda",
+      "original_sha256": "614314ca35ec18acc3e41b779579a295ade7758811bb3cc71da5c004cc024112",
+      "sha256": "614314ca35ec18acc3e41b779579a295ade7758811bb3cc71da5c004cc024112",
+      "bytes": 3586,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/base.usda",
+      "original_sha256": "76c92dd33cf0d5497bf9cd3d68dba7d8e5eae090609856bcc659ef49b3cbeac7",
+      "sha256": "76c92dd33cf0d5497bf9cd3d68dba7d8e5eae090609856bcc659ef49b3cbeac7",
+      "bytes": 38724,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/geometries.usd",
+      "original_sha256": "4160095e26ffe8f6fc6aaaf9229738f82abc63f2cef5c1bd513ae3e3819b1f50",
+      "sha256": "4160095e26ffe8f6fc6aaaf9229738f82abc63f2cef5c1bd513ae3e3819b1f50",
+      "bytes": 19637369,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/instances.usda",
+      "original_sha256": "f49c59c4eed6eb8b560903ef9528ba8b6a4881e3a07954fa3562bd9fffc626d4",
+      "sha256": "f49c59c4eed6eb8b560903ef9528ba8b6a4881e3a07954fa3562bd9fffc626d4",
+      "bytes": 18383,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/materials.usda",
+      "original_sha256": "810caee3b01d7a6b78388415b4a13da96a02b1a50d9ef310e5678dc0f7e4879c",
+      "sha256": "810caee3b01d7a6b78388415b4a13da96a02b1a50d9ef310e5678dc0f7e4879c",
+      "bytes": 5826,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/robot/handarm_keyed_v3_physical_r7/payloads/robot.usda",
+      "original_sha256": "c7b0f5f7ccd5e93e2c434af9d812025aa541553f6681c0d5b77ea4123dbc3c0f",
+      "sha256": "c7b0f5f7ccd5e93e2c434af9d812025aa541553f6681c0d5b77ea4123dbc3c0f",
+      "bytes": 7934,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_geometry_03/circumferential_band.npz",
+      "original_sha256": "7bfed21f5df7aa0850ba8063d99dd8bec44a8f0886ba5f1952329824999d01e7",
+      "sha256": "7bfed21f5df7aa0850ba8063d99dd8bec44a8f0886ba5f1952329824999d01e7",
+      "bytes": 38875,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_geometry_03/geometry_manifest.json",
+      "original_sha256": "e82d0462375b720a219e9dca65145b081583093304a7a9c9dae1fc87c1afc240",
+      "sha256": "9a5197d4169dcc401e1abd404018875f8c3c8b731e750a396755de23dc433c54",
+      "bytes": 2875,
+      "path_binding_changed": true
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_geometry_03/rigid_body.npz",
+      "original_sha256": "7c4ae92b07db81765f66cea0bb6b122dfd01fedb755b1a0b5da00fb27d9f87f6",
+      "sha256": "7c4ae92b07db81765f66cea0bb6b122dfd01fedb755b1a0b5da00fb27d9f87f6",
+      "bytes": 4407958,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_representative_law_proposal_v1.json",
+      "original_sha256": "aca17f9020101fdf0b921ed7a0cd183261cbe7700952f4093dcdfdfe37cdfc0f",
+      "sha256": "aca17f9020101fdf0b921ed7a0cd183261cbe7700952f4093dcdfdfe37cdfc0f",
+      "bytes": 2032,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_regrasp_01/cooked_finger_inspection/geometry_only.npz",
+      "original_sha256": "b660b79560873f899a91dac8d895588240433ea10883d4237f4c965734d6f05f",
+      "sha256": "b660b79560873f899a91dac8d895588240433ea10883d4237f4c965734d6f05f",
+      "bytes": 25959,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_regrasp_01/cooked_finger_inspection/geometry_only_manifest.json",
+      "original_sha256": "06243264d6eb413911d07ec1a6cd253a345b2b02ec12ced0711dee73d8101f02",
+      "sha256": "c063391e5cd35fad59d771ef00972615ae6b43ec7c5bf4301086efc9a62d7f12",
+      "bytes": 1023,
+      "path_binding_changed": true
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/representative_thread_geometry_clean_01/coupling_nut_standard_inner_thread.npz",
+      "original_sha256": "3ccb12b0177fc2367eb8b901c9688a0db5337acadea4b8dde329a17670b79a8f",
+      "sha256": "3ccb12b0177fc2367eb8b901c9688a0db5337acadea4b8dde329a17670b79a8f",
+      "bytes": 4632863,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_full_assembly_20260905/representative_thread_geometry_clean_01/geometry_manifest.json",
+      "original_sha256": "1cec6c31090bba87944640bd237bb86124925963a1bbcb7d5b8df40ce72d2602",
+      "sha256": "747704e26cccc1bef88b2afe8a781deca7734be732c74a99fbd9c24cea8b25e4",
+      "bytes": 2896,
+      "path_binding_changed": true
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_j35_engineering_v1/STEP_GEOMETRY_AUDIT.json",
+      "original_sha256": "0822a669608a42a69e909b4b49c40fd470db1a5f7e75b81d6e33e25d16699eb4",
+      "sha256": "0822a669608a42a69e909b4b49c40fd470db1a5f7e75b81d6e33e25d16699eb4",
+      "bytes": 13195,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_20FJ35SN_VISUAL.usdc",
+      "original_sha256": "c13587de80483d3be26dd53c2e625e2b9f98fd628fc87de5b446beb0a32ef117",
+      "sha256": "c13587de80483d3be26dd53c2e625e2b9f98fd628fc87de5b446beb0a32ef117",
+      "bytes": 3158010,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_BODY_VISUAL.usdc",
+      "original_sha256": "9449dfebc239a19ca844d994710582a404afb1a68aa454055bb614716f742874",
+      "sha256": "9449dfebc239a19ca844d994710582a404afb1a68aa454055bb614716f742874",
+      "bytes": 13325385,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_COUPLING_NUT_VISUAL.usdc",
+      "original_sha256": "7bf42ff2bfc07b8ecde271822b5ef030000745a7e86f923f28bf322b0fba727d",
+      "sha256": "7bf42ff2bfc07b8ecde271822b5ef030000745a7e86f923f28bf322b0fba727d",
+      "bytes": 219060,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_VISUAL.stl",
+      "original_sha256": "89bbf4ba3b8b5fb388276a378a820bb7547e676e97f0b9e2635b7862a86aa617",
+      "sha256": "89bbf4ba3b8b5fb388276a378a820bb7547e676e97f0b9e2635b7862a86aa617",
+      "bytes": 34351884,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_j35_free_split_tabletop_real_mass_resistance_0p020_v2/MANIFEST.json",
+      "original_sha256": "a3b15290fd69dee109defd401e1b74afb6e68f150a3c4e66e02bb7ed13c0b2ea",
+      "sha256": "a3b15290fd69dee109defd401e1b74afb6e68f150a3c4e66e02bb7ed13c0b2ea",
+      "bytes": 8496,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_j35_free_split_tabletop_real_mass_resistance_0p020_v2/TE_J35_FREE_SPLIT_PLUG_V1.usdc",
+      "original_sha256": "182ffa9f9bbddf582c221eb46854751bbaaa9c6413d43aac1d3eb055ebbc6007",
+      "sha256": "182ffa9f9bbddf582c221eb46854751bbaaa9c6413d43aac1d3eb055ebbc6007",
+      "bytes": 211774,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda",
+      "original_sha256": "4e220d97f3e12594c82dd6879cb584fd79cfd9264289a71e2383e43f53e6d46e",
+      "sha256": "09e021d2d468ecbe9c22e41b6240e29ead7a199eb7252abebbe4df449a6b3c24",
+      "bytes": 6026,
+      "path_binding_changed": true
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_sdf.usda",
+      "original_sha256": "df7090c873cc94e1ba14db8d040a4fffe082e5fcfc89fdfd17a000a056cf02ed",
+      "sha256": "365fe61a41a7cf51fcc12596e265f12d3c2a1a34f988e02861d6cc1a4d893626",
+      "bytes": 6281720,
+      "path_binding_changed": true
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_rgbd_observe_only_v1/near_side_rx180_run01/background/depth_m.npy",
+      "original_sha256": "54ee7f6cf1757897e1b4e4aa5a6ef0e74a455c51c6a0ad393aff38a515e9f1f6",
+      "sha256": "54ee7f6cf1757897e1b4e4aa5a6ef0e74a455c51c6a0ad393aff38a515e9f1f6",
+      "bytes": 3686528,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/isaac/te_visual_ft_assembly_v1/workflow_a/te_rgbd_observe_only_v1/near_side_rx180_run01/provider_input.json",
+      "original_sha256": "3e20e93904a079b32d40c8243566baa864f197ce910b3517f66eb24ca745946b",
+      "sha256": "3e20e93904a079b32d40c8243566baa864f197ce910b3517f66eb24ca745946b",
+      "bytes": 8743,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc",
+      "original_sha256": "234b7c0f14caeae1b8dffeabb8bae5a63e8b05d2463f3a7ff3e0c0d1d53f9eb6",
+      "sha256": "234b7c0f14caeae1b8dffeabb8bae5a63e8b05d2463f3a7ff3e0c0d1d53f9eb6",
+      "bytes": 81603949,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/te_connector_contact_repaired_20260911/install_model.py",
+      "original_sha256": "ddbb79aee999a8f375556d1ba0c9e4dc2462059ccb7186d04738983ea2c80260",
+      "sha256": "ddbb79aee999a8f375556d1ba0c9e4dc2462059ccb7186d04738983ea2c80260",
+      "bytes": 20676,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/te_connector_contact_repaired_20260911/validation_manifest.json",
+      "original_sha256": "444a5da83602eff26c3c72552a90afb8a1b1deff249bed37ed2ee01d437e4219",
+      "sha256": "444a5da83602eff26c3c72552a90afb8a1b1deff249bed37ed2ee01d437e4219",
+      "bytes": 296266,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vendor_cad_reference/te_deutsch_j35_equivalent_step_multiview_v1/source/c-ydts26f25-35pnv001-99-3d.stp",
+      "original_sha256": "27a8125236894d01d48ac12f8f777a0951f1926c5ed62a210d05f092d575301c",
+      "sha256": "27a8125236894d01d48ac12f8f777a0951f1926c5ed62a210d05f092d575301c",
+      "bytes": 3139192,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/D38999_20FJ35SN_VISUAL.obj",
+      "original_sha256": "20cbe594d5a664430248ed9df25beeaebcdb381eba570e0243fee0297934f744",
+      "sha256": "20cbe594d5a664430248ed9df25beeaebcdb381eba570e0243fee0297934f744",
+      "bytes": 21221643,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_0.png",
+      "original_sha256": "eeab16c676798f38db7b8c7543216a7e643de1e1674e6a6a44b3d7a11ffc934c",
+      "sha256": "eeab16c676798f38db7b8c7543216a7e643de1e1674e6a6a44b3d7a11ffc934c",
+      "bytes": 1631,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_1.png",
+      "original_sha256": "047197da7a438ae40e35c952ed9c99c1276496de9d895de3fe1352a81ce7935f",
+      "sha256": "047197da7a438ae40e35c952ed9c99c1276496de9d895de3fe1352a81ce7935f",
+      "bytes": 1876,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_10.png",
+      "original_sha256": "b2e08fb17e4704162ab30010e41bdc59d0682ff0689b225d97dadfcbf3b2081f",
+      "sha256": "b2e08fb17e4704162ab30010e41bdc59d0682ff0689b225d97dadfcbf3b2081f",
+      "bytes": 2129,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_11.png",
+      "original_sha256": "decafa60f88b464f92d11a33ef2013d5ab8c4de4ea4a02bf105ec238be672b95",
+      "sha256": "decafa60f88b464f92d11a33ef2013d5ab8c4de4ea4a02bf105ec238be672b95",
+      "bytes": 1855,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_12.png",
+      "original_sha256": "c3f366b9557a20ecfc8b8a2a0cce97b9d5a802ca22d74e7ca904de32301b1279",
+      "sha256": "c3f366b9557a20ecfc8b8a2a0cce97b9d5a802ca22d74e7ca904de32301b1279",
+      "bytes": 1988,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_13.png",
+      "original_sha256": "b64da814f045e83625d66af5e063a5c10cbe8a92ebd50b24c2320775aa212cac",
+      "sha256": "b64da814f045e83625d66af5e063a5c10cbe8a92ebd50b24c2320775aa212cac",
+      "bytes": 2149,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_14.png",
+      "original_sha256": "e4b7590e8a8f129e1df4835d58f78acd0b1e2d947852d3edf38a861c3956e838",
+      "sha256": "e4b7590e8a8f129e1df4835d58f78acd0b1e2d947852d3edf38a861c3956e838",
+      "bytes": 2019,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_15.png",
+      "original_sha256": "c207895b3e3d5cc1dc0f860ef3762b66b3cb95ae2f8cbdadb513bf99b4938f81",
+      "sha256": "c207895b3e3d5cc1dc0f860ef3762b66b3cb95ae2f8cbdadb513bf99b4938f81",
+      "bytes": 2099,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_16.png",
+      "original_sha256": "74fa0d770764cc9f00d9cd4b2e33609a2934a1529bfb09c7caf9f5c6dd46f49c",
+      "sha256": "74fa0d770764cc9f00d9cd4b2e33609a2934a1529bfb09c7caf9f5c6dd46f49c",
+      "bytes": 1803,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_17.png",
+      "original_sha256": "dc6d900ad2a881eaa8dfa4caecd2a3a45490c609384cd384b4b06e59167dbcb1",
+      "sha256": "dc6d900ad2a881eaa8dfa4caecd2a3a45490c609384cd384b4b06e59167dbcb1",
+      "bytes": 1886,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_18.png",
+      "original_sha256": "f296eb37364295a8dd818d699b5ee69e25a09755a7e465f060f8eff42ee4d598",
+      "sha256": "f296eb37364295a8dd818d699b5ee69e25a09755a7e465f060f8eff42ee4d598",
+      "bytes": 1946,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_19.png",
+      "original_sha256": "e5c3d9d2ab51abfe592c37e1bcbabd66029e52f955d1d86da882b53f27ef4ad4",
+      "sha256": "e5c3d9d2ab51abfe592c37e1bcbabd66029e52f955d1d86da882b53f27ef4ad4",
+      "bytes": 1934,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_2.png",
+      "original_sha256": "f25e32fc4aaba60c2a2fce79ee68f0c26ad24951478de55ebe0a19d14be94938",
+      "sha256": "f25e32fc4aaba60c2a2fce79ee68f0c26ad24951478de55ebe0a19d14be94938",
+      "bytes": 1931,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_20.png",
+      "original_sha256": "b8d55408a2e2a5c3365fba8432582ed2751b58e07595f744f3ddb5d7edefa18a",
+      "sha256": "b8d55408a2e2a5c3365fba8432582ed2751b58e07595f744f3ddb5d7edefa18a",
+      "bytes": 1838,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_21.png",
+      "original_sha256": "20eb3ad79dbb690a04ead632d92fb606321c2219f9145703a9c8855ef12b78de",
+      "sha256": "20eb3ad79dbb690a04ead632d92fb606321c2219f9145703a9c8855ef12b78de",
+      "bytes": 1939,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_22.png",
+      "original_sha256": "4dcc481534833f3eaf651241222be25385d0141b66e4b3ce458c550c74097386",
+      "sha256": "4dcc481534833f3eaf651241222be25385d0141b66e4b3ce458c550c74097386",
+      "bytes": 1944,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_23.png",
+      "original_sha256": "523abbfd6941a5507af2d5b5013457f187737859bfcc8e3c223db90e19bc32bc",
+      "sha256": "523abbfd6941a5507af2d5b5013457f187737859bfcc8e3c223db90e19bc32bc",
+      "bytes": 1887,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_24.png",
+      "original_sha256": "7731353341dea0a58f88f60c6b47f3d8430ba1429a9879206357277da13ab500",
+      "sha256": "7731353341dea0a58f88f60c6b47f3d8430ba1429a9879206357277da13ab500",
+      "bytes": 1804,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_25.png",
+      "original_sha256": "7c34c83bd3c9e321135d24e609fb530725ec42b60110fdaa7ea19cd7dca665c5",
+      "sha256": "7c34c83bd3c9e321135d24e609fb530725ec42b60110fdaa7ea19cd7dca665c5",
+      "bytes": 1695,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_26.png",
+      "original_sha256": "6b26549994a19fe363baf905886060f32e48701586e0cb69282bf928c25bf97f",
+      "sha256": "6b26549994a19fe363baf905886060f32e48701586e0cb69282bf928c25bf97f",
+      "bytes": 2090,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_27.png",
+      "original_sha256": "b3e5c3f19af2257354c5976c9b13603b70693f20e26f6fbe9b02c9f6cf78bb6a",
+      "sha256": "b3e5c3f19af2257354c5976c9b13603b70693f20e26f6fbe9b02c9f6cf78bb6a",
+      "bytes": 2026,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_28.png",
+      "original_sha256": "99d297133b5c4228cbcdd6cf60c33c511207ccc46b3314bbb492d2d08426cf8d",
+      "sha256": "99d297133b5c4228cbcdd6cf60c33c511207ccc46b3314bbb492d2d08426cf8d",
+      "bytes": 2147,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_29.png",
+      "original_sha256": "a7935a2c55667ef48f2533e110878f8365619cef614733cb9e43de7abff1df62",
+      "sha256": "a7935a2c55667ef48f2533e110878f8365619cef614733cb9e43de7abff1df62",
+      "bytes": 1985,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_3.png",
+      "original_sha256": "8dd1fc678ebd2a6fd924a787f2682013c721f2aad3245c2d243252a2cb244189",
+      "sha256": "8dd1fc678ebd2a6fd924a787f2682013c721f2aad3245c2d243252a2cb244189",
+      "bytes": 2185,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_30.png",
+      "original_sha256": "6e020d7d607518c81c9fd101e6e53b643b477d98bbbedc0eb9039dd46e8079d4",
+      "sha256": "6e020d7d607518c81c9fd101e6e53b643b477d98bbbedc0eb9039dd46e8079d4",
+      "bytes": 1853,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_31.png",
+      "original_sha256": "a3e65c2b059e58811b2ee9cb7a5064651b63e07b9f99ec97f793962765075d04",
+      "sha256": "a3e65c2b059e58811b2ee9cb7a5064651b63e07b9f99ec97f793962765075d04",
+      "bytes": 2123,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_32.png",
+      "original_sha256": "092d7bcf6259cdf3fe5e0a0abfb8ecfa09c8f950b165c0288db6c4aa81da7ec6",
+      "sha256": "092d7bcf6259cdf3fe5e0a0abfb8ecfa09c8f950b165c0288db6c4aa81da7ec6",
+      "bytes": 2182,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_33.png",
+      "original_sha256": "60668b3d22f061119727945eb35514da0f30215adeb09040a19f0ecbb1215c30",
+      "sha256": "60668b3d22f061119727945eb35514da0f30215adeb09040a19f0ecbb1215c30",
+      "bytes": 2045,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_34.png",
+      "original_sha256": "7e5e4cb9fda64fef31a70a6308e49607ade47d71b7015a1c2ddc518825f10c9e",
+      "sha256": "7e5e4cb9fda64fef31a70a6308e49607ade47d71b7015a1c2ddc518825f10c9e",
+      "bytes": 1870,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_35.png",
+      "original_sha256": "260cedec315a0ebbeea61e707bc142002b6b21b4e511d34f052caa20a32aa37a",
+      "sha256": "260cedec315a0ebbeea61e707bc142002b6b21b4e511d34f052caa20a32aa37a",
+      "bytes": 1997,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_36.png",
+      "original_sha256": "ff33475c12a7df109cef830c242539ad2fdd468a3048a200b3f6e6c917ce2763",
+      "sha256": "ff33475c12a7df109cef830c242539ad2fdd468a3048a200b3f6e6c917ce2763",
+      "bytes": 2124,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_37.png",
+      "original_sha256": "6486e0f04de88ddbaa379f18875ecee5942a7fc7b531d95c2d59b0e649afd512",
+      "sha256": "6486e0f04de88ddbaa379f18875ecee5942a7fc7b531d95c2d59b0e649afd512",
+      "bytes": 2088,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_38.png",
+      "original_sha256": "5bcae2a133b9f2f9f0b24373ad51de4aab22ebfa265115a647403301082d2b05",
+      "sha256": "5bcae2a133b9f2f9f0b24373ad51de4aab22ebfa265115a647403301082d2b05",
+      "bytes": 2173,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_39.png",
+      "original_sha256": "fa8618be7de2d7b245d32b0ee934916b1b6d842218febc4249767910ecbd2f7a",
+      "sha256": "fa8618be7de2d7b245d32b0ee934916b1b6d842218febc4249767910ecbd2f7a",
+      "bytes": 1931,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_4.png",
+      "original_sha256": "7da4cb3f3ec671fd4e03d822ea8029bafbbd9cf7aa61048e7d3bf58e7d28824b",
+      "sha256": "7da4cb3f3ec671fd4e03d822ea8029bafbbd9cf7aa61048e7d3bf58e7d28824b",
+      "bytes": 2092,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_40.png",
+      "original_sha256": "c08f09db311c647c188feafce40f44dd30f8bb38ef9a55af361e15f2463db70b",
+      "sha256": "c08f09db311c647c188feafce40f44dd30f8bb38ef9a55af361e15f2463db70b",
+      "bytes": 1878,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_41.png",
+      "original_sha256": "ac1089f06f9f04e276c2700bb769f2b1b71ded55d42f0ac2426a48a6ba36eb6f",
+      "sha256": "ac1089f06f9f04e276c2700bb769f2b1b71ded55d42f0ac2426a48a6ba36eb6f",
+      "bytes": 1631,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_5.png",
+      "original_sha256": "b136a12f944c75206beeae25f92ea2ae030c3b860b1cf1cb25351cf95b884894",
+      "sha256": "b136a12f944c75206beeae25f92ea2ae030c3b860b1cf1cb25351cf95b884894",
+      "bytes": 2122,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_6.png",
+      "original_sha256": "756defc088ca7f7d85a50e513a43f9990823645fd5ef6f3acb5d0572dac28ec5",
+      "sha256": "756defc088ca7f7d85a50e513a43f9990823645fd5ef6f3acb5d0572dac28ec5",
+      "bytes": 2001,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_7.png",
+      "original_sha256": "b610289ea4d29145c6b53a1b98683d94c6cfa2ca2ae8f2eafe08eca127fce87c",
+      "sha256": "b610289ea4d29145c6b53a1b98683d94c6cfa2ca2ae8f2eafe08eca127fce87c",
+      "bytes": 1870,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_8.png",
+      "original_sha256": "796a4c8003c6f15ab973f7e32a64c51180b7fd3241acc9f2c88295c966911fe0",
+      "sha256": "796a4c8003c6f15ab973f7e32a64c51180b7fd3241acc9f2c88295c966911fe0",
+      "bytes": 2053,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/mask_9.png",
+      "original_sha256": "c9e98f777660f6101d02402bde03576b689b984e03896816cd4a2615470248ff",
+      "sha256": "c9e98f777660f6101d02402bde03576b689b984e03896816cd4a2615470248ff",
+      "bytes": 2178,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_0.png",
+      "original_sha256": "1402736e4e630befd50722a20759fe586efb4aa7dc549636ac14a72b66d0e501",
+      "sha256": "1402736e4e630befd50722a20759fe586efb4aa7dc549636ac14a72b66d0e501",
+      "bytes": 127101,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_1.png",
+      "original_sha256": "f563314da73bca1d04c557a0c3c5c3a8f90b9ec1195e8604707b1f66537dfb86",
+      "sha256": "f563314da73bca1d04c557a0c3c5c3a8f90b9ec1195e8604707b1f66537dfb86",
+      "bytes": 142399,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_10.png",
+      "original_sha256": "c11c21f9b901154f2bd25f52e86015a925c9249af94c68a0fe1ad3637fd0a5d7",
+      "sha256": "c11c21f9b901154f2bd25f52e86015a925c9249af94c68a0fe1ad3637fd0a5d7",
+      "bytes": 145457,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_11.png",
+      "original_sha256": "8c04263f82910cfe24e20768c38d358178f5066534170789fde3ced5ff96c878",
+      "sha256": "8c04263f82910cfe24e20768c38d358178f5066534170789fde3ced5ff96c878",
+      "bytes": 149202,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_12.png",
+      "original_sha256": "4c5c61664bd512eb7fcb2789dba7de98ac292be0413657cc812b32b05d89f6c9",
+      "sha256": "4c5c61664bd512eb7fcb2789dba7de98ac292be0413657cc812b32b05d89f6c9",
+      "bytes": 146833,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_13.png",
+      "original_sha256": "59fd17dc4c13ff8891a6f44c5b19bc1b683961074206e15f0abaa6fd0531b02d",
+      "sha256": "59fd17dc4c13ff8891a6f44c5b19bc1b683961074206e15f0abaa6fd0531b02d",
+      "bytes": 149972,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_14.png",
+      "original_sha256": "2c899c87e8b209163b4b8b4295861ee4fa3b9a93f099b93fec6c230e77594995",
+      "sha256": "2c899c87e8b209163b4b8b4295861ee4fa3b9a93f099b93fec6c230e77594995",
+      "bytes": 149509,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_15.png",
+      "original_sha256": "3099c04514bfa6589e94c78a1937b11eb53b18455f64d218a0b2d09d5fc6ce30",
+      "sha256": "3099c04514bfa6589e94c78a1937b11eb53b18455f64d218a0b2d09d5fc6ce30",
+      "bytes": 144360,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_16.png",
+      "original_sha256": "6572a7d5e2a2b13fce525bb13f8e2b8287cc94c2ab069801b9ff46491157c2ec",
+      "sha256": "6572a7d5e2a2b13fce525bb13f8e2b8287cc94c2ab069801b9ff46491157c2ec",
+      "bytes": 149473,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_17.png",
+      "original_sha256": "02b80e5f41c8f60dd6ea29885ab24d6a7aed814f084c7c4c9cc7f7dbdc495446",
+      "sha256": "02b80e5f41c8f60dd6ea29885ab24d6a7aed814f084c7c4c9cc7f7dbdc495446",
+      "bytes": 148277,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_18.png",
+      "original_sha256": "d8af40fc94ed4dca3a3468cd37685aee28a2e609d53c554db38edb4a2080fe23",
+      "sha256": "d8af40fc94ed4dca3a3468cd37685aee28a2e609d53c554db38edb4a2080fe23",
+      "bytes": 149727,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_19.png",
+      "original_sha256": "8a8a898551216e6ab4568f210373cf6389184c999b4382dc8e0da2a54b33b845",
+      "sha256": "8a8a898551216e6ab4568f210373cf6389184c999b4382dc8e0da2a54b33b845",
+      "bytes": 149934,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_2.png",
+      "original_sha256": "9dc9f7e12cd7942697641feb1b05ee4afc5197eb042396f2dc88ab2298cf132d",
+      "sha256": "9dc9f7e12cd7942697641feb1b05ee4afc5197eb042396f2dc88ab2298cf132d",
+      "bytes": 142084,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_20.png",
+      "original_sha256": "7c59f67be815ba1f7c830f0c79be2548b2e256b9de3dcf9460ff1596878cd4a2",
+      "sha256": "7c59f67be815ba1f7c830f0c79be2548b2e256b9de3dcf9460ff1596878cd4a2",
+      "bytes": 137387,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_21.png",
+      "original_sha256": "ce64f79f23d475367e063a97cc4e5dbc382f6782d18576ee3999c7b0ba23d1e9",
+      "sha256": "ce64f79f23d475367e063a97cc4e5dbc382f6782d18576ee3999c7b0ba23d1e9",
+      "bytes": 149365,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_22.png",
+      "original_sha256": "937ceb2377ade125bb5ad29c41ed71233e8c6e5be7678ca387e64b07efbc7fe5",
+      "sha256": "937ceb2377ade125bb5ad29c41ed71233e8c6e5be7678ca387e64b07efbc7fe5",
+      "bytes": 149501,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_23.png",
+      "original_sha256": "241b4ede1dc355151949a8dd407dda16be2b5f397b5471c6c19eb0ab7b305250",
+      "sha256": "241b4ede1dc355151949a8dd407dda16be2b5f397b5471c6c19eb0ab7b305250",
+      "bytes": 149067,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_24.png",
+      "original_sha256": "5c6ad047a8ffb5d0b5f8546f71d32a167f8bdbe7bc3bd492702b880fc4c0ce25",
+      "sha256": "5c6ad047a8ffb5d0b5f8546f71d32a167f8bdbe7bc3bd492702b880fc4c0ce25",
+      "bytes": 149554,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_25.png",
+      "original_sha256": "5f28f5f74192c2621372b1b819c7b4658bd7200548477cd01daa915e70afcf1d",
+      "sha256": "5f28f5f74192c2621372b1b819c7b4658bd7200548477cd01daa915e70afcf1d",
+      "bytes": 142587,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_26.png",
+      "original_sha256": "d1f409535f369d3dca375c0bc869449cb38488647d8e8832036e602d03e1db36",
+      "sha256": "d1f409535f369d3dca375c0bc869449cb38488647d8e8832036e602d03e1db36",
+      "bytes": 144740,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_27.png",
+      "original_sha256": "95b41b3d07d38c38d194df33ddc130d85e7f040691b32db65d2ab356bbbfc414",
+      "sha256": "95b41b3d07d38c38d194df33ddc130d85e7f040691b32db65d2ab356bbbfc414",
+      "bytes": 149074,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_28.png",
+      "original_sha256": "d7ba43bb3b364c5021918e9d419a17c98dea1ab606b4d4e27f967c9f8a0f023f",
+      "sha256": "d7ba43bb3b364c5021918e9d419a17c98dea1ab606b4d4e27f967c9f8a0f023f",
+      "bytes": 149989,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_29.png",
+      "original_sha256": "67db181fc0fcbc0bb0ca6148cfb357b0dfc3aec811578fc844c16e2fe95a49fb",
+      "sha256": "67db181fc0fcbc0bb0ca6148cfb357b0dfc3aec811578fc844c16e2fe95a49fb",
+      "bytes": 146952,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_3.png",
+      "original_sha256": "bef7683a1b6b579fce1fb25d646366d9c9dade0f07a5e3ccc09a60e72bc14c6e",
+      "sha256": "bef7683a1b6b579fce1fb25d646366d9c9dade0f07a5e3ccc09a60e72bc14c6e",
+      "bytes": 149629,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_30.png",
+      "original_sha256": "8c6f94bb2cf3e2c05a37b0a825b1e759c9ddabeb10d33bfa5b62bd05087d5667",
+      "sha256": "8c6f94bb2cf3e2c05a37b0a825b1e759c9ddabeb10d33bfa5b62bd05087d5667",
+      "bytes": 148194,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_31.png",
+      "original_sha256": "a192a413cf3da18cadee0bbc2d14b5ebc76de442527ea58fd42f994f451e843f",
+      "sha256": "a192a413cf3da18cadee0bbc2d14b5ebc76de442527ea58fd42f994f451e843f",
+      "bytes": 144407,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_32.png",
+      "original_sha256": "f56b7aaacb98ca065bd44e3a313211c4d4a48fcac66e2524df505c17f29bb9ec",
+      "sha256": "f56b7aaacb98ca065bd44e3a313211c4d4a48fcac66e2524df505c17f29bb9ec",
+      "bytes": 150600,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_33.png",
+      "original_sha256": "ff5ef673b5f5dda001f27370222e05282bb0347e877786639b8b1e10abc02f5d",
+      "sha256": "ff5ef673b5f5dda001f27370222e05282bb0347e877786639b8b1e10abc02f5d",
+      "bytes": 148684,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_34.png",
+      "original_sha256": "7a223a9f547635d3a620cd2dc7b13ae2b785401c4d5c082bd96fd9950d98419a",
+      "sha256": "7a223a9f547635d3a620cd2dc7b13ae2b785401c4d5c082bd96fd9950d98419a",
+      "bytes": 148752,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_35.png",
+      "original_sha256": "5692f9387fec6ee8ed4c38726b55cecc1771960bd48cdea9c1f087e490a9c90b",
+      "sha256": "5692f9387fec6ee8ed4c38726b55cecc1771960bd48cdea9c1f087e490a9c90b",
+      "bytes": 145661,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_36.png",
+      "original_sha256": "5521205281cd19624f775bc1b25027e889be58dc213936474fc52a0f45dc07f5",
+      "sha256": "5521205281cd19624f775bc1b25027e889be58dc213936474fc52a0f45dc07f5",
+      "bytes": 145101,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_37.png",
+      "original_sha256": "d0fc2436900cfc36b90b644d7e29933588fee6b83b8e5c295339d2a9b378c78a",
+      "sha256": "d0fc2436900cfc36b90b644d7e29933588fee6b83b8e5c295339d2a9b378c78a",
+      "bytes": 148586,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_38.png",
+      "original_sha256": "cd06fdd5b6de4fdf0841ce63c5451b0694fe412d54fa570e2bcd436216180398",
+      "sha256": "cd06fdd5b6de4fdf0841ce63c5451b0694fe412d54fa570e2bcd436216180398",
+      "bytes": 149994,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_39.png",
+      "original_sha256": "c15837f70d8b9f8ecd8941c113a5b45fa6d146e60abfa2bc158e0350f03e1414",
+      "sha256": "c15837f70d8b9f8ecd8941c113a5b45fa6d146e60abfa2bc158e0350f03e1414",
+      "bytes": 142208,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_4.png",
+      "original_sha256": "11e4bee8870b9c7d83a09b36076a2f9104e75a148ce3ffc4cbfcb381f8c5d297",
+      "sha256": "11e4bee8870b9c7d83a09b36076a2f9104e75a148ce3ffc4cbfcb381f8c5d297",
+      "bytes": 148624,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_40.png",
+      "original_sha256": "7a3fc5ab96b31600e0fa0cc34e49ef8db2590f44550b397943951c54665c8425",
+      "sha256": "7a3fc5ab96b31600e0fa0cc34e49ef8db2590f44550b397943951c54665c8425",
+      "bytes": 141918,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_41.png",
+      "original_sha256": "3b054b700ca7a1e9635ead4ff484a1cb032c017cb228c51903cd42f0fd0678f5",
+      "sha256": "3b054b700ca7a1e9635ead4ff484a1cb032c017cb228c51903cd42f0fd0678f5",
+      "bytes": 127031,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_5.png",
+      "original_sha256": "5157f1fdb03ec7606dac9d26cc2c79b39e9957254d633ee921dec2ca5cfc6145",
+      "sha256": "5157f1fdb03ec7606dac9d26cc2c79b39e9957254d633ee921dec2ca5cfc6145",
+      "bytes": 144158,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_6.png",
+      "original_sha256": "44679263717770bac84a09ed77c72ea15ea450d00077a5be2b7561cc0879b956",
+      "sha256": "44679263717770bac84a09ed77c72ea15ea450d00077a5be2b7561cc0879b956",
+      "bytes": 145953,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_7.png",
+      "original_sha256": "262250534f66b0e65d68227c2e3dd3efdcb44a8a1e730ad4d26cd4ecaf681509",
+      "sha256": "262250534f66b0e65d68227c2e3dd3efdcb44a8a1e730ad4d26cd4ecaf681509",
+      "bytes": 148163,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_8.png",
+      "original_sha256": "1095b46b581f313b9dba393c3c1da87683717be23cb9ff066e47eb5de1ab86a0",
+      "sha256": "1095b46b581f313b9dba393c3c1da87683717be23cb9ff066e47eb5de1ab86a0",
+      "bytes": 148260,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/rgb_9.png",
+      "original_sha256": "dea951255095bb2d7d4d1770a9f0ddbd1191336288f70a0d3a97558d8e87cd86",
+      "sha256": "dea951255095bb2d7d4d1770a9f0ddbd1191336288f70a0d3a97558d8e87cd86",
+      "bytes": 150153,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_0.npy",
+      "original_sha256": "7e9d638a86326ac968255785d2bf81038d69db2a2fd8e91a1d606dea418fedc8",
+      "sha256": "7e9d638a86326ac968255785d2bf81038d69db2a2fd8e91a1d606dea418fedc8",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_1.npy",
+      "original_sha256": "8f44a849504c8056272408fbc6e31ca63a3eba0de98480b9a9326e2a0b4e488f",
+      "sha256": "8f44a849504c8056272408fbc6e31ca63a3eba0de98480b9a9326e2a0b4e488f",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_10.npy",
+      "original_sha256": "292ad04e38a828c5cdf5937c56ab31221f34381ddd1f1d25e11b38cab8bc2b82",
+      "sha256": "292ad04e38a828c5cdf5937c56ab31221f34381ddd1f1d25e11b38cab8bc2b82",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_11.npy",
+      "original_sha256": "29ff7b2bea8e88e6b8f30730e5e67fff6a09461d74209c815cc0a98f38305abc",
+      "sha256": "29ff7b2bea8e88e6b8f30730e5e67fff6a09461d74209c815cc0a98f38305abc",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_12.npy",
+      "original_sha256": "fddd0ab8dafb914b3016c851c9dcacb2a5df017aa0ba87ded800036603758966",
+      "sha256": "fddd0ab8dafb914b3016c851c9dcacb2a5df017aa0ba87ded800036603758966",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_13.npy",
+      "original_sha256": "358690216a141826438d8d268ecd9afac4f6536fe48ea07c90a788dfe15371ed",
+      "sha256": "358690216a141826438d8d268ecd9afac4f6536fe48ea07c90a788dfe15371ed",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_14.npy",
+      "original_sha256": "7e7d9c79c1a29842db9f7973318927e7fe5befbb70549e304a06d85d2efd7419",
+      "sha256": "7e7d9c79c1a29842db9f7973318927e7fe5befbb70549e304a06d85d2efd7419",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_15.npy",
+      "original_sha256": "b1b46f52bcb0edf3481c57db8fea4edcff4e08b9890673de65affdc364582666",
+      "sha256": "b1b46f52bcb0edf3481c57db8fea4edcff4e08b9890673de65affdc364582666",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_16.npy",
+      "original_sha256": "13535c20a8f588e08401ae7dd979c3abe2dd5deace22894b18ee3f8f3d8bfa17",
+      "sha256": "13535c20a8f588e08401ae7dd979c3abe2dd5deace22894b18ee3f8f3d8bfa17",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_17.npy",
+      "original_sha256": "6c2a5b974fe47769201684e2bf572e3b0962b0df27ba81a8670bfa1b062f7e79",
+      "sha256": "6c2a5b974fe47769201684e2bf572e3b0962b0df27ba81a8670bfa1b062f7e79",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_18.npy",
+      "original_sha256": "d66fba0a07bce9f07c7e6a87922fa5efc7243c34d13e1b57b0a596c332b81833",
+      "sha256": "d66fba0a07bce9f07c7e6a87922fa5efc7243c34d13e1b57b0a596c332b81833",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_19.npy",
+      "original_sha256": "3223987860bf602ce3e35b9997960bea25bc539451093b08360d5fcf804cbf18",
+      "sha256": "3223987860bf602ce3e35b9997960bea25bc539451093b08360d5fcf804cbf18",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_2.npy",
+      "original_sha256": "1a56402189a9a10dc800521587839dab0a3ab5d9be3a0d8400b0814e589dd82e",
+      "sha256": "1a56402189a9a10dc800521587839dab0a3ab5d9be3a0d8400b0814e589dd82e",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_20.npy",
+      "original_sha256": "9ba8409a2ebd5bdb9930ceaa99f27ea6b3453cb32488e4fa0488c73024eb0d13",
+      "sha256": "9ba8409a2ebd5bdb9930ceaa99f27ea6b3453cb32488e4fa0488c73024eb0d13",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_21.npy",
+      "original_sha256": "dd61e3dd813630be67077adf544ace5c99c98094e7595a776601670fea79a6d1",
+      "sha256": "dd61e3dd813630be67077adf544ace5c99c98094e7595a776601670fea79a6d1",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_22.npy",
+      "original_sha256": "69f510f1bed0b7459b0af58fd0fb7419940044b5e175f57c86b3be21ea9784b2",
+      "sha256": "69f510f1bed0b7459b0af58fd0fb7419940044b5e175f57c86b3be21ea9784b2",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_23.npy",
+      "original_sha256": "1589092e2ea36d55044f4dd0bc406797c80eab86f707df982b2333db7bdb15bc",
+      "sha256": "1589092e2ea36d55044f4dd0bc406797c80eab86f707df982b2333db7bdb15bc",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_24.npy",
+      "original_sha256": "5a4db718142027ae1383dfc72d74da08a0ce9af4e19babda94c767f1c7adbb2f",
+      "sha256": "5a4db718142027ae1383dfc72d74da08a0ce9af4e19babda94c767f1c7adbb2f",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_25.npy",
+      "original_sha256": "9b1840b01c4a9e58dcb328d11b1f090c723d51a51cbf6d64589a25de6cb3749b",
+      "sha256": "9b1840b01c4a9e58dcb328d11b1f090c723d51a51cbf6d64589a25de6cb3749b",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_26.npy",
+      "original_sha256": "9d6b864ebd29e908c86bae48e2b27d63dfb53a466f0a306df3f3bf4a358db2b1",
+      "sha256": "9d6b864ebd29e908c86bae48e2b27d63dfb53a466f0a306df3f3bf4a358db2b1",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_27.npy",
+      "original_sha256": "5c822ceeb5830c51fc8c385e1033e8ab15fc103364195422ab16b9c8ffeb3910",
+      "sha256": "5c822ceeb5830c51fc8c385e1033e8ab15fc103364195422ab16b9c8ffeb3910",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_28.npy",
+      "original_sha256": "0712a3b9561cc58c3ad30cc014232f12b799eaf99540f6b167561a6efc7fb521",
+      "sha256": "0712a3b9561cc58c3ad30cc014232f12b799eaf99540f6b167561a6efc7fb521",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_29.npy",
+      "original_sha256": "f63dfbc0a3b08e117c5ef2714867760ce5f7743b623a7f3b2adedde9e9e05816",
+      "sha256": "f63dfbc0a3b08e117c5ef2714867760ce5f7743b623a7f3b2adedde9e9e05816",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_3.npy",
+      "original_sha256": "5888ce2779c9972263dcdbf07ad8c6e666028e03933ab1f7406238d3f9d52f28",
+      "sha256": "5888ce2779c9972263dcdbf07ad8c6e666028e03933ab1f7406238d3f9d52f28",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_30.npy",
+      "original_sha256": "0355eede6e1b95c258195399a8366de915de42719910cb69aff4fe83d3784b6f",
+      "sha256": "0355eede6e1b95c258195399a8366de915de42719910cb69aff4fe83d3784b6f",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_31.npy",
+      "original_sha256": "7adc73b21628b0d8251f3a8a943fc097ed3739a77e6a1b44726fddbe55d42e32",
+      "sha256": "7adc73b21628b0d8251f3a8a943fc097ed3739a77e6a1b44726fddbe55d42e32",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_32.npy",
+      "original_sha256": "a36ed44d655aeeb908de18f665461084202701b1b788b85f20a04d142a2b6ebb",
+      "sha256": "a36ed44d655aeeb908de18f665461084202701b1b788b85f20a04d142a2b6ebb",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_33.npy",
+      "original_sha256": "7662a839c44f3f38f15806fa1d5b4ee505df045935bcf271bbc4aaf26cd8ba62",
+      "sha256": "7662a839c44f3f38f15806fa1d5b4ee505df045935bcf271bbc4aaf26cd8ba62",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_34.npy",
+      "original_sha256": "c268e93f0817093d41757b15bb042bc64b6837e4aab1333aebf3426c2822b64b",
+      "sha256": "c268e93f0817093d41757b15bb042bc64b6837e4aab1333aebf3426c2822b64b",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_35.npy",
+      "original_sha256": "2a3f97416b13639eb6a83663c5f0f911957557f91974efee98a20997d65a0ca0",
+      "sha256": "2a3f97416b13639eb6a83663c5f0f911957557f91974efee98a20997d65a0ca0",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_36.npy",
+      "original_sha256": "9fdba758327979b0dd593ebcf72b7c7c54031fde54195bf9038ef431aeab9bdc",
+      "sha256": "9fdba758327979b0dd593ebcf72b7c7c54031fde54195bf9038ef431aeab9bdc",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_37.npy",
+      "original_sha256": "42830b41a1d02aa17e6767474c0c795ad5bd4af593649612908b9b325ffb4216",
+      "sha256": "42830b41a1d02aa17e6767474c0c795ad5bd4af593649612908b9b325ffb4216",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_38.npy",
+      "original_sha256": "4341b64e54ebf2b06922278fdf760bf5e5619d7e05a71788ced6153975e73e22",
+      "sha256": "4341b64e54ebf2b06922278fdf760bf5e5619d7e05a71788ced6153975e73e22",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_39.npy",
+      "original_sha256": "c2bd687cc7cb1ea08328af28f8645b7d275dec5e12b5f45558e5b760481868ea",
+      "sha256": "c2bd687cc7cb1ea08328af28f8645b7d275dec5e12b5f45558e5b760481868ea",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_4.npy",
+      "original_sha256": "c5075cf77cff3c7f6c2a406d78ae1c3588961aee872548cfb3f1a19b080cbfe2",
+      "sha256": "c5075cf77cff3c7f6c2a406d78ae1c3588961aee872548cfb3f1a19b080cbfe2",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_40.npy",
+      "original_sha256": "7cab67c7ab301d8c97adc6d2ca86a2fb1b67b4a4926710d072c7ddc3d0a8097e",
+      "sha256": "7cab67c7ab301d8c97adc6d2ca86a2fb1b67b4a4926710d072c7ddc3d0a8097e",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_41.npy",
+      "original_sha256": "43d2cbc63c479d2fd8a61ec44469927f834e045bad28a3cc84ba290dd3265d36",
+      "sha256": "43d2cbc63c479d2fd8a61ec44469927f834e045bad28a3cc84ba290dd3265d36",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_5.npy",
+      "original_sha256": "2695667dbfc242bd851c0c5aa6489a4f3c12fecb6d815fb6899ddcec947e6ea8",
+      "sha256": "2695667dbfc242bd851c0c5aa6489a4f3c12fecb6d815fb6899ddcec947e6ea8",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_6.npy",
+      "original_sha256": "743bb2ed9cc3f3e7a239f3c03394a012b87bd3b950593fe2030cb6dc7e970708",
+      "sha256": "743bb2ed9cc3f3e7a239f3c03394a012b87bd3b950593fe2030cb6dc7e970708",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_7.npy",
+      "original_sha256": "4d33206abf954e4afd54d072345ba530d336668cdbf88f7a48f9cd7043228fc3",
+      "sha256": "4d33206abf954e4afd54d072345ba530d336668cdbf88f7a48f9cd7043228fc3",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_8.npy",
+      "original_sha256": "2998b4f0c52ea7dacf1632980d03b45a0ce0064aefad0514104a6e0f87b951cd",
+      "sha256": "2998b4f0c52ea7dacf1632980d03b45a0ce0064aefad0514104a6e0f87b951cd",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates/xyz_9.npy",
+      "original_sha256": "86cae87a16cf49c7524fbdd5ab4e89c540886e6bd53310f2d2107263a696afdf",
+      "sha256": "86cae87a16cf49c7524fbdd5ab4e89c540886e6bd53310f2d2107263a696afdf",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/D38999_26FJ35PN_VISUAL.obj",
+      "original_sha256": "770d62f68a56a8ec6c88ce4044019b45ef1e8b7269f694ac9813fa376a703bda",
+      "sha256": "770d62f68a56a8ec6c88ce4044019b45ef1e8b7269f694ac9813fa376a703bda",
+      "bytes": 28323605,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_0.png",
+      "original_sha256": "599701ba3deab870ffc1ad58264d2624f678434e924b47b1b6f33e37fdab4449",
+      "sha256": "599701ba3deab870ffc1ad58264d2624f678434e924b47b1b6f33e37fdab4449",
+      "bytes": 1619,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_1.png",
+      "original_sha256": "a20e178e5b293a7623e81704ca41a42f44a0f48ed7287d8285be6e5078f74d89",
+      "sha256": "a20e178e5b293a7623e81704ca41a42f44a0f48ed7287d8285be6e5078f74d89",
+      "bytes": 1809,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_10.png",
+      "original_sha256": "732803c149d89b6571b5689717e4a58fc5c288bbab90a65d8124c0e4b9e4f90a",
+      "sha256": "732803c149d89b6571b5689717e4a58fc5c288bbab90a65d8124c0e4b9e4f90a",
+      "bytes": 1803,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_11.png",
+      "original_sha256": "0e4f32a103de7cab6c8a1c9fe498c261e85ce975e52b78cf2c865a3f5de6ff9f",
+      "sha256": "0e4f32a103de7cab6c8a1c9fe498c261e85ce975e52b78cf2c865a3f5de6ff9f",
+      "bytes": 1841,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_12.png",
+      "original_sha256": "7bc22a60b31c15e8ed1fc6320b5b25249bbfe59483d75a270b837f3edbbdef07",
+      "sha256": "7bc22a60b31c15e8ed1fc6320b5b25249bbfe59483d75a270b837f3edbbdef07",
+      "bytes": 1913,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_13.png",
+      "original_sha256": "3e4a139553b3674393d0e0380ad9c62fe67121cc4d9beb4af31b2d191e57de9f",
+      "sha256": "3e4a139553b3674393d0e0380ad9c62fe67121cc4d9beb4af31b2d191e57de9f",
+      "bytes": 1934,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_14.png",
+      "original_sha256": "29b67f3e3726e7b3bee62a5a9d9b97ebe67abbe94e1843fb2756303ef93523f5",
+      "sha256": "29b67f3e3726e7b3bee62a5a9d9b97ebe67abbe94e1843fb2756303ef93523f5",
+      "bytes": 1860,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_15.png",
+      "original_sha256": "ce6550897d6b71d221b5f8fd8e51b4f3bc1891f910fe2beca02d8170f34fa34f",
+      "sha256": "ce6550897d6b71d221b5f8fd8e51b4f3bc1891f910fe2beca02d8170f34fa34f",
+      "bytes": 1787,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_16.png",
+      "original_sha256": "ac9e44ef19ede2908887f91b0ac8688252599da88905bf98eccb438ba75c85c3",
+      "sha256": "ac9e44ef19ede2908887f91b0ac8688252599da88905bf98eccb438ba75c85c3",
+      "bytes": 1831,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_17.png",
+      "original_sha256": "d48ca3013a5e7055eaa6932cc51b1b63ac130a2558998cbd5ddb4ab6ba6489b4",
+      "sha256": "d48ca3013a5e7055eaa6932cc51b1b63ac130a2558998cbd5ddb4ab6ba6489b4",
+      "bytes": 1806,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_18.png",
+      "original_sha256": "0e344334d45fae939e85bc4237c15c85801962476208acd268dbbfab99f180ae",
+      "sha256": "0e344334d45fae939e85bc4237c15c85801962476208acd268dbbfab99f180ae",
+      "bytes": 1824,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_19.png",
+      "original_sha256": "898dd26051b486f84a73f3f19c11ca22b33cd001e89471717bcf4e13f8f54e0d",
+      "sha256": "898dd26051b486f84a73f3f19c11ca22b33cd001e89471717bcf4e13f8f54e0d",
+      "bytes": 1925,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_2.png",
+      "original_sha256": "45a94989a336186c16dfbccbc0d3bb2cf989cfd595ee1f6f59755ee9029305e0",
+      "sha256": "45a94989a336186c16dfbccbc0d3bb2cf989cfd595ee1f6f59755ee9029305e0",
+      "bytes": 1860,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_20.png",
+      "original_sha256": "15d4b66b742cc6060006a09debb5c7aff4e7a7bb05ea2732cf5bf1c693ce2530",
+      "sha256": "15d4b66b742cc6060006a09debb5c7aff4e7a7bb05ea2732cf5bf1c693ce2530",
+      "bytes": 1956,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_21.png",
+      "original_sha256": "ef7c7d61c6b69399938fc11a34e950a37f946f4611f2ea0a94783dec3b5c1ae9",
+      "sha256": "ef7c7d61c6b69399938fc11a34e950a37f946f4611f2ea0a94783dec3b5c1ae9",
+      "bytes": 1929,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_22.png",
+      "original_sha256": "d76c5a891be8dcce07836208db748e932d892fc52a4eba8164c0776cbef63765",
+      "sha256": "d76c5a891be8dcce07836208db748e932d892fc52a4eba8164c0776cbef63765",
+      "bytes": 1824,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_23.png",
+      "original_sha256": "4e7b837ef81425ccaf20c47660e72287a7d8f5beec112d297d6e0e4f8bf3f1db",
+      "sha256": "4e7b837ef81425ccaf20c47660e72287a7d8f5beec112d297d6e0e4f8bf3f1db",
+      "bytes": 1805,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_24.png",
+      "original_sha256": "945328b60b6025c4ef2bbdbc7c66f920a19b6e29b77a60d3522d412d051201bc",
+      "sha256": "945328b60b6025c4ef2bbdbc7c66f920a19b6e29b77a60d3522d412d051201bc",
+      "bytes": 1833,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_25.png",
+      "original_sha256": "0b3c4520b4951ef63c332700b665fccdb32034004b102113be927c4a73f5ca5e",
+      "sha256": "0b3c4520b4951ef63c332700b665fccdb32034004b102113be927c4a73f5ca5e",
+      "bytes": 1811,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_26.png",
+      "original_sha256": "56433912a9e21d56ebfa0e0415ad16022681f355b91ca1ba28927558de4b9d17",
+      "sha256": "56433912a9e21d56ebfa0e0415ad16022681f355b91ca1ba28927558de4b9d17",
+      "bytes": 1802,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_27.png",
+      "original_sha256": "2ea97ab1b20367bdc0aa50d8bcede66e3c0f57cc086121f173cde7f97f299698",
+      "sha256": "2ea97ab1b20367bdc0aa50d8bcede66e3c0f57cc086121f173cde7f97f299698",
+      "bytes": 1862,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_28.png",
+      "original_sha256": "0b671bea216373c5c1f24e6f8dfd389a3f457be8a49423b52f84f670da8d21b3",
+      "sha256": "0b671bea216373c5c1f24e6f8dfd389a3f457be8a49423b52f84f670da8d21b3",
+      "bytes": 1931,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_29.png",
+      "original_sha256": "ccfd1122a89abc8cecd7e187f5704b0e9b98de9319089fbea9a9e904a51beada",
+      "sha256": "ccfd1122a89abc8cecd7e187f5704b0e9b98de9319089fbea9a9e904a51beada",
+      "bytes": 1913,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_3.png",
+      "original_sha256": "2f7c615540ba8b2a6d37b8d891874d0b145d206373b20cbc655d145f9184738e",
+      "sha256": "2f7c615540ba8b2a6d37b8d891874d0b145d206373b20cbc655d145f9184738e",
+      "bytes": 1972,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_30.png",
+      "original_sha256": "b8413b883e1a262a118f401c0b9f42e331430a5fd3452add6aa130e86c785d06",
+      "sha256": "b8413b883e1a262a118f401c0b9f42e331430a5fd3452add6aa130e86c785d06",
+      "bytes": 1843,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_31.png",
+      "original_sha256": "0ca6fc0f4800e8b7a95be2bea8ba59a846418f2bc53b5fe364c62cadf2c03b98",
+      "sha256": "0ca6fc0f4800e8b7a95be2bea8ba59a846418f2bc53b5fe364c62cadf2c03b98",
+      "bytes": 1786,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_32.png",
+      "original_sha256": "195bf12cd2e122575c4579ef70aba14faf0c94bdff2e9c6dd823da07a17c7a74",
+      "sha256": "195bf12cd2e122575c4579ef70aba14faf0c94bdff2e9c6dd823da07a17c7a74",
+      "bytes": 1940,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_33.png",
+      "original_sha256": "2c6e693dfd157e80005368b837331039f2f40cde0520afcbc6fef2ea7fa50e02",
+      "sha256": "2c6e693dfd157e80005368b837331039f2f40cde0520afcbc6fef2ea7fa50e02",
+      "bytes": 1874,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_34.png",
+      "original_sha256": "f268f14210c8908edb3f282b9110bfb482e499cd0aa703b1482994255bd455d4",
+      "sha256": "f268f14210c8908edb3f282b9110bfb482e499cd0aa703b1482994255bd455d4",
+      "bytes": 1840,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_35.png",
+      "original_sha256": "2ea44a823a6f8ea7f9e0e944c3fca2d1a08631d88047b3aa32515eacaa544dd0",
+      "sha256": "2ea44a823a6f8ea7f9e0e944c3fca2d1a08631d88047b3aa32515eacaa544dd0",
+      "bytes": 1918,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_36.png",
+      "original_sha256": "80cd06cf72dd048597e38c79e281efe0f91eb8d21893fd88235fc7ab6d056c4b",
+      "sha256": "80cd06cf72dd048597e38c79e281efe0f91eb8d21893fd88235fc7ab6d056c4b",
+      "bytes": 1804,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_37.png",
+      "original_sha256": "da756c7470f4dd565de4cd520e612727ef4af27bbafd4e04d259623497c43543",
+      "sha256": "da756c7470f4dd565de4cd520e612727ef4af27bbafd4e04d259623497c43543",
+      "bytes": 1905,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_38.png",
+      "original_sha256": "a86341a7cb0dd00e800c966c5624ed3818b143449391027165bd8ddc59becb6d",
+      "sha256": "a86341a7cb0dd00e800c966c5624ed3818b143449391027165bd8ddc59becb6d",
+      "bytes": 1972,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_39.png",
+      "original_sha256": "8d17b188eaa4891de665b9031ccc9e82eeac8d9fe874c3fc7a69bc274d728012",
+      "sha256": "8d17b188eaa4891de665b9031ccc9e82eeac8d9fe874c3fc7a69bc274d728012",
+      "bytes": 1860,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_4.png",
+      "original_sha256": "ecb56a1f62e01e4722940670a74f120e52f490e7f022fecf7d16d41c7e6a8159",
+      "sha256": "ecb56a1f62e01e4722940670a74f120e52f490e7f022fecf7d16d41c7e6a8159",
+      "bytes": 1906,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_40.png",
+      "original_sha256": "fadd5ac88e724783e71232ccd572e6c0028a9770ffdf9a2b39193ffae10bd5a8",
+      "sha256": "fadd5ac88e724783e71232ccd572e6c0028a9770ffdf9a2b39193ffae10bd5a8",
+      "bytes": 1811,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_41.png",
+      "original_sha256": "b155041fd064ca14ff4166492b9c1f449caef6ab2a8276e76992f2ef5fd9ec9a",
+      "sha256": "b155041fd064ca14ff4166492b9c1f449caef6ab2a8276e76992f2ef5fd9ec9a",
+      "bytes": 1619,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_5.png",
+      "original_sha256": "451d01732e716264b6d667edeb7161ec3b44ee942297c52eaef8b669314b2f10",
+      "sha256": "451d01732e716264b6d667edeb7161ec3b44ee942297c52eaef8b669314b2f10",
+      "bytes": 1787,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_6.png",
+      "original_sha256": "4b81bda7a21b625a5a5b90737cdbf6b9e16a7a414bcfe7a286625e29af6dc00e",
+      "sha256": "4b81bda7a21b625a5a5b90737cdbf6b9e16a7a414bcfe7a286625e29af6dc00e",
+      "bytes": 1919,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_7.png",
+      "original_sha256": "43d0eb2708cf341bdd2c76f8a1cdf0aacf1c8a82858fda4c810f76686eee63b5",
+      "sha256": "43d0eb2708cf341bdd2c76f8a1cdf0aacf1c8a82858fda4c810f76686eee63b5",
+      "bytes": 1840,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_8.png",
+      "original_sha256": "892359dac60af8ceb2a79f230373cff61a29e96abecd710b1edd3d11b48b17ad",
+      "sha256": "892359dac60af8ceb2a79f230373cff61a29e96abecd710b1edd3d11b48b17ad",
+      "bytes": 1874,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/mask_9.png",
+      "original_sha256": "fe39c530422135a3c4c2b94007d3ae09d38e398069ce1d3423c1529171583705",
+      "sha256": "fe39c530422135a3c4c2b94007d3ae09d38e398069ce1d3423c1529171583705",
+      "bytes": 1937,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_0.png",
+      "original_sha256": "3b4c8fe9fb392ae0ac6b85bfb2e12aff370128c95488c5325ea06a45bc413959",
+      "sha256": "3b4c8fe9fb392ae0ac6b85bfb2e12aff370128c95488c5325ea06a45bc413959",
+      "bytes": 127345,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_1.png",
+      "original_sha256": "87bd3c324b0c50fc634ee75e4ecc908ff9cdc30031fff0d5b0f71fb6a55d9138",
+      "sha256": "87bd3c324b0c50fc634ee75e4ecc908ff9cdc30031fff0d5b0f71fb6a55d9138",
+      "bytes": 139162,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_10.png",
+      "original_sha256": "580ebf6d3a4ee4da101aeeffaefa38cac604224acd57b5cc4fdc4d2ab2040816",
+      "sha256": "580ebf6d3a4ee4da101aeeffaefa38cac604224acd57b5cc4fdc4d2ab2040816",
+      "bytes": 131563,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_11.png",
+      "original_sha256": "cf8d361ef2b9a1c93cd96f880a4c9dc4ae571fd57d3a68670038d0cfa50d679a",
+      "sha256": "cf8d361ef2b9a1c93cd96f880a4c9dc4ae571fd57d3a68670038d0cfa50d679a",
+      "bytes": 152431,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_12.png",
+      "original_sha256": "34f148db7dfea3e36e7e6ba7003b340bb7e41aa5f10e6807aa48c1b7e1da707f",
+      "sha256": "34f148db7dfea3e36e7e6ba7003b340bb7e41aa5f10e6807aa48c1b7e1da707f",
+      "bytes": 146055,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_13.png",
+      "original_sha256": "7c4234647d11ef602656ae72008383ca47d8c7f961d188284ed09f48077556bd",
+      "sha256": "7c4234647d11ef602656ae72008383ca47d8c7f961d188284ed09f48077556bd",
+      "bytes": 147280,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_14.png",
+      "original_sha256": "c61bbd814c3683492d618e11ff4fe60ac9054cc9422e4cd0ee268c65b1826de3",
+      "sha256": "c61bbd814c3683492d618e11ff4fe60ac9054cc9422e4cd0ee268c65b1826de3",
+      "bytes": 140042,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_15.png",
+      "original_sha256": "9d5c0abed50a7684d2f22c60d63a14a9f14510b0a0b295f5afed3653eac9eafa",
+      "sha256": "9d5c0abed50a7684d2f22c60d63a14a9f14510b0a0b295f5afed3653eac9eafa",
+      "bytes": 131834,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_16.png",
+      "original_sha256": "4608c0bed92037c42a35b0259ef02b1cf68219141c975afc71902eb53906077b",
+      "sha256": "4608c0bed92037c42a35b0259ef02b1cf68219141c975afc71902eb53906077b",
+      "bytes": 148864,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_17.png",
+      "original_sha256": "32dc55724f7f4a765466d0d902abf48562191636374694ac3d77fb9f1cfb427c",
+      "sha256": "32dc55724f7f4a765466d0d902abf48562191636374694ac3d77fb9f1cfb427c",
+      "bytes": 135141,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_18.png",
+      "original_sha256": "71a9366c9dd65bac5b27e0e2dad31b3e01cc0a8b21dfe0f6a24167fbac9c67b4",
+      "sha256": "71a9366c9dd65bac5b27e0e2dad31b3e01cc0a8b21dfe0f6a24167fbac9c67b4",
+      "bytes": 141540,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_19.png",
+      "original_sha256": "321c6fd3c2e1489fd50db7e6292b03d90e8af2dbdeeaf6551ecccd40820368ef",
+      "sha256": "321c6fd3c2e1489fd50db7e6292b03d90e8af2dbdeeaf6551ecccd40820368ef",
+      "bytes": 146822,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_2.png",
+      "original_sha256": "77f604478a775474990b42d5c3198b8a08d3dc6d20e13b0b6c4b7461d6269a74",
+      "sha256": "77f604478a775474990b42d5c3198b8a08d3dc6d20e13b0b6c4b7461d6269a74",
+      "bytes": 142487,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_20.png",
+      "original_sha256": "a9a28bf56aa127a773cf7e2649c0309ac98969da48a0ea47a3ff0f10b1d62330",
+      "sha256": "a9a28bf56aa127a773cf7e2649c0309ac98969da48a0ea47a3ff0f10b1d62330",
+      "bytes": 138488,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_21.png",
+      "original_sha256": "e6fadf09fdd9cbcd586b818864d27e36b70a776c0bb4320607652967c981700d",
+      "sha256": "e6fadf09fdd9cbcd586b818864d27e36b70a776c0bb4320607652967c981700d",
+      "bytes": 147422,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_22.png",
+      "original_sha256": "02bccebcf4a8f8cb7aeac2ef2a0633f57d307c0204eee05cef995c2c42489bbe",
+      "sha256": "02bccebcf4a8f8cb7aeac2ef2a0633f57d307c0204eee05cef995c2c42489bbe",
+      "bytes": 141210,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_23.png",
+      "original_sha256": "cea43ccf30f19ae112e37123ef3783e2696980fbe9ecd5ff00c70bd1197870a2",
+      "sha256": "cea43ccf30f19ae112e37123ef3783e2696980fbe9ecd5ff00c70bd1197870a2",
+      "bytes": 135271,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_24.png",
+      "original_sha256": "73a1a282956168fddf48689bcb03af43efd16ff4f4aca575de5dc5fbc615d2e4",
+      "sha256": "73a1a282956168fddf48689bcb03af43efd16ff4f4aca575de5dc5fbc615d2e4",
+      "bytes": 149016,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_25.png",
+      "original_sha256": "84450a276653aa672fb7676388c0b1cde683b3236bee6789c83d809b019c330e",
+      "sha256": "84450a276653aa672fb7676388c0b1cde683b3236bee6789c83d809b019c330e",
+      "bytes": 156439,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_26.png",
+      "original_sha256": "924b742984f748c8546d168d69082d586630f5c2734cc31a548f483b0ff409cd",
+      "sha256": "924b742984f748c8546d168d69082d586630f5c2734cc31a548f483b0ff409cd",
+      "bytes": 132186,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_27.png",
+      "original_sha256": "e13c4aa39f8671f51e4516b58825eb9ad204a5826f9bfd4cdcd8a9005de29088",
+      "sha256": "e13c4aa39f8671f51e4516b58825eb9ad204a5826f9bfd4cdcd8a9005de29088",
+      "bytes": 140231,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_28.png",
+      "original_sha256": "d1dcd12966a88260c32915376b416d39e9bb97a0bd0894344e6e93e51f77cd13",
+      "sha256": "d1dcd12966a88260c32915376b416d39e9bb97a0bd0894344e6e93e51f77cd13",
+      "bytes": 146858,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_29.png",
+      "original_sha256": "35dd4b58e265a4658107e5bf43225a1e8c630ebfb748bc6df1bb7e4cb4056e56",
+      "sha256": "35dd4b58e265a4658107e5bf43225a1e8c630ebfb748bc6df1bb7e4cb4056e56",
+      "bytes": 145652,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_3.png",
+      "original_sha256": "3fff37bda409e28c21d9976646703e5a81b5c48a0d3aa20a5592adde1a12cd8e",
+      "sha256": "3fff37bda409e28c21d9976646703e5a81b5c48a0d3aa20a5592adde1a12cd8e",
+      "bytes": 143062,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_30.png",
+      "original_sha256": "ae9444bbb175dfc1a79e397f42472b208c87ff64c8ab30492d800e065fa52f67",
+      "sha256": "ae9444bbb175dfc1a79e397f42472b208c87ff64c8ab30492d800e065fa52f67",
+      "bytes": 152544,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_31.png",
+      "original_sha256": "84987e66cfee0d40890f29df7ed30ddcac0758930ed92777846fff336d8b9291",
+      "sha256": "84987e66cfee0d40890f29df7ed30ddcac0758930ed92777846fff336d8b9291",
+      "bytes": 132175,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_32.png",
+      "original_sha256": "aeedf42fcba45d3ecf79cfd52e022159944b3594e345a8df0c336bddff1d34c0",
+      "sha256": "aeedf42fcba45d3ecf79cfd52e022159944b3594e345a8df0c336bddff1d34c0",
+      "bytes": 147424,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_33.png",
+      "original_sha256": "cc1e343bb073d3e341b05772625f2185241d27d71717371b1edd3ee488020e1a",
+      "sha256": "cc1e343bb073d3e341b05772625f2185241d27d71717371b1edd3ee488020e1a",
+      "bytes": 139889,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_34.png",
+      "original_sha256": "d5a65f2038a7a4fecd86d64f8934e762afa0ff38b843653db62bb22ddcdf342a",
+      "sha256": "d5a65f2038a7a4fecd86d64f8934e762afa0ff38b843653db62bb22ddcdf342a",
+      "bytes": 150054,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_35.png",
+      "original_sha256": "0924c8047603aa4b5046f678edede54865859ad1087f80ff44f6178010262710",
+      "sha256": "0924c8047603aa4b5046f678edede54865859ad1087f80ff44f6178010262710",
+      "bytes": 144713,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_36.png",
+      "original_sha256": "fc1ced2be9288a921c91731bb8f4a781c1fdb2c6cb400eb338ed8867b06c9a7a",
+      "sha256": "fc1ced2be9288a921c91731bb8f4a781c1fdb2c6cb400eb338ed8867b06c9a7a",
+      "bytes": 132031,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_37.png",
+      "original_sha256": "d75855a359730bc7656f9098fa3081989aca82ed41780a343722bc97a14e4941",
+      "sha256": "d75855a359730bc7656f9098fa3081989aca82ed41780a343722bc97a14e4941",
+      "bytes": 137142,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_38.png",
+      "original_sha256": "acb69bcbad3fa656c40853acbd17654baef6414dbd2183a78030e9b8f625b3cd",
+      "sha256": "acb69bcbad3fa656c40853acbd17654baef6414dbd2183a78030e9b8f625b3cd",
+      "bytes": 143378,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_39.png",
+      "original_sha256": "a6d4c4d9835ccd68e0dc1cd6332841cc2e9baaf19f95ef10e1ecc8566339657b",
+      "sha256": "a6d4c4d9835ccd68e0dc1cd6332841cc2e9baaf19f95ef10e1ecc8566339657b",
+      "bytes": 142927,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_4.png",
+      "original_sha256": "9fb38a4b4f6a95f3dac989a54e8bf456015712ccb1b8a9dae67720a6fd8f75f6",
+      "sha256": "9fb38a4b4f6a95f3dac989a54e8bf456015712ccb1b8a9dae67720a6fd8f75f6",
+      "bytes": 137157,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_40.png",
+      "original_sha256": "2bf4890f0313e899dbbb6f1f39351c95d2b58a00730d969aed7f10add2c868d3",
+      "sha256": "2bf4890f0313e899dbbb6f1f39351c95d2b58a00730d969aed7f10add2c868d3",
+      "bytes": 139050,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_41.png",
+      "original_sha256": "0cd3073981f31d20e3ed4fecc0124d265b2ef77bf31331843c818695c6958edd",
+      "sha256": "0cd3073981f31d20e3ed4fecc0124d265b2ef77bf31331843c818695c6958edd",
+      "bytes": 127409,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_5.png",
+      "original_sha256": "874454f7363f203ecf01192cd6d5c54deac391a5355aa417c79bdff5e419ed5a",
+      "sha256": "874454f7363f203ecf01192cd6d5c54deac391a5355aa417c79bdff5e419ed5a",
+      "bytes": 132205,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_6.png",
+      "original_sha256": "52b989709f9f008cd84d1e7ebcf2b5d9b73a6628d3853e622e2f9eb19b4658b5",
+      "sha256": "52b989709f9f008cd84d1e7ebcf2b5d9b73a6628d3853e622e2f9eb19b4658b5",
+      "bytes": 145585,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_7.png",
+      "original_sha256": "6a0ff130e71f4047cab85d930c04330e57642c0c302466b14311da58f422c139",
+      "sha256": "6a0ff130e71f4047cab85d930c04330e57642c0c302466b14311da58f422c139",
+      "bytes": 150397,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_8.png",
+      "original_sha256": "5769ee9080aff558f5a3abbb5ae0918d2639c53ff61d74f3829d454a611deeda",
+      "sha256": "5769ee9080aff558f5a3abbb5ae0918d2639c53ff61d74f3829d454a611deeda",
+      "bytes": 140017,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/rgb_9.png",
+      "original_sha256": "e2196075546e4fae29cddd7567545fff5f5a02a0283b8db723c4caf501ebddab",
+      "sha256": "e2196075546e4fae29cddd7567545fff5f5a02a0283b8db723c4caf501ebddab",
+      "bytes": 146565,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_0.npy",
+      "original_sha256": "ec01a30399513d9365b854f3d993c2d1f285b60eee71f90ea278e68fbe04afbe",
+      "sha256": "ec01a30399513d9365b854f3d993c2d1f285b60eee71f90ea278e68fbe04afbe",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_1.npy",
+      "original_sha256": "64ea0ed61d79165cc9f87cacfcce1601b4df053ae7bae10ca2ef5f1e997991f5",
+      "sha256": "64ea0ed61d79165cc9f87cacfcce1601b4df053ae7bae10ca2ef5f1e997991f5",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_10.npy",
+      "original_sha256": "84fc7385f994ff1129699aefa921c22a92f83787eff794da0984e61dbfb0fcad",
+      "sha256": "84fc7385f994ff1129699aefa921c22a92f83787eff794da0984e61dbfb0fcad",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_11.npy",
+      "original_sha256": "8f831eda55a59d14590ff0933f66366845c96196a6e8d14777e2c3a84f772115",
+      "sha256": "8f831eda55a59d14590ff0933f66366845c96196a6e8d14777e2c3a84f772115",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_12.npy",
+      "original_sha256": "93e6938c6f48d1840eb7c7f1209dc730e4a751a0a1faeca176433c98ba591282",
+      "sha256": "93e6938c6f48d1840eb7c7f1209dc730e4a751a0a1faeca176433c98ba591282",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_13.npy",
+      "original_sha256": "065719d5ee1c07747766c54f916d9c8cd438918a4fc4a6d36ac696886f0245d1",
+      "sha256": "065719d5ee1c07747766c54f916d9c8cd438918a4fc4a6d36ac696886f0245d1",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_14.npy",
+      "original_sha256": "a47410d448f4d01480b7a0338c1add4224fcb50b507ca74d913eb90be9ebda49",
+      "sha256": "a47410d448f4d01480b7a0338c1add4224fcb50b507ca74d913eb90be9ebda49",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_15.npy",
+      "original_sha256": "b912e4345f062cbef590925f1768644e05bb4fcdae51a21e50cbf52c01932d21",
+      "sha256": "b912e4345f062cbef590925f1768644e05bb4fcdae51a21e50cbf52c01932d21",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_16.npy",
+      "original_sha256": "6f9f519e2f261ac77e6eeb4c1e041f344b2e7f1c569f43e4371b23d162299369",
+      "sha256": "6f9f519e2f261ac77e6eeb4c1e041f344b2e7f1c569f43e4371b23d162299369",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_17.npy",
+      "original_sha256": "82a6f17731fc86ea325692210b5f742cd4de9c144b8fb30261c2ab86f6f4f018",
+      "sha256": "82a6f17731fc86ea325692210b5f742cd4de9c144b8fb30261c2ab86f6f4f018",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_18.npy",
+      "original_sha256": "b9d75f2db6b26424fb5655dde208256888e830d94091a43c5501fd13d97d0414",
+      "sha256": "b9d75f2db6b26424fb5655dde208256888e830d94091a43c5501fd13d97d0414",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_19.npy",
+      "original_sha256": "d8fd41bdc57927a8507d7f1c9c0e6ef7878a025252048fd73985deffb6758aa9",
+      "sha256": "d8fd41bdc57927a8507d7f1c9c0e6ef7878a025252048fd73985deffb6758aa9",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_2.npy",
+      "original_sha256": "4e482ec2a037cb3a2b0218a5fce75cbd02f93c6c7d5858facbd4f4197773c51d",
+      "sha256": "4e482ec2a037cb3a2b0218a5fce75cbd02f93c6c7d5858facbd4f4197773c51d",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_20.npy",
+      "original_sha256": "fd9b6edf8a73038559ddc7b82306092b59ab9a5014d80436bf1cf94027af58bf",
+      "sha256": "fd9b6edf8a73038559ddc7b82306092b59ab9a5014d80436bf1cf94027af58bf",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_21.npy",
+      "original_sha256": "a15f4661420d391ba69b8172d17163e2009ee523286c4bb0decd26b60cc1fe5c",
+      "sha256": "a15f4661420d391ba69b8172d17163e2009ee523286c4bb0decd26b60cc1fe5c",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_22.npy",
+      "original_sha256": "83510e16c5290518568ab3e6d7cd479e4d55505da475fffad3eaeef23c1ebe7f",
+      "sha256": "83510e16c5290518568ab3e6d7cd479e4d55505da475fffad3eaeef23c1ebe7f",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_23.npy",
+      "original_sha256": "4a14ba7ec6efdcfdcbcb74e4be3c9b1e3088170e29a8303634593897c2770221",
+      "sha256": "4a14ba7ec6efdcfdcbcb74e4be3c9b1e3088170e29a8303634593897c2770221",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_24.npy",
+      "original_sha256": "d5a7d5141b6f66d50d344f665a483e8b65435b7f289871e49f4819996abdd0b7",
+      "sha256": "d5a7d5141b6f66d50d344f665a483e8b65435b7f289871e49f4819996abdd0b7",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_25.npy",
+      "original_sha256": "84b4c5c01991fc49497ba86513b0e644c586686616a69492bebd540e5aa71abd",
+      "sha256": "84b4c5c01991fc49497ba86513b0e644c586686616a69492bebd540e5aa71abd",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_26.npy",
+      "original_sha256": "bb8608edad4dca4ba6a2cc07bc82095bcc9c96fc2422efd121a327956cb25b71",
+      "sha256": "bb8608edad4dca4ba6a2cc07bc82095bcc9c96fc2422efd121a327956cb25b71",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_27.npy",
+      "original_sha256": "c16cd32c3fe0b30a8806891c65b67129b56b9d72b593354ca399f9bdb78926e3",
+      "sha256": "c16cd32c3fe0b30a8806891c65b67129b56b9d72b593354ca399f9bdb78926e3",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_28.npy",
+      "original_sha256": "ce4c5af0ba5e0bb0e23b7d0ee1f55053b44f5ebad960c3e8e2304cd6adf01b25",
+      "sha256": "ce4c5af0ba5e0bb0e23b7d0ee1f55053b44f5ebad960c3e8e2304cd6adf01b25",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_29.npy",
+      "original_sha256": "68b2568c0997eea07c3ef44edb637a7abd7d0fca06ffb6dd522c33bc9ce18d2c",
+      "sha256": "68b2568c0997eea07c3ef44edb637a7abd7d0fca06ffb6dd522c33bc9ce18d2c",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_3.npy",
+      "original_sha256": "25f0ec1fff581b5ef0785b49461b6183dcdbc551e5187a3d250de7ad8893a9c4",
+      "sha256": "25f0ec1fff581b5ef0785b49461b6183dcdbc551e5187a3d250de7ad8893a9c4",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_30.npy",
+      "original_sha256": "fa4de69b77c2af558b7e18a455ddf93e8ddb7bd044bc66075c4b123c898aa3d5",
+      "sha256": "fa4de69b77c2af558b7e18a455ddf93e8ddb7bd044bc66075c4b123c898aa3d5",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_31.npy",
+      "original_sha256": "3a4011a761e0b05c63c76215ca4c65997a134fe97232ba7bd3df44e67de8a960",
+      "sha256": "3a4011a761e0b05c63c76215ca4c65997a134fe97232ba7bd3df44e67de8a960",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_32.npy",
+      "original_sha256": "536ad15d5b91e221eaa1a47749b4e165cb0512eb0031d02c8d7f88b40f8baf0a",
+      "sha256": "536ad15d5b91e221eaa1a47749b4e165cb0512eb0031d02c8d7f88b40f8baf0a",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_33.npy",
+      "original_sha256": "013accc245b354c7ed80da888840b6f174701cf62a7bdb8507d575a7a14a08dd",
+      "sha256": "013accc245b354c7ed80da888840b6f174701cf62a7bdb8507d575a7a14a08dd",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_34.npy",
+      "original_sha256": "17ee684a847038d644efd34b3c2bc1e38147772f5b48c4bdf3273b475a5ad555",
+      "sha256": "17ee684a847038d644efd34b3c2bc1e38147772f5b48c4bdf3273b475a5ad555",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_35.npy",
+      "original_sha256": "543992f1b7b6076b414cd8ade65e55821f0bdec9c4c9119f7ade44b3edd772ca",
+      "sha256": "543992f1b7b6076b414cd8ade65e55821f0bdec9c4c9119f7ade44b3edd772ca",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_36.npy",
+      "original_sha256": "400e4c810861d7339de0bec079a14748a8944776655c8ad9c77acee2bc340166",
+      "sha256": "400e4c810861d7339de0bec079a14748a8944776655c8ad9c77acee2bc340166",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_37.npy",
+      "original_sha256": "f4469eb5d4d83d01a8e0a8559179f7093cae36051556b592c306a804a8266551",
+      "sha256": "f4469eb5d4d83d01a8e0a8559179f7093cae36051556b592c306a804a8266551",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_38.npy",
+      "original_sha256": "93b021c3569ca312e3d0b80983012ed5709e896b7a43663533e469c3850028e1",
+      "sha256": "93b021c3569ca312e3d0b80983012ed5709e896b7a43663533e469c3850028e1",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_39.npy",
+      "original_sha256": "b7bdd308f46d7fb7a99d0e5407f0aca188016381c538bc157e6480936faab9c2",
+      "sha256": "b7bdd308f46d7fb7a99d0e5407f0aca188016381c538bc157e6480936faab9c2",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_4.npy",
+      "original_sha256": "46ca9d120fc9160717c1cc9e11c68c20f3d2fe506c662157a95f9f084479431d",
+      "sha256": "46ca9d120fc9160717c1cc9e11c68c20f3d2fe506c662157a95f9f084479431d",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_40.npy",
+      "original_sha256": "8800e87ecc46e124679cde974c500311a29b0eced0ad5308cc1267aa76db357d",
+      "sha256": "8800e87ecc46e124679cde974c500311a29b0eced0ad5308cc1267aa76db357d",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_41.npy",
+      "original_sha256": "0be0b8eda7d7740a284dca78175df4543aa78644d4287131df6ed46b82d5fa35",
+      "sha256": "0be0b8eda7d7740a284dca78175df4543aa78644d4287131df6ed46b82d5fa35",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_5.npy",
+      "original_sha256": "c14a9360cd85dbfd941a36744275b6d4d949587cf5999e84e53cd0e0a16f9972",
+      "sha256": "c14a9360cd85dbfd941a36744275b6d4d949587cf5999e84e53cd0e0a16f9972",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_6.npy",
+      "original_sha256": "f5b4285dbeafabb5095ac2f8b04f3992588401a517f17a874261243a61043873",
+      "sha256": "f5b4285dbeafabb5095ac2f8b04f3992588401a517f17a874261243a61043873",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_7.npy",
+      "original_sha256": "e24d9dfd9dc54cb9c88a10c277c641ea27256ccf50ab31579f2cda1300886e2b",
+      "sha256": "e24d9dfd9dc54cb9c88a10c277c641ea27256ccf50ab31579f2cda1300886e2b",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_8.npy",
+      "original_sha256": "17d69c0c54e5d063c8f4a39f4d06230e4374e70f4ba8b638accddccfc9c68b18",
+      "sha256": "17d69c0c54e5d063c8f4a39f4d06230e4374e70f4ba8b638accddccfc9c68b18",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    },
+    {
+      "path": "artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/templates/xyz_9.npy",
+      "original_sha256": "a142e5f9a598984bfd0651c62b4248f54ace794bb09f25fc84c8449635ce3e76",
+      "sha256": "a142e5f9a598984bfd0651c62b4248f54ace794bb09f25fc84c8449635ce3e76",
+      "bytes": 1572992,
+      "path_binding_changed": false
+    }
+  ],
+  "original_source_commit": "30d98391531ad8e2f15d82898bfa8bea02e5b3db",
+  "changes": "Repository path strings, relative USD references, and the matching top-level USD wrapper hash only. Geometry, physics and numerical settings unchanged."
+}

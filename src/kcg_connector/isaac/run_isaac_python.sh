@@ -15,6 +15,10 @@ else
   isaac_env_prefix="${workspace_root}/isaacsim/.conda-env"
 fi
 isaac_python="${isaac_env_prefix}/bin/python"
+export ISAAC_ENV_PREFIX="${isaac_env_prefix}"
+# An environment may have an editable install pointing at another checkout.
+# This invocation must import the source belonging to its selected repository.
+export PYTHONPATH="${repository_root}/src/kcg_connector${PYTHONPATH:+:${PYTHONPATH}}"
 
 if [[ ! -x "${isaac_python}" ]]; then
   echo "Isaac Sim Python was not found: ${isaac_python}" >&2

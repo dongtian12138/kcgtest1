@@ -9358,7 +9358,7 @@ def _create_runtime(
                 *scene["evidence_paths"], manifest_path,
                 repository / band["parameter_source"],
                 Path(__file__).resolve().parents[1] / "te_grounding_band_scene.py",
-                *(Path(entry["path"]) for entry in geometry["meshes"].values()),
+                *(repository / entry["path"] for entry in geometry["meshes"].values()),
             )))
         mating = assembly_document.get("mating_contact_model")
         if mating and mating.get("enabled"):

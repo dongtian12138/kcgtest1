@@ -23,7 +23,7 @@ def run_coaxial_nut_interval(repository,runtime,stepper,dynamic,grip,socket,sett
     # before capture. Keep that measured, recorded reference instead of
     # silently restoring a stronger reference at the turn boundary.
     recipe['root_moment_targets_nm']=list(grip['effort_reference_nm'])
-    geometry=json.loads(Path(recipe['source_geometry_plan']).read_text())
+    geometry=json.loads((root/recipe['source_geometry_plan']).read_text())
     if geometry['finger_mechanism_id']!=mechanism.setup['mechanism_id']:
         raise ValueError('The live grasp and coaxial controller must use the same fourbar hand')
     degrees=-float(settings['rotation_about_socket_plus_z_deg'])

@@ -1,0 +1,31 @@
+{
+  "upstream": "https://github.com/JiehongLin/SAM-6D.git",
+  "commit": "1c2543b3b6faa1f1d81b3c7291f8b371d71e50c2",
+  "weights": [
+    {
+      "path": "Instance_Segmentation_Model/checkpoints/segment-anything/sam_vit_h_4b8939.pth",
+      "bytes": 2564550879,
+      "sha256": "a7bf3b02f3ebf1267aba913ff637d9a2d5c33d3173bb679e46d9f338c26f262e",
+      "url": "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
+    },
+    {
+      "path": "Instance_Segmentation_Model/checkpoints/dinov2/dinov2_vitl14_pretrain.pth",
+      "bytes": 1217586395,
+      "sha256": "d5383ea8f4877b2472eb973e0fd72d557c7da5d3611bd527ceeb1d7162cbf428",
+      "url": "https://dl.fbaipublicfiles.com/dinov2/dinov2_vitl14/dinov2_vitl14_pretrain.pth"
+    },
+    {
+      "path": "Pose_Estimation_Model/checkpoints/sam-6d-pem-base.pth",
+      "bytes": 1295700437,
+      "sha256": "19885cc1a9dbb71159830e38ec09c6e8804f5b21834fad2a6dba127e93372c59",
+      "url": "https://drive.google.com/file/d/1joW9IvwsaRJYxoUmGo68dBVg-HcFNyI7/view"
+    },
+    {
+      "path": "Pose_Estimation_Model/checkpoints/mae_pretrain_vit_base.pth",
+      "bytes": 343249461,
+      "sha256": "aec5f0b68e5f3193a00b07bc65a37440db549c15b36b8bea242606cc40c4bc5d",
+      "url": "https://dl.fbaipublicfiles.com/mae/pretrain/mae_pretrain_vit_base.pth"
+    }
+  ],
+  "patch": "sam6d_inference_local_changes.patch"
+}

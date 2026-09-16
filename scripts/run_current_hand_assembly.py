@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Check or rerun the preserved 2026-09-16 assembly on this workstation.
+"""Check or replay the preserved assembly using versioned assets and a fresh preflight.
 
-The default only checks files and prints commands. --run starts a fresh
-preflight, then one bounded simulation. This is not a portable GitHub bundle
-and does not turn a process exit code into a physical success verdict.
+--run starts simulation; --gui displays Isaac Sim. An exit code is not a physical verdict.
 """
 
 import argparse
@@ -19,8 +17,8 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT / "artifacts/full_rotation_20260914/visual_integration"
-REFERENCE = BASE / "visual_complete_all_reserves14"
+BASE = ROOT / "reproducibility/assembly_20260916"
+REFERENCE = BASE / "evidence"
 MOTION_FLAGS = (
     "--visual-body-start", "--postgrasp-key-observation",
     "--body-assembly-transport", "--body-key-entry",
@@ -39,39 +37,36 @@ def replace_value(command, flag, value):
 
 
 def check_reference():
-    invocation = read_json(REFERENCE / "run_invocation.json")
-    recorded_root = Path(invocation["working_directory"])
-    if ROOT != recorded_root:
-        raise ValueError("此入口依赖原本机目录；跨目录/跨机器复现包尚未整理，不能悄悄使用旧目录资产")
-    manifest = read_json(REFERENCE / "execution_source_snapshots/manifest.json")
-    evaluation = read_json(REFERENCE / "evaluation.json")
-    binding = evaluation["evidence_binding"]
-    expected = {
-        str(Path(row["source_path"]).relative_to(recorded_root)): row["sha256"]
-        for row in manifest["files"]
-    }
-    expected.update(binding["scene_evidence_sha256"])
-    command = read_json(BASE / "visual_complete_all_reserves14_command.json")
-    expected[command[command.index("--config") + 1]] = binding["config_sha256"]
-    expected["src/kcg_connector/config/carts_v2_isaac_runtime.json"] = binding["runtime_resources_sha256"]
-    expected[command[command.index("--robot-asset") + 1]] = evaluation["pad_surface_identity_evidence"]["robot_asset_sha256"]
+    manifest = read_json(BASE / "runtime_assets.json")
+    source = read_json(BASE / "portable_source_manifest.json")
+    expected = {row["path"]: row["sha256"] for row in manifest["files"]}
+    expected.update(source["sha256"])
     changed = []
     for relative, digest in expected.items():
         path = ROOT / relative
         if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
             changed.append(relative)
     if changed:
-        raise ValueError("以下文件缺失或与记录版本不同；不会覆盖你的修改：\n" + "\n".join(changed))
-    if command[:2] != ["src/kcg_connector/isaac/run_isaac_python.sh",
-                       "src/kcg_connector/isaac/run_body_assembly_with_video.py"]:
-        raise ValueError("不是预期的本机 Isaac Sim 入口")
-    runtime = Path(os.environ.get("ISAAC_ENV_PREFIX", str(ROOT.parent / "isaacsim/.conda-env")))
-    if not os.access(runtime / "bin/python", os.X_OK):
-        raise ValueError(f"找不到 Isaac Sim Python：{runtime / 'bin/python'}")
-    print(f"已核对 {len(expected)} 个记录绑定文件，与基线一致。")
-    print(f"Isaac Sim 环境：{runtime}")
-    print("这不等于完整依赖包已可移植，也不保证每次物理结果完全相同。")
-    return command, len(expected)
+        raise ValueError("缺失或与本版本不符的文件：\n" + "\n".join(changed))
+    sys.path.insert(0, str(ROOT / "src/kcg_connector/isaac"))
+    from te_runtime_paths import isaac_environment_prefix, sam6d_runtime, planner_python, ros_setup_bash
+    sam_root, sam_python = sam6d_runtime(ROOT)
+    executables = [isaac_environment_prefix() / "bin/python", sam_python, planner_python(ROOT)]
+    for executable in executables:
+        if not os.access(executable, os.X_OK):
+            raise ValueError(f"缺少环境 Python：{executable}")
+    for required in (ROOT / "install/setup.bash", ros_setup_bash()):
+        if not required.is_file():
+            raise ValueError(f"缺少 ROS 资源环境：{required}")
+    sam = read_json(BASE / "sam6d.json")
+    for row in sam["weights"]:
+        path = sam_root / row["path"]
+        if not path.is_file() or path.stat().st_size != row["bytes"]:
+            raise ValueError(f"缺少视觉权重或大小不符：{path}；用 prepare_assembly_reproduction.py 校验/准备")
+    print(f"已核对 {len(expected)} 个本版本源码与资产文件。")
+    print(f"Isaac Python：{executables[0]}\n视觉 Python：{sam_python}\n规划 Python：{executables[2]}")
+    print(f"视觉源码：{sam_root}；权重完整 SHA256 由准备脚本核验。")
+    return read_json(BASE / "assembly_command.json"), len(expected)
 
 
 def build_commands(original, output, gui):
@@ -117,6 +112,7 @@ def main(argv=None):
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--check", action="store_true", help="只核对并打印命令；默认行为")
     action.add_argument("--run", action="store_true", help="实际执行新预检和一次完整仿真")
+    action.add_argument("--preflight-only", action="store_true", help="只执行独立新预检")
     parser.add_argument("--gui", action="store_true", help="给预检和正式运行都启用 Isaac Sim 窗口")
     parser.add_argument("--output-root", type=Path, help="新的结果目录，必须尚不存在")
     args = parser.parse_args(argv)
@@ -132,7 +128,7 @@ def main(argv=None):
                                           ("完整装配", motion, 18000, 1200)):
         print(f"\n{label}命令：\nKCG_EXPERIMENT_WALL_LIMIT_S={limit} "
               f"KCG_EXPERIMENT_CLOSEOUT_RESERVE_S={reserve} {shlex.join(command)}")
-    if not args.run:
+    if not (args.run or args.preflight_only):
         print("\n仅检查完成，没有创建结果目录、启动物理实验或修改原运行记录。")
         return 0
     if args.gui and not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
@@ -159,6 +155,10 @@ def main(argv=None):
         save()
         print("预检未通过，没有启动完整装配。请查看预检日志与原始评估。")
         return code if code > 0 else 2
+    if args.preflight_only:
+        plan["status"] = "PREFLIGHT_PASSED_ASSEMBLY_NOT_STARTED"
+        save()
+        return 0
     plan["status"] = "ASSEMBLY_RUNNING"
     save()
     code = execute(motion, output, "assembly", 18000, 1200)
@@ -183,5 +183,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except (OSError, ValueError, KeyError) as error:
-        print(f"本机复现入口停止：{error}", file=sys.stderr)
+        print(f"复现入口停止：{error}", file=sys.stderr)
         raise SystemExit(2)

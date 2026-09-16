@@ -164,7 +164,7 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
     if config["nut_regrasp"].get("cooked_hand_geometry"):
         manifest_path = repository / config["nut_regrasp"]["cooked_hand_geometry"]
         manifest = json.loads(manifest_path.read_text())
-        mesh_path = Path(manifest["mesh_data"])
+        mesh_path = repository / manifest["mesh_data"]
         if (manifest["contains_object_pose_contact_or_witness_data"] is not False
                 or hashlib.sha256(Path(runtime["robot_asset"]).read_bytes()).hexdigest() != manifest["source_robot_asset_sha256"]
                 or hashlib.sha256(mesh_path.read_bytes()).hexdigest() != manifest["mesh_data_sha256"]):

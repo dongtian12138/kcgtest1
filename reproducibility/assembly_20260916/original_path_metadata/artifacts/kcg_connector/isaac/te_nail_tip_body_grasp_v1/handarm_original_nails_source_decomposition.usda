@@ -1,0 +1,108 @@
+#usda 1.0
+(
+    defaultPrim = "handarm"
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Xform "handarm" (
+    prepend references = @/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_sdf.usda@
+)
+{
+    over "Geometry"
+    {
+        over "world"
+        {
+            over "iiwa_link_0"
+            {
+                over "iiwa_link_1"
+                {
+                    over "iiwa_link_2"
+                    {
+                        over "iiwa_link_3"
+                        {
+                            over "iiwa_link_4"
+                            {
+                                over "iiwa_link_5"
+                                {
+                                    over "iiwa_link_6"
+                                    {
+                                        over "iiwa_link_7"
+                                        {
+                                            over "iiwa_link_ee"
+                                            {
+                                                over "handbase_link"
+                                                {
+                                                    over "f1Link1"
+                                                    {
+                                                        over "f1Link2"
+                                                        {
+                                                            over "f1Link3"
+                                                            {
+                                                                over "f1Link3_convex"
+                                                                {
+                                                                    over "f1Link3_convex" (
+                                                                        delete apiSchemas = ["PhysxSDFMeshCollisionAPI"]
+                                                                        prepend apiSchemas = ["PhysxConvexDecompositionCollisionAPI", "PhysicsMeshCollisionAPI"]
+                                                                    )
+                                                                    {
+                                                                        uniform token physics:approximation = "convexDecomposition"
+                                                                        custom bool physxConvexDecompositionCollision:shrinkWrap = 1
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+
+                                                    over "f2Link1"
+                                                    {
+                                                        over "f2Link2"
+                                                        {
+                                                            over "f2Link2_convex"
+                                                            {
+                                                                over "f2Link2_convex" (
+                                                                    delete apiSchemas = ["PhysxSDFMeshCollisionAPI"]
+                                                                    prepend apiSchemas = ["PhysxConvexDecompositionCollisionAPI", "PhysicsMeshCollisionAPI"]
+                                                                )
+                                                                {
+                                                                    uniform token physics:approximation = "convexDecomposition"
+                                                                    custom bool physxConvexDecompositionCollision:shrinkWrap = 1
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+
+                                                    over "f3Link1"
+                                                    {
+                                                        over "f3Link2"
+                                                        {
+                                                            over "f3Link3"
+                                                            {
+                                                                over "f3Link3_convex"
+                                                                {
+                                                                    over "f3Link3_convex" (
+                                                                        delete apiSchemas = ["PhysxSDFMeshCollisionAPI"]
+                                                                        prepend apiSchemas = ["PhysxConvexDecompositionCollisionAPI", "PhysicsMeshCollisionAPI"]
+                                                                    )
+                                                                    {
+                                                                        uniform token physics:approximation = "convexDecomposition"
+                                                                        custom bool physxConvexDecompositionCollision:shrinkWrap = 1
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

@@ -1,0 +1,28 @@
+{
+  "schema_version": "cooked_robot_contact_geometry_v1",
+  "source_robot_asset": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda",
+  "source_robot_asset_sha256": "4e220d97f3e12594c82dd6879cb584fd79cfd9264289a71e2383e43f53e6d46e",
+  "mesh_data": "/home/noob/WorkPlace/kcgtest1/artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_regrasp_01/cooked_finger_inspection/geometry_only.npz",
+  "mesh_data_sha256": "b660b79560873f899a91dac8d895588240433ea10883d4237f4c965734d6f05f",
+  "source": "OFFLINE_PHYSX_COOKING_OF_UNMODIFIED_ROBOT_ASSET",
+  "physics_version": "110.1.13",
+  "records": [
+    {
+      "link": "f1Link3",
+      "convex_count": 32,
+      "triangle_count": 730
+    },
+    {
+      "link": "f2Link2",
+      "convex_count": 32,
+      "triangle_count": 746
+    },
+    {
+      "link": "f3Link3",
+      "convex_count": 32,
+      "triangle_count": 704
+    }
+  ],
+  "contains_object_pose_contact_or_witness_data": false,
+  "mass_material_joint_and_physical_collision_changed": false
+}
