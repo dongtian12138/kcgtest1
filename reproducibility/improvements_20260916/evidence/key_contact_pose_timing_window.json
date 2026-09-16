@@ -1,0 +1,45 @@
+{
+  "scope": "POSTRUN_LOCAL_CONTACT_AND_POSTSTEP_POSE_ALIGNMENT_CHECK",
+  "native_separation_is_not_assumed_to_be_poststep_geometry": true,
+  "records": [
+    {
+      "step": 228522,
+      "source_pose_gap_um": -1.7508217071828813,
+      "native_separation_min_um": -1.9970066205132753,
+      "points": 6
+    },
+    {
+      "step": 228523,
+      "source_pose_gap_um": -1.5049935549520388,
+      "native_separation_min_um": -1.7455283796152798,
+      "points": 6
+    },
+    {
+      "step": 228524,
+      "source_pose_gap_um": -2.0053950038347867,
+      "native_separation_min_um": -1.5021494164102478,
+      "points": 6
+    },
+    {
+      "step": 228525,
+      "source_pose_gap_um": -2.14765949235185,
+      "native_separation_min_um": -2.0119846340094227,
+      "points": 6
+    },
+    {
+      "step": 228526,
+      "source_pose_gap_um": -1.9337904776796089,
+      "native_separation_min_um": -2.155708216378116,
+      "points": 6
+    },
+    {
+      "step": 228527,
+      "source_pose_gap_um": -1.8042508798306045,
+      "native_separation_min_um": -1.9207839159207651,
+      "points": 6
+    }
+  ],
+  "same_record_rms_difference_um": 0.2801243372410661,
+  "native_vs_preceding_pose_rms_difference_um": 0.007918134551255283,
+  "interpretation": "In this six-frame window, the native contact separation matches the preceding stored body pose much more closely than the post-step pose in its own record. The apparent0.136um discrepancy at228525 is therefore primarily a sampling-time difference, not evidence of mismatched geometry. Native228526 confirms about2.156um penetration after source-pose228525 reports2.148um. This local alignment observation is not a universal API timing guarantee."
+}

@@ -1,0 +1,36 @@
+{
+  "scope": "SOURCE_KEY2_DESCRIPTOR_PLANES_VS_CURRENT_FROZEN_SOCKET_TRIANGLES",
+  "source_model_unchanged": true,
+  "vertex_count": 77873,
+  "triangle_count": 155742,
+  "planes": [
+    {
+      "normal": [
+        0.1736482401742434,
+        0.9848077419904803,
+        -7.205251666246969e-09
+      ],
+      "d_mm": -0.8001009999689889,
+      "parallel_nearby_faces": 5,
+      "vertex_plane_gap_range_um": [
+        -7.539617208340843e-05,
+        0.0002704863721891826
+      ],
+      "nearest_parallel_centroid_plane_gap_um": 1.1102230246251565e-13
+    },
+    {
+      "normal": [
+        -0.1736482340118492,
+        -0.9848077430770765,
+        2.4742544788897617e-08
+      ],
+      "d_mm": -0.8000989572602286,
+      "parallel_nearby_faces": 5,
+      "vertex_plane_gap_range_um": [
+        -0.0005754309980732231,
+        1.6722553675130314e-05
+      ],
+      "nearest_parallel_centroid_plane_gap_um": 2.220446049250313e-13
+    }
+  ]
+}

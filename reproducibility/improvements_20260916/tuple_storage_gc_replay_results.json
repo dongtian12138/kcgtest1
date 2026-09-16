@@ -1,0 +1,1755 @@
+{
+  "scope": "SIX_FRESH_PROCESS_LIST_VS_TUPLE64_1_DEFAULT_GC120FRAME_REPLAY",
+  "production_source_changed": false,
+  "simulation_app_created": false,
+  "physics_executed": false,
+  "gc_disabled_or_threshold_changed": false,
+  "process_cpu_measurement_added_in_repeat2_only": true,
+  "reports": [
+    {
+      "scope": "SYNTHETIC_LIFETIME_REPLAY_OF_UNMODIFIED_SEALED_DENSE_FRAMES",
+      "source_steps": [
+        279680,
+        279681
+      ],
+      "source_rows_alternated_without_changing_any_field": true,
+      "frames_created": 120,
+      "block_size": 64,
+      "sealed_cache_blocks_while_writing": 1,
+      "closed_read_cache_blocks": 1,
+      "repeat": 0,
+      "simulation_app_created": false,
+      "physics_executed": false,
+      "gc_enabled_throughout": true,
+      "gc_thresholds": [
+        700,
+        10,
+        10
+      ],
+      "gc_count_before": [
+        1,
+        0,
+        0
+      ],
+      "tracked_point_containers": {
+        "point_dict": true,
+        "position_list": true,
+        "normal_list": true,
+        "impulse_list": true
+      },
+      "phase_wall_s": {
+        "creation": 6.445123869925737,
+        "statistics": 2.942006799799856,
+        "archive_append": 1.086285186407622,
+        "archive_close": 1.1121758500230499,
+        "loop_overhead": 0.017957514966838062
+      },
+      "total_wall_s": 11.603801968041807,
+      "gc_wall_s_by_phase_and_generation": {
+        "creation": [
+          0.13231725443620235,
+          0.23016585246659815,
+          3.3380262829596177
+        ],
+        "statistics": [
+          0.05552973714657128,
+          0.11353506881278008,
+          1.3148076989455149
+        ],
+        "archive_append": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "archive_close": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "loop_overhead": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "gc_collections_by_phase_and_generation": {
+        "creation": [
+          11651,
+          1058,
+          12
+        ],
+        "statistics": [
+          3879,
+          353,
+          6
+        ],
+        "archive_append": [
+          0,
+          0,
+          0
+        ],
+        "archive_close": [
+          0,
+          0,
+          0
+        ],
+        "loop_overhead": [
+          0,
+          0,
+          0
+        ]
+      },
+      "gc_generation_total_s": [
+        0.18784699158277363,
+        0.34370092127937824,
+        4.6528339819051325
+      ],
+      "gc_generation_total_count": [
+        15530,
+        1411,
+        18
+      ],
+      "gc_longest_pause_s_by_generation": [
+        0.0001520480145700276,
+        0.0012870780192315578,
+        0.8160229200148024
+      ],
+      "gc_collected_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_uncollectable_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_wall_s_total": 5.184381894767284,
+      "maximum_live_frames": 64,
+      "maximum_cached_frames": 64,
+      "maximum_retained_frames": 120,
+      "rss_before_replay_kib": 153468,
+      "maximum_recording_rss_kib": 1880736,
+      "rss_samples": [
+        {
+          "frame": 16,
+          "live": 16,
+          "cached": 0,
+          "rss_kib": 379860
+        },
+        {
+          "frame": 32,
+          "live": 32,
+          "cached": 0,
+          "rss_kib": 610420
+        },
+        {
+          "frame": 48,
+          "live": 48,
+          "cached": 0,
+          "rss_kib": 840972
+        },
+        {
+          "frame": 64,
+          "live": 64,
+          "cached": 0,
+          "rss_kib": 1071500
+        },
+        {
+          "frame": 80,
+          "live": 16,
+          "cached": 64,
+          "rss_kib": 1304408
+        },
+        {
+          "frame": 96,
+          "live": 32,
+          "cached": 64,
+          "rss_kib": 1535936
+        },
+        {
+          "frame": 112,
+          "live": 48,
+          "cached": 64,
+          "rss_kib": 1766488
+        },
+        {
+          "frame": 120,
+          "live": 56,
+          "cached": 64,
+          "rss_kib": 1881768
+        }
+      ],
+      "archive_compressed_bytes": 57495982,
+      "archive_uncompressed_bytes": 411513840,
+      "full_field_values_order_and_encoded_stream_identical": true,
+      "archive_index_complete": true,
+      "decoded_stream_sha256": "157703830fec00c42f232200d2442ed0b45d06b677965afd8e12e1649a985aaf",
+      "pilot_random_read_verified": null,
+      "synthetic_temporary_archive_removed_after_verification": true,
+      "limitations": [
+        "No native get_full_contact_report or C++ContactDataVector timing.",
+        "Only the two dense final-hold frames are replayed; not a physical trajectory or entire-run weighted estimate.",
+        "Same existing Isaac Python default GC thresholds; original full14 did not record gc.callbacks timings.",
+        "Non-contact metadata uses deepcopy; point dicts and Float3vector copies are freshly created by the original decoder."
+      ],
+      "vector_container": "list",
+      "equivalence_and_tracking_probe": [
+        {
+          "source_step": 279680,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 3625,
+              "position_vectors": 113,
+              "normal_vectors": 113,
+              "impulse_vectors": 113,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        },
+        {
+          "source_step": 279681,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 17356,
+              "position_vectors": 106,
+              "normal_vectors": 106,
+              "impulse_vectors": 106,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        }
+      ],
+      "existing_type_specific_test": {
+        "test": "test_contact_path_cache_does_not_change_raw_contact_values",
+        "passed": true
+      },
+      "candidate_injected_only_into_this_child_process": true
+    },
+    {
+      "scope": "SYNTHETIC_LIFETIME_REPLAY_OF_UNMODIFIED_SEALED_DENSE_FRAMES",
+      "source_steps": [
+        279680,
+        279681
+      ],
+      "source_rows_alternated_without_changing_any_field": true,
+      "frames_created": 120,
+      "block_size": 64,
+      "sealed_cache_blocks_while_writing": 1,
+      "closed_read_cache_blocks": 1,
+      "repeat": 0,
+      "simulation_app_created": false,
+      "physics_executed": false,
+      "gc_enabled_throughout": true,
+      "gc_thresholds": [
+        700,
+        10,
+        10
+      ],
+      "gc_count_before": [
+        1,
+        0,
+        0
+      ],
+      "tracked_point_containers": {
+        "point_dict": true,
+        "position_list": false,
+        "normal_list": false,
+        "impulse_list": false
+      },
+      "phase_wall_s": {
+        "creation": 3.7092545881750993,
+        "statistics": 3.5806158442865126,
+        "archive_append": 1.054147624236066,
+        "archive_close": 1.0895330919884145,
+        "loop_overhead": 0.01622914581093937
+      },
+      "total_wall_s": 9.450025124999229,
+      "gc_wall_s_by_phase_and_generation": {
+        "creation": [
+          0.1269581454107538,
+          0.12422981852432713,
+          0.7683271749410778
+        ],
+        "statistics": [
+          0.052957843290641904,
+          0.09527762391371652,
+          2.042115219810512
+        ],
+        "archive_append": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "archive_close": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "loop_overhead": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "gc_collections_by_phase_and_generation": {
+        "creation": [
+          11652,
+          1059,
+          10
+        ],
+        "statistics": [
+          3861,
+          351,
+          20
+        ],
+        "archive_append": [
+          0,
+          0,
+          0
+        ],
+        "archive_close": [
+          0,
+          0,
+          0
+        ],
+        "loop_overhead": [
+          0,
+          0,
+          0
+        ]
+      },
+      "gc_generation_total_s": [
+        0.1799159887013957,
+        0.21950744243804365,
+        2.8104423947515897
+      ],
+      "gc_generation_total_count": [
+        15513,
+        1410,
+        30
+      ],
+      "gc_longest_pause_s_by_generation": [
+        8.188904030248523e-05,
+        0.0006395819946192205,
+        0.20312294200994074
+      ],
+      "gc_collected_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_uncollectable_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_wall_s_total": 3.209865825891029,
+      "maximum_live_frames": 64,
+      "maximum_cached_frames": 64,
+      "maximum_retained_frames": 120,
+      "rss_before_replay_kib": 153276,
+      "maximum_recording_rss_kib": 1684452,
+      "rss_samples": [
+        {
+          "frame": 16,
+          "live": 16,
+          "cached": 0,
+          "rss_kib": 352844
+        },
+        {
+          "frame": 32,
+          "live": 32,
+          "cached": 0,
+          "rss_kib": 557384
+        },
+        {
+          "frame": 48,
+          "live": 48,
+          "cached": 0,
+          "rss_kib": 761744
+        },
+        {
+          "frame": 64,
+          "live": 64,
+          "cached": 0,
+          "rss_kib": 966116
+        },
+        {
+          "frame": 80,
+          "live": 16,
+          "cached": 64,
+          "rss_kib": 1173312
+        },
+        {
+          "frame": 96,
+          "live": 32,
+          "cached": 64,
+          "rss_kib": 1378684
+        },
+        {
+          "frame": 112,
+          "live": 48,
+          "cached": 64,
+          "rss_kib": 1583076
+        },
+        {
+          "frame": 120,
+          "live": 56,
+          "cached": 64,
+          "rss_kib": 1685272
+        }
+      ],
+      "archive_compressed_bytes": 57495982,
+      "archive_uncompressed_bytes": 411513840,
+      "full_field_values_order_and_encoded_stream_identical": true,
+      "archive_index_complete": true,
+      "decoded_stream_sha256": "157703830fec00c42f232200d2442ed0b45d06b677965afd8e12e1649a985aaf",
+      "pilot_random_read_verified": null,
+      "synthetic_temporary_archive_removed_after_verification": true,
+      "limitations": [
+        "No native get_full_contact_report or C++ContactDataVector timing.",
+        "Only the two dense final-hold frames are replayed; not a physical trajectory or entire-run weighted estimate.",
+        "Same existing Isaac Python default GC thresholds; original full14 did not record gc.callbacks timings.",
+        "Non-contact metadata uses deepcopy; point dicts and Float3vector copies are freshly created by the original decoder."
+      ],
+      "vector_container": "tuple",
+      "equivalence_and_tracking_probe": [
+        {
+          "source_step": 279680,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 3625,
+              "position_vectors": 113,
+              "normal_vectors": 113,
+              "impulse_vectors": 113,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        },
+        {
+          "source_step": 279681,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 17356,
+              "position_vectors": 106,
+              "normal_vectors": 106,
+              "impulse_vectors": 106,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        }
+      ],
+      "existing_type_specific_test": {
+        "test": "test_contact_path_cache_does_not_change_raw_contact_values",
+        "passed": false,
+        "known_reason": "Line32 directly compares the owned vector with a list literal; tuple is value/encoding equivalent but not equal to that list as a Python object."
+      },
+      "candidate_injected_only_into_this_child_process": true
+    },
+    {
+      "scope": "SYNTHETIC_LIFETIME_REPLAY_OF_UNMODIFIED_SEALED_DENSE_FRAMES",
+      "source_steps": [
+        279680,
+        279681
+      ],
+      "source_rows_alternated_without_changing_any_field": true,
+      "frames_created": 120,
+      "block_size": 64,
+      "sealed_cache_blocks_while_writing": 1,
+      "closed_read_cache_blocks": 1,
+      "repeat": 1,
+      "simulation_app_created": false,
+      "physics_executed": false,
+      "gc_enabled_throughout": true,
+      "gc_thresholds": [
+        700,
+        10,
+        10
+      ],
+      "gc_count_before": [
+        1,
+        0,
+        0
+      ],
+      "tracked_point_containers": {
+        "point_dict": true,
+        "position_list": true,
+        "normal_list": true,
+        "impulse_list": true
+      },
+      "phase_wall_s": {
+        "creation": 6.033669385069516,
+        "statistics": 2.8067742130951956,
+        "archive_append": 1.0423722220002674,
+        "archive_close": 1.090235514973756,
+        "loop_overhead": 0.014318001689389348
+      },
+      "total_wall_s": 10.987596928025596,
+      "gc_wall_s_by_phase_and_generation": {
+        "creation": [
+          0.12640223855851218,
+          0.20691428158897907,
+          3.11704274994554
+        ],
+        "statistics": [
+          0.052796597010456026,
+          0.09672620228957385,
+          1.2951495950110257
+        ],
+        "archive_append": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "archive_close": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "loop_overhead": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "gc_collections_by_phase_and_generation": {
+        "creation": [
+          11651,
+          1058,
+          12
+        ],
+        "statistics": [
+          3879,
+          353,
+          6
+        ],
+        "archive_append": [
+          0,
+          0,
+          0
+        ],
+        "archive_close": [
+          0,
+          0,
+          0
+        ],
+        "loop_overhead": [
+          0,
+          0,
+          0
+        ]
+      },
+      "gc_generation_total_s": [
+        0.1791988355689682,
+        0.3036404838785529,
+        4.412192344956566
+      ],
+      "gc_generation_total_count": [
+        15530,
+        1411,
+        18
+      ],
+      "gc_longest_pause_s_by_generation": [
+        8.259102469310164e-05,
+        0.000565111986361444,
+        0.8106849920004606
+      ],
+      "gc_collected_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_uncollectable_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_wall_s_total": 4.895031664404087,
+      "maximum_live_frames": 64,
+      "maximum_cached_frames": 64,
+      "maximum_retained_frames": 120,
+      "rss_before_replay_kib": 153456,
+      "maximum_recording_rss_kib": 1881756,
+      "rss_samples": [
+        {
+          "frame": 16,
+          "live": 16,
+          "cached": 0,
+          "rss_kib": 378840
+        },
+        {
+          "frame": 32,
+          "live": 32,
+          "cached": 0,
+          "rss_kib": 610408
+        },
+        {
+          "frame": 48,
+          "live": 48,
+          "cached": 0,
+          "rss_kib": 840976
+        },
+        {
+          "frame": 64,
+          "live": 64,
+          "cached": 0,
+          "rss_kib": 1071504
+        },
+        {
+          "frame": 80,
+          "live": 16,
+          "cached": 64,
+          "rss_kib": 1305420
+        },
+        {
+          "frame": 96,
+          "live": 32,
+          "cached": 64,
+          "rss_kib": 1535940
+        },
+        {
+          "frame": 112,
+          "live": 48,
+          "cached": 64,
+          "rss_kib": 1766492
+        },
+        {
+          "frame": 120,
+          "live": 56,
+          "cached": 64,
+          "rss_kib": 1881772
+        }
+      ],
+      "archive_compressed_bytes": 57495982,
+      "archive_uncompressed_bytes": 411513840,
+      "full_field_values_order_and_encoded_stream_identical": true,
+      "archive_index_complete": true,
+      "decoded_stream_sha256": "157703830fec00c42f232200d2442ed0b45d06b677965afd8e12e1649a985aaf",
+      "pilot_random_read_verified": null,
+      "synthetic_temporary_archive_removed_after_verification": true,
+      "limitations": [
+        "No native get_full_contact_report or C++ContactDataVector timing.",
+        "Only the two dense final-hold frames are replayed; not a physical trajectory or entire-run weighted estimate.",
+        "Same existing Isaac Python default GC thresholds; original full14 did not record gc.callbacks timings.",
+        "Non-contact metadata uses deepcopy; point dicts and Float3vector copies are freshly created by the original decoder."
+      ],
+      "vector_container": "list",
+      "equivalence_and_tracking_probe": [
+        {
+          "source_step": 279680,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 3625,
+              "position_vectors": 113,
+              "normal_vectors": 113,
+              "impulse_vectors": 113,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        },
+        {
+          "source_step": 279681,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 17356,
+              "position_vectors": 106,
+              "normal_vectors": 106,
+              "impulse_vectors": 106,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        }
+      ],
+      "existing_type_specific_test": {
+        "test": "test_contact_path_cache_does_not_change_raw_contact_values",
+        "passed": true
+      },
+      "candidate_injected_only_into_this_child_process": true
+    },
+    {
+      "scope": "SYNTHETIC_LIFETIME_REPLAY_OF_UNMODIFIED_SEALED_DENSE_FRAMES",
+      "source_steps": [
+        279680,
+        279681
+      ],
+      "source_rows_alternated_without_changing_any_field": true,
+      "frames_created": 120,
+      "block_size": 64,
+      "sealed_cache_blocks_while_writing": 1,
+      "closed_read_cache_blocks": 1,
+      "repeat": 1,
+      "simulation_app_created": false,
+      "physics_executed": false,
+      "gc_enabled_throughout": true,
+      "gc_thresholds": [
+        700,
+        10,
+        10
+      ],
+      "gc_count_before": [
+        1,
+        0,
+        0
+      ],
+      "tracked_point_containers": {
+        "point_dict": true,
+        "position_list": false,
+        "normal_list": false,
+        "impulse_list": false
+      },
+      "phase_wall_s": {
+        "creation": 3.632828201109078,
+        "statistics": 3.4859105339855887,
+        "archive_append": 1.0343588585383259,
+        "archive_close": 1.0692362069967203,
+        "loop_overhead": 0.013945818820502609
+      },
+      "total_wall_s": 9.236513047013432,
+      "gc_wall_s_by_phase_and_generation": {
+        "creation": [
+          0.12443590170005336,
+          0.11286299343919381,
+          0.7501182229607366
+        ],
+        "statistics": [
+          0.05161536252126098,
+          0.08420622232370079,
+          2.000515529012773
+        ],
+        "archive_append": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "archive_close": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "loop_overhead": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "gc_collections_by_phase_and_generation": {
+        "creation": [
+          11652,
+          1059,
+          10
+        ],
+        "statistics": [
+          3861,
+          351,
+          20
+        ],
+        "archive_append": [
+          0,
+          0,
+          0
+        ],
+        "archive_close": [
+          0,
+          0,
+          0
+        ],
+        "loop_overhead": [
+          0,
+          0,
+          0
+        ]
+      },
+      "gc_generation_total_s": [
+        0.17605126422131434,
+        0.1970692157628946,
+        2.75063375197351
+      ],
+      "gc_generation_total_count": [
+        15513,
+        1410,
+        30
+      ],
+      "gc_longest_pause_s_by_generation": [
+        7.394596468657255e-05,
+        0.0005301409983076155,
+        0.2074120559846051
+      ],
+      "gc_collected_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_uncollectable_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_wall_s_total": 3.1237542319577187,
+      "maximum_live_frames": 64,
+      "maximum_cached_frames": 64,
+      "maximum_retained_frames": 120,
+      "rss_before_replay_kib": 152392,
+      "maximum_recording_rss_kib": 1685160,
+      "rss_samples": [
+        {
+          "frame": 16,
+          "live": 16,
+          "cached": 0,
+          "rss_kib": 351912
+        },
+        {
+          "frame": 32,
+          "live": 32,
+          "cached": 0,
+          "rss_kib": 556456
+        },
+        {
+          "frame": 48,
+          "live": 48,
+          "cached": 0,
+          "rss_kib": 761840
+        },
+        {
+          "frame": 64,
+          "live": 64,
+          "cached": 0,
+          "rss_kib": 966208
+        },
+        {
+          "frame": 80,
+          "live": 16,
+          "cached": 64,
+          "rss_kib": 1174412
+        },
+        {
+          "frame": 96,
+          "live": 32,
+          "cached": 64,
+          "rss_kib": 1377752
+        },
+        {
+          "frame": 112,
+          "live": 48,
+          "cached": 64,
+          "rss_kib": 1583148
+        },
+        {
+          "frame": 120,
+          "live": 56,
+          "cached": 64,
+          "rss_kib": 1684324
+        }
+      ],
+      "archive_compressed_bytes": 57495982,
+      "archive_uncompressed_bytes": 411513840,
+      "full_field_values_order_and_encoded_stream_identical": true,
+      "archive_index_complete": true,
+      "decoded_stream_sha256": "157703830fec00c42f232200d2442ed0b45d06b677965afd8e12e1649a985aaf",
+      "pilot_random_read_verified": null,
+      "synthetic_temporary_archive_removed_after_verification": true,
+      "limitations": [
+        "No native get_full_contact_report or C++ContactDataVector timing.",
+        "Only the two dense final-hold frames are replayed; not a physical trajectory or entire-run weighted estimate.",
+        "Same existing Isaac Python default GC thresholds; original full14 did not record gc.callbacks timings.",
+        "Non-contact metadata uses deepcopy; point dicts and Float3vector copies are freshly created by the original decoder."
+      ],
+      "vector_container": "tuple",
+      "equivalence_and_tracking_probe": [
+        {
+          "source_step": 279680,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 3771,
+              "position_vectors": 113,
+              "normal_vectors": 113,
+              "impulse_vectors": 113,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        },
+        {
+          "source_step": 279681,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 17356,
+              "position_vectors": 106,
+              "normal_vectors": 106,
+              "impulse_vectors": 106,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        }
+      ],
+      "existing_type_specific_test": {
+        "test": "test_contact_path_cache_does_not_change_raw_contact_values",
+        "passed": false,
+        "known_reason": "Line32 directly compares the owned vector with a list literal; tuple is value/encoding equivalent but not equal to that list as a Python object."
+      },
+      "candidate_injected_only_into_this_child_process": true
+    },
+    {
+      "scope": "SYNTHETIC_LIFETIME_REPLAY_OF_UNMODIFIED_SEALED_DENSE_FRAMES",
+      "source_steps": [
+        279680,
+        279681
+      ],
+      "source_rows_alternated_without_changing_any_field": true,
+      "frames_created": 120,
+      "block_size": 64,
+      "sealed_cache_blocks_while_writing": 1,
+      "closed_read_cache_blocks": 1,
+      "repeat": 2,
+      "simulation_app_created": false,
+      "physics_executed": false,
+      "gc_enabled_throughout": true,
+      "gc_thresholds": [
+        700,
+        10,
+        10
+      ],
+      "gc_count_before": [
+        1,
+        0,
+        0
+      ],
+      "tracked_point_containers": {
+        "point_dict": true,
+        "position_list": true,
+        "normal_list": true,
+        "impulse_list": true
+      },
+      "phase_wall_s": {
+        "creation": 6.013356780749746,
+        "statistics": 2.787988059222698,
+        "archive_append": 1.037387814198155,
+        "archive_close": 1.0830241329967976,
+        "loop_overhead": 0.014272572239860892
+      },
+      "total_wall_s": 10.93627749098232,
+      "recording_process_cpu_s": 10.935871950000001,
+      "gc_wall_s_by_phase_and_generation": {
+        "creation": [
+          0.12572484055999666,
+          0.20405747328186408,
+          3.1044597778236493
+        ],
+        "statistics": [
+          0.052199867845047265,
+          0.0948113658814691,
+          1.2955891959136352
+        ],
+        "archive_append": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "archive_close": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "loop_overhead": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "gc_collections_by_phase_and_generation": {
+        "creation": [
+          11651,
+          1058,
+          12
+        ],
+        "statistics": [
+          3879,
+          353,
+          6
+        ],
+        "archive_append": [
+          0,
+          0,
+          0
+        ],
+        "archive_close": [
+          0,
+          0,
+          0
+        ],
+        "loop_overhead": [
+          0,
+          0,
+          0
+        ]
+      },
+      "gc_generation_total_s": [
+        0.17792470840504393,
+        0.2988688391633332,
+        4.4000489737372845
+      ],
+      "gc_generation_total_count": [
+        15530,
+        1411,
+        18
+      ],
+      "gc_longest_pause_s_by_generation": [
+        7.94529914855957e-05,
+        0.0005836960044689476,
+        0.8105919449590147
+      ],
+      "gc_collected_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_uncollectable_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_wall_s_total": 4.876842521305662,
+      "maximum_live_frames": 64,
+      "maximum_cached_frames": 64,
+      "maximum_retained_frames": 120,
+      "rss_before_replay_kib": 153392,
+      "maximum_recording_rss_kib": 1881608,
+      "rss_samples": [
+        {
+          "frame": 16,
+          "live": 16,
+          "cached": 0,
+          "rss_kib": 378764
+        },
+        {
+          "frame": 32,
+          "live": 32,
+          "cached": 0,
+          "rss_kib": 610328
+        },
+        {
+          "frame": 48,
+          "live": 48,
+          "cached": 0,
+          "rss_kib": 840900
+        },
+        {
+          "frame": 64,
+          "live": 64,
+          "cached": 0,
+          "rss_kib": 1071428
+        },
+        {
+          "frame": 80,
+          "live": 16,
+          "cached": 64,
+          "rss_kib": 1304332
+        },
+        {
+          "frame": 96,
+          "live": 32,
+          "cached": 64,
+          "rss_kib": 1535864
+        },
+        {
+          "frame": 112,
+          "live": 48,
+          "cached": 64,
+          "rss_kib": 1766412
+        },
+        {
+          "frame": 120,
+          "live": 56,
+          "cached": 64,
+          "rss_kib": 1881696
+        }
+      ],
+      "archive_compressed_bytes": 57495982,
+      "archive_uncompressed_bytes": 411513840,
+      "full_field_values_order_and_encoded_stream_identical": true,
+      "archive_index_complete": true,
+      "decoded_stream_sha256": "157703830fec00c42f232200d2442ed0b45d06b677965afd8e12e1649a985aaf",
+      "pilot_random_read_verified": null,
+      "synthetic_temporary_archive_removed_after_verification": true,
+      "limitations": [
+        "No native get_full_contact_report or C++ContactDataVector timing.",
+        "Only the two dense final-hold frames are replayed; not a physical trajectory or entire-run weighted estimate.",
+        "Same existing Isaac Python default GC thresholds; original full14 did not record gc.callbacks timings.",
+        "Non-contact metadata uses deepcopy; point dicts and Float3vector copies are freshly created by the original decoder."
+      ],
+      "vector_container": "list",
+      "equivalence_and_tracking_probe": [
+        {
+          "source_step": 279680,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 3625,
+              "position_vectors": 113,
+              "normal_vectors": 113,
+              "impulse_vectors": 113,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        },
+        {
+          "source_step": 279681,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 17356,
+              "position_vectors": 106,
+              "normal_vectors": 106,
+              "impulse_vectors": 106,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        }
+      ],
+      "existing_type_specific_test": {
+        "test": "test_contact_path_cache_does_not_change_raw_contact_values",
+        "passed": true
+      },
+      "candidate_injected_only_into_this_child_process": true
+    },
+    {
+      "scope": "SYNTHETIC_LIFETIME_REPLAY_OF_UNMODIFIED_SEALED_DENSE_FRAMES",
+      "source_steps": [
+        279680,
+        279681
+      ],
+      "source_rows_alternated_without_changing_any_field": true,
+      "frames_created": 120,
+      "block_size": 64,
+      "sealed_cache_blocks_while_writing": 1,
+      "closed_read_cache_blocks": 1,
+      "repeat": 2,
+      "simulation_app_created": false,
+      "physics_executed": false,
+      "gc_enabled_throughout": true,
+      "gc_thresholds": [
+        700,
+        10,
+        10
+      ],
+      "gc_count_before": [
+        1,
+        0,
+        0
+      ],
+      "tracked_point_containers": {
+        "point_dict": true,
+        "position_list": false,
+        "normal_list": false,
+        "impulse_list": false
+      },
+      "phase_wall_s": {
+        "creation": 3.7472228844999336,
+        "statistics": 3.6432673598174006,
+        "archive_append": 1.0516824689111672,
+        "archive_close": 1.080286092008464,
+        "loop_overhead": 0.016097468847874552
+      },
+      "total_wall_s": 9.538818421016913,
+      "recording_process_cpu_s": 9.537895283000001,
+      "gc_wall_s_by_phase_and_generation": {
+        "creation": [
+          0.12885879626264796,
+          0.12707634450634941,
+          0.7786358449375257
+        ],
+        "statistics": [
+          0.05397532938513905,
+          0.09438378916820511,
+          2.1102009669994004
+        ],
+        "archive_append": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "archive_close": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "loop_overhead": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "gc_collections_by_phase_and_generation": {
+        "creation": [
+          11652,
+          1059,
+          10
+        ],
+        "statistics": [
+          3861,
+          351,
+          20
+        ],
+        "archive_append": [
+          0,
+          0,
+          0
+        ],
+        "archive_close": [
+          0,
+          0,
+          0
+        ],
+        "loop_overhead": [
+          0,
+          0,
+          0
+        ]
+      },
+      "gc_generation_total_s": [
+        0.182834125647787,
+        0.22146013367455453,
+        2.888836811936926
+      ],
+      "gc_generation_total_count": [
+        15513,
+        1410,
+        30
+      ],
+      "gc_longest_pause_s_by_generation": [
+        0.00011066795559599996,
+        0.000783628027420491,
+        0.23296066001057625
+      ],
+      "gc_collected_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_uncollectable_objects_by_generation": [
+        0,
+        0,
+        0
+      ],
+      "gc_wall_s_total": 3.2931310712592676,
+      "maximum_live_frames": 64,
+      "maximum_cached_frames": 64,
+      "maximum_retained_frames": 120,
+      "rss_before_replay_kib": 154352,
+      "maximum_recording_rss_kib": 1684540,
+      "rss_samples": [
+        {
+          "frame": 16,
+          "live": 16,
+          "cached": 0,
+          "rss_kib": 351856
+        },
+        {
+          "frame": 32,
+          "live": 32,
+          "cached": 0,
+          "rss_kib": 556408
+        },
+        {
+          "frame": 48,
+          "live": 48,
+          "cached": 0,
+          "rss_kib": 761784
+        },
+        {
+          "frame": 64,
+          "live": 64,
+          "cached": 0,
+          "rss_kib": 966160
+        },
+        {
+          "frame": 80,
+          "live": 16,
+          "cached": 64,
+          "rss_kib": 1174360
+        },
+        {
+          "frame": 96,
+          "live": 32,
+          "cached": 64,
+          "rss_kib": 1377700
+        },
+        {
+          "frame": 112,
+          "live": 48,
+          "cached": 64,
+          "rss_kib": 1583100
+        },
+        {
+          "frame": 120,
+          "live": 56,
+          "cached": 64,
+          "rss_kib": 1684284
+        }
+      ],
+      "archive_compressed_bytes": 57495982,
+      "archive_uncompressed_bytes": 411513840,
+      "full_field_values_order_and_encoded_stream_identical": true,
+      "archive_index_complete": true,
+      "decoded_stream_sha256": "157703830fec00c42f232200d2442ed0b45d06b677965afd8e12e1649a985aaf",
+      "pilot_random_read_verified": null,
+      "synthetic_temporary_archive_removed_after_verification": true,
+      "limitations": [
+        "No native get_full_contact_report or C++ContactDataVector timing.",
+        "Only the two dense final-hold frames are replayed; not a physical trajectory or entire-run weighted estimate.",
+        "Same existing Isaac Python default GC thresholds; original full14 did not record gc.callbacks timings.",
+        "Non-contact metadata uses deepcopy; point dicts and Float3vector copies are freshly created by the original decoder."
+      ],
+      "vector_container": "tuple",
+      "equivalence_and_tracking_probe": [
+        {
+          "source_step": 279680,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 3625,
+              "position_vectors": 113,
+              "normal_vectors": 113,
+              "impulse_vectors": 113,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17384,
+              "position_vectors": 17384,
+              "normal_vectors": 17384,
+              "impulse_vectors": 17384,
+              "points": 17384,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17384,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        },
+        {
+          "source_step": 279681,
+          "complete_poll_headers_msgpack_equal_to_archive": true,
+          "complete_contacts_msgpack_equal_to_archive": true,
+          "json_encoding_identical": true,
+          "owned_outputs_survive_source_mutation_and_clear": true,
+          "tracking_before_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 17356,
+              "position_vectors": 106,
+              "normal_vectors": 106,
+              "impulse_vectors": 106,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "tracking_after_explicit_untimed_collect": {
+            "list": {
+              "point_dicts": 17380,
+              "position_vectors": 17380,
+              "normal_vectors": 17380,
+              "impulse_vectors": 17380,
+              "points": 17380,
+              "headers": 1829
+            },
+            "tuple": {
+              "point_dicts": 0,
+              "position_vectors": 0,
+              "normal_vectors": 0,
+              "impulse_vectors": 0,
+              "points": 17380,
+              "headers": 1829
+            }
+          },
+          "in_memory_types_differ": {
+            "original": "list",
+            "candidate": "tuple"
+          }
+        }
+      ],
+      "existing_type_specific_test": {
+        "test": "test_contact_path_cache_does_not_change_raw_contact_values",
+        "passed": false,
+        "known_reason": "Line32 directly compares the owned vector with a list literal; tuple is value/encoding equivalent but not equal to that list as a Python object."
+      },
+      "candidate_injected_only_into_this_child_process": true
+    }
+  ]
+}

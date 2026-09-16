@@ -1,0 +1,56 @@
+{
+  "release": {
+    "assets": [
+      {
+        "apiUrl": "https://api.github.com/repos/dongtian12138/kcgtest1/releases/assets/568620205",
+        "contentType": "application/x-gtar",
+        "createdAt": "2026-09-16T19:17:28Z",
+        "digest": "sha256:195e378646663803872f527c17afb1ee3541ce4af95cdb533e629112832d9e70",
+        "downloadCount": 0,
+        "id": "RA_kwDOT4G-lc4h5HSt",
+        "label": "",
+        "name": "assembly-runtime-assets.tar.gz",
+        "size": 121458865,
+        "state": "uploaded",
+        "updatedAt": "2026-09-16T19:17:45Z",
+        "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-baseline-20260916/assembly-runtime-assets.tar.gz"
+      },
+      {
+        "apiUrl": "https://api.github.com/repos/dongtian12138/kcgtest1/releases/assets/568620204",
+        "contentType": "video/mp4",
+        "createdAt": "2026-09-16T19:17:28Z",
+        "digest": "sha256:c0fdda913cb0f2507852399285b39618473dd43e08dc42f71d4569d6e1e912b6",
+        "downloadCount": 0,
+        "id": "RA_kwDOT4G-lc4h5HSs",
+        "label": "",
+        "name": "assembly_four_view.mp4",
+        "size": 42428584,
+        "state": "uploaded",
+        "updatedAt": "2026-09-16T19:17:37Z",
+        "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-baseline-20260916/assembly_four_view.mp4"
+      },
+      {
+        "apiUrl": "https://api.github.com/repos/dongtian12138/kcgtest1/releases/assets/568620214",
+        "contentType": "video/mp4",
+        "createdAt": "2026-09-16T19:17:28Z",
+        "digest": "sha256:717fafb7fcc57943a5bf0428a5b6949e2718d678c4126fc3487f58d3636e9f03",
+        "downloadCount": 0,
+        "id": "RA_kwDOT4G-lc4h5HS2",
+        "label": "",
+        "name": "final_turn_and_release_actual_clip.mp4",
+        "size": 1491344,
+        "state": "uploaded",
+        "updatedAt": "2026-09-16T19:17:30Z",
+        "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-baseline-20260916/final_turn_and_release_actual_clip.mp4"
+      }
+    ],
+    "isPrerelease": true,
+    "tagName": "assembly-baseline-20260916",
+    "targetCommitish": "d64fa4a0a1a394bc800f96191d23aecc3bdad45c",
+    "url": "https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-baseline-20260916"
+  },
+  "downloaded_into": "/home/noob/WorkPlace/kcgtest1-improvements-20260916",
+  "asset_archive_sha256": "195e378646663803872f527c17afb1ee3541ce4af95cdb533e629112832d9e70",
+  "all_297_extracted_files_verified": true,
+  "checked_at_utc": "2026-09-16T19:21:49.339625+00:00"
+}

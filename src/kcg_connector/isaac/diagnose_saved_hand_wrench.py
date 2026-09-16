@@ -88,6 +88,8 @@ parser.add_argument("--main-read-sequence", action="store_true",
 parser.add_argument("--wrist-reference-loads",action="store_true",
                     help="Keep the source hand open and apply bounded reference loads to its wrist sensor subtree; no grasp or assembly.")
 parser.add_argument("--position-iterations",type=int,default=32)
+parser.add_argument('--experimental-connector-position-convergence',action='store_true',
+                    help='Explicit CPU960Hz/4velocity comparison of64 versus128 position iterations; source model and force limits remain unchanged')
 parser.add_argument("--closing-drive-cap-nm",type=float,default=1.)
 parser.add_argument('--finite-drive-sensitivity',action='store_true',
                     help='Explicit bounded actuator-reference sensitivity up to4Nm; not a hardware rating')
@@ -387,11 +389,21 @@ if args.frozen_connector_model is not None:
     balanced_iterations=bool(experimental_rate and source_stage_recipe
         and source_stage_recipe.get('balanced_cpu_iteration_budget',False)
         and (args.physics_hz,args.position_iterations,args.velocity_iterations)==(240,255,16))
+    experimental_position=bool(args.experimental_connector_position_convergence
+        and args.source_stage_probe is not None and args.physics_device=='cpu'
+        and args.solver_type=='TGS' and args.external_forces_every_iteration
+        and args.physics_hz==required['physics_hz']==960
+        and args.velocity_iterations==required['velocity_iterations']==4
+        and required['position_iterations']==64 and args.position_iterations in (64,128)
+        and not args.experimental_connector_time_resolution and not args.experimental_connector_gpu_comparison)
     if (not args.free_plug_in_socket or (args.physics_device!='cpu' and not experimental_gpu)
             or (args.cpu_wrist_reference is None and not args.source_stage_probe)
             or (args.physics_hz!=required['physics_hz'] and not experimental_rate)
-            or (not balanced_iterations and any(getattr(args,k)!=required[k] for k in ('position_iterations','velocity_iterations')))):
+            or (not balanced_iterations and not experimental_position
+                and any(getattr(args,k)!=required[k] for k in ('position_iterations','velocity_iterations')))):
         parser.error('The delivered connector requires its declared CPU runtime configuration and a CPU wrist reference')
+if args.experimental_connector_position_convergence and not (args.frozen_connector_model and experimental_position):
+    parser.error('Position convergence is restricted to the declared frozen-connector CPU960Hz/64-or128/4 source-stage comparison')
 if args.experimental_connector_gpu_comparison and not (args.frozen_connector_model and args.physics_device=='cuda:0'
         and args.gpu_host_readback and args.interface_twist_deg is not None):
     parser.error('Experimental GPU comparison requires the frozen connector, local interface probe, CUDA and host readback')
@@ -1084,6 +1096,34 @@ try:
             for name,state in source_stage_recipe['motor_input_state'].items():
                 drive=UsdPhysics.DriveAPI(stage.GetPrimAtPath('/World/HandArm/Physics/'+name),'angular')
                 drive.CreateTargetPositionAttr(float(np.degrees(state['input_angle'])))
+    if args.experimental_connector_position_convergence:
+        # Apply after all model/hand authoring, before the first physical step.
+        # The frozen USD and its validated64-iteration contract stay unchanged.
+        before={'scene_min':scene.GetMinPositionIterationCountAttr().Get(),
+                'scene_max':scene.GetMaxPositionIterationCountAttr().Get()}
+        scene.CreateMinPositionIterationCountAttr(args.position_iterations)
+        scene.CreateMaxPositionIterationCountAttr(args.position_iterations)
+        actors=[]
+        for prim in stage.Traverse():
+            for schema in (PhysxSchema.PhysxRigidBodyAPI,PhysxSchema.PhysxArticulationAPI):
+                if prim.HasAPI(schema):
+                    api=schema(prim)
+                    api.CreateSolverPositionIterationCountAttr(args.position_iterations)
+                    api.CreateSolverVelocityIterationCountAttr(args.velocity_iterations)
+                    actors.append({'path':str(prim.GetPath()),'schema':schema.__name__,
+                                   'position':api.GetSolverPositionIterationCountAttr().Get(),
+                                   'velocity':api.GetSolverVelocityIterationCountAttr().Get()})
+        if not actors or any(a['position']!=args.position_iterations or a['velocity']!=4 for a in actors):
+            raise RuntimeError('Explicit numerical iteration override was not authored consistently')
+        (args.output/'position_iteration_comparison.json').write_text(json.dumps({
+            'scope':'PRE_RESET_NUMERICAL_CONVERGENCE_COMPARISON_NOT_TRANSFERRED_MODEL_ACCEPTANCE',
+            'baseline_hz_position_velocity':[960,64,4],
+            'actual_hz_position_velocity':[args.physics_hz,args.position_iterations,args.velocity_iterations],
+            'scene_before':before,'scene_after':{'min':scene.GetMinPositionIterationCountAttr().Get(),
+                'max':scene.GetMaxPositionIterationCountAttr().Get()},'actors':actors,
+            'geometry_material_mass_inertia_effort_limits_changed':False,
+            'source_model_file_changed':False,'original_key_review_tolerance_um':2.,
+            'requires_new_physical_review':True},indent=2)+'\n')
     print(json.dumps({'stage':'begin_physics_reset','wall_seconds':time.monotonic()-diagnostic_started,
                       'device':args.physics_device}),flush=True)
     world.reset();world.pause()

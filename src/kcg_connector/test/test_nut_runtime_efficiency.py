@@ -29,7 +29,9 @@ def test_contact_path_cache_does_not_change_raw_contact_values():
     first=r._decode_full_report([h],[c]);second=r._decode_full_report([h],[c])
     assert first==second and seen==[1,2,3,4]
     p[0]=9.
-    assert first[0]['contacts'][0]['position_m']==[1.,2.,3.]
+    assert list(first[0]['contacts'][0]['position_m'])==[1.,2.,3.]
+    # Native evidence owns its values even when the SDK's source is reused.
+    assert json.loads(dumps(first))[0]['contacts'][0]['position_m']==[1.,2.,3.]
 
 
 def test_real_time_guard_terminates_a_stuck_child_before_long_experiment(tmp_path):

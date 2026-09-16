@@ -1,0 +1,33 @@
+{
+  "scope": "POSTRUN_ORIGINAL_WITNESS_PRECISION_AND_CONTACT_REPRESENTATION",
+  "source_run": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14",
+  "step": 228525,
+  "tolerance_um_unchanged": 2.0,
+  "physical_or_control_parameters_changed": false,
+  "original_geometry_gap_um": -2.14765949235185,
+  "extended_precision_geometry_gap_um": -2.147659492351258,
+  "arithmetic_difference_um": 5.921295900754187e-13,
+  "body_positions_exact_float32_values": true,
+  "body_quaternion_reconstructs_from_normalized_float32": true,
+  "body_stored_pose_rounding_cell_corner_gap_range_um": [
+    -2.160179572510034,
+    -2.1351394121929452
+  ],
+  "body_stored_pose_rounding_conservative_gap_bound_um": 0.01493426462761091,
+  "native_report_minimum_separation_um": -2.0119846340094227,
+  "native_key_contact_points": 6,
+  "key_collision_approximation": "convexHull",
+  "socket_collision_approximation": "none",
+  "key_and_socket_rest_offsets_m": [
+    0.0,
+    0.0
+  ],
+  "original_check_still_failed": true,
+  "interpretation": [
+    "Extended arithmetic on the same stored poses cannot erase the observed breach.",
+    "The pose-rounding bounds cover stored Body input quantization only, not all internal PhysX arithmetic or collision-cooking uncertainty.",
+    "The active native contact manifold independently reports penetration; its deepest contact is not necessarily the same source vertex/plane witness.",
+    "This witness uses a convex key and a static triangle-mesh socket; an SDF-grid explanation does not apply to this pair.",
+    "A solver-iteration comparison is still required; this report alone does not establish that higher iterations solve the complete task."
+  ]
+}

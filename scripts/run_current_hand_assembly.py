@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check or replay the preserved assembly using versioned assets and a fresh preflight.
+"""Check or replay this branch's assembly configuration with versioned assets and a fresh preflight.
 
 --run starts simulation; --gui displays Isaac Sim. An exit code is not a physical verdict.
 """
@@ -135,7 +135,7 @@ def main(argv=None):
         raise ValueError("--gui 需要图形桌面环境；当前没有 DISPLAY/WAYLAND_DISPLAY")
     output.mkdir(parents=True, exist_ok=False)
     plan_path = output / "reproduction_plan.json"
-    plan = {"source_run": str(REFERENCE), "checked_bound_files": checked,
+    plan = {"source_run": str(REFERENCE), "configuration_id": read_json(BASE / "portable_source_manifest.json").get("configuration_id", "preserved-baseline"), "checked_bound_files": checked,
             "gui": args.gui, "gui_variant_newly_requested": args.gui,
             "preflight_command": preflight, "motion_command": motion,
             "simulation_only": True, "hardware_authorized": False,

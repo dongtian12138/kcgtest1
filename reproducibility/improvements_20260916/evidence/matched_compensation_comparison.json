@@ -1,0 +1,180 @@
+{
+  "matched50ms": {
+    "load_compensation_filter_s": 0.05,
+    "commanded_rotation_deg": 30.80257952740375,
+    "actual_nut_relative_rotation_deg": 29.793824987178994,
+    "body_advance_mm": 0.5577802658081055,
+    "maximum_virtual_pivot_xy_error_mm": 0.5791832874308461,
+    "outer_abort": null,
+    "error": null,
+    "motor_records": {
+      "f1j1": {
+        "samples": 1824,
+        "max_abs_transmission_effort_nm": 0.4681235238326682,
+        "any_elastic_boundary_exceeded": false,
+        "any_drive_saturation": false
+      },
+      "f1j2": {
+        "samples": 1824,
+        "max_abs_transmission_effort_nm": 3.5583837744207463,
+        "any_elastic_boundary_exceeded": false,
+        "any_drive_saturation": false
+      },
+      "f2j1": {
+        "samples": 1824,
+        "max_abs_transmission_effort_nm": 3.1301682146409195,
+        "any_elastic_boundary_exceeded": false,
+        "any_drive_saturation": false
+      },
+      "f3j2": {
+        "samples": 1824,
+        "max_abs_transmission_effort_nm": 3.5056052749403017,
+        "any_elastic_boundary_exceeded": false,
+        "any_drive_saturation": false
+      }
+    },
+    "physical_endpoints": [
+      {
+        "step": 480,
+        "body_depth_mm": 12.448859661817524,
+        "body_lateral_mm": 0.07926780461965047,
+        "nut_lateral_mm": 0.08261380780517201,
+        "nut_body_yaw_deg": -112.136539330476,
+        "native_points_retained_at_endpoint": true,
+        "native_callback_count_at_endpoint": 1
+      },
+      {
+        "step": 1823,
+        "body_depth_mm": 13.00663992762563,
+        "body_lateral_mm": 0.006504863712996758,
+        "nut_lateral_mm": 0.008369530388543798,
+        "nut_body_yaw_deg": -82.342714343297,
+        "native_points_retained_at_endpoint": true,
+        "native_callback_count_at_endpoint": 1
+      }
+    ],
+    "checkpoints": [
+      {
+        "angle_deg": 20.013713129340278,
+        "xy_error_mm": 0.011079245509062132
+      },
+      {
+        "angle_deg": 24.040156736434145,
+        "xy_error_mm": 0.04493202684732257
+      },
+      {
+        "angle_deg": 25.043875169743018,
+        "xy_error_mm": 0.13187813088213146
+      },
+      {
+        "angle_deg": 26.01541180555556,
+        "xy_error_mm": 0.24662851430217425
+      },
+      {
+        "angle_deg": 27.046620869103283,
+        "xy_error_mm": 0.39192743706280136
+      },
+      {
+        "angle_deg": 28.043109287708816,
+        "xy_error_mm": 0.43438092043869103
+      },
+      {
+        "angle_deg": 29.002591496359887,
+        "xy_error_mm": 0.47142713776039785
+      },
+      {
+        "angle_deg": 30.020394805714556,
+        "xy_error_mm": 0.5133974811285912
+      }
+    ]
+  },
+  "matched10ms": {
+    "load_compensation_filter_s": 0.01,
+    "commanded_rotation_deg": 89.99999997355123,
+    "actual_nut_relative_rotation_deg": 90.02959782539932,
+    "body_advance_mm": 1.8575489521026611,
+    "maximum_virtual_pivot_xy_error_mm": 0.09903808634003854,
+    "outer_abort": null,
+    "error": null,
+    "motor_records": {
+      "f1j1": {
+        "samples": 3721,
+        "max_abs_transmission_effort_nm": 0.7436422116187824,
+        "any_elastic_boundary_exceeded": false,
+        "any_drive_saturation": false
+      },
+      "f1j2": {
+        "samples": 3721,
+        "max_abs_transmission_effort_nm": 3.276665371319779,
+        "any_elastic_boundary_exceeded": false,
+        "any_drive_saturation": false
+      },
+      "f2j1": {
+        "samples": 3721,
+        "max_abs_transmission_effort_nm": 3.1712731422999543,
+        "any_elastic_boundary_exceeded": false,
+        "any_drive_saturation": false
+      },
+      "f3j2": {
+        "samples": 3721,
+        "max_abs_transmission_effort_nm": 3.4748899584062594,
+        "any_elastic_boundary_exceeded": false,
+        "any_drive_saturation": false
+      }
+    },
+    "physical_endpoints": [
+      {
+        "step": 480,
+        "body_depth_mm": 12.448859661817524,
+        "body_lateral_mm": 0.07926780461965047,
+        "nut_lateral_mm": 0.08261380780517201,
+        "nut_body_yaw_deg": -112.136539330476,
+        "native_points_retained_at_endpoint": true,
+        "native_callback_count_at_endpoint": 1
+      },
+      {
+        "step": 3720,
+        "body_depth_mm": 14.306408613920185,
+        "body_lateral_mm": 0.0344442913655402,
+        "nut_lateral_mm": 0.03776407600832953,
+        "nut_body_yaw_deg": -22.10694150507666,
+        "native_points_retained_at_endpoint": true,
+        "native_callback_count_at_endpoint": 1
+      }
+    ],
+    "checkpoints": [
+      {
+        "angle_deg": 20.013713129340278,
+        "xy_error_mm": 0.03054484868889293
+      },
+      {
+        "angle_deg": 24.040156736434145,
+        "xy_error_mm": 0.02279703571025446
+      },
+      {
+        "angle_deg": 25.043875169743018,
+        "xy_error_mm": 0.019079758683216513
+      },
+      {
+        "angle_deg": 26.01541180555556,
+        "xy_error_mm": 0.01160329033706357
+      },
+      {
+        "angle_deg": 27.046620869103283,
+        "xy_error_mm": 0.010802830180119868
+      },
+      {
+        "angle_deg": 28.043109287708816,
+        "xy_error_mm": 0.010775318817961258
+      },
+      {
+        "angle_deg": 29.002591496359887,
+        "xy_error_mm": 0.008333503826434552
+      },
+      {
+        "angle_deg": 30.020394805714556,
+        "xy_error_mm": 0.008244004288869483
+      }
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "basis": "Actual baseline source plus repository path/environment resolution only",
+  "basis": "Current candidate: separate10ms measured-load feedforward, unchanged50ms protection/admittance and all original limits, owned immutable contact vectors and cached path roles. Immutable original baseline remains on assembly-baseline-20260916.",
   "sha256": {
     "src/iiwa_description/meshes/hand/collision/f1Link1_convex.stl": "71ac06e81fddbe7924c6272929d2cc16b6ee1a0987a6b2c9a7090335c03d06d4",
     "src/iiwa_description/meshes/hand/collision/f1Link2_convex.stl": "0120af92411f3258dede198f79628a214e578dc002df096eb81cc3b95d597313",
@@ -196,7 +196,7 @@
     "src/kcg_connector/isaac/carts_v2/controller.py": "be2039ba64225c76b33007ae73be4306992e1cbc416bbed09527f096a5a84bd1",
     "src/kcg_connector/isaac/carts_v2/disk_samples.py": "22cdc6bbd88ba2ddd16f4df21ed9d0f5d081058218731e4f972372f3994f9d84",
     "src/kcg_connector/isaac/carts_v2/engine_health.py": "cb370d9d6d82f7ff1c7a57acbe22a4beccd716ed5220a498e9e4d27197ae997a",
-    "src/kcg_connector/isaac/carts_v2/evaluate_run.py": "2ffda8171480c435b64d91d989a736f39054f3dc720770981999f2503b1a13fa",
+    "src/kcg_connector/isaac/carts_v2/evaluate_run.py": "261c6cd05d77643507f788e36c68f56f584ab87aa880ee5e30f99ed7f717b23d",
     "src/kcg_connector/isaac/carts_v2/fast_json.py": "acc3220bde7d64dc795c46b8fd6fe0694e88b178a709393c19f47da893c0fd9a",
     "src/kcg_connector/isaac/carts_v2/finite_cad_search.py": "38e5d5a32c999b981aba95dc0bc138bea65c03f19cd7a36892340867f63af798",
     "src/kcg_connector/isaac/carts_v2/native_pose_audit.py": "88ce21a02525b4447c97ddec69db49b20cb9f5de5ca585c690532fd644c3e31c",
@@ -222,7 +222,7 @@
     "src/kcg_connector/isaac/diagnose_joint_drive_velocity_state.py": "79b4849aa374d7514393df852c754949443cf0aee9adc713a6a25f6293bf427a",
     "src/kcg_connector/isaac/diagnose_pin_bore_entry.py": "00976636a4a4171c78a467726e3e07b498ab15b63f8e7df4da376c8ba5846006",
     "src/kcg_connector/isaac/diagnose_radial_sector_band.py": "a66e0449730e365260f99fe0f60def93c519d0c029fa2b47f57a4e3aa42703a2",
-    "src/kcg_connector/isaac/diagnose_saved_hand_wrench.py": "eda9619b3451343a34830ad9326b3adc79561774092b8c74f9ccf55c9e4d56d7",
+    "src/kcg_connector/isaac/diagnose_saved_hand_wrench.py": "f33901c79b5bd4e50fb89f40df5406afc173b34ec7ee802f4d908c3634216b2c",
     "src/kcg_connector/isaac/diagnose_single_mating_contact.py": "9dbbb35bb7faa5b4d28d4af0c98e64122b6cf3da3b58d4653eb7f20f366be48f",
     "src/kcg_connector/isaac/estimate_rear_contact_array_yaw.py": "2cb60ab93563574d4796c016fcd159a0ef661cccfbe693e93d00e6675ef64330",
     "src/kcg_connector/isaac/evaluate_body_band_contacts.py": "c8ef9b3687223dabd736d3b6fe60c74e158f836eab8b8c00ff43f8921ca0f1d0",
@@ -240,7 +240,7 @@
     "src/kcg_connector/isaac/evaluate_rear_array_sensor_perturbations.py": "4417f75e596b566657a6fae7035adf996c6fe89f52501b2ebd93f00843f2ae5f",
     "src/kcg_connector/isaac/evaluate_rear_face_visibility.py": "fc615eadc7d5ccb9b0957c09dbba17164c4dc4a92ed06721a0dac7b1d9d83557",
     "src/kcg_connector/isaac/evaluate_source_key_contacts.py": "39172ce47814816e487119dc09739537e5f38c14e8e446f5e609478ab4bea0a4",
-    "src/kcg_connector/isaac/evaluate_source_key_containment.py": "562285bff1386ed18acbfe0362e1d5c7bede4aef927516f6388ea0e09331f5ad",
+    "src/kcg_connector/isaac/evaluate_source_key_containment.py": "767afe6335f1d55fbc0334c2b4a4c574afb5b057637b9c024634666969ce0444",
     "src/kcg_connector/isaac/evaluate_source_nut_pad.py": "41a1117843a765b19bea4fe3885b5fb74f7bfb2d72cf4d322bdf7e9ea0a2202c",
     "src/kcg_connector/isaac/evaluate_source_support_endpoints.py": "55a670a0b3fdf6920ba47a8a342fd524da5c5bf6df7924cb53e4c82b52349fdb",
     "src/kcg_connector/isaac/evaluate_visual_assembly_v1.py": "c57bc9e1e4eb835c46347fbb4a49d13fb341a38fa273b29a357761827c4acc6a",
@@ -303,7 +303,7 @@
     "src/kcg_connector/isaac/te_instrumented_rotary_guide.py": "3fb7544d4294ca455231b3daf2206c7410c8d4a9c32db54d0356d37ee5b7ff06",
     "src/kcg_connector/isaac/te_interface_stroke_schedule.py": "d052bb97707021cb40cfc00822fdc58c8b83c0f416a0a04058558e249ae01284",
     "src/kcg_connector/isaac/te_known_wrench_calibration.py": "7f674ea7f9c62c3dff07534f94dea479d2c20a890e445421ede9973fe485092c",
-    "src/kcg_connector/isaac/te_local_interface_following.py": "259cf01593a19bbed0a4d9c4660c2a08aea7907183402c71273b7bca67ea6594",
+    "src/kcg_connector/isaac/te_local_interface_following.py": "03874770144557de348f9fed141f023e66a9421544deb61631cb470e3a85decd",
     "src/kcg_connector/isaac/te_mating_contact_scene.py": "2adb85f2cc801a4961771d7c4c264685ff239211ccf890511bc43515afc5711d",
     "src/kcg_connector/isaac/te_mounted_nut_torque_probe.py": "059fe01e186a97618f6a5a13bebd8b1238738596d411baebe2572463b94db16a",
     "src/kcg_connector/isaac/te_multiview_video.py": "0169592164a2c20f3c6836dabd73df56d50b2e5b8191147febf9704931b7ffba",
@@ -325,7 +325,7 @@
     "src/kcg_connector/isaac/te_sam6d_depth_support_filter.py": "0f42a323202fcd3fd76f2e4d06894ac7537d3082fd8a3eb3aced525e2a6d5430",
     "src/kcg_connector/isaac/te_saved_nut_probe.py": "c216d508f0bbe9340556905413a7be65e87f08acf700fd91176e3fb13a430f12",
     "src/kcg_connector/isaac/te_source_pin_contact.py": "9d4f260ffedc71418e36e0787776ca93bc21da989dfbea9d55776f0487ca6ed0",
-    "src/kcg_connector/isaac/te_source_stage_probe.py": "7a2a7efadcddcf8c11466652f2ae0ddfb2085a8aab95e838766fbce6dd0cf598",
+    "src/kcg_connector/isaac/te_source_stage_probe.py": "1d4fdf9f1677a0727524e2e6a72de870a652d17c2ff809b7e11d6945a11edc10",
     "src/kcg_connector/isaac/te_split_lock_increment.py": "445d57315c479ed637f86119dbbc3fba751a8423fa3af6139d449c61ee005203",
     "src/kcg_connector/isaac/te_three_finger_wrench_observer.py": "000bb93eba5d31d7484c469c52618d3e14ca2f699df3b4f755a761aeb2bc3fd4",
     "src/kcg_connector/isaac/te_transport_grasp_target_offline.py": "d308394044e4bdf9cb433ee2f423d52ed44617514db744d213822c1ec32484a8",
@@ -333,7 +333,7 @@
     "src/kcg_connector/isaac/te_visual_seating_axis.py": "bc3a8a64277c32e4d5234cefead38317e2e34e841e79bd552d3bba98b708ab63",
     "src/kcg_connector/isaac/te_worm_drive.py": "e63d91f2273075a75e9ea035f2e9c237d8d0f1f07738c19f7d71c69bff034dfb",
     "src/kcg_connector/isaac/thread_proxy_smoke.py": "e3f7db0b7e7c6b04014dbb8a83b144f0df4bff5f74d7c7348fe3ef2e6f6c7357",
-    "src/kcg_connector/isaac/trace_metadata.py": "ce1089602e77112e15d24f60330d7f91be9b3e7f49ea782e6e32005a1ec5b6a7",
+    "src/kcg_connector/isaac/trace_metadata.py": "c055887d598aa90e5f4441b6e59dde9a5ab583d97365f6a87bbc64f8b226e844",
     "src/kcg_connector/isaac/validate_connector_asset.py": "040d80a9093231065ab14a0f189d3a2017d4dc1e47433b81bc4c348b6cd09870",
     "src/kcg_connector/isaac/validate_d38999_proxy_asset.py": "92da7a0768e45076e8b59769a65104d633354db76ea4c3ad04322be018dc46d1",
     "src/kcg_connector/isaac/validate_robot_asset.py": "4f4da98522937a9bde6c49405e02f60727f980d39c8948d1ebe12ec0b6e5ea79",
@@ -435,7 +435,7 @@
     "src/kcg_connector/test/test_nut_motion_controls.py": "e0cc0a42e607ab2ae7cf5632b43f379d83447d310a09e0f5e45504e35e24dcdf",
     "src/kcg_connector/test/test_nut_recovery_sequence.py": "1af64d66c8cd5836f25705418fefcd39b07e3325db90d71cb86a30207d1a9a78",
     "src/kcg_connector/test/test_nut_reserve_release.py": "ab45995aeca49666b8877c39823dacf44078d03ca704633ff7057f35a8973ba7",
-    "src/kcg_connector/test/test_nut_runtime_efficiency.py": "cf0cd793203c652ea8e3056e681790b46fc552d5a619de23ea8d8417b36ab768",
+    "src/kcg_connector/test/test_nut_runtime_efficiency.py": "9551b36f9e72b6850464347f1d8104ec855c8a24c686ad76d0b861a50d5a2db9",
     "src/kcg_connector/test/test_observed_nut_rotation.py": "1fd3011b51d1977a5f8a2949227a4488872472b6cd8ba7d61d5359c90103068f",
     "src/kcg_connector/test/test_package_data.py": "41f375f75cba8aaa7780012750271397f1a979b55018535aac3bfad73231ac32",
     "src/kcg_connector/test/test_physics_backend_identity.py": "d9c7816a71c9a60db52f576eed5e71287c03aafe8b596d431f879268ae04094c",
@@ -461,6 +461,11 @@
     "src/kcg_moveit1/config/handarm.srdf": "856f44a9507a58dced9953feb36432884bfca692116fddb46f9055f2333fa880",
     "src/kcg_moveit1/config/handarm.urdf.xacro": "76dabd23ac6c713b7fd6fa85e2cee7b62c09397e6b011d4ffdbdf9d5db6c4e7c",
     "src/kcg_moveit1/config/tesseract_kinematics.yaml": "d342e3fd39b572e82586bb278846903e70eedf3370d4500c9c506594089804d1",
-    "src/kcg_moveit1/scripts/plan_visual_pose_tesseract.py": "e74f0da465c6189a20fc99171c748baf52f0eb3eb186a5f9da7057e7445daf91"
-  }
+    "src/kcg_moveit1/scripts/plan_visual_pose_tesseract.py": "e74f0da465c6189a20fc99171c748baf52f0eb3eb186a5f9da7057e7445daf91",
+    "reproducibility/improvements_20260916/config/initial_load10ms_recipe.json": "b13f6f9275b569f3e0024b03539d77ee95c7ca5e1f851549ef9b555c36395ddc",
+    "reproducibility/improvements_20260916/config/visual_load10ms_task.yaml": "978e9b16a3ba4eb750c452fcd22e7ce864be8c5fb18d4e4bb3e9470d73cecd31",
+    "reproducibility/improvements_20260916/config/late_load10ms_recipe.json": "b1972be919453bf7fe2dd014c00534de95873b8a6982bbcfb29854e927adbbda",
+    "reproducibility/assembly_20260916/key_backlash_dimensions.json": "aa09cd6133f4a54cc3aca731e9c723826d67432eea43325dde8a24e7024e6dc0"
+  },
+  "configuration_id": "load10ms_native_lossless_tuple_cpu960_64_4"
 }

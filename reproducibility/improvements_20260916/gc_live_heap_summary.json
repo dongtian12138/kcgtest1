@@ -1,0 +1,306 @@
+[
+  {
+    "block": 64,
+    "write_cache": 1,
+    "total_median_s": 11.09640009899158,
+    "gc_median_s": 5.0297988889797125,
+    "rss_median_mib": 1837.537109375,
+    "phase_wall_median_s": {
+      "creation": 6.101526723912684,
+      "statistics": 2.8655682757671457,
+      "archive_append": 1.0385211218090262,
+      "archive_close": 1.0760724214778747,
+      "loop_overhead": 0.014500653167488053
+    },
+    "gc_by_phase_median_s": {
+      "creation": 3.524137003143551,
+      "statistics": 1.5056618858361617,
+      "archive_append": 0.0,
+      "archive_close": 0.0,
+      "loop_overhead": 0.0
+    },
+    "gc_gen_counts_each": [
+      [
+        15530,
+        1411,
+        18
+      ],
+      [
+        15530,
+        1411,
+        18
+      ]
+    ],
+    "gc_gen_s_each": [
+      [
+        0.18670942657627165,
+        0.34182346402667463,
+        4.640580589941237
+      ],
+      [
+        0.17719189770286903,
+        0.2948064017109573,
+        4.418485998001415
+      ]
+    ],
+    "collected_each": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "longest_gen2_pause_each_s": [
+      0.8243068450246938,
+      0.808745039976202
+    ],
+    "thresholds": [
+      700,
+      10,
+      10
+    ],
+    "tracked": {
+      "point_dict": true,
+      "position_list": true,
+      "normal_list": true,
+      "impulse_list": true
+    },
+    "max_retained_frames": 120,
+    "bytes": 57495982,
+    "logical_stream": "157703830fec00c42f232200d2442ed0b45d06b677965afd8e12e1649a985aaf",
+    "total_reduction_vs_actual_baseline_percent": 0.0
+  },
+  {
+    "block": 16,
+    "write_cache": 1,
+    "total_median_s": 10.66507469600765,
+    "gc_median_s": 4.622339406778337,
+    "rss_median_mib": 611.57421875,
+    "phase_wall_median_s": {
+      "creation": 5.732777577999514,
+      "statistics": 2.694543166551739,
+      "archive_append": 2.0510687010828406,
+      "archive_close": 0.17150288197444752,
+      "loop_overhead": 0.014950580487493426
+    },
+    "gc_by_phase_median_s": {
+      "creation": 3.263964772282634,
+      "statistics": 1.3583746344957035,
+      "archive_append": 0.0,
+      "archive_close": 0.0,
+      "loop_overhead": 0.0
+    },
+    "gc_gen_counts_each": [
+      [
+        15538,
+        1412,
+        27
+      ],
+      [
+        15538,
+        1412,
+        27
+      ]
+    ],
+    "gc_gen_s_each": [
+      [
+        0.18291765631875023,
+        0.3196462383493781,
+        4.126176922873128
+      ],
+      [
+        0.1805235319188796,
+        0.30496113293338567,
+        4.130453331163153
+      ]
+    ],
+    "collected_each": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "longest_gen2_pause_each_s": [
+      0.2508587709744461,
+      0.2520029660081491
+    ],
+    "thresholds": [
+      700,
+      10,
+      10
+    ],
+    "tracked": {
+      "point_dict": true,
+      "position_list": true,
+      "normal_list": true,
+      "impulse_list": true
+    },
+    "max_retained_frames": 32,
+    "bytes": 57495987,
+    "logical_stream": "157703830fec00c42f232200d2442ed0b45d06b677965afd8e12e1649a985aaf",
+    "total_reduction_vs_actual_baseline_percent": 3.887075079629909
+  },
+  {
+    "block": 64,
+    "write_cache": 0,
+    "total_median_s": 10.747125963011058,
+    "gc_median_s": 4.562313841917785,
+    "rss_median_mib": 1061.685546875,
+    "phase_wall_median_s": {
+      "creation": 6.348356417613104,
+      "statistics": 2.11539847010863,
+      "archive_append": 1.2094022876408417,
+      "archive_close": 1.0601590195146855,
+      "loop_overhead": 0.013596127508208156
+    },
+    "gc_by_phase_median_s": {
+      "creation": 3.7879591136297677,
+      "statistics": 0.7743547282880172,
+      "archive_append": 0.0,
+      "archive_close": 0.0,
+      "loop_overhead": 0.0
+    },
+    "gc_gen_counts_each": [
+      [
+        15541,
+        1412,
+        24
+      ],
+      [
+        15541,
+        1412,
+        24
+      ]
+    ],
+    "gc_gen_s_each": [
+      [
+        0.17845291370758787,
+        0.30061822541756555,
+        4.104248511954211
+      ],
+      [
+        0.17734003788791597,
+        0.29286079871235415,
+        4.0711071961559355
+      ]
+    ],
+    "collected_each": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "longest_gen2_pause_each_s": [
+      0.4352079519885592,
+      0.4273395930067636
+    ],
+    "thresholds": [
+      700,
+      10,
+      10
+    ],
+    "tracked": {
+      "point_dict": true,
+      "position_list": true,
+      "normal_list": true,
+      "impulse_list": true
+    },
+    "max_retained_frames": 64,
+    "bytes": 57495982,
+    "logical_stream": "157703830fec00c42f232200d2442ed0b45d06b677965afd8e12e1649a985aaf",
+    "total_reduction_vs_actual_baseline_percent": 3.1476346640769037
+  },
+  {
+    "block": 16,
+    "write_cache": 0,
+    "total_median_s": 10.277273543004412,
+    "gc_median_s": 4.209108429931803,
+    "rss_median_mib": 385.18359375,
+    "phase_wall_median_s": {
+      "creation": 6.061529896396678,
+      "statistics": 1.952047622326063,
+      "archive_append": 2.0986135329585522,
+      "archive_close": 0.15068538853665814,
+      "loop_overhead": 0.014160959050059319
+    },
+    "gc_by_phase_median_s": {
+      "creation": 3.5873725074343383,
+      "statistics": 0.6217359224974643,
+      "archive_append": 0.0,
+      "archive_close": 0.0,
+      "loop_overhead": 0.0
+    },
+    "gc_gen_counts_each": [
+      [
+        15589,
+        1417,
+        55
+      ],
+      [
+        15589,
+        1417,
+        55
+      ]
+    ],
+    "gc_gen_s_each": [
+      [
+        0.1797848863643594,
+        0.3044373997254297,
+        3.722008919052314
+      ],
+      [
+        0.17991201172117144,
+        0.30881841480731964,
+        3.723255228193011
+      ]
+    ],
+    "collected_each": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "longest_gen2_pause_each_s": [
+      0.1327955590095371,
+      0.13397408102173358
+    ],
+    "thresholds": [
+      700,
+      10,
+      10
+    ],
+    "tracked": {
+      "point_dict": true,
+      "position_list": true,
+      "normal_list": true,
+      "impulse_list": true
+    },
+    "max_retained_frames": 16,
+    "bytes": 57495987,
+    "logical_stream": "157703830fec00c42f232200d2442ed0b45d06b677965afd8e12e1649a985aaf",
+    "total_reduction_vs_actual_baseline_percent": 7.381912590386941
+  }
+]

@@ -1,0 +1,51 @@
+{
+  "scope": "SAME481_STEP_LOADED_HOLD_RECORDING_PREFIX",
+  "entire_physical_sample_stream_bytes_identical": true,
+  "results": {
+    "fourth_loaded_baseline": {
+      "raw_messagepack_sha256": "6f9fb4799734d3789764b2efaecee65592fec49569c40627072b366715e6fae0",
+      "uncompressed_bytes": 1421146150,
+      "physical_samples": 481,
+      "hash_read_s": 2.3977442699833773,
+      "stepper": {
+        "command_and_sensor_s": 0.3696667316253297,
+        "physics_step_s": 59.715954137733206,
+        "audit_and_record_s": 16.65868211851921,
+        "viewport_render_s": 0.0
+      },
+      "truth_capture": {
+        "contact_callback_s": 37.2427750271745,
+        "engine_and_body_s": 0.16081513121025637,
+        "robot_poses_s": 0.5011006362037733,
+        "contact_counts_s": 7.864710615889635,
+        "archive_append_s": 7.005617749411613
+      }
+    },
+    "tuple_loaded_hold": {
+      "raw_messagepack_sha256": "6f9fb4799734d3789764b2efaecee65592fec49569c40627072b366715e6fae0",
+      "uncompressed_bytes": 1421146150,
+      "physical_samples": 481,
+      "hash_read_s": 2.3691220650216565,
+      "stepper": {
+        "command_and_sensor_s": 0.37025046261260286,
+        "physics_step_s": 55.18009025231004,
+        "audit_and_record_s": 17.035420301079284,
+        "viewport_render_s": 0.0
+      },
+      "truth_capture": {
+        "contact_callback_s": 32.30129668733571,
+        "engine_and_body_s": 0.16076034668367356,
+        "robot_poses_s": 0.5004849210381508,
+        "contact_counts_s": 8.296906407107599,
+        "archive_append_s": 6.938856541411951
+      }
+    }
+  },
+  "physical_step_and_capture_total_wall_reduction_fraction": 0.05418697948866236,
+  "native_contact_callback_reduction_fraction": 0.13268287167734427,
+  "limits": [
+    "Single short paired measurement, not whole-episode percentage or hardware speed.",
+    "Reference stopped later on an old-path identity check; its481 physical hold rows are valid and remain failed overall.",
+    "Candidate was deliberately bounded after the same481 physical steps."
+  ]
+}

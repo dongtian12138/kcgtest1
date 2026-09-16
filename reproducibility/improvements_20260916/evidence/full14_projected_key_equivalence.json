@@ -1,0 +1,17 @@
+{
+  "scope": "ENDED_ORIGINAL_FULL14_REVIEW_REPLAY_WITH_SELECTED_FIELD_READER",
+  "wall_seconds": 337.9262088080286,
+  "original_failed_report_overwritten": false,
+  "original_tolerance_m_unchanged": 2e-06,
+  "all_original_results_except_relocated_model_path_exactly_equal": true,
+  "different_keys": [],
+  "original_accepted": false,
+  "replayed_accepted": false,
+  "minimum_gaps_m": [
+    -6.684030363731663e-07,
+    -9.011604346845781e-07,
+    -2.14765949235185e-06,
+    0.00010433629984060522,
+    -1.0185643411870782e-06
+  ]
+}

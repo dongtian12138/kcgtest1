@@ -445,10 +445,12 @@ class TruthAuditRecorder:
                 record = contact_data[index]
                 position,normal,impulse=record.position,record.normal,record.impulse
                 contacts.append({
-                    # Native Float3 slices copy into owned Python lists.
-                    "position_m": position[:3],
-                    "normal": normal[:3],
-                    "impulse_n_s": impulse[:3],
+                    # Own immutable numeric vectors; after GC they do not
+                    # keep every contact point in the cyclic-GC scan set.
+                    # JSON/MessagePack still encode exactly the same arrays.
+                    "position_m": tuple(position[:3]),
+                    "normal": tuple(normal[:3]),
+                    "impulse_n_s": tuple(impulse[:3]),
                     "separation_m": float(record.separation),
                 })
             decoded.append({
@@ -654,6 +656,26 @@ class TruthAuditRecorder:
 
     def _contact_counts(self) -> dict[str, object]:
         native_only=getattr(self,'contact_audit_mode','full')=='native-report'
+
+        # Paths and roots determine categories; contact values are never cached.
+        role_roots = tuple(self.roots[k] for k in ('robot', 'object', 'table', 'fixture'))
+        role_signature = (role_roots, tuple(TERMINAL_LINK_NAMES))
+        previous_signature, previous_roles = getattr(self, '_contact_role_cache', (None, {}))
+        if previous_signature != role_signature:
+            previous_roles = {}
+        current_roles = {}
+
+        def path_roles(paths):
+            key = tuple(paths)
+            roles = current_roles.get(key)
+            if roles is None:
+                roles = previous_roles.get(key)
+                if roles is None:
+                    flags = tuple(any(_below(path, root) for path in key) for root in role_roots)
+                    terminal = tuple(any(f'/{name}' in path for path in key) for name in TERMINAL_LINK_NAMES) if flags[0] and flags[1] else (False, False, False)
+                    roles = (*flags, terminal)
+                current_roles[key] = roles
+            return roles
         result: dict[str, object] = {
             "terminal_link_object": [0, 0, 0],
             "terminal_link_object_examples": [None, None, None],
@@ -702,8 +724,8 @@ class TruthAuditRecorder:
             tensor_rows=[];friction_rows=[]
             for row in report_rows:
                 paths=row['paths']
-                if (any(_below(p,self.roots['object']) for p in paths)
-                        and any(_below(p,self.roots['table']) for p in paths)):
+                roles = path_roles(paths)
+                if roles[1] and roles[2]:
                     result['object_table_positive_normal_impulse_n_s']+=sum(
                         math.hypot(*c['impulse_n_s']) for c in row['contacts'])
         else:
@@ -789,10 +811,7 @@ class TruthAuditRecorder:
                 records, combined.get(paths, 0)
             )
         for paths, records in combined.items():
-            has_robot = any(_below(path, self.roots["robot"]) for path in paths)
-            has_object = any(_below(path, self.roots["object"]) for path in paths)
-            has_table = any(_below(path, self.roots["table"]) for path in paths)
-            has_fixture = any(_below(path, self.roots["fixture"]) for path in paths)
+            has_robot, has_object, has_table, has_fixture, terminal_hits = path_roles(paths)
             if has_object and has_table:
                 result["object_table"] += records
             if has_robot and has_table:
@@ -806,10 +825,6 @@ class TruthAuditRecorder:
                 result["examples"].setdefault("robot_unclassified", list(paths))
             if not (has_robot and has_object):
                 continue
-            terminal_hits = [
-                any(f"/{name}" in path for path in paths)
-                for name in TERMINAL_LINK_NAMES
-            ]
             if any(terminal_hits):
                 for index, hit in enumerate(terminal_hits):
                     if hit:
@@ -821,6 +836,7 @@ class TruthAuditRecorder:
                 result["examples"].setdefault(
                     "robot_object_unauthorized", list(paths)
                 )
+        self._contact_role_cache = (role_signature, current_roles)
         return result
 
     def capture(

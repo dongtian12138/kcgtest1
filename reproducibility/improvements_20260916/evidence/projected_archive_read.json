@@ -1,0 +1,21 @@
+{
+  "scope": "TWO_SEALED_BLOCK_READER_COMPARISON_NOT_FULL_RUN_ESTIMATE",
+  "blocks": [
+    {
+      "first": 228480,
+      "last": 228543,
+      "full_materialization_seconds": 0.02320993202738464,
+      "projected_seconds": 0.015426842030137777,
+      "selected_fields_bytes_identical": true,
+      "physical_motion_executed": false
+    },
+    {
+      "first": 259904,
+      "last": 259967,
+      "full_materialization_seconds": 0.8506054260069504,
+      "projected_seconds": 0.4581981480005197,
+      "selected_fields_bytes_identical": true,
+      "physical_motion_executed": false
+    }
+  ]
+}

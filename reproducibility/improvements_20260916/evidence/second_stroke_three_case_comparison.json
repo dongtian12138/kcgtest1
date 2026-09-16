@@ -1,0 +1,65 @@
+{
+  "second_source_solver64": {
+    "min_key_gaps_um": [
+      -0.587970612465738,
+      -0.6262466292941138,
+      -1.678368768903593,
+      104.76601070153734,
+      -0.8459094302888381
+    ],
+    "key_accepted": true,
+    "max_wrist_xy_mm": 0.6384766777593367,
+    "actual_nut_turn_deg": 91.0602583112007,
+    "body_advance_mm": 2.0457208156585693,
+    "stepper_wall": {
+      "command_and_sensor_s": 3.4778145140153356,
+      "physics_step_s": 121.33995207806583,
+      "audit_and_record_s": 31.235062211344484,
+      "viewport_render_s": 0.0
+    },
+    "normal_stop": null,
+    "outer_abort": null
+  },
+  "second_load10ms_solver64": {
+    "min_key_gaps_um": [
+      -0.48679731867984355,
+      -0.6039299953048971,
+      -0.45699519790542986,
+      104.54707718432356,
+      -0.8967790646634555
+    ],
+    "key_accepted": true,
+    "max_wrist_xy_mm": 0.1533251318303737,
+    "actual_nut_turn_deg": 89.60845893432048,
+    "body_advance_mm": 1.9063055515289307,
+    "stepper_wall": {
+      "command_and_sensor_s": 3.2172337560914457,
+      "physics_step_s": 115.88770576787647,
+      "audit_and_record_s": 29.925427426816896,
+      "viewport_render_s": 0.0
+    },
+    "normal_stop": null,
+    "outer_abort": null
+  },
+  "second_load10ms_solver128": {
+    "min_key_gaps_um": [
+      -0.7871332541692366,
+      -1.1884151889244299,
+      -0.638261514661953,
+      104.44781847941331,
+      -0.982532136013292
+    ],
+    "key_accepted": true,
+    "max_wrist_xy_mm": 0.3186290068300205,
+    "actual_nut_turn_deg": 89.9320849295442,
+    "body_advance_mm": 1.9427239894866943,
+    "stepper_wall": {
+      "command_and_sensor_s": 3.1936694398755208,
+      "physics_step_s": 122.7237524780794,
+      "audit_and_record_s": 30.776547637942713,
+      "viewport_render_s": 0.0
+    },
+    "normal_stop": null,
+    "outer_abort": null
+  }
+}

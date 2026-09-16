@@ -6,14 +6,17 @@ import json
 import numpy as np
 from scipy.spatial.transform import Rotation
 from pxr import Usd,UsdGeom
-from trace_metadata import iter_truth_samples
+from trace_metadata import iter_truth_samples, iter_truth_fields
 
 
-def review(directory, *, first_step=None):
+def review(directory, *, first_step=None, output_path=None):
     directory=Path(directory);root=Path(__file__).resolve().parents[3]
     source=root/'artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc'
     stage=Usd.Stage.Open(str(source))
-    dimensions=json.loads((root/'artifacts/kcg_connector/key_antirotation_20260910/key_backlash_dimensions.json').read_text())
+    dimensions_path=root/'artifacts/kcg_connector/key_antirotation_20260910/key_backlash_dimensions.json'
+    if not dimensions_path.exists():
+        dimensions_path=root/'reproducibility/assembly_20260916/key_backlash_dimensions.json'
+    dimensions=json.loads(dimensions_path.read_text())
     if first_step is None:
         entry=json.loads((directory/'socket_transport/key_entry/key_entry_controller_result.json').read_text())
         first_contact_step=int(entry['contact_first_step'])
@@ -33,7 +36,10 @@ def review(directory, *, first_step=None):
         local=np.asarray(mesh.GetPointsAttr().Get());transform=np.asarray(UsdGeom.Xformable(mesh).GetLocalTransformation())
         vertices.append((np.c_[local,np.ones(len(local))]@transform)[:,:3])
     minimum=np.full(5,np.inf);counts=np.zeros(5,dtype=int);witness=[None]*5;full_extent_steps=0;last=None
-    for row in iter_truth_samples(directory):
+    fields={"step","phase","object_part_positions_m","object_part_orientations_wxyz"}
+    rows=(iter_truth_fields(directory,fields,first_step=first_contact_step)
+          if (directory/"truth_samples.msgpack.gz.index.json").exists() else iter_truth_samples(directory))
+    for row in rows:
         if int(row['step'])<first_contact_step:continue
         if not row['phase'].startswith(('key_probe_','nut_index_')):continue
         R=socket[:3,:3].T@Rotation.from_quat(np.roll(row['object_part_orientations_wxyz'][0],-1)).as_matrix()
@@ -65,12 +71,15 @@ def review(directory, *, first_step=None):
         'physical_geometry_or_contact_parameters_changed':False}
     result['accepted']=bool(np.all(counts>0) and np.all(minimum>=-tolerance)
         and last and last['all_keys_behind_mouth'])
-    (directory/'source_key_containment_review.json').write_text(json.dumps(result,indent=2)+'\n')
+    destination=Path(output_path) if output_path is not None else directory/'source_key_containment_review.json'
+    destination.parent.mkdir(parents=True,exist_ok=True)
+    destination.write_text(json.dumps(result,indent=2)+'\n')
     return result
 
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('directory',type=Path)
     parser.add_argument('--first-step',type=int,help='Explicit start for local diagnoses only; never fabricates key-entry evidence')
+    parser.add_argument("--output",type=Path,help="Optional separate review path; preserve an earlier report")
     args=parser.parse_args()
-    print(json.dumps(review(args.directory,first_step=args.first_step),indent=2))
+    print(json.dumps(review(args.directory,first_step=args.first_step,output_path=args.output),indent=2))

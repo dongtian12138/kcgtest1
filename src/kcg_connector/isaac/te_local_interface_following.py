@@ -72,6 +72,13 @@ class LocalInterfaceFollowing:
                 self.coaxial_reference_rotation=Rotation.from_rotvec(cross*angle/sine).as_matrix()@self.pivot0[:3,:3]
                 self.coaxial_initial_correction_deg=float(np.degrees(angle))
         self.arm=q0[:7].copy();self.offset=np.zeros(3);self.bias_samples=[];self.bias=None;self.filtered=None
+        self.filtered_contact_load=None
+        self.contact_load_filter_tau=(None if not grip_recipe else
+            grip_recipe.get('contact_load_compensation_filter_time_constant_s'))
+        if self.contact_load_filter_tau is not None:
+            self.contact_load_filter_tau=float(self.contact_load_filter_tau)
+            if not np.isfinite(self.contact_load_filter_tau) or not self.dt<=self.contact_load_filter_tau<=.05:
+                raise ValueError('Contact compensation filter must stay between one control tick and50ms')
         self.hand_mechanism=hand_mechanism;self.last_joint_velocity=None;self.last_contact_compensation=None
         self.release_hold_started=False;self.release_records=[]
         self.current_root_moments=None;self.stroke_index=0;self.load_compensation_active=False
@@ -111,6 +118,17 @@ class LocalInterfaceFollowing:
             self.hand_goal=self.contact_q.copy();self.hand_goal[1:]+=.002
             self.filtered_normal=None;self.last_grip=None
 
+    def _update_contact_filters(self, fixed):
+        # Keep the established admittance/observation signal exactly as before.
+        # An explicit local comparison may filter only the load feedforward
+        # faster; no wrist protection, grip or pose-feedback threshold changes.
+        alpha=self.dt/(self.settings['contact_estimate_filter_time_constant_s']+self.dt)
+        self.filtered=fixed.copy() if self.filtered is None else self.filtered+alpha*(fixed-self.filtered)
+        if self.contact_load_filter_tau is not None:
+            gain=self.dt/(self.contact_load_filter_tau+self.dt)
+            self.filtered_contact_load=(fixed.copy() if self.filtered_contact_load is None else
+                self.filtered_contact_load+gain*(fixed-self.filtered_contact_load))
+
     def adopt_existing_grip(self, open_history, grip_history, *, diagnostic_open_calibration_source=None):
         """Initialize from this episode's earlier robot-only sensor history.
 
@@ -145,8 +163,7 @@ class LocalInterfaceFollowing:
             measured=residual-np.r_[R@self.bias[:3],R@self.bias[3:]]
             fixed=interface_wrench_from_wrist(measured,H[:3,3],self.pivot0[:3,3],
                 R@self.com_hand+H[:3,3],self.settings['payload_mass_kg'],9.81,self.axes)
-            alpha=self.dt/(self.settings['contact_estimate_filter_time_constant_s']+self.dt)
-            self.filtered=fixed.copy() if self.filtered is None else self.filtered+alpha*(fixed-self.filtered)
+            self._update_contact_filters(fixed)
             self.acquisition_axial_forces.append(float(self.filtered[2]))
             gravity=self.grip_observer._system(q,fk=fk)[2]
             self.grip_load_history.append(np.asarray(row['active_efforts_nm'])[8:]-self.grip_observer.tare_reaction
@@ -333,15 +350,15 @@ class LocalInterfaceFollowing:
         pivot=H@self.hand_from_pivot;com=R@self.com_hand+H[:3,3]
         fixed=interface_wrench_from_wrist(measured,H[:3,3],self.pivot0[:3,3],com,
             self.settings['payload_mass_kg'],9.81,self.axes)
-        alpha=self.dt/(self.settings['contact_estimate_filter_time_constant_s']+self.dt)
-        self.filtered=fixed.copy() if self.filtered is None else self.filtered+alpha*(fixed-self.filtered)
+        self._update_contact_filters(fixed)
         separated_grip=bool(self.grip_recipe and self.grip_recipe.get('stage_separated_capacity_grip'))
         acquiring=separated_grip and (elapsed<self.turn_start or
             (preserve_stroke_pose and grip_enabled and not force_follow_enabled))
         if self.grip_recipe and self.grip_recipe.get('compensate_measured_contact_load'):
+            load_signal=self.filtered if self.contact_load_filter_tau is None else self.filtered_contact_load
             gravity_payload=np.array([0.,0.,-self.settings['payload_mass_kg']*9.81])
-            contact_force=self.axes@self.filtered[:3]+gravity_payload
-            contact_moment=(self.axes@self.filtered[3:]+np.cross(com-self.pivot0[:3,3],gravity_payload)
+            contact_force=self.axes@load_signal[:3]+gravity_payload
+            contact_moment=(self.axes@load_signal[3:]+np.cross(com-self.pivot0[:3,3],gravity_payload)
                 +np.cross(self.pivot0[:3,3]-H[:3,3],contact_force))
             self.last_contact_compensation=-np.asarray(self.model.geometric_jacobian('handbase_link',tuple(q)))[:,:7].T@np.r_[contact_force,contact_moment]
             suppress_load=(acquiring or (hold_pose and self.grip_recipe.get('relax_contact_load_on_release'))
@@ -556,6 +573,8 @@ class LocalInterfaceFollowing:
             'angular_follow_offset_deg':Rotation.from_matrix(self.angular_follow).as_rotvec(degrees=True).tolist(),
             'encoder_pivot_world_m':pivot[:3,3].tolist(),'nominal_arm_target_rad':self.arm.tolist(),
             'pivot_position_tracking_error_m':error[:3].tolist(),
+            'contact_load_filter_time_constant_s':self.contact_load_filter_tau,
+            'contact_load_interface_wrench_n_nm':(self.filtered if self.contact_load_filter_tau is None else self.filtered_contact_load).tolist(),
             'bounded_velocity_task_residual':None if velocity_tracking_residual is None else velocity_tracking_residual.tolist(),
             'unlimited_interface_velocity_world_m_rad_s':None if unlimited_interface_velocity is None else unlimited_interface_velocity.tolist(),
             'requested_interface_velocity_world_m_rad_s':np.r_[requested_twist[:3],requested_twist[3:]/.05].tolist(),

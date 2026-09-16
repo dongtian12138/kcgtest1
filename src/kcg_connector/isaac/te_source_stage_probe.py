@@ -92,7 +92,8 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
     ft.stepper=stepper
     runtime={'world':world,'inputs':inputs,'scene':scene,'auditor':recorder,'robot_data':robot_data,
         'object_parts':parts,'nail_body_ft_auditor':ft,'body_assembly_control_config':str(assembly_path),
-        'body_assembly_scene':prepared,'robot_asset':metadata['robot_asset']}
+        'body_assembly_scene':prepared,
+        'robot_asset':str(args.robot_asset.resolve() if args.robot_asset else Path(metadata['robot_asset']).resolve())}
     runtime['declared_source_stage_diagnostic']=True
     runtime['inspection_ui_enabled']=bool(recipe.get('inspection_ui_enabled',False))
     runtime['simulation_stop_request_path']=str(output/'STOP_REQUEST')

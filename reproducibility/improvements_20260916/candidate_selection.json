@@ -1,0 +1,30 @@
+{
+  "configuration_id": "load10ms_native_lossless_tuple_cpu960_64_4",
+  "status": "LOCAL_VALIDATED_FULL_EPISODE_REPEATS_PENDING",
+  "selected_position_velocity_iterations": [
+    64,
+    4
+  ],
+  "physics_hz": 960,
+  "load_compensation_filter_s": 0.01,
+  "original_control_and_stop_filter_s": 0.05,
+  "original_key_band_um": 2.0,
+  "source_geometry_mass_material_and_force_limits_changed": false,
+  "controls_changed": [
+    "Separate measured-load feedforward time constant50ms->10ms"
+  ],
+  "recording_changes": [
+    "Cache only contact path role labels",
+    "Own immutable native point vectors with unchanged serialized arrays"
+  ],
+  "postreview_change": "Only materialize required fields for source-key geometry evaluation; full raw archive retained",
+  "declined": [
+    "128-position-iteration local candidate did not improve the measured key or wrist result",
+    "Robot-history disk prototype had no measured speed benefit"
+  ],
+  "planned_full_validation": [
+    "Two same-scene complete visual assembly episodes",
+    "One explicitly bounded initial position/yaw perturbation after same-scene success"
+  ],
+  "full_success_claimed": false
+}
