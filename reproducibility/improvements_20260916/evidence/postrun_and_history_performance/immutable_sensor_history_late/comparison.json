@@ -1,0 +1,138 @@
+{
+  "scope": "BOUNDED_OFFLINE_32768_LATE_EPISODE_REAL_SENSOR_RECORDS",
+  "original": {
+    "mode": "lists",
+    "sensor_rows": 32768,
+    "source_step_range": [
+      249000,
+      281767
+    ],
+    "phases": [
+      "key_probe_nut_contact",
+      "key_probe_nut_grip_hold",
+      "key_probe_nut_index_open",
+      "key_probe_nut_index_unload",
+      "key_probe_nut_open",
+      "key_probe_nut_open_hold",
+      "key_probe_nut_rotation_turn",
+      "key_probe_nut_tare",
+      "key_probe_nut_transfer",
+      "key_probe_nut_transfer_hold",
+      "nut_index_free_final_hold",
+      "nut_index_free_open_hold",
+      "nut_index_free_rotate"
+    ],
+    "scope": "OFFLINE_SAVED_ROBOT_SIGNALS_ONLY",
+    "input": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat01_restart01/run/wrist_ft_samples.json.gz",
+    "ingestion_parse_encode_and_check_wall_s": 8.799910383000679,
+    "array_conversion_s": 0.0016884713695617393,
+    "gen2_collections": [
+      {
+        "wall_s": 0.09483317899866961,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.10885857600078452,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.10680485800185124,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.10911896099787555,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.10663629200280411,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.10845162500118022,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      }
+    ],
+    "steady_collection_median_s": 0.10762824150151573,
+    "all_row_encoded_values_exactly_equal": true,
+    "logical_rows_sha256": "0216e8af0fc270c7b44834920297bb24dd612ef849cc6cf0f618d333ab90953c",
+    "maximum_rss_mib": 393.75,
+    "production_modified": false,
+    "physics_executed": false,
+    "controller_mutation_compatibility_not_yet_verified": true
+  },
+  "candidate": {
+    "mode": "tuples",
+    "sensor_rows": 32768,
+    "source_step_range": [
+      249000,
+      281767
+    ],
+    "phases": [
+      "key_probe_nut_contact",
+      "key_probe_nut_grip_hold",
+      "key_probe_nut_index_open",
+      "key_probe_nut_index_unload",
+      "key_probe_nut_open",
+      "key_probe_nut_open_hold",
+      "key_probe_nut_rotation_turn",
+      "key_probe_nut_tare",
+      "key_probe_nut_transfer",
+      "key_probe_nut_transfer_hold",
+      "nut_index_free_final_hold",
+      "nut_index_free_open_hold",
+      "nut_index_free_rotate"
+    ],
+    "scope": "OFFLINE_SAVED_ROBOT_SIGNALS_ONLY",
+    "input": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat01_restart01/run/wrist_ft_samples.json.gz",
+    "ingestion_parse_encode_and_check_wall_s": 9.239227423000557,
+    "array_conversion_s": 0.4196756518758775,
+    "gen2_collections": [
+      {
+        "wall_s": 0.07913335299963364,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.03620383399902494,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.03140043799794512,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.028549878999911016,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.026423317998705897,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.02545697399909841,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      }
+    ],
+    "steady_collection_median_s": 0.027486598499308457,
+    "all_row_encoded_values_exactly_equal": true,
+    "logical_rows_sha256": "0216e8af0fc270c7b44834920297bb24dd612ef849cc6cf0f618d333ab90953c",
+    "maximum_rss_mib": 370.34375,
+    "production_modified": false,
+    "physics_executed": false,
+    "controller_mutation_compatibility_not_yet_verified": true
+  },
+  "collection_cost_reduction_fraction": 0.7446153712460185,
+  "not_a_whole_episode_speed_estimate": true,
+  "not_adopted_into_live_physics": true
+}

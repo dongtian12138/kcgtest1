@@ -1,0 +1,416 @@
+[
+  {
+    "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run",
+    "scope": "ENDED_REPEAT02_STAGE_POSE_DECOMPOSITION",
+    "control_rows_match_preceding_observed_physics_step": true,
+    "initial_actual_hand_nut_relation_used_for_offline_comparison_only": true,
+    "rows": [
+      {
+        "control_step": 244483,
+        "physical_observation_step": 244482,
+        "command_deg": 0.0,
+        "reported_xy_error_mm": 2.0206364052201326e-12,
+        "actual_nut_lateral_to_socket_mm": 0.09783813933348907,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.0,
+        "native_vs_encoder_virtual_point_xy_mm": 0.00010399573934983383,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            -0.022521197952873884,
+            0.09874389852546073,
+            0.1788898969422026
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            0.02252119795165264,
+            -0.0987438985238509,
+            -0.17889004674298548
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "control_step": 245590,
+        "physical_observation_step": 245589,
+        "command_deg": 20.013713129340278,
+        "reported_xy_error_mm": 0.21687245271966332,
+        "actual_nut_lateral_to_socket_mm": 0.10756754650993247,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.1759773849392587,
+        "native_vs_encoder_virtual_point_xy_mm": 4.603906228415673e-05,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            -0.08916194569463798,
+            -0.02803135868717499,
+            0.25352594133404294
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            -0.11510116900248502,
+            0.13311559226597547,
+            -0.20504467332055354
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            -0.012560949480100447,
+            -0.10050319195992197,
+            -0.1790274354846466
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          0.04836456951286029,
+          0.04860362613381074,
+          0.00020490567510038252
+        ]
+      },
+      {
+        "control_step": 246007,
+        "physical_observation_step": 246006,
+        "command_deg": 40.01169320093858,
+        "reported_xy_error_mm": 0.6185020942800239,
+        "actual_nut_lateral_to_socket_mm": 0.01730661189941942,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.5916905033206991,
+        "native_vs_encoder_virtual_point_xy_mm": 5.9989516973054945e-05,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            -0.0048826252151412675,
+            0.006794940453525022,
+            0.41554691543777
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            0.4323886657566778,
+            -0.4039030743198946,
+            0.022118243120095027
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            -0.046529673945694405,
+            -0.09013087188358693,
+            -0.17893335234153707
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          -0.1611890493177159,
+          0.21932761953286445,
+          -0.016317321927160462
+        ]
+      },
+      {
+        "control_step": 246007,
+        "physical_observation_step": 246006,
+        "command_deg": 40.01169320093858,
+        "reported_xy_error_mm": 0.6185020942800239,
+        "actual_nut_lateral_to_socket_mm": 0.01730661189941942,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.5916905033206991,
+        "native_vs_encoder_virtual_point_xy_mm": 5.9989516973054945e-05,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            -0.0048826252151412675,
+            0.006794940453525022,
+            0.41554691543777
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            0.4323886657566778,
+            -0.4039030743198946,
+            0.022118243120095027
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            -0.046529673945694405,
+            -0.09013087188358693,
+            -0.17893335234153707
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          -0.1611890493177159,
+          0.21932761953286445,
+          -0.016317321927160462
+        ]
+      }
+    ],
+    "limitations": [
+      "The changing hand/Nut relation combines finger joint motion, structural/solver compliance, rolling and sliding; these components are not separated here.",
+      "Native-vs-FK is a positional comparison, not a manufacturer sensor accuracy claim.",
+      "This is not an online controller or a proof that increasing grip force resolves assembly."
+    ],
+    "stage": "nut_rotation_continued_01"
+  },
+  {
+    "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run",
+    "scope": "ENDED_REPEAT02_STAGE_POSE_DECOMPOSITION",
+    "control_rows_match_preceding_observed_physics_step": true,
+    "initial_actual_hand_nut_relation_used_for_offline_comparison_only": true,
+    "rows": [
+      {
+        "control_step": 259322,
+        "physical_observation_step": 259321,
+        "command_deg": 0.0,
+        "reported_xy_error_mm": 4.457446068814721e-11,
+        "actual_nut_lateral_to_socket_mm": 0.021135671228715167,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 1.1443916996305594e-13,
+        "native_vs_encoder_virtual_point_xy_mm": 0.00010323559541594598,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            -0.00870000895913936,
+            0.0063665340965801676,
+            0.0596699607439688
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            -1.1102230246251565e-13,
+            2.7755575615628914e-14,
+            0.0
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            0.008700008985229601,
+            -0.006366534132828949,
+            -0.05966653519962062
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "control_step": 260035,
+        "physical_observation_step": 260034,
+        "command_deg": 6.703948876635696,
+        "reported_xy_error_mm": 0.05105384471411348,
+        "actual_nut_lateral_to_socket_mm": 0.05450536602915744,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.08803822858354665,
+        "native_vs_encoder_virtual_point_xy_mm": 0.00012186506530793103,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            -0.018118127741217904,
+            -0.03778479499880194,
+            0.11846931211495493
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            0.05581351899952569,
+            0.06808509961084286,
+            -0.08034118920341449
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            0.007910888200957089,
+            -0.007353358541239974,
+            -0.0595999481070586
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          -0.012096265020092582,
+          0.05907259858414778,
+          -0.005648566443600545
+        ]
+      },
+      {
+        "control_step": 260259,
+        "physical_observation_step": 260258,
+        "command_deg": 13.417703591417334,
+        "reported_xy_error_mm": 0.16538728602564726,
+        "actual_nut_lateral_to_socket_mm": 0.10450711350903764,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.07176991741596854,
+        "native_vs_encoder_virtual_point_xy_mm": 0.0002009218526701012,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            -0.03242446483475714,
+            -0.0870314368151548,
+            0.1241170728431551
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            0.015927381181279898,
+            -0.06998027989799094,
+            -0.0982888312714425
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            0.00699776063839419,
+            -0.008102538398835346,
+            -0.05953390992402552
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          0.005279736228419856,
+          0.006886538230665356,
+          0.0305855871033171
+        ]
+      },
+      {
+        "control_step": 260259,
+        "physical_observation_step": 260258,
+        "command_deg": 13.417703591417334,
+        "reported_xy_error_mm": 0.16538728602564726,
+        "actual_nut_lateral_to_socket_mm": 0.10450711350903764,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.07176991741596854,
+        "native_vs_encoder_virtual_point_xy_mm": 0.0002009218526701012,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            -0.03242446483475714,
+            -0.0870314368151548,
+            0.1241170728431551
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            0.015927381181279898,
+            -0.06998027989799094,
+            -0.0982888312714425
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            0.00699776063839419,
+            -0.008102538398835346,
+            -0.05953390992402552
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          0.005279736228419856,
+          0.006886538230665356,
+          0.0305855871033171
+        ]
+      }
+    ],
+    "limitations": [
+      "The changing hand/Nut relation combines finger joint motion, structural/solver compliance, rolling and sliding; these components are not separated here.",
+      "Native-vs-FK is a positional comparison, not a manufacturer sensor accuracy claim.",
+      "This is not an online controller or a proof that increasing grip force resolves assembly."
+    ],
+    "stage": "nut_rotation_continued_02"
+  },
+  {
+    "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run",
+    "scope": "ENDED_REPEAT02_STAGE_POSE_DECOMPOSITION",
+    "control_rows_match_preceding_observed_physics_step": true,
+    "initial_actual_hand_nut_relation_used_for_offline_comparison_only": true,
+    "rows": [
+      {
+        "control_step": 289667,
+        "physical_observation_step": 289666,
+        "command_deg": 0.0,
+        "reported_xy_error_mm": 1.4486309243184154e-10,
+        "actual_nut_lateral_to_socket_mm": 0.09804876400311473,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 1.1443916996305594e-13,
+        "native_vs_encoder_virtual_point_xy_mm": 0.00011026482180077375,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            -0.0698113012100876,
+            -0.04604771594055035,
+            0.10807340122892528
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            -1.1102230246251565e-13,
+            -2.7755575615628914e-14,
+            0.0
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            0.06981130129501967,
+            0.046047715823144264,
+            -0.10806228151705177
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "control_step": 290716,
+        "physical_observation_step": 290715,
+        "command_deg": 18.875625738412467,
+        "reported_xy_error_mm": 0.21272938036069441,
+        "actual_nut_lateral_to_socket_mm": 0.07028750113069676,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.2041134515798803,
+        "native_vs_encoder_virtual_point_xy_mm": 0.00016544972008619517,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            0.03556703712004339,
+            -0.058963313200460776,
+            0.09407665307686885
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            -0.10574275707364578,
+            -0.17458742922191184,
+            -0.20859457691513317
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            0.08077558687291653,
+            0.02108561095384709,
+            -0.10808601296108389
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          0.05464834354927202,
+          0.06735761804737325,
+          -0.01650515212933581
+        ]
+      },
+      {
+        "control_step": 291561,
+        "physical_observation_step": 291560,
+        "command_deg": 37.649936451413716,
+        "reported_xy_error_mm": 0.8608377156647579,
+        "actual_nut_lateral_to_socket_mm": 0.0447672224270309,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.9104803684732189,
+        "native_vs_encoder_virtual_point_xy_mm": 0.0001539951022043008,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            -0.023681468771186154,
+            -0.019115542296888055,
+            0.24808735955816896
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            -0.42978525545855906,
+            0.8026575456354657,
+            -0.24617072917643146
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            0.08348741426189576,
+            -0.006266709181718122,
+            -0.10803435896994396
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          -0.05671106067861587,
+          0.47752072299039394,
+          -0.1507422749821814
+        ]
+      },
+      {
+        "control_step": 291580,
+        "physical_observation_step": 291579,
+        "command_deg": 37.72680918810376,
+        "reported_xy_error_mm": 0.857772376357113,
+        "actual_nut_lateral_to_socket_mm": 0.04556220730700289,
+        "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.9087921817421489,
+        "native_vs_encoder_virtual_point_xy_mm": 0.00018215040976508458,
+        "error_decomposition_world_mm": {
+          "target_minus_actual_nut": [
+            -0.023562236343810383,
+            -0.020590789357288752,
+            0.25267518479360485
+          ],
+          "actual_nut_minus_fixed_grasp_prediction": [
+            -0.4291778681377867,
+            0.8010677793397758,
+            -0.24604297047292611
+          ],
+          "initial_calibration_and_native_fk_difference": [
+            0.08340022723918317,
+            -0.006292577377914332,
+            -0.10799636786124056
+          ]
+        },
+        "finger_output_angle_change_deg": [
+          -0.05627051347715005,
+          0.4767745248235701,
+          -0.15048614288830595
+        ]
+      }
+    ],
+    "limitations": [
+      "The changing hand/Nut relation combines finger joint motion, structural/solver compliance, rolling and sliding; these components are not separated here.",
+      "Native-vs-FK is a positional comparison, not a manufacturer sensor accuracy claim.",
+      "This is not an online controller or a proof that increasing grip force resolves assembly."
+    ],
+    "stage": "nut_rotation_continued_04"
+  }
+]

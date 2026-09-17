@@ -1,0 +1,416 @@
+{
+  "scope": "READ_ONLY_PLANAR_HOLD_CONTROL_FACT_REVIEW",
+  "cases": [
+    {
+      "run_name": "contact_last_gc128_repeat01_restart01",
+      "scope": "COMPLETED_FOURTH_CONTROL_INTERVAL_ROBOT_AND_ONLINE_VISION_ONLY",
+      "first_control_step": 259010,
+      "last_exclusive_control_step": 261172,
+      "saved_control_row_count": 2162,
+      "normal_stop_reason": "WRIST_BENDING_RESERVE_EARLY_REGRASP",
+      "last_issued_interval_angle_deg": 71.15224431369556,
+      "early_regrasp": {
+        "step": 261172,
+        "filtered_interface_wrench_n_nm": [
+          -76.55991047839048,
+          12.409926769148234,
+          -0.2680868462033645,
+          -0.8834938939400512,
+          -0.471403389071817,
+          1.0249304613114714
+        ],
+        "wrench_origin": "CURRENT_ENCODER_PIVOT_SAME_AS_HARD_WRIST_BOUND",
+        "bending_nm": 1.0013903414042644,
+        "threshold_nm": 1.0,
+        "last_applied_rotation_deg": 71.15224431369556,
+        "all_original_force_and_transmission_limits_retained": true
+      },
+      "settings": {
+        "planar_hold": true,
+        "sidewall_sequence": false,
+        "planar_compliance_m_per_n": 2e-05,
+        "planar_compliance_time_constant_s": 0.1,
+        "maximum_planar_offset_m": 0.001,
+        "maximum_planar_speed_m_s": 0.002,
+        "pivot_position_error_gain_s_inv": 20.0,
+        "bound_total_interface_velocity": true,
+        "compensate_measured_contact_load": true,
+        "contact_load_compensation_filter_time_constant_s": 0.01,
+        "angular_admittance_rad_per_nm_s": 0.0,
+        "validated_grip_helical_following": true
+      },
+      "online_visual_axes_source": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat01_restart01/run/socket_transport/wrist_socket/camera_and_estimate.json",
+      "interface_axes_in_world": [
+        [
+          0.99999918473502,
+          -0.0012769216966024902,
+          5.248371980580687e-07
+        ],
+        [
+          0.0012769216964231512,
+          0.9999991847351002,
+          3.4183753434825574e-07
+        ],
+        [
+          -5.252732699460583e-07,
+          -3.411670796886268e-07,
+          0.9999999999998042
+        ]
+      ],
+      "all_recorded_interface_offset_xy_exactly_zero": true,
+      "maximum_interface_offset_xy_m": 0.0,
+      "target_reconstruction_max_abs_m": 0.0,
+      "unlimited_velocity_reconstruction_max_abs_m_s": 0.0,
+      "limiter_reconstruction_max_abs_m_s": 2.168404344971009e-18,
+      "maximum_world_xy_reference_shift_from_axial_following_m": 9.378218964639916e-10,
+      "interface_planar_speed_limit_mm_s": 2.0,
+      "clipped_saved_row_count": 820,
+      "clipped_fraction": 0.3792784458834413,
+      "clipping_count_numeric_slack_m_s": 1e-12,
+      "first_clipped_step": 259934,
+      "first_clipped_angle_deg": 12.963712239740632,
+      "maximum_unlimited_interface_xy_mm_s": 5.653809203155506,
+      "maximum_requested_interface_xy_mm_s": 2.000000000000002,
+      "minimum_lateral_request_scale": 0.3537438084899928,
+      "maximum_joint_velocity_solver_linear_task_residual_norm_m_s": 3.8153887656178953e-07,
+      "maximum_joint_velocity_solver_angular_task_residual_norm_rad_s": 9.969172426774146e-05,
+      "selected_saved_controls": [
+        {
+          "step": 259010,
+          "observed_sensor_step": 259009,
+          "issued_angle_deg": 0.0,
+          "interface_lateral_force_n": 0.8653733463583866,
+          "interface_bending_nm": 0.2381394736066521,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 1.3552344578064725e-13,
+          "world_position_error_xy_mm": 5.1581330920906635e-12,
+          "unlimited_interface_xy_mm_s": 2.7104687628394586e-12,
+          "requested_interface_xy_mm_s": 2.710468606883088e-12,
+          "lateral_request_scale": 1.0,
+          "requested_world_xy_mm_s": 4.925554702826686e-09,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 1.1363098217479664e-08,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 8.993364329397012e-09
+        },
+        {
+          "step": 259465,
+          "observed_sensor_step": 259464,
+          "issued_angle_deg": 1.9969824035298416,
+          "interface_lateral_force_n": 25.243668239112573,
+          "interface_bending_nm": 0.2785863067677115,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 0.03092491732585583,
+          "world_position_error_xy_mm": 0.030924931560119644,
+          "unlimited_interface_xy_mm_s": 0.6184983465171167,
+          "requested_interface_xy_mm_s": 0.618498346517117,
+          "lateral_request_scale": 1.0,
+          "requested_world_xy_mm_s": 0.6184986482784048,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 8.945044456648777e-08,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 8.942753990933698e-08
+        },
+        {
+          "step": 259648,
+          "observed_sensor_step": 259647,
+          "issued_angle_deg": 5.001934670371922,
+          "interface_lateral_force_n": 36.864671542174584,
+          "interface_bending_nm": 0.34165658759929773,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 0.07737549222101471,
+          "world_position_error_xy_mm": 0.07737550344218753,
+          "unlimited_interface_xy_mm_s": 1.5475098444202942,
+          "requested_interface_xy_mm_s": 1.5475098444202933,
+          "lateral_request_scale": 1.0,
+          "requested_world_xy_mm_s": 1.5475096653394413,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 1.5223877671135177e-07,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 1.5153122103928863e-07
+        },
+        {
+          "step": 259843,
+          "observed_sensor_step": 259842,
+          "issued_angle_deg": 10.002948020787445,
+          "interface_lateral_force_n": 62.36826168937563,
+          "interface_bending_nm": 0.6785938689632557,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 0.09049293453376216,
+          "world_position_error_xy_mm": 0.09049292485692433,
+          "unlimited_interface_xy_mm_s": 1.809858690675243,
+          "requested_interface_xy_mm_s": 1.8098586906752423,
+          "lateral_request_scale": 1.0,
+          "requested_world_xy_mm_s": 1.8098583326571296,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 2.2267717684214835e-07,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 2.2053285069486432e-07
+        },
+        {
+          "step": 259946,
+          "observed_sensor_step": 259945,
+          "issued_angle_deg": 13.38251266575217,
+          "interface_lateral_force_n": 78.0692070600304,
+          "interface_bending_nm": 0.8154380293851375,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 0.11482583317053642,
+          "world_position_error_xy_mm": 0.11482584648856278,
+          "unlimited_interface_xy_mm_s": 2.296516663410728,
+          "requested_interface_xy_mm_s": 2.000000000000001,
+          "lateral_request_scale": 0.870884166383383,
+          "requested_world_xy_mm_s": 2.0000004525009594,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 2.602919771211123e-07,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 2.563986011189905e-07
+        },
+        {
+          "step": 261171,
+          "observed_sensor_step": 261170,
+          "issued_angle_deg": 71.15224431369556,
+          "interface_lateral_force_n": 77.38995896087233,
+          "interface_bending_nm": 0.9849342478416495,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 0.2826904601577752,
+          "world_position_error_xy_mm": 0.28269057290753247,
+          "unlimited_interface_xy_mm_s": 5.653809203155506,
+          "requested_interface_xy_mm_s": 2.0000000000000013,
+          "lateral_request_scale": 0.3537438084899928,
+          "requested_world_xy_mm_s": 2.0000013549598257,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 3.11116040113626e-07,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 3.056729576674612e-07
+        }
+      ]
+    },
+    {
+      "run_name": "contact_last_gc128_repeat02",
+      "scope": "COMPLETED_FOURTH_CONTROL_INTERVAL_ROBOT_AND_ONLINE_VISION_ONLY",
+      "first_control_step": 259322,
+      "last_exclusive_control_step": 260260,
+      "saved_control_row_count": 938,
+      "normal_stop_reason": "WRIST_BENDING_RESERVE_EARLY_REGRASP",
+      "last_issued_interval_angle_deg": 13.417703591417334,
+      "early_regrasp": {
+        "step": 260260,
+        "filtered_interface_wrench_n_nm": [
+          -66.5334876977025,
+          -53.13931201053881,
+          16.519468268856077,
+          -0.19873166763768527,
+          -0.9891166988688163,
+          1.0788823328004848
+        ],
+        "wrench_origin": "CURRENT_ENCODER_PIVOT_SAME_AS_HARD_WRIST_BOUND",
+        "bending_nm": 1.0088836006711577,
+        "threshold_nm": 1.0,
+        "last_applied_rotation_deg": 13.417703591417334,
+        "all_original_force_and_transmission_limits_retained": true
+      },
+      "settings": {
+        "planar_hold": true,
+        "sidewall_sequence": false,
+        "planar_compliance_m_per_n": 2e-05,
+        "planar_compliance_time_constant_s": 0.1,
+        "maximum_planar_offset_m": 0.001,
+        "maximum_planar_speed_m_s": 0.002,
+        "pivot_position_error_gain_s_inv": 20.0,
+        "bound_total_interface_velocity": true,
+        "compensate_measured_contact_load": true,
+        "contact_load_compensation_filter_time_constant_s": 0.01,
+        "angular_admittance_rad_per_nm_s": 0.0,
+        "validated_grip_helical_following": true
+      },
+      "online_visual_axes_source": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run/socket_transport/wrist_socket/camera_and_estimate.json",
+      "interface_axes_in_world": [
+        [
+          0.9999927407823005,
+          -0.003810291944387036,
+          7.615863352499622e-06
+        ],
+        [
+          0.0038102920247576025,
+          0.9999927407551688,
+          -1.0566525474397952e-05
+        ],
+        [
+          -7.5755465202106706e-06,
+          1.0595467433051578e-05,
+          0.9999999999151732
+        ]
+      ],
+      "all_recorded_interface_offset_xy_exactly_zero": true,
+      "maximum_interface_offset_xy_m": 0.0,
+      "target_reconstruction_max_abs_m": 0.0,
+      "unlimited_velocity_reconstruction_max_abs_m_s": 4.235164736271502e-22,
+      "limiter_reconstruction_max_abs_m_s": 2.168404344971009e-18,
+      "maximum_world_xy_reference_shift_from_axial_following_m": 3.090826249562248e-09,
+      "interface_planar_speed_limit_mm_s": 2.0,
+      "clipped_saved_row_count": 11,
+      "clipped_fraction": 0.011727078891257996,
+      "clipping_count_numeric_slack_m_s": 1e-12,
+      "first_clipped_step": 260249,
+      "first_clipped_angle_deg": 13.067806556052094,
+      "maximum_unlimited_interface_xy_mm_s": 3.3077525367472527,
+      "maximum_requested_interface_xy_mm_s": 1.9999999999999996,
+      "minimum_lateral_request_scale": 0.6046401530287213,
+      "maximum_joint_velocity_solver_linear_task_residual_norm_m_s": 2.584047466969031e-07,
+      "maximum_joint_velocity_solver_angular_task_residual_norm_rad_s": 6.675447813290847e-05,
+      "selected_saved_controls": [
+        {
+          "step": 259322,
+          "observed_sensor_step": 259321,
+          "issued_angle_deg": 0.0,
+          "interface_lateral_force_n": 0.7006487274750732,
+          "interface_bending_nm": 0.20340029719116778,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 1.1206577760610192e-13,
+          "world_position_error_xy_mm": 4.457446068814721e-11,
+          "unlimited_interface_xy_mm_s": 2.2413156483760077e-12,
+          "requested_interface_xy_mm_s": 2.2413157466372753e-12,
+          "lateral_request_scale": 1.0,
+          "requested_world_xy_mm_s": 4.372477333391388e-08,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 3.7212303786863834e-09,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 2.9773591768818713e-09
+        },
+        {
+          "step": 259777,
+          "observed_sensor_step": 259776,
+          "issued_angle_deg": 1.9969824035298416,
+          "interface_lateral_force_n": 22.51522356128423,
+          "interface_bending_nm": 0.32132755940399593,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 0.051680540413012725,
+          "world_position_error_xy_mm": 0.051680093159191684,
+          "unlimited_interface_xy_mm_s": 1.0336108082602544,
+          "requested_interface_xy_mm_s": 1.033610808260254,
+          "lateral_request_scale": 1.0,
+          "requested_world_xy_mm_s": 1.0336006976469183,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 9.018219381882608e-08,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 9.018051936184216e-08
+        },
+        {
+          "step": 259960,
+          "observed_sensor_step": 259959,
+          "issued_angle_deg": 5.001934670371922,
+          "interface_lateral_force_n": 36.549709151150566,
+          "interface_bending_nm": 0.43022671425408987,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 0.06381570841508952,
+          "world_position_error_xy_mm": 0.06381567728131922,
+          "unlimited_interface_xy_mm_s": 1.2763141683017905,
+          "requested_interface_xy_mm_s": 1.2763141683017905,
+          "lateral_request_scale": 1.0,
+          "requested_world_xy_mm_s": 1.2763145156010138,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 1.5354418401192042e-07,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 1.5246417248013067e-07
+        },
+        {
+          "step": 260155,
+          "observed_sensor_step": 260154,
+          "issued_angle_deg": 10.002948020787445,
+          "interface_lateral_force_n": 67.69673518696057,
+          "interface_bending_nm": 0.7895007765487865,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 0.032732627115641476,
+          "world_position_error_xy_mm": 0.03273156323771073,
+          "unlimited_interface_xy_mm_s": 0.6546525423128294,
+          "requested_interface_xy_mm_s": 0.6546525423128293,
+          "lateral_request_scale": 1.0,
+          "requested_world_xy_mm_s": 0.6546219973821283,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 2.253682001678162e-07,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 2.2183293821229887e-07
+        },
+        {
+          "step": 260258,
+          "observed_sensor_step": 260257,
+          "issued_angle_deg": 13.38251266575217,
+          "interface_lateral_force_n": 84.96216713675715,
+          "interface_bending_nm": 0.9874238178037209,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 0.16071231722705714,
+          "world_position_error_xy_mm": 0.16071197360789083,
+          "unlimited_interface_xy_mm_s": 3.2142463445411433,
+          "requested_interface_xy_mm_s": 1.9999999999999991,
+          "lateral_request_scale": 0.6222298435204456,
+          "requested_world_xy_mm_s": 1.999990855661461,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 2.5808017497525943e-07,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 2.551891625459671e-07
+        },
+        {
+          "step": 260259,
+          "observed_sensor_step": 260258,
+          "issued_angle_deg": 13.417703591417334,
+          "interface_lateral_force_n": 85.05006206856608,
+          "interface_bending_nm": 0.9878392038872612,
+          "interface_offset_xy_m": [
+            0.0,
+            0.0
+          ],
+          "interface_position_error_xy_mm": 0.16538762683736258,
+          "world_position_error_xy_mm": 0.16538728602564726,
+          "unlimited_interface_xy_mm_s": 3.3077525367472527,
+          "requested_interface_xy_mm_s": 1.9999999999999987,
+          "lateral_request_scale": 0.6046401530287213,
+          "requested_world_xy_mm_s": 1.9999909232200561,
+          "joint_velocity_solver_linear_task_residual_norm_m_s": 2.584047466969031e-07,
+          "joint_velocity_solver_linear_task_residual_interface_xy_m_s": 2.555268459990481e-07
+        }
+      ]
+    }
+  ],
+  "same_relevant_planar_and_load_settings": true,
+  "object_or_contact_truth_read": false,
+  "physical_experiment_executed": false,
+  "production_modified": false,
+  "limits": [
+    "Recorded control rows use preceding robot observations. The normal-stop event is the next decision, not an additional applied row.",
+    "The quoted joint-velocity residual is the Jacobian task-fit residual, not measured actuator tracking.",
+    "Interface vectors are projected using the online wrist-vision axes; worldXY is not used as a substitute.",
+    "These runs have different prior motion/grip histories. Neither a planar_hold change nor a speed-limit change has been tested here."
+  ],
+  "matched_issued_command_prefix": {
+    "saved_rows_each": 938,
+    "issued_angle_sequence_exactly_equal": true,
+    "last_issued_angle_deg": 13.417703591417334,
+    "cases": [
+      {
+        "run_name": "contact_last_gc128_repeat01_restart01",
+        "clipped_rows": 14,
+        "clipped_fraction": 0.014925373134328358,
+        "maximum_unlimited_interface_xy_mm_s": 2.3213614625452546,
+        "last_prefix_bending_nm": 0.8071329965386775
+      },
+      {
+        "run_name": "contact_last_gc128_repeat02",
+        "clipped_rows": 11,
+        "clipped_fraction": 0.011727078891257996,
+        "maximum_unlimited_interface_xy_mm_s": 3.3077525367472527,
+        "last_prefix_bending_nm": 0.9878392038872612
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "scope": "PREPARED_POSTRUN_PATCH_AST_AND_EXISTING_READER_WITH_SYNTHETIC_ARCHIVE",
+  "all_case_summaries_exactly_equal": true,
+  "cases": [
+    "ordinary_list_caller_without_output_directory",
+    "unclosed_fixture_retains_original_reader",
+    "closed_fixture_without_motion_marker_retains_original_reader",
+    "closed_fixture_with_marker_uses_sealed_pose_projection"
+  ],
+  "production_modified": false,
+  "physics_executed": false,
+  "existing_episode_files_modified": false
+}

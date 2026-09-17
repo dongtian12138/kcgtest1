@@ -56,7 +56,8 @@ def main():
         result=review(run)
     else:
         from evaluate_visual_assembly_v1 import review
-        result=review(run)
+        from trace_metadata import without_cyclic_gc
+        result=without_cyclic_gc(review,run)
     print(json.dumps(result,indent=2))
 
 

@@ -1,0 +1,31 @@
+{
+  "scope": "EQUIVALENT_NATIVE_AUDIT_AND_POSTRUN_READERS_AFTER_SECOND_PRODUCER_EXITED",
+  "second_episode_execution_commit": "baf6d4f5c2c7035b4fd17ba38e0a19bd04ea7455",
+  "control_law_or_physics_configuration_changed": false,
+  "raw_contacts_or_numeric_values_dropped": false,
+  "applied_changes": [
+    {
+      "path": "src/kcg_connector/isaac/carts_v2/run_grasp_lift.py",
+      "before_sha256": "7724bb1c2e2f8a9a45634eb1e98348b17fbeb0d5c8fdd1e7e46975544f04d3ce",
+      "after_sha256": "d7ff1116110ad02d659751d69d15291d37cea3d8c5a58798022148bb91849785",
+      "prepared_patch": "artifacts/performance_review/relative_summary_projection/prepared_reader_change.json"
+    },
+    {
+      "path": "src/kcg_connector/isaac/carts_v2/evaluate_run.py",
+      "before_sha256": "261c6cd05d77643507f788e36c68f56f584ab87aa880ee5e30f99ed7f717b23d",
+      "after_sha256": "1dfba5779e53c0358ec33225fde33c382d95ccb71f4a2545a414274c6400810d",
+      "prepared_patch": "artifacts/performance_review/finite_contact_validation/prepared_streaming_guard_change.json"
+    }
+  ],
+  "native_finiteness_equivalence_domain": "Installed ContactData Float3 plus existing owned3-vector decoder; not arbitrary malformed Python dictionaries",
+  "frozen_existing_episode_sources_or_data_modified": false,
+  "validation": {
+    "native_contact_and_codec_tests": "8 tests and4subtests passed in Isaac Python3.12",
+    "pytest_version": "9.1.1",
+    "pytest_installation": "Task-local artifacts/test_dependencies/pytest_9_1_1 only; simulation environment unchanged",
+    "installed_source_matches_prepared_AST": true,
+    "startup_and_pose_variation_bound_file_check_passed": true,
+    "bound_file_count": 768,
+    "whole_review_helper_uses_previously_validated_without_cyclic_gc": true
+  }
+}

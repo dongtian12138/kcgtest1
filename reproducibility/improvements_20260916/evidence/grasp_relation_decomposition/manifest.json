@@ -1,0 +1,19 @@
+{
+  "scope": "OFFLINE_HISTORICAL_FOURTH_STROKE_POSE_DECOMPOSITION",
+  "physics_or_online_control_changed": false,
+  "source_episodes": [
+    "visual_complete_all_reserves14",
+    "load10ms_repeat01"
+  ],
+  "live_repeat02_truth_used": false,
+  "unique_historical_physical_frames_in_independent_recheck": 7,
+  "source_big_archives_retained_locally_not_in_git": true,
+  "files": {
+    "comparison.json": "4aaca90e29ba343616b12f4111b89c0b8ac342cd74344face29d62157d9ae84e",
+    "independent_pose_check.json": "c9f65ee3940e3170d00bb0ea5322a3770ae1251f7cab6b8dcaf0e033c980bccc",
+    "independent_pose_check.py": "a3468f5580936fd4ac5337351f412b4e269bf964cae3459bdd903c4ada02c1df",
+    "independent_review_CN.md": "09fd68d480111e43e464c76f366b73ff549b03d409b17cc7ed1c42c25b548afd",
+    "review.py": "a56d4a9392036653564bd2a03cb4fc8ed4de87c5f52e00627c7b211b6c34c088",
+    "review_CN.md": "08964dbf8f57693ad64684b38a0dfb6164dcdd141512353acac4146da84e83bf"
+  }
+}

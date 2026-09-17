@@ -1,0 +1,32 @@
+{
+  "checked_at_utc": "2026-09-17T07:58:15.427903+00:00",
+  "git_remote": "https://github.com/dongtian12138/kcgtest1.git",
+  "tag": "assembly-first-verified-20260917",
+  "checked_out_commit": "baf6d4f5c2c7035b4fd17ba38e0a19bd04ea7455",
+  "fresh_directory": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/reproduction_check/assembly-first-verified-20260917",
+  "clone_from_public_github": true,
+  "runtime_archive_downloaded_from_public_release": true,
+  "runtime_archive_sha256": "195e378646663803872f527c17afb1ee3541ce4af95cdb533e629112832d9e70",
+  "runtime_asset_count": 297,
+  "all_runtime_asset_hashes_checked_by_prepare_script": true,
+  "pinned_sam6d_source_and_patch_verified": true,
+  "all_four_sam6d_weights_verified": true,
+  "sam6d_weights_reused_from_explicit_local_cache": true,
+  "sam6d_project_source_used_from_fresh_directory": true,
+  "ros_description_build_returncode": 0,
+  "startup_check_returncode": 0,
+  "bound_source_and_asset_file_count": 768,
+  "source_manifest_sha256": "989fb2f12b7007aa4f9eaa6e479e460ea995e867b5f7a876e2f8840bfc000e48",
+  "new_physics_started": false,
+  "second_physical_run_started_concurrently": false,
+  "new_machine_environment_install_verified": false,
+  "third_party_python_environments_reused": [
+    "/home/noob/WorkPlace/isaacsim/.conda-env",
+    "/home/noob/WorkPlace/kcgtest1/.venv",
+    "/home/noob/.cache/kcgtest1-sam6d/.venv"
+  ],
+  "startup_log_sha256": "ff1d3673a9b10f4b9d8545946a51e0433d427b5cdf4e4314d6ff772cab7a3ee2",
+  "portable_source_manifest_file_count": 471,
+  "pose_variation_startup_check_returncode": 0,
+  "pose_variation_physics_executed": false
+}

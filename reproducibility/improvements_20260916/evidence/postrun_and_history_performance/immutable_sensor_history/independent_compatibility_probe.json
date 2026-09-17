@@ -1,0 +1,64 @@
+{
+  "scope": "SEALED_ROBOT_HISTORY_CONSUMER_TYPE_CHECK_ONLY",
+  "source_run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat01_restart01/run",
+  "benchmark_prefix": {
+    "rows": 32768,
+    "first_step": 0,
+    "last_step": 32767,
+    "phase_counts": {
+      "ft_free_space_tare": 480,
+      "initial_rgbd_settle": 1440,
+      "settle": 1920,
+      "preshape_at_home": 2880,
+      "approach_above": 2880,
+      "wait_above_settled": 30,
+      "approach_descent": 3840,
+      "pregrasp_hold": 480,
+      "tare": 480,
+      "parallel_contact_approach": 300,
+      "parallel_contact_contact_confirmed": 3,
+      "preload": 480,
+      "prelift_effort_check": 276,
+      "lift": 17279
+    }
+  },
+  "four_representative_record_checks": [
+    {
+      "step": 0,
+      "phase": "ft_free_space_tare",
+      "msgpack_json_ready_fast_json_and_dump_array_equal": true,
+      "numpy_shapes_dtypes_values_and_raw_tuple_matmul_equal": true,
+      "source_list_mutation_and_mutable_numpy_work_array_do_not_change_history": true
+    },
+    {
+      "step": 32767,
+      "phase": "lift",
+      "msgpack_json_ready_fast_json_and_dump_array_equal": true,
+      "numpy_shapes_dtypes_values_and_raw_tuple_matmul_equal": true,
+      "source_list_mutation_and_mutable_numpy_work_array_do_not_change_history": true
+    },
+    {
+      "step": 290424,
+      "phase": "key_probe_nut_rotation_turn",
+      "msgpack_json_ready_fast_json_and_dump_array_equal": true,
+      "numpy_shapes_dtypes_values_and_raw_tuple_matmul_equal": true,
+      "source_list_mutation_and_mutable_numpy_work_array_do_not_change_history": true
+    },
+    {
+      "step": 290720,
+      "phase": "key_probe_nut_index_unload",
+      "msgpack_json_ready_fast_json_and_dump_array_equal": true,
+      "numpy_shapes_dtypes_values_and_raw_tuple_matmul_equal": true,
+      "source_list_mutation_and_mutable_numpy_work_array_do_not_change_history": true
+    }
+  ],
+  "synthetic_special_values_preserved": true,
+  "controller_executed": false,
+  "physics_executed": false,
+  "production_modified": false,
+  "limitations": [
+    "This exercises current numeric/serialization consumption patterns, not the full live controller or all exceptional sensor states.",
+    "The benchmark prefix is read only for phase coverage; its GC timings are not rerun here.",
+    "No repeat02 file is read."
+  ]
+}

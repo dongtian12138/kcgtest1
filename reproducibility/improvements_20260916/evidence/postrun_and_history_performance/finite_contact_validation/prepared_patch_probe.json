@@ -1,0 +1,36 @@
+{
+  "scope": "PREPARED_GUARD_FULL_CONTACT_METHOD_REPLAY_OF_FOUR_SEALED_REAL_FRAMES",
+  "rows": [
+    {
+      "step": 10000,
+      "phase": "approach_descent",
+      "all_contact_fields_and_encoded_bytes_equal_to_original_saved_record": true,
+      "contact_record_bytes": 7976,
+      "sha256": "03cdd67c61e42157fcd76f35745a195e90064008cb642ada3b3c92fbfcff96ec"
+    },
+    {
+      "step": 35000,
+      "phase": "hold",
+      "all_contact_fields_and_encoded_bytes_equal_to_original_saved_record": true,
+      "contact_record_bytes": 15995,
+      "sha256": "d02fafcebb8ebef8421f717653325d3aae4f7f10ae5df8594861026cde2f6a9e"
+    },
+    {
+      "step": 230008,
+      "phase": "key_probe_nut_rotation_turn",
+      "all_contact_fields_and_encoded_bytes_equal_to_original_saved_record": true,
+      "contact_record_bytes": 73201,
+      "sha256": "87db16241da8cbd872ca6dc74d85c3ceab11f8cfe606bcdfbeb57c13a7774f7f"
+    },
+    {
+      "step": 294559,
+      "phase": "nut_index_free_open_hold",
+      "all_contact_fields_and_encoded_bytes_equal_to_original_saved_record": true,
+      "contact_record_bytes": 3519018,
+      "sha256": "9d31399603f14dd4c3ba1387e4c440e1843f11d78149dc2e788da3a1cbd23545"
+    }
+  ],
+  "production_modified": false,
+  "physics_executed": false,
+  "raw_archive_or_reports_modified": false
+}

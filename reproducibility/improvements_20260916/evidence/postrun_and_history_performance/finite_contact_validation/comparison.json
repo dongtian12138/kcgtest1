@@ -1,0 +1,269 @@
+{
+  "scope": "OFFLINE_ONE_REAL_DENSE_REPORT_PLUS_NONFINITE_AND_EXTREME_FINITE_FIELDS",
+  "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat01_restart01/run",
+  "sample_step": 294559,
+  "contact_points": 17901,
+  "balanced_order_repetitions": 30,
+  "median_s": {
+    "original_array": 0.00493882249975286,
+    "streamed_isfinite": 0.003524308998748893,
+    "fromiter_array": 0.00443600700054958
+  },
+  "all_tested_boolean_results_identical": true,
+  "invalid_and_extreme_values_tested_at_all_ten_components": [
+    {
+      "value": "nan",
+      "component": 0,
+      "accepted": false
+    },
+    {
+      "value": "nan",
+      "component": 1,
+      "accepted": false
+    },
+    {
+      "value": "nan",
+      "component": 2,
+      "accepted": false
+    },
+    {
+      "value": "nan",
+      "component": 3,
+      "accepted": false
+    },
+    {
+      "value": "nan",
+      "component": 4,
+      "accepted": false
+    },
+    {
+      "value": "nan",
+      "component": 5,
+      "accepted": false
+    },
+    {
+      "value": "nan",
+      "component": 6,
+      "accepted": false
+    },
+    {
+      "value": "nan",
+      "component": 7,
+      "accepted": false
+    },
+    {
+      "value": "nan",
+      "component": 8,
+      "accepted": false
+    },
+    {
+      "value": "nan",
+      "component": 9,
+      "accepted": false
+    },
+    {
+      "value": "inf",
+      "component": 0,
+      "accepted": false
+    },
+    {
+      "value": "inf",
+      "component": 1,
+      "accepted": false
+    },
+    {
+      "value": "inf",
+      "component": 2,
+      "accepted": false
+    },
+    {
+      "value": "inf",
+      "component": 3,
+      "accepted": false
+    },
+    {
+      "value": "inf",
+      "component": 4,
+      "accepted": false
+    },
+    {
+      "value": "inf",
+      "component": 5,
+      "accepted": false
+    },
+    {
+      "value": "inf",
+      "component": 6,
+      "accepted": false
+    },
+    {
+      "value": "inf",
+      "component": 7,
+      "accepted": false
+    },
+    {
+      "value": "inf",
+      "component": 8,
+      "accepted": false
+    },
+    {
+      "value": "inf",
+      "component": 9,
+      "accepted": false
+    },
+    {
+      "value": "-inf",
+      "component": 0,
+      "accepted": false
+    },
+    {
+      "value": "-inf",
+      "component": 1,
+      "accepted": false
+    },
+    {
+      "value": "-inf",
+      "component": 2,
+      "accepted": false
+    },
+    {
+      "value": "-inf",
+      "component": 3,
+      "accepted": false
+    },
+    {
+      "value": "-inf",
+      "component": 4,
+      "accepted": false
+    },
+    {
+      "value": "-inf",
+      "component": 5,
+      "accepted": false
+    },
+    {
+      "value": "-inf",
+      "component": 6,
+      "accepted": false
+    },
+    {
+      "value": "-inf",
+      "component": 7,
+      "accepted": false
+    },
+    {
+      "value": "-inf",
+      "component": 8,
+      "accepted": false
+    },
+    {
+      "value": "-inf",
+      "component": 9,
+      "accepted": false
+    },
+    {
+      "value": "1e+308",
+      "component": 0,
+      "accepted": true
+    },
+    {
+      "value": "1e+308",
+      "component": 1,
+      "accepted": true
+    },
+    {
+      "value": "1e+308",
+      "component": 2,
+      "accepted": true
+    },
+    {
+      "value": "1e+308",
+      "component": 3,
+      "accepted": true
+    },
+    {
+      "value": "1e+308",
+      "component": 4,
+      "accepted": true
+    },
+    {
+      "value": "1e+308",
+      "component": 5,
+      "accepted": true
+    },
+    {
+      "value": "1e+308",
+      "component": 6,
+      "accepted": true
+    },
+    {
+      "value": "1e+308",
+      "component": 7,
+      "accepted": true
+    },
+    {
+      "value": "1e+308",
+      "component": 8,
+      "accepted": true
+    },
+    {
+      "value": "1e+308",
+      "component": 9,
+      "accepted": true
+    },
+    {
+      "value": "-1e+308",
+      "component": 0,
+      "accepted": true
+    },
+    {
+      "value": "-1e+308",
+      "component": 1,
+      "accepted": true
+    },
+    {
+      "value": "-1e+308",
+      "component": 2,
+      "accepted": true
+    },
+    {
+      "value": "-1e+308",
+      "component": 3,
+      "accepted": true
+    },
+    {
+      "value": "-1e+308",
+      "component": 4,
+      "accepted": true
+    },
+    {
+      "value": "-1e+308",
+      "component": 5,
+      "accepted": true
+    },
+    {
+      "value": "-1e+308",
+      "component": 6,
+      "accepted": true
+    },
+    {
+      "value": "-1e+308",
+      "component": 7,
+      "accepted": true
+    },
+    {
+      "value": "-1e+308",
+      "component": 8,
+      "accepted": true
+    },
+    {
+      "value": "-1e+308",
+      "component": 9,
+      "accepted": true
+    }
+  ],
+  "production_modified": false,
+  "raw_archive_modified": false,
+  "physics_executed": false,
+  "not_a_whole_episode_timing": true
+}

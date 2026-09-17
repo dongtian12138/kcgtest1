@@ -718,9 +718,15 @@ class TruthAuditRecorder:
             (row["paths"], int(row["records"])) for row in report_rows
         ]
         if native_only:
-            values=np.asarray([[*c['position_m'],*c['normal'],*c['impulse_n_s'],c['separation_m']]
-                for row in report_rows for c in row['contacts']],dtype=float)
-            if not np.isfinite(values).all():raise RuntimeError('native contact report is not finite')
+            # The native decoder owns 3 + 3 + 3 + 1 floats per point.
+            # Stream the finite check without a temporary rectangular array.
+            from itertools import chain
+            values = chain.from_iterable(
+                vector for row in report_rows for c in row['contacts']
+                for vector in (c['position_m'], c['normal'], c['impulse_n_s'],
+                               (c['separation_m'],)))
+            if not all(map(math.isfinite, values)):
+                raise RuntimeError('native contact report is not finite')
             tensor_rows=[];friction_rows=[]
             for row in report_rows:
                 paths=row['paths']

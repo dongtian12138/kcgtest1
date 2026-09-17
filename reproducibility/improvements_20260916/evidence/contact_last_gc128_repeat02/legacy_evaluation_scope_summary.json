@@ -1,0 +1,17 @@
+{
+  "pickup_evaluation_sample_scope": {
+    "first": 0,
+    "count": 35649,
+    "full_episode_count": 295421,
+    "whole_assembly_acceptance": false
+  },
+  "controller_completed": true,
+  "controller_failure_reason": null,
+  "engine_health_pass": true,
+  "identity_hash_check_pass": true,
+  "truth_isolation_pass": true,
+  "hardware_authorized": false,
+  "pad_surface_identity_verified": false,
+  "retained_process_returncode": 2,
+  "scope_note": "Legacy pickup fields retained; applicable original-nail/source-region and whole-assembly reviews supply this episode acceptance."
+}

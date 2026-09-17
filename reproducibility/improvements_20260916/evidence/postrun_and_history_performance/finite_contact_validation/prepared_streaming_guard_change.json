@@ -1,0 +1,11 @@
+{
+  "file": "src/kcg_connector/isaac/carts_v2/evaluate_run.py",
+  "before": "            values=np.asarray([[*c['position_m'],*c['normal'],*c['impulse_n_s'],c['separation_m']]\n                for row in report_rows for c in row['contacts']],dtype=float)\n            if not np.isfinite(values).all():raise RuntimeError('native contact report is not finite')",
+  "after": "            # The native decoder owns 3 + 3 + 3 + 1 floats per point.\n            # Stream the finite check without a temporary rectangular array.\n            from itertools import chain\n            values = chain.from_iterable(\n                vector for row in report_rows for c in row['contacts']\n                for vector in (c['position_m'], c['normal'], c['impulse_n_s'],\n                               (c['separation_m'],)))\n            if not all(map(math.isfinite, values)):\n                raise RuntimeError('native contact report is not finite')",
+  "prepared_against_sha256": "261c6cd05d77643507f788e36c68f56f584ab87aa880ee5e30f99ed7f717b23d",
+  "applied": false,
+  "all_native_points_retained": true,
+  "finiteness_rejection_retained_for_current_native_float3_decoder": true,
+  "generic_malformed_python_dictionary_equivalence_claimed": false,
+  "required_input_contract": "Installed Native ContactData Float3 vectors copied to owned three-element tuples, plus float separation"
+}

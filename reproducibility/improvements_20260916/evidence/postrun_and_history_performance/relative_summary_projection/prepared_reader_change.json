@@ -1,0 +1,8 @@
+{
+  "file": "src/kcg_connector/isaac/carts_v2/run_grasp_lift.py",
+  "before": "    relative = [\n        np.linalg.inv(pose_matrix(row, 0)) @ pose_matrix(row, 1)\n        for row in samples\n    ]",
+  "after": "    rows = samples\n    archive = runtime.get(\"truth_stream\")\n    if archive is samples and archive.closed and archive.codec == \"msgpack\":\n        output = Path(archive.name).parent\n        if (output / \"motion_timing.json\").is_file():\n            from trace_metadata import iter_truth_fields\n            rows = iter_truth_fields(output, (\n                \"object_part_positions_m\", \"object_part_orientations_wxyz\"))\n    relative = [\n        np.linalg.inv(pose_matrix(row, 0)) @ pose_matrix(row, 1)\n        for row in rows\n    ]",
+  "prepared_against_sha256": "7724bb1c2e2f8a9a45634eb1e98348b17fbeb0d5c8fdd1e7e46975544f04d3ce",
+  "applied": false,
+  "scope": "Post-motion relative pose summary only; no new controller data source"
+}

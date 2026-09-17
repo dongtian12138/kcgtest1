@@ -1,0 +1,31 @@
+{
+  "episode": "contact_last_gc128_repeat02",
+  "executed_git_commit": "baf6d4f5c2c7035b4fd17ba38e0a19bd04ea7455",
+  "execution_manifest_sha256": "989fb2f12b7007aa4f9eaa6e479e460ea995e867b5f7a876e2f8840bfc000e48",
+  "source_archive_sample_count": 295421,
+  "source_archive_size_bytes": 26530655597,
+  "index_sha256": "1b9a5a4108ca76c5cb0cf0d07d87885950f3b3340ed5d2a9f02bbc94d8346215",
+  "whole_review_status": "VERIFIED",
+  "independent_full_three_second_terminal_check": true,
+  "simulation_only": true,
+  "raw_archive_retained_locally": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run/truth_samples.msgpack.gz",
+  "files": {
+    "execution_source_manifest.json": "989fb2f12b7007aa4f9eaa6e479e460ea995e867b5f7a876e2f8840bfc000e48",
+    "final_mating_visibility_review.json": "387ac0f6c66db3e082a630cf04e4ec912f3059241b1c902191eb18f042732294",
+    "independent_terminal_release.json": "b32c813a7378034675118c0c769de98c2c29f150363897d780b394b18e55ecf9",
+    "independent_terminal_release_CN.md": "d06a59ddc752278aa0fde645ee54f4d72bfe0382fa23f2bff0a721b9bbcde064",
+    "legacy_evaluation_scope_summary.json": "079aadc899d0b381352c271f478c4c85a2bf2c5d7721b672ea18f93bad2a92e4",
+    "motion_timing.json": "77064e72a7fca6759d872f014fd612303924543000c536a863e36c48ecf9c763",
+    "recording_gc_audit.json": "f3f094176e81e2cb18110a3214149344e92d2412f0b91d7d92cd012328ede354",
+    "reproduction_plan.json": "687ae07d542a1e4995805e78417da767a4fe4583434b1f689c64e04f44408566",
+    "run_invocation.json": "2db9d90c8a978d4beb358c0f8b50cc67a48488a5823f10bd6ce77a14e82e0783",
+    "run_timing.json": "77b4913a0034304378ce804360a86efbfe70e90450cc3b9478f9e177938e6439",
+    "source_band_radial_occlusion_review.json": "597c4bc3ffe4ef426d5f5caa980a5b25bc86c309cad5ff8d118aedb7acc71345",
+    "source_key_containment_review.json": "9df9e04b369dade5afe19b4bb692263f020fbb22f2727993d91085f9804736db",
+    "source_nail_body_review.json": "3975eed86062372ad9c6e3f75e32353de205085ab26a2c3485ed457f9705923a",
+    "source_nut_pad_review.json": "6b442d7a3f5f9ab79d88f0d3d6e88e5ef32ef2bd040ab7d0b6ee0496566edf00",
+    "turn_progress_physical_review.json": "60eb79d23580dfb14da3ce7d0b866fc2ade32b2fbbb23f98299f0740365e5316",
+    "video_render_isolation.json": "c8039dd8c490944093e2a08b97725491216d6ba5aae28fe81ff3c94e8cb1e74a",
+    "whole_assembly_review.json": "3873d61caf0a3d41f892e5cc3c3956d780a9447d5839efe2376613cca70390c3"
+  }
+}

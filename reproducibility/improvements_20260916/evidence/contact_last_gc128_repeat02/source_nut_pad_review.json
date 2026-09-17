@@ -1,0 +1,49 @@
+{
+  "scope": "POSTRUN_DECLARED_ORIGINAL_NUT_GRASP_CONTACT_REGIONS",
+  "online_control_used": false,
+  "stages_sampled": 38763,
+  "other_actor_positive_contacts": 0,
+  "first_other_contacts": [],
+  "per_link": {
+    "f1Link3": {
+      "positive_contact_points": 35339,
+      "nonpad_points": 35339,
+      "nail_points": 35339,
+      "disallowed_original_region_points": 0,
+      "uncertain_projection_points": 0,
+      "maximum_projection_residual_m": 3.298789790926476e-05
+    },
+    "f2Link2": {
+      "positive_contact_points": 41644,
+      "nonpad_points": 0,
+      "nail_points": 0,
+      "disallowed_original_region_points": 0,
+      "uncertain_projection_points": 0,
+      "maximum_projection_residual_m": 9.784370586912737e-05
+    },
+    "f3Link3": {
+      "positive_contact_points": 63915,
+      "nonpad_points": 63915,
+      "nail_points": 63915,
+      "disallowed_original_region_points": 0,
+      "uncertain_projection_points": 0,
+      "maximum_projection_residual_m": 1.7958834525039215e-05
+    }
+  },
+  "projection_residual_limit_m": 0.0005,
+  "expected_original_regions": {
+    "f1Link3": [
+      "NAIL",
+      "PAD"
+    ],
+    "f2Link2": [
+      "PAD"
+    ],
+    "f3Link3": [
+      "NAIL",
+      "PAD"
+    ]
+  },
+  "declared_geometry_plan": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/grasp_capacity_20260914/selected_two_nail_geometry.json",
+  "accepted": true
+}

@@ -1,0 +1,131 @@
+{
+  "scope": "COMPLETED_CONTROL_INTERVALS_ROBOT_ONLY_DURING_REPEAT02",
+  "comparison": "Same declared fourth stroke and nearby issued wrist angles; previous contact/grip histories differ, so not a single-variable causal experiment.",
+  "cases": {
+    "contact_last_gc128_repeat01_restart01": [
+      {
+        "requested_wrist_angle_deg": 0.0,
+        "actual_saved_command_deg": 0.0,
+        "control_step": 259010,
+        "force_xy_n": 0.8653733463583867,
+        "force_z_n": 3.5821737648316,
+        "bending_xy_nm": 0.23813947360665214,
+        "twist_z_nm": 0.02232945379776309,
+        "fast_load_force_xy_n": 0.770065454136077,
+        "fast_load_bending_xy_nm": 0.24801802413408044,
+        "virtual_center_xy_mm": 5.1581330920906635e-12
+      },
+      {
+        "requested_wrist_angle_deg": 2.0,
+        "actual_saved_command_deg": 1.9969824035298416,
+        "control_step": 259465,
+        "force_xy_n": 25.243668239112573,
+        "force_z_n": 19.471098302867638,
+        "bending_xy_nm": 0.27858630676771157,
+        "twist_z_nm": 0.879035121730334,
+        "fast_load_force_xy_n": 27.94904681900691,
+        "fast_load_bending_xy_nm": 0.3082922157798327,
+        "virtual_center_xy_mm": 0.030924931560119644
+      },
+      {
+        "requested_wrist_angle_deg": 5.0,
+        "actual_saved_command_deg": 5.001934670371922,
+        "control_step": 259648,
+        "force_xy_n": 36.864671542174584,
+        "force_z_n": 6.190616333810389,
+        "bending_xy_nm": 0.34165658759929773,
+        "twist_z_nm": 1.1159732844044856,
+        "fast_load_force_xy_n": 39.97117398968677,
+        "fast_load_bending_xy_nm": 0.38667938410333663,
+        "virtual_center_xy_mm": 0.07737550344218753
+      },
+      {
+        "requested_wrist_angle_deg": 10.0,
+        "actual_saved_command_deg": 10.002948020787445,
+        "control_step": 259843,
+        "force_xy_n": 62.36826168937563,
+        "force_z_n": 8.103062814227197,
+        "bending_xy_nm": 0.6785938689632556,
+        "twist_z_nm": 1.1330039410764252,
+        "fast_load_force_xy_n": 68.8710866825478,
+        "fast_load_bending_xy_nm": 0.7860079596539472,
+        "virtual_center_xy_mm": 0.09049292485692433
+      },
+      {
+        "requested_wrist_angle_deg": 13.4,
+        "actual_saved_command_deg": 13.38251266575217,
+        "control_step": 259946,
+        "force_xy_n": 78.0692070600304,
+        "force_z_n": 17.55581554341582,
+        "bending_xy_nm": 0.8154380293851375,
+        "twist_z_nm": 1.0691186821514174,
+        "fast_load_force_xy_n": 81.87189510779243,
+        "fast_load_bending_xy_nm": 0.8062270016323229,
+        "virtual_center_xy_mm": 0.11482584648856278
+      }
+    ],
+    "contact_last_gc128_repeat02": [
+      {
+        "requested_wrist_angle_deg": 0.0,
+        "actual_saved_command_deg": 0.0,
+        "control_step": 259322,
+        "force_xy_n": 0.7006487274750732,
+        "force_z_n": 2.0049533548682263,
+        "bending_xy_nm": 0.20340029719116778,
+        "twist_z_nm": -0.018191895795850486,
+        "fast_load_force_xy_n": 0.580491416313393,
+        "fast_load_bending_xy_nm": 0.2078733309725707,
+        "virtual_center_xy_mm": 4.457446068814721e-11
+      },
+      {
+        "requested_wrist_angle_deg": 2.0,
+        "actual_saved_command_deg": 1.9969824035298416,
+        "control_step": 259777,
+        "force_xy_n": 22.51522356128423,
+        "force_z_n": 20.290097891863148,
+        "bending_xy_nm": 0.32132755940399593,
+        "twist_z_nm": 0.9308662796450068,
+        "fast_load_force_xy_n": 25.790853810611637,
+        "fast_load_bending_xy_nm": 0.3913628746391431,
+        "virtual_center_xy_mm": 0.051680093159191684
+      },
+      {
+        "requested_wrist_angle_deg": 5.0,
+        "actual_saved_command_deg": 5.001934670371922,
+        "control_step": 259960,
+        "force_xy_n": 36.549709151150566,
+        "force_z_n": 3.8565489988608506,
+        "bending_xy_nm": 0.43022671425408987,
+        "twist_z_nm": 1.1490864453202472,
+        "fast_load_force_xy_n": 40.591352343636814,
+        "fast_load_bending_xy_nm": 0.4729799830655415,
+        "virtual_center_xy_mm": 0.06381567728131922
+      },
+      {
+        "requested_wrist_angle_deg": 10.0,
+        "actual_saved_command_deg": 10.002948020787445,
+        "control_step": 260155,
+        "force_xy_n": 67.69673518696057,
+        "force_z_n": 2.0628491525323525,
+        "bending_xy_nm": 0.7895007765487865,
+        "twist_z_nm": 1.1567211340880155,
+        "fast_load_force_xy_n": 75.13277477466039,
+        "fast_load_bending_xy_nm": 0.939209438355083,
+        "virtual_center_xy_mm": 0.03273156323771073
+      },
+      {
+        "requested_wrist_angle_deg": 13.4,
+        "actual_saved_command_deg": 13.38251266575217,
+        "control_step": 260258,
+        "force_xy_n": 84.96216713675715,
+        "force_z_n": 16.346546876293875,
+        "bending_xy_nm": 0.9874238178037209,
+        "twist_z_nm": 1.0844425136121734,
+        "fast_load_force_xy_n": 89.14059002441249,
+        "fast_load_bending_xy_nm": 1.0308889726006036,
+        "virtual_center_xy_mm": 0.16071197360789083
+      }
+    ]
+  },
+  "read_live_object_truth": false
+}

@@ -1,0 +1,48 @@
+{
+  "status": "COMPLETE",
+  "part_order": [
+    "/World/TE_J35FreeSplitPlug/Body",
+    "/World/TE_J35FreeSplitPlug/CouplingNut"
+  ],
+  "reference_rule": "FIRST_POST_STEP_SAMPLE",
+  "sample_count": 294560,
+  "maximum_relative_translation_change_m": 0.0005167027044249154,
+  "final_relative_translation_change_m": 0.0005157309466159213,
+  "maximum_relative_translation_components_m": [
+    1.586485458171527e-05,
+    1.33859311804152e-05,
+    0.0005165633188272123
+  ],
+  "maximum_noncoaxial_axis_tilt_rad": 0.00055667007979591,
+  "final_noncoaxial_axis_tilt_rad": 0.0003400033277438201,
+  "final_unwrapped_coaxial_rotation_rad": 6.174527313639276,
+  "minimum_unwrapped_coaxial_rotation_rad": -1.3063876147283188e-05,
+  "maximum_unwrapped_coaxial_rotation_rad": 6.174572883626798,
+  "total_unwrapped_coaxial_rotation_range_rad": 6.174585947502945,
+  "joint_drive_or_friction_authored": true,
+  "rotational_resistance": {
+    "model": "NATIVE_STATIC_DYNAMIC_COULOMB_FRICTION",
+    "assumed_resisting_torque_nm": 0.02,
+    "static_friction_effort_nm": 0.02,
+    "dynamic_friction_effort_nm": 0.02,
+    "viscous_friction_coefficient_nm_s_per_deg": 0.0,
+    "disabled_velocity_drive_maximum_torque_nm": 0.0,
+    "disabled_velocity_drive_damping_nm_s_per_deg": 0.0,
+    "original_asset_drive_readback": {
+      "model": "SYMMETRIC_CAPPED_ZERO_VELOCITY_BRAKE",
+      "assumed_resisting_torque_nm": 0.02,
+      "drive_type": "force",
+      "target_velocity_deg_s": 0.0,
+      "stiffness_nm_per_deg": 0.0,
+      "damping_nm_s_per_deg": 10000000000.0,
+      "maximum_drive_torque_nm": 0.019999999552965164,
+      "angle_preference_or_limit_authored": false,
+      "physical_status": "ENGINEERING_ASSUMPTION_PUBLIC_NUMERIC_VALUE_UNAVAILABLE",
+      "asset_readback_matches_manifest": true
+    },
+    "source_asset_modified": false,
+    "hardware_resistance_calibrated": false
+  },
+  "online_control_used": false,
+  "evidence_limit": "MEASURES_RESPONSE_TO_AN_ASSUMED_SYMMETRIC_RESISTING_TORQUE;DOES_NOT_ESTABLISH_THIS_SPECIMENS_TRUE_UNLOADED_TORQUE"
+}

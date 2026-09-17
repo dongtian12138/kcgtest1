@@ -2,6 +2,8 @@
 
 2026-09-17：下面的修改已完成局部对照和必要检查。**新的第一次连续完整回合已经通过：最终14.604580849mm，原2µm键槽检查最差1.848419871µm，原止挡持续承载，完整松手保持3秒。** 结果与剩余重复验证见[完整验证说明](ASSEMBLY_COMPLETE_VALIDATION_20260917_CN.md)。此前第一轮改进版停在14.582080mm且键槽最大穿入2.475998µm，仍保留为失败证据；原成功到位基线独立封存。
 
+第二次同场景完整回合此后也已通过：最终14.604402035mm、键槽最差1.866570826µm，独立完整3秒松手检查通过。当前状态以[两次重复及后续读取优化](ASSEMBLY_REPEATABILITY_20260917_CN.md)为准。
+
 ## 接触求解顺序的对照
 
 使用第一轮完整运行第三段开始前同一状态，保持同一手、同一模型、同一10ms负载补偿、同一抓力和速度，以及CPU960Hz、64/4迭代。两次配方仅改变 `solve_articulation_contact_last`。源码快照相同，启动前后读取的设置符合预期，19项Actor/API均为64/4。
@@ -20,6 +22,10 @@
 候选改善了这一次局部旋拧的完成角度与键槽余量，但腕部推算中心误差并没有全面改善。两次都是从保存状态重建的局部场景；原顺序的局部也未重现完整回合2.476µm的越界。因此它是值得做完整验证的候选，不能称为已解决整场数值问题。
 
 [NVIDIA关节机器人稳定性说明](https://docs.omniverse.nvidia.com/kit/docs/omni_physics/110.0/dev_guide/guides/articulation_stability_guide.html#articulation-solver-order)指出，接触约束与关节约束的求解顺序会影响抓握和持续穿透。这里使用当前环境提供的设置，没有修改模型几何、质量、材料或接触检查阈值。
+
+2026-09-17回查该官方页面（页面更新时间2026-06-08）：动态接触后求解可能减少持续穿入、提高有效接触传力，也有额外计算开销。因此不能把完整回合的所有耗时变化都归因于记录优化；这个设置的取舍由局部对照和完整验收决定，文档本身不替代本项目的测量。
+
+Lynch与Park的[《Modern Robotics》摩擦接触说明](https://modernrobotics.northwestern.edu/nu-gm-book-resource/12-2-1-friction/)给出接触摩擦力与法向力的关系，并说明力矩取决于接触位置与力的方向。由此能支持“同时看抓紧程度、接触布局和传力方向”的检查方法，不能据此声称三指甲一定最优，或当前两指甲加一指腹是所有抓法的全局最优。这是有针对性的原理核对，不是完整学术文献综述。
 
 ## 记录提速已做真实数据等价核对
 
@@ -50,7 +56,7 @@ Python频繁扫描大量接触记录对象，消耗了相当一部分时间。�
 
 ```bash
 python3 scripts/run_current_hand_assembly.py --check
-python3 scripts/run_current_hand_assembly.py --run --output-root artifacts/full_validation/contact_last_gc128_repeat01
+python3 scripts/run_current_hand_assembly.py --run
 ```
 
 本机环境变量与从GitHub准备资产的方法见[复现说明](REPRODUCE_CURRENT_HAND_ASSEMBLY_CN.md)。需要窗口时增加 `--gui`。每个完整回合先运行新预检；计算时间上限预先设为6小时，其中预留20分钟收尾。这是电脑计算预算，不是物理动作时间或新增力/速度额度，运行中不会自动延长。

@@ -1,0 +1,11 @@
+{
+  "scope": "ROBOT_CONTROL_ONLY_PENDING_ENDED_OBJECT_POSE_REVIEW",
+  "third_wrist_command_deg": 40.01169320093858,
+  "normal_stop_reason": "ELASTIC_RESERVE_EARLY_REGRASP",
+  "maximum_virtual_center_xy_mm": 0.6185020942800239,
+  "control_step_at_maximum": 246007,
+  "preceding_observation_step_for_later_review": 246006,
+  "first_control_step": 244483,
+  "raw_truth_read": false,
+  "review_after_full_motion_ends_only": true
+}

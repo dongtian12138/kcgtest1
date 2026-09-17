@@ -1,5 +1,5 @@
 {
-  "status": "PREPARED_WAITING_FOR_NOMINAL_VALIDATION",
+  "status": "READY_AFTER_TWO_VERIFIED_NOMINAL_EPISODES",
   "required_order": "Only after two same-scene complete episodes have been reviewed",
   "perturbation": {
     "object_translation_delta_m": [
@@ -16,5 +16,11 @@
   "friction_matches_nominal_candidate": true,
   "fresh_same_perturbation_preflight_required": true,
   "current_assembly_config": "reproducibility/improvements_20260916/config/visual_contact_last_gc128_task.yaml",
-  "entry_command": "python3 scripts/run_current_hand_assembly.py --run --pose-variation"
+  "entry_command": "python3 scripts/run_current_hand_assembly.py --run --pose-variation",
+  "verified_nominal_episodes": [
+    "contact_last_gc128_repeat01_restart01",
+    "contact_last_gc128_repeat02"
+  ],
+  "nominal_reviews": "Both whole reviews VERIFIED plus independent complete3s hand-zero, original-stop and same128-sleeve checks",
+  "physical_variation_executed": false
 }

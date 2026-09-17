@@ -1,0 +1,249 @@
+{
+  "scope": "POSTRUN_ACTUAL_SAME_EPISODE_RED_BAND_VISIBILITY_REVIEW",
+  "online_control_used": false,
+  "accepted": true,
+  "physical_assembly_success_claimed_by_visibility_alone": false,
+  "reviewed_actual_frames": [
+    {
+      "label": "rotation_end_before_release",
+      "image": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run/postrun_evidence/rotation_end_before_release.png",
+      "frame": 1518,
+      "step": 291456,
+      "phase": "key_probe_nut_rotation_turn",
+      "simulation_time_s": 303.6010416666667,
+      "world_time_before_render_s": 303.60314083413687,
+      "world_time_after_render_s": 303.60314083413687,
+      "world_step_before_render": 291459,
+      "world_step_after_render": 291459,
+      "render_error": null,
+      "render_clock_audit": {
+        "before": {
+          "timeline_s": 0.8333333333333343,
+          "physics_s": 303.60314083413687,
+          "physics_step": 291459,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        },
+        "after_app_flush": {
+          "timeline_s": 0.8333333333333343,
+          "physics_s": 303.60314083413687,
+          "physics_step": 291459,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": false
+        },
+        "after_capture": {
+          "timeline_s": 0.8333333333333343,
+          "physics_s": 303.60314083413687,
+          "physics_step": 291459,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": true
+        },
+        "after_restore": {
+          "timeline_s": 0.8333333333333343,
+          "physics_s": 303.60314083413687,
+          "physics_step": 291459,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        }
+      },
+      "render_native_state_max_abs_deltas": {
+        "robot_joint_position_rad": 0.0,
+        "robot_joint_velocity_rad_s": 0.0,
+        "robot_projected_joint_force_nm": 0.0,
+        "object_position_m": 0.0,
+        "object_quaternion_wxyz": 0.0,
+        "object_linear_velocity_m_s": 0.0,
+        "object_angular_velocity_rad_s": 0.0,
+        "raw_wrist_wrench_n_nm": 0.0
+      },
+      "native_state_deltas_are_record_only_not_controller_inputs": true
+    },
+    {
+      "label": "released_hold",
+      "image": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run/postrun_evidence/released_hold.png",
+      "frame": 1524,
+      "step": 292608,
+      "phase": "nut_index_free_open_hold",
+      "simulation_time_s": 304.80104166666666,
+      "world_time_before_render_s": 304.80314089672174,
+      "world_time_after_render_s": 304.80314089672174,
+      "world_step_before_render": 292611,
+      "world_step_after_render": 292611,
+      "render_error": null,
+      "render_clock_audit": {
+        "before": {
+          "timeline_s": 0.850000000000001,
+          "physics_s": 304.80314089672174,
+          "physics_step": 292611,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        },
+        "after_app_flush": {
+          "timeline_s": 0.850000000000001,
+          "physics_s": 304.80314089672174,
+          "physics_step": 292611,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": false
+        },
+        "after_capture": {
+          "timeline_s": 0.850000000000001,
+          "physics_s": 304.80314089672174,
+          "physics_step": 292611,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": true
+        },
+        "after_restore": {
+          "timeline_s": 0.850000000000001,
+          "physics_s": 304.80314089672174,
+          "physics_step": 292611,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        }
+      },
+      "render_native_state_max_abs_deltas": {
+        "robot_joint_position_rad": 0.0,
+        "robot_joint_velocity_rad_s": 0.0,
+        "robot_projected_joint_force_nm": 0.0,
+        "object_position_m": 0.0,
+        "object_quaternion_wxyz": 0.0,
+        "object_linear_velocity_m_s": 0.0,
+        "object_angular_velocity_rad_s": 0.0,
+        "raw_wrist_wrench_n_nm": 0.0
+      },
+      "native_state_deltas_are_record_only_not_controller_inputs": true
+    },
+    {
+      "label": "final_released",
+      "image": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run/postrun_evidence/final_released.png",
+      "frame": 1538,
+      "step": 295296,
+      "phase": "nut_index_free_open_hold",
+      "simulation_time_s": 307.6010416666667,
+      "world_time_before_render_s": 307.6031410427531,
+      "world_time_after_render_s": 307.6031410427531,
+      "world_step_before_render": 295299,
+      "world_step_after_render": 295299,
+      "render_error": null,
+      "render_clock_audit": {
+        "before": {
+          "timeline_s": 0.850000000000001,
+          "physics_s": 307.6031410427531,
+          "physics_step": 295299,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        },
+        "after_app_flush": {
+          "timeline_s": 0.850000000000001,
+          "physics_s": 307.6031410427531,
+          "physics_step": 295299,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": false
+        },
+        "after_capture": {
+          "timeline_s": 0.850000000000001,
+          "physics_s": 307.6031410427531,
+          "physics_step": 295299,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": true
+        },
+        "after_restore": {
+          "timeline_s": 0.850000000000001,
+          "physics_s": 307.6031410427531,
+          "physics_step": 295299,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        }
+      },
+      "render_native_state_max_abs_deltas": {
+        "robot_joint_position_rad": 0.0,
+        "robot_joint_velocity_rad_s": 0.0,
+        "robot_projected_joint_force_nm": 0.0,
+        "object_position_m": 0.0,
+        "object_quaternion_wxyz": 0.0,
+        "object_linear_velocity_m_s": 0.0,
+        "object_angular_velocity_rad_s": 0.0,
+        "raw_wrist_wrench_n_nm": 0.0
+      },
+      "native_state_deltas_are_record_only_not_controller_inputs": true
+    }
+  ],
+  "observation": "Inspected actual rotation-end, released-hold and final video frames: no exposed source red mating band is visible in the available views. The original radial mesh check covers1024/1024source samples. This does not substitute for depth, loaded stop, hand-detachment or key-gap checks.",
+  "source_band_radial_review": {
+    "scope": "POSTRUN_ORIGINAL_RED_BAND_RADIAL_SIDE_VIEW_OCCLUSION_SAMPLES",
+    "step": 295420,
+    "phase": "nut_index_free_open_hold",
+    "source_model": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc",
+    "source_band_path": "/World/TEVisualHandoff/FixedReceptaclePose/OfficialVisual/MatingIndicatorRedBand",
+    "source_occluding_visual_mesh_path": "/World/TE_J35FreeSplitPlug/CouplingNut/RepresentativeThreadVisual",
+    "source_band_radius_m": 0.020604400134042695,
+    "source_band_socket_z_range_m": [
+      -0.01295000035315752,
+      -0.012450000271201134
+    ],
+    "source_band_has_physics": false,
+    "original_mesh_geometry_changed": false,
+    "online_control_used": false,
+    "physics_executed": false,
+    "point_selection": "EVERY_SOURCE_VERTEX_AND_EVERY_SOURCE_TRIANGLE_CENTROID",
+    "ray_direction": "OUTWARD_RADIAL_IN_FIXED_PHYSICAL_SOCKET_FRAME",
+    "sample_count": 1024,
+    "covered_by_nut_sample_count": 1024,
+    "all_sampled_radial_views_blocked_by_nut": true,
+    "uncovered_sample_indices": [],
+    "positive_hit_distance_range_m": [
+      0.00042124305453267576,
+      0.0004853678602436968
+    ],
+    "source_nut_triangle_count": 652768,
+    "broad_phase_triangle_count": 280,
+    "ray_distance_bound_m": 0.05280782603332565,
+    "physical_socket_world_from_frame": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.55
+      ],
+      [
+        0.0,
+        1.0,
+        0.0,
+        0.185
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.27162299796938894
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "nut_origin_world_m": [
+      0.5500146746635437,
+      0.1850186288356781,
+      0.25650864839553833
+    ],
+    "sampled_radial_visibility_is_not_all_camera_views_proof": true,
+    "actual_episode_image_review_still_required": true,
+    "full_assembly_success_claimed": false
+  },
+  "image_or_model_geometry_edited": false,
+  "synthetic_images_used": false
+}

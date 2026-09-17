@@ -1,0 +1,21 @@
+{
+  "scope": "PROCESS_LOCAL_RECORDING_GC_NOT_A_PHYSICS_OR_CONTROL_CHANGE",
+  "only_nut_phases": true,
+  "full_collection_interval_physical_steps": 128,
+  "collection_attempts_by_generation": [
+    109713,
+    0,
+    864
+  ],
+  "collected_objects_by_generation": [
+    18134,
+    0,
+    386
+  ],
+  "maximum_pause_s": 3.5329047269988223,
+  "episode_end_collection_s": 2.640601388997311,
+  "externally_disabled_calls": 0,
+  "cleanup_errors": [],
+  "episode_end_collection_completed": true,
+  "timing_excludes_process_exit_and_still_referenced_object_destruction": true
+}

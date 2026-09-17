@@ -1,0 +1,51 @@
+{
+  "scope": "ROBOT_SIGNALS_ONLY_NOT_OBJECT_TRUTH",
+  "stages": [
+    {
+      "stage": "nut_rotation",
+      "completed": true,
+      "normal_stop_reason": null,
+      "failure_reason": null,
+      "outer_abort_reason": null,
+      "first_step": 211314,
+      "last_step": 214554,
+      "last_issued_wrist_command_deg": 89.99999997355123,
+      "maximum_virtual_center_xy_mm": 0.0800703690981588
+    },
+    {
+      "stage": "nut_rotation_after_index",
+      "completed": true,
+      "normal_stop_reason": null,
+      "failure_reason": null,
+      "outer_abort_reason": null,
+      "first_step": 227895,
+      "last_step": 231135,
+      "last_issued_wrist_command_deg": 89.99999997355123,
+      "maximum_virtual_center_xy_mm": 0.21938076270666426
+    },
+    {
+      "stage": "nut_rotation_continued_01",
+      "completed": true,
+      "normal_stop_reason": "ELASTIC_RESERVE_EARLY_REGRASP",
+      "failure_reason": null,
+      "outer_abort_reason": null,
+      "first_step": 244483,
+      "last_step": 246008,
+      "last_issued_wrist_command_deg": 40.01169320093858,
+      "maximum_virtual_center_xy_mm": 0.6185020942800239
+    },
+    {
+      "stage": "nut_rotation_continued_02",
+      "completed": true,
+      "normal_stop_reason": "WRIST_BENDING_RESERVE_EARLY_REGRASP",
+      "failure_reason": null,
+      "outer_abort_reason": null,
+      "first_step": 259322,
+      "last_step": 260260,
+      "last_issued_wrist_command_deg": 13.417703591417334,
+      "maximum_virtual_center_xy_mm": 0.16538728602564726
+    }
+  ],
+  "total_issued_wrist_command_deg": 233.42939673945838,
+  "raw_truth_read": false
+}

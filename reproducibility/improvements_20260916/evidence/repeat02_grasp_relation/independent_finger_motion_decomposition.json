@@ -1,0 +1,1083 @@
+{
+  "scope": "SEALED_REPEAT02_SIX_POSE_FRAME_FINGER_CENTER_HYPOTHESIS_DECOMPOSITION",
+  "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run",
+  "sealed_sample_count": 295421,
+  "sealed_archive_bytes": 26530655597,
+  "unique_truth_steps_read": [
+    244482,
+    246006,
+    259321,
+    260258,
+    289666,
+    291560
+  ],
+  "world_xy_is_physical_socket_lateral_plane": true,
+  "formula": {
+    "P_hand": "H(t) H(0)^-1 [N(0),1]",
+    "P_finger_i": "Fi(t) Fi(0)^-1 [N(0),1]",
+    "finger_relative_motion_term": "P_finger_i - P_hand",
+    "remaining_finger_center_relation_term": "N(t) - P_finger_i",
+    "closure": "N(t)-P_hand = (P_finger_i-P_hand) + (N(t)-P_finger_i)"
+  },
+  "results": [
+    {
+      "stage": "nut_rotation_continued_01",
+      "start_control_step": 244483,
+      "start_physical_observation_step": 244482,
+      "maximum_control_step": 246007,
+      "maximum_physical_observation_step": 246006,
+      "maximum_command_deg": 40.01169320093858,
+      "start_phase": "key_probe_nut_grip_hold",
+      "maximum_phase": "key_probe_nut_rotation_turn",
+      "reported_virtual_xy_error_mm": 0.6185020942800239,
+      "actual_nut_lateral_to_socket_mm": 0.01730661189941942,
+      "N0_world_m": [
+        0.5500349402427673,
+        0.18490861356258392,
+        0.2602260708808899
+      ],
+      "N_world_m": [
+        0.5500172972679138,
+        0.18500056862831116,
+        0.25941139459609985
+      ],
+      "P_hand_world_m": [
+        0.5495849086021571,
+        0.18540447170263105,
+        0.2593892763529798
+      ],
+      "base_relative_center_change_world_mm": [
+        0.4323886657566778,
+        -0.4039030743198946,
+        0.022118243120039516
+      ],
+      "base_relative_center_change_xy_norm_mm": 0.5916905033206991,
+      "initial_native_hand_world_transform": [
+        [
+          -0.9981667543081866,
+          0.06052342606193276,
+          0.00021328756692423417,
+          0.5547595620155334
+        ],
+        [
+          0.060523399256548004,
+          0.9981667702590716,
+          -0.00012997309928559976,
+          0.1833803802728653
+        ],
+        [
+          -0.00022076297907783063,
+          -0.00011682593809186965,
+          -0.9999999688077034,
+          0.7013614177703857
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "maximum_native_hand_world_transform": [
+        [
+          -0.7261281794628269,
+          0.6875580849685585,
+          -0.0013216597025866572,
+          0.5528425574302673
+        ],
+        [
+          0.6875585803109621,
+          0.7261289055613478,
+          0.00010558907906689193,
+          0.18104739487171173
+        ],
+        [
+          0.0010322939383606118,
+          -0.0008320472630106917,
+          -0.9999991210329022,
+          0.7005190253257751
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "finger_output_angle_change_deg": {
+        "f1j2": -0.1611890493177159,
+        "f2j1": 0.21932761953286445,
+        "f3j2": -0.016317321927160462
+      },
+      "fingers": [
+        {
+          "terminal_link": "f1Link3",
+          "P_finger_world_m": [
+            0.5497467502140645,
+            0.1847974891382872,
+            0.25899883774878857
+          ],
+          "finger_relative_motion_term_world_mm": [
+            0.16184161190735402,
+            -0.6069825643438553,
+            -0.39043860419124554
+          ],
+          "remaining_finger_to_nut_center_term_world_mm": [
+            0.27054705384932376,
+            0.20307949002396075,
+            0.41255684731128506
+          ],
+          "finger_relative_motion_xy_norm_mm": 0.6281883004022067,
+          "remaining_finger_to_nut_center_xy_norm_mm": 0.3382853641748943,
+          "finger_relative_motion_xyz_norm_mm": 0.7396369679816046,
+          "remaining_finger_to_nut_center_xyz_norm_mm": 0.5335167662579761,
+          "signed_projection_on_total_xy_direction_mm": {
+            "finger_motion": 0.5326105466708487,
+            "remaining_relation": 0.05907995664985037
+          },
+          "relative_terminal_origin_change_in_hand_frame_mm": [
+            -0.1817010069495098,
+            -0.08904410046491062,
+            -0.012317124491789677
+          ],
+          "relative_terminal_rotation_change_deg": 0.3247761207077233,
+          "vector_closure_max_abs_m": 0.0,
+          "hand_frame_factorization_max_abs_m": 8.901299836105991e-17,
+          "initial_native_finger_world_transform": [
+            [
+              -0.09327430220837327,
+              0.8286938894953116,
+              0.5518752957513806,
+              0.6042500734329224
+            ],
+            [
+              0.06171156877279438,
+              -0.5484140994793831,
+              0.8339266501148759,
+              0.13743528723716736
+            ],
+            [
+              0.9937261125819037,
+              0.1118410166501988,
+              1.2942496988466168e-05,
+              0.3362090289592743
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "maximum_native_finger_world_transform": [
+            [
+              -0.03210105152676901,
+              0.28324088331485886,
+              0.9585114107353624,
+              0.5608186721801758
+            ],
+            [
+              0.11223890365916277,
+              -0.9519181023003904,
+              0.28505149537971747,
+              0.11397968977689743
+            ],
+            [
+              0.9931626004820485,
+              0.11673272262670138,
+              -0.001233074163503598,
+              0.33534449338912964
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "terminal_link": "f2Link2",
+          "P_finger_world_m": [
+            0.5504147494665255,
+            0.18520637720346889,
+            0.259777377682997
+          ],
+          "finger_relative_motion_term_world_mm": [
+            0.8298408643683253,
+            -0.19809449916216582,
+            0.3881013300172098
+          ],
+          "remaining_finger_to_nut_center_term_world_mm": [
+            -0.3974521986116475,
+            -0.20580857515772877,
+            -0.3659830868971703
+          ],
+          "finger_relative_motion_xy_norm_mm": 0.8531572485619978,
+          "remaining_finger_to_nut_center_xy_norm_mm": 0.447577278008711,
+          "finger_relative_motion_xyz_norm_mm": 0.9372832726209327,
+          "remaining_finger_to_nut_center_xyz_norm_mm": 0.5781600467729231,
+          "signed_projection_on_total_xy_direction_mm": {
+            "finger_motion": 0.7416457740816601,
+            "remaining_relation": -0.14995527076096085
+          },
+          "relative_terminal_origin_change_in_hand_frame_mm": [
+            -0.22700689471005786,
+            0.13113802629255433,
+            0.05534431260939554
+          ],
+          "relative_terminal_rotation_change_deg": 0.4385255929589406,
+          "vector_closure_max_abs_m": 0.0,
+          "hand_frame_factorization_max_abs_m": 9.806608650131388e-17,
+          "initial_native_finger_world_transform": [
+            [
+              0.5069559471824558,
+              -0.7372161674194196,
+              0.4466631729970154,
+              0.5052700042724609
+            ],
+            [
+              0.25328653375257637,
+              -0.36790483595794227,
+              -0.8947021646885431,
+              0.14517515897750854
+            ],
+            [
+              0.8239184422234669,
+              0.5667083501892152,
+              0.00021538308595919764,
+              0.33759382367134094
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "maximum_native_finger_world_transform": [
+            [
+              0.54624633767126,
+              -0.8047436714464189,
+              -0.23238451292561196,
+              0.4901171922683716
+            ],
+            [
+              -0.13033516514936955,
+              0.19239373645365382,
+              -0.9726239740510658,
+              0.18361975252628326
+            ],
+            [
+              0.8274223125503821,
+              0.5615801576269768,
+              0.000207974607819017,
+              0.3367845416069031
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "terminal_link": "f3Link3",
+          "P_finger_world_m": [
+            0.5496192379782285,
+            0.18546235021163326,
+            0.2593527826615502
+          ],
+          "finger_relative_motion_term_world_mm": [
+            0.034329376071395856,
+            0.0578785090022127,
+            -0.03649369142960657
+          ],
+          "remaining_finger_to_nut_center_term_world_mm": [
+            0.3980592896852819,
+            -0.4617815833221073,
+            0.05861193454964608
+          ],
+          "finger_relative_motion_xy_norm_mm": 0.06729359453744867,
+          "remaining_finger_to_nut_center_xy_norm_mm": 0.6096666538365236,
+          "finger_relative_motion_xyz_norm_mm": 0.07655205666688442,
+          "remaining_finger_to_nut_center_xyz_norm_mm": 0.6124775813626778,
+          "signed_projection_on_total_xy_direction_mm": {
+            "finger_motion": -0.014422530967427126,
+            "remaining_relation": 0.6061130342881262
+          },
+          "relative_terminal_origin_change_in_hand_frame_mm": [
+            -0.014690735723427856,
+            0.014535500960116687,
+            -0.00182195523934503
+          ],
+          "relative_terminal_rotation_change_deg": 0.04112476788667259,
+          "vector_closure_max_abs_m": 0.0,
+          "hand_frame_factorization_max_abs_m": 1.0957895832039433e-16,
+          "initial_native_finger_world_transform": [
+            [
+              -0.010528315594612647,
+              0.059154704117282846,
+              -0.9981933057036282,
+              0.5719320774078369
+            ],
+            [
+              -0.17122784823578355,
+              0.983397656078115,
+              0.06008389142368214,
+              0.2510736286640167
+            ],
+            [
+              0.9851752019611962,
+              0.1715510740300569,
+              -0.0002245881791659854,
+              0.3363485336303711
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "maximum_native_finger_world_transform": [
+            [
+              -0.11711611029464047,
+              0.677509797329731,
+              -0.7261296655774923,
+              0.6089955568313599
+            ],
+            [
+              -0.12516021539770333,
+              0.7152623781355587,
+              0.6875570164760634,
+              0.22202284634113312
+            ],
+            [
+              0.9851998463210672,
+              0.17140654872580574,
+              0.0010285246005125592,
+              0.3354429006576538
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "nut_rotation_continued_02",
+      "start_control_step": 259322,
+      "start_physical_observation_step": 259321,
+      "maximum_control_step": 260259,
+      "maximum_physical_observation_step": 260258,
+      "maximum_command_deg": 13.417703591417334,
+      "start_phase": "key_probe_nut_grip_hold",
+      "maximum_phase": "key_probe_nut_rotation_turn",
+      "reported_virtual_xy_error_mm": 0.16538728602564726,
+      "actual_nut_lateral_to_socket_mm": 0.10450711350903764,
+      "N0_world_m": [
+        0.5500211119651794,
+        0.18500100076198578,
+        0.25941452383995056
+      ],
+      "N_world_m": [
+        0.5500448346138,
+        0.18509440124034882,
+        0.25911277532577515
+      ],
+      "P_hand_world_m": [
+        0.5500289072326188,
+        0.18516438152024683,
+        0.25921106415704664
+      ],
+      "base_relative_center_change_world_mm": [
+        0.015927381181279898,
+        -0.0699802798980187,
+        -0.09828883127149801
+      ],
+      "base_relative_center_change_xy_norm_mm": 0.0717699174159956,
+      "initial_native_hand_world_transform": [
+        [
+          -0.6675404165742543,
+          -0.7445735534147576,
+          0.00012567892539007053,
+          0.5540363788604736
+        ],
+        [
+          -0.7445735449015934,
+          0.6675404281754252,
+          0.00011394755351779644,
+          0.18788614869117737
+        ],
+        [
+          -0.00016873809849317895,
+          -1.7512605654220723e-05,
+          -0.9999999856103815,
+          0.7004303336143494
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "maximum_native_hand_world_transform": [
+        [
+          -0.8217302608482768,
+          -0.5698766343644944,
+          -3.4087191645207666e-06,
+          0.5546699166297913
+        ],
+        [
+          -0.5698766213669378,
+          0.8217302407991112,
+          0.00021857639078585932,
+          0.18698164820671082
+        ],
+        [
+          -0.0001217605303127058,
+          0.00018155338397640489,
+          -0.9999999761063709,
+          0.7002264261245728
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "finger_output_angle_change_deg": {
+        "f1j2": 0.005279736228419856,
+        "f2j1": 0.006886538230665356,
+        "f3j2": 0.0305855871033171
+      },
+      "fingers": [
+        {
+          "terminal_link": "f1Link3",
+          "P_finger_world_m": [
+            0.550053315395352,
+            0.18486119065982434,
+            0.25922411597412326
+          ],
+          "finger_relative_motion_term_world_mm": [
+            0.024408162733191574,
+            -0.303190860422492,
+            0.013051817076614736
+          ],
+          "remaining_finger_to_nut_center_term_world_mm": [
+            -0.008480781551911676,
+            0.2332105805244733,
+            -0.11134064834811275
+          ],
+          "finger_relative_motion_xy_norm_mm": 0.30417175452651907,
+          "remaining_finger_to_nut_center_xy_norm_mm": 0.23336473282030662,
+          "finger_relative_motion_xyz_norm_mm": 0.30445164834623967,
+          "remaining_finger_to_nut_center_xyz_norm_mm": 0.2585649599208508,
+          "signed_projection_on_total_xy_direction_mm": {
+            "finger_motion": 0.3010472934145795,
+            "remaining_relation": -0.2292773759985838
+          },
+          "relative_terminal_origin_change_in_hand_frame_mm": [
+            -0.19217908257396915,
+            0.16505354510659015,
+            0.00046336746195585476
+          ],
+          "relative_terminal_rotation_change_deg": 0.43593991740935206,
+          "vector_closure_max_abs_m": 0.0,
+          "hand_frame_factorization_max_abs_m": 1.4522888100443332e-16,
+          "initial_native_finger_world_transform": [
+            [
+              -0.10749772792641804,
+              0.9443378581300758,
+              -0.31091839474845945,
+              0.6207923889160156
+            ],
+            [
+              -0.03524222315027892,
+              0.30891461477493987,
+              0.950436608346857,
+              0.1981595754623413
+            ],
+            [
+              0.9935805071548474,
+              0.11312723138462971,
+              7.294631390580841e-05,
+              0.33527401089668274
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "maximum_native_finger_world_transform": [
+            [
+              -0.1123217992578274,
+              0.9895783312800736,
+              -0.09010293931070851,
+              0.6219995617866516
+            ],
+            [
+              -0.010383040152574075,
+              0.08950296810294842,
+              0.9959324330384831,
+              0.18182241916656494
+            ],
+            [
+              0.9936176356570341,
+              0.11280046525483622,
+              0.0002216971315591454,
+              0.33505871891975403
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "terminal_link": "f2Link2",
+          "P_finger_world_m": [
+            0.5500414327345859,
+            0.18519095622743995,
+            0.2592250763669863
+          ],
+          "finger_relative_motion_term_world_mm": [
+            0.0125255019671755,
+            0.026574707193111058,
+            0.014012209939628928
+          ],
+          "remaining_finger_to_nut_center_term_world_mm": [
+            0.0034018792141043974,
+            -0.09655498709112975,
+            -0.11230104121112694
+          ],
+          "finger_relative_motion_xy_norm_mm": 0.029378619129041886,
+          "remaining_finger_to_nut_center_xy_norm_mm": 0.09661489695877955,
+          "finger_relative_motion_xyz_norm_mm": 0.03254912117587112,
+          "remaining_finger_to_nut_center_xyz_norm_mm": 0.14814169626225704,
+          "signed_projection_on_total_xy_direction_mm": {
+            "finger_motion": -0.02313235214749894,
+            "remaining_relation": 0.09490226956349453
+          },
+          "relative_terminal_origin_change_in_hand_frame_mm": [
+            -0.007169144100961644,
+            0.004132292194411469,
+            0.0017843030062358878
+          ],
+          "relative_terminal_rotation_change_deg": 0.015652219214051466,
+          "vector_closure_max_abs_m": 0.0,
+          "hand_frame_factorization_max_abs_m": 9.382075736967532e-17,
+          "initial_native_finger_world_transform": [
+            [
+              0.11705921152574203,
+              -0.1692972243172709,
+              0.9785885707668159,
+              0.5531684756278992
+            ],
+            [
+              0.5569637436235408,
+              -0.804628479351114,
+              -0.20582613659582863,
+              0.12528152763843536
+            ],
+            [
+              0.8222460272241042,
+              0.5691321991027934,
+              0.00010324047682339077,
+              0.3366827666759491
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "maximum_native_finger_world_transform": [
+            [
+              0.24280486505149493,
+              -0.35089047597601536,
+              0.9043902207435965,
+              0.5392856597900391
+            ],
+            [
+              0.5144380886355927,
+              -0.7438246654645734,
+              -0.42670636274547646,
+              0.12633463740348816
+            ],
+            [
+              0.8224349521197916,
+              0.568859157363087,
+              -9.282173856442477e-05,
+              0.3364711105823517
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "terminal_link": "f3Link3",
+          "P_finger_world_m": [
+            0.5498555673630097,
+            0.18495717321579708,
+            0.2592787752668878
+          ],
+          "finger_relative_motion_term_world_mm": [
+            -0.17333986960910153,
+            -0.20720830444975746,
+            0.06771110984116202
+          ],
+          "remaining_finger_to_nut_center_term_world_mm": [
+            0.18926725079038142,
+            0.13722802455173877,
+            -0.16599994111266003
+          ],
+          "finger_relative_motion_xy_norm_mm": 0.27015179405112916,
+          "remaining_finger_to_nut_center_xy_norm_mm": 0.23378114326036167,
+          "finger_relative_motion_xyz_norm_mm": 0.27850814391138656,
+          "remaining_finger_to_nut_center_xyz_norm_mm": 0.2867221710881953,
+          "signed_projection_on_total_xy_direction_mm": {
+            "finger_motion": 0.1635733380793041,
+            "remaining_relation": -0.09180342066330853
+          },
+          "relative_terminal_origin_change_in_hand_frame_mm": [
+            -0.2534437772019511,
+            -0.1295472366864142,
+            0.0033636234158529454
+          ],
+          "relative_terminal_rotation_change_deg": 0.44042986846339705,
+          "vector_closure_max_abs_m": 0.0,
+          "hand_frame_factorization_max_abs_m": 1.5376697311275667e-16,
+          "initial_native_finger_world_transform": [
+            [
+              0.12587039453561183,
+              -0.7339428437328451,
+              -0.6674462869121335,
+              0.511694610118866
+            ],
+            [
+              -0.1130476874134112,
+              0.6578030070469087,
+              -0.7446579243454838,
+              0.2433547079563141
+            ],
+            [
+              0.9855845291754174,
+              0.16918364593952062,
+              -0.00017261715391458932,
+              0.33541566133499146
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "maximum_native_finger_world_transform": [
+            [
+              0.09479471840389081,
+              -0.5556799299109841,
+              -0.8259744408011971,
+              0.5265408754348755
+            ],
+            [
+              -0.1391158544140212,
+              0.8141747793856464,
+              -0.5637075550877336,
+              0.2508311867713928
+            ],
+            [
+              0.9857285328189416,
+              0.16834263900288945,
+              -0.00012441928687773052,
+              0.33522143959999084
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "nut_rotation_continued_04",
+      "start_control_step": 289667,
+      "start_physical_observation_step": 289666,
+      "maximum_control_step": 291561,
+      "maximum_physical_observation_step": 291560,
+      "maximum_command_deg": 37.649936451413716,
+      "start_phase": "key_probe_nut_grip_hold",
+      "maximum_phase": "key_probe_nut_rotation_turn",
+      "reported_virtual_xy_error_mm": 0.8608377156647579,
+      "actual_nut_lateral_to_socket_mm": 0.0447672224270309,
+      "N0_world_m": [
+        0.5500822067260742,
+        0.18505343794822693,
+        0.25719547271728516
+      ],
+      "N_world_m": [
+        0.5500360727310181,
+        0.18502651154994965,
+        0.25650888681411743
+      ],
+      "P_hand_world_m": [
+        0.5504658579864766,
+        0.18422385400431415,
+        0.25675505754329386
+      ],
+      "base_relative_center_change_world_mm": [
+        -0.42978525545855906,
+        0.8026575456354934,
+        -0.24617072917643146
+      ],
+      "base_relative_center_change_xy_norm_mm": 0.9104803684732434,
+      "initial_native_hand_world_transform": [
+        [
+          0.595337134747766,
+          -0.8034759846379013,
+          0.00019519343053337655,
+          0.5479967594146729
+        ],
+        [
+          -0.8034760058343365,
+          -0.5953371345329718,
+          6.553297852587224e-05,
+          0.1896347552537918
+        ],
+        [
+          6.355172316607146e-05,
+          -0.0001958474535971391,
+          -0.9999999788024764,
+          0.6982588171958923
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "maximum_native_hand_world_transform": [
+        [
+          -0.0202038356672813,
+          -0.9997956183473,
+          0.0007256430733132189,
+          0.5513826608657837
+        ],
+        [
+          -0.9997957694158632,
+          0.020203484130187955,
+          -0.0004885561828842747,
+          0.18930983543395996
+        ],
+        [
+          0.00047379581264831545,
+          -0.0007353655836377092,
+          -0.9999996173774202,
+          0.6978168487548828
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "finger_output_angle_change_deg": {
+        "f1j2": -0.05671106067861587,
+        "f2j1": 0.47752072299039394,
+        "f3j2": -0.1507422749821814
+      },
+      "fingers": [
+        {
+          "terminal_link": "f1Link3",
+          "P_finger_world_m": [
+            0.5507199864065264,
+            0.18433913967129448,
+            0.2566177924376282
+          ],
+          "finger_relative_motion_term_world_mm": [
+            0.25412842004979286,
+            0.11528566698032483,
+            -0.13726510566564043
+          ],
+          "remaining_finger_to_nut_center_term_world_mm": [
+            -0.6839136755083519,
+            0.6873718786551686,
+            -0.10890562351079103
+          ],
+          "finger_relative_motion_xy_norm_mm": 0.27905561970349624,
+          "remaining_finger_to_nut_center_xy_norm_mm": 0.9696483976747855,
+          "finger_relative_motion_xyz_norm_mm": 0.31098834081280563,
+          "remaining_finger_to_nut_center_xyz_norm_mm": 0.9757450742614862,
+          "signed_projection_on_total_xy_direction_mm": {
+            "finger_motion": -0.018326301151316043,
+            "remaining_relation": 0.9288066696245594
+          },
+          "relative_terminal_origin_change_in_hand_frame_mm": [
+            -0.16320480600326426,
+            0.04976333456690324,
+            -0.004344109958920317
+          ],
+          "relative_terminal_rotation_change_deg": 0.25408102904554214,
+          "vector_closure_max_abs_m": 0.0,
+          "hand_frame_factorization_max_abs_m": 1.5655879370690684e-16,
+          "initial_native_finger_world_transform": [
+            [
+              0.012599855392448844,
+              -0.11315202365572861,
+              -0.9934977922404774,
+              0.5514400601387024
+            ],
+            [
+              -0.11167540779450903,
+              0.9872013500636818,
+              -0.1138512087172287,
+              0.25704383850097656
+            ],
+            [
+              0.9936648564470917,
+              0.11238377985749232,
+              -0.0001977041304947469,
+              0.33309653401374817
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "maximum_native_finger_world_transform": [
+            [
+              -0.059475153147831805,
+              0.5105360414603763,
+              -0.8577969786190731,
+              0.595471978187561
+            ],
+            [
+              -0.09757670473180113,
+              0.8522295466733256,
+              0.513987924440507,
+              0.2405545860528946
+            ],
+            [
+              0.9934492905285728,
+              0.11427051302477981,
+              -0.0008700582329816409,
+              0.33266064524650574
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "terminal_link": "f2Link2",
+          "P_finger_world_m": [
+            0.5495717632214098,
+            0.18584682725837737,
+            0.25760827714561463
+          ],
+          "finger_relative_motion_term_world_mm": [
+            -0.8940947650668551,
+            1.6229732540632147,
+            0.853219602320765
+          ],
+          "remaining_finger_to_nut_center_term_world_mm": [
+            0.4643095096082961,
+            -0.8203157084277213,
+            -1.0993903314971964
+          ],
+          "finger_relative_motion_xy_norm_mm": 1.852956457212229,
+          "remaining_finger_to_nut_center_xy_norm_mm": 0.9426034066382163,
+          "finger_relative_motion_xyz_norm_mm": 2.039958656960699,
+          "remaining_finger_to_nut_center_xyz_norm_mm": 1.4481575477811406,
+          "signed_projection_on_total_xy_direction_mm": {
+            "finger_motion": 1.8528246562588284,
+            "remaining_relation": -0.9423442877855851
+          },
+          "relative_terminal_origin_change_in_hand_frame_mm": [
+            -0.4945470771378774,
+            0.2854617132294762,
+            0.11968275850149368
+          ],
+          "relative_terminal_rotation_change_deg": 0.955517059664757,
+          "vector_closure_max_abs_m": 0.0,
+          "hand_frame_factorization_max_abs_m": 1.4040418133687282e-16,
+          "initial_native_finger_world_transform": [
+            [
+              -0.5214623967186615,
+              0.7546784760021275,
+              0.39816751081364654,
+              0.60921710729599
+            ],
+            [
+              0.22621850091380863,
+              -0.3276622903019649,
+              0.9173127129601877,
+              0.17619796097278595
+            ],
+            [
+              0.8227406387512034,
+              0.5684169432495629,
+              0.00014132970206946066,
+              0.3345209062099457
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "maximum_native_finger_world_transform": [
+            [
+              -0.26809040725796945,
+              0.40104060021727367,
+              0.8759531782656107,
+              0.5915272831916809
+            ],
+            [
+              0.48611271570373155,
+              -0.7286896192262657,
+              0.48239596439338395,
+              0.141591414809227
+            ],
+            [
+              0.8317583550331185,
+              0.5551377088698342,
+              0.00040376150395088285,
+              0.33400049805641174
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "terminal_link": "f3Link3",
+          "P_finger_world_m": [
+            0.5498574626114225,
+            0.18410314707859782,
+            0.25641929350018833
+          ],
+          "finger_relative_motion_term_world_mm": [
+            -0.6083953750540827,
+            -0.12070692571633512,
+            -0.3357640431055353
+          ],
+          "remaining_finger_to_nut_center_term_world_mm": [
+            0.17861011959552364,
+            0.9233644713518285,
+            0.08959331392910386
+          ],
+          "finger_relative_motion_xy_norm_mm": 0.6202540562568589,
+          "remaining_finger_to_nut_center_xy_norm_mm": 0.9404804738944711,
+          "finger_relative_motion_xyz_norm_mm": 0.7053031879593786,
+          "remaining_finger_to_nut_center_xyz_norm_mm": 0.9447383149198343,
+          "signed_projection_on_total_xy_direction_mm": {
+            "finger_motion": 0.1807760415820348,
+            "remaining_relation": 0.7297043268912086
+          },
+          "relative_terminal_origin_change_in_hand_frame_mm": [
+            -0.1333350504287359,
+            0.13535255260439805,
+            -0.016917693660578603
+          ],
+          "relative_terminal_rotation_change_deg": 0.37656981677790563,
+          "vector_closure_max_abs_m": 0.0,
+          "hand_frame_factorization_max_abs_m": 1.5113778284447932e-16,
+          "initial_native_finger_world_transform": [
+            [
+              0.1368065186597324,
+              -0.7917577402868547,
+              0.5953181142448615,
+              0.4852188229560852
+            ],
+            [
+              0.1014352194984654,
+              -0.5866127828078531,
+              -0.803490099062661,
+              0.15924400091171265
+            ],
+            [
+              0.985390720829815,
+              0.17030890682016614,
+              5.966755836597781e-05,
+              0.3332330584526062
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "maximum_native_finger_world_transform": [
+            [
+              0.17489414232050052,
+              -0.9842898584957038,
+              -0.02419738507533825,
+              0.4831863343715668
+            ],
+            [
+              -0.003773479697864013,
+              0.02390590307863133,
+              -0.9997070914267665,
+              0.20362995564937592
+            ],
+            [
+              0.9845800118999708,
+              0.17493422266812964,
+              0.00046680461748721536,
+              0.3327656388282776
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "physics_executed": false,
+  "production_or_source_reports_modified": false,
+  "limitations": [
+    "Each finger is a separate hypothetical rigid attachment of the initial Nut reference center, not a measured no-slip contact.",
+    "The finger-relative term includes all observed terminal-link motion relative to the base, including joint/palm motion and any constraint/pose residual; it is not a uniquely identified single-joint causal contribution.",
+    "The remaining center relation can change through relative rotation, rolling, patch migration, sliding or compliance; it is not pure tangential material slip.",
+    "Per-finger decompositions must not be summed or averaged as physical contributions. Only vectors within each identity add; norms and projections are not causal percentages.",
+    "Only stage start and recorded maximum-error observations are sampled; no history/contact-material correspondence or full-episode acceptance is inferred."
+  ]
+}

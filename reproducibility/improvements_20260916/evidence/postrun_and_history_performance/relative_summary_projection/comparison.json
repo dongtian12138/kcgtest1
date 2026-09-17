@@ -1,0 +1,38 @@
+{
+  "scope": "POSTRUN_READER_ONLY_ORIGINAL_SUMMARY_FORMULAS_UNMODIFIED",
+  "episode": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat01_restart01/run",
+  "source_commit_of_episode": "25a0d6f68771080fe60a7dde948cdaa4e8d5927f",
+  "summary_functions_ast_sha256": "b2af42656ddf4a2503bb0482e9af20e46820ad7556a604f3d8b6831968fca57b",
+  "full_summary_all_fields_exactly_equal": true,
+  "full_projected_timing": {
+    "wall_s": 449.24237260899827,
+    "process_cpu_s": 449.02783732899996,
+    "sample_count": 294560
+  },
+  "paired_dense_window_inclusive": [
+    293536,
+    294559
+  ],
+  "paired_summaries_exactly_equal": true,
+  "paired_original_timing": {
+    "wall_s": 19.763396906000708,
+    "process_cpu_s": 19.75104116700004,
+    "sample_count": 1024
+  },
+  "paired_projected_timing": {
+    "wall_s": 8.85043979299735,
+    "process_cpu_s": 8.849894006999989,
+    "sample_count": 1024
+  },
+  "scene_inputs_only": [
+    "relative_motion_model",
+    "part_prim_paths",
+    "joint_rotational_resistance"
+  ],
+  "measured_summary_values_used_as_inputs": false,
+  "production_source_modified": false,
+  "physics_executed": false,
+  "raw_archive_or_original_reports_modified": false,
+  "reference_full_summary_separate_timing_unavailable": true,
+  "timing_limits": "One sequential pair during another process execution; not a claimed whole-episode acceleration."
+}

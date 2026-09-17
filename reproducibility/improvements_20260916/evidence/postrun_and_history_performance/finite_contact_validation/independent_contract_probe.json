@@ -1,0 +1,196 @@
+{
+  "scope": "PURE_GUARD_AND_INSTALLED_CARB_FLOAT3_CONTRACT_NO_SIMULATION",
+  "native_float3_cases": [
+    {
+      "requested_first_component": "0.0",
+      "native_components": [
+        "0.0",
+        "1.0",
+        "2.0"
+      ],
+      "length": 3,
+      "slice_length": 3,
+      "element_types": [
+        "float",
+        "float",
+        "float"
+      ],
+      "both_guards": {
+        "accepted": true
+      },
+      "copied_tuple_retained_after_source_mutation": true
+    },
+    {
+      "requested_first_component": "-0.0",
+      "native_components": [
+        "-0.0",
+        "1.0",
+        "2.0"
+      ],
+      "length": 3,
+      "slice_length": 3,
+      "element_types": [
+        "float",
+        "float",
+        "float"
+      ],
+      "both_guards": {
+        "accepted": true
+      },
+      "copied_tuple_retained_after_source_mutation": true
+    },
+    {
+      "requested_first_component": "nan",
+      "native_components": [
+        "nan",
+        "1.0",
+        "2.0"
+      ],
+      "length": 3,
+      "slice_length": 3,
+      "element_types": [
+        "float",
+        "float",
+        "float"
+      ],
+      "both_guards": {
+        "accepted": false
+      },
+      "copied_tuple_retained_after_source_mutation": true
+    },
+    {
+      "requested_first_component": "inf",
+      "native_components": [
+        "inf",
+        "1.0",
+        "2.0"
+      ],
+      "length": 3,
+      "slice_length": 3,
+      "element_types": [
+        "float",
+        "float",
+        "float"
+      ],
+      "both_guards": {
+        "accepted": false
+      },
+      "copied_tuple_retained_after_source_mutation": true
+    },
+    {
+      "requested_first_component": "-inf",
+      "native_components": [
+        "-inf",
+        "1.0",
+        "2.0"
+      ],
+      "length": 3,
+      "slice_length": 3,
+      "element_types": [
+        "float",
+        "float",
+        "float"
+      ],
+      "both_guards": {
+        "accepted": false
+      },
+      "copied_tuple_retained_after_source_mutation": true
+    },
+    {
+      "requested_first_component": "3e+38",
+      "native_components": [
+        "3.0000000054977558e+38",
+        "1.0",
+        "2.0"
+      ],
+      "length": 3,
+      "slice_length": 3,
+      "element_types": [
+        "float",
+        "float",
+        "float"
+      ],
+      "both_guards": {
+        "accepted": true
+      },
+      "copied_tuple_retained_after_source_mutation": true
+    }
+  ],
+  "native_wrong_length_construction": [
+    {
+      "supplied_length": 2,
+      "exception": "IndexError"
+    },
+    {
+      "supplied_length": 4,
+      "constructed_length": 3,
+      "slice_length": 3
+    }
+  ],
+  "arbitrary_python_container_counterexamples": {
+    "valid_two_points": {
+      "original": {
+        "accepted": true
+      },
+      "streamed": {
+        "accepted": true
+      }
+    },
+    "empty_report": {
+      "original": {
+        "accepted": true
+      },
+      "streamed": {
+        "accepted": true
+      }
+    },
+    "ragged_second_position_len2": {
+      "original": {
+        "exception": "ValueError"
+      },
+      "streamed": {
+        "accepted": true
+      }
+    },
+    "uniform_position_len2": {
+      "original": {
+        "accepted": true
+      },
+      "streamed": {
+        "accepted": true
+      }
+    },
+    "numeric_string_component": {
+      "original": {
+        "accepted": true
+      },
+      "streamed": {
+        "exception": "TypeError"
+      }
+    },
+    "none_component": {
+      "original": {
+        "accepted": false
+      },
+      "streamed": {
+        "exception": "TypeError"
+      }
+    },
+    "nan_then_ragged": {
+      "original": {
+        "exception": "ValueError"
+      },
+      "streamed": {
+        "accepted": false
+      }
+    }
+  },
+  "native_contact_data_contract_source": "omni.physx110.1.13 _physx.pyi:442-496",
+  "float3_storage_contract_source": "/home/noob/WorkPlace/isaacsim/.conda-env/lib/python3.12/site-packages/isaacsim/kit/dev/include/carb/Types.h:369",
+  "simulation_app_created": false,
+  "physics_executed": false,
+  "raw_run_files_read": false,
+  "production_modified": false,
+  "prepared_files_modified": false,
+  "interpretation": "Guard equivalence holds for ten built-in-float scalars from the installed Native ContactData/unchanged decoder. It is not universal malformed-container equivalence."
+}

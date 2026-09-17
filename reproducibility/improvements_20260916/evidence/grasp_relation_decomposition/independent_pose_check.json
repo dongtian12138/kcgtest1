@@ -1,0 +1,312 @@
+{
+  "scope": "BOUNDED_POSE_AND_CONTROL_ALIGNMENT_RECHECK_NO_PHYSICS_NO_FULL_SCAN",
+  "results": [
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1/artifacts/full_rotation_20260914/visual_integration/visual_complete_all_reserves14",
+      "sealed_sample_count": 279682,
+      "unique_truth_frames_read": [
+        258721,
+        259828,
+        260040
+      ],
+      "socket_rotation_equals_world_axes": true,
+      "max_control_error_step": 260041,
+      "all_existing_scalar_and_vector_rows_match": true,
+      "rows": [
+        {
+          "control_step": 258722,
+          "observed_step": 258721,
+          "is_interval_maximum": false,
+          "reported_xy_error_mm": 7.701709626517582e-11,
+          "actual_nut_lateral_to_socket_mm": 0.07902374192623697,
+          "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.0,
+          "native_vs_encoder_virtual_point_xy_mm": 0.00011688256526405735,
+          "difference_from_existing_scalar_table_mm": {
+            "reported_xy_error_mm": 0.0,
+            "actual_nut_lateral_to_socket_mm": 0.0,
+            "actual_nut_minus_fixed_grasp_prediction_xy_mm": -1.2412670766236365e-13,
+            "native_vs_encoder_virtual_point_xy_mm": 0.0
+          },
+          "saved_control_error_world_mm": [
+            -7.338574192772285e-11,
+            2.3370194668359545e-11,
+            6.258922824464719e-06
+          ],
+          "sum_of_three_vectors_world_mm": [
+            -7.338574192772285e-11,
+            2.3370194668359545e-11,
+            6.258922824464719e-06
+          ],
+          "vector_identity_max_abs_residual_m": 0.0,
+          "preceding_FT_FK_reconstructs_saved_encoder_pivot_max_abs_m": 0.0,
+          "same_numbered_poststep_FT_is_not_control_observation_xy_delta_mm": 8.184110725504289e-05,
+          "same_step_command_matches_FT_active_target": true,
+          "target_minus_nut_xy_mm": 0.07921608168682885,
+          "fixed_calibration_plus_native_fk_xy_mm": 0.07921608161267764,
+          "native_initial_center_calibration_xy_mm": 0.07918134919718885,
+          "relative_center_change_is_not_full_relative_orientation_measurement": true,
+          "actual_nut_drift_from_initial_socket_xy_mm": 0.0
+        },
+        {
+          "control_step": 259829,
+          "observed_step": 259828,
+          "is_interval_maximum": false,
+          "reported_xy_error_mm": 0.01992146242991587,
+          "actual_nut_lateral_to_socket_mm": 0.04118619296348549,
+          "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.062193550123285445,
+          "native_vs_encoder_virtual_point_xy_mm": 0.0001491107099523668,
+          "difference_from_existing_scalar_table_mm": {
+            "reported_xy_error_mm": 0.0,
+            "actual_nut_lateral_to_socket_mm": 0.0,
+            "actual_nut_minus_fixed_grasp_prediction_xy_mm": -5.91332538490974e-14,
+            "native_vs_encoder_virtual_point_xy_mm": 0.0
+          },
+          "saved_control_error_world_mm": [
+            -5.261824009838989e-05,
+            -0.019921392939936666,
+            0.11689669882125608
+          ],
+          "sum_of_three_vectors_world_mm": [
+            -5.261824009838989e-05,
+            -0.019921392939936666,
+            0.11689669882125608
+          ],
+          "vector_identity_max_abs_residual_m": 0.0,
+          "preceding_FT_FK_reconstructs_saved_encoder_pivot_max_abs_m": 0.0,
+          "same_numbered_poststep_FT_is_not_control_observation_xy_delta_mm": 0.00031161278594084524,
+          "same_step_command_matches_FT_active_target": true,
+          "target_minus_nut_xy_mm": 0.04485857769652328,
+          "fixed_calibration_plus_native_fk_xy_mm": 0.07876740182920186,
+          "native_initial_center_calibration_xy_mm": 0.07884505725442975,
+          "relative_center_change_is_not_full_relative_orientation_measurement": true,
+          "actual_nut_drift_from_initial_socket_xy_mm": 0.06234270454004468
+        },
+        {
+          "control_step": 260041,
+          "observed_step": 260040,
+          "is_interval_maximum": true,
+          "reported_xy_error_mm": 0.6078438713171745,
+          "actual_nut_lateral_to_socket_mm": 0.02961827978907205,
+          "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.5304668549136647,
+          "native_vs_encoder_virtual_point_xy_mm": 0.00016780701344920474,
+          "difference_from_existing_scalar_table_mm": {
+            "reported_xy_error_mm": 0.0,
+            "actual_nut_lateral_to_socket_mm": 0.0,
+            "actual_nut_minus_fixed_grasp_prediction_xy_mm": 5.784261958297066e-14,
+            "native_vs_encoder_virtual_point_xy_mm": 0.0
+          },
+          "saved_control_error_world_mm": [
+            0.19534084192818213,
+            -0.5756006665846025,
+            -0.04957735414429232
+          ],
+          "sum_of_three_vectors_world_mm": [
+            0.19534084192818213,
+            -0.5756006665846025,
+            -0.04957735414429232
+          ],
+          "vector_identity_max_abs_residual_m": 0.0,
+          "preceding_FT_FK_reconstructs_saved_encoder_pivot_max_abs_m": 0.0,
+          "same_numbered_poststep_FT_is_not_control_observation_xy_delta_mm": 0.005469611950084036,
+          "same_step_command_matches_FT_active_target": true,
+          "target_minus_nut_xy_mm": 0.03326749557866698,
+          "fixed_calibration_plus_native_fk_xy_mm": 0.07880684620226287,
+          "native_initial_center_calibration_xy_mm": 0.0788250233961329,
+          "relative_center_change_is_not_full_relative_orientation_measurement": true,
+          "actual_nut_drift_from_initial_socket_xy_mm": 0.06427709627880054
+        },
+        {
+          "control_step": 260041,
+          "observed_step": 260040,
+          "is_interval_maximum": true,
+          "reported_xy_error_mm": 0.6078438713171745,
+          "actual_nut_lateral_to_socket_mm": 0.02961827978907205,
+          "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.5304668549136647,
+          "native_vs_encoder_virtual_point_xy_mm": 0.00016780701344920474,
+          "difference_from_existing_scalar_table_mm": {
+            "reported_xy_error_mm": 0.0,
+            "actual_nut_lateral_to_socket_mm": 0.0,
+            "actual_nut_minus_fixed_grasp_prediction_xy_mm": 5.784261958297066e-14,
+            "native_vs_encoder_virtual_point_xy_mm": 0.0
+          },
+          "saved_control_error_world_mm": [
+            0.19534084192818213,
+            -0.5756006665846025,
+            -0.04957735414429232
+          ],
+          "sum_of_three_vectors_world_mm": [
+            0.19534084192818213,
+            -0.5756006665846025,
+            -0.04957735414429232
+          ],
+          "vector_identity_max_abs_residual_m": 0.0,
+          "preceding_FT_FK_reconstructs_saved_encoder_pivot_max_abs_m": 0.0,
+          "same_numbered_poststep_FT_is_not_control_observation_xy_delta_mm": 0.005469611950084036,
+          "same_step_command_matches_FT_active_target": true,
+          "target_minus_nut_xy_mm": 0.03326749557866698,
+          "fixed_calibration_plus_native_fk_xy_mm": 0.07880684620226287,
+          "native_initial_center_calibration_xy_mm": 0.0788250233961329,
+          "relative_center_change_is_not_full_relative_orientation_measurement": true,
+          "actual_nut_drift_from_initial_socket_xy_mm": 0.06427709627880054
+        }
+      ]
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/load10ms_repeat01/run",
+      "sealed_sample_count": 277530,
+      "unique_truth_frames_read": [
+        255486,
+        256593,
+        256752,
+        258725
+      ],
+      "socket_rotation_equals_world_axes": true,
+      "max_control_error_step": 256753,
+      "all_existing_scalar_and_vector_rows_match": true,
+      "rows": [
+        {
+          "control_step": 255487,
+          "observed_step": 255486,
+          "is_interval_maximum": false,
+          "reported_xy_error_mm": 8.162518405530286e-11,
+          "actual_nut_lateral_to_socket_mm": 0.04606514465674988,
+          "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.0,
+          "native_vs_encoder_virtual_point_xy_mm": 0.00011456646988604561,
+          "difference_from_existing_scalar_table_mm": {
+            "reported_xy_error_mm": 0.0,
+            "actual_nut_lateral_to_socket_mm": 0.0,
+            "actual_nut_minus_fixed_grasp_prediction_xy_mm": -1.2412670766236365e-13,
+            "native_vs_encoder_virtual_point_xy_mm": 0.0
+          },
+          "saved_control_error_world_mm": [
+            -5.773159728050814e-11,
+            5.770384170489251e-11,
+            7.776255861458026e-06
+          ],
+          "sum_of_three_vectors_world_mm": [
+            -5.773159728050814e-11,
+            5.770384170489251e-11,
+            7.776255861458026e-06
+          ],
+          "vector_identity_max_abs_residual_m": 0.0,
+          "preceding_FT_FK_reconstructs_saved_encoder_pivot_max_abs_m": 0.0,
+          "same_numbered_poststep_FT_is_not_control_observation_xy_delta_mm": 0.00023149810195435851,
+          "same_step_command_matches_FT_active_target": true,
+          "target_minus_nut_xy_mm": 0.040923441395024844,
+          "fixed_calibration_plus_native_fk_xy_mm": 0.040923441324363666,
+          "native_initial_center_calibration_xy_mm": 0.040923307684597655,
+          "relative_center_change_is_not_full_relative_orientation_measurement": true,
+          "actual_nut_drift_from_initial_socket_xy_mm": 0.0
+        },
+        {
+          "control_step": 256594,
+          "observed_step": 256593,
+          "is_interval_maximum": false,
+          "reported_xy_error_mm": 0.26607217072138145,
+          "actual_nut_lateral_to_socket_mm": 0.08786870097748543,
+          "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.1752820817225648,
+          "native_vs_encoder_virtual_point_xy_mm": 0.00012753231601576266,
+          "difference_from_existing_scalar_table_mm": {
+            "reported_xy_error_mm": 0.0,
+            "actual_nut_lateral_to_socket_mm": 0.0,
+            "actual_nut_minus_fixed_grasp_prediction_xy_mm": -2.2842838731662596e-14,
+            "native_vs_encoder_virtual_point_xy_mm": 0.0
+          },
+          "saved_control_error_world_mm": [
+            -0.11137178858844354,
+            -0.24164172805829498,
+            -0.28083266121481376
+          ],
+          "sum_of_three_vectors_world_mm": [
+            -0.11137178858844354,
+            -0.24164172805829498,
+            -0.28083266121481376
+          ],
+          "vector_identity_max_abs_residual_m": 0.0,
+          "preceding_FT_FK_reconstructs_saved_encoder_pivot_max_abs_m": 0.0,
+          "same_numbered_poststep_FT_is_not_control_observation_xy_delta_mm": 0.001320796732802868,
+          "same_step_command_matches_FT_active_target": true,
+          "target_minus_nut_xy_mm": 0.08678887014368483,
+          "fixed_calibration_plus_native_fk_xy_mm": 0.04087272951555342,
+          "native_initial_center_calibration_xy_mm": 0.04095074784961665,
+          "relative_center_change_is_not_full_relative_orientation_measurement": true,
+          "actual_nut_drift_from_initial_socket_xy_mm": 0.08466984027740375
+        },
+        {
+          "control_step": 256753,
+          "observed_step": 256752,
+          "is_interval_maximum": true,
+          "reported_xy_error_mm": 0.41588932872184525,
+          "actual_nut_lateral_to_socket_mm": 0.12383734993829307,
+          "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.29960910418885034,
+          "native_vs_encoder_virtual_point_xy_mm": 6.481616954361672e-05,
+          "difference_from_existing_scalar_table_mm": {
+            "reported_xy_error_mm": 0.0,
+            "actual_nut_lateral_to_socket_mm": 0.0,
+            "actual_nut_minus_fixed_grasp_prediction_xy_mm": -4.618527782440651e-14,
+            "native_vs_encoder_virtual_point_xy_mm": 0.0
+          },
+          "saved_control_error_world_mm": [
+            -0.1941342548692493,
+            -0.3677986199417671,
+            -0.02127201668805645
+          ],
+          "sum_of_three_vectors_world_mm": [
+            -0.1941342548692493,
+            -0.3677986199417671,
+            -0.02127201668805645
+          ],
+          "vector_identity_max_abs_residual_m": 0.0,
+          "preceding_FT_FK_reconstructs_saved_encoder_pivot_max_abs_m": 0.0,
+          "same_numbered_poststep_FT_is_not_control_observation_xy_delta_mm": 0.00042474964010848313,
+          "same_step_command_matches_FT_active_target": true,
+          "target_minus_nut_xy_mm": 0.1208301610034099,
+          "fixed_calibration_plus_native_fk_xy_mm": 0.040930776458901474,
+          "native_initial_center_calibration_xy_mm": 0.04094667306941709,
+          "relative_center_change_is_not_full_relative_orientation_measurement": true,
+          "actual_nut_drift_from_initial_socket_xy_mm": 0.09903447601259893
+        },
+        {
+          "control_step": 258726,
+          "observed_step": 258725,
+          "is_interval_maximum": false,
+          "reported_xy_error_mm": 0.35137091342342297,
+          "actual_nut_lateral_to_socket_mm": 0.13467516117398026,
+          "actual_nut_minus_fixed_grasp_prediction_xy_mm": 0.37475848999662426,
+          "native_vs_encoder_virtual_point_xy_mm": 0.00013602271825842964,
+          "difference_from_existing_scalar_table_mm": {
+            "reported_xy_error_mm": 0.0,
+            "actual_nut_lateral_to_socket_mm": 0.0,
+            "actual_nut_minus_fixed_grasp_prediction_xy_mm": -1.865174681370263e-14,
+            "native_vs_encoder_virtual_point_xy_mm": 0.0
+          },
+          "saved_control_error_world_mm": [
+            0.28587673077173914,
+            0.20429393922305472,
+            0.2958004336817144
+          ],
+          "sum_of_three_vectors_world_mm": [
+            0.28587673077173914,
+            0.20429393922305472,
+            0.2958004336817144
+          ],
+          "vector_identity_max_abs_residual_m": 0.0,
+          "preceding_FT_FK_reconstructs_saved_encoder_pivot_max_abs_m": 0.0,
+          "same_numbered_poststep_FT_is_not_control_observation_xy_delta_mm": 0.002215963927289698,
+          "same_step_command_matches_FT_active_target": true,
+          "target_minus_nut_xy_mm": 0.13084418162953182,
+          "fixed_calibration_plus_native_fk_xy_mm": 0.04082601967730784,
+          "native_initial_center_calibration_xy_mm": 0.04095507848271436,
+          "relative_center_change_is_not_full_relative_orientation_measurement": true,
+          "actual_nut_drift_from_initial_socket_xy_mm": 0.10880148330803376
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Target is reconstructed from saved encoder pivot plus saved error; vector closure alone is algebraic, not independent validation of timing.",
+    "All quoted small-distance comparisons are lateral XY metrics. The fixed relation is the Nut center in the initial hand frame, not a separated material-point slip measurement.",
+    "Two full episodes have different entry/grip histories; this comparison is not an isolated50ms-vs10ms causal experiment.",
+    "Only the existing four selected rows per run (three unique historical frames in full14) are independently recomputed."
+  ]
+}

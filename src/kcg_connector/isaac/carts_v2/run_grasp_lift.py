@@ -10633,9 +10633,17 @@ def _split_plug_relative_motion_summary(runtime) -> dict[str, object]:
         )
         return matrix
 
+    rows = samples
+    archive = runtime.get("truth_stream")
+    if archive is samples and archive.closed and archive.codec == "msgpack":
+        output = Path(archive.name).parent
+        if (output / "motion_timing.json").is_file():
+            from trace_metadata import iter_truth_fields
+            rows = iter_truth_fields(output, (
+                "object_part_positions_m", "object_part_orientations_wxyz"))
     relative = [
         np.linalg.inv(pose_matrix(row, 0)) @ pose_matrix(row, 1)
-        for row in samples
+        for row in rows
     ]
     reference = relative[0]
     translations = np.asarray(

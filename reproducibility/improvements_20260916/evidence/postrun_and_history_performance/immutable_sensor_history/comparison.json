@@ -1,0 +1,100 @@
+{
+  "scope": "BOUNDED_OFFLINE_32768_REAL_SENSOR_RECORDS",
+  "original": {
+    "mode": "lists",
+    "sensor_rows": 32768,
+    "scope": "OFFLINE_SAVED_ROBOT_SIGNALS_ONLY",
+    "input": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat01_restart01/run/wrist_ft_samples.json.gz",
+    "ingestion_parse_encode_and_check_wall_s": 1.425435903998732,
+    "array_conversion_s": 0.001708115578367142,
+    "gen2_collections": [
+      {
+        "wall_s": 0.09780771200166782,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.11223047199746361,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.1132419649984513,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.11017996200098423,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.11227721400064183,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.1151500109990593,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      }
+    ],
+    "steady_collection_median_s": 0.11275958949954656,
+    "all_row_encoded_values_exactly_equal": true,
+    "logical_rows_sha256": "276378fe688e3b83c44d6e6c98d55fbea2a9c7c45541829b1cdf53217685dce5",
+    "maximum_rss_mib": 394.625,
+    "production_modified": false,
+    "physics_executed": false,
+    "controller_mutation_compatibility_not_yet_verified": true
+  },
+  "candidate": {
+    "mode": "tuples",
+    "sensor_rows": 32768,
+    "scope": "OFFLINE_SAVED_ROBOT_SIGNALS_ONLY",
+    "input": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat01_restart01/run/wrist_ft_samples.json.gz",
+    "ingestion_parse_encode_and_check_wall_s": 1.8455721129976155,
+    "array_conversion_s": 0.42371726306009805,
+    "gen2_collections": [
+      {
+        "wall_s": 0.0845855309999024,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.02980403500259854,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.026842447001399705,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.02563020999878063,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.026706822001870023,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      },
+      {
+        "wall_s": 0.026085698998940643,
+        "collected": 0,
+        "tracked_sensor_row_dicts": 32768
+      }
+    ],
+    "steady_collection_median_s": 0.026396260500405333,
+    "all_row_encoded_values_exactly_equal": true,
+    "logical_rows_sha256": "276378fe688e3b83c44d6e6c98d55fbea2a9c7c45541829b1cdf53217685dce5",
+    "maximum_rss_mib": 371.4375,
+    "production_modified": false,
+    "physics_executed": false,
+    "controller_mutation_compatibility_not_yet_verified": true
+  },
+  "collection_cost_reduction_fraction": 0.7659067346949548,
+  "not_a_whole_episode_speed_estimate": true,
+  "not_adopted_into_live_physics": true
+}

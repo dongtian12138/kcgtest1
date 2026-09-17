@@ -1,0 +1,14 @@
+{
+  "scope": "ROBOT_ONLY_CONTROL_BRANCH_AND_INTERFACE_LIMIT_AUDIT",
+  "object_or_contact_truth_from_active_repeat02_read": false,
+  "production_source_or_limits_changed": false,
+  "single_variable_planar_hold_comparison_executed": false,
+  "files": {
+    "four_control_intervals_only.json": "8765602b9cd80c398ec8864c5b78b530d4e13816264e94f3bbd61750bd166921",
+    "fourth_control_wrench_comparison.json": "ac94c5f5be6cc5203bf36fa130f9b8b73f074039ace6e6d44d6a58286a21d795",
+    "independent_review_CN.md": "4b7a420c6083d7fad44d8371db4bae0b734b2d3a3be2542929fadbff3a609bda",
+    "review_robot_only.py": "651c3ff27fab05b1aa97f265dcf3d0f07b50b228a0f67fad86d7e13326c9ca5c",
+    "robot_only_review.json": "201ad55750772b7235d7caa272c03e24e96b8da17addc7d6c35c643905d988aa",
+    "third_control_interval_only.json": "9245373dd100f35967248002ecfde409f9a06303fa85dee98f84d37aae371f10"
+  }
+}
