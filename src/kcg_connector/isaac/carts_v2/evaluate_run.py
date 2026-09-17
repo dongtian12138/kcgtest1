@@ -335,10 +335,27 @@ class TruthAuditRecorder:
         object_articulation=None,
         sample_log_path=None,
         contact_audit_mode='full',
+        native_contact_copy=False,
+        packed_native_contacts=False,
     ) -> None:
         if contact_audit_mode not in ('full','native-report'):
             raise ValueError('unsupported contact audit mode')
         self.contact_audit_mode=contact_audit_mode
+        if type(native_contact_copy) is not bool:
+            raise ValueError('native_contact_copy must be Boolean')
+        self._native_contact_copier=None
+        self._native_contact_packer=None
+        self._native_copy_verified_reports=0
+        if native_contact_copy:
+            if __package__:
+                from . import _contact_copy_native
+            else:
+                import _contact_copy_native
+            self._native_contact_copier=_contact_copy_native.decode_ranges
+            if packed_native_contacts:
+                self._native_contact_packer=_contact_copy_native.pack_ranges
+        if type(packed_native_contacts) is not bool or (packed_native_contacts and not native_contact_copy):
+            raise ValueError('packed native contacts require the native copier')
         self.object_parts = tuple(object_parts)
         self.object_articulation = object_articulation
         self.hand_base_prim = hand_base_prim
@@ -350,7 +367,7 @@ class TruthAuditRecorder:
         self._tensor_actor_paths={}
         from isaacsim.core.simulation_manager import SimulationManager
         self.usd_pose_output_enabled=not SimulationManager.is_fabric_enabled()
-        self.capture_wall_times = {name:0. for name in ('contact_callback_s','engine_and_body_s',
+        self.capture_wall_times = {name:0. for name in ('contact_callback_s','native_contact_poll_s','contact_python_decode_s','engine_and_body_s',
             'robot_poses_s','contact_counts_s','archive_append_s')}
         # Read-only evidence: a pose plateau may otherwise hide actor sleep.
         # This state is never supplied to the online controller.
@@ -424,6 +441,37 @@ class TruthAuditRecorder:
         return cache[value]
 
     def _decode_full_report(self, headers, contact_data) -> list[dict[str, object]]:
+        copier=getattr(self,'_native_contact_copier',None)
+        if copier is None:
+            return self._decode_full_report_python(headers,contact_data)
+        ranges=[(int(h.contact_data_offset),int(h.num_contact_data)) for h in headers]
+        packer=getattr(self,'_native_contact_packer',None)
+        if packer is not None:
+            if __package__:
+                from .contact_codec import PackedContactPoints
+            else:
+                from contact_codec import PackedContactPoints
+            blocks,finite=packer(contact_data,ranges)
+            contacts=[PackedContactPoints(block,native_finite_verified=finite) for block in blocks]
+        else:
+            contacts=copier(contact_data,ranges)
+        decoded=[{
+            'paths':tuple(self._decode_path(v) for v in
+                          (h.actor0,h.actor1,h.collider0,h.collider1)),
+            'records':count,'contact_data_offset':offset,'contacts':points,
+        } for h,(offset,count),points in zip(headers,ranges,contacts)]
+        # Verify actual SDK field layout before trusting the optimized reader.
+        # The first two nonempty reports retain the original implementation as
+        # a reference; all later reports retain its range and finite checks.
+        if self._native_copy_verified_reports<2 and len(contact_data):
+            import msgpack
+            reference=self._decode_full_report_python(headers,contact_data)
+            if msgpack.packb(decoded,use_bin_type=True,default=lambda p:p.tolist())!=msgpack.packb(reference,use_bin_type=True):
+                raise RuntimeError('Native contact-copy ABI/value verification failed')
+            self._native_copy_verified_reports+=1
+        return decoded
+
+    def _decode_full_report_python(self, headers, contact_data) -> list[dict[str, object]]:
         decoded: list[dict[str, object]] = []
         contact_data_count = len(contact_data)
         for header in headers:
@@ -468,10 +516,15 @@ class TruthAuditRecorder:
         from time import perf_counter
         started=perf_counter()
         headers, contact_data, _ = self.contact_interface.get_full_contact_report()
+        polled=perf_counter()
         self._physics_step_reports.append(
             self._decode_full_report(headers, contact_data)
         )
-        if hasattr(self,'capture_wall_times'):self.capture_wall_times['contact_callback_s']+=perf_counter()-started
+        decoded=perf_counter()
+        if hasattr(self,'capture_wall_times'):
+            self.capture_wall_times['contact_callback_s']+=decoded-started
+            self.capture_wall_times['native_contact_poll_s']+=polled-started
+            self.capture_wall_times['contact_python_decode_s']+=decoded-polled
 
     def _tensor_contact_rows(self) -> list[dict[str, object]]:
         import warp as wp
@@ -721,12 +774,13 @@ class TruthAuditRecorder:
             # The native decoder owns 3 + 3 + 3 + 1 floats per point.
             # Stream the finite check without a temporary rectangular array.
             from itertools import chain
-            values = chain.from_iterable(
-                vector for row in report_rows for c in row['contacts']
-                for vector in (c['position_m'], c['normal'], c['impulse_n_s'],
-                               (c['separation_m'],)))
-            if not all(map(math.isfinite, values)):
-                raise RuntimeError('native contact report is not finite')
+            if not all(getattr(row['contacts'],'native_finite_verified',False) for row in report_rows):
+                values = chain.from_iterable(
+                    vector for row in report_rows for c in row['contacts']
+                    for vector in (c['position_m'], c['normal'], c['impulse_n_s'],
+                                   (c['separation_m'],)))
+                if not all(map(math.isfinite, values)):
+                    raise RuntimeError('native contact report is not finite')
             tensor_rows=[];friction_rows=[]
             for row in report_rows:
                 paths=row['paths']

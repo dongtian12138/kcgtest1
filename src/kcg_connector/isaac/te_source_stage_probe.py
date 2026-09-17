@@ -59,9 +59,12 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         physics_dt_s=dynamic['physics_dt_s'],engine_monitor=PhysxStatsMonitor(world.get_physics_context()),
         physics_step_interface=get_physx_interface(),tensor_contact_prim=contact_view,
         tensor_contact_sensor_paths=contact_paths,tensor_contact_max_count=32768,
-        contact_audit_mode=args.contact_audit_mode)
+        contact_audit_mode=args.contact_audit_mode,
+        native_contact_copy=recipe.get('native_contact_copy',False),
+        packed_native_contacts=recipe.get('packed_native_contacts',False))
     codec=args.truth_archive_codec
-    recorder.samples=GzipSampleStore(output/f'truth_samples.{codec}.gz',block_size=64,cache_blocks=1,codec=codec)
+    recorder.samples=GzipSampleStore(output/f'truth_samples.{codec}.gz',block_size=64,cache_blocks=1,codec=codec,
+                                    compression_backend=recipe.get('compression_backend','gzip'))
     ft_doc=json.loads((repository/'src/kcg_connector/config/te_visual_high_reobserve_v1.json').read_text())
     safety=ft_doc['wrist_ft_safety'];monitor=assembly['wrist_planned_contact_torque_monitor']
     phases=('visual_align','visual_refine','axial_settle','turn','hold')
@@ -95,6 +98,9 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         if recipe['defer_recording_gc']:
             stepper.enable_deferred_recording_gc()
     ft.stepper=stepper
+    if recipe.get('packed_sensor_history',False):
+        from carts_v2.sensor_history import EncodedSensorHistory
+        ft.samples=EncodedSensorHistory(compression_backend=recipe.get('compression_backend','gzip'))
     runtime={'world':world,'inputs':inputs,'scene':scene,'auditor':recorder,'robot_data':robot_data,
         'object_parts':parts,'nail_body_ft_auditor':ft,'body_assembly_control_config':str(assembly_path),
         'body_assembly_scene':prepared,

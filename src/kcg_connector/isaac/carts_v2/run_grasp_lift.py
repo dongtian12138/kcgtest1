@@ -9395,6 +9395,25 @@ def _create_runtime(
             connector_position_iterations = connector_runtime_requirements.get("position_iterations", 128)
             connector_velocity_iterations = connector_runtime_requirements.get("velocity_iterations", 1)
             connector_physics_hz = connector_runtime_requirements.get("physics_hz", 960)
+            revalidate_runtime=numerical.get('revalidate_runtime_requirements',False)
+            if type(revalidate_runtime) is not bool:
+                raise ValueError('runtime revalidation selection must be Boolean')
+            if revalidate_runtime:
+                candidate_hz=1./float(dynamic['physics_dt_s'])
+                candidate_position=numerical.get('position_iterations')
+                candidate_velocity=numerical.get('velocity_iterations')
+                if (candidate_hz not in (240.,480.,960.) or candidate_position not in (16,32,64)
+                        or candidate_velocity!=4 or arguments.physics_device!='cpu'):
+                    raise ValueError('Unsupported bounded performance runtime candidate')
+                trace['connector_runtime_revalidation']={
+                    'validated_source_profile':dict(connector_runtime_requirements),
+                    'candidate_profile':{'physics_hz':candidate_hz,'position_iterations':candidate_position,
+                                         'velocity_iterations':candidate_velocity},
+                    'source_model_file_changed':False,'previous_physical_acceptance_transferred':False,
+                    'requires_new_complete_assembly_and_original_key_review':True}
+                connector_physics_hz=candidate_hz
+                connector_position_iterations=candidate_position
+                connector_velocity_iterations=candidate_velocity
             if (any(isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 255
                     for value in (connector_position_iterations, connector_velocity_iterations))
                     or isinstance(connector_physics_hz, bool)
@@ -9445,6 +9464,7 @@ def _create_runtime(
                     api.CreateSolverPositionIterationCountAttr(connector_position_iterations)
                     api.CreateSolverVelocityIterationCountAttr(connector_velocity_iterations)
             trace["validated_connector_integration"] = {
+                'runtime_acceptance_transferred':not revalidate_runtime,
                 "model_path": str(model_path),
                 "passive_joint_type": stage.GetPrimAtPath(installed["passive_joint_path"]).GetTypeName(),
                 "ordinary_passive_revolute": stage.GetPrimAtPath(installed["passive_joint_path"]).GetTypeName() == "PhysicsRevoluteJoint",
@@ -9828,6 +9848,10 @@ def _create_runtime(
         tensor_contact_sensor_paths=tensor_contact_sensor_paths,
         tensor_contact_max_count=contact_capacity,
         contact_audit_mode=arguments.contact_audit_mode,
+        native_contact_copy=(assembly_document.get('recording',{}).get('native_contact_copy',False)
+                             if arguments.body_assembly_collision_config else False),
+        packed_native_contacts=(assembly_document.get('recording',{}).get('packed_native_contacts',False)
+                                if arguments.body_assembly_collision_config else False),
     )
     truth_stream = None
     truth_write_timing = {"serialization_and_write_s": 0.0, "sample_count": 0}
@@ -9838,7 +9862,9 @@ def _create_runtime(
         if disk_samples:
             from sample_store import GzipSampleStore
             codec=arguments.truth_archive_codec
-            truth_stream=GzipSampleStore(output/f'truth_samples.{codec}.gz',block_size=64,cache_blocks=1,codec=codec)
+            truth_stream=GzipSampleStore(output/f'truth_samples.{codec}.gz',block_size=64,cache_blocks=1,codec=codec,
+                compression_backend=(assembly_document.get('recording',{}).get('compression_backend','gzip')
+                                     if arguments.body_assembly_collision_config else 'gzip'))
             auditor.samples=truth_stream
         else:
             truth_stream = (gzip.open(output/"truth_samples.jsonl.gz","xt",encoding="utf-8",compresslevel=1)
@@ -10497,6 +10523,9 @@ def _run_controller(runtime, arguments, motion_plan, dynamic):
             dynamic_inertia_enabled_phases=("approach_above", "wait_above_settled", "approach_descent", "settle", "pregrasp_hold", "tare"),
         )
         truth_capture = runtime["auditor"].capture
+        if assembly_control.get('recording',{}).get('packed_sensor_history',False):
+            from sensor_history import EncodedSensorHistory
+            ft_auditor.samples=EncodedSensorHistory(compression_backend=assembly_control.get('recording',{}).get('compression_backend','gzip'))
 
         def capture_truth_and_ft(**keywords):
             truth_capture(**keywords)

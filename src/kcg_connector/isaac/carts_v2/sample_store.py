@@ -19,7 +19,11 @@ except ImportError:
 def msgpack_rows(stream):
     """Read the same nested numeric observations without executable objects."""
     import msgpack
-    return msgpack.Unpacker(stream, raw=False)
+    try:
+        from .contact_codec import decode_extension
+    except ImportError:
+        from contact_codec import decode_extension
+    return msgpack.Unpacker(stream, raw=False, ext_hook=decode_extension)
 
 
 class _SampleSlice(Sequence):
@@ -38,14 +42,24 @@ class _SampleSlice(Sequence):
 
 
 class GzipSampleStore(Sequence):
-    def __init__(self,path,*,block_size=512,cache_blocks=2,codec='jsonl'):
+    def __init__(self,path,*,block_size=512,cache_blocks=2,codec='jsonl',compression_backend='gzip'):
         if block_size<1 or cache_blocks<1:raise ValueError('positive block/cache sizes required')
         if codec not in ('jsonl','msgpack'):raise ValueError('unsupported raw observation codec')
         self.codec=codec
+        try:
+            from .recording_compression import gzip_backend
+        except ImportError:
+            from recording_compression import gzip_backend
+        self._gzip=gzip_backend(compression_backend)
+        self.compression_backend=compression_backend
         self.format='CONCATENATED_GZIP_'+codec.upper()
         if codec=='msgpack':
             import msgpack
-            self._packer=msgpack.Packer(use_bin_type=True,default=normalize_value)
+            try:
+                from .contact_codec import encode_extension
+            except ImportError:
+                from contact_codec import encode_extension
+            self._packer=msgpack.Packer(use_bin_type=True,default=encode_extension)
         self.name=str(path);self.block_size=block_size;self.cache_blocks=cache_blocks
         self._file=open(path,'xb');self._live=[];self._blocks=[];self._cache=OrderedDict()
         self._count=0;self.closed=False
@@ -63,7 +77,7 @@ class GzipSampleStore(Sequence):
         offset=self._file.tell()
         # Finish each member, so every closed block has its own checksum and
         # can be read without retaining or decompressing previous samples.
-        with gzip.GzipFile(fileobj=self._file,mode='wb',compresslevel=1,mtime=0) as member:
+        with self._gzip.GzipFile(fileobj=self._file,mode='wb',compresslevel=1,mtime=0) as member:
             for row in self._live:
                 member.write(self._packer.pack(row) if self.codec=='msgpack'
                              else (encode_row(row)+'\n').encode())
@@ -84,7 +98,7 @@ class GzipSampleStore(Sequence):
         block=self._blocks[index]
         with open(self.name,'rb') as stream:
             stream.seek(block['offset']);data=stream.read(block['end']-block['offset'])
-        raw=gzip.decompress(data)
+        raw=self._gzip.decompress(data)
         rows=(list(msgpack_rows(io.BytesIO(raw))) if self.codec=='msgpack'
               else [decode_row(line) for line in raw.splitlines()])
         if len(rows)!=block['count']:raise ValueError('sample archive block count differs')
@@ -108,6 +122,7 @@ class GzipSampleStore(Sequence):
         if self.closed:return
         self._seal_block();self._file.close();self.closed=True
         Path(self.name+'.index.json').write_text(json.dumps({'format':self.format,
+            'compression_backend':self.compression_backend,'contact_extension_schema':'f64le_xyz_normal_impulse_separation_v1_code42',
             'sample_count':self._count,'block_size':self.block_size,'blocks':self._blocks},indent=2)+'\n')
 
     def __del__(self):

@@ -237,13 +237,17 @@ if source_stage_recipe is not None:
     except (TypeError, ValueError) as error:
         parser.error(str(error))
     if 'solve_articulation_contact_last' in source_stage_recipe:
+        same_rate_profile=(args.physics_hz==960 and args.velocity_iterations==4
+            and args.position_iterations in ((16,32,64,128) if args.experimental_connector_position_convergence else (64,)))
+        declared_rate_profile=(args.experimental_connector_time_resolution and args.physics_hz in (240,480)
+            and args.position_iterations==64 and args.velocity_iterations==4
+            and not args.experimental_connector_position_convergence)
         if (type(source_stage_recipe['solve_articulation_contact_last']) is not bool
                 or args.frozen_connector_model is None or args.physics_device != 'cpu'
                 or args.solver_type != 'TGS' or not args.external_forces_every_iteration
-                or (args.physics_hz, args.position_iterations, args.velocity_iterations) != (960, 64, 4)
-                or args.experimental_connector_position_convergence
-                or args.experimental_connector_time_resolution or args.experimental_connector_gpu_comparison):
-            parser.error('Contact-order comparison requires an explicit boolean and the unchanged frozen-connector CPU TGS 960/64/4 source-stage setup')
+                or not (same_rate_profile or declared_rate_profile)
+                or args.experimental_connector_gpu_comparison):
+            parser.error('Contact order requires the declared CPU source-stage numerical profile; model acceptance must be rechecked')
 finger_mechanism_document=None
 if args.finger_mechanism is not None:
     args.finger_mechanism=args.finger_mechanism.resolve()
@@ -402,7 +406,7 @@ if args.frozen_connector_model is not None:
         and args.solver_type=='TGS' and args.external_forces_every_iteration
         and args.physics_hz==required['physics_hz']==960
         and args.velocity_iterations==required['velocity_iterations']==4
-        and required['position_iterations']==64 and args.position_iterations in (64,128)
+        and required['position_iterations']==64 and args.position_iterations in (16,32,64,128)
         and not args.experimental_connector_time_resolution and not args.experimental_connector_gpu_comparison)
     if (not args.free_plug_in_socket or (args.physics_device!='cpu' and not experimental_gpu)
             or (args.cpu_wrist_reference is None and not args.source_stage_probe)
@@ -411,7 +415,7 @@ if args.frozen_connector_model is not None:
                 and any(getattr(args,k)!=required[k] for k in ('position_iterations','velocity_iterations')))):
         parser.error('The delivered connector requires its declared CPU runtime configuration and a CPU wrist reference')
 if args.experimental_connector_position_convergence and not (args.frozen_connector_model and experimental_position):
-    parser.error('Position convergence is restricted to the declared frozen-connector CPU960Hz/64-or128/4 source-stage comparison')
+    parser.error('Position convergence requires an explicit frozen-connector CPU960Hz/16,32,64,128/4 source-stage comparison')
 if args.experimental_connector_gpu_comparison and not (args.frozen_connector_model and args.physics_device=='cuda:0'
         and args.gpu_host_readback and args.interface_twist_deg is not None):
     parser.error('Experimental GPU comparison requires the frozen connector, local interface probe, CUDA and host readback')

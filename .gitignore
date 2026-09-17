@@ -3,6 +3,9 @@ install/
 log/
 .venv/
 .deps/
+src/kcg_connector/isaac/carts_v2/_contact_copy_native*.so
+/.venv
+/install
 artifacts/*
 !artifacts/README.md
 __pycache__/

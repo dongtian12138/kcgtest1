@@ -97,7 +97,15 @@ def read_truth_sample(directory,step):
 def write_gzip_array(path,rows,*,mode="x",prepare=None):
     """Write one ordinary JSON array without duplicating all rows in memory."""
     from carts_v2.fast_json import dumps
-    with gzip.open(path,mode+"t",encoding="utf-8",compresslevel=1) as stream:
+    from carts_v2.recording_compression import gzip_backend
+    backend=gzip_backend(getattr(rows,'compression_backend','gzip'))
+    known_numeric_preparer=(prepare is None or (
+        getattr(prepare,'__name__',None)=='_json_ready' and
+        getattr(prepare,'__module__','').split('.')[-1] in
+        ('run_grasp_lift','te_foundationpose_handoff_runtime')))
+    if getattr(rows,'normalized_numeric_snapshots',False) and known_numeric_preparer:
+        prepare=None
+    with backend.open(path,mode+"t",encoding="utf-8",compresslevel=1) as stream:
         stream.write('[')
         for index,row in enumerate(rows):
             if index:stream.write(',')
@@ -139,7 +147,8 @@ def iter_truth_fields(directory, fields, first_step=0, last_step=None):
         blocks = index['blocks'][first_step // index['block_size']:last // index['block_size'] + 1]
         for block in blocks:
             stream.seek(block['offset'])
-            reader = msgpack.Unpacker(raw=False, max_buffer_size=0)
+            from carts_v2.contact_codec import decode_extension
+            reader = msgpack.Unpacker(raw=False, max_buffer_size=0, ext_hook=decode_extension)
             reader.feed(gzip.decompress(stream.read(block['end'] - block['offset'])))
             for _ in range(block['count']):
                 row = {}
