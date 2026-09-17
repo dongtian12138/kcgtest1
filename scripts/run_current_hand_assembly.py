@@ -115,8 +115,12 @@ def main(argv=None):
     action.add_argument("--preflight-only", action="store_true", help="只执行独立新预检")
     parser.add_argument("--gui", action="store_true", help="给预检和正式运行都启用 Isaac Sim 窗口")
     parser.add_argument("--output-root", type=Path, help="新的结果目录，必须尚不存在")
+    parser.add_argument("--pose-variation", action="store_true",
+                        help="使用已保存的初始X平移1mm、偏角1度场景；仍先执行新预检")
     args = parser.parse_args(argv)
     original, checked = check_reference()
+    if args.pose_variation:
+        original = read_json(ROOT / 'reproducibility/improvements_20260916/pose_variation_candidate_command.json')
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S_%fZ")
     output = args.output_root or ROOT / "artifacts/reproductions" / f"current_hand_{stamp}"
     output = output.resolve()
@@ -125,7 +129,7 @@ def main(argv=None):
     preflight, motion = build_commands(original, output, args.gui)
     print(f"新结果目录：{output}")
     for label, command, limit, reserve in (("预检", preflight, 300, 30),
-                                          ("完整装配", motion, 18000, 1200)):
+                                          ("完整装配", motion, 21600, 1200)):
         print(f"\n{label}命令：\nKCG_EXPERIMENT_WALL_LIMIT_S={limit} "
               f"KCG_EXPERIMENT_CLOSEOUT_RESERVE_S={reserve} {shlex.join(command)}")
     if not (args.run or args.preflight_only):
@@ -135,7 +139,18 @@ def main(argv=None):
         raise ValueError("--gui 需要图形桌面环境；当前没有 DISPLAY/WAYLAND_DISPLAY")
     output.mkdir(parents=True, exist_ok=False)
     plan_path = output / "reproduction_plan.json"
-    plan = {"source_run": str(REFERENCE), "configuration_id": read_json(BASE / "portable_source_manifest.json").get("configuration_id", "preserved-baseline"), "checked_bound_files": checked,
+    configuration_id = read_json(BASE / "portable_source_manifest.json").get("configuration_id", "preserved-baseline")
+    if args.pose_variation:
+        configuration_id += '_x1mm_yaw1deg'
+    try:
+        source_commit = subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).strip()
+    except (OSError, subprocess.CalledProcessError):
+        source_commit = None
+    plan = {"source_run": str(REFERENCE), "configuration_id": configuration_id, "checked_bound_files": checked,
+            "source_git_commit": source_commit,
+            "source_manifest_sha256": hashlib.sha256((BASE / 'portable_source_manifest.json').read_bytes()).hexdigest(),
+            "initial_pose_variation_requested": args.pose_variation,
             "gui": args.gui, "gui_variant_newly_requested": args.gui,
             "preflight_command": preflight, "motion_command": motion,
             "simulation_only": True, "hardware_authorized": False,
@@ -161,7 +176,7 @@ def main(argv=None):
         return 0
     plan["status"] = "ASSEMBLY_RUNNING"
     save()
-    code = execute(motion, output, "assembly", 18000, 1200)
+    code = execute(motion, output, "assembly", 21600, 1200)
     plan.update(status="PROCESS_ENDED_REQUIRES_PHYSICAL_REVIEW", returncode=code)
     save()
     release_file = output / "run/socket_transport/nut_terminal_release/nut_reindex_controller_result.json"

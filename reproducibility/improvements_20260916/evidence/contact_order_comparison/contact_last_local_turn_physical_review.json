@@ -1,0 +1,127 @@
+{
+  "scope": "ENDED_LOCAL_TURN_CONTROL_AND_PHYSICAL_ENDPOINT_REVIEW",
+  "full_assembly_or_terminal_release_claimed": false,
+  "online_truth_used": false,
+  "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/local_tracking/repeat01_third_solver_order_contact_last",
+  "physical_samples": 3721,
+  "selected_planar_speed_mm_s": 2.0,
+  "selected_axial_speed_mm_s": 3.0,
+  "load_compensation_filter_s": 0.01,
+  "completed_controller_interval": true,
+  "outer_abort": null,
+  "error": null,
+  "normal_stop": null,
+  "commanded_rotation_deg": 89.99999997355123,
+  "actual_nut_relative_rotation_deg": 90.58316439634893,
+  "body_advance_mm": 2.0503997802734375,
+  "maximum_virtual_pivot_xy_error_mm": 0.4041057008860688,
+  "checkpoints": [
+    {
+      "angle_deg": 20.013713129340278,
+      "xy_error_mm": 0.14916236615750408
+    },
+    {
+      "angle_deg": 24.040156736434145,
+      "xy_error_mm": 0.12189081047871463
+    },
+    {
+      "angle_deg": 25.043875169743018,
+      "xy_error_mm": 0.11289104041920993
+    },
+    {
+      "angle_deg": 26.01541180555556,
+      "xy_error_mm": 0.10199031839711792
+    },
+    {
+      "angle_deg": 27.046620869103283,
+      "xy_error_mm": 0.06578310772891766
+    },
+    {
+      "angle_deg": 28.043109287708816,
+      "xy_error_mm": 0.06543850428117172
+    },
+    {
+      "angle_deg": 29.002591496359887,
+      "xy_error_mm": 0.05037878553981281
+    },
+    {
+      "angle_deg": 30.020394805714556,
+      "xy_error_mm": 0.04447968837380647
+    }
+  ],
+  "physical_endpoints": [
+    {
+      "step": 480,
+      "body_depth_mm": 9.977740496396992,
+      "body_lateral_mm": 0.11973644471605162,
+      "nut_lateral_mm": 0.11973537388076562,
+      "nut_body_yaw_deg": 134.57652901269967,
+      "native_points_retained_at_endpoint": true,
+      "native_callback_count_at_endpoint": 1
+    },
+    {
+      "step": 3720,
+      "body_depth_mm": 12.02814027667043,
+      "body_lateral_mm": 0.11848773204523697,
+      "nut_lateral_mm": 0.12518484461162974,
+      "nut_body_yaw_deg": -134.84030659095137,
+      "native_points_retained_at_endpoint": true,
+      "native_callback_count_at_endpoint": 1
+    }
+  ],
+  "motor_records": {
+    "f1j1": {
+      "samples": 3721,
+      "max_abs_transmission_effort_nm": 0.8966045921303714,
+      "any_elastic_boundary_exceeded": false,
+      "any_drive_saturation": false
+    },
+    "f1j2": {
+      "samples": 3721,
+      "max_abs_transmission_effort_nm": 3.2813922764055423,
+      "any_elastic_boundary_exceeded": false,
+      "any_drive_saturation": false
+    },
+    "f2j1": {
+      "samples": 3721,
+      "max_abs_transmission_effort_nm": 3.219064770298661,
+      "any_elastic_boundary_exceeded": false,
+      "any_drive_saturation": false
+    },
+    "f3j2": {
+      "samples": 3721,
+      "max_abs_transmission_effort_nm": 3.559312939603446,
+      "any_elastic_boundary_exceeded": false,
+      "any_drive_saturation": false
+    }
+  },
+  "wall_timing": {
+    "local_run_and_closeout_s": 337.66651663702214,
+    "stepper": {
+      "command_and_sensor_s": 3.2353148025576957,
+      "physics_step_s": 222.3604881099891,
+      "audit_and_record_s": 70.38302530825604,
+      "viewport_render_s": 0.0
+    },
+    "hand_mechanism": {
+      "read_before_s": 0.39745042205322534,
+      "fourbar_update_s": 2.1413904504152015,
+      "motor_solve_s": 0.8281334943603724,
+      "native_physics_s": 215.99460973666282,
+      "read_after_s": 1.488868163432926,
+      "evidence_and_boundary_s": 1.4050686661503278
+    },
+    "truth_capture": {
+      "contact_callback_s": 104.97185328189516,
+      "engine_and_body_s": 1.2567893520463258,
+      "robot_poses_s": 3.881322596978862,
+      "contact_counts_s": 32.02290686132619,
+      "archive_append_s": 25.432985368242953
+    }
+  },
+  "limitations": [
+    "This cold-initialized local turn is not a continuous visual assembly episode.",
+    "Physical endpoint checks do not certify every intermediate source contact or key gap.",
+    "The full raw archive, video and controller records are retained for further review."
+  ]
+}

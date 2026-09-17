@@ -1,0 +1,126 @@
+{
+  "scope": "ENDED_COLD_DIAGNOSTIC_CHECKPOINTS_NOT_A_CONTINUOUS_COMPLETE_RUN",
+  "original_complete_run_final_depth_mm": 14.582080096006367,
+  "rows": [
+    {
+      "step": 0,
+      "phase": "key_probe_nut_open_hold",
+      "body_depth_mm": 14.582258909940693,
+      "nut_depth_mm": 15.083981007337544,
+      "body_lateral_mm": 0.01872328304213838,
+      "nut_body_yaw_deg": -7.765007855792115,
+      "source_stop_positive_pairs": 0,
+      "hand_impulse_norm_sum_n_s": 0.0
+    },
+    {
+      "step": 100,
+      "phase": "key_probe_nut_open_hold",
+      "body_depth_mm": 14.587623327970478,
+      "nut_depth_mm": 15.08752748370168,
+      "body_lateral_mm": 0.006494014018536373,
+      "nut_body_yaw_deg": -7.767253553711721,
+      "source_stop_positive_pairs": 0,
+      "hand_impulse_norm_sum_n_s": 0.0
+    },
+    {
+      "step": 480,
+      "phase": "key_probe_nut_open_hold",
+      "body_depth_mm": 14.597607105970356,
+      "nut_depth_mm": 15.09748145937917,
+      "body_lateral_mm": 0.0068503480029245365,
+      "nut_body_yaw_deg": -7.767313621223926,
+      "source_stop_positive_pairs": 5,
+      "hand_impulse_norm_sum_n_s": 0.0
+    },
+    {
+      "step": 481,
+      "phase": "key_probe_nut_open",
+      "body_depth_mm": 14.597607105970356,
+      "nut_depth_mm": 15.09748145937917,
+      "body_lateral_mm": 0.006849656261261148,
+      "nut_body_yaw_deg": -7.76731253091304,
+      "source_stop_positive_pairs": 5,
+      "hand_impulse_norm_sum_n_s": 0.0
+    },
+    {
+      "step": 2000,
+      "phase": "key_probe_nut_transfer_hold",
+      "body_depth_mm": 14.605772942304585,
+      "nut_depth_mm": 15.10561749339101,
+      "body_lateral_mm": 0.0017169154915736633,
+      "nut_body_yaw_deg": -7.767322561764977,
+      "source_stop_positive_pairs": 23,
+      "hand_impulse_norm_sum_n_s": 0.0
+    },
+    {
+      "step": 3800,
+      "phase": "key_probe_nut_transfer_hold",
+      "body_depth_mm": 14.605772942304585,
+      "nut_depth_mm": 15.10561749339101,
+      "body_lateral_mm": 0.0017167007942903787,
+      "nut_body_yaw_deg": -7.767327683123702,
+      "source_stop_positive_pairs": 23,
+      "hand_impulse_norm_sum_n_s": 0.0
+    },
+    {
+      "step": 4300,
+      "phase": "key_probe_nut_tare",
+      "body_depth_mm": 14.605772942304585,
+      "nut_depth_mm": 15.10561749339101,
+      "body_lateral_mm": 0.0017167007942903787,
+      "nut_body_yaw_deg": -7.767326831342947,
+      "source_stop_positive_pairs": 23,
+      "hand_impulse_norm_sum_n_s": 0.0
+    },
+    {
+      "step": 4800,
+      "phase": "key_probe_nut_contact",
+      "body_depth_mm": 14.605743139982197,
+      "nut_depth_mm": 15.105647295713398,
+      "body_lateral_mm": 0.0028866693768209986,
+      "nut_body_yaw_deg": -7.767459508472049,
+      "source_stop_positive_pairs": 21,
+      "hand_impulse_norm_sum_n_s": 0.0002695074841035653
+    },
+    {
+      "step": 6000,
+      "phase": "key_probe_nut_grip_hold",
+      "body_depth_mm": 14.60571333765981,
+      "nut_depth_mm": 15.105587691068623,
+      "body_lateral_mm": 0.005743934846828708,
+      "nut_body_yaw_deg": -7.766696535382415,
+      "source_stop_positive_pairs": 23,
+      "hand_impulse_norm_sum_n_s": 0.03235217349598033
+    },
+    {
+      "step": 7300,
+      "phase": "key_probe_nut_grip_hold",
+      "body_depth_mm": 14.605743139982197,
+      "nut_depth_mm": 15.10561749339101,
+      "body_lateral_mm": 0.006768155076825618,
+      "nut_body_yaw_deg": -7.766234777423278,
+      "source_stop_positive_pairs": 19,
+      "hand_impulse_norm_sum_n_s": 0.04329554777224374
+    },
+    {
+      "step": 8503,
+      "phase": "key_probe_nut_grip_hold",
+      "body_depth_mm": 14.60583254694936,
+      "nut_depth_mm": 15.105736702680561,
+      "body_lateral_mm": 0.007621810750906594,
+      "nut_body_yaw_deg": -7.766578296836459,
+      "source_stop_positive_pairs": 22,
+      "hand_impulse_norm_sum_n_s": 0.05498449329506134
+    },
+    {
+      "step": 8640,
+      "phase": "key_probe_nut_rotation_turn",
+      "body_depth_mm": 14.60556432604787,
+      "nut_depth_mm": 15.104991644620869,
+      "body_lateral_mm": 0.010581049059152725,
+      "nut_body_yaw_deg": -7.5860859283362485,
+      "source_stop_positive_pairs": 16,
+      "hand_impulse_norm_sum_n_s": 0.06112651947582563
+    }
+  ]
+}

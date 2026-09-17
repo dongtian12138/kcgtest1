@@ -1,0 +1,143 @@
+{
+  "scope": "LOCAL_PRE_RESET_CONTACT_SOLVER_ORDER_COMPARISON",
+  "scene_path": "/physicsScene",
+  "before": false,
+  "requested": false,
+  "usd_readback_before_reset": false,
+  "requested_solver_hz_position_velocity": [
+    "TGS",
+    960,
+    64,
+    4
+  ],
+  "scene_position_iteration_min_max": [
+    1,
+    255
+  ],
+  "scene_velocity_iteration_min_max": [
+    4,
+    4
+  ],
+  "geometry_material_mass_inertia_effort_limits_changed": false,
+  "source_model_file_changed": false,
+  "key_review_tolerance_um_unchanged": 2.0,
+  "validation_transfer_from_original_solver_claimed": false,
+  "documentation": "https://docs.omniverse.nvidia.com/kit/docs/omni_physics/110.0/dev_guide/guides/articulation_stability_guide.html#articulation-solver-order",
+  "usd_readback_after_reset": false,
+  "actor_solver_iterations": [
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/TE_J35FreeSplitPlug/Body",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    },
+    {
+      "path": "/World/TE_J35FreeSplitPlug/CouplingNut",
+      "schema": "PhysxRigidBodyAPI",
+      "position": 64,
+      "velocity": 4
+    }
+  ]
+}

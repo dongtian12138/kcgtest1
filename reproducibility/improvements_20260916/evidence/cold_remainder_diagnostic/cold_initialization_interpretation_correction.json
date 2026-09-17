@@ -1,0 +1,17 @@
+{
+  "checked_at_utc": "2026-09-17T01:44:15.260986+00:00",
+  "scope": "CAUSAL_INTERPRETATION_CORRECTION_FOR_COLD_LOCAL_REMAINDER_PROBES",
+  "original_continuous_run_final_depth_mm": 14.582080096006367,
+  "cold_step0_depth_mm": 14.582258909940693,
+  "cold_step480_depth_mm": 14.597607105970356,
+  "cold_step2000_depth_mm": 14.605772942304585,
+  "step2000_hand_impulse_norm_sum_n_s": 0.0,
+  "step2000_nut_body_yaw_deg": -7.767322561764977,
+  "original_final_nut_body_yaw_deg": -7.765278246810694,
+  "step2000_source_stop_positive_pairs": 23,
+  "interpretation": "The cold source evolved to seating before new hand contact and without a tightening turn. This probe cannot establish that an additional grasp or the remaining5.25degrees resolves the continuous-run shortfall.",
+  "native_contact_warm_start_or_internal_friction_history_not_restored": true,
+  "exact_mechanism_of_difference_not_yet_proved": true,
+  "followup_held_probe_stop_requested": true,
+  "full_continuous_validation_still_required": true
+}

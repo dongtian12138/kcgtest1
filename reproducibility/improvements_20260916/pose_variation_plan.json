@@ -1,0 +1,20 @@
+{
+  "status": "PREPARED_WAITING_FOR_NOMINAL_VALIDATION",
+  "required_order": "Only after two same-scene complete episodes have been reviewed",
+  "perturbation": {
+    "object_translation_delta_m": [
+      0.001,
+      0.0,
+      0.0
+    ],
+    "object_yaw_delta_rad": 0.017453292519943295,
+    "contact_friction_coefficient": 0.45
+  },
+  "scope": "One explicitly bounded combined initial-pose test; not a statistical robustness guarantee or blind parameter scan",
+  "all_changes_authored_before_physics": true,
+  "geometry_material_mass_and_force_limits_unchanged": true,
+  "friction_matches_nominal_candidate": true,
+  "fresh_same_perturbation_preflight_required": true,
+  "current_assembly_config": "reproducibility/improvements_20260916/config/visual_contact_last_gc128_task.yaml",
+  "entry_command": "python3 scripts/run_current_hand_assembly.py --run --pose-variation"
+}

@@ -1,0 +1,142 @@
+{
+  "scope": "ENDED_LOCAL_TURN_CONTROL_AND_PHYSICAL_ENDPOINT_REVIEW",
+  "full_assembly_or_terminal_release_claimed": false,
+  "online_truth_used": false,
+  "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/local_tracking/repeat01_third_solver_order_default",
+  "physical_samples": 2987,
+  "selected_planar_speed_mm_s": 2.0,
+  "selected_axial_speed_mm_s": 3.0,
+  "load_compensation_filter_s": 0.01,
+  "completed_controller_interval": true,
+  "outer_abort": null,
+  "error": null,
+  "normal_stop": {
+    "step": 2987,
+    "filtered_interface_wrench_n_nm": [
+      -18.384410558088504,
+      31.152523446652097,
+      82.61803988272888,
+      0.12068296099107709,
+      0.23982069859324717,
+      0.8483373049508542
+    ],
+    "wrench_origin": "CURRENT_ENCODER_PIVOT_SAME_AS_HARD_WRIST_BOUND",
+    "force_n": 90.18983746923344,
+    "threshold_n": 90.0,
+    "last_applied_rotation_deg": 82.74402768192074,
+    "all_original_force_and_transmission_limits_retained": true
+  },
+  "commanded_rotation_deg": 82.74402768192074,
+  "actual_nut_relative_rotation_deg": 82.19693320980798,
+  "body_advance_mm": 1.8891990184783936,
+  "maximum_virtual_pivot_xy_error_mm": 0.2736718357052531,
+  "checkpoints": [
+    {
+      "angle_deg": 20.013713129340278,
+      "xy_error_mm": 0.11577777744218767
+    },
+    {
+      "angle_deg": 24.040156736434145,
+      "xy_error_mm": 0.08681187403589896
+    },
+    {
+      "angle_deg": 25.043875169743018,
+      "xy_error_mm": 0.08148288840569703
+    },
+    {
+      "angle_deg": 26.01541180555556,
+      "xy_error_mm": 0.07271660692301325
+    },
+    {
+      "angle_deg": 27.046620869103283,
+      "xy_error_mm": 0.037946859564632285
+    },
+    {
+      "angle_deg": 28.043109287708816,
+      "xy_error_mm": 0.03332134188723206
+    },
+    {
+      "angle_deg": 29.002591496359887,
+      "xy_error_mm": 0.02710481744542543
+    },
+    {
+      "angle_deg": 30.020394805714556,
+      "xy_error_mm": 0.026654687744369052
+    }
+  ],
+  "physical_endpoints": [
+    {
+      "step": 480,
+      "body_depth_mm": 9.97777029871938,
+      "body_lateral_mm": 0.11580687842155833,
+      "nut_lateral_mm": 0.1158770117882015,
+      "nut_body_yaw_deg": 134.5764791364684,
+      "native_points_retained_at_endpoint": true,
+      "native_callback_count_at_endpoint": 1
+    },
+    {
+      "step": 2986,
+      "body_depth_mm": 11.866969317197773,
+      "body_lateral_mm": 0.09126073456615635,
+      "nut_lateral_mm": 0.09956608184499402,
+      "nut_body_yaw_deg": -143.22658765372364,
+      "native_points_retained_at_endpoint": true,
+      "native_callback_count_at_endpoint": 1
+    }
+  ],
+  "motor_records": {
+    "f1j1": {
+      "samples": 2987,
+      "max_abs_transmission_effort_nm": 0.7809442144421475,
+      "any_elastic_boundary_exceeded": false,
+      "any_drive_saturation": false
+    },
+    "f1j2": {
+      "samples": 2987,
+      "max_abs_transmission_effort_nm": 3.316037684797495,
+      "any_elastic_boundary_exceeded": false,
+      "any_drive_saturation": false
+    },
+    "f2j1": {
+      "samples": 2987,
+      "max_abs_transmission_effort_nm": 3.2994435113245855,
+      "any_elastic_boundary_exceeded": false,
+      "any_drive_saturation": false
+    },
+    "f3j2": {
+      "samples": 2987,
+      "max_abs_transmission_effort_nm": 3.5998880644213935,
+      "any_elastic_boundary_exceeded": false,
+      "any_drive_saturation": false
+    }
+  },
+  "wall_timing": {
+    "local_run_and_closeout_s": 220.2278534270008,
+    "stepper": {
+      "command_and_sensor_s": 2.584165161650162,
+      "physics_step_s": 137.7206559056649,
+      "audit_and_record_s": 42.13216240343172,
+      "viewport_render_s": 0.0
+    },
+    "hand_mechanism": {
+      "read_before_s": 0.31459586595883593,
+      "fourbar_update_s": 1.6729801453766413,
+      "motor_solve_s": 0.6692429532995448,
+      "native_physics_s": 132.6494178029243,
+      "read_after_s": 1.1915750962216407,
+      "evidence_and_boundary_s": 1.139332237537019
+    },
+    "truth_capture": {
+      "contact_callback_s": 56.006483456352726,
+      "engine_and_body_s": 0.999192770163063,
+      "robot_poses_s": 3.132993806619197,
+      "contact_counts_s": 18.41501070454251,
+      "archive_append_s": 13.3214015342528
+    }
+  },
+  "limitations": [
+    "This cold-initialized local turn is not a continuous visual assembly episode.",
+    "Physical endpoint checks do not certify every intermediate source contact or key gap.",
+    "The full raw archive, video and controller records are retained for further review."
+  ]
+}

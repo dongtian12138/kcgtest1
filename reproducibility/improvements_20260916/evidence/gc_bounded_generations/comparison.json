@@ -1,0 +1,100 @@
+{
+  "default": {
+    "total_wall_s": 19.251487020985223,
+    "recording_process_cpu_s": 19.247367407,
+    "gc_wall_s_total": 6.9060196410282515,
+    "gc_generation_total_count": [
+      33087,
+      3007,
+      50
+    ],
+    "maximum_recording_rss_kib": 1800140,
+    "gc_collected_objects_by_generation": [
+      0,
+      0,
+      1
+    ],
+    "full_field_values_order_and_encoded_stream_identical": true,
+    "decoded_stream_sha256": "8ab78f171bc5ff8c1ff057789fd2f5ab8ec5395e50361b5d3a2dfa89db03d74c",
+    "old_gen2_sentinel_released_frames": [
+      2
+    ],
+    "lifetime_checks": [
+      {
+        "frame": 120,
+        "old_gen2_cycle_alive": false,
+        "live": 56,
+        "cached": 64
+      },
+      {
+        "frame": 128,
+        "old_gen2_cycle_alive": false,
+        "live": 64,
+        "cached": 64
+      },
+      {
+        "frame": 129,
+        "old_gen2_cycle_alive": false,
+        "live": 1,
+        "cached": 64
+      },
+      {
+        "frame": 256,
+        "old_gen2_cycle_alive": false,
+        "live": 64,
+        "cached": 64
+      }
+    ],
+    "maximum_retained_frames": 128
+  },
+  "bounded_128": {
+    "total_wall_s": 14.634114424989093,
+    "recording_process_cpu_s": 14.624758334000001,
+    "gc_wall_s_total": 1.8930942381266505,
+    "gc_generation_total_count": [
+      254,
+      0,
+      2
+    ],
+    "maximum_recording_rss_kib": 1800472,
+    "gc_collected_objects_by_generation": [
+      0,
+      0,
+      1
+    ],
+    "full_field_values_order_and_encoded_stream_identical": true,
+    "decoded_stream_sha256": "8ab78f171bc5ff8c1ff057789fd2f5ab8ec5395e50361b5d3a2dfa89db03d74c",
+    "old_gen2_sentinel_released_frames": [
+      128
+    ],
+    "lifetime_checks": [
+      {
+        "frame": 120,
+        "old_gen2_cycle_alive": true,
+        "live": 56,
+        "cached": 64
+      },
+      {
+        "frame": 128,
+        "old_gen2_cycle_alive": false,
+        "live": 64,
+        "cached": 64
+      },
+      {
+        "frame": 129,
+        "old_gen2_cycle_alive": false,
+        "live": 1,
+        "cached": 64
+      },
+      {
+        "frame": 256,
+        "old_gen2_cycle_alive": false,
+        "live": 64,
+        "cached": 64
+      }
+    ],
+    "maximum_retained_frames": 128
+  },
+  "scope": "BOUNDED_OFFLINE_REPLAY_WITH_GEN2_DEADLINE_NOT_A_PRODUCTION_INTEGRATION",
+  "production_gc_unchanged": true
+}

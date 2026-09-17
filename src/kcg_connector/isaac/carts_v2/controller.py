@@ -925,6 +925,94 @@ class JointSignalStepper:
         self, phase: str, arm_target: np.ndarray, hand_target: np.ndarray,
         *, pre_step_hook=None, arm_velocity_target=None, arm_load_compensation_nm=None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
+        if (not getattr(self, 'deferred_recording_gc_enabled', False)
+                or (self.recording_gc_audit['only_nut_phases']
+                    and not phase.startswith(('key_probe_nut', 'nut_index')))):
+            return self._advance_step(phase, arm_target, hand_target,
+                pre_step_hook=pre_step_hook, arm_velocity_target=arm_velocity_target,
+                arm_load_compensation_nm=arm_load_compensation_nm)
+        import gc
+        if not gc.isenabled():
+            self.recording_gc_audit['externally_disabled_calls'] += 1
+            return self._advance_step(phase, arm_target, hand_target,
+                pre_step_hook=pre_step_hook, arm_velocity_target=arm_velocity_target,
+                arm_load_compensation_nm=arm_load_compensation_nm)
+        first_step = self.step_index
+        primary_error = None
+        gc.disable()
+        try:
+            return self._advance_step(phase, arm_target, hand_target,
+                pre_step_hook=pre_step_hook, arm_velocity_target=arm_velocity_target,
+                arm_load_compensation_nm=arm_load_compensation_nm)
+        except BaseException as error:
+            primary_error = error
+            raise
+        finally:
+            try:
+                if self.step_index != first_step:
+                    self._collect_recording_garbage(
+                        2 if self.step_index % 128 == 0 else 0, 'frame_end', primary_error)
+            finally:
+                gc.enable()
+
+    def enable_deferred_recording_gc(self, *, only_nut_phases=False) -> None:
+        """Defer automatic GC within a frame; keep bounded old-generation cleanup."""
+        if self.step_index != 0:
+            raise ValueError('Recording GC policy must be chosen before the first physical step')
+        if type(only_nut_phases) is not bool:
+            raise ValueError('Recording GC phase selection requires a boolean')
+        self.deferred_recording_gc_enabled = True
+        self._recording_gc_finished = False
+        self.wall_times['recording_gc_s'] = 0.0
+        self.recording_gc_audit = {
+            'scope': 'PROCESS_LOCAL_RECORDING_GC_NOT_A_PHYSICS_OR_CONTROL_CHANGE',
+            'only_nut_phases': only_nut_phases,
+            'full_collection_interval_physical_steps': 128,
+            'collection_attempts_by_generation': [0, 0, 0],
+            'collected_objects_by_generation': [0, 0, 0],
+            'maximum_pause_s': 0.0, 'episode_end_collection_s': 0.0,
+            'externally_disabled_calls': 0, 'cleanup_errors': [],
+            'episode_end_collection_completed': False,
+            'timing_excludes_process_exit_and_still_referenced_object_destruction': True,
+        }
+
+    def _collect_recording_garbage(self, generation, boundary, primary_error=None):
+        import gc
+        started = perf_counter()
+        audit = self.recording_gc_audit
+        audit['collection_attempts_by_generation'][generation] += 1
+        try:
+            audit['collected_objects_by_generation'][generation] += gc.collect(generation)
+            if boundary == 'episode_end':
+                audit['episode_end_collection_completed'] = True
+        except Exception as error:
+            audit['cleanup_errors'].append({'step': self.step_index, 'boundary': boundary,
+                                            'error_type': type(error).__name__, 'error': str(error)})
+            if primary_error is None and self.abort_reason is None:
+                self.abort_reason = 'RECORDING_GC_CLEANUP_FAILED'
+        finally:
+            elapsed = perf_counter() - started
+            self.wall_times['recording_gc_s'] += elapsed
+            audit['maximum_pause_s'] = max(audit['maximum_pause_s'], elapsed)
+            if boundary == 'episode_end':
+                audit['episode_end_collection_s'] += elapsed
+
+    def finish_deferred_recording_gc(self, primary_error=None) -> None:
+        """Collect the non-periodic tail after ended motion, including aborted runs."""
+        if (not getattr(self, 'deferred_recording_gc_enabled', False)
+                or self._recording_gc_finished):
+            return
+        import gc
+        if gc.isenabled():
+            self._collect_recording_garbage(2, 'episode_end', primary_error)
+        else:
+            self.recording_gc_audit['episode_end_collection_skipped_external_gc_disabled'] = True
+        self._recording_gc_finished = True
+
+    def _advance_step(
+        self, phase: str, arm_target: np.ndarray, hand_target: np.ndarray,
+        *, pre_step_hook=None, arm_velocity_target=None, arm_load_compensation_nm=None,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
         if self.abort_reason is not None:
             return self.latest
         import os

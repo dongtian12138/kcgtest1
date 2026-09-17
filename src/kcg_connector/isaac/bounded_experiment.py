@@ -63,7 +63,12 @@ def main(argv):
     # for this measured dense-contact workload and finite evidence closeout;
     # this changes no motion, force, geometry, or physics limit and does not
     # extend a run that has already started.
-    ceiling=18000. if visual_assembly else 2400. if full_current_hand_turn else source_probe_ceiling if source_grip_probe else 600. if local_turn else 300.
+    # The 2026-09-17 candidate permits one more finite regrasp within the
+    # same360degree budget and compares articulation contact solve order.
+    # The measured near-seat9s source segment alone cost2102.68wall seconds.
+    # Allow an explicitly selected21600s complete-episode ceiling; defaults,
+    # local probes, all motion/force limits and the no-live-extension rule stay.
+    ceiling=21600. if visual_assembly else 2400. if full_current_hand_turn else source_probe_ceiling if source_grip_probe else 600. if local_turn else 300.
     if not 0<grace<limit<=ceiling:raise SystemExit(f'this experiment requires 0 < closeout reserve < total limit <= {ceiling:g} seconds')
     started=time.monotonic();env=os.environ.copy()
     env.update(KCG_BOUNDED_EXPERIMENT='1',KCG_EXPERIMENT_ACTION_DEADLINE=str(started+limit-grace))

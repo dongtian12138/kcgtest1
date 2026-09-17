@@ -89,6 +89,11 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         active_indices=active,arm_indices=arm_indices,arm_lower_limits=lower,arm_upper_limits=upper,
         settings=dynamic,render=False,robot_model=inputs.robot_model,
         payload_model=metadata['controller_outcome']['payload_compensation_model'])
+    if 'defer_recording_gc' in recipe:
+        if type(recipe['defer_recording_gc']) is not bool:
+            raise ValueError('The local recording GC comparison requires an explicit boolean')
+        if recipe['defer_recording_gc']:
+            stepper.enable_deferred_recording_gc()
     ft.stepper=stepper
     runtime={'world':world,'inputs':inputs,'scene':scene,'auditor':recorder,'robot_data':robot_data,
         'object_parts':parts,'nail_body_ft_auditor':ft,'body_assembly_control_config':str(assembly_path),
@@ -360,6 +365,9 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         if profiler is not None:
             profiler.disable();profiler.dump_stats(str(output/'python_controller.prof'))
         world.pause();recorder.samples.close()
+        stepper.finish_deferred_recording_gc(primary_error=result.get('error') or stepper.abort_reason)
+        if hasattr(stepper, 'recording_gc_audit'):
+            result['recording_gc_audit'] = dict(stepper.recording_gc_audit)
         # Preserve the first failure even when a zero-frame video cannot be
         # finalized. Encoding must not replace the physical/adapter error.
         (output/'source_stage_probe_result.json').write_text(json.dumps(_json_ready(result),indent=2)+'\n')

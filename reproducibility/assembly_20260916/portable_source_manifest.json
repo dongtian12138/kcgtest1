@@ -1,5 +1,5 @@
 {
-  "basis": "Current candidate: separate10ms measured-load feedforward, unchanged50ms protection/admittance and all original limits, owned immutable contact vectors and cached path roles. Immutable original baseline remains on assembly-baseline-20260916.",
+  "basis": "Candidate for new complete validation: unchanged geometry/materials/force/speed and2um band; separate10ms measured-load feedforward; articulation contacts solved last; lossless recording with bounded GC only in Nut phases; at most6grips within unchanged360degree budget. Original baseline stays immutable on assembly-baseline-20260916.",
   "sha256": {
     "src/iiwa_description/meshes/hand/collision/f1Link1_convex.stl": "71ac06e81fddbe7924c6272929d2cc16b6ee1a0987a6b2c9a7090335c03d06d4",
     "src/iiwa_description/meshes/hand/collision/f1Link2_convex.stl": "0120af92411f3258dede198f79628a214e578dc002df096eb81cc3b95d597313",
@@ -188,12 +188,12 @@
     "src/kcg_connector/isaac/audit_contact_polarity.py": "9ec64475055cc4afb90cc64ac178a1a8aefc566a29a893bec9ea98541dfb8828",
     "src/kcg_connector/isaac/audit_nut_grasp_cooked_fingers.py": "6f9691858b453660a21ff4165c9483cc8e3647b42f42108043678737e9dcd948",
     "src/kcg_connector/isaac/author_direct_nailfree_hand.py": "6a022ef03a4dba493546d5899227b6b8d4bfebd3ab23750172fc0edbd6d1edda",
-    "src/kcg_connector/isaac/bounded_experiment.py": "d4bf437aeb223704e7209467634137bfa4146f92d7e521ff027ad3fba5ff2315",
+    "src/kcg_connector/isaac/bounded_experiment.py": "4e1d03dad5ace388f5e9f291de33d6de2a82e4a256b61dcfcef3881b89a2fb7c",
     "src/kcg_connector/isaac/build_nailfree_hand_geometry.py": "775f90546b5c6f09891eab6f381672e69a6b3aae432199b4c475f45d7018c86c",
     "src/kcg_connector/isaac/build_te_free_split_plug.py": "fafdc22bc6e6420332e582e1e2e5038e22c909405b22fcbe80223994e5b4ec60",
     "src/kcg_connector/isaac/build_te_representative_inner_thread.py": "07ab738a9cc1b33a6c7b244834478bd92f8b3234a8320839fa031aa46a7db64f",
     "src/kcg_connector/isaac/build_te_split_lock_proxy.py": "8eaf5c5e5337de01dc3e947fb54efdd510c60bfd427e7497c545b28eddf52f6e",
-    "src/kcg_connector/isaac/carts_v2/controller.py": "be2039ba64225c76b33007ae73be4306992e1cbc416bbed09527f096a5a84bd1",
+    "src/kcg_connector/isaac/carts_v2/controller.py": "8cc38776e782109e0c10213bb4f8ccc3e5e88e39a2fe5269cefed8f621779b8a",
     "src/kcg_connector/isaac/carts_v2/disk_samples.py": "22cdc6bbd88ba2ddd16f4df21ed9d0f5d081058218731e4f972372f3994f9d84",
     "src/kcg_connector/isaac/carts_v2/engine_health.py": "cb370d9d6d82f7ff1c7a57acbe22a4beccd716ed5220a498e9e4d27197ae997a",
     "src/kcg_connector/isaac/carts_v2/evaluate_run.py": "261c6cd05d77643507f788e36c68f56f584ab87aa880ee5e30f99ed7f717b23d",
@@ -201,7 +201,7 @@
     "src/kcg_connector/isaac/carts_v2/finite_cad_search.py": "38e5d5a32c999b981aba95dc0bc138bea65c03f19cd7a36892340867f63af798",
     "src/kcg_connector/isaac/carts_v2/native_pose_audit.py": "88ce21a02525b4447c97ddec69db49b20cb9f5de5ca585c690532fd644c3e31c",
     "src/kcg_connector/isaac/carts_v2/render_finite_gdelta_evidence.py": "03c683dd70ed2091e16f29753cbb24d7e31310d20d3b73b4cb815b1121cf9f3b",
-    "src/kcg_connector/isaac/carts_v2/run_grasp_lift.py": "8d12cc7e55c615c5621a255ee2f654db648703cfc44c9099ad100c8f1c3a580a",
+    "src/kcg_connector/isaac/carts_v2/run_grasp_lift.py": "7724bb1c2e2f8a9a45634eb1e98348b17fbeb0d5c8fdd1e7e46975544f04d3ce",
     "src/kcg_connector/isaac/carts_v2/sample_store.py": "c7f3ebf233d20aff062b3700305df33d4106c065b0cff11c11d588365550223d",
     "src/kcg_connector/isaac/connector_tabletop_home_to_pregrasp_smoke.py": "be73f92354ba9dc08833ddcb8f8fefa52a7de7e21e42e1824cdf07d3026a5b61",
     "src/kcg_connector/isaac/connector_tabletop_pick_smoke.py": "365da9dbe58ee3ee149b2f28958d01be6b16b04247164b17fb24dcb07d909d03",
@@ -222,7 +222,7 @@
     "src/kcg_connector/isaac/diagnose_joint_drive_velocity_state.py": "79b4849aa374d7514393df852c754949443cf0aee9adc713a6a25f6293bf427a",
     "src/kcg_connector/isaac/diagnose_pin_bore_entry.py": "00976636a4a4171c78a467726e3e07b498ab15b63f8e7df4da376c8ba5846006",
     "src/kcg_connector/isaac/diagnose_radial_sector_band.py": "a66e0449730e365260f99fe0f60def93c519d0c029fa2b47f57a4e3aa42703a2",
-    "src/kcg_connector/isaac/diagnose_saved_hand_wrench.py": "f33901c79b5bd4e50fb89f40df5406afc173b34ec7ee802f4d908c3634216b2c",
+    "src/kcg_connector/isaac/diagnose_saved_hand_wrench.py": "42517141bd8aa82d3866ffc82ab2e693db3bca0da7703ddc0afe94997638f91d",
     "src/kcg_connector/isaac/diagnose_single_mating_contact.py": "9dbbb35bb7faa5b4d28d4af0c98e64122b6cf3da3b58d4653eb7f20f366be48f",
     "src/kcg_connector/isaac/estimate_rear_contact_array_yaw.py": "2cb60ab93563574d4796c016fcd159a0ef661cccfbe693e93d00e6675ef64330",
     "src/kcg_connector/isaac/evaluate_body_band_contacts.py": "c8ef9b3687223dabd736d3b6fe60c74e158f836eab8b8c00ff43f8921ca0f1d0",
@@ -273,7 +273,7 @@
     "src/kcg_connector/isaac/probe_source_finger_fourbar.py": "4443755f2340048a7a42b615c7762d2f2ed2b77294a9ecbffc7d9ca5701b1c51",
     "src/kcg_connector/isaac/probe_three_finger_torque_capacity.py": "655f744f9d6f05f6a2499c53779c4fb109ff7e763686f192ab30046605c46dae",
     "src/kcg_connector/isaac/robot_physics_smoke.py": "5d0249a6e2c9ae743d560beddfa50f41ff09eaa1c70e63c823a97cd424d4fa3e",
-    "src/kcg_connector/isaac/run_body_assembly_with_video.py": "3fec2357c4e4a7d78066203bd0d7567cea2e2b8852385ea002f54312b0e4db6f",
+    "src/kcg_connector/isaac/run_body_assembly_with_video.py": "86c400706a5badbe3de2245c2aec250a90418f1f1db57e721eda9434384123bf",
     "src/kcg_connector/isaac/run_isaac_python.sh": "cc7cdd243bb0341452d0910fc7a5969360313d2fd30f7495750532546b469c90",
     "src/kcg_connector/isaac/te_assembled_thread_load_probe.py": "40a6c80913af4858e4c8adb6224e28a7901c0c4d97d58da25bc6ec66106c97e1",
     "src/kcg_connector/isaac/te_body_assembly_motion.py": "8c4d749365aca0793a50aa835a2dac86a8a252508fae7a95f5a70d8c5bf64564",
@@ -325,7 +325,7 @@
     "src/kcg_connector/isaac/te_sam6d_depth_support_filter.py": "0f42a323202fcd3fd76f2e4d06894ac7537d3082fd8a3eb3aced525e2a6d5430",
     "src/kcg_connector/isaac/te_saved_nut_probe.py": "c216d508f0bbe9340556905413a7be65e87f08acf700fd91176e3fb13a430f12",
     "src/kcg_connector/isaac/te_source_pin_contact.py": "9d4f260ffedc71418e36e0787776ca93bc21da989dfbea9d55776f0487ca6ed0",
-    "src/kcg_connector/isaac/te_source_stage_probe.py": "1d4fdf9f1677a0727524e2e6a72de870a652d17c2ff809b7e11d6945a11edc10",
+    "src/kcg_connector/isaac/te_source_stage_probe.py": "2c7e07c2f76122d52ef4d950b011656f20c1e0d535e63171df0bdb899edf6b7d",
     "src/kcg_connector/isaac/te_split_lock_increment.py": "445d57315c479ed637f86119dbbc3fba751a8423fa3af6139d449c61ee005203",
     "src/kcg_connector/isaac/te_three_finger_wrench_observer.py": "000bb93eba5d31d7484c469c52618d3e14ca2f699df3b4f755a761aeb2bc3fd4",
     "src/kcg_connector/isaac/te_transport_grasp_target_offline.py": "d308394044e4bdf9cb433ee2f423d52ed44617514db744d213822c1ec32484a8",
@@ -465,7 +465,13 @@
     "reproducibility/improvements_20260916/config/initial_load10ms_recipe.json": "b13f6f9275b569f3e0024b03539d77ee95c7ca5e1f851549ef9b555c36395ddc",
     "reproducibility/improvements_20260916/config/visual_load10ms_task.yaml": "978e9b16a3ba4eb750c452fcd22e7ce864be8c5fb18d4e4bb3e9470d73cecd31",
     "reproducibility/improvements_20260916/config/late_load10ms_recipe.json": "b1972be919453bf7fe2dd014c00534de95873b8a6982bbcfb29854e927adbbda",
-    "reproducibility/assembly_20260916/key_backlash_dimensions.json": "aa09cd6133f4a54cc3aca731e9c723826d67432eea43325dde8a24e7024e6dc0"
+    "reproducibility/assembly_20260916/key_backlash_dimensions.json": "aa09cd6133f4a54cc3aca731e9c723826d67432eea43325dde8a24e7024e6dc0",
+    "reproducibility/improvements_20260916/config/visual_contact_last_gc128_task.yaml": "93195cece50fe40cbf30cbf80578733ac0359dd82b4d1e1c0fb12b39c18486e4",
+    "src/kcg_connector/test/test_recording_gc_lifecycle.py": "16d9d3682f19be012e11bac4dc5202fd2ce7c9e869cdf5aaeb8c12e40ab1392b",
+    "reproducibility/assembly_20260916/assembly_command.json": "7b9f87cef6a810343a1520548b94b840b2798efc66b51ea0d40fd0d21ff0f84f",
+    "scripts/run_current_hand_assembly.py": "3498bd4ca4fa274e92aa1b96783cbd1f09b6bbeab520cedf68906c8a8d5f871a",
+    "reproducibility/improvements_20260916/pose_variation_candidate_command.json": "5457bbd09ed6a82cc3dda6da154fd002586c1bfec57a3cc78d6308316fee5c58",
+    "reproducibility/improvements_20260916/config/visual_body_finite_pose_variation.yaml": "6f7b389587f7a8e351f80eb84746e9c6e27824aa35c8d9e65dbafcc60e217412"
   },
-  "configuration_id": "load10ms_native_lossless_tuple_cpu960_64_4"
+  "configuration_id": "load10ms_contact_last_gc128_nut_cpu960_64_4_six_grips"
 }

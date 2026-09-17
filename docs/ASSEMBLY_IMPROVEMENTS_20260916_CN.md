@@ -1,6 +1,6 @@
 # 连接器装配：补偿修正、记录提速与重复验证
 
-当前状态（2026-09-17）：保存版已上传，局部控制、记录和键槽对照已经完成。第一次完整改进版运行停在14.582080mm，尚差22.919904µm，原止挡未承载；第三键最大穿入2.475998µm，原2µm检查未通过。**尚未获得一次完整通过的改进版重复。** 详见[首次完整核验与两个阻塞](ASSEMBLY_FIRST_COMPLETE_REVIEW_20260917_CN.md)。原完整14的机械装配与原2µm数值失败都保留。
+当前状态（2026-09-17）：保存版已上传，局部控制、记录和键槽对照已经完成。新的接触求解顺序和记录调度候选已准备，详见[当前候选及验证边界](ASSEMBLY_CONTACT_ORDER_AND_RECORDING_20260917_CN.md)。第一次完整改进版运行停在14.582080mm，尚差22.919904µm，原止挡未承载；第三键最大穿入2.475998µm，原2µm检查未通过。**尚未获得一次完整通过的改进版重复。** 详见[首次完整核验与两个阻塞](ASSEMBLY_FIRST_COMPLETE_REVIEW_20260917_CN.md)。原完整14的机械装配与原2µm数值失败都保留。
 
 ## 已定位并实际改善的控制问题
 
@@ -60,7 +60,7 @@ python3 scripts/run_current_hand_assembly.py --check
 python3 scripts/run_current_hand_assembly.py --run --gui
 ```
 
-无窗口录像用`--run`；每次先新预检，再完整动作，并创建新的结果目录。运行中可在另一个终端用 `tail -f <本次结果目录>/assembly.log` 查看当前动作阶段、仿真时间和停止信息。三个环境、SAM上游权重和保存版资产准备方式见[环境与保存版说明](REPRODUCE_CURRENT_HAND_ASSEMBLY_CN.md)。跨机器从零安装环境尚未验证，GUI完整重跑也尚未验证。默认命令明确绑定本分支的`load10ms_native_lossless_tuple_cpu960_64_4`配方。
+无窗口录像用`--run`；每次先新预检，再完整动作，并创建新的结果目录。运行中可在另一个终端用 `tail -f <本次结果目录>/assembly.log` 查看当前动作阶段、仿真时间和停止信息。三个环境、SAM上游权重和保存版资产准备方式见[环境与保存版说明](REPRODUCE_CURRENT_HAND_ASSEMBLY_CN.md)。跨机器从零安装环境尚未验证，GUI完整重跑也尚未验证。默认命令现绑定`load10ms_contact_last_gc128_nut_cpu960_64_4_six_grips`；先前`load10ms_native_lossless_tuple_cpu960_64_4`配置和失败完整回合仍保留。
 
 原保存版：[分支](https://github.com/dongtian12138/kcgtest1/tree/codex/connector-assembly-baseline-20260916)；[资产与原完整视频](https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-baseline-20260916)。原成功版不因本分支的改动而丢失。
 

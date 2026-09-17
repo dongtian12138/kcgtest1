@@ -1,0 +1,92 @@
+{
+  "scope": "MATCHED_481_STEP_DENSE_PHYSICAL_GC_EQUIVALENCE_AND_TIMING",
+  "reference_run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/local_tracking/tuple_loaded_hold",
+  "candidate_run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/local_tracking/dense_gc_prefix",
+  "all_uncompressed_messagepack_fields_order_and_bytes_equal": true,
+  "uncompressed_stream": {
+    "bytes": 1421146150,
+    "sha256": "6f9fb4799734d3789764b2efaecee65592fec49569c40627072b366715e6fae0"
+  },
+  "recorded_physical_steps_each": 481,
+  "reference_stop": "DIAGNOSTIC_STEP_BUDGET_REACHED",
+  "candidate_stop": "DIAGNOSTIC_STEP_BUDGET_REACHED",
+  "reference_stepper_all_components_s": 72.58576101600192,
+  "candidate_stepper_all_components_including_gc_s": 60.44299073721049,
+  "observed_stepper_reduction_percent": 16.72885991525871,
+  "reference_wall_timing": {
+    "local_run_and_closeout_s": 94.0297288010479,
+    "stepper": {
+      "command_and_sensor_s": 0.37025046261260286,
+      "physics_step_s": 55.18009025231004,
+      "audit_and_record_s": 17.035420301079284,
+      "viewport_render_s": 0.0
+    },
+    "hand_mechanism": {
+      "read_before_s": 0.05673286091769114,
+      "fourbar_update_s": 0.26460744661744684,
+      "motor_solve_s": 0.11408043088158593,
+      "native_physics_s": 54.35499521123711,
+      "read_after_s": 0.1953320715110749,
+      "evidence_and_boundary_s": 0.18037903576623648
+    },
+    "truth_capture": {
+      "contact_callback_s": 32.30129668733571,
+      "engine_and_body_s": 0.16076034668367356,
+      "robot_poses_s": 0.5004849210381508,
+      "contact_counts_s": 8.296906407107599,
+      "archive_append_s": 6.938856541411951
+    }
+  },
+  "candidate_wall_timing": {
+    "local_run_and_closeout_s": 81.90921714500291,
+    "stepper": {
+      "command_and_sensor_s": 0.39952870656270534,
+      "physics_step_s": 44.39903248252813,
+      "audit_and_record_s": 12.355565625126474,
+      "viewport_render_s": 0.0,
+      "recording_gc_s": 3.288863922993187
+    },
+    "hand_mechanism": {
+      "read_before_s": 0.057850764656905085,
+      "fourbar_update_s": 0.27081079786876217,
+      "motor_solve_s": 0.11589732172433287,
+      "native_physics_s": 43.56024633249035,
+      "read_after_s": 0.19946385809453204,
+      "evidence_and_boundary_s": 0.18105317756999284
+    },
+    "truth_capture": {
+      "contact_callback_s": 22.06216097070137,
+      "engine_and_body_s": 0.16353451315080747,
+      "robot_poses_s": 0.502544075192418,
+      "contact_counts_s": 3.651786866830662,
+      "archive_append_s": 6.901719431974925
+    }
+  },
+  "candidate_gc": {
+    "scope": "PROCESS_LOCAL_RECORDING_GC_NOT_A_PHYSICS_OR_CONTROL_CHANGE",
+    "only_nut_phases": false,
+    "full_collection_interval_physical_steps": 128,
+    "collection_attempts_by_generation": [
+      478,
+      0,
+      4
+    ],
+    "collected_objects_by_generation": [
+      160,
+      0,
+      111
+    ],
+    "maximum_pause_s": 0.6333716679946519,
+    "episode_end_collection_s": 0.3456588349654339,
+    "externally_disabled_calls": 0,
+    "cleanup_errors": [],
+    "episode_end_collection_completed": true,
+    "timing_excludes_process_exit_and_still_referenced_object_destruction": true
+  },
+  "limitations": [
+    "One dense0.501s physical window, not whole-episode speedup.",
+    "The reference is an earlier completed matching physical window, not a paired same-minute timing trial.",
+    "Includes scheduled frame/end GC in the candidate; process-exit resource destruction is outside these stepper components.",
+    "The candidate ends by the same explicit481step diagnostic budget, not by assembly success."
+  ]
+}

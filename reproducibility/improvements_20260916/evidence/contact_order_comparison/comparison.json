@@ -1,0 +1,53 @@
+{
+  "scope": "ONE_MATCHED_COLD_SOURCE_STATE_CONTACT_ORDER_COMPARISON",
+  "source_complete_run": "load10ms_repeat01",
+  "source_step": 238926,
+  "only_physics_variable_changed": "solve_articulation_contact_last false->true",
+  "physics_hz_position_velocity": [
+    960,
+    64,
+    4
+  ],
+  "load_compensation_filter_s": 0.01,
+  "results": {
+    "default": {
+      "commanded_rotation_deg": 82.74402768192074,
+      "actual_nut_relative_rotation_deg": 82.19693320980798,
+      "body_advance_mm": 1.8891990184783936,
+      "maximum_virtual_pivot_xy_error_mm": 0.2736718357052531,
+      "normal_stop": {
+        "step": 2987,
+        "filtered_interface_wrench_n_nm": [
+          -18.384410558088504,
+          31.152523446652097,
+          82.61803988272888,
+          0.12068296099107709,
+          0.23982069859324717,
+          0.8483373049508542
+        ],
+        "wrench_origin": "CURRENT_ENCODER_PIVOT_SAME_AS_HARD_WRIST_BOUND",
+        "force_n": 90.18983746923344,
+        "threshold_n": 90.0,
+        "last_applied_rotation_deg": 82.74402768192074,
+        "all_original_force_and_transmission_limits_retained": true
+      },
+      "outer_abort": null,
+      "maximum_key_penetration_um": 1.714075812943805,
+      "key_2um_pass": true
+    },
+    "contact_last": {
+      "commanded_rotation_deg": 89.99999997355123,
+      "actual_nut_relative_rotation_deg": 90.58316439634893,
+      "body_advance_mm": 2.0503997802734375,
+      "maximum_virtual_pivot_xy_error_mm": 0.4041057008860688,
+      "normal_stop": null,
+      "outer_abort": null,
+      "maximum_key_penetration_um": 1.4598237886925824,
+      "key_2um_pass": true
+    }
+  },
+  "candidate_selected_for_complete_validation": true,
+  "cold_baseline_did_not_reproduce_full_run_2p476um_breach": true,
+  "max_wrist_virtual_pivot_error_not_improved": true,
+  "whole_run_success_or_numerical_fix_claimed": false
+}

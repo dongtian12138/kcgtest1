@@ -1,0 +1,18 @@
+{
+  "configuration_id": "load10ms_contact_last_gc128_nut_cpu960_64_4_six_grips",
+  "prepared_at_utc": "2026-09-17T02:23:08.969791+00:00",
+  "baseline_preserved_commit": "d64fa4a0a1a394bc800f96191d23aecc3bdad45c",
+  "previous_complete_candidate_commit": "c95785ca3d81798146ef7b464c86b840c722f3ab",
+  "selected_command": "reproducibility/improvements_20260916/contact_last_gc128_candidate_command.json",
+  "selected_config": "reproducibility/improvements_20260916/config/visual_contact_last_gc128_task.yaml",
+  "status": "PREPARED_REQUIRES_FRESH_PREFLIGHT_AND_COMPLETE_EPISODE",
+  "new_nominal_passes": 0,
+  "finite_pose_variation_passes": 0,
+  "key_band_um_unchanged": 2.0,
+  "maximum_total_command_deg_unchanged": 360.0,
+  "maximum_total_grips": 6,
+  "increased_grasp_force_or_motor_limit": false,
+  "contact_order_local_evidence": "reproducibility/improvements_20260916/evidence/contact_order_comparison/comparison.json",
+  "recording_physical_evidence": "reproducibility/improvements_20260916/evidence/gc_bounded_generations/dense_physical_prefix_comparison.json",
+  "seating_shortfall_cold_probe_not_used_as_causal_success_evidence": true
+}

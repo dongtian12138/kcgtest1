@@ -1,0 +1,89 @@
+{
+  "scope": "ENDED_MATCHED_PHYSICAL_RECORDING_PREFIX_EQUIVALENCE",
+  "reference_run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/local_tracking/repeat01_third_solver_order_contact_last",
+  "candidate_run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/local_tracking/third_contact_last_gc_prefix",
+  "raw_interval_half_open": [
+    0,
+    481
+  ],
+  "reference": {
+    "bytes": 38759566,
+    "sha256": "e3c526af6d6bd60eb30346ca9a58a587ba143481fbce5bb08d5cf27e6348babf",
+    "block_prefix_hashes": [
+      "1df7aab1afacc4c543ad59ac31828bc4fd1d9f624adce0775d985be010ac70e8",
+      "54082cdb5059c636a815eede30c1dd8ae20c5a2bfa069683239ad24690ceffc8",
+      "0cf502cc97fce4fcd284c11165e08f18e40e06584d96cb5df6e439ad254dc669",
+      "53ac9ff29fa8c9f745243be145baa808c9ce82bc59f314a15dc9f9118ea062bf",
+      "a6373efec6d3970e598753a847d02e99b1de5a0a8fc8569636df14401f2b886b",
+      "3e65f3365d12a2781938da77fcf76c5c70676b200c17d493b05d6ffb6002ea36",
+      "7051fbd88b8e20328bd8c1373bf774f848c44731854ec72eca4e7483e392d22b",
+      "83fe23aea74ff944faff551d396f06fd6c951e9746f4f001a975931bd68b248a"
+    ]
+  },
+  "candidate": {
+    "bytes": 38759566,
+    "sha256": "e3c526af6d6bd60eb30346ca9a58a587ba143481fbce5bb08d5cf27e6348babf",
+    "block_prefix_hashes": [
+      "1df7aab1afacc4c543ad59ac31828bc4fd1d9f624adce0775d985be010ac70e8",
+      "54082cdb5059c636a815eede30c1dd8ae20c5a2bfa069683239ad24690ceffc8",
+      "0cf502cc97fce4fcd284c11165e08f18e40e06584d96cb5df6e439ad254dc669",
+      "53ac9ff29fa8c9f745243be145baa808c9ce82bc59f314a15dc9f9118ea062bf",
+      "a6373efec6d3970e598753a847d02e99b1de5a0a8fc8569636df14401f2b886b",
+      "3e65f3365d12a2781938da77fcf76c5c70676b200c17d493b05d6ffb6002ea36",
+      "7051fbd88b8e20328bd8c1373bf774f848c44731854ec72eca4e7483e392d22b",
+      "83fe23aea74ff944faff551d396f06fd6c951e9746f4f001a975931bd68b248a"
+    ]
+  },
+  "entire_uncompressed_messagepack_prefix_identical": true,
+  "comparison_wall_s": 0.2088102709967643,
+  "all_fields_points_order_and_original_stop_inputs_included": true,
+  "candidate_recording_gc_audit": {
+    "scope": "PROCESS_LOCAL_RECORDING_GC_NOT_A_PHYSICS_OR_CONTROL_CHANGE",
+    "full_collection_interval_physical_steps": 128,
+    "collection_attempts_by_generation": [
+      478,
+      0,
+      4
+    ],
+    "collected_objects_by_generation": [
+      160,
+      0,
+      111
+    ],
+    "maximum_pause_s": 0.23383041901979595,
+    "episode_end_collection_s": 0.23383041901979595,
+    "externally_disabled_calls": 0,
+    "cleanup_errors": [],
+    "episode_end_collection_completed": true,
+    "timing_excludes_process_exit_and_still_referenced_object_destruction": true
+  },
+  "candidate_wall_timing": {
+    "local_run_and_closeout_s": 33.491555885004345,
+    "stepper": {
+      "command_and_sensor_s": 0.3511196100153029,
+      "physics_step_s": 9.772931314248126,
+      "audit_and_record_s": 2.100406182173174,
+      "viewport_render_s": 0.0,
+      "recording_gc_s": 0.9136745447758585
+    },
+    "hand_mechanism": {
+      "read_before_s": 0.044990564114414155,
+      "fourbar_update_s": 0.22811642731539905,
+      "motor_solve_s": 0.10258724889717996,
+      "native_physics_s": 9.014327237266116,
+      "read_after_s": 0.18942822108510882,
+      "evidence_and_boundary_s": 0.1804778851219453
+    },
+    "truth_capture": {
+      "contact_callback_s": 0.6600566321867518,
+      "engine_and_body_s": 0.15828432369744405,
+      "robot_poses_s": 0.5070972120156512,
+      "contact_counts_s": 0.10918508854229003,
+      "archive_append_s": 0.2505532775539905
+    }
+  },
+  "reference_wall_timing_covers_full_turn_not_a_matched_timing_baseline": true,
+  "whole_episode_speedup_not_measured_here": true,
+  "candidate_stop_reason": "DIAGNOSTIC_STEP_BUDGET_REACHED",
+  "physical_assembly_success_claimed": false
+}

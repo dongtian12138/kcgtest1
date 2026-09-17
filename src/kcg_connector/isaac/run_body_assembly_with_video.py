@@ -44,11 +44,20 @@ def recorded_controller(runtime, arguments, motion_plan, dynamic):
     class RecordedStepper(original_stepper):
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
+            recording_state['stepper'] = self
+            recording_state['runtime'] = runtime
+            recording_state['output'] = output
+            if runtime.get('body_assembly_control_config'):
+                import yaml
+                config = yaml.safe_load((repository / runtime['body_assembly_control_config']).read_text())
+                deferred_gc = config.get('recording', {}).get('defer_gc_during_nut_phases', False)
+                if type(deferred_gc) is not bool:
+                    raise ValueError('The recording GC option requires a Boolean')
+                if deferred_gc:
+                    self.enable_deferred_recording_gc(only_nut_phases=True)
             world, robot = kwargs["world"], kwargs["robot"]
             before_time = float(world.current_time)
             before_joint = runner._host_array(robot.get_dof_positions()).copy()
-            recording_state["runtime"] = runtime
-            recording_state["output"] = output
             runtime["body_assembly_video"] = BodyAssemblyVideo(
                 repository, runtime, output / "video", float(dynamic["physics_dt_s"]),
                 fps=video_options.assembly_video_fps)
@@ -71,8 +80,18 @@ def recorded_controller(runtime, arguments, motion_plan, dynamic):
 def finalize_recording():
     runtime = recording_state.get("runtime", {})
     raw_archive=runtime.get("truth_stream")
-    if raw_archive is not None and not raw_archive.closed:
-        raw_archive.close()
+    primary_error = sys.exc_info()[1]
+    try:
+        if raw_archive is not None and not raw_archive.closed:
+            raw_archive.close()
+    finally:
+        stepper = recording_state.get('stepper')
+        if stepper is not None:
+            stepper.finish_deferred_recording_gc(primary_error=primary_error or sys.exc_info()[1])
+            if hasattr(stepper, 'recording_gc_audit'):
+                runtime['recording_gc_audit'] = dict(stepper.recording_gc_audit)
+                (recording_state['output'] / 'recording_gc_audit.json').write_text(
+                    json.dumps(runtime['recording_gc_audit'], indent=2)+'\n')
     recorder = runtime.pop("body_assembly_video", None)
     if recorder is not None:
         video = recorder.close()

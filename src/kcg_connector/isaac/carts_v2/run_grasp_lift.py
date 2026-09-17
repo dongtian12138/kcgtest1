@@ -9281,6 +9281,20 @@ def _create_runtime(
                 "before": before_flag, "requested": flag, "observed": attribute.Get(),
                 "scope": "PRE_RESET_TGS_NUMERICAL_SETTING_NOT_FORCE_LIMIT_CHANGE",
             }
+        if "solve_articulation_contact_last" in numerical:
+            flag = numerical["solve_articulation_contact_last"]
+            if type(flag) is not bool:
+                raise ValueError("articulation contact solve order must be Boolean")
+            attribute = physics_scene_api.GetSolveArticulationContactLastAttr()
+            before_flag = attribute.Get()
+            physics_scene_api.CreateSolveArticulationContactLastAttr(flag)
+            if attribute.Get() is not flag:
+                raise RuntimeError("articulation contact solve order did not read back")
+            trace["physics_contact_solver_order_audit"] = {
+                "before": before_flag, "requested": flag, "usd_readback": attribute.Get(),
+                "scope": "PRE_RESET_CONTACT_SOLVER_ORDER_REQUIRES_NEW_WHOLE_EPISODE_VALIDATION",
+                "source_geometry_mass_materials_and_force_limits_changed": False,
+            }
         if "velocity_iterations" in numerical:
             value = numerical["velocity_iterations"]
             if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 255:
@@ -9634,6 +9648,11 @@ def _create_runtime(
     }
     context.set_gravity(float(scene["gravity_m_s2"]))
     world.reset()
+    if 'physics_contact_solver_order_audit' in trace:
+        order_audit = trace['physics_contact_solver_order_audit']
+        order_audit['usd_readback_after_reset'] = physics_scene_api.GetSolveArticulationContactLastAttr().Get()
+        if order_audit['usd_readback_after_reset'] is not order_audit['requested']:
+            raise RuntimeError('Articulation contact solve order changed during model initialization')
     if mechanism_setup is not None:
         # A read-only FT view after reset must not reinitialize the new hand.
         ft_articulation=SingleArticulation(prim_path=ARTICULATION_PATH,
@@ -11034,9 +11053,14 @@ def _execute(
                     # Seal the movie and measured timings while physical
                     # motion is finished, before any long offline review.
                     if runtime.get('finalize_motion_evidence'):
+                        evidence_closeout_started = perf_counter()
                         runtime['finalize_motion_evidence']()
+                        runtime['wall_timing']['motion_evidence_closeout_s'] = perf_counter() - evidence_closeout_started
+                    if runtime.get('recording_gc_audit') is not None:
+                        trace['recording_gc_audit'] = runtime['recording_gc_audit']
                     (output/'motion_timing.json').write_text(json.dumps({
                         'execution_through_transport_s':runtime['wall_timing']['execution_through_transport_s'],
+                        'motion_evidence_closeout_s':runtime['wall_timing'].get('motion_evidence_closeout_s', 0.),
                         'stepper':dict(stepper.wall_times,physical_step_count=stepper.step_index),
                         'hand_mechanism':dict(getattr(getattr(runtime['world'],'hand_mechanism',None),'wall_times',{})),
                         'truth_capture':dict(getattr(runtime['auditor'],'capture_wall_times',{}))},indent=2)+'\n')

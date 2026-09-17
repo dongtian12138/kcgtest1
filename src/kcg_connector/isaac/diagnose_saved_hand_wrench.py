@@ -236,6 +236,14 @@ if source_stage_recipe is not None:
         source_probe_rotation_degrees(source_stage_recipe)
     except (TypeError, ValueError) as error:
         parser.error(str(error))
+    if 'solve_articulation_contact_last' in source_stage_recipe:
+        if (type(source_stage_recipe['solve_articulation_contact_last']) is not bool
+                or args.frozen_connector_model is None or args.physics_device != 'cpu'
+                or args.solver_type != 'TGS' or not args.external_forces_every_iteration
+                or (args.physics_hz, args.position_iterations, args.velocity_iterations) != (960, 64, 4)
+                or args.experimental_connector_position_convergence
+                or args.experimental_connector_time_resolution or args.experimental_connector_gpu_comparison):
+            parser.error('Contact-order comparison requires an explicit boolean and the unchanged frozen-connector CPU TGS 960/64/4 source-stage setup')
 finger_mechanism_document=None
 if args.finger_mechanism is not None:
     args.finger_mechanism=args.finger_mechanism.resolve()
@@ -1124,9 +1132,43 @@ try:
             'geometry_material_mass_inertia_effort_limits_changed':False,
             'source_model_file_changed':False,'original_key_review_tolerance_um':2.,
             'requires_new_physical_review':True},indent=2)+'\n')
+    contact_order_audit = None
+    if source_stage_recipe is not None and 'solve_articulation_contact_last' in source_stage_recipe:
+        requested_order = source_stage_recipe['solve_articulation_contact_last']
+        previous_order = scene.GetSolveArticulationContactLastAttr().Get()
+        scene.CreateSolveArticulationContactLastAttr(requested_order)
+        if scene.GetSolveArticulationContactLastAttr().Get() != requested_order:
+            raise RuntimeError('The explicit articulation contact solve order was not authored')
+        contact_order_audit = {
+            'scope': 'LOCAL_PRE_RESET_CONTACT_SOLVER_ORDER_COMPARISON',
+            'scene_path': str(scene.GetPrim().GetPath()), 'before': previous_order,
+            'requested': requested_order, 'usd_readback_before_reset': scene.GetSolveArticulationContactLastAttr().Get(),
+            'requested_solver_hz_position_velocity': [args.solver_type, args.physics_hz, args.position_iterations, args.velocity_iterations],
+            'scene_position_iteration_min_max': [scene.GetMinPositionIterationCountAttr().Get(), scene.GetMaxPositionIterationCountAttr().Get()],
+            'scene_velocity_iteration_min_max': [scene.GetMinVelocityIterationCountAttr().Get(), scene.GetMaxVelocityIterationCountAttr().Get()],
+            'geometry_material_mass_inertia_effort_limits_changed': False,
+            'source_model_file_changed': False, 'key_review_tolerance_um_unchanged': 2.,
+            'validation_transfer_from_original_solver_claimed': False,
+            'documentation': 'https://docs.omniverse.nvidia.com/kit/docs/omni_physics/110.0/dev_guide/guides/articulation_stability_guide.html#articulation-solver-order',
+        }
     print(json.dumps({'stage':'begin_physics_reset','wall_seconds':time.monotonic()-diagnostic_started,
                       'device':args.physics_device}),flush=True)
     world.reset();world.pause()
+    if contact_order_audit is not None:
+        contact_order_audit['usd_readback_after_reset'] = scene.GetSolveArticulationContactLastAttr().Get()
+        if contact_order_audit['usd_readback_after_reset'] != contact_order_audit['requested']:
+            raise RuntimeError('Articulation contact solve order changed during reset')
+        contact_order_audit['actor_solver_iterations'] = []
+        for prim in stage.Traverse():
+            for schema in (PhysxSchema.PhysxRigidBodyAPI, PhysxSchema.PhysxArticulationAPI):
+                if prim.HasAPI(schema):
+                    api = schema(prim)
+                    contact_order_audit['actor_solver_iterations'].append({
+                        'path': str(prim.GetPath()), 'schema': schema.__name__,
+                        'position': api.GetSolverPositionIterationCountAttr().Get(),
+                        'velocity': api.GetSolverVelocityIterationCountAttr().Get(),
+                    })
+        (args.output/'contact_order_comparison.json').write_text(json.dumps(contact_order_audit, indent=2)+'\n')
     print(json.dumps({'stage':'physics_reset_complete','wall_seconds':time.monotonic()-diagnostic_started}),flush=True)
     if args.physics_device=='cpu' and args.frozen_connector_model is not None:
         import carb.logging
