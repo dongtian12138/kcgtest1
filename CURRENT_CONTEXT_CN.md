@@ -1,10 +1,10 @@
 # 当前任务：用户截图四项工作的最终交付
 
-核验时间：2026-09-17T12:39:09.344999+00:00。两次名义完整装配均已 VERIFIED；随后 1 mm/1° 初始位姿变化已执行，在初始抓取接触阶段停止。无主要物理进程，session40317/cell198 已结束。现在仅补独立失败审查、发布第二轮与变化案例视频/证据、核对 GitHub 交付；不得再按旧“运行中”等待，也不自动重跑四小时整场。
+核验时间：2026-09-17T12:50:13.995959+00:00。本轮截图四项的实验、复核与交付已完成：两次名义完整装配 VERIFIED；一例 1 mm/1° 初始位姿变化在初始抓取停止。不是全部问题已解决：总体计算仍慢、变化抓取不稳定、唯一接触瞬态原因未定。当前没有主要物理进程或待等待会话，独立审查已结束；新 Release 六附件公开且 SHA 全匹配。
 
 ## 当前有效验收与结果
 
-- 活动树 `/home/noob/WorkPlace/kcgtest1-improvements-20260916`，分支 `codex/connector-assembly-improvements-20260916`。生产源码 HEAD ab129ee333b573dda98c9582d947b506f5e1ea74 已推送。其后仅本次文档/证据更新，未改控制、物理、力速或源几何。原树 `/home/noob/WorkPlace/kcgtest1` 的原脏资产保留，仅镜像本上下文。
+- 活动树 `/home/noob/WorkPlace/kcgtest1-improvements-20260916`，分支 `codex/connector-assembly-improvements-20260916`。生产代码与 ab129ee333b573dda98c9582d947b506f5e1ea74 一致。冻结交付标签 assembly-repeatability-20260917 对应4b9ce0f7a20002dbf1b8f39d4931dad5cba909ce，已推送并公开；之后只追加发布确认和当前状态。此次仅本次文档/证据更新，未改控制、物理、力速或源几何。原树 `/home/noob/WorkPlace/kcgtest1` 的原脏资产保留，仅镜像本上下文。
 - 第一次完整成功：`artifacts/full_validation/contact_last_gc128_repeat01_restart01/run`，实际执行25a0d6f。294560帧/25520469055字节。Body深度14.604580849409077 mm，最差键1.848419870833 µm，原2 µm通过。2880帧完整3秒手原始冲量精确0，原止挡每帧8组，同一套128簧套逐帧承载，Body/Nut均醒着，后备轴向全流最大.516563319 mm<.5999 mm。
 - 第二次完整成功：`artifacts/full_validation/contact_last_gc128_repeat02/run`，实际执行baf6d4f。295421帧/26530655597字节。Body14.60440203547475 mm，最差键1.866570825613 µm，原2 µm通过。完全张手[292541,295421)2880帧手原始冲量精确0，原止挡每帧9–11组，同128簧套承载且醒着；后备轴向全流.511467930 mm<.5999 mm。两轮实际末段图均已看，源指甲/指腹与视觉检查通过，whole VERIFIED。
 - 两轮legacy通用拾取评分与主程序退出码2原样保留，专用实际验收通过；不能声称每个JSON全PASS。baf比25a仅修记录收尾异常，物理/控制一致。
@@ -20,11 +20,11 @@
 - 实际整场仍慢：运动242.88/245.65分钟，主程序关闭前261.95/265.17分钟。不同接触轨迹不能作为整场速度AB结论。
 - 独立代理 `/root/independent_final_guard_audit` 是用户明确授权的现有只读复核，勿另起新代理。本次变化末段和名义对应有界窗口审查已完成，实际输出 `artifacts/control_review/pose_variation_early_abort/independent_*`。此前控制/指节/末3秒审查均已完成，随版evidence保留。
 
-## 当前交付状态与收尾
+## 已完成交付与继续工作入口
 
 - 原基线树 `/home/noob/WorkPlace/kcgtest1-baseline-20260916`，分支codex/connector-assembly-baseline-20260916，d64fa4a；Release `assembly-baseline-20260916`：121458865字节/297资产，旧291.4秒视频，旧键2.147659 µm失败保留。
 - 首次完整通过 Release `assembly-first-verified-20260917` 已公开且4附件GitHub SHA匹配，tag baf6d4f，实际执行25a。干净下载目录已校验471 Git+297资产=768项，固定SAM源码补丁/4权重，ROS构建及nominal/variation --check通过，复用本机环境，不算额外物理重复。
-- 正准备 Release `assembly-repeatability-20260917`，文件在 `artifacts/deliveries/assembly-repeatability-20260917/`：第二轮307.8秒完整视频、22.8秒连续末段、变化15.4秒提前停止录像、变化原始档69.7 MB、中文notes。独立报告和161项small evidence打包已完成，还需提交本次文档/证据、推送分支/标签和上传核对附件。未经这些实际完成不得说新Release已公开。
+- Release `assembly-repeatability-20260917` 已公开：https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-repeatability-20260917 。标签4b9ce0f；六附件：第二轮307.8秒完整视频、22.8秒连续末段、变化15.4秒提前停止录像、161项small evidence包、变化原始档69.7 MB、SHA单。GitHub字节数和SHA逐项与本机完全匹配，确认记录 `reproducibility/improvements_20260916/repeatability_published_asset_verification.json`。首发Release正文已追加新结果链接，保留原始首发说明。
 - 新变化小证据已复制至 `reproducibility/improvements_20260916/evidence/pose_variation_early_abort/`；独立结果已复制，review状态/清单已更新。原case记录不改、不删。
 - 最短后续区分实验仅作为提案：同变化场景，初始合拢0.18→0.09 rad/s，其他参数和3 rad/s保护保持，到抓起/保持结束。不改交付配方，不盲扫，不自动开新的整场。用户续作若要求修复该最早问题再依现有证据执行。
 

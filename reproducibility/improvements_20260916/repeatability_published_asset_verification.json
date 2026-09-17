@@ -1,0 +1,58 @@
+{
+  "verified_at_utc": "2026-09-17T12:49:21.990723+00:00",
+  "release_url": "https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-repeatability-20260917",
+  "release_tag": "assembly-repeatability-20260917",
+  "target_commitish": "4b9ce0f7a20002dbf1b8f39d4931dad5cba909ce",
+  "published_at": "2026-09-17T12:48:48Z",
+  "all_uploaded_assets_match_local": true,
+  "assets": [
+    {
+      "name": "second_verified_assembly_four_view.mp4",
+      "bytes": 44632462,
+      "github_digest": "sha256:99ca64c0523f4c47efae9d9694f220255734a5e61f0e1c359a584ad0cf2002e5",
+      "expected_sha256": "99ca64c0523f4c47efae9d9694f220255734a5e61f0e1c359a584ad0cf2002e5",
+      "passed": true,
+      "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-repeatability-20260917/second_verified_assembly_four_view.mp4"
+    },
+    {
+      "name": "second_verified_final_two_strokes_and_release.mp4",
+      "bytes": 3734230,
+      "github_digest": "sha256:f4771baae7f5fd408a7d0e2a22844a51fdc25ba2c93f277e7a0011407f4c5d25",
+      "expected_sha256": "f4771baae7f5fd408a7d0e2a22844a51fdc25ba2c93f277e7a0011407f4c5d25",
+      "passed": true,
+      "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-repeatability-20260917/second_verified_final_two_strokes_and_release.mp4"
+    },
+    {
+      "name": "pose_variation_early_stop_actual.mp4",
+      "bytes": 1275551,
+      "github_digest": "sha256:d9780a3a4c2ca083c9348769ebacd3457b2d63860560b00a422b06c08cef22b3",
+      "expected_sha256": "d9780a3a4c2ca083c9348769ebacd3457b2d63860560b00a422b06c08cef22b3",
+      "passed": true,
+      "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-repeatability-20260917/pose_variation_early_stop_actual.mp4"
+    },
+    {
+      "name": "repeatability_evidence.tar.gz",
+      "bytes": 4575084,
+      "github_digest": "sha256:5c9b1a0bc732157dff09a68395d8de327213e17f63efef7cd62c12db93b70ab6",
+      "expected_sha256": "5c9b1a0bc732157dff09a68395d8de327213e17f63efef7cd62c12db93b70ab6",
+      "passed": true,
+      "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-repeatability-20260917/repeatability_evidence.tar.gz"
+    },
+    {
+      "name": "pose_variation_early_stop_raw.tar.gz",
+      "bytes": 69706540,
+      "github_digest": "sha256:fc3a04d8251dce9a4e312b0ca48d68e990cdb5976ee5c7078b3ccbad2c6ddd76",
+      "expected_sha256": "fc3a04d8251dce9a4e312b0ca48d68e990cdb5976ee5c7078b3ccbad2c6ddd76",
+      "passed": true,
+      "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-repeatability-20260917/pose_variation_early_stop_raw.tar.gz"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 523,
+      "github_digest": "sha256:8d2c4f177167b89167d890463d9ff35ff7bf3988e3dff03977b7e94cb0a92eaa",
+      "expected_sha256": "8d2c4f177167b89167d890463d9ff35ff7bf3988e3dff03977b7e94cb0a92eaa",
+      "passed": true,
+      "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-repeatability-20260917/SHA256SUMS.txt"
+    }
+  ]
+}
