@@ -1,0 +1,28 @@
+{
+  "controller_failure_reason": "JOINT_SPEED_ABORT",
+  "engine_health_pass": true,
+  "identity_hash_check_pass": true,
+  "truth_isolation_pass": true,
+  "unauthorized_contact_records": {
+    "robot_object_unauthorized": 0,
+    "robot_table": 0,
+    "robot_fixture": 0,
+    "robot_unclassified": 0
+  },
+  "nail_body_stability": {
+    "body_pickup_and_hold_observed": false,
+    "minimum_fingers_directly_contacting_body_during_lift_and_hold": 0,
+    "all_three_fingers_body_only": false,
+    "from_first_body_contact": null,
+    "from_first_three_contact": null,
+    "lift": null,
+    "hold": null,
+    "maximum_lift_m": 0.0,
+    "maximum_finger_effort_nm": 1.1614465713500977,
+    "maximum_wrist_force_n": 35.21794588553831,
+    "maximum_wrist_moment_nm": 4.933433135493722,
+    "controller_failure_reason": "JOINT_SPEED_ABORT",
+    "evaluation_only_no_online_truth": true,
+    "scope": "NOMINAL_NAIL_BODY_GRASP_STABILITY_NOT_ASSEMBLY_OR_GLOBAL_OPTIMALITY"
+  }
+}

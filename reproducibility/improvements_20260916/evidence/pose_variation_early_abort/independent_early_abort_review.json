@@ -1,0 +1,145 @@
+{
+  "scope": "INDEPENDENT_ENDED_POSE_VARIATION_EARLY_ABORT_REVIEW",
+  "variation_run": "artifacts/full_validation/contact_last_gc128_pose_x1mm_yaw1deg/run",
+  "nominal_reference_run": "artifacts/full_validation/contact_last_gc128_repeat02/run",
+  "reviewed_raw_steps_inclusive": [
+    14700,
+    14719
+  ],
+  "variation_sealed_sample_count": 14720,
+  "variation_archive_and_index_bytes": 35256838,
+  "ending_evidence": [
+    "matching_archive_index",
+    "run_timing.json",
+    "pickup_controller_outcome.json"
+  ],
+  "motion_timing_absence_reason": "Assembly stage was never reached; absence is not treated as unfinished physics.",
+  "failure": {
+    "raw_step": 14719,
+    "post_step_counter": 14720,
+    "phase": "parallel_contact_approach",
+    "joint": "f1j3",
+    "native_velocity_rad_s": -4.000000476837158,
+    "original_speed_limit_rad_s": 3.0,
+    "rule": "max(abs(all_native_joint_velocities)) > 3.0",
+    "reason": "JOINT_SPEED_ABORT",
+    "pickup_completed": false
+  },
+  "variation_timeline": [
+    {
+      "steps_inclusive": [
+        14700,
+        14715
+      ],
+      "positive_hand_contacts": [],
+      "f1j3_speed_approx_rad_s": 0.1785,
+      "f1_mimic_position_error_approx_rad": -4e-07
+    },
+    {
+      "step": 14716,
+      "positive_hand_pairs": {
+        "f1Link3->Body": {
+          "impulse_norm_sum_n_s": 0.0002092311489500746,
+          "minimum_native_separation_m": 5.4075462685432285e-06
+        }
+      }
+    },
+    {
+      "step": 14717,
+      "positive_hand_pairs": {
+        "f1Link3->Body": {
+          "impulse_norm_sum_n_s": 0.0017126402664192528,
+          "minimum_native_separation_m": -2.5020284510901547e-07
+        }
+      }
+    },
+    {
+      "step": 14718,
+      "positive_hand_pairs": {
+        "f2Link2->Body": {
+          "impulse_norm_sum_n_s": 0.005430702013463694,
+          "minimum_native_separation_m": -0.0001329556107521057
+        }
+      },
+      "f1j3_velocity_rad_s": 0.1833183914422989,
+      "f1_mimic_position_error_rad": -6.556510925292969e-07
+    },
+    {
+      "step": 14719,
+      "positive_hand_pairs": {
+        "f1Link3->Body": {
+          "impulse_norm_sum_n_s": 0.007074733481172298,
+          "minimum_native_separation_m": 8.053450073930435e-06
+        },
+        "f2Link2->Body": {
+          "impulse_norm_sum_n_s": 0.0034420574224834485,
+          "minimum_native_separation_m": 8.791685104370117e-06
+        }
+      },
+      "f1j2_velocity_rad_s": -1.0316898822784424,
+      "f1j3_velocity_rad_s": -4.000000476837158,
+      "f1_mimic_position_error_rad": -0.0005664229393005371,
+      "f1_mimic_velocity_error_rad_s": -2.9611659049987793
+    }
+  ],
+  "first_positive_hand_contact_in_selected_window": 14716,
+  "record_intervals_to_speed_abort": 3,
+  "elapsed_record_intervals_s": 0.003125,
+  "positive_hand_nut_contact_found_in_window": false,
+  "command_comparison": {
+    "hand_target_sequences_identical_to_nominal": true,
+    "each_finger_target_increment_rad": 0.0001875000000000071,
+    "corresponding_reference_rate_rad_s": 0.18,
+    "arm_targets_constant_within_each_window": true,
+    "same_absolute_arm_pose_between_runs": false,
+    "target_jump_found_in_window": false
+  },
+  "nominal_window": {
+    "first_positive_hand_contact_in_window": 14718,
+    "first_pair": "f2Link2->Body",
+    "first_pair_impulse_norm_sum_n_s": 0.003602011239648355,
+    "first_pair_minimum_native_separation_m": -9.133294224739075e-05,
+    "raw14719_f1j3_velocity_rad_s": 0.3384639024734497,
+    "raw14719_f1_mimic_position_error_rad": -4.231929779052734e-06,
+    "raw14719_f1_mimic_velocity_error_rad_s": -0.012060552835464478,
+    "overspeed_found_in_window": false
+  },
+  "finite_mechanism_observations_already_read": {
+    "raw14718_f1_rod_closure_error_m": 4.205254670874847e-08,
+    "raw14719_f1_rod_closure_error_m": -5.61881644615958e-06,
+    "raw14719_applied_constraint_slope": 1.0068859208524215,
+    "raw14719_current_geometric_derivative": 1.0069252413248415,
+    "raw14719_input_velocity_rad_s": 0.17509748143833964,
+    "raw14719_elastic_effort_boundary_exceeded": false,
+    "raw14719_native_drive_clipping_predicted": false,
+    "raw14719_drive_saturation": false,
+    "scope": "Recorded values only; the uniquely responsible native constraint/contact/mesh point has not been identified."
+  },
+  "timing_boundary": "The row target is sent before world.step. Contact callbacks record native contact data during that step. Native joint velocities/poses are read after world.step and archived under the same raw step; the step counter is then incremented and the speed guard applied. Contact manifold positions/separations and poststep rigid poses must not be assumed exactly simultaneous.",
+  "facts": "The original3rad/s guard stopped the run before pickup. Contact establishment precedes the speed and fourbar-residual spike in the selected window. No Nut positive hand load or target discontinuity was found.",
+  "main_hypothesis": "A contact/constraint-solving transient during contact establishment, rather than an observed spontaneous no-contact fourbar oscillation in this window.",
+  "unknown": [
+    "Which native constraint or mesh/contact point dominates the transient.",
+    "Whether smaller closure speed would avoid it.",
+    "How much is physical impact versus numerical constraint resolution; temporal association is not unique causation.",
+    "First contact here means first in the selected20-frame window; no full-episode raw-contact rescan is claimed."
+  ],
+  "unexecuted_minimal_followup": {
+    "scope": "One bounded diagnostic from the same initial scene and frozen visual/grasp plan, ending after pickup and the original hold only.",
+    "single_changed_variable": "Initial parallel_contact_approach closure reference0.18->0.09rad/s.",
+    "retained": [
+      "3rad/s independent speed guard",
+      "all original force/torque limits",
+      "original model, materials, solver, initial1mm/1degree scene",
+      "original preload/force regulation and other motion settings"
+    ],
+    "interpretation": "A reduced transient and completed pickup would support speed-sensitive contact interaction, not identify a unique mechanism or establish full perturbed assembly. Repeated failure would retain the unresolved failure boundary.",
+    "executed": false
+  },
+  "physics_executed_by_review": false,
+  "production_or_original_records_modified": false,
+  "supporting_files": [
+    "independent_contact_speed_window.json",
+    "independent_extract_window.py"
+  ]
+}

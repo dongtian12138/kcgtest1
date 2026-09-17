@@ -2,7 +2,7 @@
 
 > 本改进分支默认采用 10 毫秒负载补偿、关节接触最后求解和无损记录回收调度，最多六次抓握，总腕部指令仍限 360°。最新连续运行的深度、原 2 微米键槽检查和松手记录见 [完整验证说明](ASSEMBLY_COMPLETE_VALIDATION_20260917_CN.md)。原保存版仍在 `codex/connector-assembly-baseline-20260916` / `assembly-baseline-20260916`；下面标为原版的历史结果与耗时属于该保存版。
 
-当前已取得两次同场景完整通过，实际结果和控制解释见[重复验收说明](ASSEMBLY_REPEATABILITY_20260917_CN.md)。随后加入的改动只减少审计检查的中间数组和收尾读取开销，保持原控制、物理及数据。1mm/1°初始位姿变化的入口已经准备，尚未将它计为完成。
+当前已取得两次同场景完整通过，实际结果和控制解释见[重复验收说明](ASSEMBLY_REPEATABILITY_20260917_CN.md)。随后加入的改动只减少审计检查的中间数组和收尾读取开销，保持原控制、物理及数据。1mm/1°初始位姿变化已经执行，在初始手指接触阶段因关节速度保护停止，未完成抓起；不能把它计为第三次装配成功。[四项工作及变化失败说明](ASSEMBLY_FOUR_ITEMS_DELIVERY_20260917_CN.md)、[第二轮成功及变化测试视频](https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-repeatability-20260917)均单独保留结果边界。
 
 第一次完整验收通过的公开交付：[assembly-first-verified-20260917](https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-first-verified-20260917)。含本轮 307 秒完整视频、21 秒末段片段、实际末段图片和验收证据包；下载附件即可观看，不需要先花数小时重新计算仿真。发布标签为 `baf6d4f5c2c7035b4fd17ba38e0a19bd04ea7455`，其中记录的实际物理运行提交为 `25a0d6f`；两者仅差记录收尾异常处理和交付证据，控制与物理配置相同。
 
@@ -101,6 +101,8 @@ python3 scripts/run_current_hand_assembly.py --run --gui
 # 无窗口运行并录像。
 python3 scripts/run_current_hand_assembly.py --run
 ```
+
+初始位置变化测试可用 `python3 scripts/run_current_hand_assembly.py --run --pose-variation` 复现；这个明确场景已观察到初始手指接触速度保护停止，不是保证成功的选项。查看已生成的视频无需重新进行数小时仿真。
 
 每次创建新的 `artifacts/reproductions/current_hand_<UTC时间>/`，拒绝覆盖已有结果。`--output-root` 可指定新的输出目录。预检失败会停止，完整动作不会启动。原版 291 秒仿真用了约 257 分钟现实时间；当前改进版这次约 307 秒仿真执行到运动结束用了约 243 分钟，尚不能据此把不同轨迹的耗时差当成同条件提速。当前改进版完整动作使用有限 21600 秒墙钟预算，其中 1200 秒留给保存与收尾，不会自动无限延长。原封存分支仍保留其 18000 秒预算。
 

@@ -1,0 +1,30 @@
+{
+  "episode": "contact_last_gc128_pose_x1mm_yaw1deg",
+  "executed_git_commit": "ab129ee333b573dda98c9582d947b506f5e1ea74",
+  "execution_manifest_sha256": "1ce843904f0767c2ae6cc20955ff6d72a0380f12da69a23d5896435cb8db6887",
+  "verdict": "EARLY_PICKUP_JOINT_SPEED_ABORT_NOT_ASSEMBLY_SUCCESS",
+  "physical_success": false,
+  "archive_sample_count": 14720,
+  "archive_bytes": 35256838,
+  "archive_sha256": "b0113f16a2bd54f8eabf59d2e46de0a6e2bb6ab75595d42691eb90989bc4ba3e",
+  "report_scope": "Two ended20-frame windows and associated finite mechanism records, source/state transition audit; no full reference archive rescan",
+  "files": {
+    "README_CN.md": "16d6ac5ca165cb26324a8037970394861a31054ab136209d3eb72c2daf53995d",
+    "early_physical_result.json": "868413f36565c1986b1b3babeed9372ee419a2279ae2469f1ae6583530675cea",
+    "ended_episode_status.json": "c248ac13ddd204a1524e31dc066d4ba453ef3e7cfb2564fabcc8e0bd92b1e7e4",
+    "execution_source_manifest.json": "1ce843904f0767c2ae6cc20955ff6d72a0380f12da69a23d5896435cb8db6887",
+    "independent_contact_speed_window.json": "623cc8dc31cd3ffe13115016bdd885c1687097dbd65c8261d908216933978379",
+    "independent_early_abort_review.json": "f71edc785f12112be703c9b96c483375545bc4897f109b6901e9bea56e692bef",
+    "independent_early_abort_review_CN.md": "64e68eca2c71b45d103edce3de91ef30769622187db4367a37dcbaa92ea1eb21",
+    "independent_extract_window.py": "2697ce276cdb1fcaea6b7d5aa3627a019e9aaf6de6769202c12f971c54458956",
+    "reproduction_plan.json": "e33c47915f13ddb4343791d4e954481c69f0cf77fd398c2ce134bb7fe05b9ee9",
+    "run/initial_rgbd/consumed_grasp_plan.json": "94ae6499a1a82cb1b0c5be44f81787e39413a57e426e3734fa5b3b333618146f",
+    "run/initial_rgbd/posthoc_truth_comparison.json": "5f6c907ff6dd3a75e84bb2da00cf5e93b25e7673de4ef3016b0515221c5eedf8",
+    "run/pickup_controller_outcome.json": "578f670d07b522729ca3f5578b88efe471316aedc02a939bd90d0a5815885352",
+    "run/run_invocation.json": "548c64158f7dbcabb2caf3935336307d90ebca964933abacd0ff6e0e9cbe012d",
+    "run/run_timing.json": "8a68178056d517c127c1d3a6d5c391893f898ce0a2570560c6d6d146cd50487f",
+    "run/truth_samples.msgpack.gz.index.json": "dbf4589fce4c86ffb2ad112e079982a6160de7e09f2801f1ba9666c7ef29ae51",
+    "run/video/assembly_four_view_video.json": "5b8b3f19c48c7a800e3d4eaba0402b36f433e75672017798db2557d6ad7444dc",
+    "run/video_render_isolation.json": "d545f9a6a7d80cda812bfd08b4d9d7c5a32d79301347579b1cc88d50c4c4165d"
+  }
+}

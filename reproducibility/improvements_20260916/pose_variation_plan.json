@@ -1,5 +1,5 @@
 {
-  "status": "READY_AFTER_TWO_VERIFIED_NOMINAL_EPISODES",
+  "status": "EXECUTED_EARLY_PICKUP_JOINT_SPEED_ABORT",
   "required_order": "Only after two same-scene complete episodes have been reviewed",
   "perturbation": {
     "object_translation_delta_m": [
@@ -22,5 +22,17 @@
     "contact_last_gc128_repeat02"
   ],
   "nominal_reviews": "Both whole reviews VERIFIED plus independent complete3s hand-zero, original-stop and same128-sleeve checks",
-  "physical_variation_executed": false
+  "physical_variation_executed": true,
+  "executed_episode": "contact_last_gc128_pose_x1mm_yaw1deg",
+  "executed_git_commit": "ab129ee333b573dda98c9582d947b506f5e1ea74",
+  "assembly_success": false,
+  "earliest_stop": {
+    "step": 14719,
+    "phase": "parallel_contact_approach",
+    "reason": "JOINT_SPEED_ABORT",
+    "joint": "f1j3",
+    "measured_velocity_rad_s": -4.000000476837158,
+    "original_stop_rad_s": 3.0
+  },
+  "report": "docs/ASSEMBLY_FOUR_ITEMS_DELIVERY_20260917_CN.md"
 }

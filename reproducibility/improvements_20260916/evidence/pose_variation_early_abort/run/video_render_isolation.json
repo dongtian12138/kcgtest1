@@ -1,0 +1,63 @@
+{
+  "initialization": {
+    "world_time_before_s": 0.0020833334419876337,
+    "world_time_after_s": 0.0020833334419876337,
+    "maximum_joint_change_rad": 0.0
+  },
+  "video": {
+    "path": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_pose_x1mm_yaw1deg/run/video/assembly_four_view.mp4",
+    "fps": 5,
+    "resolution_px": [
+      1920,
+      1080
+    ],
+    "physics_hz": 960,
+    "physics_step_stride": 192,
+    "frame_count": 77,
+    "duration_s": 15.4,
+    "phase_frame_counts": {
+      "ft_free_space_tare": 3,
+      "initial_rgbd_settle": 7,
+      "settle": 10,
+      "preshape_at_home": 15,
+      "approach_above": 15,
+      "wait_above_settled": 1,
+      "approach_descent": 20,
+      "pregrasp_hold": 2,
+      "tare": 3,
+      "parallel_contact_approach": 1
+    },
+    "ffmpeg_return_code": 0,
+    "ffmpeg_log": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_pose_x1mm_yaw1deg/run/video/assembly_four_view.ffmpeg.log",
+    "file_size_bytes": 1275551,
+    "observation_only_not_returned_to_control": true,
+    "error": null,
+    "capture_and_encode_wall_s": 6.885548498023127,
+    "inspection_view": {
+      "camera_path": null,
+      "camera_pose_rewritten_during_motion": false,
+      "refresh_count": 0,
+      "refresh_wall_s": 0.0,
+      "maximum_refresh_gap_s": 0.0,
+      "wall_seconds_between_refresh_attempts": 0.1,
+      "note": "Responsiveness during explicit motion; blocking planning/perception calls are not yet serviced here."
+    },
+    "maximum_render_native_state_deltas": {
+      "robot_joint_position_rad": 0.0,
+      "robot_joint_velocity_rad_s": 0.0,
+      "robot_projected_joint_force_nm": 0.0,
+      "object_position_m": 0.0,
+      "object_quaternion_wxyz": 0.0,
+      "object_linear_velocity_m_s": 0.0,
+      "object_angular_velocity_rad_s": 0.0,
+      "raw_wrist_wrench_n_nm": 0.0
+    },
+    "render_state_audit_role": "POSTRUN_ONLY; NO_STATE_VALUES_RETURNED_TO_CONTROL",
+    "camera_pose_inputs": "FIXED_RIG_CALIBRATION_AND_JOINT_ENCODER_FK",
+    "simulator_object_or_contact_truth_used_for_camera_poses": false,
+    "physics_time_invariance_checked_each_frame": true
+  },
+  "source": "CURRENT_EPISODE_CAMERA_CAPTURE_AFTER_PHYSICS_STEPS",
+  "physics_trajectory_comparison_required_for_initial_preflight": true,
+  "video_does_not_establish_assembly_completion": true
+}

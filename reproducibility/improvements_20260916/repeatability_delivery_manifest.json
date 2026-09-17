@@ -1,0 +1,42 @@
+{
+  "evidence_members": 161,
+  "assets": [
+    {
+      "file": "second_verified_assembly_four_view.mp4",
+      "bytes": 44632462,
+      "sha256": "99ca64c0523f4c47efae9d9694f220255734a5e61f0e1c359a584ad0cf2002e5"
+    },
+    {
+      "file": "second_verified_final_two_strokes_and_release.mp4",
+      "bytes": 3734230,
+      "sha256": "f4771baae7f5fd408a7d0e2a22844a51fdc25ba2c93f277e7a0011407f4c5d25"
+    },
+    {
+      "file": "pose_variation_early_stop_actual.mp4",
+      "bytes": 1275551,
+      "sha256": "d9780a3a4c2ca083c9348769ebacd3457b2d63860560b00a422b06c08cef22b3"
+    },
+    {
+      "file": "repeatability_evidence.tar.gz",
+      "bytes": 4575084,
+      "sha256": "5c9b1a0bc732157dff09a68395d8de327213e17f63efef7cd62c12db93b70ab6"
+    },
+    {
+      "file": "pose_variation_early_stop_raw.tar.gz",
+      "bytes": 69706540,
+      "sha256": "fc3a04d8251dce9a4e312b0ca48d68e990cdb5976ee5c7078b3ccbad2c6ddd76"
+    },
+    {
+      "file": "SHA256SUMS.txt",
+      "bytes": 523,
+      "sha256": "8d2c4f177167b89167d890463d9ff35ff7bf3988e3dff03977b7e94cb0a92eaa"
+    }
+  ],
+  "release_tag": "assembly-repeatability-20260917",
+  "release_url": "https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-repeatability-20260917",
+  "runtime_source_commit": "ab129ee333b573dda98c9582d947b506f5e1ea74",
+  "publication_changes_scope": "Documents and copied evidence only; runtime and source binding unchanged.",
+  "nominal_complete_verified_count": 2,
+  "pose_variation_completed_successfully": false,
+  "raw_successful_episodes_retained_locally": true
+}

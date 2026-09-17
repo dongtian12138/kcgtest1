@@ -1,6 +1,6 @@
 # 两次完整名义装配的验收结果
 
-2026-09-17，同一初始场景已经完成两次连续视觉装配，**两次整体结果均为 `VERIFIED`**。两轮都实际到原止挡，并在完全张手后保持完整3秒；原2微米键槽检查均通过，没有放宽标准。接下来仍需完成初始位置横移1mm、偏转1°的明确变化案例，不能把两次名义成功当作所有初始条件都成功。
+2026-09-17，同一初始场景已经完成两次连续视觉装配，**两次整体结果均为 `VERIFIED`**。两轮都实际到原止挡，并在完全张手后保持完整3秒；原2微米键槽检查均通过，没有放宽标准。随后已执行初始位置横移1mm、偏转1°的变化案例，它在初始抓取接触时触发关节速度保护，未抓起、未进入装配。不能把两次名义成功当作所有初始条件都成功。四项工作、变化失败及交付入口见[本次交付说明](ASSEMBLY_FOUR_ITEMS_DELIVERY_20260917_CN.md)。
 
 | 原验收项目 | 第一轮 | 第二轮 |
 | --- | ---: | ---: |
@@ -44,7 +44,7 @@
 
 两轮第四段共同的前938条指令角序列完全相同，但既往装配和抓握历史不同。在约13.4°时，第一轮弯矩约0.815Nm，第二轮约0.987Nm；第二轮下一次决定达到1.008883601Nm，触发原1.0Nm正常换抓线。第二轮只有最后11条已发指令受到横向速度截断；在10°、弯矩已经0.789501Nm时，横向请求仅0.654653mm/s，没有触及2mm/s。因此末尾截速是真实存在的，但不能用它解释此前全部弯矩增长，更不能直接断言提高限速就能解决。
 
-有界横向让位是可单独验证的后续方向。**本次两轮没有改变这个开关，也没有证明改变它就能改善全部装配。** 当前优先完成既定的小位姿变化验证，保留这两轮作为对照。
+有界横向让位是可单独验证的后续方向。**本次两轮没有改变这个开关，也没有证明改变它就能改善全部装配。** 随后的位姿变化案例暴露了更早的初始手指接触瞬态，应先针对那个阻塞做短诊断；这两轮完整成功保留作为对照。
 
 ## 记录和后处理的小优化
 
@@ -57,4 +57,4 @@
 
 原生接触和存储相关8项测试及4项子测试在Isaac Python环境通过，768项启动绑定通过。控制、物理、抓力、速度、几何和原2µm标准均未改。正式后评入口也采用此前已使用并验证的后处理GC包装，验收公式不变。传感历史tuple表示仍只保留为离线候选，未加入正式控制运行。
 
-证据分别位于 `reproducibility/improvements_20260916/evidence/contact_last_gc128_repeat01/`、`contact_last_gc128_repeat02/`、`planar_hold_review/`、`repeat02_grasp_relation/` 和 `postrun_and_history_performance/`。首轮实际视频已在[首次完整通过发布页](https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-first-verified-20260917)；第二轮视频与22.8秒连续末段片段保存在本轮 `run/video/` 和 `run/postrun_evidence/`。运行入口与环境见[复现说明](REPRODUCE_CURRENT_HAND_ASSEMBLY_CN.md)。仅仿真，`hardware_authorized=false`。
+证据分别位于 `reproducibility/improvements_20260916/evidence/contact_last_gc128_repeat01/`、`contact_last_gc128_repeat02/`、`planar_hold_review/`、`repeat02_grasp_relation/` 和 `postrun_and_history_performance/`。首轮实际视频已在[首次完整通过发布页](https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-first-verified-20260917)；第二轮视频、22.8秒连续末段片段和位姿变化提前停止录像在[本次发布页](https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-repeatability-20260917)，本机各原始回合也完整保留。运行入口与环境见[复现说明](REPRODUCE_CURRENT_HAND_ASSEMBLY_CN.md)。仅仿真，`hardware_authorized=false`。
