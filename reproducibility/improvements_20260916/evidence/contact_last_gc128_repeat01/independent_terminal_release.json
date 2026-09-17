@@ -1,0 +1,135 @@
+{
+  "scope": "POSTRUN_TERMINAL_RELEASE_COVERAGE_SUPPLEMENT_ONLY",
+  "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat01_restart01/run",
+  "original_acceptance_rules_changed": false,
+  "complete_tabletop_success_claimed": false,
+  "reviewed_raw_range_half_open": [
+    290720,
+    294560
+  ],
+  "sample_count_reviewed": 3840,
+  "phase_counts": {
+    "key_probe_nut_index_unload": 192,
+    "key_probe_nut_index_open": 768,
+    "nut_index_free_open_hold": 2880
+  },
+  "record_coverage": {
+    "all_provided_native_report_points_retained_true": 3840,
+    "contact_report_channels_agree_true": 3840,
+    "one_physics_callback": 3840
+  },
+  "hold": {
+    "raw_range_half_open": [
+      291680,
+      294560
+    ],
+    "count": 2880,
+    "physics_dt_s": 0.0010416666666666667,
+    "duration_from_physical_intervals_s": 3.0,
+    "all_phase_free_open_hold": true,
+    "all_hand_impulse_norm_sums_exactly_zero": true,
+    "depth_range_mm": [
+      14.604580849409077,
+      14.604580849409077
+    ],
+    "source_stop_positive_any_frame": true,
+    "maximum_simultaneously_loaded_clip_count": 128,
+    "source_stop_positive_every_frame": true,
+    "stop_count_range": [
+      8,
+      8
+    ],
+    "loaded_clip_count_range": [
+      128,
+      128
+    ],
+    "stop_and128_simultaneous_every_frame": true,
+    "distinct_loaded_clip_sets": 1,
+    "sleeping_state_counts": {
+      "[False, False]": 2880
+    }
+  },
+  "maximum_absolute_thrust_coordinate_mm_during_terminal_release_only": 0.5160865088728339,
+  "backup_threshold_mm_unchanged": 0.5999,
+  "unload_and_open": {
+    "raw_range_half_open": [
+      290720,
+      291680
+    ],
+    "frames_reviewed": 960,
+    "actor_pairs": [
+      {
+        "hand": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f3Link1/f3Link2/f3Link3",
+        "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+        "positive_points": 542
+      },
+      {
+        "hand": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f2Link1/f2Link2",
+        "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+        "positive_points": 378
+      },
+      {
+        "hand": "/World/HandArm/Geometry/world/iiwa_link_0/iiwa_link_1/iiwa_link_2/iiwa_link_3/iiwa_link_4/iiwa_link_5/iiwa_link_6/iiwa_link_7/iiwa_link_ee/handbase_link/f1Link1/f1Link2/f1Link3",
+        "partner": "/World/TE_J35FreeSplitPlug/CouplingNut",
+        "positive_points": 358
+      }
+    ],
+    "unexpected_actor_positive_contacts": [],
+    "unclassified_positive_contacts": [],
+    "source_surface_projection_limit_m_unchanged": 0.0005,
+    "per_link": {
+      "f3Link3": {
+        "positive_contact_points_without_impulse_threshold": 542,
+        "steps_with_positive_points": 404,
+        "first_positive_step": 290720,
+        "last_positive_step": 291126,
+        "allowed_original_regions": [
+          "PAD",
+          "NAIL"
+        ],
+        "pad_points": 0,
+        "nail_points": 542,
+        "disallowed_points": 0,
+        "maximum_projection_residual_m": 3.0183567554130526e-05,
+        "maximum_residual_step": 291126,
+        "uncertain_projection_points_above_original_500um": 0
+      },
+      "f2Link2": {
+        "positive_contact_points_without_impulse_threshold": 378,
+        "steps_with_positive_points": 332,
+        "first_positive_step": 290720,
+        "last_positive_step": 291075,
+        "allowed_original_regions": [
+          "PAD"
+        ],
+        "pad_points": 378,
+        "nail_points": 0,
+        "disallowed_points": 0,
+        "maximum_projection_residual_m": 1.0614268103403568e-05,
+        "maximum_residual_step": 290750,
+        "uncertain_projection_points_above_original_500um": 0
+      },
+      "f1Link3": {
+        "positive_contact_points_without_impulse_threshold": 358,
+        "steps_with_positive_points": 358,
+        "first_positive_step": 290720,
+        "last_positive_step": 291077,
+        "allowed_original_regions": [
+          "PAD",
+          "NAIL"
+        ],
+        "pad_points": 0,
+        "nail_points": 358,
+        "disallowed_points": 0,
+        "maximum_projection_residual_m": 2.9565102598715415e-06,
+        "maximum_residual_step": 291053,
+        "uncertain_projection_points_above_original_500um": 0
+      }
+    }
+  },
+  "limitations": [
+    "Only final release interval is read; earlier stages and whole-run backup clearance require their own existing reviews.",
+    "Missing/zero stop records alone are not treated as loss of contact; sleeping and native-report coverage are reported for interpretation.",
+    "No video, red-band visibility, lift or earlier support claim is made."
+  ]
+}

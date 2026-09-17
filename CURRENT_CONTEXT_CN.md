@@ -1,46 +1,52 @@
 # 当前任务：完成用户截图的四项装配工作
 
-核验时间：2026-09-17 02:32 UTC。用户最新指令“继续”；原请求是全部完成：保存可复现基线、计算/记录提速、腕部跟踪根因、原2µm数值检查及完整重复。不要只做报告或部分交付就结束。simulation-only，hardware_authorized=false；一次只运行一个物理实验；原2µm不放宽，原始失败不删除。
+核验时间：2026-09-17 07:27 UTC。当前第一次新候选完整验收已VERIFIED，原2µm键槽和完整3秒松手均通过；主程序和全部后评已结束，正在保存提交并准备第二次名义重复。simulation-only，hardware_authorized=false；同时一个主要物理实验。
 
-## 当前执行位置
+## 当前有效结果与执行位置
 
-- 活动工作树：/home/noob/WorkPlace/kcgtest1-improvements-20260916，分支codex/connector-assembly-improvements-20260916。此前已推送2ee7778（首次完整失败和后评工具）；新数值/记录实现准备提交后启动完整验证。原目录/home/noob/WorkPlace/kcgtest1的原脏资产不动。
-- 所有局部物理实验当前均已结束：final_regrasp_remaining360(60515)、final_held_remaining360(86761)、接触顺序default(57303)/contact_last(5453)、third_contact_last_gc_prefix(11757)、dense_gc_prefix(8072)。独立代理/root/independent_final_guard_audit本轮只读任务已全部完成。
-- 下一步：提交并推送已准备代码，运行scripts/run_current_hand_assembly.py --run --output-root artifacts/full_validation/contact_last_gc128_repeat01。入口先做新预检，四项通过后才启动完整回合。全程上限21600秒、收尾1200秒，按已测深插成本增加电脑时间预算，不改物理力/速度/角度边界；不运行中延长。
-- 当前默认配置id：load10ms_contact_last_gc128_nut_cpu960_64_4_six_grips。配置reproducibility/improvements_20260916/config/visual_contact_last_gc128_task.yaml，命令contact_last_gc128_candidate_command.json；BASE assembly_command已更新。768个源码/资产绑定检查通过，后续改动绑定源须明确更新manifest，不能绕过。
-- 正式候选保留10ms负载前馈、50ms原观测/导纳/停止、960Hz、64/4、原模型材料和有限抓力/速度。新增关节接触最后求解、仅螺母阶段GC调度；最多6次抓握（原5次）但总指令仍360度。尚无新候选完整通过回合。
-- 新候选完整通过后，再同初始场景完整重复一次，然后做1mm平移+1度偏角。入口已准备--pose-variation，当前不得提前当成已跑；其命令与配置已绑定。第一轮失败后仍须先定位最早问题，不盲重跑。
+- 活动树 `/home/noob/WorkPlace/kcgtest1-improvements-20260916`，分支 `codex/connector-assembly-improvements-20260916`，执行代码25a0d6f68771080fe60a7dde948cdaa4e8d5927f已推送。原目录脏资产保留；封存基线树不改。
+- 当前完整回合 `artifacts/full_validation/contact_last_gc128_repeat01_restart01/run`：294560帧、25520469055字节归档，索引封存一致；motion_timing已生成。主程序session17980/PID21229已退出2；通用evaluation仅前35649帧pickup且旧全指腹门不适用，保留原报告。原引擎健康、身份和真值隔离均true。
+- 实际最终Body深度14.604580849409077mm，欠目标0.419150591µm。独立完整3秒、2880帧每帧手冲量精确0，8组原StopBox正载，与同一套128簧套同时承载；Body/Nut均不休眠，深度保存精度下恒定。独立报告父目录review/independent_terminal_release.json与中文说明。
+- `source_key_containment_review.json` accepted=true：五键最差间隙约−.910355/−.651432/−1.848420/+101.983432/−.859048µm，第三键raw230008最差，原2µm未改，余量约.151580µm。原源面Body/Nut检查均通过；原指甲抓起保持最低离桌56.109771mm，2秒桌面0、三甲100%。螺母真实区域为第一/第三指甲、第二指腹。
+- 六段实际Nu角89.047246/89.549457/31.160159/70.687890/73.206586/.037954°。对应腕指令90/90/33.030902/71.152244/75.068092/.748762°，总约360。第三/第五f1传动余量正常换抓，第四腕弯矩正常换抓，无硬abort。第五已经到位，不能说第六补转导致到位。
+- 实际三张末段图片已亲自看过、红带未露；1024原源面径向样点都被螺母遮挡。final_mating_visibility_review=true。实际视频run/video/assembly_four_view.mp4；连续21秒末段片段postrun_evidence/final_two_strokes_and_release_actual_clip.mp4已完成。
+- 整体review session23420已退出0，whole_assembly_review.json=VERIFIED，所有mechanics/visual/additional项true；最大thrust.516563319mm<.5999mm。独立最差键三帧复算与主报告完全相同，源几何/原2µm绑定未变，独立报告review/independent_key_report_review_CN.md。
+- 当前说明docs/ASSEMBLY_COMPLETE_VALIDATION_20260917_CN.md已更新为第一次完整通过，相关小证据已复制至reproducibility/improvements_20260916/evidence/contact_last_gc128_repeat01，保存原25a执行manifest。当前正在提交交付；仅修正后续收尾异常，不改控制/物理。
 
-## 首轮完整改进版：已核验但失败
+## 立即继续
 
-- artifacts/full_validation/load10ms_repeat01/run使用c95785ca3d81798146ef7b464c86b840c722f3ab；277530帧、19,090,801,262字节原始归档封存。墙钟12859.883秒（214.33分钟），物理289.09375秒、五段旋拧13.565625秒。原257分钟与此接触历史/终点不同，不能把全部差值归因提速。
-- 五段已发角90/46.874383/90/90/37.876059度，累计354.750442度，尚余5.249558度但五次预算用尽。第二/第五段正常余量换抓，无硬abort。第五段f1弹性3.501318Nm、余量.498682Nm触线；这是手指传动，不是螺母轴向拧矩。末条腕部观测扭矩.803025Nm，早停止决定一拍。
-- 最终Body深度14.582080096mm，差22.919904µm。完整3秒每帧手冲量精确0、同128簧套承载、Body/Nut未休眠，但原StopBox每帧零正载，未坐底。
-- 全流第三键最差−2.475998µm(raw240346)，第五键−2.141567µm(raw225936)。原生接触与前一拍步后姿态对齐吻合。原2µm失败；第三键最差时腕虚拟中心误差仅.108mm，非最大误差时刻。
-- whole_assembly_review=REVIEW_REQUIRED：全部视觉阶段、源指甲/指腹、真实松手、备份轴向限位通过；机械坐底/止挡和键槽未通过。最大被动轴向坐标.506907mm<.5999mm。实际末段图片已看，红带遮住不能代替坐底。
-- 报告docs/ASSEMBLY_FIRST_COMPLETE_REVIEW_20260917_CN.md；小证据随版evidence/load10ms_repeat01，独立补核在该run父目录review/。程序原退出2及未更新plan状态均保留/解释，不能把退出码当物理结论。
+1. 第一次完整验收已结束通过，不再等待旧session。
+2. 异常收尾已修复，12项针对性测试通过，768绑定检查通过，待提交推送；不是已证实主机重启原因。
+3. 用相同控制/物理配置开始第二次名义重复 `.../contact_last_gc128_repeat02`，新预检。一轮失败则先定位最早原因，不盲重跑。
+4. 两次名义完整通过后运行已准备的 `--pose-variation`，初始横移1mm、偏转1°，摩擦仍.45。尚未执行。
+5. 完成重复和扰动后整理新视频/evidence/可复现提交及GitHub交付，不能只汇报状态就把四项当完成。
 
-## 最近局部数值与记录证据
+## 当前冻结配方与已准备修正
 
-- 同源第三段238926，default与contact_last只差solve_articulation_contact_last布尔，代码快照相同。19项Actor/API均64/4；local scene位置范围1..255、速度4..4；原模型文件未改。
-- default：指令82.744°后90N正常换抓，实际Nut82.197°、Body+1.889mm、最大虚拟中心XY .273672mm，最差键1.714076µm。
-- contact_last：90°完成，实际Nut90.583°、Body+2.050mm、最大XY .404106mm，最差键1.459824µm。均无硬abort，均局部2µm通过。冷baseline未重现整场2.476µm，且腕误差未全面改善；只能据此选完整验证候选。证据evidence/contact_order_comparison。
-- GC离线120帧仅collect(0)有约31%收益，但独立发现老代循环不会回收，未照搬。新256帧每128步collect(2)：19.251→14.634秒（23.98%），877896192字节一致，跨129/193缓存淘汰，gen2哨兵128帧释放。
-- 实际较浅481步38,759,566字节完全相同；实际密集481步1,421,146,150字节完全相同，SHA6f9fb4799734d3789764b2efaecee65592fec49569c40627072b366715e6fae0，物理/传感/记录/计划GC72.585761→60.442991秒（16.73%）。参考为先前已结束相同窗口，非同分钟成对计时；不能外推整场。最长GC暂停.633372秒，尾段GC正常，无错误。
-- GC实现保留原advance方法体（AST一致），只延后帧内回收；跨阶段按总步数计数，每128步完整回收并有结束/中止尾段处理，恢复原GC状态，保留原始错误/停止。全程仅Nut阶段启用，早期桌面/搬运保持默认。14项相关测试通过。源码controller.py、te_source_stage_probe.py、run_body_assembly_with_video.py；GC总时间单列，尾GC在closeout计时中。
+- id `load10ms_contact_last_gc128_nut_cpu960_64_4_six_grips`；配置reproducibility/improvements_20260916/config/visual_contact_last_gc128_task.yaml；BASE assembly_command指向对应候选。768绑定，执行manifest SHA e7cb9ca0901ee5ca6ca9d75290ebed41b7662ac03a8121b9f65d11255988e416。
+- 10ms负载前馈、原50ms观测/导纳/停止、CPU960Hz、64/4、关节接触最后求解；最多6抓但总360度。源模型材料与力/速度/2µm不改。
+- 记录GC仅Nut阶段帧末gen0、每128全局步gen2，尾段回收，原advance方法体不变。相关14测试通过。实际481密集步完整1421146150字节相同，72.585761→60.442991s（16.73%局部），不能外推整场。
+- 本完整motion execution14572.931180s≈242.88min；sim306.833333s。stepper physics8173.564761s（含内部回调）、audit2843.337378s、GC2270.717461s、command395.511487s；不要把嵌套回调重复加总。GC最长3.660647s，尾2.893803s，无错误，完整计算速度仍慢。
+- 收尾修正已于首轮主程序退出后应用：run_body_assembly_with_video.py独立尝试raw/GC审计/video收尾并保留首异常。test_recording_finalizer.py六项、原GC六项共12项通过；只有wrapper生产源变化，控制/物理源未改。recording_finalizer_repair.json记录前后hash；768绑定检查通过。
 
-## 必须保留的诊断纠错
+## 已定位的腕偏差和未解决范围
 
-- final_regrasp_remaining360在8641步/2102.68秒触墙钟保护，夹持8504已完成、仅补.208748°。但重建后手还没接触时Body已从14.582259（step0）到14.597607（480）、14.605773mm（2000），Nu角仅变约.002°，StopBox已承载。
-- 因此冷重建未恢复原接触历史，不能证明“重抓/补5.25度解决原欠行程”。后续final_held_remaining360从8503夹持末态出发，被主动STOP_REQUEST，739步/278.18秒退出2。两者未计成功；不能继续该无效解释。evidence/cold_remainder_diagnostic保存纠正。
-- 原第四段有效50→10ms局部对照：指令30.80258°/90°，最大XY .579183/.099038mm；独立确认其因果范围。原完整/新完整其它抓姿仍可能大误差（新第二段.693mm）。不能恢复已撤回的missing-wrench-origin-shift解释。
-- 原key longdouble重算同值，保存Body量化界仅约.014934µm；源平面与模型一致；凸包键/静态三角槽壁，不是该接触对的SDF网格误差。128位置迭代先前局部无收益，未采用。
+- artifacts/control_review/grasp_relation_decomposition：旧第四段最大腕推算误差.607844mm，实体Nut仅.029618mm；真实手/Nut关系相对最初刚性假设变化.530467mm；原生手姿态与编码器虚拟点只差.000168mm。不能将.53mm叫纯滑移，仍混有指节、柔顺、滚动；不能把虚拟误差说成实体偏心或纯机械臂错误。在线控制未用离线对象真值。
+- 同源局部50→10ms负载补偿曾把第四段最大虚拟误差.579183降至.099038mm并完成90度，但不证明每种抓姿均改善。
+- 接触顺序局部default/contact_last只差bool，最差键1.714/1.460µm，两者局部都通过；colddefault未重现全流2.476µm。不能孤立归因全部全场成功于此一项。
 
-## 保存版和环境
+## 保留的失败与已撤回解释
 
-- 原成功到位基线树/home/noob/WorkPlace/kcgtest1-baseline-20260916，分支codex/connector-assembly-baseline-20260916，提交d64fa4a0a1a394bc800f96191d23aecc3bdad45c。
-- Release https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-baseline-20260916，含297运行资产和原291.4秒视频；新目录公开下载/逐文件核验、预检完成。未验证全新机器从零安装。
-- 原完整14到14.604491442mm、3秒松手、StopBox/128簧套持续承载，但原第三键−2.147659492µm，整体仍REVIEW_REQUIRED；不可称全部数值检查通过。
-- 环境：ISAAC_ENV_PREFIX=/home/noob/WorkPlace/isaacsim/.conda-env；KCG_PLANNER_PYTHON=/home/noob/WorkPlace/kcgtest1/.venv/bin/python；KCG_SAM6D_PYTHON=/home/noob/.cache/kcgtest1-sam6d/.venv/bin/python；KCG_SAM6D_ROOT=/home/noob/WorkPlace/kcgtest1-baseline-20260916/.deps/SAM-6D/SAM-6D。
-- 后评入口reproducibility/improvements_20260916/review_completed_assembly.py，支持body/nut/key/turns/terminal/band/whole；terminal须输出run外，Nut须选两NAIL+PAD。已封存后才能读真值。extract_final_episode_frames.py从本回合视频选图，需亲自看图再写visibility判定。完整3秒每帧承载由独立terminal补核，不由旧whole的2秒/any规则替代。
-- 当前说明docs/ASSEMBLY_CONTACT_ORDER_AND_RECORDING_20260917_CN.md。历史入口docs/history，不重复恢复过期动态任务。
+- load10ms_repeat01执行c95785ca，277530帧：最后14.582080096mm，欠22.919904µm，完整松手3秒但原StopBox从未正载；全流第三键2.475998µm、第五2.141567µm，whole REVIEW_REQUIRED。保留docs/ASSEMBLY_FIRST_COMPLETE_REVIEW_20260917_CN.md和随版evidence。
+- cold final_regrasp_remaining360：手未接触时Body已自行从14.582259到14.605773mm，故不能证明末5.25度/多换抓修复短缺；后续final_held主动停。证据evidence/cold_remainder_diagnostic。
+- contact_last_gc128_repeat01在2026-09-17 02:41:52主机重启时仅到initial_rgbd_settle，没有抓取，未封存；标INTERRUPTED_AT_HOST_RESTART_NO_COMPLETE_ASSEMBLY_RESULT，返回码null。当前restart01不是丢弃失败重编成功。驱动未改。
+- 原第三键2.147659µm不是浮点重算或SDF分辨率解释：longdouble同值，保存Body量化界约.014934µm；键凸包/静态槽三角，源平面匹配。原生接触与前一步步后姿态对齐。已撤回missing-wrench-origin-shift说法，不能恢复。
+
+## 基线交付、命令和环境
+
+- 不变基线 `/home/noob/WorkPlace/kcgtest1-baseline-20260916`，codex/connector-assembly-baseline-20260916，d64fa4a0a1a394bc800f96191d23aecc3bdad45c。
+- Release https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-baseline-20260916 ，297运行资产/121MB和原视频已公开下载并逐文件验证；不是全新机器零安装保证。原baseline14到14.604491442mm但键2.147659µm未过，不能称全验收通过。
+- 环境 ISAAC_ENV_PREFIX=/home/noob/WorkPlace/isaacsim/.conda-env；KCG_PLANNER_PYTHON=/home/noob/WorkPlace/kcgtest1/.venv/bin/python；KCG_SAM6D_PYTHON=/home/noob/.cache/kcgtest1-sam6d/.venv/bin/python；KCG_SAM6D_ROOT=/home/noob/WorkPlace/kcgtest1-baseline-20260916/.deps/SAM-6D/SAM-6D。
+- 入口python3 scripts/run_current_hand_assembly.py --run --output-root 新目录；--pose-variation只在名义通过后。--check不启动物理，--gui打开窗口。完整固定21600秒/收尾1200，不能运行时扩限。不要对bounded_experiment.py调用--help（会被当执行指令）。
+- 后评reproducibility/improvements_20260916/review_completed_assembly.py，body/nut/key/turns/band/whole/terminal；terminal输出run外。必须motion结束且归档封存，不能读活体真值。whole以without_cyclic_gc包装运行较快。完整3秒每帧补核仍不可省略。
+- 只读监控 artifacts/full_validation/read_active_progress.py 检查控制/录像/实际PID，不读liveGT。历史含docs/history/CURRENT_CONTEXT_CN_20260917_before_first_complete_postreview.md。

@@ -1,0 +1,17 @@
+{
+  "pickup_evaluation_sample_scope": {
+    "first": 0,
+    "count": 35649,
+    "full_episode_count": 294560,
+    "whole_assembly_acceptance": false
+  },
+  "controller_completed": true,
+  "controller_failure_reason": null,
+  "engine_health_pass": true,
+  "identity_hash_check_pass": true,
+  "truth_isolation_pass": true,
+  "hardware_authorized": false,
+  "pad_surface_identity_verified": false,
+  "retained_process_returncode": 2,
+  "note": "Legacy pickup evaluation scope and full-pad identity are retained; original-nail source reviews and same-episode whole review supply the applicable physical acceptance. No evaluation fields were overwritten."
+}

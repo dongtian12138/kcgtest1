@@ -1,0 +1,11 @@
+{
+  "scope": "EXCEPTION_CLOSEOUT_ONLY_AFTER_FIRST_COMPLETE_PROCESS_ENDED",
+  "physics_and_control_source_changed": false,
+  "normal_motion_path_changed": false,
+  "changed_runtime_file": "src/kcg_connector/isaac/run_body_assembly_with_video.py",
+  "previous_sha256": "86c400706a5badbe3de2245c2aec250a90418f1f1db57e721eda9434384123bf",
+  "current_sha256": "5abddf49599367f257d6dcbe892ce7d95788211f43b30ac658cb400ba6805cab",
+  "regression_validation": "12 passed: six finalizer fault/normal cases plus six recording GC lifecycle cases",
+  "first_complete_episode_execution_commit": "25a0d6f68771080fe60a7dde948cdaa4e8d5927f",
+  "previous_episode_files_modified": false
+}

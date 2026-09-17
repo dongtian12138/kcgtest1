@@ -273,7 +273,7 @@
     "src/kcg_connector/isaac/probe_source_finger_fourbar.py": "4443755f2340048a7a42b615c7762d2f2ed2b77294a9ecbffc7d9ca5701b1c51",
     "src/kcg_connector/isaac/probe_three_finger_torque_capacity.py": "655f744f9d6f05f6a2499c53779c4fb109ff7e763686f192ab30046605c46dae",
     "src/kcg_connector/isaac/robot_physics_smoke.py": "5d0249a6e2c9ae743d560beddfa50f41ff09eaa1c70e63c823a97cd424d4fa3e",
-    "src/kcg_connector/isaac/run_body_assembly_with_video.py": "5abddf49599367f257d6dcbe892ce7d95788211f43b30ac658cb400ba6805cab",
+    "src/kcg_connector/isaac/run_body_assembly_with_video.py": "86c400706a5badbe3de2245c2aec250a90418f1f1db57e721eda9434384123bf",
     "src/kcg_connector/isaac/run_isaac_python.sh": "cc7cdd243bb0341452d0910fc7a5969360313d2fd30f7495750532546b469c90",
     "src/kcg_connector/isaac/te_assembled_thread_load_probe.py": "40a6c80913af4858e4c8adb6224e28a7901c0c4d97d58da25bc6ec66106c97e1",
     "src/kcg_connector/isaac/te_body_assembly_motion.py": "8c4d749365aca0793a50aa835a2dac86a8a252508fae7a95f5a70d8c5bf64564",

@@ -1,12 +1,22 @@
 # 当前三指手与连接器：保存版复现说明
 
-> 本分支的默认入口现在采用10毫秒负载补偿候选；原保存版仍在 `codex/connector-assembly-baseline-20260916` / `assembly-baseline-20260916`。当前改进与验证状态见 [改进说明](ASSEMBLY_IMPROVEMENTS_20260916_CN.md)。下面的历史结果与耗时属于原保存版。
+> 本改进分支默认采用 10 毫秒负载补偿、关节接触最后求解和无损记录回收调度，最多六次抓握，总腕部指令仍限 360°。最新连续运行的深度、原 2 微米键槽检查和松手记录见 [完整验证说明](ASSEMBLY_COMPLETE_VALIDATION_20260917_CN.md)。原保存版仍在 `codex/connector-assembly-baseline-20260916` / `assembly-baseline-20260916`；下面标为原版的历史结果与耗时属于该保存版。
 
 这份基线保留 2026-09-16 的同一回合装配：从桌面视觉识别、抓取、搬运、插入键槽、换抓螺母、五段旋拧，到张手后保持 3 秒。最终本体深度 **14.604491442 mm**，目标是 14.605 mm。
 
 **结果有明确边界：机械到位和真实松手已经发生；原键槽 2 µm 数值比较带仍有一项未通过。** 第三键最小间隙 −2.147659492 µm，超带 0.147659492 µm。保存版没有改阈值，也没有把这项失败改成通过。它是后续提速和排查的比较基线，不是硬件验证或重复成功率保证。
 
 ## 1. 下载指定版本与运行资产
+
+复现当前改进版时，先下载改进分支，再按下文准备同一套运行资产和环境：
+
+```bash
+git clone --branch codex/connector-assembly-improvements-20260916 https://github.com/dongtian12138/kcgtest1.git kcgtest1-improvements
+cd kcgtest1-improvements
+python3 scripts/prepare_assembly_reproduction.py --assets
+```
+
+下面这组命令则用于复现原封存基线，二者选择一个独立目录：
 
 ```bash
 git clone --branch codex/connector-assembly-baseline-20260916 https://github.com/dongtian12138/kcgtest1.git kcgtest1-baseline
@@ -86,7 +96,7 @@ python3 scripts/run_current_hand_assembly.py --run --gui
 python3 scripts/run_current_hand_assembly.py --run
 ```
 
-每次创建新的 `artifacts/reproductions/current_hand_<UTC时间>/`，拒绝覆盖已有结果。`--output-root` 可指定新的输出目录。预检失败会停止，完整动作不会启动。原版 291 秒仿真用了约 257 分钟现实时间，保存版仍保留该记录方式；后续提速在另外分支进行。完整动作使用有限 18000 秒墙钟预算，其中 1200 秒留给保存与收尾，不会自动无限延长。
+每次创建新的 `artifacts/reproductions/current_hand_<UTC时间>/`，拒绝覆盖已有结果。`--output-root` 可指定新的输出目录。预检失败会停止，完整动作不会启动。原版 291 秒仿真用了约 257 分钟现实时间；当前改进版这次约 307 秒仿真执行到运动结束用了约 243 分钟，尚不能据此把不同轨迹的耗时差当成同条件提速。当前改进版完整动作使用有限 21600 秒墙钟预算，其中 1200 秒留给保存与收尾，不会自动无限延长。原封存分支仍保留其 18000 秒预算。
 
 完成后可看：
 

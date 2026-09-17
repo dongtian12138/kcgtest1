@@ -78,29 +78,50 @@ def recorded_controller(runtime, arguments, motion_plan, dynamic):
 
 
 def finalize_recording():
-    runtime = recording_state.get("runtime", {})
-    raw_archive=runtime.get("truth_stream")
+    runtime = recording_state.get('runtime', {})
     primary_error = sys.exc_info()[1]
-    try:
-        if raw_archive is not None and not raw_archive.closed:
-            raw_archive.close()
-    finally:
-        stepper = recording_state.get('stepper')
-        if stepper is not None:
-            stepper.finish_deferred_recording_gc(primary_error=primary_error or sys.exc_info()[1])
-            if hasattr(stepper, 'recording_gc_audit'):
-                runtime['recording_gc_audit'] = dict(stepper.recording_gc_audit)
+    failures = []
+
+    def attempt(component, action):
+        try:
+            return True, action()
+        except Exception as error:
+            failures.append((component, error))
+            return False, None
+
+    raw_archive = runtime.get('truth_stream')
+    if raw_archive is not None and not raw_archive.closed:
+        attempt('raw_archive_close', raw_archive.close)
+    stepper = recording_state.get('stepper')
+    if stepper is not None:
+        attempt('recording_gc_cleanup', lambda: stepper.finish_deferred_recording_gc(
+            primary_error=primary_error or (failures[0][1] if failures else None)))
+        if hasattr(stepper, 'recording_gc_audit'):
+            runtime['recording_gc_audit'] = dict(stepper.recording_gc_audit)
+            attempt('recording_gc_audit_write', lambda:
                 (recording_state['output'] / 'recording_gc_audit.json').write_text(
-                    json.dumps(runtime['recording_gc_audit'], indent=2)+'\n')
-    recorder = runtime.pop("body_assembly_video", None)
+                    json.dumps(runtime['recording_gc_audit'], indent=2)+'\n'))
+    recorder = runtime.pop('body_assembly_video', None)
     if recorder is not None:
-        video = recorder.close()
-        (recording_state["output"] / "video_render_isolation.json").write_text(json.dumps({
-            "initialization": recording_state.get("initialization"), "video": video,
-            "source": "CURRENT_EPISODE_CAMERA_CAPTURE_AFTER_PHYSICS_STEPS",
-            "physics_trajectory_comparison_required_for_initial_preflight": True,
-            "video_does_not_establish_assembly_completion": True,
-        }, indent=2) + "\n")
+        closed, video = attempt('video_close', recorder.close)
+        if closed:
+            attempt('video_isolation_write', lambda:
+                (recording_state['output'] / 'video_render_isolation.json').write_text(json.dumps({
+                    'initialization': recording_state.get('initialization'), 'video': video,
+                    'source': 'CURRENT_EPISODE_CAMERA_CAPTURE_AFTER_PHYSICS_STEPS',
+                    'physics_trajectory_comparison_required_for_initial_preflight': True,
+                    'video_does_not_establish_assembly_completion': True,
+                }, indent=2)+'\n'))
+    if failures:
+        runtime['recording_finalize_errors'] = [
+            {'component': component, 'error_type': type(error).__name__, 'error': str(error)}
+            for component, error in failures]
+        first_error = primary_error or failures[0][1]
+        if hasattr(first_error, 'add_note'):
+            for component, error in failures:
+                first_error.add_note(f'Recording cleanup {component}: {type(error).__name__}: {error}')
+        if primary_error is None:
+            raise first_error
 
 
 def recorded_execute(*args, **kwargs):

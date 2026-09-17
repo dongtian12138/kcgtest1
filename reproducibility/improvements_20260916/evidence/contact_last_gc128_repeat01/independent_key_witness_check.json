@@ -1,0 +1,198 @@
+{
+  "scope": "INDEPENDENT_BOUND_SOURCE_AND_THREE_FRAME_WORST_WITNESS_REVIEW_NOT_FULL_RESCAN",
+  "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat01_restart01/run",
+  "full_archive_sample_count": 294560,
+  "archive_index_end_equals_file_bytes": 25520469055,
+  "source_model": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc",
+  "source_model_sha256": "234b7c0f14caeae1b8dffeabb8bae5a63e8b05d2463f3a7ff3e0c0d1d53f9eb6",
+  "source_matches_run_evidence_binding_and_original_full14_model": true,
+  "dimensions_path": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/reproducibility/assembly_20260916/key_backlash_dimensions.json",
+  "dimensions_sha256": "aa09cd6133f4a54cc3aca731e9c723826d67432eea43325dde8a24e7024e6dc0",
+  "dimensions_equal_original_json": true,
+  "run_manifest_and_bound_evaluator_unchanged": true,
+  "first_contact_step_matches_report": 146350,
+  "last_report_step_matches_sealed_last_sample": 294559,
+  "numerical_tolerance_m_unchanged_from_full14": 2e-06,
+  "reported_minimum_sidewall_gaps_um": [
+    -0.9103551603288907,
+    -0.6514317011074855,
+    -1.8484198708327293,
+    101.98343195519999,
+    -0.859048213856073
+  ],
+  "reported_evaluated_samples_by_key": [
+    135615,
+    135551,
+    135589,
+    135726,
+    135760
+  ],
+  "worst_key_number_one_based": 3,
+  "witness_recomputed_exactly_equal": true,
+  "headroom_to_original_2um_band_um": 0.15158012916727057,
+  "sampled_rows": [
+    {
+      "step": 230007,
+      "phase": "key_probe_nut_rotation_turn",
+      "body_position_m": [
+        0.550095796585083,
+        0.1850115954875946,
+        0.2609875500202179
+      ],
+      "body_orientation_wxyz": [
+        0.0014245198174433482,
+        0.003026800709868074,
+        0.999994401808974,
+        7.464224507317812e-05
+      ],
+      "inside_vertex_counts": [
+        13,
+        12,
+        12,
+        13,
+        13
+      ],
+      "minimum_sidewall_gaps_m": [
+        9.987512648411856e-05,
+        7.772978245340512e-05,
+        -1.7427387990226472e-06,
+        0.0001229300687912591,
+        -1.3689119364102e-07
+      ]
+    },
+    {
+      "step": 230008,
+      "phase": "key_probe_nut_rotation_turn",
+      "body_position_m": [
+        0.5500953197479248,
+        0.1850115805864334,
+        0.2609863877296448
+      ],
+      "body_orientation_wxyz": [
+        0.001424055212678478,
+        0.0030322554698688437,
+        0.9999943858350756,
+        7.610418293959681e-05
+      ],
+      "inside_vertex_counts": [
+        13,
+        12,
+        12,
+        13,
+        13
+      ],
+      "minimum_sidewall_gaps_m": [
+        9.920819829076089e-05,
+        7.717727382434715e-05,
+        -1.8484198708327293e-06,
+        0.00012320150120547014,
+        -1.7184450421614538e-07
+      ]
+    },
+    {
+      "step": 230009,
+      "phase": "key_probe_nut_rotation_turn",
+      "body_position_m": [
+        0.5500942468643188,
+        0.18501144647598267,
+        0.26098525524139404
+      ],
+      "body_orientation_wxyz": [
+        0.0014197168746896325,
+        0.0030353588587931604,
+        0.9999943823742814,
+        7.88699776864197e-05
+      ],
+      "inside_vertex_counts": [
+        13,
+        12,
+        12,
+        13,
+        13
+      ],
+      "minimum_sidewall_gaps_m": [
+        9.80753634386784e-05,
+        7.637574830276083e-05,
+        -1.6437899268579859e-06,
+        0.0001241513849697191,
+        4.4942244381562803e-10
+      ]
+    }
+  ],
+  "available_summary_snapshot": {
+    "source_nail_body_review.json": {
+      "present": true,
+      "scope": "POSTRUN_ONLY_SOURCE_NAIL_CONTACT_AND_LIFT",
+      "accepted": true
+    },
+    "source_nut_pad_review.json": {
+      "present": true,
+      "scope": "POSTRUN_DECLARED_ORIGINAL_NUT_GRASP_CONTACT_REGIONS",
+      "accepted": true
+    },
+    "physical_key_entry_result.json": {
+      "present": true,
+      "scope": "KEY_ENTRY_AT_ONE_FIXED_SCENE_NOT_FULL_INSERTION_LOCKING_OR_HARDWARE",
+      "status": "DYNAMIC_PASS"
+    },
+    "final_mating_visibility_review.json": {
+      "present": true,
+      "scope": "POSTRUN_ORIGINAL_MATING_INDICATOR_VISIBILITY_REVIEW",
+      "accepted": true
+    },
+    "whole_assembly_review.json": {
+      "present": false
+    },
+    "evaluation.json": {
+      "present": true
+    }
+  },
+  "limitations": [
+    "Only230007..230009 were read here; no25GB full archive rescan or compressed stream hash.",
+    "The original evaluator traverses the indexed interval146350..294559 contiguously but applies its original key_probe_/nut_index_ phase filter and only tests vertices behind the socket mouth. Counts are not294560 checks per key.",
+    "Accepted means within the original2um postrun numerical band; the small negative gaps are preserved, not declared zero penetration.",
+    "The final key report omits a run-path or archive-digest field; this audit binds it by source hashes, same-episode entry/final indices and exact witness recomputation.",
+    "Summary fields are read from existing reports; their entire scans and actual video viewing are not repeated in this bounded audit."
+  ],
+  "legacy_pickup_evaluation_scope_snapshot": {
+    "pickup_evaluation_sample_scope": {
+      "first": 0,
+      "count": 35649,
+      "full_episode_count": 294560,
+      "whole_assembly_acceptance": false
+    },
+    "physics_time_advanced_s": 37.134375,
+    "controller_completed": true,
+    "controller_failure_reason": null,
+    "controller_nominal_physical_pass": true,
+    "finite_throughout": true,
+    "unauthorized_contact_records": {
+      "robot_object_unauthorized": 0,
+      "robot_table": 0,
+      "robot_fixture": 0,
+      "robot_unclassified": 0
+    },
+    "contact_report_channels_agree": true,
+    "contact_report_api_complete": true,
+    "truth_isolation_pass": true,
+    "engine_health_pass": true,
+    "identity_hash_check_pass": true,
+    "physx_capacity_warning_count": 0,
+    "physx_error_lines": [],
+    "preflight_pass": false,
+    "controller_preflight_pass": false,
+    "accepted_preflight_pass": false,
+    "accepted_preflight_bound": false,
+    "pad_surface_identity_verified": false,
+    "nominal_diagnostic_pass": true,
+    "nominal_three_stage_dynamic_witness_pass": false,
+    "research_dynamic_pass": false,
+    "formal_dynamic_pass": false,
+    "nominal_research_dynamic_pass": false,
+    "evidence_limit": "RESEARCH_ONLY_TERMINAL_LINK_CONTACT_PAD_IDENTITY_UNRESOLVED",
+    "split_plug_grasp_contact_policy_status": "NO_TERMINAL_CONTACT",
+    "nail_body_stability_body_pickup_and_hold_observed": false,
+    "pad_identity_reason": "USER_CONFIRMED_FULL_PAD_GEOMETRY_NOT_PROVIDED",
+    "whole_report_present": false
+  }
+}
