@@ -1,0 +1,331 @@
+{
+  "scope": "POSTRUN_FIFTH_NORMAL_STOP_ROBOT_AND_FINITE_MECHANISM_ONLY",
+  "source_run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/load10ms_repeat01/run",
+  "physics_executed": false,
+  "object_contact_truth_read": false,
+  "decision_step": 273690,
+  "source_sensor_and_mechanism_step_for_decision": 273689,
+  "checked_mechanism_step_half_open": [
+    272043,
+    273690
+  ],
+  "checked_samples_by_finger": {
+    "f1j2": 1647,
+    "f2j1": 1647,
+    "f3j2": 1647
+  },
+  "gzip_rows_traversed_to_select_interval": 1094761,
+  "gzip_file_bytes": 411379484,
+  "elastic_formula": "4 Nm - abs(120 Nm/rad * (input_angle - output_angle))",
+  "first_half_nm_reserve_crossing_by_finger": {
+    "f1j2": {
+      "step": 273689,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f1j2",
+      "input_angle": 0.7596577836961056,
+      "output_angle": 0.7304801344871521,
+      "input_effort": 0.0,
+      "transmission_effort": 3.5986420379937307,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 3.501317905074419,
+      "elastic_margin_nm": 0.4986820949255808
+    },
+    "f2j1": null,
+    "f3j2": null
+  },
+  "minimum_reserve_by_finger": {
+    "f1j2": {
+      "step": 273689,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f1j2",
+      "input_angle": 0.7596577836961056,
+      "output_angle": 0.7304801344871521,
+      "input_effort": 0.0,
+      "transmission_effort": 3.5986420379937307,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 3.501317905074419,
+      "elastic_margin_nm": 0.4986820949255808
+    },
+    "f2j1": {
+      "step": 273509,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f2j1",
+      "input_angle": 0.51208042120382,
+      "output_angle": 0.48566174507141113,
+      "input_effort": 0.0,
+      "transmission_effort": 3.21620376759149,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 3.170241135889067,
+      "elastic_margin_nm": 0.829758864110933
+    },
+    "f3j2": {
+      "step": 273105,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f3j2",
+      "input_angle": 0.7311380492989882,
+      "output_angle": 0.703451931476593,
+      "input_effort": 0.0,
+      "transmission_effort": 3.470014123256969,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 3.3223341386874194,
+      "elastic_margin_nm": 0.6776658613125806
+    }
+  },
+  "last_three_mechanism_steps": [
+    {
+      "step": 273687,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f1j2",
+      "input_angle": 0.7596577836961056,
+      "output_angle": 0.7305405735969543,
+      "input_effort": 0.0,
+      "transmission_effort": 3.61313444543487,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 3.4940652118981497,
+      "elastic_margin_nm": 0.5059347881018503
+    },
+    {
+      "step": 273687,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f2j1",
+      "input_angle": 0.51208042120382,
+      "output_angle": 0.4884811043739319,
+      "input_effort": 0.0,
+      "transmission_effort": 2.7402118479547637,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 2.8319180195865767,
+      "elastic_margin_nm": 1.1680819804134233
+    },
+    {
+      "step": 273687,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f3j2",
+      "input_angle": 0.7311380492989882,
+      "output_angle": 0.7044485211372375,
+      "input_effort": 0.0,
+      "transmission_effort": 3.064776657160091,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 3.2027433794100757,
+      "elastic_margin_nm": 0.7972566205899243
+    },
+    {
+      "step": 273688,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f1j2",
+      "input_angle": 0.7596577836961056,
+      "output_angle": 0.7305100560188293,
+      "input_effort": 0.0,
+      "transmission_effort": 3.5766297744572775,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 3.4977273212731497,
+      "elastic_margin_nm": 0.5022726787268503
+    },
+    {
+      "step": 273688,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f2j1",
+      "input_angle": 0.51208042120382,
+      "output_angle": 0.48850464820861816,
+      "input_effort": 0.0,
+      "transmission_effort": 2.7872319852647918,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 2.8290927594242232,
+      "elastic_margin_nm": 1.1709072405757768
+    },
+    {
+      "step": 273688,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f3j2",
+      "input_angle": 0.7311380492989882,
+      "output_angle": 0.7044497132301331,
+      "input_effort": 0.0,
+      "transmission_effort": 3.0616582911570545,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 3.2026003282626148,
+      "elastic_margin_nm": 0.7973996717373852
+    },
+    {
+      "step": 273689,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f1j2",
+      "input_angle": 0.7596577836961056,
+      "output_angle": 0.7304801344871521,
+      "input_effort": 0.0,
+      "transmission_effort": 3.5986420379937307,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 3.501317905074419,
+      "elastic_margin_nm": 0.4986820949255808
+    },
+    {
+      "step": 273689,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f2j1",
+      "input_angle": 0.51208042120382,
+      "output_angle": 0.48852652311325073,
+      "input_effort": 0.0,
+      "transmission_effort": 2.7730172609625,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 2.826467770868315,
+      "elastic_margin_nm": 1.173532229131685
+    },
+    {
+      "step": 273689,
+      "phase": "key_probe_nut_rotation_turn",
+      "joint": "f3j2",
+      "input_angle": 0.7311380492989882,
+      "output_angle": 0.7044520974159241,
+      "input_effort": 0.0,
+      "transmission_effort": 3.066680280502605,
+      "elastic_effort_boundary_exceeded": false,
+      "native_drive_clipping_predicted": false,
+      "predicted_branch_consistent": true,
+      "spring_law_residual_nm": 0.0,
+      "elastic_effort_nm": 3.202314225967693,
+      "elastic_margin_nm": 0.7976857740323071
+    }
+  ],
+  "event": {
+    "step": 273690,
+    "elastic_margins_nm": {
+      "f1j2": 0.4986820949255808,
+      "f2j1": 1.173532229131685,
+      "f3j2": 0.7976857740323071
+    },
+    "threshold_nm": 0.5,
+    "last_applied_rotation_deg": 37.8760591609241,
+    "all_original_force_and_transmission_limits_retained": true
+  },
+  "event_margins_exactly_equal_last_mechanism_reconstruction": true,
+  "last_mechanism_output_exactly_equal_last_robot_encoders": true,
+  "last_applied_interval_angle_deg": 37.8760591609241,
+  "cumulative_applied_command_angle_deg": 354.7504418890766,
+  "remaining_within_360_degree_command_budget": 5.249558110923374,
+  "normal_stop_reason": "ELASTIC_RESERVE_EARLY_REGRASP",
+  "outer_abort_reason": null,
+  "last_archived_control_row": {
+    "control_and_applied_step": 273689,
+    "observation_sensor_step": 273688,
+    "filtered_50ms_interface_wrench_n_nm": [
+      -2.7596600450634394,
+      1.866993953757309,
+      31.004910347830066,
+      0.28640454092893786,
+      0.10720872249185838,
+      0.8030250859435444
+    ],
+    "resultant_force_n": 31.183422770194195,
+    "lateral_force_n": 3.3318748457416425,
+    "bending_nm": 0.3058124772520767,
+    "twisting_nm": 0.8030250859435444,
+    "pivot_position_tracking_error_mm": [
+      0.5189652841240955,
+      -0.13488326684493734,
+      0.25217533582433393
+    ],
+    "pivot_tracking_xy_mm": 0.5362074801797955,
+    "pivot_tracking_norm_mm": 0.5925460841140386,
+    "encoder_pivot_world_m": [
+      0.549485872427894,
+      0.18513299411732242,
+      0.2564884180766139
+    ],
+    "contact_load_filter_time_constant_s": 0.01
+  },
+  "last_robot_sensor_row": {
+    "step": 273689,
+    "phase": "key_probe_nut_rotation_turn",
+    "active_positions_rad": [
+      0.11812113225460052,
+      0.5037619471549988,
+      0.39957740902900696,
+      -0.8551158905029297,
+      -0.1942167431116104,
+      1.8132694959640503,
+      0.40732449293136597,
+      1.0466110706329346,
+      0.7304801344871521,
+      0.48852652311325073,
+      0.7044520974159241
+    ],
+    "hand2arm_raw_wrench": [
+      -8.642877578735352,
+      -7.2095046043396,
+      -0.912355363368988,
+      3.321074962615967,
+      -3.888073205947876,
+      1.0022435188293457
+    ],
+    "force_used_for_protection_task_n": [
+      -2.8844329344039803,
+      1.970530689935125,
+      30.17213636636677
+    ],
+    "resultant_force_used_for_protection_n": 30.373685279591655,
+    "ft_limit_reason": null,
+    "ft_gate_enabled": true,
+    "effective_force_limit_n": 110.0
+  },
+  "source_alignment": {
+    "reserve_before_advance": "src/kcg_connector/isaac/te_coaxial_nut_interval.py:245",
+    "control_row_written_only_after_successful_advance": "src/kcg_connector/isaac/te_coaxial_nut_interval.py:278",
+    "remaining_command_budget": "src/kcg_connector/isaac/te_nut_motion.py:49"
+  },
+  "limitations": [
+    "The last archived control wrench and pivot error use sensor step273688. The decision273690 uses sensor273689; the elastic-stop event omits its same-decision filtered wrist/pivot values.",
+    "Raw wrist and planned-contact protection fields at273689 are retained under their own names; neither is relabelled as the omitted controller stop wrench.",
+    "Angles are issued robot commands, not measured Nut rotation.",
+    "An extra regrasp within the existing360-degree budget tests use of remaining command after the regrasp-count cap; it does not prove physical seating or replay the original whole episode."
+  ],
+  "decision_input_encoder_pivot": {
+    "sensor_step": 273689,
+    "virtual_pivot_world_m": [
+      0.5494802460103255,
+      0.185134315577171,
+      0.25648843361428986
+    ],
+    "displacement_from_initial_virtual_pivot_world_mm": [
+      -0.5245876891309953,
+      0.13620071161885017,
+      -0.7931811870010019
+    ],
+    "world_xy_displacement_from_initial_mm": 0.5419805138870576,
+    "previous_sensor_reconstructs_saved_control_pivot_within_1e_minus_10_m": true,
+    "meaning": "Actual encoder-derived pivot displacement; not the omitted next-controller target error or object pose."
+  }
+}

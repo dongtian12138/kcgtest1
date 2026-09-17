@@ -1,0 +1,20 @@
+{
+  "scope": "FIRST_IMPROVED_COMPLETE_RUN_NOT_A_SUCCESSFUL_REPEAT",
+  "source_commit": "c95785ca3d81798146ef7b464c86b840c722f3ab",
+  "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/load10ms_repeat01/run",
+  "checked_at_utc": "2026-09-17T01:14:52.072198+00:00",
+  "archive_bytes": 19090801262,
+  "archive_index_end": 19090801262,
+  "physical_sample_count": 277530,
+  "original_key_band_um": 2.0,
+  "final_depth_mm": 14.582080096006367,
+  "source_stop_target_mm": 14.605,
+  "seating_shortfall_um": 22.9199039936329,
+  "key_maximum_penetration_um": 2.475998348007158,
+  "stop_positive_in_released_hold": false,
+  "full_assembly_verified": false,
+  "wall_seconds": 12859.883214601025,
+  "video_path": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/load10ms_repeat01/run/video/assembly_four_view.mp4",
+  "full_raw_archive_retained_locally": true,
+  "next_action": "One bounded local current-grasp remaining-angle diagnostic is running. A solver-order local comparison is prepared, not started. Full nominal repeats and finite pose variation remain outstanding."
+}

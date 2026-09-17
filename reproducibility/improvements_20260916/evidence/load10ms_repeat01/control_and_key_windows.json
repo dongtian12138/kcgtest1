@@ -1,0 +1,449 @@
+{
+  "scope": "ENDED_EPISODE_CONTROL_AND_KEY_WITNESS_DIAGNOSIS",
+  "run": "/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/load10ms_repeat01/run",
+  "online_truth_used": false,
+  "physics_executed": false,
+  "key_band_um_unchanged": 2.0,
+  "turns": [
+    {
+      "stage": "nut_rotation",
+      "first_step": 207360,
+      "last_step": 210600,
+      "actual_command_deg": 89.99999997355123,
+      "elapsed_physics_s": 3.375,
+      "maximum_encoder_pivot_xy_error_mm": 0.10945048806991023,
+      "maximum_error_step": 207826,
+      "maximum_error_command_deg": 2.1332622250495663,
+      "final_encoder_pivot_xy_error_mm": 0.08930903857540301,
+      "maximum_filtered_force_n": 52.67424751939733,
+      "maximum_filtered_bending_nm": 0.567720865769975,
+      "maximum_filtered_twist_nm": 0.5714507898136711,
+      "early_regrasp": null,
+      "normal_stop_reason": null,
+      "outer_abort": null
+    },
+    {
+      "stage": "nut_rotation_after_index",
+      "first_step": 223945,
+      "last_step": 225602,
+      "actual_command_deg": 46.874382807498826,
+      "elapsed_physics_s": 1.7260416666666667,
+      "maximum_encoder_pivot_xy_error_mm": 0.6929714772091042,
+      "maximum_error_step": 225601,
+      "maximum_error_command_deg": 46.874382807498826,
+      "final_encoder_pivot_xy_error_mm": 0.6929714772091042,
+      "maximum_filtered_force_n": 34.52543499169027,
+      "maximum_filtered_bending_nm": 0.7235234342336316,
+      "maximum_filtered_twist_nm": 0.6860545828582014,
+      "early_regrasp": {
+        "step": 225602,
+        "elastic_margins_nm": {
+          "f1j2": 0.4989299170768744,
+          "f2j1": 1.205345715989444,
+          "f3j2": 1.002868097065016
+        },
+        "threshold_nm": 0.5,
+        "last_applied_rotation_deg": 46.874382807498826,
+        "all_original_force_and_transmission_limits_retained": true
+      },
+      "normal_stop_reason": "ELASTIC_RESERVE_EARLY_REGRASP",
+      "outer_abort": null
+    },
+    {
+      "stage": "nut_rotation_continued_01",
+      "first_step": 238927,
+      "last_step": 242167,
+      "actual_command_deg": 89.99999997355123,
+      "elapsed_physics_s": 3.375,
+      "maximum_encoder_pivot_xy_error_mm": 0.5364220911076633,
+      "maximum_error_step": 241357,
+      "maximum_error_command_deg": 80.68359375,
+      "final_encoder_pivot_xy_error_mm": 0.4616438519204001,
+      "maximum_filtered_force_n": 87.32839044435823,
+      "maximum_filtered_bending_nm": 0.825347955807718,
+      "maximum_filtered_twist_nm": 1.1618853667617368,
+      "early_regrasp": null,
+      "normal_stop_reason": null,
+      "outer_abort": null
+    },
+    {
+      "stage": "nut_rotation_continued_02",
+      "first_step": 255487,
+      "last_step": 258727,
+      "actual_command_deg": 89.99999997355123,
+      "elapsed_physics_s": 3.375,
+      "maximum_encoder_pivot_xy_error_mm": 0.41588932872184525,
+      "maximum_error_step": 256753,
+      "maximum_error_command_deg": 27.141023447346463,
+      "final_encoder_pivot_xy_error_mm": 0.35137091342342297,
+      "maximum_filtered_force_n": 80.33694625596829,
+      "maximum_filtered_bending_nm": 0.8991970777595918,
+      "maximum_filtered_twist_nm": 1.3090481962034886,
+      "early_regrasp": null,
+      "normal_stop_reason": null,
+      "outer_abort": null
+    },
+    {
+      "stage": "nut_rotation_continued_03",
+      "first_step": 272044,
+      "last_step": 273690,
+      "actual_command_deg": 37.8760591609241,
+      "elapsed_physics_s": 1.7145833333333333,
+      "maximum_encoder_pivot_xy_error_mm": 0.5464720675749601,
+      "maximum_error_step": 273523,
+      "maximum_error_command_deg": 33.60804697792197,
+      "final_encoder_pivot_xy_error_mm": 0.5362074801797955,
+      "maximum_filtered_force_n": 67.86751765763489,
+      "maximum_filtered_bending_nm": 0.6018866147295435,
+      "maximum_filtered_twist_nm": 1.1130344764306104,
+      "early_regrasp": {
+        "step": 273690,
+        "elastic_margins_nm": {
+          "f1j2": 0.4986820949255808,
+          "f2j1": 1.173532229131685,
+          "f3j2": 0.7976857740323071
+        },
+        "threshold_nm": 0.5,
+        "last_applied_rotation_deg": 37.8760591609241,
+        "all_original_force_and_transmission_limits_retained": true
+      },
+      "normal_stop_reason": "ELASTIC_RESERVE_EARLY_REGRASP",
+      "outer_abort": null
+    }
+  ],
+  "total_actually_executed_command_deg": 354.7504418890766,
+  "turn_physics_seconds": 13.565625,
+  "key_witness_windows": [
+    {
+      "source_key_number_one_based": 3,
+      "minimum_witness": {
+        "step": 240346,
+        "phase": "key_probe_nut_rotation_turn",
+        "gap_m": -2.475998348007158e-06
+      },
+      "window": [
+        {
+          "step": 240343,
+          "phase": "key_probe_nut_rotation_turn",
+          "source_key_gap_um": -2.2194270580653264,
+          "native_key_contact_minimum_separation_um": -2.3271959435078315,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.015795796889181337,
+          "body_depth_mm": 10.699344128370258,
+          "body_lateral_mm": 0.12041195932161015,
+          "body_axis_tilt_deg": 0.16240006338858354,
+          "control_before_step": {
+            "command_deg": 34.48678847435557,
+            "encoder_pivot_xy_error_mm": 0.10867339077904725,
+            "filtered_wrench_n_nm": [
+              -23.294950970131282,
+              8.813872132121697,
+              18.126632568251036,
+              0.020392726069604263,
+              -0.24929552073931033,
+              0.7927454975364965
+            ],
+            "load_compensation_wrench_n_nm": [
+              -25.88039691308342,
+              9.464713138210705,
+              21.145384158243193,
+              0.030214760407392672,
+              -0.25374713629689727,
+              0.8696823004509232
+            ]
+          }
+        },
+        {
+          "step": 240344,
+          "phase": "key_probe_nut_rotation_turn",
+          "source_key_gap_um": -2.0864778667101236,
+          "native_key_contact_minimum_separation_um": -2.2142462512420025,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.015681039320354376,
+          "body_depth_mm": 10.700536221265766,
+          "body_lateral_mm": 0.12062526833884148,
+          "body_axis_tilt_deg": 0.16314075977273518,
+          "control_before_step": {
+            "command_deg": 34.5372410542744,
+            "encoder_pivot_xy_error_mm": 0.10813409327822043,
+            "filtered_wrench_n_nm": [
+              -23.370859184983065,
+              8.833533551475513,
+              18.2477847123306,
+              0.016364956877336245,
+              -0.24855707520586054,
+              0.7965387984551773
+            ],
+            "load_compensation_wrench_n_nm": [
+              -25.987383383346184,
+              9.49420073653599,
+              21.42063920257399,
+              0.010929228153482629,
+              -0.24861976964660923,
+              0.8797326727063798
+            ]
+          },
+          "native_separation_minus_previous_post_pose_gap_um": 0.005180806823323891
+        },
+        {
+          "step": 240345,
+          "phase": "key_probe_nut_rotation_turn",
+          "source_key_gap_um": -2.1687270406145487,
+          "native_key_contact_minimum_separation_um": -2.0698132630059263,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.01612142433055974,
+          "body_depth_mm": 10.701638907194111,
+          "body_lateral_mm": 0.12068801437737607,
+          "body_axis_tilt_deg": 0.16321701716448833,
+          "control_before_step": {
+            "command_deg": 34.58770949594604,
+            "encoder_pivot_xy_error_mm": 0.10764433840245408,
+            "filtered_wrench_n_nm": [
+              -23.440676693018567,
+              8.830791361765135,
+              18.354597485442863,
+              0.021512509618176825,
+              -0.23895717369737104,
+              0.8005033463340956
+            ],
+            "load_compensation_wrench_n_nm": [
+              -26.063282788570376,
+              9.41919748362382,
+              21.615070465994513,
+              0.035489446843809,
+              -0.20286765709403815,
+              0.8899909505756677
+            ]
+          },
+          "native_separation_minus_previous_post_pose_gap_um": 0.01666460370419731
+        },
+        {
+          "step": 240346,
+          "phase": "key_probe_nut_rotation_turn",
+          "source_key_gap_um": -2.475998348007158,
+          "native_key_contact_minimum_separation_um": -2.1600108084385283,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.015177677059652802,
+          "body_depth_mm": 10.703099220991108,
+          "body_lateral_mm": 0.12078144810817495,
+          "body_axis_tilt_deg": 0.16350558996866274,
+          "control_before_step": {
+            "command_deg": 34.63819372370835,
+            "encoder_pivot_xy_error_mm": 0.10790033062697763,
+            "filtered_wrench_n_nm": [
+              -23.538484934944794,
+              8.830775222121805,
+              18.44879592450192,
+              0.023161862122031737,
+              -0.24631316196515446,
+              0.8046669417268222
+            ],
+            "load_compensation_wrench_n_nm": [
+              -26.267999558271626,
+              9.363612864342516,
+              21.742924289894717,
+              0.04200136685285146,
+              -0.23883139339981246,
+              0.9004827915974958
+            ]
+          },
+          "native_separation_minus_previous_post_pose_gap_um": 0.008716232176020355
+        },
+        {
+          "step": 240347,
+          "phase": "key_probe_nut_rotation_turn",
+          "source_key_gap_um": -2.1226002785456055,
+          "native_key_contact_minimum_separation_um": -2.466121031829971,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.010795943821977138,
+          "body_depth_mm": 10.704440325498554,
+          "body_lateral_mm": 0.12104842227771577,
+          "body_axis_tilt_deg": 0.16403235559240373,
+          "control_before_step": {
+            "command_deg": 34.68869366186257,
+            "encoder_pivot_xy_error_mm": 0.10873736741709208,
+            "filtered_wrench_n_nm": [
+              -23.626567250652418,
+              8.828368698479382,
+              18.548628325197264,
+              0.020370037901561788,
+              -0.2503268975701057,
+              0.809237710247583
+            ],
+            "load_compensation_wrench_n_nm": [
+              -26.41767114754962,
+              9.302220666163322,
+              21.893646862411607,
+              0.027447376874813613,
+              -0.2566477350562357,
+              0.9121703904375786
+            ]
+          },
+          "native_separation_minus_previous_post_pose_gap_um": 0.009877316177187012
+        },
+        {
+          "step": 240348,
+          "phase": "key_probe_nut_rotation_turn",
+          "source_key_gap_um": -1.881004239888906,
+          "native_key_contact_minimum_separation_um": -2.117080612151767,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.007505695849628738,
+          "body_depth_mm": 10.705423802137348,
+          "body_lateral_mm": 0.1212099618776174,
+          "body_axis_tilt_deg": 0.16436499341447908,
+          "control_before_step": {
+            "command_deg": 34.739209234673474,
+            "encoder_pivot_xy_error_mm": 0.10885818141979367,
+            "filtered_wrench_n_nm": [
+              -23.710955294380092,
+              8.840602361766283,
+              18.643982613555217,
+              0.01439761238272224,
+              -0.2519707978691619,
+              0.8108270459984676
+            ],
+            "load_compensation_wrench_n_nm": [
+              -26.544455132998568,
+              9.314069490066549,
+              22.01886776734796,
+              -0.0006046442527628329,
+              -0.2622295493875676,
+              0.9094917077616926
+            ]
+          },
+          "native_separation_minus_previous_post_pose_gap_um": 0.005519666393838385
+        },
+        {
+          "step": 240349,
+          "phase": "key_probe_nut_rotation_turn",
+          "source_key_gap_um": -1.9600163163090436,
+          "native_key_contact_minimum_separation_um": -1.8708457218963304,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.006897806969510334,
+          "body_depth_mm": 10.706645697355244,
+          "body_lateral_mm": 0.12128334113964932,
+          "body_axis_tilt_deg": 0.1646553931120413,
+          "control_before_step": {
+            "command_deg": 34.78974036636946,
+            "encoder_pivot_xy_error_mm": 0.10826688792647085,
+            "filtered_wrench_n_nm": [
+              -23.795022374063155,
+              8.851239009802695,
+              18.70891458896846,
+              0.018154251001832118,
+              -0.25120155303970193,
+              0.8088112275988333
+            ],
+            "load_compensation_wrench_n_nm": [
+              -26.665755799588343,
+              9.318572190583904,
+              22.000639620315532,
+              0.018478818305401108,
+              -0.25630883064551985,
+              0.8906474214049597
+            ]
+          },
+          "native_separation_minus_previous_post_pose_gap_um": 0.01015851799257561
+        }
+      ]
+    },
+    {
+      "source_key_number_one_based": 5,
+      "minimum_witness": {
+        "step": 225936,
+        "phase": "key_probe_nut_index_open",
+        "gap_m": -2.1415666605320016e-06
+      },
+      "window": [
+        {
+          "step": 225933,
+          "phase": "key_probe_nut_index_open",
+          "source_key_gap_um": -2.09736203144828,
+          "native_key_contact_minimum_separation_um": -2.075906422760454,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.01100012256196748,
+          "body_depth_mm": 9.9808697402477,
+          "body_lateral_mm": 0.09755847082453087,
+          "body_axis_tilt_deg": 0.13263496518269663
+        },
+        {
+          "step": 225934,
+          "phase": "key_probe_nut_index_open",
+          "source_key_gap_um": -2.0675107770186107,
+          "native_key_contact_minimum_separation_um": -2.09133759199176,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.011028584446088485,
+          "body_depth_mm": 9.9808697402477,
+          "body_lateral_mm": 0.09749906876082871,
+          "body_axis_tilt_deg": 0.13261522959568955,
+          "native_separation_minus_previous_post_pose_gap_um": 0.006024439456520092
+        },
+        {
+          "step": 225935,
+          "phase": "key_probe_nut_index_open",
+          "source_key_gap_um": -2.1362819257747523,
+          "native_key_contact_minimum_separation_um": -2.089752570100245,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.011213805230117623,
+          "body_depth_mm": 9.9808697402477,
+          "body_lateral_mm": 0.09755479958775547,
+          "body_axis_tilt_deg": 0.13261946556560425,
+          "native_separation_minus_previous_post_pose_gap_um": -0.02224179308163432
+        },
+        {
+          "step": 225936,
+          "phase": "key_probe_nut_index_open",
+          "source_key_gap_um": -2.1415666605320016,
+          "native_key_contact_minimum_separation_um": -2.1317596292647067,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.011255924391432965,
+          "body_depth_mm": 9.9808697402477,
+          "body_lateral_mm": 0.09755479958775547,
+          "body_axis_tilt_deg": 0.13262762198851794,
+          "native_separation_minus_previous_post_pose_gap_um": 0.0045222965100455426
+        },
+        {
+          "step": 225937,
+          "phase": "key_probe_nut_index_open",
+          "source_key_gap_um": -2.125183621402682,
+          "native_key_contact_minimum_separation_um": -2.134202077286318,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.010989753676373558,
+          "body_depth_mm": 9.9808697402477,
+          "body_lateral_mm": 0.09755479958775547,
+          "body_axis_tilt_deg": 0.13262271985272872,
+          "native_separation_minus_previous_post_pose_gap_um": 0.007364583245683676
+        },
+        {
+          "step": 225938,
+          "phase": "key_probe_nut_index_open",
+          "source_key_gap_um": -2.0727593973224323,
+          "native_key_contact_minimum_separation_um": -2.1179134819249157,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.011138635723762627,
+          "body_depth_mm": 9.9808697402477,
+          "body_lateral_mm": 0.0974966175163552,
+          "body_axis_tilt_deg": 0.13256590938279927,
+          "native_separation_minus_previous_post_pose_gap_um": 0.007270139477766335
+        },
+        {
+          "step": 225939,
+          "phase": "key_probe_nut_index_open",
+          "source_key_gap_um": -2.045617260082455,
+          "native_key_contact_minimum_separation_um": -2.065306944132317,
+          "native_key_point_count": 6,
+          "native_key_impulse_norm_sum_n_s": 0.01102973281492504,
+          "body_depth_mm": 9.980899542570087,
+          "body_lateral_mm": 0.09749906876082871,
+          "body_axis_tilt_deg": 0.13257954365531022,
+          "native_separation_minus_previous_post_pose_gap_um": 0.007452453190115449
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "The wrist virtual pivot is a robot/grasp reference, not the observed physical Nut center.",
+    "Native contact-generation separation and post-step poses may differ by a physics tick.",
+    "Correlation of a key residual with load or wrist error does not prove a causal controller fix."
+  ]
+}
