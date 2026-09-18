@@ -230,6 +230,11 @@ if args.source_stage_probe and (not args.shared_hand_mechanism or not args.free_
         or args.interface_twist_deg is not None or args.probe_additional_turn_deg is not None):
     parser.error('Source-stage diagnosis requires the shared hand and free connector; other probe modes are mutually exclusive')
 source_stage_recipe=json.loads(args.source_stage_probe.read_text()) if args.source_stage_probe else None
+declared_balanced_cpu_profile=bool(source_stage_recipe
+    and source_stage_recipe.get('balanced_cpu_iteration_budget') is True
+    and args.physics_device=='cpu' and args.experimental_connector_time_resolution
+    and (args.physics_hz,args.position_iterations,args.velocity_iterations)
+        in ((240,255,16),(480,128,8)))
 if source_stage_recipe is not None:
     from te_nut_motion import source_probe_rotation_degrees
     try:
@@ -240,7 +245,8 @@ if source_stage_recipe is not None:
         same_rate_profile=(args.physics_hz==960 and args.velocity_iterations==4
             and args.position_iterations in ((16,32,64,128) if args.experimental_connector_position_convergence else (64,)))
         declared_rate_profile=(args.experimental_connector_time_resolution and args.physics_hz in (240,480)
-            and args.position_iterations==64 and args.velocity_iterations==4
+            and ((args.position_iterations,args.velocity_iterations)==(64,4)
+                 or declared_balanced_cpu_profile)
             and not args.experimental_connector_position_convergence)
         declared_gpu_profile=(args.experimental_connector_gpu_comparison and args.physics_device=='cuda:0'
             and args.gpu_host_readback and args.physics_hz in (480,960)
@@ -402,10 +408,7 @@ if args.frozen_connector_model is not None:
                        and ((args.physics_hz==480 and args.interface_control_decimation==2
                              and args.interface_twist_deg is not None)
                             or (args.source_stage_probe is not None and args.physics_hz in (240,480))))
-    balanced_iterations=bool(experimental_rate and source_stage_recipe
-        and source_stage_recipe.get('balanced_cpu_iteration_budget',False)
-        and (args.physics_hz,args.position_iterations,args.velocity_iterations)
-            in ((240,255,16),(480,128,8)))
+    balanced_iterations=bool(experimental_rate and declared_balanced_cpu_profile)
     experimental_position=bool(args.experimental_connector_position_convergence
         and args.source_stage_probe is not None and args.physics_device=='cpu'
         and args.solver_type=='TGS' and args.external_forces_every_iteration
@@ -1190,10 +1193,12 @@ try:
     if source_stage_recipe is not None and 'pin_contact_offset_m' in source_stage_recipe:
         declared_iterations=(args.position_iterations==64 or (
             args.experimental_connector_position_convergence and args.position_iterations in (16,32)))
-        if ((args.physics_device,args.physics_hz,args.velocity_iterations)!=('cpu',960,4)
-                or not declared_iterations
+        original_rate_profile=((args.physics_device,args.physics_hz,args.velocity_iterations)==('cpu',960,4)
+                               and declared_iterations)
+        balanced_margin_profile=(declared_balanced_cpu_profile and args.physics_hz==480)
+        if (not (original_rate_profile or balanced_margin_profile)
                 or source_stage_recipe.get('fuse_convex_pin_quarters',False)):
-            raise ValueError('The source pin margin comparison requiresCPU960Hz, explicit iteration comparison and original four-quarter geometry')
+            raise ValueError('The source pin margin comparison requires the declared CPU960Hz or balanced CPU480Hz profile and original four-quarter geometry')
         from pin_contact_margin import configure_pin_contact_margin
         report=configure_pin_contact_margin(stage,source_stage_recipe['pin_contact_offset_m'])
         report['actual_hz_position_velocity']=[args.physics_hz,args.position_iterations,args.velocity_iterations]
