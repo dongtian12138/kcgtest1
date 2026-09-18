@@ -24,14 +24,20 @@ def _estimate(repository, image_directory, output, sample_time, camera, intrinsi
         rgb=image_directory / 'rgb.png', depth_m=image_directory / 'depth_m.npy',
         depth_mm=image_directory / 'depth_mm.png', camera_json=calibration,
         output_dir=output / 'perception', workspace_world_aabb_m=workspace,
-        workspace_world_from_camera=camera)
+        workspace_world_from_camera=camera,run_pem=False)
+    import cv2
+    from global_socket_coarse_geometry import estimate
+    mask=cv2.imread(str(seed['mask']),cv2.IMREAD_GRAYSCALE)
+    if mask is None:raise RuntimeError('The current Global1 socket mask is missing')
+    geometry=estimate(np.load(image_directory/'depth_m.npy'),mask>0,intrinsic,camera,workspace)
     elapsed = perf_counter() - started
     record = _json_ready({'scope': 'FIXED_GLOBAL1_COARSE_SOCKET_ONLY',
         'same_frame_as_initial_plug_localization': True, 'rgbd_directory': str(image_directory),
         'sample_time_s': sample_time, 'estimation_wall_s': elapsed,
         'nominal_sensor_delay_s': .05, 'available_time_s': sample_time + .05 + elapsed,
         'world_from_camera_cv': camera, 'intrinsics_3x3': intrinsic, 'coarse_estimate': seed,
-        'world_from_socket_coarse': camera @ np.asarray(seed['camera_from_object']),
+        'world_from_socket_coarse': geometry['world_from_socket_coarse'],
+        'coarse_geometry':geometry,'learning_pose_used_for_transport':False,
         'socket_key_yaw_measured': False, 'online_object_or_contact_truth_used': False,
         'receptacle_cad_mm': str(repository / SOCKET_CAD_MM),
         'hardware_latency_calibrated': False})
