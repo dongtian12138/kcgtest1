@@ -338,8 +338,17 @@ def _solve_goal(
     start_arm: np.ndarray,
     start_hand: np.ndarray,
     bounds: np.ndarray,
+    *, prefer_current: bool = False,
 ) -> tuple[np.ndarray, dict[str, object]]:
     pose = Pose(target)
+    if prefer_current:
+        current = robot.ik("kuka", pose, seed=start_arm, tip_link="handbase_link")
+        if current is not None:
+            current=np.asarray(current,dtype=np.float64).reshape(7)
+            if (np.all(current>=bounds[:,0]) and np.all(current<=bounds[:,1])
+                    and _goal_is_collision_free(robot,current,start_hand)):
+                return current, {"method":"CURRENT_STATE_SEED_FIRST", "seed_count":1,
+                                 "ik_solution_count":1,"collision_free_solution_count":1}
     nominal = robot.ik(
         "kuka",
         pose,
@@ -502,7 +511,8 @@ def _plan_cartesian_constrained(robot, request, start_arm, start_hand, target, b
                .set_joint_names(names)
                .start_at(StateTarget(start_arm, names=names, profile="DEFAULT")))
     instructions = program.to_composite_instruction(names, "handbase_link")
-    goal_seed, seed_search = _solve_goal(robot, target, start_arm, start_hand, bounds)
+    goal_seed, seed_search = _solve_goal(robot, target, start_arm, start_hand, bounds,
+        prefer_current=request.get('goal_seed_policy')=='current_state_first')
     # These joint values are numerical initial guesses only. All supplied
     # Cartesian poses remain constraints; the seed is never an executable path.
     for index, pose in enumerate(poses[1:], 1):
@@ -582,6 +592,8 @@ def _plan_cartesian_constrained(robot, request, start_arm, start_hand, target, b
 
 
 def plan(repository: Path, request: dict[str, object]) -> dict[str, object]:
+    if request.get('goal_seed_policy','task_nominal_first') not in ('task_nominal_first','current_state_first'):
+        raise ValueError('Unknown explicit goal seed policy')
     start_names = [str(name) for name in request["start_joint_names"]]
     start_values = _finite_vector(
         request["start_joint_positions_rad"], len(start_names), "start state"
@@ -620,7 +632,8 @@ def plan(repository: Path, request: dict[str, object]) -> dict[str, object]:
                 robot, request, start_arm, start_hand, target, bounds, obstacle_ids,
             )
         goal_arm, goal_search = _solve_goal(
-            robot, target, start_arm, start_hand, bounds
+            robot, target, start_arm, start_hand, bounds,
+            prefer_current=request.get('goal_seed_policy')=='current_state_first'
         )
         robot.set_joints(_robot_joint_state(start_arm, start_hand))
         program = (

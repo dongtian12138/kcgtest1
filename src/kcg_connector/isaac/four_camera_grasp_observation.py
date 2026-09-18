@@ -72,6 +72,8 @@ def observe(repository,runtime,stepper,arguments,output,rig):
         cv2.imwrite(str(out/'palm/visual_roi.png'),mask.astype(np.uint8)*255)
         measured=estimate_plug_rear_circle_from_float_depth(depth_m=depth,mask=mask,
             intrinsics=K,mesh_path=cad,pixel_center_offset_px=.5,plane_iterations=128)
+        measured['metrics']['mask_source']='SIMULTANEOUS_GLOBAL2_VISUAL_POSE_AND_CAD_REAR_FACE_ROI'
+        measured['metrics']['sam_used_for_this_observation']=False
         palm_body=camera@np.asarray(measured['camera_from_object'])
         record['palm_observation']={'capture':capture,'world_from_camera_cv':camera.tolist(),
             'intrinsics_3x3':K.tolist(),'world_from_plug_five_dof':palm_body.tolist(),

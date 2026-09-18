@@ -1613,6 +1613,8 @@ def _run_sam6d_frame(
     camera_json: Path,
     output_dir: Path,
     run_pem: bool = True,
+    workspace_world_aabb_m: dict | None = None,
+    workspace_world_from_camera: np.ndarray | None = None,
 ) -> dict[str, object]:
     output_dir.mkdir(parents=True, exist_ok=False)
     (output_dir / "templates").symlink_to(templates.resolve(), target_is_directory=True)
@@ -1638,12 +1640,23 @@ def _run_sam6d_frame(
         cwd=sam6d_root / "Instance_Segmentation_Model",
         log_path=output_dir / "sam6d_ism.log",
     )
+    detection_input=results/'detection_ism.json'
+    workspace_filter=None
+    if workspace_world_aabb_m is not None:
+        if workspace_world_from_camera is None:
+            raise ValueError('Workspace selection requires the calibrated camera transform')
+        from perception_workspace import select_detections
+        camera_intrinsics=np.asarray(json.loads(camera_json.read_text())['cam_K']).reshape(3,3)
+        detection_input=results/'detection_ism_workspace.json'
+        workspace_filter=select_detections(results/'detection_ism.json',results/'detection_ism.npz',
+            np.load(depth_m),camera_intrinsics,workspace_world_from_camera,workspace_world_aabb_m,
+            detection_input,results/'workspace_selection.json')
     filter_elapsed = _run_logged_process(
         [
             str(sam6d_python),
             str(repository / "src/kcg_connector/isaac/te_sam6d_depth_support_filter.py"),
             "--detections-json",
-            str(results / "detection_ism.json"),
+            str(detection_input),
             "--depth-m-npy",
             str(depth_m),
             "--camera-json",
@@ -1665,6 +1678,7 @@ def _run_sam6d_frame(
     )
     if not run_pem:
         return {
+            "workspace_filter": workspace_filter,
             "score": float(depth_filter["source_detection_score"]),
             "mask": results / "best_mask_depth_support_filtered.png",
             "timing_s": {
@@ -1722,6 +1736,7 @@ def _run_sam6d_frame(
     camera_from_object[:3, 3] = translation_mm / 1000.0
     return {
         "camera_from_object": camera_from_object,
+        "workspace_filter": workspace_filter,
         "score": score,
         "mask": results / "best_mask_depth_support_filtered.png",
         "timing_s": {
