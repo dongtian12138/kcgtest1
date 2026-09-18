@@ -28,9 +28,10 @@ def main(run):
     palm=anchor['palm_observation'];camera=np.array(palm['world_from_camera_cv']);H=np.array(anchor['world_from_hand_encoder'])
     mount=np.linalg.inv(H)@camera
     memory.update_palm(mount,np.linalg.inv(camera)@np.array(palm['world_from_plug_five_dof']),anchor['physics_time_s'])
-    frozen=np.array(anchor['hand_from_body_visual_memory']);events=[]
+    frozen=np.array(anchor['hand_from_body_visual_memory']);events=[];last_held_step=None
     for line in (run/'four_camera_perception/events.jsonl').read_text().splitlines():
         event=json.loads(line)
+        if event['event']=='BODY_GRASP_REFERENCE_RETIRED':last_held_step=int(event['step'])-1
         if (event['event']=='PALM_MEASUREMENT_CONSUMED'
                 and event['sample_time_s']>=anchor['physics_time_s']):
             observed=json.loads((Path(event['observation_directory'])/'observation.json').read_text())
@@ -38,7 +39,7 @@ def main(run):
     phases={};metrics={};old_metrics={};last=None;index=0;first=int(anchor['robot_sample_step'])+1;trajectory=[]
     fields=('phase','simulation_time_s','hand_base_position_m','hand_base_orientation_wxyz',
             'object_part_positions_m','object_part_orientations_wxyz','active_velocities_rad_s')
-    for row in iter_truth_fields(run,fields,first_step=first):
+    for row in iter_truth_fields(run,fields,first_step=first,last_step=last_held_step):
         while index<len(events) and events[index][0]['consumed_step']<=row['step']:
             event,observed=events[index];memory.update_palm(mount,observed['measurement']['camera_from_plug_five_dof'],event['sample_time_s']);index+=1
         H=pose(row['hand_base_position_m'],row['hand_base_orientation_wxyz'])
@@ -64,7 +65,8 @@ def main(run):
     wrist=None
     if wrist_path.exists():
         record=json.loads(wrist_path.read_text());wrist={'key_direction_measured':record['measurement']['key_direction_measured'],'measurement':record['measurement']}
-    result={'scope':'ENDED_TRANSPORT_ONLY_PHYSICAL_AND_PERCEPTION_REVIEW','truth_used_only_after_motion':True,
+    result={'scope':'ENDED_HELD_BODY_SINGLE_KEY_LIFETIME_REVIEW','truth_used_only_after_motion':True,
+        'body_grasp_reference_retired_after_step':last_held_step,
         'controller_completed':transport['completed'],'controller_stage':transport['stage'],
         'key_observation_events':anchor['key_observation_event_count'],'palm_consumed':index,
         'maximum_tracker_errors':metrics,'maximum_initial_frozen_memory_errors':old_metrics,

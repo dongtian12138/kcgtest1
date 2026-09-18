@@ -73,6 +73,9 @@ def recorded_controller(runtime, arguments, motion_plan, dynamic):
                 raise RuntimeError("camera initialization changed physics time or joint state")
 
         def advance(self, phase, *args, **kwargs):
+            session=runtime.get('four_camera_perception_session')
+            if session is not None and self.abort_reason is None:
+                session.service()
             if phase!=self._last_timing_phase:
                 from time import perf_counter
                 row={'wall_clock':perf_counter(),'step':self.step_index,'next_phase':phase,

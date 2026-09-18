@@ -105,8 +105,23 @@ def review(directory):
         transport=json.loads((directory/'socket_transport/transport_and_observation.json').read_text())
         visual={'fresh_image_plan_consumed':initial.exists(),
             'current_held_body_key_observed':held.exists() and json.loads(held.read_text())['key_measurement']['key_direction_measured'],
-            'body_key_reobserved_after_carry':transport.get('body_key_reobservations_after_memory',0)>0,
             'current_wrist_socket_observed':bool(transport.get('wrist_socket_observation_executed'))}
+        if 'key_observation_event_count' in transport:
+            camera_review=directory/'four_camera_contract_review.json'
+            session_path=directory/'four_camera_perception/summary.json'
+            session=json.loads(session_path.read_text()) if session_path.exists() else {}
+            memory=session.get('key_memory',{})
+            visual.update(
+                single_key_observation=(transport['key_observation_event_count']==1
+                    and transport.get('body_key_reobservations_after_memory')==0),
+                fixed_four_camera_records_verified=(camera_review.exists()
+                    and json.loads(camera_review.read_text()).get('passed') is True),
+                palm_position_and_axis_updates=int(memory.get('palm_update_count',0))>=2,
+                body_grasp_reference_retired=(memory.get('active_body_grasp') is False
+                    and memory.get('retirement_reason')=='BODY_RELEASED_AFTER_GUIDED_ENTRY'),
+                online_seating_confirmed=transport.get('online_completion',{}).get('online_seating_confirmed') is True)
+        else:
+            visual['body_key_reobserved_after_carry']=transport.get('body_key_reobservations_after_memory',0)>0
         result['visual_stage_conditions']=visual
         # Source face identification and camera visibility remain separately
         # auditable requirements. A generic contact or angle is insufficient.

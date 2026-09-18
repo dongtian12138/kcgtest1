@@ -445,6 +445,9 @@ def observe_tracked_plug_from_rgbd(repository,stage,world,rep,hand,output,contex
 
 def observe_current_plug_from_rgbd(repository,stage,world,rep,hand,output,runtime):
     """Reuse current-episode visual identity; reacquire when tracking is invalid."""
+    session=runtime.get('four_camera_perception_session')
+    if session is not None:
+        return session.available_observation(output)
     context=runtime.setdefault('plug_visual_tracking_context',{})
     if context.get('last_observation') is not None:
         try:

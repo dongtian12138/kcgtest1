@@ -212,7 +212,21 @@ def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output, *, 
             current_hand_from_body_visual_memory=session.memory.hand_from_body().tolist(),
             key_memory=session.memory.report())
         if runtime.get('body_key_entry_requested'):
-            raise RuntimeError('Four-camera contact continuation is not connected in this transport-only revision')
+            from te_body_key_entry import run_body_key_entry
+            from four_camera_post_entry import continue_after_entry
+            record.update(stage='VISUAL_ALIGNMENT_AND_ONE_LIGHT_KEY_PROBE',key_entry_first_step=int(stepper.step_index))
+            save()
+            record['key_entry']=run_body_key_entry(root,runtime,stepper,grasp_result,dynamic,
+                session.memory.hand_from_body(),socket,scene,obstacles,bounds,output/'key_entry')
+            probe_record=record['key_entry'].get('probe_controller') or {}
+            record['contact_motion_commanded']=bool(probe_record.get('probe_motion_executed'))
+            record['completed']=bool(record['key_entry'].get('controller_depth_reached'))
+            record['completed_scope']='KEY_ENTRY_CONTROLLER_REQUIRES_POSTRUN_PHYSICAL_REVIEW'
+            if not record['completed']:
+                record['failure_reason']=(record['key_entry'].get('failure_reason') or probe_record.get('termination'))
+            else:
+                continue_after_entry(root,runtime,stepper,grasp_result,dynamic,record,
+                    socket,scene,obstacles,output,save)
     except Exception as error:
         record.update(failure_stage=record['stage'], stage='STOPPED', completed=False, failure_reason=str(error))
         raise

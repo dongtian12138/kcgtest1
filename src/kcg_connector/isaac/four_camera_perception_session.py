@@ -25,6 +25,7 @@ class FourCameraPerceptionSession:
         self.sensor_delay=float(settings.get('nominal_sensor_frame_period_s',.05))
         if self.period<=0 or self.sensor_delay<=0:raise ValueError('Positive declared camera periods required')
         self.resources={};self.pending=None;self.next_request=float(self.world.current_time)
+        self.last_observation=None
         self.camera_counts={};self.palm_count=0;self.consumed_count=0;self.closed=False
         self.memory=KeyDirectionMemory()
         self.prekey_relation=None
@@ -60,6 +61,9 @@ class FourCameraPerceptionSession:
     def adopt_key_anchor(self,anchor):
         if anchor.get('key_observation_event_count')!=1 or self.memory.initialized:
             raise ValueError('Exactly one current-episode key initialization is permitted')
+        availability=float(anchor['observation_latency']['availability_physics_time_s'])
+        if availability>float(self.world.current_time) or float(anchor['physics_time_s'])>availability:
+            raise ValueError('The single key observation is not causally available yet')
         if self.pending is not None:
             self._write({'event':'OLDER_PREKEY_PENDING_FRAME_REPLACED_BY_SYNCHRONIZED_KEY_ANCHOR',
                          'sample_time_s':self.pending.sample_time_s})
@@ -122,6 +126,28 @@ class FourCameraPerceptionSession:
                 rotation=minimum_axis_rotation(self.prekey_relation[:3,2],measured[:3,2])
                 self.prekey_relation[:3,:3]=rotation@self.prekey_relation[:3,:3]
                 self.prekey_relation[:3,3]=measured[:3,3]
+            observed=payload['observation']
+            self.last_observation={
+                'status':'DELAYED_CURRENT_PALM_POSITION_AND_AXIS',
+                'position_and_axis_measured':True,
+                'physics_time_s':self.pending.sample_time_s,
+                'capture_physics_time_s':self.pending.sample_time_s,
+                'available_physics_time_s':self.pending.available_time_s,
+                'consumed_physics_time_s':now,
+                'capture':observed['capture'],
+                'rgbd_directory':payload['directory'],
+                'world_from_hand_encoder':observed['hand'].tolist(),
+                'world_from_camera_cv':observed['camera'].tolist(),
+                'intrinsics_3x3':observed['intrinsics'].tolist(),
+                'world_from_plug_five_dof':self.last_body.tolist(),
+                'metrics':measurement['metrics'],
+                'measurement':{'geometry':{'metrics':measurement['metrics'],
+                    'camera_from_object':measurement['camera_from_plug_five_dof']}},
+                'tracking_seed_mask':str(Path(payload['directory'])/'roi.png'),
+                'axial_yaw_measured':False,
+                'previous_hand_body_relation_used_for_measurement':False,
+                'previous_pose_used_only_for_search_region':True,
+                'online_object_or_contact_truth_used':False}
             self.consumed_count+=1
             self._write({'event':'PALM_MEASUREMENT_CONSUMED','sample_step':payload['sample_step'],
                 'sample_time_s':self.pending.sample_time_s,'available_time_s':self.pending.available_time_s,
@@ -147,14 +173,34 @@ class FourCameraPerceptionSession:
                     'delay_model':'NOMINAL_SENSOR_FRAME_PERIOD_PLUS_MEASURED_GEOMETRY_ESTIMATION',
                     'render_and_file_io_are_simulation_overhead_not_hardware_sensor_latency':True,
                     'hardware_latency_calibrated':False,'online_object_or_contact_truth_used':False}
+            self.pending.payload['observation']=record
             (folder/'observation.json').write_text(json.dumps(_json_ready(record),indent=2)+'\n')
             self._write({'event':'PALM_SAMPLE_PENDING','sample_time_s':frame['sample_time_s'],
                 'sample_step':frame['sample_step'],'available_time_s':self.pending.available_time_s,
                 'observation_directory':str(folder)})
             self.palm_count+=1;self.next_request=frame['sample_time_s']+self.period
 
+    def available_observation(self, output):
+        """Return the latest causally available image, without pausing control for a new result."""
+        import copy
+        from te_foundationpose_handoff_runtime import _json_ready
+        self.service(request_new=False)
+        if self.last_observation is None:
+            raise RuntimeError('No consumed palm observation is available')
+        age=float(self.world.current_time)-self.last_observation['capture_physics_time_s']
+        if age > .5:
+            raise RuntimeError('Palm observation is older than the declared0.5s maximum age')
+        result=_json_ready(copy.deepcopy(self.last_observation))
+        result.update(consumed_by_stage_at_physics_time_s=float(self.world.current_time),
+                      sample_age_at_stage_consumption_s=age,
+                      new_image_acquired_by_this_function=False)
+        output=Path(output);output.mkdir(parents=True,exist_ok=False)
+        (output/'camera_and_estimate.json').write_text(json.dumps(result,indent=2)+'\n')
+        return result
+
     def retire_body_grasp(self):
         self.last_body=self.body();self.memory.retire('BODY_RELEASED_AFTER_GUIDED_ENTRY')
+        self.prekey_relation=None
         self._write({'event':'BODY_GRASP_REFERENCE_RETIRED','time_s':float(self.world.current_time),
                      'step':int(self.stepper.step_index)})
 

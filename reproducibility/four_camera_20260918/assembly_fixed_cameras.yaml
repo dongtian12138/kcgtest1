@@ -642,7 +642,7 @@ recording:
   all_provided_native_points_retained: true
 perception:
   four_camera_rig: src/kcg_connector/config/four_camera_assembly_20260918.yaml
-  current_validation_scope: SHORT_TRANSPORT_AND_DELAYED_PALM_PREFIX_NOT_COMPLETE_ASSEMBLY
+  current_validation_scope: FULL_FOUR_CAMERA_SINGLE_KEY_ASSEMBLY_CANDIDATE_REQUIRES_PHYSICAL_VALIDATION
   palm_update_period_s: 0.2
   nominal_sensor_frame_period_s: 0.05
   hardware_latency_calibrated: false

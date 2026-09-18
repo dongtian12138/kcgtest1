@@ -339,6 +339,7 @@ def _execute_held_plug_path(
 def _run_light_contact_key_search(
     world, stepper, ft_auditor, grasp_result, dynamic, inputs, probe,
     hand_from_plug, world_from_socket, payload_model, collision_scene, obstacles,
+    *, body_relation_getter=None,
 ):
     """One bounded force-guided entry attempt; no object/contact truth input."""
     motion, stops = probe["motion"], probe["probe_stops"]
@@ -359,6 +360,10 @@ def _run_light_contact_key_search(
               "online_object_or_contact_truth_used": False, "samples": []}
 
     def sensor_without_payload():
+        nonlocal hand_from_plug, com_hand
+        if body_relation_getter is not None:
+            hand_from_plug = np.asarray(body_relation_getter())
+            com_hand = (hand_from_plug @ np.r_[payload_model['center_of_mass_object_m'], 1.])[:3]
         row = ft_auditor.samples[-1]
         hand = np.eye(4)
         hand[:3, :3] = np.asarray(row["handbase_rotation_world_row_major"])

@@ -82,5 +82,5 @@ class KeyDirectionMemory:
         return {'initialized':self.initialized,'active_body_grasp':self.active,
                 'palm_update_count':self.update_count,'sample_time_s':getattr(self,'sample_time_s',None),
                 'extra_axial_rotation_is_measured':False,
-                'assumption':'ADDITIONAL_BODY_AXIAL_SLIP_RELATIVE_TO_HAND_IS_WITHIN_VERIFIED_GRIP_BUDGET',
+                'assumption':'ADDITIONAL_BODY_AXIAL_SLIP_MUST_FIT_REMAINING_KEYWAY_CLEARANCE_AND_REQUIRES_VERIFICATION',
                 'retirement_reason':getattr(self,'retirement_reason',None)}

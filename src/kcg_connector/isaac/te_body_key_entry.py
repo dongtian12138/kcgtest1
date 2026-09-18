@@ -38,6 +38,7 @@ def run_body_key_entry(
     world, inputs, ft = runtime["world"], runtime["inputs"], runtime["nail_body_ft_auditor"]
     stage = omni.usd.get_context().get_stage()
     memory = np.asarray(hand_from_body, dtype=np.float64).reshape(4, 4).copy()
+    session = runtime.get('four_camera_perception_session')
     socket = np.asarray(world_from_socket, dtype=np.float64).reshape(4, 4).copy()
     dt = float(dynamic["physics_dt_s"])
     config_path = repository / runtime["body_assembly_control_config"]
@@ -77,6 +78,26 @@ def run_body_key_entry(
         (output / "key_entry_controller_result.json").write_text(
             json.dumps(_json_ready(record), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
+    def feedback_states(states):
+        for arm in states:
+            if session is not None:
+                session.service()
+            yield arm
+
+    def refresh_memory():
+        nonlocal memory
+        if session is None:
+            return
+        from four_camera_held_feedback import refresh
+        refresh(session, dynamic)
+        memory = session.memory.hand_from_body()
+
+    def current_relation():
+        nonlocal memory
+        session.service()
+        memory = session.memory.hand_from_body()
+        return memory
+
     def hand_pose():
         active = np.asarray(stepper.latest[0], dtype=np.float64)
         hand = np.asarray(inputs.robot_model.forward_kinematics(
@@ -104,6 +125,8 @@ def run_body_key_entry(
     def move_checked(target_hand, phase, speed, *, unloading=False, settle=True):
         if stepper.abort_reason is not None:
             raise RuntimeError(f"outer joint/FT abort remains active: {stepper.abort_reason}")
+        from time import perf_counter
+        planning_started=perf_counter()
         active, _ = hand_pose()
         arm_states, ik = _plan_key_probe_descent(inputs, active, target_hand, dt, float(speed))
         offset = np.asarray(ft.samples[-1]["active_targets_rad"][:7]) - active[:7]
@@ -142,8 +165,13 @@ def run_body_key_entry(
                 arm_states[-1:], round(float(dynamic["hold_duration_s"]) / dt), axis=0)))
         np.save(output / f"{phase}_arm_path_rad.npy", arm_states)
         save()
+        if session is not None:
+            from four_camera_held_feedback import hold
+            item['planning_wall_s']=perf_counter()-planning_started
+            item['planning_delay_hold']=hold(session,dynamic,item['planning_wall_s'],
+                phase='key_probe_entry_planning_hold')
         execution = _execute_held_plug_path(
-            world, stepper, ft, grasp_result, dynamic, arm_states, probe, phase=phase)
+            world, stepper, ft, grasp_result, dynamic, feedback_states(arm_states), probe, phase=phase)
         item["execution"] = execution
         item["last_step"] = int(stepper.step_index)
         save()
@@ -190,21 +218,33 @@ def run_body_key_entry(
         if stepper.abort_reason is not None or grasp_result.get("failure_reason"):
             raise RuntimeError("current joint/FT controller is not clear for alignment")
         world.pause()
+        refresh_memory()
         target = desired_body(motion["transport_face_gap_m"])
         aligned = False
         for attempt in range(3):
             record["stage"] = f"VISUAL_ALIGNMENT_{attempt + 1}"
             move_checked(target @ np.linalg.inv(memory), f"key_probe_body_align_{attempt + 1}", 0.02)
             _, hand = hand_pose()
-            observation = observe_body_after_transport(
-                repository, stage, world, rep, hand, hand @ memory, output / f"alignment_rgbd_{attempt + 1}")
+            if session is not None:
+                refresh_memory()
+                hand = session.hand()
+                observation = {'source': 'ONE_KEY_ANCHOR_ENCODERS_AND_CURRENT_DELAYED_PALM_5DOF',
+                    'hand_from_body_visual_memory': memory.tolist(),
+                    'key_direction_reobserved': False,
+                    'current_estimated_world_from_body': (hand @ memory).tolist(),
+                    'palm_observation': session.last_observation,
+                    'extra_axial_slip_observed': False}
+            else:
+                observation = observe_body_after_transport(
+                    repository, stage, world, rep, hand, hand @ memory, output / f"alignment_rgbd_{attempt + 1}")
             item = {"attempt": attempt + 1, "step": int(stepper.step_index), "observation": observation}
             record["alignment"].append(item)
-            if not observation["key_measurement"]["key_direction_measured"]:
+            if session is None and not observation["key_measurement"]["key_direction_measured"]:
                 record.update(stage="ALIGNMENT_KEY_UNOBSERVED", failure_reason="No new visual memory; contact was not started")
                 return _json_ready(record)
             memory = np.asarray(observation["hand_from_body_visual_memory"])
-            observed = np.asarray(observation["key_measurement"]["world_from_plug_row_major"]).reshape(4, 4)
+            observed = (np.asarray(observation['current_estimated_world_from_body']) if session is not None
+                        else np.asarray(observation["key_measurement"]["world_from_plug_row_major"]).reshape(4, 4))
             position_error = float(np.linalg.norm(observed[:3, 3] - target[:3, 3]))
             rotation_error = float(Rotation.from_matrix(target[:3, :3].T @ observed[:3, :3]).magnitude())
             item["visual_error"] = {
@@ -237,6 +277,8 @@ def run_body_key_entry(
         # No contact/object truth or post-entry yaw observation is involved.
         record["precontact_tracking_corrections"] = []
         for correction in range(4):
+            refresh_memory()
+            precontact_hand_goal = precontact_body_goal @ np.linalg.inv(memory)
             _, hand = hand_pose()
             predicted_body = hand @ memory
             position_error = float(np.linalg.norm(predicted_body[:3, 3]-precontact_body_goal[:3, 3]))
@@ -271,7 +313,8 @@ def run_body_key_entry(
         try:
             contact_record = _run_light_contact_key_search(
                 world, stepper, ft, grasp_result, dynamic, inputs, probe,
-                memory, socket, payload, collision_scene, probe_obstacles)
+                memory, socket, payload, collision_scene, probe_obstacles,
+                body_relation_getter=current_relation if session is not None else None)
         except Exception as error:
             world.pause()
             contact_record = {"termination": "CONTACT_CONTROLLER_EXCEPTION", "error": str(error),

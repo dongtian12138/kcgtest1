@@ -303,6 +303,8 @@ def run_coaxial_nut_interval(repository,runtime,stepper,dynamic,grip,socket,sett
             planned_peak_rotation_acceleration_deg_s2=(10./np.sqrt(3.))*profile_degrees/duration**2 if not axis_control and not schedule else None,
             coaxial_controller_report=controller.report(),release_from_actual_encoder_pose=True,
             release_with_contact_feedforward_removed=True)
+        if controller.records:
+            record['last_loaded_interface_wrench_n_nm']=list(controller.records[-1]['interface_wrench'])
         runtime['coaxial_nut_commanded_degrees']=before+float(np.degrees(last_applied_angle))
         with gzip.open(out/'joint_ft_samples.json.gz','wt',compresslevel=1) as stream:dump_array(stream,ft.samples[first_ft:])
         (out/'nut_rotation_controller_result.json').write_text(dumps(record)+'\n')
