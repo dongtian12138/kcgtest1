@@ -9430,9 +9430,12 @@ def _create_runtime(
                 regular_profile=(candidate_hz in (240.,480.,960.) and candidate_position in (16,32,64)
                                  and candidate_velocity==4)
                 balanced_initial_profile=(candidate_hz==240. and candidate_position==255 and candidate_velocity==16)
+                balanced_480_profile=(candidate_hz==480. and candidate_position==128 and candidate_velocity==8
+                                      and numerical.get('balanced_cpu_iteration_budget') is True)
                 gpu_profile=(arguments.physics_device=='cuda:0' and arguments.gpu_host_readback
                              and candidate_hz in (480.,960.) and candidate_position==64 and candidate_velocity==4)
-                if not (gpu_profile or (arguments.physics_device=='cpu' and (regular_profile or balanced_initial_profile))):
+                if not (gpu_profile or (arguments.physics_device=='cpu'
+                        and (regular_profile or balanced_initial_profile or balanced_480_profile))):
                     raise ValueError('Unsupported bounded performance runtime candidate')
                 trace['connector_runtime_revalidation']={
                     'validated_source_profile':dict(connector_runtime_requirements),
@@ -9703,14 +9706,20 @@ def _create_runtime(
     }
     context.set_gravity(float(scene["gravity_m_s2"]))
     if arguments.body_assembly_collision_config and 'pin_contact_offset_m' in numerical:
+        margin_hz=1./float(dynamic['physics_dt_s'])
+        original_margin_profile=(math.isclose(margin_hz,960.,rel_tol=0,abs_tol=1e-8)
+                                 and numerical.get('position_iterations') in (16,32,64)
+                                 and numerical.get('velocity_iterations')==4)
+        balanced_margin_profile=(math.isclose(margin_hz,480.,rel_tol=0,abs_tol=1e-8)
+                                 and numerical.get('position_iterations')==128
+                                 and numerical.get('velocity_iterations')==8
+                                 and numerical.get('balanced_cpu_iteration_budget') is True)
         if (arguments.physics_device!='cpu' or not numerical.get('revalidate_runtime_requirements',False)
-                or not math.isclose(float(dynamic['physics_dt_s']),1./960,rel_tol=0,abs_tol=1e-12)
-                or numerical.get('position_iterations') not in (16,32,64)
-                or numerical.get('velocity_iterations')!=4):
-            raise ValueError('The declared pin margin needs the explicitCPU960Hz performance revalidation profile')
+                or not (original_margin_profile or balanced_margin_profile)):
+            raise ValueError('The declared pin margin needs an explicit CPU960Hz or balanced CPU480Hz performance revalidation profile')
         from pin_contact_margin import configure_pin_contact_margin
         margin=configure_pin_contact_margin(stage,numerical['pin_contact_offset_m'])
-        margin['actual_hz_position_velocity']=[960,numerical['position_iterations'],4]
+        margin['actual_hz_position_velocity']=[margin_hz,numerical['position_iterations'],numerical['velocity_iterations']]
         (output/'pin_contact_margin.json').write_text(json.dumps(margin,indent=2)+'\n')
         trace['contact_numerical_revalidation']={k:v for k,v in margin.items() if k!='colliders'}
     if arguments.body_assembly_collision_config and numerical.get('compile_collision_pairs',False):
