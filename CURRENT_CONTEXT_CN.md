@@ -1,57 +1,47 @@
 # 当前任务：完整装配至少 5 倍性能优化
 
-核验时间：2026-09-18T02:47:02.358363+00:00。完整至少5倍尚未达成；正在准备下一完整软件优化候选。
+核验时间：2026-09-18T03:34:51.717977+00:00。**至少5倍尚未实现**。480Hz128/8局部旋拧与near-seat原精度验证通过，新完整候选正在运行。
 
-## 验收
+## 验收与保留基线
 
-- 对照封存第二轮完整名义回合：295421 步，主程序收尾前 15909.994568975 秒，约265.17分钟。目标同一完整流程含记录与收尾 <=3181.998913795秒（约53.03分钟），至少5倍。不能以局部速度、提前失败、少执行步骤或移出必要收尾来验收。
-- 原完整装配验收保留：实际到原止挡、原2 µm键槽标准、真实手接触、连续3秒完全松手、同128簧套承载且Body/Nut不休眠、后备限位不承载。原几何、质量惯量、材料事实、有限驱动和力速保护不放宽。
-- 两次有效成功证据及参数见本文件归档 `docs/history/CURRENT_CONTEXT_CN_20260917_before_5x_performance.md`。硬件未验证。
+- 封存成功对照：`/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run`，295421步，收尾前15909.994568975s。新完整回合含记录/必要收尾/进程退出应<=3181.998913795s（53.03min），才是至少5倍。局部速度、失败回合、少走物理阶段不能代替完整验收。
+- 保留实际14.605mm±10µm到位、源止挡正载、键槽侧壁<=2µm、原NAIL/PAD接触身份、末尾连续3s完全张手且原始手冲量严格0、同128簧套每帧正载、Body/Nut不休眠、后备轴向限位<0.5999mm且不承载及同回合影像。
+- 原几何/质量惯量/材料/有限驱动与保护不放宽；仿真真值只用于事后评价。仅仿真，hardware_authorized=false。
+- 原有效树`kcgtest1-improvements-20260916`、原始数据及主树未提交用户资产保留。优化树`/home/noob/WorkPlace/kcgtest1-performance-20260917`，分支`codex/assembly-performance-5x-20260917`。未推送，无硬件/系统变更。
 
-## 当前状态（5倍尚未实现）
+## 最新结果与当前运行
 
-- 本地已提交bad29f6（原生点复制/紧凑记录/传感历史/ISA-L）和ab811e1（480Hz候选配置），均未推送。其后有未提交的原生报告头缓存、停止和索引改动。原成功树与原始数据不改。
-- 密集0.5秒基线：481步合计61.511秒。原生点复制后约43秒，紧凑记录后约34.8秒。字节重编码核查均保留全部记录内容。
-- 新原生报告头路径缓存已加入`native/contact_reports.cpp`。真实SDK向量离线回放：事件头+完整报告6.251→1.132ms。实际960Hz/480步`all_native_960`合计27.639秒，原生完整回调0.977秒、事件头0.0855秒，其余物理/SDK仍占主要成本。与contact_last_p64的480步所有raw字段/物理轨迹逻辑字节相同（all_native_comparison.json）。单靠软件记录优化当前约2.2倍，不是5倍。
-- C++构建：Isaac Python运行`scripts/build_contact_copy.py`，生成两个本地so，不入Git。本地pybind11=2.13.6，SDK ABI v5/gcc/cxxabi1016；ContactData=64字节、Header=72字节，首两份真实报告与原Python参考核查。`.deps/recording`为isal1.8.0。
-- `EncodedSensorHistory`保留全历史字节和512条解码缓存；32768行GC扫描0.04766→0.001665秒。ISA-L真实密集行压缩6.947→1.307ms，标准gzip解压完全相同。相关记录/归档/原生接触12项unittest已通过；后评selective reader已适配extension42并对真实数据比较一致。
-- 240Hz/64/4中段120步=0.5秒约8.153秒，局部约7.5倍；近坐底冷诊断键槽通过但深度变为14.611286mm。冷诊断不能代替连续装配。
-- 完整`full_fast240_01`：预检通过，正式85.44秒时初始视觉拒绝，未抓取。实际Body轴倾0.001082rad，原参考0.000034rad；图像倾角裕度0.011851>原0.0112，视觉界未改。
-- 完整`full_fast480_01`：预检和初始视觉通过，执行抓取/搬运/入槽、前两次90度指令及第三次32.78度传动余量换抓。45分钟仍在转移，投影不满足53分钟目标，于2728秒请求停止，不计完成或提速成功。SDK信号处理直接退出导致无收尾索引/分项计时。原2.92GB压缩文件未改，恢复出1902个完整gzip块/121728帧，无文件尾截断，未刷出的内存帧数未知。外部`recovered_partial_index.json`明确标为中止回合，未伪造结束或成功marker。
-- 已修正停止方式：完整RecordedStepper绑定run/STOP_REQUEST，后续在控制步边界停止；每块写`.blocks.jsonl`，在阶段切换写`phase_timing.jsonl`。这些是为保留失败证据和定位性能，不替代物理验收。
-- 高起始迭代假设已否定：`initial_precision_probe`在240Hz/255位置/16速度下预检通过，但初始视觉仍拒绝（裕度0.012113>0.0112）。不继续调宽视觉阈值或盲扫此候选。
-- 已查清并解决GPU初始化异常：CUPTI记录原始场景每秒数千次重复申请/释放50,230,784和63,479,296字节。原生调用栈指向PxgGeometryManager；官方公开InternalFilteredPairs.cpp证明每个排除对都调用resetFiltering整actor。模型166586条排除关系触发大量重复几何上传。只删除禁用API/只编译叶子对均未解决。
-- 新runtime_collision_groups.py将包括刚体/关节树/目标子树的全部有效pair映射成30个CollisionGroup；1513碰撞形状全部1143828个不同形状对检查，图差异0，另用USD官方ComputeCollisionGroupTable检查。原几何/材料/质量/位姿/驱动/源资产不改。禁用API1047个、不可见无子且非刚体叶919个只在运行时省略。兼容问题：Kit USD25.11内置LoadUsdPhysicsFromRange在此组合场景段错误；已将只读所有权解析隔离到现有planner环境USD26.8，输入保留为运行目录collision_filter_ownership/composed_scene.usdc，结果ownership.json。完整编译后GPU约24秒完成reset、RSS峰约9GB。
-- GPU速度与精度分开：gpu_all_filters_960_retry01中段480步总24.30秒（stepper24.06），CPU同优化约27.6秒；gpu_all_filters_480中段240步合计12.09秒/收尾12.38秒，按相同0.5秒模拟时间仅局部约5.08倍，不能当整回合验收。1024步一次全代GC用于后者，逐帧gen0及最终gen2仍执行。
-- GPU路线当前不合格：gpu_near_seat_480近坐底240步键槽最差77.213µm越界、最终深度14.665795mm；只恢复960Hz的gpu_near_seat_960仍50.722µm越界、深度14.625085mm。原标准2µm/目标14.605mm(±10µm)保持。不得用这些候选启动接受性整回合或说完成。main已加入显式GPU-host诊断profile和配套后端身份检查，但未通过物理验收，非默认。
-- CPU480也不满足原精度：对full_fast480_01中断文件恢复出的72071..121727帧只读复查，第一圈键槽最差4.922554µm，另一个键3.847689µm。partial_key_containment_review.json明确只覆盖恢复完整块，无新建完成marker，无修改原3GB数据。这否定直接降频交付。
-- CPU全排除组编译(cpu_all_filters_960)480步27.97秒，无速度收益；与未编译源位置最大差2.265µm、关节位最大57.34µrad，并非逐字节轨迹相同（compiled_filter_cpu_state_equivalence.json）。静态排除关系等价不代表浮点轨迹相同。
-- 只绑定8个P核心(cpu_pcores_960)480步26.67秒，局部约5%改善、启动更慢；未改系统governor/驱动，暂未采用。
-- adaptive_fourbar_960结束：1440次检查只重配3次、闭合误差6.13pm，但480步27.75秒，无显著整体收益。未采用。
-- pin几何优化：新fuse_pin_collision_quarters.py证明128根四象限凸块并集为凸体(最大体积相对差5.73e-16、坐标差1.73e-18m)。单180顶点凸体局部19.33秒，但后续实际cooking读回仅40顶点、外形内缩31.12µm，拒绝；官方ConvexMeshCookingTask.cpp证实SDK无条件把vertexLimit钳到64，设置255不起作用。此方案未进入主线。
-- 改为沿真实CAD直杆/圆头交界分块：一个40顶点直杆+四个50顶点鼻部；640块actual cooking全部读回、原外包络偏差约1e-19m，质量/材料/源文件不动。axial_pin_near_seat_960静态480步35.20秒(旧同窗口40.38秒)，键槽通过、深度14.604849mm；收益有限，未用于完整回合。所有分块改动仅显式诊断，main尚未接入。
-- 找到更直接开销：near_seat_960第300帧18339个点中14223个零冲量；其中12754个是pin—原插座刚性孔壁，全部零冲量且间距>20µm。pin—128簧套有5126点/3936正冲量。原Pin与Socket各50µm contactOffset产生100µm预测接触范围。
-- 新pin_contact_margin.py仅将原512个pin凸块和插座OfficialVisual/Geometry的contactOffset从50µm改为10µm，restOffset=0、原网格/材料/簧套margin不变；保持CPU960Hz。mid pin_margin10_960(p64)480步19.56秒vs27.92软件优化基线；仍非5倍。
-- pin_margin10_near_seat_960加无损f32记录/1024步全代GC：480步23.54秒vs旧同窗口40.38秒，键槽通过、深度14.60464045mm。原物理限值不放宽；完整回合未验证。
-- 原生接触扩展43：SDK原本float32，直接储存10个f32，读回原Pythonfloat并将as_array提升f64，避免后评计算精度变化。真实SDK向量18339点回放全部字段/顺序/事件精确一致，点载荷1467120→733560字节。相关13项unittest通过。两个本地so已重新构建；不在物理进程运行时重写so。新增native_contact_float32选项默认false，main与source-probe已接入，当前margin-near实际f32运行首两报告与Python参考校验已通过。
-- GC可显式1024步一次gen2(范围128..8192)，逐帧gen0和最终gen2仍保留；默认128未改。main另可defer_gc_only_nut_phases=false，使全阶段使用同记录GC策略。
-- first_turn_source.json提取原成功repeat02第211314步/第一轮nut_rotation和nut_regrasp；四个电机输入状态从原hand_mechanism_samples.jsonl.gz匹配取得。first_turn_margin10_p64已完成同源冷态90°加载运动：3721步、wall215.26秒、local118.90秒(含当前RGBD等)，stepper约81.68秒。实际Nut相对Body转89.153°、Body深度9.242309mm，原2µm键槽标准通过(最差1.171276µm)。这是局部加载段，不是完整装配。
-- first_turn_margin10_p16结束：与p64同样3721步/90度，physics63.03秒vs63.02秒，没有收益；原键槽标准失败，最差13.473947µm，拒绝16迭代，不用于完整候选。
-- 官方Carbonite原生CPU时间线已采集：native_zone_profile首圈局部28个有效帧中main物理13.81ms，SolveIslandTask平均0.411ms；PxsContext.contactManagerDiscreteUpdate为关键路径。native_zone_dense中密集状态main38.47ms，Solver10.52ms，窄相位各线程累计34.04ms。线程累计含重叠且profiling本身有开销，不作为提速验收。SDK GuContactMeshMesh.cpp证实双SDF接触执行双向投影；指端14192三角面/42576点，NutExternal235728面/117866点。
-- 网格简化未采用：fast_simplification已有0.2.0，及官方meshoptimizer-v1.2(9d9890c73011d75920af614485296d1e03e95448，本地.deps构建)均只做离线候选。原坐标为m时trimesh小三角形距离谓词有绝对容差问题，后改为µm坐标计算并换回m，保留旧结果。meshopt目标3/20/50µm各生成13888/11226/8520面，但双向采样实际最大24.45/59.41/141.13µm，超对应预算，均未用于仿真。误差仅有限采样，不冒充全局Hausdorff证明。原STL/质量/视觉不改。
-- first_turn_sdf8仅外部Nut的SDF由16bit→8bit：CPU960Hz64/4与源网格/分辨率不变，完成3721步、physics62.95秒，与p64无显著速度差。键槽通过(最差0.989µm)、深度9.252203mm。精度变化不是无损，但该候选没有收益，未采用。
-- first_turn_original_convex：省去Nut专用指端SDF，改用原资产已有指端convexDecomposition。复用旧SDF已抓握电机状态，481步后CAPACITY_TESTED_GRIP_PRELOAD_NOT_REACHED，未开始旋转；不是完整失败/成功性能结论。下一步必须用同力目标的真实重新抓握建立接触，不能加力或放松预载检查。
-- 凸分解后续：first_turn_convex_fresh_grip复用闭合起点，前置路径检查报Nut与f1Link3冲突，未开始重新抓握；改用原回合206658步真实张手tare状态(open_first_grip_source.json)后convex_open_grip_turn完成真实抓握+90度指令，共10311步/wall358.69秒。后评f2原PAD投影有327点超过原0.5mm限，最大0.605744mm；键侧越界未超过2µm，但该局部结束深度7.764918mm、非所有键全部越口，不能写完整插合。凸分解路线未用于完整候选。原阈值未改。
-- full_cpu960_margin10_01结束且不合格：约34.5分钟仍在对键插入阶段，按已测分段预测超出53.03分钟目标，通过run/STOP_REQUEST在控制边界停止。原始档案/索引/影像已封存，motion执行2045.612s；程序总wall2200.169s、exit1，收尾在序列化包含PackedNativeFloat32ContactPoints的评价见证时TypeError。未完成装配、未宣称倍率。JSON摘要/最终评价写出已补充原数值默认编码器，兼容42/43，相关回归通过；原失败证据不改。
-- 新kinematic_result_cache.py仅缓存不可变运行模型的有限tuple输入，键保留signed-zero和limit模式；给每次调用独立可写矩阵，模型合同对象变化失效。真实模型400个重复查询全连杆逐字节一致，0.1087→0.0314s。两个缓存行为测试通过。默认关闭，不是物理/控制参数变化。
-- 新CPU Fabric显示发布延迟：保持逐步原生传感读回，仅World.render前发布显示数据；_install_rgbd_resume_sync现在幂等，world._kcg_defer_fabric_until_render显式选用，默认仍原逐步输出。主入口和源态诊断均已接入。
-- first_turn_deferred_fabric结束：原CPU960Hz64/4+margin10、相同源态/输入/90度，加入精确FK缓存与显示边界发布。3721帧的native关节位置/速度/力矩、Body/Nut位置/四元数与first_turn_margin10_p64全部逐值零差，键槽完全相同(最差1.171276µm)。physics63.02→57.96s、audit14.05→12.21s、local118.90→111.21s；不是整回合5倍证明。
-- 新retime_transport.py只作用于经验证的单调关节直线路径；保留起终点/直线、原0.8速度余量、每关节峰值速度不增加和每关节峰值加速度不增加(容许浮点差)。复用已有ScalarMotion，非直线路径不修改。原主搬运动作48.636→32.970模拟秒，峰值速度仍0.12rad/s，峰值加速度约4.787→0.12rad/s²；原后续2s保持不删。te_body_assembly_motion仅在显式computation选项对自由搬运与侧观察路径应用，生成后仍走完整当前手+插头碰撞检查；接触插入/旋拧/末尾3s保持不改。
-- 下一完整候选配置：reproducibility/performance_20260917/assembly_cpu960_software_fast.yaml。在上一CPU64margin10原SDF/原CAD候选上启用cpu_fabric_output、defer_fabric_until_render、cache_forward_kinematics、retime_straight_free_transport。尚未预检/整回合。当前没有物理进程；准备提交这些已检查改动，进行新预检与一次完整计时。
-- 源码c776f5e已提交前一批记录/诊断支持；其后本段软件/Fabric/重计时/JSON修复和新候选未提交。无远端推送。所有失败证据保留。
-- 目标仍是新完整回合含记录收尾<=3181.998913795秒并通过原实际到位、2µm键槽、源接触、3s全松手零手冲量、同128簧套逐帧承载、Body/Nut不休眠、后备限位不承载及同回合影像验收。任何局部成功或缩短路径数学检查均不能替代完整验收。
-- 所有运行simulation-only；没有硬件、系统驱动变更、外部发布或新子代理。始终只有一个主要物理进程。
+- 完整`artifacts/performance_5x/full_cpu960_software_fast_01/run`已结束：exit2，总1804.271685132s，148546步，物理及运输1656.5675s。原保护在编码插深0.69225mm时判定BLOCKED_WITHOUT_AXIAL_PROGRESS，真实最深0.696642mm，随后正常退至3.1018mm间隙。未进入旋拧；不是提速验收成果。原档案/索引/视频已封存。
+- 此回合保留CPU960Hz64/4、原CAD/SDF/材料/控制限值、pin/Socket预测接触margin10µm；加入精确FK缓存、Fabric仅图像边界发布和自由直线路径重计时。最后视觉校正实际误差0.0296°，但其后长下降期间连接器相对原生手部发生约0.163°轴向转动；封存成功对照仅0.00329°。受阻处实际键方向约0.493°。`software_fast_alignment_posthoc.json`与`software_fast_grip_drift_posthoc.json`保留完整只读比较。尚不能把多项改变的全部差异归因到某一项；下一完整候选先关闭自由搬运重计时，恢复原路径时序。
+- **first_turn_balanced480_retry02已结束并局部通过**：同封存第一轮旋拧源态211314，CPU480Hz128/8，原SDF/几何/力界、contact-last、pin margin10µm、f32无损记录/FK缓存/Fabric边界发布。完整90°指令、1861物理步，outer_abort无；键槽原标准通过，最差1.655694µm，末深9.238852mm。stepper39.6262s，对应960Hz64/4软件候选74.7848s；local含当前图像和收尾68.6192s vs111.2069s；进程164.729s vs207.533s。这些都不是完整5倍。原记录`artifacts/performance_5x/first_turn_balanced480_retry02/`。
+- near_seat_balanced480已结束：240步=0.5s，按诊断步数正常停止(exit2/DIAGNOSTIC_STEP_BUDGET_REACHED)，local13.9993s；原键槽通过且无越界，末深14.6043126mm。与960Hz margin10同源local23.5359s相比约1.68倍，仅局部。`balanced480_local_comparison.json`记录两个窗口全部比较，注明near-seat另含FK/Fabric软件改动。
+- 当前唯一主要物理运行：**artifacts/performance_5x/full_balanced480_01/run**，exec session55696。启动PID/UTC/完整argv在父目录motion_process.json；配置assembly_balanced_480hz.yaml与body_480hz.yaml，源码f939387。预检exit0/131.2955s，preflight/engine/identity均通过，实际CPU480Hz128/8读回通过。原搬运时序已恢复；保留pin margin10µm及记录/FK/Fabric优化。预算3600s、收尾240s，目标仍3181.9989s；额外记录preflight_plus_motion_s。恢复先核实实际进程/文件状态；安全停止写run/STOP_REQUEST。
+- 新数值假设：每秒碰撞检测从960降到480，同时位置迭代每秒61440、速度迭代每秒3840不变。此前480Hz64/4完整中断前键槽4.92µm失败；960Hz16/4第一圈13.47µm失败而960Hz64/4同源1.17µm通过，说明更充分求解有直接精度依据。不是提高物理力或放宽容差。
+- 193f548为局部诊断扩展，后续f939387接入显式480Hz128/8完整候选与margin许可。诊断部分：诊断CLI显式允许这一有界配置，并在contact-last/margin检查与实际作者记录中一致处理。7641ba0/b838170为前序提交；头两次first_turn_balanced480与retry01因旧CLI/交叉检查拒绝，尚未启动物理，原log保留。当前有效retry02已成功。
 
-## 环境
+## 下一步
 
-Isaac Python `/home/noob/WorkPlace/isaacsim/.conda-env/bin/python`；规划 `/home/noob/WorkPlace/kcgtest1/.venv/bin/python`；视觉 `/home/noob/.cache/kcgtest1-sam6d/.venv/bin/python`；SAM根 `/home/noob/WorkPlace/kcgtest1-baseline-20260916/.deps/SAM-6D/SAM-6D`。Isaac6.0.1.0 / PhysX110.1.13，原CPU960Hz/64位置+4速度迭代，关节接触最后求解。所有运行simulation-only/hardware_authorized=false。
+1. 核对full_balanced480_01的实际进程/当前阶段，继续观察初始视觉、真实抓取、对键插入、旋拧与最终松手承载。不凭旧状态等待。
+2. 源码与参数在运行中冻结。结束后读取实际motion_process总时间，并按原body/nut/key/turns/terminal/band/whole审查。先核对实际结果，不能以程序exit或PASS代替完整装配。
+3. 若完整物理通过且总耗时<=3181.9989s，才按5倍目标验收；连预检耗时也要明确报告。若失败或超时，定位最早实际原因后继续，不盲扫/调宽物理标准。
+4. 全过程只一项主物理运行；独立离线分析可继续，但避免重CPU负载污染计时。
+
+## 已验证计算改进与暂不采用路线
+
+- 原生接触点复制+路径缓存；ext43保留SDK原float32全部原值，as_array仍升float64供后评。完整接触/事件/顺序保留；原始64帧分块MessagePack+标准gzip(ISA-L)及增量块索引。EncodedSensorHistory保存全样本字节，精确FK有限缓存返回独立矩阵。GC每步gen0、每1024步gen2及最终gen2。匹配真实数据/多项针对性测试已通过。
+- 原CPU960Hz64/4、margin10µm匹配首90°有键槽证据；Fabric边界发布/FK缓存同源3721帧原生关节、力矩、Body/Nut位姿与前候选全部0差（software_optimization_physical_comparison.json）。这是局部物理等价，不是整轮等价。
+- 先前完整full_fast240_01初始视觉拒绝；240Hz255/16仍拒绝。full_fast480_01完成前两圈及第三圈部分，45min中断，恢复121728完整帧；键槽4.92µm失败。full_cpu960_margin10_01约34.5min尚在key entry，受控停止；JSON紧凑contact见证写出错误已修复，不改原失败数据。
+- GPU初始化根因已解决：166586排除关系导致逐对重传SDF。全有效pair编译30CollisionGroup、1513形状全部1143828对关系检查无差；但GPU480/960 near-seat键槽77/51µm失败。GPU非合格路线。CPU同组编译无性能增益。
+- 原生CPU时间线显示窄相位接触为密集阶段主要成本。降位置迭代16、SDF8bit、CPU串行/核心绑定、四连杆少重配均未提供合格显著收益。
+- 单180顶点pin合并实际SDKcook钳64顶点造成31µm外形损失，拒绝；精确轴向640凸块分解几何通过但收益小，未用于完整回合。
+- 全指端改原凸分解后的真实重新抓握+90°，f2的327接触点超过原PAD投影0.5mm限（最大0.606mm），未采用。其他指端局部身份通过不证明全程。
+- 当前离线网格候选未用于物理：nut_mesh_probe外Nut235728→124046三角面，但独立采样最大25.5µm且非闭合；thread_mesh_probe8个仅Nut接触的插座三角面约减25%，采样约30µm。QEM标称1µm不是Hausdorff保证；不作为无损优化或验收。原几何文件未改。
+
+## 入口与环境
+
+- Isaac Python `/home/noob/WorkPlace/isaacsim/.conda-env/bin/python`；规划 `/home/noob/WorkPlace/kcgtest1/.venv/bin/python`；视觉 `/home/noob/.cache/kcgtest1-sam6d/.venv/bin/python`；SAM根 `/home/noob/WorkPlace/kcgtest1-baseline-20260916/.deps/SAM-6D/SAM-6D`。
+- 运行环境ISAAC_ENV_PREFIX为Isaac conda目录，KCG_PLANNER_PYTHON/KCG_SAM6D_PYTHON/KCG_SAM6D_ROOT如上。Isaac6.0.1.0/PhysX110.1.13，RTX5070Ti16GB。不得在物理进程运行时重写已加载native so。
+- 主回合安全停止写run/STOP_REQUEST；勿SIGINT（SDK可能跳过Python收尾）。functions.wait只用于exec返回的cell ID；shell会话用write_stdin。原始数据artifacts被忽略不代表可删。
+- 源态：first_turn_source.json为211314/nut_rotation/nut_regrasp；near_seat_source.json为291580/continued_04；open_first_grip_source.json为206658/nut_regrasp。只能事前设置冷态用于局部诊断，不冒充连续装配。
+- 原整体验收入口`reproducibility/improvements_20260916/review_completed_assembly.py`；key review脚本`src/kcg_connector/isaac/evaluate_source_key_containment.py`。必须读取实际原数据，保留失败。
+- 详细优化历史见`docs/history/CURRENT_CONTEXT_CN_20260918_before_balanced480.md`；两次原成功与验收见`docs/history/CURRENT_CONTEXT_CN_20260917_before_5x_performance.md`。
