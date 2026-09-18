@@ -80,7 +80,7 @@ parser.add_argument("--assembly-config",type=Path,
                     help="Explicit local physical-model configuration; defaults to the sealed source configuration.")
 parser.add_argument("--mounted-grasp-recipe",type=Path,
                     help="Explicit fixed-Nut laboratory grasp/torque recipe, not an assembly run.")
-parser.add_argument("--velocity-iterations", type=int, choices=(0,1,4,8,16), default=1)
+parser.add_argument("--velocity-iterations", type=int, choices=(0,1,4,16), default=1)
 parser.add_argument("--contact-convergence-check", action="store_true")
 parser.add_argument("--diagnostic-center-socket-before-start", action="store_true")
 parser.add_argument("--main-read-sequence", action="store_true",
@@ -230,11 +230,6 @@ if args.source_stage_probe and (not args.shared_hand_mechanism or not args.free_
         or args.interface_twist_deg is not None or args.probe_additional_turn_deg is not None):
     parser.error('Source-stage diagnosis requires the shared hand and free connector; other probe modes are mutually exclusive')
 source_stage_recipe=json.loads(args.source_stage_probe.read_text()) if args.source_stage_probe else None
-declared_balanced_cpu_profile=bool(source_stage_recipe
-    and source_stage_recipe.get('balanced_cpu_iteration_budget') is True
-    and args.physics_device=='cpu' and args.experimental_connector_time_resolution
-    and (args.physics_hz,args.position_iterations,args.velocity_iterations)
-        in ((240,255,16),(480,128,8)))
 if source_stage_recipe is not None:
     from te_nut_motion import source_probe_rotation_degrees
     try:
@@ -242,21 +237,13 @@ if source_stage_recipe is not None:
     except (TypeError, ValueError) as error:
         parser.error(str(error))
     if 'solve_articulation_contact_last' in source_stage_recipe:
-        same_rate_profile=(args.physics_hz==960 and args.velocity_iterations==4
-            and args.position_iterations in ((16,32,64,128) if args.experimental_connector_position_convergence else (64,)))
-        declared_rate_profile=(args.experimental_connector_time_resolution and args.physics_hz in (240,480)
-            and ((args.position_iterations,args.velocity_iterations)==(64,4)
-                 or declared_balanced_cpu_profile)
-            and not args.experimental_connector_position_convergence)
-        declared_gpu_profile=(args.experimental_connector_gpu_comparison and args.physics_device=='cuda:0'
-            and args.gpu_host_readback and args.physics_hz in (480,960)
-            and (args.position_iterations,args.velocity_iterations)==(64,4)
-            and (args.physics_hz==960 or args.experimental_connector_time_resolution))
         if (type(source_stage_recipe['solve_articulation_contact_last']) is not bool
-                or args.frozen_connector_model is None or (args.physics_device != 'cpu' and not declared_gpu_profile)
+                or args.frozen_connector_model is None or args.physics_device != 'cpu'
                 or args.solver_type != 'TGS' or not args.external_forces_every_iteration
-                or not (same_rate_profile or declared_rate_profile or declared_gpu_profile)):
-            parser.error('Contact order requires the declared CPU source-stage numerical profile; model acceptance must be rechecked')
+                or (args.physics_hz, args.position_iterations, args.velocity_iterations) != (960, 64, 4)
+                or args.experimental_connector_position_convergence
+                or args.experimental_connector_time_resolution or args.experimental_connector_gpu_comparison):
+            parser.error('Contact-order comparison requires an explicit boolean and the unchanged frozen-connector CPU TGS 960/64/4 source-stage setup')
 finger_mechanism_document=None
 if args.finger_mechanism is not None:
     args.finger_mechanism=args.finger_mechanism.resolve()
@@ -402,19 +389,20 @@ if args.frozen_connector_model is not None:
     required=frozen_requirements or dict(physics_hz=960,position_iterations=128,
                                        velocity_iterations=4 if args.contact_convergence_check else 1)
     experimental_gpu=(args.experimental_connector_gpu_comparison and args.physics_device=='cuda:0'
-                      and args.gpu_host_readback and (args.interface_twist_deg is not None or args.source_stage_probe is not None))
-    experimental_rate=(args.experimental_connector_time_resolution
-                       and (args.physics_device=='cpu' or (experimental_gpu and args.physics_hz==480))
+                      and args.gpu_host_readback and args.interface_twist_deg is not None)
+    experimental_rate=(args.experimental_connector_time_resolution and args.physics_device=='cpu'
                        and ((args.physics_hz==480 and args.interface_control_decimation==2
                              and args.interface_twist_deg is not None)
                             or (args.source_stage_probe is not None and args.physics_hz in (240,480))))
-    balanced_iterations=bool(experimental_rate and declared_balanced_cpu_profile)
+    balanced_iterations=bool(experimental_rate and source_stage_recipe
+        and source_stage_recipe.get('balanced_cpu_iteration_budget',False)
+        and (args.physics_hz,args.position_iterations,args.velocity_iterations)==(240,255,16))
     experimental_position=bool(args.experimental_connector_position_convergence
         and args.source_stage_probe is not None and args.physics_device=='cpu'
         and args.solver_type=='TGS' and args.external_forces_every_iteration
         and args.physics_hz==required['physics_hz']==960
         and args.velocity_iterations==required['velocity_iterations']==4
-        and required['position_iterations']==64 and args.position_iterations in (16,32,64,128)
+        and required['position_iterations']==64 and args.position_iterations in (64,128)
         and not args.experimental_connector_time_resolution and not args.experimental_connector_gpu_comparison)
     if (not args.free_plug_in_socket or (args.physics_device!='cpu' and not experimental_gpu)
             or (args.cpu_wrist_reference is None and not args.source_stage_probe)
@@ -423,9 +411,9 @@ if args.frozen_connector_model is not None:
                 and any(getattr(args,k)!=required[k] for k in ('position_iterations','velocity_iterations')))):
         parser.error('The delivered connector requires its declared CPU runtime configuration and a CPU wrist reference')
 if args.experimental_connector_position_convergence and not (args.frozen_connector_model and experimental_position):
-    parser.error('Position convergence requires an explicit frozen-connector CPU960Hz/16,32,64,128/4 source-stage comparison')
+    parser.error('Position convergence is restricted to the declared frozen-connector CPU960Hz/64-or128/4 source-stage comparison')
 if args.experimental_connector_gpu_comparison and not (args.frozen_connector_model and args.physics_device=='cuda:0'
-        and args.gpu_host_readback and (args.interface_twist_deg is not None or args.source_stage_probe is not None)):
+        and args.gpu_host_readback and args.interface_twist_deg is not None):
     parser.error('Experimental GPU comparison requires the frozen connector, local interface probe, CUDA and host readback')
 if args.experimental_connector_time_resolution and not (args.frozen_connector_model and experimental_rate):
     parser.error('Time-resolution comparison requires the frozen connector and the declared bounded CPU interface or source-stage probe')
@@ -460,23 +448,12 @@ for module_name in ('te_local_interface_following.py','te_interface_stroke_sched
     module_path=Path(__file__).with_name(module_name)
     (args.output/module_name).write_bytes(module_path.read_bytes())
 sys.path.insert(0,str(Path(__file__).with_name("carts_v2")))
-if source_stage_recipe is not None and source_stage_recipe.get('cuda_allocation_trace_library'):
-    # Diagnostic-only: CUPTI supports one subscriber, so acquire it before Kit's
-    # optional GPU profiler. This observer never changes allocation parameters.
-    import ctypes
-    allocation_observer=ctypes.CDLL(str(Path(source_stage_recipe['cuda_allocation_trace_library']).resolve()))
-    allocation_observer.start_allocation_trace.argtypes=[ctypes.c_char_p]
-    status=allocation_observer.start_allocation_trace(str(args.output/'cuda_allocations.jsonl').encode())
-    if status!=0:raise RuntimeError(f'CUPTI allocation observer unavailable: {status}')
 from isaacsim import SimulationApp
 app = SimulationApp({"headless":args.probe_additional_turn_deg is None,"multi_gpu":False,
                      "active_gpu":0,"physics_gpu":0,"fast_shutdown":True,"shutdown_watchdog_timeout":10.,
                      "extra_args":((["--/rtx/hydra/supportMultiTickRate=false"]
                                     if args.probe_additional_turn_deg is not None else [])
-                                   +(["--/physics/fabricUseGPUInterop=true"] if args.fabric_gpu_interop else [])
-                                   +(["--/app/profilerBackend=cpu","--/profiler/enabled=true",
-                                      "--/profiler/gpu=false","--/app/profilerMask=0"]
-                                     if source_stage_recipe and source_stage_recipe.get('native_cpu_timeline',False) else []))})
+                                   +(["--/physics/fabricUseGPUInterop=true"] if args.fabric_gpu_interop else []))})
 failed=False
 requested_exit_code=0
 previous_physics_dispatch_settings=None
@@ -958,7 +935,7 @@ try:
         if prim.HasAPI(UsdPhysics.RigidBodyAPI):
             PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr(0.)
     if source_stage_recipe and source_stage_recipe.get('balanced_cpu_iteration_budget',False):
-        if not balanced_iterations:raise ValueError('the declared balanced iteration comparison must be CPU240Hz/255/16 or CPU480Hz/128/8')
+        if not balanced_iterations:raise ValueError('the declared balanced iteration comparison must be CPU240Hz/255/16')
         scene.CreateMinPositionIterationCountAttr(args.position_iterations)
         scene.CreateMaxPositionIterationCountAttr(args.position_iterations)
         counts={'rigid_bodies':0,'articulations':0}
@@ -972,12 +949,9 @@ try:
                 api.CreateSolverPositionIterationCountAttr(args.position_iterations)
                 api.CreateSolverVelocityIterationCountAttr(args.velocity_iterations)
         (args.output/'balanced_iteration_comparison.json').write_text(json.dumps({
-            'baseline_hz_position_velocity':[960,64,4],
-            'actual_hz_position_velocity':[args.physics_hz,args.position_iterations,args.velocity_iterations],
-            'baseline_position_iterations_per_second':61440,
-            'actual_position_iterations_per_second':args.physics_hz*args.position_iterations,
-            'velocity_iterations_per_second':args.physics_hz*args.velocity_iterations,
-            'configured_actor_counts':counts,
+            'baseline_hz_position_velocity':[960,64,4],'actual_hz_position_velocity':[240,255,16],
+            'baseline_position_iterations_per_second':61440,'actual_position_iterations_per_second':61200,
+            'velocity_iterations_per_second':3840,'configured_actor_counts':counts,
             'geometry_material_inertia_effort_boundaries_changed':False,
             'accuracy_requires_current_physical_review':True},indent=2)+'\n')
     contact_capacity=(max(4096,int(prepared["contact_recording"].get("minimum_contact_records",4096)))
@@ -987,21 +961,14 @@ try:
         'raw_unfiltered_records_only':args.raw_contact_only,'sensor_count':len(hand_paths),
         'legacy_filter_count':len(contact_filters),'record_capacity':contact_capacity,
         'collision_filters_and_contact_materials_changed':False},indent=2)+'\n')
-    efficient_probe_views=bool(source_stage_recipe and (
-        source_stage_recipe.get('omit_unused_contact_collectors',False) or args.contact_audit_mode=='native-report'))
+    efficient_probe_views=bool(source_stage_recipe and source_stage_recipe.get('omit_unused_contact_collectors',False))
     contacts=RigidPrim(hand_paths,resolve_paths=False,
         **({} if efficient_probe_views else {**contact_filter_arguments,'max_contact_count':contact_capacity}))
     probe_contact_paths=([str(p.GetPath()) for p in stage.Traverse() if p.HasAPI(UsdPhysics.RigidBodyAPI)
                           and str(p.GetPath()).startswith("/World/HandArm/")] + [body_path,fixture_path]
                          if args.probe_additional_turn_deg is not None or args.source_stage_probe else [])
-    probe_contacts=(RigidPrim(probe_contact_paths,resolve_paths=False,
-                    **({} if efficient_probe_views else {**contact_filter_arguments,'max_contact_count':contact_capacity}))
+    probe_contacts=(RigidPrim(probe_contact_paths,resolve_paths=False,**contact_filter_arguments,max_contact_count=contact_capacity)
                     if probe_contact_paths else None)
-    (args.output/'contact_collector_usage.json').write_text(json.dumps({
-        'tensor_contact_collectors_enabled':not efficient_probe_views,
-        'native_contact_report_apis_retained':True,'all_native_points_required':True,
-        'pose_views_retained':True,'joint_and_wrist_force_sensors_unchanged':True,
-        'legacy_filter_count':len(contact_filters)},indent=2)+'\n')
     static_part_contact_recording = args.free_plug_in_socket and args.probe_additional_turn_deg is None and not efficient_probe_views
     parts=RigidPrim([body_path,fixture_path] if args.free_plug_in_socket else [fixture_path],resolve_paths=False,
         **({**contact_filter_arguments,'max_contact_count':contact_capacity}
@@ -1184,52 +1151,6 @@ try:
             'validation_transfer_from_original_solver_claimed': False,
             'documentation': 'https://docs.omniverse.nvidia.com/kit/docs/omni_physics/110.0/dev_guide/guides/articulation_stability_guide.html#articulation-solver-order',
         }
-    if source_stage_recipe is not None and 'nut_external_sdf_bits' in source_stage_recipe:
-        if (args.physics_device,args.physics_hz,args.position_iterations,args.velocity_iterations)!=('cpu',960,64,4):
-            raise ValueError('The external SDF storage comparison retainsCPU960Hz64/4')
-        from nut_sdf_storage import configure_nut_external_sdf_bits
-        report=configure_nut_external_sdf_bits(stage,source_stage_recipe['nut_external_sdf_bits'])
-        (args.output/'nut_sdf_storage.json').write_text(json.dumps(report,indent=2)+'\n')
-    if source_stage_recipe is not None and 'pin_contact_offset_m' in source_stage_recipe:
-        declared_iterations=(args.position_iterations==64 or (
-            args.experimental_connector_position_convergence and args.position_iterations in (16,32)))
-        original_rate_profile=((args.physics_device,args.physics_hz,args.velocity_iterations)==('cpu',960,4)
-                               and declared_iterations)
-        balanced_margin_profile=(declared_balanced_cpu_profile and args.physics_hz==480)
-        if (not (original_rate_profile or balanced_margin_profile)
-                or source_stage_recipe.get('fuse_convex_pin_quarters',False)):
-            raise ValueError('The source pin margin comparison requires the declared CPU960Hz or balanced CPU480Hz profile and original four-quarter geometry')
-        from pin_contact_margin import configure_pin_contact_margin
-        report=configure_pin_contact_margin(stage,source_stage_recipe['pin_contact_offset_m'])
-        report['actual_hz_position_velocity']=[args.physics_hz,args.position_iterations,args.velocity_iterations]
-        (args.output/'pin_contact_margin.json').write_text(json.dumps(report,indent=2)+'\n')
-    if source_stage_recipe is not None and source_stage_recipe.get('fuse_convex_pin_quarters',False):
-        if args.physics_device!='cpu':raise ValueError('The exact180vertex pin hull is a CPU-only candidate')
-        from fuse_pin_collision_quarters import fuse_pin_quarters, fuse_pin_shafts, inspect_cooked_pin_hulls
-        mode=source_stage_recipe.get('pin_fusion_mode','whole')
-        if mode not in ('whole','axial_shaft'):raise ValueError('Unknown explicit pin decomposition')
-        report=(fuse_pin_shafts(stage) if mode=='axial_shaft' else fuse_pin_quarters(stage))
-        (args.output/'pin_collision_fusion.json').write_text(json.dumps(report,indent=2)+'\n')
-        cooked=inspect_cooked_pin_hulls(stage,report)
-        (args.output/'pin_cooked_geometry.json').write_text(json.dumps(cooked,indent=2)+'\n')
-        if max(cooked['maximum_source_outside_cooked_plane_m'],
-               cooked['maximum_cooked_outside_source_plane_m'])>1e-8:
-            raise RuntimeError('Fused pin native cooking changed its source envelope by more than10nm')
-    if source_stage_recipe is not None and source_stage_recipe.get('omit_disabled_collision_apis',False):
-        from runtime_collision_pruning import omit_disabled_collision_apis
-        report=omit_disabled_collision_apis(stage, deactivate_invisible_leaves=bool(
-            source_stage_recipe.get('deactivate_disabled_invisible_collision_leaves',False)))
-        (args.output/'disabled_collision_api_omission.json').write_text(json.dumps(report,indent=2)+'\n')
-    if args.physics_device!='cpu':
-        buffers={a.GetName():a.Get() for a in scene.GetPrim().GetAttributes()
-                 if 'gpu' in a.GetName().lower()}
-        (args.output/'gpu_scene_buffers_before_reset.json').write_text(json.dumps(buffers,indent=2)+'\n')
-    if source_stage_recipe is not None and source_stage_recipe.get('compile_leaf_collision_pairs',False):
-        from runtime_collision_groups import compile_leaf_collision_pairs
-        report=compile_leaf_collision_pairs(stage, include_actor_pairs=bool(
-            source_stage_recipe.get('compile_actor_collision_pairs',False)),
-            ownership_parser_workdir=args.output/'collision_filter_ownership')
-        (args.output/'collision_pair_compilation.json').write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps({'stage':'begin_physics_reset','wall_seconds':time.monotonic()-diagnostic_started,
                       'device':args.physics_device}),flush=True)
     world.reset();world.pause()

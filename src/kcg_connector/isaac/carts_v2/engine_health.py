@@ -75,8 +75,7 @@ def gpu_world_parameters(resources) -> dict[str, object]:
     return physics_world_parameters(resources, "cuda:0")
 
 
-def physics_backend_record(world, context, requested_device="cuda:0", *,
-                           gpu_host_readback=False, observed_suppress_readback=None) -> dict[str, object]:
+def physics_backend_record(world, context, requested_device="cuda:0") -> dict[str, object]:
     if requested_device not in ("cuda:0", "cpu"):
         raise ValueError("unsupported physics device")
     result = {
@@ -92,21 +91,6 @@ def physics_backend_record(world, context, requested_device="cuda:0", *,
         and result["gpu_dynamics_enabled"]
         and result["broadphase_type"] == "GPU"
     )
-    if gpu_host_readback:
-        if requested_device != 'cuda:0':
-            raise ValueError('GPU host readback requires an explicitly requested GPU solver')
-        # Isaac reports the data device as CPU when host readback is active.
-        # Establish solver identity from the actual native scene, separately
-        # from where the returned NumPy sensor arrays reside.
-        host_pass = bool(result['world_device'] == 'cpu'
-                         and result['physics_context_device'] == 'cpu'
-                         and result['gpu_dynamics_enabled']
-                         and result['broadphase_type'] == 'GPU'
-                         and observed_suppress_readback is False)
-        result['gpu_host_readback'] = {
-            'requested': True, 'observed_suppress_readback': observed_suppress_readback,
-            'verified': host_pass, 'solver_and_data_devices_recorded_separately': True}
-        gpu_pass = host_pass
     cpu_pass = bool(result["world_device"] == "cpu" and result["physics_context_device"] == "cpu"
                     and not result["gpu_sim"] and not result["gpu_pipeline"]
                     and not result["gpu_dynamics_enabled"] and result["broadphase_type"] in ("MBP", "SAP"))

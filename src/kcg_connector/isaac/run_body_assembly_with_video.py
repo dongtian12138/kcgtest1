@@ -56,10 +56,7 @@ def recorded_controller(runtime, arguments, motion_plan, dynamic):
                 if type(deferred_gc) is not bool:
                     raise ValueError('The recording GC option requires a Boolean')
                 if deferred_gc:
-                    recording=config['recording']
-                    self.enable_deferred_recording_gc(
-                        only_nut_phases=recording.get('defer_gc_only_nut_phases',True),
-                        full_collection_interval_steps=recording.get('gc_full_collection_interval_steps',128))
+                    self.enable_deferred_recording_gc(only_nut_phases=True)
             world, robot = kwargs["world"], kwargs["robot"]
             before_time = float(world.current_time)
             before_joint = runner._host_array(robot.get_dof_positions()).copy()

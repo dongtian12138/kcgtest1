@@ -380,12 +380,8 @@ physics_numerics:
   position_iterations: 64
   velocity_iterations: 4
   external_forces_every_iteration: true
-  rationale: Performance candidate retainingCPU960Hz64/4, source meshes and physical
-    limits; only the original pin/socket speculative margin is reduced50umto10um.
-    Whole assembly and original2um key acceptance require fresh validation.
+  rationale: 保留CPU960Hz、64位置/4速度迭代；采用同源局部对照的关节接触后求解候选。局部已完成90度且原2µm通过，连续全流程仍需重新验证。
   solve_articulation_contact_last: true
-  revalidate_runtime_requirements: true
-  pin_contact_offset_m: 1.0e-05
 wrist_planned_contact_force_monitor:
   time_constant_s: 0.05
   rationale: 3.0400615 N来自旧研究扰动幅值，初始5 N也只是观察包络；不能当厂家瞬时额定。四个已结束回合停止瞬间的原始腕力3.14..5.68
@@ -633,15 +629,14 @@ continued_nut_strokes:
   coaxial_interface_recipe: reproducibility/improvements_20260916/config/late_load10ms_recipe.json
 recording:
   defer_gc_during_nut_phases: true
-  policy: All native contacts and every physics frame retained. Native float32 values
-    are losslessly promoted on reading; history is byte-backed. Generation0 GC each
-    frame, generation2 every1024steps and at ended-run cleanup.
+  policy: Automatic GC deferred only within Nut-phase physical/recording frames; full
+    generation collection every128physical steps plus ended-run cleanup. Earlier pickup/transport
+    phases retain default GC.
+  raw_contact_points_and_sample_rate_unchanged: true
   physical_prefix_evidence: reproducibility/improvements_20260916/evidence/gc_bounded_generations/dense_physical_prefix_comparison.json
   native_contact_copy: true
   packed_native_contacts: true
   native_contact_float32: true
   packed_sensor_history: true
   compression_backend: isal
-  defer_gc_only_nut_phases: false
-  gc_full_collection_interval_steps: 1024
   all_provided_native_points_retained: true

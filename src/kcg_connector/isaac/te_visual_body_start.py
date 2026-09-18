@@ -86,32 +86,7 @@ def observe_tabletop_body(repository, runtime, output):
     pose=_camera_cv_pose_from_eye_target(camera["eye_world_m"],camera["target_world_m"])
     expected=np.asarray(template["camera_calibration"]["world_from_camera_cv_row_major"]).reshape(4,4)
     if not np.allclose(pose,expected,rtol=0,atol=1e-12):raise ValueError("Initial RGB-D extrinsics differ from calibrated view")
-    K=np.asarray(template["camera_calibration"]["intrinsics_3x3"],dtype=float)
-    sampling_scale=1
-    if runtime.get('body_assembly_control_config'):
-        assembly_path=Path(runtime['body_assembly_control_config'])
-        if not assembly_path.is_absolute():assembly_path=repository/assembly_path
-        sampling_scale=yaml.safe_load(assembly_path.read_text()).get('computation',{}).get('initial_rgbd_resolution_scale',1)
-    if type(sampling_scale) is not int or sampling_scale not in (1,2):
-        raise ValueError('Initial RGB-D sampling permits only the original or twice-finer native pixel grid')
-    sampling_contract=None
-    if sampling_scale!=1:
-        source_resolution=list(camera['resolution_px'])
-        if source_resolution!=template['camera_calibration']['resolution_px']:
-            raise ValueError('The source image grid and frozen calibration disagree')
-        camera['resolution_px']=[sampling_scale*int(v) for v in source_resolution]
-        K=K.copy();K[:2,:]*=sampling_scale
-        sampling_contract={
-            'scope':'NATIVE_CURRENT_RGBD_FINER_PIXEL_GRID_SAME_CAMERA_OPTICS_AND_EXTRINSICS',
-            'source_camera_config':str(camera_path),'source_camera_config_sha256':digest(camera_path),
-            'source_calibration_sha256':template['camera_calibration']['calibration_sha256'],
-            'source_resolution_px':source_resolution,'native_resolution_px':camera['resolution_px'],
-            'native_intrinsics_3x3':K.tolist(),'world_from_camera_cv':pose.tolist(),
-            'current_rgb_and_depth_are_natively_rendered_not_upsampled':True,
-            'static_background_policy':'NEAREST_REGRID_OF_PRESERVED_BACKGROUND_FOR_FOREGROUND_MASK_ONLY',
-            'source_static_background_sha256':digest(static_path),
-            'frozen_pose_research_bounds_changed':False,'object_or_contact_truth_used':False}
-        (output/'camera_sampling_contract.json').write_text(json.dumps(sampling_contract,indent=2)+'\n')
+    K=np.asarray(template["camera_calibration"]["intrinsics_3x3"])
     world.pause();before=float(world.current_time)
     _author_camera(stage,camera["prim_path"],pose,resolution=tuple(camera["resolution_px"]),
         focal_length_mm=camera["focal_length_mm"],horizontal_aperture_mm=camera["horizontal_aperture_mm"],
@@ -129,15 +104,7 @@ def observe_tabletop_body(repository, runtime, output):
     static=np.load(static_path)
     (output/'background').mkdir()
     local_static_path=output/'background/depth_m.npy'
-    if sampling_scale==1:
-        shutil.copyfile(static_path,local_static_path)
-    else:
-        if static.shape!=tuple(reversed(template['camera_calibration']['resolution_px'])):
-            raise ValueError('The preserved static background does not match its source camera grid')
-        static=np.repeat(np.repeat(static,sampling_scale,axis=0),sampling_scale,axis=1)
-        np.save(local_static_path,static)
-    if depth.shape!=static.shape or rgb.shape[:2]!=depth.shape:
-        raise ValueError('Current native RGB-D and background grids must match')
+    shutil.copyfile(static_path,local_static_path)
     ws=template["frozen_endpoint_workspaces_world_aabb_m"]["plug"]
     observation=evaluate_te_rgbd_observability(rgb=rgb,depth_m=depth,static_depth_m=static,
         intrinsics=K,world_from_camera=pose,
@@ -147,14 +114,6 @@ def observe_tabletop_body(repository, runtime, output):
     manifest=copy.deepcopy(template)
     manifest.update(provider_scope="TRANSPORT_PLUG_ONLY",capture_id="body_start_"+uuid.uuid4().hex,
                     capture_contract_sha256=digest(camera_path),control_authorized=False,pose_result=None)
-    if sampling_contract is not None:
-        sampling_hash=digest(output/'camera_sampling_contract.json')
-        manifest['capture_contract_sha256']=sampling_hash
-        manifest['runtime_camera_sampling']=sampling_contract
-        manifest['camera_calibration'].update(
-            calibration_id=template['camera_calibration']['calibration_id']+'_native_2x',
-            calibration_scope='SIMULATION_ONLY_SAME_OPTICS_ANALYTIC_PIXEL_GRID_SCALING',
-            calibration_sha256=sampling_hash,intrinsics_3x3=K.tolist(),resolution_px=camera['resolution_px'])
     manifest["capture_time"].update(capture_started_at_utc=started.isoformat(),
                                     observed_frame_timestamp_utc=datetime.now(timezone.utc).isoformat())
     manifest["observability"]=observation

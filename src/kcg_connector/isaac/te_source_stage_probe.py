@@ -46,9 +46,6 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
                    closing_drive_maximum_effort_nm=float(world.hand_mechanism.settings['finger_transmission_boundary_nm']),
                    measured_effort_abort_action='record_only',arm_damping=float(metadata['effective_lift_arm_damping_nm_s_rad']))
     assembly_path=repository/recipe['assembly_config'];assembly=yaml.safe_load(assembly_path.read_text())
-    if recipe.get('cache_forward_kinematics',False):
-        from kinematic_result_cache import install_fk_cache
-        install_fk_cache(inputs.robot_model)
     scene=prepared['scene'];parts=[]
     for i,path in enumerate(scene['part_prim_paths']):
         part=SingleRigidPrim(path,name=f'source_probe_part_{i}',reset_xform_properties=False);part.initialize();parts.append(part)
@@ -62,13 +59,9 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         physics_dt_s=dynamic['physics_dt_s'],engine_monitor=PhysxStatsMonitor(world.get_physics_context()),
         physics_step_interface=get_physx_interface(),tensor_contact_prim=contact_view,
         tensor_contact_sensor_paths=contact_paths,tensor_contact_max_count=32768,
-        contact_audit_mode=args.contact_audit_mode,
-        native_contact_copy=recipe.get('native_contact_copy',False),
-        packed_native_contacts=recipe.get('packed_native_contacts',False),
-        native_contact_float32=recipe.get('native_contact_float32',False))
+        contact_audit_mode=args.contact_audit_mode)
     codec=args.truth_archive_codec
-    recorder.samples=GzipSampleStore(output/f'truth_samples.{codec}.gz',block_size=64,cache_blocks=1,codec=codec,
-                                    compression_backend=recipe.get('compression_backend','gzip'))
+    recorder.samples=GzipSampleStore(output/f'truth_samples.{codec}.gz',block_size=64,cache_blocks=1,codec=codec)
     ft_doc=json.loads((repository/'src/kcg_connector/config/te_visual_high_reobserve_v1.json').read_text())
     safety=ft_doc['wrist_ft_safety'];monitor=assembly['wrist_planned_contact_torque_monitor']
     phases=('visual_align','visual_refine','axial_settle','turn','hold')
@@ -100,12 +93,8 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         if type(recipe['defer_recording_gc']) is not bool:
             raise ValueError('The local recording GC comparison requires an explicit boolean')
         if recipe['defer_recording_gc']:
-            stepper.enable_deferred_recording_gc(
-                full_collection_interval_steps=recipe.get('gc_full_collection_interval_steps',128))
+            stepper.enable_deferred_recording_gc()
     ft.stepper=stepper
-    if recipe.get('packed_sensor_history',False):
-        from carts_v2.sensor_history import EncodedSensorHistory
-        ft.samples=EncodedSensorHistory(compression_backend=recipe.get('compression_backend','gzip'))
     runtime={'world':world,'inputs':inputs,'scene':scene,'auditor':recorder,'robot_data':robot_data,
         'object_parts':parts,'nail_body_ft_auditor':ft,'body_assembly_control_config':str(assembly_path),
         'body_assembly_scene':prepared,
@@ -122,11 +111,6 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
     if 'initial_loaded_command_deg' in recipe:
         runtime['engagement_loaded_turn_command_deg']=float(recipe['initial_loaded_command_deg'])
         runtime['coaxial_nut_commanded_degrees']=float(recipe['initial_loaded_command_deg'])
-    if recipe.get('defer_fabric_until_render',False):
-        from isaacsim.core.simulation_manager import SimulationManager
-        if not SimulationManager.is_fabric_enabled():
-            raise ValueError('Deferred render publication requires the explicitly enabled Fabric backend')
-        world._kcg_defer_fabric_until_render=True
     _install_rgbd_resume_sync(world,stage)
     light=UsdLux.DomeLight.Define(stage,'/World/SourceStageDiagnosticLighting')
     light.CreateIntensityAttr(float(scene['render'].dome_light_intensity))
@@ -152,31 +136,6 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         profiler=cProfile.Profile();profiler.enable()
     if recipe.get('adaptive_fourbar_updates',False):
         world.hand_mechanism.adaptive_tangent_settings={'closure_tolerance_m':1e-8,'maximum_slope_error':1e-4}
-    if recipe.get('native_cpu_timeline',False):
-        import carb.profiler
-        native_profiler=carb.profiler.acquire_profiler_interface(plugin_name='carb.profiler-cpu.plugin')
-        native_monitor=carb.profiler.acquire_profile_monitor_interface(plugin_name='carb.profiler-cpu.plugin')
-        previous_mask=native_profiler.get_capture_mask()
-        native_profiler.set_python_profiling_enabled(False)
-        native_step=world.hand_mechanism._original_step
-        captured_frames=[0]
-        def profile_native_step(*args,**kwargs):
-            if captured_frames[0]>=32:return native_step(*args,**kwargs)
-            native_monitor.mark_frame_end()
-            native_profiler.set_capture_mask(1)
-            native_profiler.begin(1,'KCG_NATIVE_PHYSICS_ONLY')
-            try:return native_step(*args,**kwargs)
-            finally:
-                native_profiler.end(1)
-                native_monitor.mark_frame_end()
-                snapshot=native_monitor.get_last_profile_events()
-                row={'frame':captured_frames[0],'main_thread':snapshot.get_main_thread_id(),
-                     'threads':{str(t):snapshot.get_profile_events(t) for t in snapshot.get_profile_thread_ids()}}
-                with (output/'native_cpu_timeline.jsonl').open('a') as stream:
-                    stream.write(json.dumps(row,default=str)+'\n')
-                captured_frames[0]+=1
-                native_profiler.set_capture_mask(previous_mask)
-        world.hand_mechanism._original_step=profile_native_step
     try:
         world.play()
         warmup=float(recipe.get('warmup_s',2.))
@@ -422,6 +381,5 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             'truth_capture':dict(recorder.capture_wall_times)}
         result['scene_output_backend']=getattr(world,'_kcg_rgbd_resume_sync_backend',None)
         result['fourbar_tangent_updates']=getattr(world.hand_mechanism,'tangent_update_stats',None)
-        result['forward_kinematics_cache']=getattr(inputs.robot_model,'_performance_fk_cache_report',None)
         (output/'source_stage_probe_result.json').write_text(json.dumps(_json_ready(result),indent=2)+'\n')
     return _json_ready(result)
