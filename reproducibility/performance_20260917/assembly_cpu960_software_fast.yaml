@@ -1,0 +1,653 @@
+schema_version: te_light_contact_key_entry_v1
+authorization:
+  source: CURRENT_USER_EXECUTION_APPROVAL_20260912
+  user_instruction: 按已审阅计划自主执行并可据证据修订；完成Isaac Sim视觉识别、指甲抓本体、对键插入、旋拧到位全流程。
+  simulation_only: true
+  hardware_authorized: false
+  grasp_transport_observation_authorized: true
+  light_contact_key_entry_authorized: true
+  locking_authorized: true
+  scope: VISUAL_TO_COMPLETE_ASSEMBLY_ONE_EPISODE_SIMULATION_ONLY
+  current_scope: User requested continuous mating verification followed by the complete
+    visual assembly, same current task; simulation only.
+experiment:
+  status: VISUAL_ASSEMBLY_V1_CANDIDATE
+  source_configuration: artifacts/kcg_connector/force_to_hand_20260908/step3_preparation/assembly_preflight.yaml
+  full_chain_verified: false
+  table_representation_evidence: artifacts/visual_assembly_v1/shared_runtime_table_mesh03/evaluation.json
+  pickup_evidence: artifacts/visual_assembly_v1/visual_body_grasp04/physical_stage_review.json
+  next_nut_stage_is_unverified: true
+  entry_travel_evidence: artifacts/visual_assembly_v1/visual_to_key_entry05/probe_travel_boundary_review.json
+receptacle_templates: artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/templates
+collision:
+  body_representation: source_cad_sparse_sdf
+  body_sdf_resolution: 1024
+  body_sdf_subgrid_resolution: 6
+  body_sdf_narrow_band_thickness: 0.002
+  receptacle_representation: stationary_source_cad_triangle_mesh
+  contact_offset_m: 5.0e-05
+  rest_offset_m: 0.0
+  nut_representation: source_cad_sparse_sdf
+  representative_inner_thread_manifest: artifacts/kcg_connector/isaac/te_full_assembly_20260905/representative_thread_geometry_clean_01/geometry_manifest.json
+  table_representation: source_equivalent_triangle_box
+key_camera:
+  eye_world_m:
+  - 0.59
+  - -0.37
+  - 0.225
+  resolution_px:
+  - 1280
+  - 720
+  focal_length_mm: 24.0
+  horizontal_aperture_mm: 20.955
+  clipping_range_m:
+  - 0.02
+  - 10.0
+motion:
+  search_mode: retract_rotate_probe
+  trial_wrist_offsets_deg:
+  - 0.0
+  retracted_face_gap_m: 0.001
+  blocked_hold_duration_s: 0.75
+  unloaded_hold_duration_s: 0.25
+  rotation_settle_duration_s: 0.5
+  maximum_total_search_duration_s: 75.0
+  transport_face_gap_m: 0.05
+  maximum_precontact_speed_m_s: 0.002
+  precontact_face_gap_m: 0.003
+  target_key_entry_depth_m: 0.00785
+  maximum_axial_travel_m: 0.012
+  axial_force_reference_n: 0.2
+  maximum_axial_speed_m_s: 0.0003
+  maximum_xy_correction_m: 0.002
+  maximum_xy_speed_m_s: 0.00015
+  maximum_tilt_correction_deg: 1.0
+  maximum_tilt_speed_rad_s: 0.002
+  sweep_start_deg: -10.0
+  sweep_end_deg: 10.0
+  sweep_speed_deg_s: 0.5
+  maximum_contact_duration_s: 75.0
+  maximum_transport_joint_speed_rad_s: 0.15
+  contact_seating:
+    enabled: false
+    stability_duration_s: 0.25
+    minimum_force_reference_fraction: 0.75
+    maximum_force_reference_fraction: 1.5
+    maximum_depth_range_m: 3.0e-05
+    rationale: 确认窗0.25 s，为50 ms一阶力状态滤波的5个时间常数；输入是原始接触估计的独立滤波，未串联导纳用的滤波器。腕部与单指保护仍逐物理步执行；原始接触估计另行记录。0.20
+      N参考及0.3 mm/s速度不变。
+    travel_bound_rationale: 本回合视觉对准后实际插深5.995mm仍无任何插头—插座正载接触；原9mm行程含3mm起始间隙，实际只容许6mm插深。已有新模型局部夹持初态在约7.96mm深处。仅将有限行程改为12mm（最多约9mm插深），0.20N参考、0.3mm/s限速及其余试探停止值保留。不是厂家插入行程额定。
+    force_state_filter_time_constant_s: 0.05
+    depth_handoff_rationale: Only the internal encoder handoff target changes from
+      7.930 to 7.850 mm. Ended full09 stopped at encoder 7.897523 mm after 0.75 s
+      force-balanced low progress; postrun original CAD at raw181920 shows actual
+      depth7.846368 mm with all5keys behind mouth, minimum axial margin0.100896 mm
+      and sidewall residual -0.108311 um within original2um band. Retain original
+      fixed-target0.5s hold, actual finger release, all force/collision/travel limits.
+      Earlier release support and complete assembly still require direct physical
+      validation. This target is an engineering stage transition, not a manufacturer
+      limit.
+  contact_estimate_filter_time_constant_s: 0.05
+  contact_estimate_filter_rationale: 匹配低速导纳与接触估计带宽：用既有50 ms时间常数的因果一阶低通处理六维接触估计，供导纳和附加试探停止判断；原始估计另行保存，原腕部与单指逐步保护不变。回放多个已结束回合显示高频接触估计弯矩远大于50
+    ms分量；新物理动作仍需核对真实接触和穿透。0.3 mm/s下每时间常数轴向移动上界15 um，小于50 um接触偏置；不放大力参考或速度。
+probe_stops:
+  maximum_contact_axial_force_n: 0.75
+  maximum_contact_lateral_force_n: 0.3
+  maximum_contact_bending_moment_nm: 0.02
+  maximum_contact_torsional_moment_nm: 0.015
+  note: 附加试探门限作用于50 ms滤波后的六维接触估计；未滤波估计单独记录。原腕部力/矩保护和单指保护逐物理步继续执行，数值不变。
+boundaries:
+  plug_mass_kg: 0.062459669349
+  grasp_relation: src/kcg_connector/config/te_nail_tip_body_grasp_v1.yaml
+  online_object_or_contact_truth_allowed: false
+  post_start_object_pose_write_allowed: false
+  direct_body_or_nut_force_or_torque_allowed: false
+  cable_or_marker_addition_allowed: false
+  passive_nut_resistance_source: validated_connector.model_path native ratchet and
+    thrust contacts
+nut_regrasp:
+  readiness:
+    window_s: 0.25
+    relative_tolerance: 0.05
+    relative_range: 0.15
+    minimum_margin_nm: 0.1
+    finish_refinement_when_ready: true
+  geometry_plan: artifacts/grasp_capacity_20260914/selected_two_nail_geometry.json
+  scope: one_finite_regrasp_from_current_palm_position_and_axis
+  torque_rotation_in_this_experiment: true
+  cooked_hand_geometry: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_regrasp_01/cooked_finger_inspection/geometry_only_manifest.json
+  required_closing_joint_effort_nm: &id001
+  - 1.7570975472482842
+  - 1.25
+  - 1.2535246753822211
+  pad_contact_required_for_physical_evaluation: true
+  body_pose_reserve_m: 0.0007
+  body_pose_reserve_rationale: 仅规划避碰包络增加0.7 mm储备，覆盖允许1度轴修正对约37 mm源Body范围的影响；不改变任何物理碰撞表面。
+  root_moment_preload:
+    source_evidence: artifacts/full_rotation_20260914/continuous_unturned_10/continuous_mating_review.json
+    targets_nm: *id001
+    finite_motor_cap_nm: 4.0
+    ramp_duration_s: 1.5
+    total_duration_s: 2.0
+    target_relaxation_time_constant_s: 0.16666666666666666
+    position_stiffness_reference_nm_rad: 120.0
+    maximum_target_speed_rad_s: 0.15
+    target_open_allowance_rad: 0.04
+    target_close_allowance_rad: 0.24
+    legacy_effort_monitor_action: record_only
+    wrist_force_observation_n: 110.0
+    control_quantity: BASE_BRIDGE_EXTERNAL_MOMENT_ABOUT_O_WITH_POSE_DEPENDENT_GRAVITY_COMPENSATION
+    integration_note: Same source root-moment law at the common 960 Hz; prior trial25
+      outer loop was 240 Hz. Stage revalidation required.
+    claim: finite shared motor feedback; physical full-sequence validation remains
+      pending
+    task_refinement:
+      targets_nm:
+      - 2.085566865538565
+      - 2.2503397335976487
+      - 2.145754682300982
+      ramp_duration_s: 1.5
+      total_duration_s: 3.0
+      source_estimate: artifacts/visual_assembly_v1/task_torque_preload_estimate.json
+      dynamic_evidence: artifacts/visual_assembly_v1/source_stage_task_preload20/local_motion_review.json
+      normal_force_target_is_model_based_not_sensor_readback: true
+  end_clearance_geometry_evidence:
+  - artifacts/visual_assembly_v1/task_preload20_end_clearance_plus.json
+  - artifacts/visual_assembly_v1/task_preload20_end_clearance_minus.json
+  body_pose_reserve_basis: Conservative visual Body avoidance allowance includes up
+    to0.6mm captive Nut/Body motion; physical source meshes and clearances are unchanged.
+  keyed_socket_grasp_frame: true
+  keyed_socket_grasp_basis: Full visual run preserved arbitrary hand yaw and loaded
+    with about-2.43degrees yaw error relative to the tested NAIL grasp. Use the observed
+    keyed Socket frame and source assembly relation; Nut yaw is not directly measured.
+    Local actual-contact validation is required.
+  initial_capture_preload_scale: 0.6
+  initial_capture_grip_basis: Light60percent initial preload passed actual89.0625degree
+    first capture and1.4056mm advance, peak elastic2.068Nm. After the first near90degree
+    command, regrasp returns to the original established-assembly references; that
+    transition is now being tested.
+  captured_nut_offset_m: 0.0005
+  captured_nut_offset_basis: Source connector working thrust limit +0.5mm in Body
+    Z, confirmed in postrun capture (0.50022mm). Current vision measures Body, not
+    the captive Nut origin. Use the nominal working face only after the completed
+    first capture stroke; keep raw poses and original physical geometry unchanged.
+  preserve_reindex_yaw_after_early_stop: true
+  grasp_yaw_bias:
+    degrees: 0.0
+    minimum_cumulative_command_deg: 180.0
+    basis: Neutral fixed bias; current-image Nu phase supplies the separately recorded
+      physical alignment.
+  visual_nut_phase:
+    enabled: true
+    minimum_cumulative_command_deg: 80.0
+    source_model: artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc
+    source_model_sha256: 234b7c0f14caeae1b8dffeabb8bae5a63e8b05d2463f3a7ff3e0c0d1d53f9eb6
+    reference_target_hand_nut_yaw_deg: -174.5245766750459
+    reference_evidence: artifacts/full_rotation_20260914/visual_integration/nu_yaw_image_probe_20260915/reference24_image_grasp_calibration.json
+    search_half_width_deg: 8.0
+    maximum_fit_rms_m: 0.0001
+    minimum_three_degree_score_ratio: 1.2
+    basis: Current open-hand depth exterior, one physical yaw alignment bounded to5degrees,
+      then new RGB-D verification before the original tare/closure. No object truth
+      input.
+nut_rotation:
+  require_preparation_ready: true
+  arm_trajectory_velocity_feedforward: true
+  rotation_profile: trapezoid
+  maximum_rotation_acceleration_deg_s2: 8.75
+  measured_tracking:
+    enabled: true
+    maximum_lateral_error_m: 0.00025
+  axial_lead_following:
+    enabled: true
+    lead_m: 0.00762
+    maximum_correction_m: 0.0001
+    restoring_rate_s_inv: 1.0
+    source: validated TE three-start thread lead; robot reference only
+  visual_progress:
+    enabled: true
+    captive_nut_axial_travel_m: 0.001
+    thread_lead_m: 0.00762
+    passive_travel_source: frozen connector_model_assembly_scene.json captive_nut_axial_play;
+      working travel, excluding backup margin
+    reference_following:
+      enabled: true
+      maximum_lateral_motion_m: 0.0005
+      maximum_axis_motion_deg: 1.0
+      maximum_lateral_speed_m_s: 0.00015
+      maximum_axis_speed_rad_s: 0.002
+      smoothing_time_s: 0.2
+    observation_period_s: 1.0
+    maximum_grasp_relation_error_m: 0.0002
+    nominal_seated_depth_m: 0.014605
+    visual_seating_tolerance_m: 2.0e-05
+    stable_depth_tolerance_m: 5.0e-06
+    seating_minimum_torque_nm: 0.4
+    seating_confirmations: 2
+    minimum_loaded_command_deg: 40.0
+    minimum_progress_check_angle_deg: 0.75
+    minimum_observed_progress_m: 1.0e-05
+  recovery:
+    enabled: false
+    maximum_regrasps: 1
+  finger_position_stiffness_reference_nm_rad: 120.0
+  enabled: true
+  rotation_about_socket_plus_z_deg: -90.0
+  rotation_direction_source: RIGHT_HAND_THREE_START_THREAD; clockwise viewed from
+    plug rear advances toward socket
+  maximum_rotation_speed_deg_s: 50.0
+  axial_settle_duration_s: 2.0
+  post_rotation_hold_s: 0.0
+  axial_force_reference_n: 0.2
+  axial_admittance_m_per_n_s: 0.0015
+  maximum_axial_speed_m_s: 0.0003
+  maximum_axial_travel_m: 0.004
+  maximum_arm_speed_rad_s: 0.2
+  payload_mass_kg: 0.062459669349
+  payload_com_body_m:
+  - 3.365477557677864e-06
+  - 1.407639432650501e-06
+  - -0.018135482890882567
+  payload_source: original frozen source Body and CouplingNut MassAPI values; Nut
+    transverse COM is essentially zero
+  stops:
+    axial_force_n: null
+    lateral_force_n: 20.0
+    bending_moment_nm: 0.4
+    torsional_moment_nm: 4.6
+  stop_rationale: 新模型单体前向实测力矩均值约0.42至1.07 Nm、峰3.08 Nm；旧0.04 Nm是旧0.02 Nm阻力的试探参考，已不适用。沿用新手局部候选的20
+    N、0.4 Nm和4.6 Nm观测范围及有限传动，原始力矩完整保留。均为仿真研究参考，不是硬件额定；物理到位和松手保持仍需独立验收。
+  no_lead_based_position_command: false
+  no_loaded_wrench_rezeroing: true
+  verified_pad_grasp_reference: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_pad_regrasp_filter_01/nut_pad_surface_posthoc_v1.json
+  axial_protection: EXISTING_PLANNED_CONTACT_50_MS_WRIST_FORCE_LIMIT_AND_RAW_TORQUE_FINGER_COLLISION_PROTECTIONS
+  retired_axial_probe_stop_evidence:
+    previous_limit_n: 0.75
+    previous_stable_pad_hold_interface_force_mean_n: 0.8967969478498379
+    previous_stable_pad_hold_interface_force_peak_n: 1.0816112978003045
+    recorded_pilot_pre_command_interface_force_n: 1.1960778396756024
+    original_wrist_limit_n: 3.0400615
+    scope: 净界面力含由插座承担的插头重量与夹持轴向预载；浅插附加值不是旋拧的已验证安全上限。原腕部保护、力参考、速度、行程、横向/弯矩/扭矩和单指保护不变。
+  contact_estimate_filter_time_constant_s: 0.05
+  contact_estimate_filter_rationale: 原回合0.133 s的原始横向峰值0.80652 N；50 ms因果回放峰值0.22600
+    N，三指持续Nut接触、Body轴向变化小于0.51 um，原腕部最高1.16228 N低于3.0400615 N。旋拧模块应与前段匹配慢速导纳的接触估计带宽。原始估计保留；先把矩平移到固定初始视觉原点再滤波，输出时移回当前原点。原腕部与单指逐步保护不变，未重新归零受载腕力。
+  contact_filter_initialization_history_s: 0.5
+  filter_initialization_rationale: 使用刚完成2 s夹持中的最后120个腕部传感器与编码器样本，覆盖50 ms时间常数的约10倍。以当前掌心观测建立虚拟原点，并用当前抓持关系与历史编码器换算此前保持段；仅用已经获得的信息，不使用对象/接触真值，不将受载力归零。过滤状态记录最后步号，避免第一条动作重复计入最后样本。上一轮孤立初值横向1.028
+    N，历史初始化约0.528 N；回放不是动态成功。
+  pre_turn_visual_alignment:
+    enabled: true
+    maximum_lateral_correction_m: 0.0005
+    maximum_axis_correction_deg: 1.0
+    maximum_lateral_speed_m_s: 0.00015
+    maximum_axis_speed_rad_s: 0.002
+    rationale: 当前掌心位置/有向轴与腕部插座视觉共同定义目标；最小轴角修正和横向居中，轴向始终采用原0.20 N导纳。目标不使用对象或接触真值。
+  pre_turn_torsional_compliance:
+    enabled: true
+    angular_admittance_rad_per_nm_s: 0.17453292519943295
+    maximum_speed_deg_s: 0.2
+    maximum_total_correction_deg: 0.5
+    rationale: 掌心观测仅含中心和轴，不将未观测本体键角等同固定手/Nut角。视觉重新对准及其轴向准备期间，按净腕部轴向反力矩有界跟随以释放预扭矩，随后冻结偏置并执行配置的有限角度动作。0.2度每秒为原旋拧速度十分之一，增益在原0.020
+      Nm假设阻力处达到该限速；总修正限0.5度，既有力/矩/行程停止值不变。
+  planar_force_admittance:
+    enabled: true
+    admittance_m_per_n_s: 0.0002
+    virtual_restoring_stiffness_n_m: 13000.0
+    maximum_speed_m_s: 0.00015
+    maximum_offset_m: 0.0005
+    rationale: 共享机构局部20度对照仅启用有界XY反馈后，横向合力峰由13.21N降至2.91N、末段约0.872N，最大横向偏移0.286mm；Nut—Socket在握持末段产生实际承载。保留原增益0.0002和速度0.15mm/s，行程0.5mm小于源Body间隙四分之一0.939mm。根力矩、轴向参考及有限驱动未增加；正式连续旋合仍待验证。
+    activate_during_axial_preparation: true
+    activate_during_visual_alignment: true
+    freeze_after_preparation: false
+  turn_axial_force_reference_n: 0.61272935631369
+  turn_force_reference_ramp_duration_s: 0.5
+  turn_force_reference_rationale: 120度回合在7.791 mm末段无Nut/Socket接触，Body/Socket承受0.199
+    N轴向力，其中法向0.058 N、摩擦0.141 N；全部末段触点投影于源键面，未碰接地弹片。原0.20 N参考使机械臂托住约0.413 N重量。仅正式旋拧以0.5
+    s平滑转到原质量乘9.81的0.6127293563 N，目标对应约零净手指轴向支承，检验自重能否克服键侧摩擦；不是厂家插入力或安全额定。准备阶段0.20
+    N、120度转角、速度、4 mm轴向/100 um横向边界及所有保护保持。
+  pose_observation_scope: 入槽前识别Body键角；可靠导向后旋拧只使用当前位置、轴线与六维力。没有后端孔阵列要求，不从Nut或Hand角推断Body角。判断真实螺纹推进和壳体到底，键槽导向丢失时停止并重新插入。
+  regulate_finger_effort_during_rotation: true
+  regulate_finger_effort_during_preparation: true
+  controller_version: Shared coaxial controller transferred from the measured continuous
+    mating and release run
+  development_purpose: Whole visual assembly candidate based on actual87.85degree
+    Nut turn and1.26mm Body advance; full mating and release remain postrun checks.
+  planar_force_following_evidence: artifacts/visual_assembly_v1/raised_nut_xy_follow07/local_physical_review.json
+  arm_kinematic_reference: commanded_pose
+  grip_lateral_balance:
+    enabled: false
+  finger_effort_limited_turn:
+    enabled: false
+  engagement_axial_assist:
+    enabled: true
+    additional_downward_force_n: 3.0400615
+    initial_cumulative_command_deg: 0.0
+    ending_cumulative_command_deg: 40.0
+    ramp_out_angle_deg: 5.0
+    source: artifacts/kcg_connector/contact_consistency_20260911/free_guide_32_final/result.json
+      and driver_snapshot.py engagement_axial_assist; source benchmark applied the
+      same finite extra force until40degrees
+    implementation: Same-episode accumulated loaded turn commands start at zero. Add
+      the finite reference through wrist force control and the original arm; smoothly
+      remove it by40commanded degrees. No actual Nut angle or object/contact truth
+      is used.
+    hardware_rating_claimed: false
+  controlled_release_effort_reserve_nm: 0.05
+  finger_effort_regulation_time_constant_s: 0.16666666666666666
+  finger_motor_force_control:
+    enabled: true
+    signal_filter_time_s: 0.05
+    moment_deadband_nm: 0.02
+  loaded_coordination:
+    enabled: false
+    begin_slowing_error_m: 0.000125
+    outward_unload_threshold_m_s: 3.0e-05
+    maximum_extra_time_s: 0.5
+    maximum_total_linear_speed_m_s: 0.001
+    maximum_total_angular_speed_rad_s: 0.15
+  integration_evidence: artifacts/rotation_coordination_20260914/coordinated_turn_02
+  integration_validation_scope: Local12degree cold-state window only; newly integrated
+    full sequence is not physically validated.
+  coaxial_interface_recipe: reproducibility/improvements_20260916/config/initial_load10ms_recipe.json
+  coaxial_maximum_profile_acceleration_deg_s2: 45.61779904708154
+passive_joint_solver:
+  representation: floating_reduced_coordinate_articulation
+  position_iterations: 32
+  velocity_iterations: 1
+  rationale: 独立重力负载试件中，原最大坐标关节的制动保持失真；相同质量、惯量、驱动值和迭代数下，约化坐标表示保持低于0.020 Nm的负载，并允许超过上限的运动。仅变内部求解表示，不增加固定约束或改变运动自由度。
+  diagnostic_reference: artifacts/kcg_connector/isaac/te_full_assembly_20260905/brake_gravity_articulated_01/result.json
+  position_iteration_rationale: 维持浮动关节32次位置迭代；仅速度迭代改为1。
+  brake_model: native_static_dynamic_friction
+  native_friction_rationale: 以当前引擎原生静/动摩擦替代极大阻尼速度驱动；静、动均沿用源假设0.020 Nm，黏性0。不叠加旧驱动，不改变自由度、质量、惯量、摩擦表面或力/速度保护。合成重力与自旋试件已核对基本响应，整机效果仍需验证。
+evaluation_recording:
+  socket_friction: true
+  native_robot_link_poses: DIRECT_PHYSICS_TENSOR_AUDIT_ONLY_WITH_FK_FIELDS_RETAINED
+wrist_contact_force_probe:
+  phase_limits_n:
+    preload: 5.0
+    prelift_effort_check: 5.0
+    lift: 5.0
+    hold: 5.0
+  source_of_retired_bound: 'src/kcg_connector/config/te_postgrasp_disturbance_panel_v1.json:
+    input_limits, SIMULATION_RESEARCH_LIMITS_NOT_HARDWARE_RATINGS'
+  rationale: 旧3.0400615 N扰动输入上限被直接复用为当前Body夹持的腕力停止，没有厂家额定依据。当前合法Body夹持在起抬出现3.301 N腕力和4.101
+    N手侧接触合力。采用有限5 N观察包络，只用于初始Body预载/起抬/保持；这是工程试验上界而非硬件能力或成功标准。保持原夹力目标、速度、单指0.9 Nm及腕矩边界；自由接近和后续装配阶段仍用原3.0400615
+    N。
+  no_commanded_force_increase: true
+  no_automatic_further_limit_expansion: true
+  robot_table_or_socket_collision_is_not_accepted: true
+physics_numerics:
+  device: cpu
+  position_iterations: 64
+  velocity_iterations: 4
+  external_forces_every_iteration: true
+  rationale: CPU960Hz64/4 and original contact geometry/physical limits retained;
+    speculative pin/socket margin10um. Native sensor readback each step; render output
+    published only for actual image capture. ExactFK reuse and bounded retiming of
+    collision-checked straight free transport require new full-run validation.
+  solve_articulation_contact_last: true
+  revalidate_runtime_requirements: true
+  pin_contact_offset_m: 1.0e-05
+  cpu_fabric_output: true
+  defer_fabric_until_render: true
+wrist_planned_contact_force_monitor:
+  time_constant_s: 0.05
+  rationale: 3.0400615 N来自旧研究扰动幅值，初始5 N也只是观察包络；不能当厂家瞬时额定。四个已结束回合停止瞬间的原始腕力3.14..5.68
+    N，50 ms向量回放值0.19..0.48 N，所有计划接触段回放峰值<0.79 N。将既有数值用于50 ms因果持续载荷监测，原瞬时力与峰值完整记录；自由空间仍逐步原始力门限，原始腕矩与单指/机械臂力矩及碰撞约束不变。
+  source_replay: artifacts/kcg_connector/isaac/te_full_assembly_20260905/planned_wrist_force_bandwidth_replay_v1.json
+  signal_history: 从最早有效补偿力连续维护，阶段切换不归零；不重新归零受载腕力。
+  limitation: 这是仿真研究接触监测带宽变更，不是瞬时峰值硬件安全认证。
+  existing_force_limit_values_unchanged: true
+  new_force_or_torque_command_added: false
+nut_reindex:
+  require_release_load_observation: true
+  joint7_only: false
+  maximum_joint7_speed_rad_s: 1.0
+  maximum_joint7_acceleration_rad_s2: 2.0
+  joint7_settle_timeout_s: 0.5
+  joint7_position_tolerance_rad: 0.003
+  enabled: true
+  rotation_about_socket_plus_z_deg: 90.0
+  maximum_arm_speed_rad_s: 0.8
+  open_hold_duration_s: 0.5
+  open_hand_positions_rad:
+  - 1.0471975511965976
+  - 0.6345364456176764
+  - 0.451303031921387
+  - 0.6345330734252933
+  regrasp_after_reindex: true
+  rationale: 已插入导向后卸力张手、依据当前RGBD位置与轴线回转空手并复抓Nut；不再识别Body键角。保留覆盖全部Body绕轴角的避障包络、正的源键导向轴向储备和全部原力矩/碰撞保护；不要求整段键长先越过槽口。
+  offline_path_reference: artifacts/kcg_connector/isaac/te_full_assembly_20260905/key_full_stroke_01/open_hand_reindex_geometry_v1.json
+  minimum_observed_key_guide_overlap_m: 0.0001
+  coaxial_measured_release: true
+  bounded_release_braking: true
+nut_rotation_after_index:
+  require_preparation_ready: true
+  arm_trajectory_velocity_feedforward: true
+  rotation_profile: trapezoid
+  maximum_rotation_acceleration_deg_s2: 8.75
+  measured_tracking:
+    enabled: true
+    maximum_lateral_error_m: 0.00025
+  axial_lead_following:
+    enabled: true
+    lead_m: 0.00762
+    maximum_correction_m: 0.0001
+    restoring_rate_s_inv: 1.0
+    source: validated TE three-start thread lead; robot reference only
+  visual_progress:
+    enabled: true
+    captive_nut_axial_travel_m: 0.001
+    thread_lead_m: 0.00762
+    passive_travel_source: frozen connector_model_assembly_scene.json captive_nut_axial_play;
+      working travel, excluding backup margin
+    reference_following:
+      enabled: true
+      maximum_lateral_motion_m: 0.0005
+      maximum_axis_motion_deg: 1.0
+      maximum_lateral_speed_m_s: 0.00015
+      maximum_axis_speed_rad_s: 0.002
+      smoothing_time_s: 0.2
+    observation_period_s: 1.0
+    maximum_grasp_relation_error_m: 0.0002
+    nominal_seated_depth_m: 0.014605
+    visual_seating_tolerance_m: 2.0e-05
+    stable_depth_tolerance_m: 5.0e-06
+    seating_minimum_torque_nm: 0.4
+    seating_confirmations: 2
+    minimum_loaded_command_deg: 40.0
+    minimum_progress_check_angle_deg: 0.75
+    minimum_observed_progress_m: 1.0e-05
+  recovery:
+    enabled: false
+    maximum_regrasps: 1
+  finger_position_stiffness_reference_nm_rad: 120.0
+  enabled: true
+  rotation_about_socket_plus_z_deg: -90.0
+  rotation_direction_source: RIGHT_HAND_THREE_START_THREAD; clockwise viewed from
+    plug rear advances toward socket
+  maximum_rotation_speed_deg_s: 50.0
+  axial_settle_duration_s: 2.0
+  post_rotation_hold_s: 0.0
+  axial_force_reference_n: 0.2
+  axial_admittance_m_per_n_s: 0.0015
+  maximum_axial_speed_m_s: 0.0003
+  maximum_axial_travel_m: 0.004
+  maximum_arm_speed_rad_s: 0.2
+  payload_mass_kg: 0.062459669349
+  payload_com_body_m:
+  - 3.365477557677864e-06
+  - 1.407639432650501e-06
+  - -0.018135482890882567
+  payload_source: original frozen source Body and CouplingNut MassAPI values; Nut
+    transverse COM is essentially zero
+  stops:
+    axial_force_n: null
+    lateral_force_n: 20.0
+    bending_moment_nm: 0.4
+    torsional_moment_nm: 4.6
+  stop_rationale: 新模型单体前向实测力矩均值约0.42至1.07 Nm、峰3.08 Nm；旧0.04 Nm是旧0.02 Nm阻力的试探参考，已不适用。沿用新手局部候选的20
+    N、0.4 Nm和4.6 Nm观测范围及有限传动，原始力矩完整保留。均为仿真研究参考，不是硬件额定；物理到位和松手保持仍需独立验收。
+  no_lead_based_position_command: false
+  no_loaded_wrench_rezeroing: true
+  verified_pad_grasp_reference: artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_pad_regrasp_filter_01/nut_pad_surface_posthoc_v1.json
+  axial_protection: EXISTING_PLANNED_CONTACT_50_MS_WRIST_FORCE_LIMIT_AND_RAW_TORQUE_FINGER_COLLISION_PROTECTIONS
+  retired_axial_probe_stop_evidence:
+    previous_limit_n: 0.75
+    previous_stable_pad_hold_interface_force_mean_n: 0.8967969478498379
+    previous_stable_pad_hold_interface_force_peak_n: 1.0816112978003045
+    recorded_pilot_pre_command_interface_force_n: 1.1960778396756024
+    original_wrist_limit_n: 3.0400615
+    scope: 净界面力含由插座承担的插头重量与夹持轴向预载；浅插附加值不是旋拧的已验证安全上限。原腕部保护、力参考、速度、行程、横向/弯矩/扭矩和单指保护不变。
+  contact_estimate_filter_time_constant_s: 0.05
+  contact_estimate_filter_rationale: 原回合0.133 s的原始横向峰值0.80652 N；50 ms因果回放峰值0.22600
+    N，三指持续Nut接触、Body轴向变化小于0.51 um，原腕部最高1.16228 N低于3.0400615 N。旋拧模块应与前段匹配慢速导纳的接触估计带宽。原始估计保留；先把矩平移到固定初始视觉原点再滤波，输出时移回当前原点。原腕部与单指逐步保护不变，未重新归零受载腕力。
+  contact_filter_initialization_history_s: 0.5
+  filter_initialization_rationale: 使用刚完成2 s夹持中的最后120个腕部传感器与编码器样本，覆盖50 ms时间常数的约10倍。以当前掌心观测建立虚拟原点，并用当前抓持关系与历史编码器换算此前保持段；仅用已经获得的信息，不使用对象/接触真值，不将受载力归零。过滤状态记录最后步号，避免第一条动作重复计入最后样本。上一轮孤立初值横向1.028
+    N，历史初始化约0.528 N；回放不是动态成功。
+  pre_turn_visual_alignment:
+    enabled: true
+    maximum_lateral_correction_m: 0.0005
+    maximum_axis_correction_deg: 1.0
+    maximum_lateral_speed_m_s: 0.00015
+    maximum_axis_speed_rad_s: 0.002
+    rationale: 当前掌心位置/有向轴与腕部插座视觉共同定义目标；最小轴角修正和横向居中，轴向始终采用原0.20 N导纳。目标不使用对象或接触真值。
+  pre_turn_torsional_compliance:
+    enabled: true
+    angular_admittance_rad_per_nm_s: 0.17453292519943295
+    maximum_speed_deg_s: 0.2
+    maximum_total_correction_deg: 0.5
+    rationale: 掌心观测仅含中心和轴，不将未观测本体键角等同固定手/Nut角。视觉重新对准及其轴向准备期间，按净腕部轴向反力矩有界跟随以释放预扭矩，随后冻结偏置并执行配置的有限角度动作。0.2度每秒为原旋拧速度十分之一，增益在原0.020
+      Nm假设阻力处达到该限速；总修正限0.5度，既有力/矩/行程停止值不变。
+  planar_force_admittance:
+    enabled: true
+    admittance_m_per_n_s: 0.0002
+    virtual_restoring_stiffness_n_m: 13000.0
+    maximum_speed_m_s: 0.00015
+    maximum_offset_m: 0.0005
+    rationale: 共享机构局部20度对照仅启用有界XY反馈后，横向合力峰由13.21N降至2.91N、末段约0.872N，最大横向偏移0.286mm；Nut—Socket在握持末段产生实际承载。保留原增益0.0002和速度0.15mm/s，行程0.5mm小于源Body间隙四分之一0.939mm。根力矩、轴向参考及有限驱动未增加；正式连续旋合仍待验证。
+    activate_during_axial_preparation: true
+    activate_during_visual_alignment: true
+    freeze_after_preparation: false
+  turn_axial_force_reference_n: 0.61272935631369
+  turn_force_reference_ramp_duration_s: 0.5
+  turn_force_reference_rationale: 120度回合在7.791 mm末段无Nut/Socket接触，Body/Socket承受0.199
+    N轴向力，其中法向0.058 N、摩擦0.141 N；全部末段触点投影于源键面，未碰接地弹片。原0.20 N参考使机械臂托住约0.413 N重量。仅正式旋拧以0.5
+    s平滑转到原质量乘9.81的0.6127293563 N，目标对应约零净手指轴向支承，检验自重能否克服键侧摩擦；不是厂家插入力或安全额定。准备阶段0.20
+    N、120度转角、速度、4 mm轴向/100 um横向边界及所有保护保持。
+  development_purpose: Whole visual assembly candidate based on actual87.85degree
+    Nut turn and1.26mm Body advance; full mating and release remain postrun checks.
+  finger_effort_regulation_time_constant_s: 0.16666666666666666
+  finger_effort_regulation_rationale: Shared bounded motor inverse; 50ms signal filtering
+    and 1/6s response reference; root moments are not direct pad normal forces. Full
+    sequence remains unverified.
+  pose_observation_scope: 入槽前识别Body键角；可靠导向后旋拧只使用当前位置、轴线与六维力。没有后端孔阵列要求，不从Nut或Hand角推断Body角。判断真实螺纹推进和壳体到底，键槽导向丢失时停止并重新插入。
+  regulate_finger_effort_during_rotation: true
+  regulate_finger_effort_during_preparation: true
+  controller_version: Shared coaxial controller transferred from the measured continuous
+    mating and release run
+  planar_force_following_evidence: artifacts/visual_assembly_v1/raised_nut_xy_follow07/local_physical_review.json
+  arm_kinematic_reference: commanded_pose
+  grip_lateral_balance:
+    enabled: false
+  finger_effort_limited_turn:
+    enabled: false
+  engagement_axial_assist:
+    enabled: true
+    additional_downward_force_n: 3.0400615
+    initial_cumulative_command_deg: 0.0
+    ending_cumulative_command_deg: 40.0
+    ramp_out_angle_deg: 5.0
+    source: artifacts/kcg_connector/contact_consistency_20260911/free_guide_32_final/result.json
+      and driver_snapshot.py engagement_axial_assist; source benchmark applied the
+      same finite extra force until40degrees
+    implementation: Same-episode accumulated loaded turn commands start at zero. Add
+      the finite reference through wrist force control and the original arm; smoothly
+      remove it by40commanded degrees. No actual Nut angle or object/contact truth
+      is used.
+    hardware_rating_claimed: false
+  controlled_release_effort_reserve_nm: 0.05
+  finger_motor_force_control:
+    enabled: true
+    signal_filter_time_s: 0.05
+    moment_deadband_nm: 0.02
+  loaded_coordination:
+    enabled: false
+    begin_slowing_error_m: 0.000125
+    outward_unload_threshold_m_s: 3.0e-05
+    maximum_extra_time_s: 0.5
+    maximum_total_linear_speed_m_s: 0.001
+    maximum_total_angular_speed_rad_s: 0.15
+  integration_evidence: artifacts/rotation_coordination_20260914/coordinated_turn_02
+  integration_validation_scope: Local12degree cold-state window only; newly integrated
+    full sequence is not physically validated.
+  coaxial_interface_recipe: reproducibility/improvements_20260916/config/initial_load10ms_recipe.json
+  coaxial_maximum_profile_acceleration_deg_s2: 45.61779904708154
+task_acceptance: 实际对键入槽、螺母相对本体旋合产生真实轴向推进、最终壳体到位及卸手保持；仅转角或程序完成不构成装配成功。
+wrist_planned_contact_torque_monitor:
+  action: record_only
+  legacy_reference_nm: 1.380577140290147
+  source_evidence: artifacts/kcg_connector/isaac/te_full_assembly_20260905/wrist_resultant_moment_limit_provenance_v1.json
+  rationale: 旧研究力上限3.0400615 N乘旧几何力臂0.45412803 m，不是KUKA或六维力传感器额定，也不是用户明确要求。当前计划接触阶段保留原始腕矩、峰值和越过旧参考的标记，但该数不再单独触发硬停止。旋拧轴向扭矩/横向力监测、有限驱动及行程等独立机制保持；不把它们自动称为厂家标定值。
+grounding_band_contact_model:
+  geometry_manifest: artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_geometry_03/geometry_manifest.json
+  native_per_contact_stiffness_n_m: 2000.0
+  native_per_contact_damping_ns_m: 5.0
+  parameter_source: artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_representative_law_proposal_v1.json
+  manufacturer_calibrated: false
+  scope: Representative compliant source-envelope contact; raw overlap is retained
+    as compression, and rigid-key/core interpenetration must still be evaluated separately
+  local_evidence: artifacts/kcg_connector/isaac/te_full_assembly_20260905/grounding_band_core_contact_01/result.json
+  known_limitation: Contact manifold produces pose-dependent transverse reaction;
+    full assembly may fail existing force/travel bounds
+  maximum_expected_radial_compression_m: 0.0004
+  preserve_original_non_socket_collision: true
+validated_connector:
+  model_path: artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc
+  validation_scope: Mechanical model accepted in declared CPU runtime; continuous
+    mating/release, free guidance, retention, wrong-key blocking and original hand
+    integration verified; full robot sequence remains controller research
+  validation_manifest: artifacts/kcg_connector/te_connector_contact_repaired_20260911/validation_manifest.json
+  verified_connector_runtime: CPU TGS,960Hz,64position/4velocity iterations
+  robot_sequence_revalidation_required: true
+  passive_resistance_model: native_ratchet_and_thrust_contact
+  legacy_0p02_nm_is_not_current_resistance: true
+  torque_reference: artifacts/kcg_connector/te_connector_contact_repaired_20260911/continuous_cycle_review.json
+  torque_reference_speed_profile: Forward17/120/20deg_s and reverse90/30deg_s; both
+    complete strokes exceed5seconds; raw sensor peaks retained
+  internal_coupling_friction_reference: 0.2
+  internal_coupling_friction_is_factory_calibrated: false
+  hand_friction_effort_from_urdf: false
+  nut_fingertip_source_sdf_links:
+  - f1Link3
+  - f2Link2
+  - f3Link3
+  runtime_requirements:
+    physics_hz: 960
+    position_iterations: 64
+    velocity_iterations: 4
+  minimum_contact_records: 32768
+continued_nut_strokes:
+  maximum_total_command_deg: 360.0
+  enabled: true
+  maximum_additional_strokes: 4
+  release_at_end: true
+  purpose: 最多6次抓握旋拧；原360度总指令预算和全部抓力/速度/力矩限制不变。第6次仅在还有未执行角度且未触发到位候选/硬停止时可用，避免五次用完后丢弃剩余角度。连续装配必须独立后评。
+  complete_remaining_command_on_last_stroke: true
+  coaxial_interface_recipe: reproducibility/improvements_20260916/config/late_load10ms_recipe.json
+recording:
+  defer_gc_during_nut_phases: true
+  policy: All native contacts and every physics frame retained. Native float32 values
+    are losslessly promoted on reading; history is byte-backed. Generation0 GC each
+    frame, generation2 every1024steps and at ended-run cleanup.
+  physical_prefix_evidence: reproducibility/improvements_20260916/evidence/gc_bounded_generations/dense_physical_prefix_comparison.json
+  native_contact_copy: true
+  packed_native_contacts: true
+  native_contact_float32: true
+  packed_sensor_history: true
+  compression_backend: isal
+  defer_gc_only_nut_phases: false
+  gc_full_collection_interval_steps: 1024
+  all_provided_native_points_retained: true
+computation:
+  cache_forward_kinematics: true
+  retime_straight_free_transport: true

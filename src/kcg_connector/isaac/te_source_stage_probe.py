@@ -46,6 +46,9 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
                    closing_drive_maximum_effort_nm=float(world.hand_mechanism.settings['finger_transmission_boundary_nm']),
                    measured_effort_abort_action='record_only',arm_damping=float(metadata['effective_lift_arm_damping_nm_s_rad']))
     assembly_path=repository/recipe['assembly_config'];assembly=yaml.safe_load(assembly_path.read_text())
+    if recipe.get('cache_forward_kinematics',False):
+        from kinematic_result_cache import install_fk_cache
+        install_fk_cache(inputs.robot_model)
     scene=prepared['scene'];parts=[]
     for i,path in enumerate(scene['part_prim_paths']):
         part=SingleRigidPrim(path,name=f'source_probe_part_{i}',reset_xform_properties=False);part.initialize();parts.append(part)
@@ -119,6 +122,11 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
     if 'initial_loaded_command_deg' in recipe:
         runtime['engagement_loaded_turn_command_deg']=float(recipe['initial_loaded_command_deg'])
         runtime['coaxial_nut_commanded_degrees']=float(recipe['initial_loaded_command_deg'])
+    if recipe.get('defer_fabric_until_render',False):
+        from isaacsim.core.simulation_manager import SimulationManager
+        if not SimulationManager.is_fabric_enabled():
+            raise ValueError('Deferred render publication requires the explicitly enabled Fabric backend')
+        world._kcg_defer_fabric_until_render=True
     _install_rgbd_resume_sync(world,stage)
     light=UsdLux.DomeLight.Define(stage,'/World/SourceStageDiagnosticLighting')
     light.CreateIntensityAttr(float(scene['render'].dome_light_intensity))
@@ -414,5 +422,6 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             'truth_capture':dict(recorder.capture_wall_times)}
         result['scene_output_backend']=getattr(world,'_kcg_rgbd_resume_sync_backend',None)
         result['fourbar_tangent_updates']=getattr(world.hand_mechanism,'tangent_update_stats',None)
+        result['forward_kinematics_cache']=getattr(inputs.robot_model,'_performance_fk_cache_report',None)
         (output/'source_stage_probe_result.json').write_text(json.dumps(_json_ready(result),indent=2)+'\n')
     return _json_ready(result)

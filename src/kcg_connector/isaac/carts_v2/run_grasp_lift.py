@@ -2990,6 +2990,9 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         arguments.runtime_resources_path)
     arguments.physics_device = "cuda:0"
     arguments.gpu_host_readback = False
+    arguments.cpu_fabric_output = False
+    arguments.defer_fabric_until_render = False
+    arguments.cache_forward_kinematics = False
     if arguments.body_assembly_collision_config:
         import yaml
         assembly_path = Path(arguments.body_assembly_collision_config)
@@ -2998,6 +3001,15 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
         numerical = yaml.safe_load(assembly_path.read_text()).get("physics_numerics", {})
         arguments.physics_device = numerical.get("device", "cuda:0")
         arguments.gpu_host_readback = numerical.get('gpu_host_readback',False)
+        arguments.cpu_fabric_output = numerical.get('cpu_fabric_output',False)
+        arguments.defer_fabric_until_render = numerical.get('defer_fabric_until_render',False)
+        arguments.cache_forward_kinematics = yaml.safe_load(assembly_path.read_text()).get(
+            'computation',{}).get('cache_forward_kinematics',False)
+        if any(type(v) is not bool for v in (arguments.cpu_fabric_output,
+                arguments.defer_fabric_until_render,arguments.cache_forward_kinematics)):
+            raise ValueError('Runtime computation options must be Boolean')
+        if arguments.defer_fabric_until_render and not arguments.cpu_fabric_output:
+            raise ValueError('Deferred output requires the declared CPU Fabric publication mode')
         if (type(arguments.gpu_host_readback) is not bool
                 or (arguments.gpu_host_readback and arguments.physics_device!='cuda:0')):
             raise ValueError('GPU host readback must be a Boolean for an explicit CUDA solver')
@@ -4546,6 +4558,8 @@ def _json_ready(value: Any) -> Any:
         return value.tolist()
     if isinstance(value, np.generic):
         return value.item()
+    if hasattr(value,'tolist'):
+        return _json_ready(value.tolist())
     if isinstance(value, Mapping):
         return {str(key): _json_ready(item) for key, item in value.items()}
     if isinstance(value, (tuple, list)):
@@ -9236,11 +9250,15 @@ def _create_runtime(
         raise RuntimeError("PhysX contact processing was not enabled before World creation")
     World.clear_instance()
     SimulationManager.set_physics_sim_device(arguments.physics_device)
+    world_parameters=physics_world_parameters(arguments.runtime_resources_document,arguments.physics_device)
+    if arguments.cpu_fabric_output:
+        if arguments.physics_device!='cpu':raise ValueError('CPU Fabric option requiresCPUphysics')
+        world_parameters['sim_params']['use_fabric']=True
     world = World(
         stage_units_in_meters=1.0,
         physics_dt=float(dynamic["physics_dt_s"]),
         rendering_dt=1.0 / 60.0,
-        **physics_world_parameters(arguments.runtime_resources_document, arguments.physics_device),
+        **world_parameters,
     )
     if arguments.gpu_host_readback:
         settings.set_bool('/physics/suppressReadback',False)
@@ -9857,6 +9875,14 @@ def _create_runtime(
         preserve_authored_state=mechanism_setup is not None,
         initial_named_positions=None if mechanism_setup is None else mechanism_setup["initial_positions"],
     )
+    if arguments.cache_forward_kinematics:
+        from kinematic_result_cache import install_fk_cache
+        trace['forward_kinematics_cache']=install_fk_cache(inputs.robot_model)
+    if arguments.cpu_fabric_output:
+        from te_foundationpose_handoff_runtime import _install_rgbd_resume_sync
+        world._kcg_defer_fabric_until_render=arguments.defer_fabric_until_render
+        _install_rgbd_resume_sync(world,stage)
+        trace['physics_output_publication']=world._kcg_rgbd_resume_sync_backend
     if mechanism_setup is not None:
         from te_hand_mechanism_runtime import HandMechanismRuntime
         hand_caps=[float(dynamic["hand_drive_maximum_effort_nm"]),
@@ -10913,6 +10939,7 @@ def _nail_body_stability_after_motion(samples, evaluation, wrist_ft):
 
 
 def _finish_run(repository, inputs, runtime, trace, outcome):
+    from fast_json import _default as numeric_json_default
     finish_started = perf_counter()
     timing = runtime["wall_timing"]
     mechanism=getattr(runtime["world"],"hand_mechanism",None)
@@ -10996,7 +11023,7 @@ def _finish_run(repository, inputs, runtime, trace, outcome):
     trace["wall_timing"] = timing
     _write_progress_metadata(runtime["output_directory"],trace)
     (runtime["output_directory"]/"physics_evaluation_before_video_close.json").write_text(
-        json.dumps(evaluation,ensure_ascii=False,separators=(",", ":"))+"\n")
+        json.dumps(evaluation,ensure_ascii=False,separators=(",", ":"),default=numeric_json_default)+"\n")
     return trace, evaluation, engine_runtime
 
 
@@ -11312,6 +11339,7 @@ def main() -> int:
         return result
     try:
         trace, evaluation, engine_runtime = result
+        from fast_json import _default as numeric_json_default
         engine_runtime["engine_log_sync"] = synchronize_engine_log(engine_log_path)
         evaluation = finalize_engine_evaluation(evaluation, engine_runtime, engine_log_path)
         save_started = perf_counter()
@@ -11320,12 +11348,13 @@ def main() -> int:
         if arguments.body_assembly_transport or arguments.hand_mechanism_config:
             metadata = {key: value for key, value in trace.items() if key != "samples"}
             (output / "trace_metadata.json").write_text(json.dumps(
-                metadata, ensure_ascii=False, separators=(",", ":")) + "\n")
+                metadata, ensure_ascii=False, separators=(",", ":"),default=numeric_json_default) + "\n")
         if not arguments.omit_trace_json:
             with (output / "trace.json").open("w", encoding="utf-8") as stream:
                 json.dump(trace, stream, ensure_ascii=False,
                            indent=None if arguments.body_assembly_transport else 2,
-                           separators=(",", ":") if arguments.body_assembly_transport else None)
+                           separators=(",", ":") if arguments.body_assembly_transport else None,
+                           default=numeric_json_default)
                 stream.write("\n")
         if "visual_evidence" in trace:
             (output / "visual_evidence.json").write_text(
@@ -11334,7 +11363,8 @@ def main() -> int:
         (output / "evaluation.json").write_text(
             json.dumps(evaluation, ensure_ascii=False,
                        indent=None if arguments.body_assembly_transport else 2,
-                       separators=(",", ":") if arguments.body_assembly_transport else None)
+                       separators=(",", ":") if arguments.body_assembly_transport else None,
+                       default=numeric_json_default)
             + "\n", encoding="utf-8")
         if "wall_timing" in trace:
             trace["wall_timing"].update(final_output_s=perf_counter() - save_started,
@@ -11344,7 +11374,7 @@ def main() -> int:
         if arguments.body_assembly_transport:
             print("BODY_ASSEMBLY_EVALUATION_SAVED", str(output / "evaluation.json"), flush=True)
         else:
-            print(json.dumps(evaluation, ensure_ascii=False, indent=2))
+            print(json.dumps(evaluation, ensure_ascii=False, indent=2,default=numeric_json_default))
         if arguments.postgrasp_disturbance is not None:
             exit_pass = bool(
                 evaluation["nominal_research_dynamic_pass"]

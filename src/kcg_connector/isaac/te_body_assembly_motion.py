@@ -44,6 +44,7 @@ def run_to_socket_observation(
     speed_config = yaml.safe_load((repository / runtime["body_assembly_control_config"]).read_text())
     transport_speed = float(speed_config.get("motion", {}).get("maximum_transport_joint_speed_rad_s", .15))
     retime_free = bool(speed_config.get("development_feedback", {}).get("retime_free_space_paths", False))
+    retime_straight=bool(speed_config.get('computation',{}).get('retime_straight_free_transport',False))
     if not np.isfinite(transport_speed) or transport_speed <= 0:
         raise ValueError("transport speed must be finite and positive")
     output.mkdir(parents=True, exist_ok=False)
@@ -174,7 +175,7 @@ def run_to_socket_observation(
             raise RuntimeError("loaded nominal target offset crosses an original arm soft limit")
         arm_states, collision_report = _check_held_plug_path(
             collision_scene, arm_states, active[7:], obstacles, memory, plug_bounds, dt, transport_speed,
-            allow_speedup=retime_free,
+            allow_speedup=retime_free,retime_straight=retime_straight,
         )
         record["path"] = {"external_planner": planner_report, "collision": collision_report,
                           "plug_bounds": plug_bounds, "checked_hand_variant": inputs.hand_variant}
@@ -236,7 +237,7 @@ def run_to_socket_observation(
             raise RuntimeError("side observation path crosses an original arm soft limit")
         side_states, side_check = _check_held_plug_path(
             collision_scene, side_states, active[7:], obstacles, memory, plug_bounds, dt, transport_speed,
-            allow_speedup=retime_free)
+            allow_speedup=retime_free,retime_straight=retime_straight)
         record["side_observation_path"] = {"ik": side_ik, "collision": side_check,
                                            "minimum_soft_limit_margin_rad": side_margin,
                                            "translation_world_m": [-0.035, 0.0, 0.0]}

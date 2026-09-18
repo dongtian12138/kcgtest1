@@ -1,6 +1,6 @@
 # 当前任务：完整装配至少 5 倍性能优化
 
-核验时间：2026-09-18T01:38:57.209261+00:00。完整装配至少5倍仍未达成；在独立performance工作树进行，不改原封存资产。
+核验时间：2026-09-18T02:47:02.358363+00:00。完整至少5倍尚未达成；正在准备下一完整软件优化候选。
 
 ## 验收
 
@@ -41,9 +41,15 @@
 - 网格简化未采用：fast_simplification已有0.2.0，及官方meshoptimizer-v1.2(9d9890c73011d75920af614485296d1e03e95448，本地.deps构建)均只做离线候选。原坐标为m时trimesh小三角形距离谓词有绝对容差问题，后改为µm坐标计算并换回m，保留旧结果。meshopt目标3/20/50µm各生成13888/11226/8520面，但双向采样实际最大24.45/59.41/141.13µm，超对应预算，均未用于仿真。误差仅有限采样，不冒充全局Hausdorff证明。原STL/质量/视觉不改。
 - first_turn_sdf8仅外部Nut的SDF由16bit→8bit：CPU960Hz64/4与源网格/分辨率不变，完成3721步、physics62.95秒，与p64无显著速度差。键槽通过(最差0.989µm)、深度9.252203mm。精度变化不是无损，但该候选没有收益，未采用。
 - first_turn_original_convex：省去Nut专用指端SDF，改用原资产已有指端convexDecomposition。复用旧SDF已抓握电机状态，481步后CAPACITY_TESTED_GRIP_PRELOAD_NOT_REACHED，未开始旋转；不是完整失败/成功性能结论。下一步必须用同力目标的真实重新抓握建立接触，不能加力或放松预载检查。
-- 当前唯一物理诊断：first_turn_convex_fresh_grip，exec session56874，PID/argv在同名_launch.json。相同源态，原指端convexDecomposition用于Nut；perform_current_regrasp=true、preserve_source_grip_state=false、maximum_physical_steps20000；原目标/有限驱动/力速限制/CPU960Hz64/4/2µm均保留。总预算600秒、60秒收尾。先核实实际状态，结束后检查实际抓握、转动、键槽和原PAD/NAIL投影，不能只看退出码。
-- 已准备纯CPU64候选配置reproducibility/performance_20260917/assembly_cpu960_margin10.yaml，原SDF指端仍保持；native/f32/字节历史/ISA-L/全阶段GC1024+pin/socket10µm预测margin。尚未预检或跑新的完整回合。主线没有采用GPU、低频、低迭代、几何简化或SDF8bit。
-- 全部近期源码修改仍未提交。目标仍是新完整回合含记录收尾<=3181.998913795秒(约53.03分钟)，并通过原独立物理验收。必须继续实际优化/完整验证，不能将局部倍率或局部加载成功交付成5倍验收。
+- 凸分解后续：first_turn_convex_fresh_grip复用闭合起点，前置路径检查报Nut与f1Link3冲突，未开始重新抓握；改用原回合206658步真实张手tare状态(open_first_grip_source.json)后convex_open_grip_turn完成真实抓握+90度指令，共10311步/wall358.69秒。后评f2原PAD投影有327点超过原0.5mm限，最大0.605744mm；键侧越界未超过2µm，但该局部结束深度7.764918mm、非所有键全部越口，不能写完整插合。凸分解路线未用于完整候选。原阈值未改。
+- full_cpu960_margin10_01结束且不合格：约34.5分钟仍在对键插入阶段，按已测分段预测超出53.03分钟目标，通过run/STOP_REQUEST在控制边界停止。原始档案/索引/影像已封存，motion执行2045.612s；程序总wall2200.169s、exit1，收尾在序列化包含PackedNativeFloat32ContactPoints的评价见证时TypeError。未完成装配、未宣称倍率。JSON摘要/最终评价写出已补充原数值默认编码器，兼容42/43，相关回归通过；原失败证据不改。
+- 新kinematic_result_cache.py仅缓存不可变运行模型的有限tuple输入，键保留signed-zero和limit模式；给每次调用独立可写矩阵，模型合同对象变化失效。真实模型400个重复查询全连杆逐字节一致，0.1087→0.0314s。两个缓存行为测试通过。默认关闭，不是物理/控制参数变化。
+- 新CPU Fabric显示发布延迟：保持逐步原生传感读回，仅World.render前发布显示数据；_install_rgbd_resume_sync现在幂等，world._kcg_defer_fabric_until_render显式选用，默认仍原逐步输出。主入口和源态诊断均已接入。
+- first_turn_deferred_fabric结束：原CPU960Hz64/4+margin10、相同源态/输入/90度，加入精确FK缓存与显示边界发布。3721帧的native关节位置/速度/力矩、Body/Nut位置/四元数与first_turn_margin10_p64全部逐值零差，键槽完全相同(最差1.171276µm)。physics63.02→57.96s、audit14.05→12.21s、local118.90→111.21s；不是整回合5倍证明。
+- 新retime_transport.py只作用于经验证的单调关节直线路径；保留起终点/直线、原0.8速度余量、每关节峰值速度不增加和每关节峰值加速度不增加(容许浮点差)。复用已有ScalarMotion，非直线路径不修改。原主搬运动作48.636→32.970模拟秒，峰值速度仍0.12rad/s，峰值加速度约4.787→0.12rad/s²；原后续2s保持不删。te_body_assembly_motion仅在显式computation选项对自由搬运与侧观察路径应用，生成后仍走完整当前手+插头碰撞检查；接触插入/旋拧/末尾3s保持不改。
+- 下一完整候选配置：reproducibility/performance_20260917/assembly_cpu960_software_fast.yaml。在上一CPU64margin10原SDF/原CAD候选上启用cpu_fabric_output、defer_fabric_until_render、cache_forward_kinematics、retime_straight_free_transport。尚未预检/整回合。当前没有物理进程；准备提交这些已检查改动，进行新预检与一次完整计时。
+- 源码c776f5e已提交前一批记录/诊断支持；其后本段软件/Fabric/重计时/JSON修复和新候选未提交。无远端推送。所有失败证据保留。
+- 目标仍是新完整回合含记录收尾<=3181.998913795秒并通过原实际到位、2µm键槽、源接触、3s全松手零手冲量、同128簧套逐帧承载、Body/Nut不休眠、后备限位不承载及同回合影像验收。任何局部成功或缩短路径数学检查均不能替代完整验收。
 - 所有运行simulation-only；没有硬件、系统驱动变更、外部发布或新子代理。始终只有一个主要物理进程。
 
 ## 环境

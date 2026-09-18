@@ -31,6 +31,14 @@ class PackedRuntimeRecordsTests(unittest.TestCase):
         self.assertEqual(restored.as_array().tobytes(),legacy.as_array().tobytes())
         self.assertEqual(len(raw)*2,len(legacy.payload))
 
+    def test_json_evaluation_witness_accepts_both_packed_contact_formats(self):
+        from carts_v2.fast_json import _default
+        for cls,fmt in ((PackedContactPoints,'<10d'),(PackedNativeFloat32ContactPoints,'<10f')):
+            points=cls(struct.pack(fmt,*([.25,-0.]+[0.]*8)))
+            witness={'worst_frame':{'contacts':{'poll_headers':[{'contacts':points}]}}}
+            restored=json.loads(json.dumps(witness,default=_default))
+            self.assertEqual(restored['worst_frame']['contacts']['poll_headers'][0]['contacts'],points.tolist())
+
     def test_indexed_and_projected_readers_preserve_every_contact_field(self):
         values = [1.25, -0.0, 2., 0., 0., 1., 1e-7, -2e-7, 0., -1e-6]
         points = PackedContactPoints(struct.pack('<10d', *values))

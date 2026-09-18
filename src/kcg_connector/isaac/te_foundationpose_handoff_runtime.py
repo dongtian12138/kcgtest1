@@ -145,6 +145,8 @@ def _json_ready(value: object) -> object:
         return value.tolist()
     if isinstance(value, np.generic):
         return value.item()
+    if hasattr(value,'tolist'):
+        return _json_ready(value.tolist())
     if isinstance(value, dict):
         return {str(key): _json_ready(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
@@ -166,6 +168,12 @@ def _install_rgbd_resume_sync(world, stage) -> None:
     from omni.physxfabric import get_physx_fabric_interface
     from pxr import UsdUtils
 
+    deferred=bool(getattr(world,'_kcg_defer_fabric_until_render',False))
+    if getattr(world,'_kcg_fabric_sync_installed',False):
+        if world._kcg_fabric_sync_deferred!=deferred:
+            raise RuntimeError('Fabric publication policy cannot change after installation')
+        return
+
     original_play = world.play
     original_step = world.step
     fabric = get_physx_fabric_interface()
@@ -177,18 +185,27 @@ def _install_rgbd_resume_sync(world, stage) -> None:
         fabric.attach_stage(stage_id)
 
     def step_with_render_sync(*args, **kwargs):
-        kwargs["update_fabric"] = True
+        if deferred:
+            # Physics sensors use native tensor readback. World.render() forces
+            # a Fabric update before every current RGB-D/video capture.
+            kwargs.setdefault('update_fabric',False)
+        else:
+            kwargs["update_fabric"] = True
         return original_step(*args, **kwargs)
 
     world.play = play_with_render_sync
     world.step = step_with_render_sync
-    world._kcg_rgbd_resume_sync_backend = "PHYSX_FABRIC_REATTACH_AND_STEP_UPDATE"
+    world._kcg_fabric_sync_installed=True
+    world._kcg_fabric_sync_deferred=deferred
+    world._kcg_rgbd_resume_sync_backend = (
+        'PHYSX_FABRIC_NATIVE_SENSORS_RENDER_BOUNDARY_PUBLICATION' if deferred
+        else 'PHYSX_FABRIC_REATTACH_AND_STEP_UPDATE')
 
 
 def _check_held_plug_path(
     collision_scene, arm_states, hand_positions, obstacles, hand_from_plug,
     plug_bounds, physics_dt_s, maximum_arm_speed_rad_s,
-    *, allow_speedup=False,
+    *, allow_speedup=False, retime_straight=False,
 ):
     """Check the carried plug as well as the existing complete robot geometry."""
     import fcl
@@ -207,6 +224,10 @@ def _check_held_plug_path(
         np.interp(coordinate, np.arange(len(source)), source[:, joint])
         for joint in range(7)
     ])
+    retiming=None
+    if retime_straight:
+        from retime_transport import retime_straight_transport
+        states,retiming=retime_straight_transport(states,physics_dt_s,maximum_arm_speed_rad_s)
     z_min, z_max = float(plug_bounds["z_min_m"]), float(plug_bounds["z_max_m"])
     held = fcl.CollisionObject(fcl.Cylinder(float(plug_bounds["radius_m"]), z_max - z_min))
     request = fcl.CollisionRequest(num_max_contacts=1, enable_contact=False)
@@ -234,6 +255,7 @@ def _check_held_plug_path(
         "duration_s": (len(states) - 1) * physics_dt_s,
         "source_duration_s": (len(source) - 1) * physics_dt_s,
         "free_space_speedup_requested": bool(allow_speedup),
+        "straight_path_retiming":retiming,
         "maximum_commanded_arm_speed_rad_s": float(np.max(np.abs(np.diff(states, axis=0))) / physics_dt_s),
         "held_shape": "SOURCE_PLUG_YAW_SWEPT_CYLINDER",
         "object_pose_input": "CURRENT_RGBD_KEY_POSE_AND_ENCODER_HAND_POSE",
