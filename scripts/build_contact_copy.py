@@ -26,3 +26,9 @@ command = ['g++', '-O3', '-shared', '-std=c++17', '-fPIC', '-fvisibility=hidden'
            '-I'+str(ISAAC/'kit/dev/include'), str(SOURCE), '-o', str(TARGET)]
 subprocess.run(command, check=True)
 print(TARGET)
+report_target=MODULE/('_contact_reports_native'+sysconfig.get_config_var('EXT_SUFFIX'))
+report_command=list(command)
+report_command[report_command.index(str(SOURCE))]=str(MODULE/'native/contact_reports.cpp')
+report_command[-1]=str(report_target)
+subprocess.run(report_command,check=True)
+print(report_target)

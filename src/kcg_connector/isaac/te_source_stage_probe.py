@@ -61,7 +61,8 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         tensor_contact_sensor_paths=contact_paths,tensor_contact_max_count=32768,
         contact_audit_mode=args.contact_audit_mode,
         native_contact_copy=recipe.get('native_contact_copy',False),
-        packed_native_contacts=recipe.get('packed_native_contacts',False))
+        packed_native_contacts=recipe.get('packed_native_contacts',False),
+        native_contact_float32=recipe.get('native_contact_float32',False))
     codec=args.truth_archive_codec
     recorder.samples=GzipSampleStore(output/f'truth_samples.{codec}.gz',block_size=64,cache_blocks=1,codec=codec,
                                     compression_backend=recipe.get('compression_backend','gzip'))
@@ -96,7 +97,8 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         if type(recipe['defer_recording_gc']) is not bool:
             raise ValueError('The local recording GC comparison requires an explicit boolean')
         if recipe['defer_recording_gc']:
-            stepper.enable_deferred_recording_gc()
+            stepper.enable_deferred_recording_gc(
+                full_collection_interval_steps=recipe.get('gc_full_collection_interval_steps',128))
     ft.stepper=stepper
     if recipe.get('packed_sensor_history',False):
         from carts_v2.sensor_history import EncodedSensorHistory
@@ -142,6 +144,31 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
         profiler=cProfile.Profile();profiler.enable()
     if recipe.get('adaptive_fourbar_updates',False):
         world.hand_mechanism.adaptive_tangent_settings={'closure_tolerance_m':1e-8,'maximum_slope_error':1e-4}
+    if recipe.get('native_cpu_timeline',False):
+        import carb.profiler
+        native_profiler=carb.profiler.acquire_profiler_interface(plugin_name='carb.profiler-cpu.plugin')
+        native_monitor=carb.profiler.acquire_profile_monitor_interface(plugin_name='carb.profiler-cpu.plugin')
+        previous_mask=native_profiler.get_capture_mask()
+        native_profiler.set_python_profiling_enabled(False)
+        native_step=world.hand_mechanism._original_step
+        captured_frames=[0]
+        def profile_native_step(*args,**kwargs):
+            if captured_frames[0]>=32:return native_step(*args,**kwargs)
+            native_monitor.mark_frame_end()
+            native_profiler.set_capture_mask(1)
+            native_profiler.begin(1,'KCG_NATIVE_PHYSICS_ONLY')
+            try:return native_step(*args,**kwargs)
+            finally:
+                native_profiler.end(1)
+                native_monitor.mark_frame_end()
+                snapshot=native_monitor.get_last_profile_events()
+                row={'frame':captured_frames[0],'main_thread':snapshot.get_main_thread_id(),
+                     'threads':{str(t):snapshot.get_profile_events(t) for t in snapshot.get_profile_thread_ids()}}
+                with (output/'native_cpu_timeline.jsonl').open('a') as stream:
+                    stream.write(json.dumps(row,default=str)+'\n')
+                captured_frames[0]+=1
+                native_profiler.set_capture_mask(previous_mask)
+        world.hand_mechanism._original_step=profile_native_step
     try:
         world.play()
         warmup=float(recipe.get('warmup_s',2.))

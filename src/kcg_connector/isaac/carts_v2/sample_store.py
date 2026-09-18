@@ -62,6 +62,10 @@ class GzipSampleStore(Sequence):
             self._packer=msgpack.Packer(use_bin_type=True,default=encode_extension)
         self.name=str(path);self.block_size=block_size;self.cache_blocks=cache_blocks
         self._file=open(path,'xb');self._live=[];self._blocks=[];self._cache=OrderedDict()
+        self._journal=open(self.name+'.blocks.jsonl','x')
+        self._journal.write(json.dumps({'kind':'metadata','format':self.format,
+            'block_size':block_size,'compression_backend':compression_backend})+'\n')
+        self._journal.flush()
         self._count=0;self.closed=False
 
     def __len__(self):
@@ -84,6 +88,8 @@ class GzipSampleStore(Sequence):
         self._file.flush()
         self._blocks.append({'first':self._count-len(self._live),'count':len(self._live),
                              'offset':offset,'end':self._file.tell()})
+        self._journal.write(json.dumps({'kind':'sealed_block',**self._blocks[-1]})+'\n')
+        self._journal.flush()
         self._remember(len(self._blocks)-1,self._live)
         self._live=[]
 
@@ -120,9 +126,11 @@ class GzipSampleStore(Sequence):
 
     def close(self):
         if self.closed:return
-        self._seal_block();self._file.close();self.closed=True
+        self._seal_block();self._file.close();self._journal.close();self.closed=True
         Path(self.name+'.index.json').write_text(json.dumps({'format':self.format,
-            'compression_backend':self.compression_backend,'contact_extension_schema':'f64le_xyz_normal_impulse_separation_v1_code42',
+            'compression_backend':self.compression_backend,
+            'contact_extension_schemas':{'42':'f64le_xyz_normal_impulse_separation_v1',
+                                         '43':'native_f32le_xyz_normal_impulse_separation_v1'},
             'sample_count':self._count,'block_size':self.block_size,'blocks':self._blocks},indent=2)+'\n')
 
     def __del__(self):

@@ -337,15 +337,21 @@ class TruthAuditRecorder:
         contact_audit_mode='full',
         native_contact_copy=False,
         packed_native_contacts=False,
+        native_contact_float32=False,
     ) -> None:
         if contact_audit_mode not in ('full','native-report'):
             raise ValueError('unsupported contact audit mode')
         self.contact_audit_mode=contact_audit_mode
         if type(native_contact_copy) is not bool:
             raise ValueError('native_contact_copy must be Boolean')
+        if (type(native_contact_float32) is not bool
+                or (native_contact_float32 and not (native_contact_copy and packed_native_contacts))):
+            raise ValueError('Native float32 storage requires checked native packed reports')
         self._native_contact_copier=None
         self._native_contact_packer=None
+        self._native_report_decoder=None
         self._native_copy_verified_reports=0
+        self._native_copy_verified_events=0
         if native_contact_copy:
             if __package__:
                 from . import _contact_copy_native
@@ -354,6 +360,14 @@ class TruthAuditRecorder:
             self._native_contact_copier=_contact_copy_native.decode_ranges
             if packed_native_contacts:
                 self._native_contact_packer=_contact_copy_native.pack_ranges
+                if __package__:
+                    from . import _contact_reports_native
+                    from .contact_codec import PackedContactPoints, PackedNativeFloat32ContactPoints
+                else:
+                    import _contact_reports_native
+                    from contact_codec import PackedContactPoints, PackedNativeFloat32ContactPoints
+                self._native_report_decoder=(_contact_reports_native.Decoder(path_decoder,PackedNativeFloat32ContactPoints,True)
+                    if native_contact_float32 else _contact_reports_native.Decoder(path_decoder,PackedContactPoints))
         if type(packed_native_contacts) is not bool or (packed_native_contacts and not native_contact_copy):
             raise ValueError('packed native contacts require the native copier')
         self.object_parts = tuple(object_parts)
@@ -367,7 +381,7 @@ class TruthAuditRecorder:
         self._tensor_actor_paths={}
         from isaacsim.core.simulation_manager import SimulationManager
         self.usd_pose_output_enabled=not SimulationManager.is_fabric_enabled()
-        self.capture_wall_times = {name:0. for name in ('contact_callback_s','native_contact_poll_s','contact_python_decode_s','engine_and_body_s',
+        self.capture_wall_times = {name:0. for name in ('contact_callback_s','contact_event_header_s','native_contact_poll_s','contact_python_decode_s','engine_and_body_s',
             'robot_poses_s','contact_counts_s','archive_append_s')}
         # Read-only evidence: a pose plateau may otherwise hide actor sleep.
         # This state is never supplied to the online controller.
@@ -423,6 +437,17 @@ class TruthAuditRecorder:
         )
 
     def _decode_headers(self, headers) -> list[tuple[tuple[str, ...], int]]:
+        native=getattr(self,'_native_report_decoder',None)
+        if native is not None:
+            result=native.events(headers)
+            if self._native_copy_verified_events<2:
+                if result!=self._decode_headers_python(headers):
+                    raise RuntimeError('Native event-header value verification failed')
+                self._native_copy_verified_events+=1
+            return result
+        return self._decode_headers_python(headers)
+
+    def _decode_headers_python(self, headers) -> list[tuple[tuple[str, ...], int]]:
         return [
             (
                 tuple(self._decode_path(value) for value in (
@@ -441,6 +466,16 @@ class TruthAuditRecorder:
         return cache[value]
 
     def _decode_full_report(self, headers, contact_data) -> list[dict[str, object]]:
+        native=getattr(self,'_native_report_decoder',None)
+        if native is not None:
+            decoded=native.full(headers,contact_data)
+            if self._native_copy_verified_reports<2 and len(contact_data):
+                import msgpack
+                reference=self._decode_full_report_python(headers,contact_data)
+                if msgpack.packb(decoded,use_bin_type=True,default=lambda p:p.tolist())!=msgpack.packb(reference,use_bin_type=True):
+                    raise RuntimeError('Native full-report ABI/value verification failed')
+                self._native_copy_verified_reports+=1
+            return decoded
         copier=getattr(self,'_native_contact_copier',None)
         if copier is None:
             return self._decode_full_report_python(headers,contact_data)
@@ -510,7 +545,11 @@ class TruthAuditRecorder:
         return decoded
 
     def _on_contact_report(self, headers, _contact_data) -> None:
+        from time import perf_counter
+        started=perf_counter()
         self._event_headers.extend(self._decode_headers(headers))
+        if hasattr(self,'capture_wall_times'):
+            self.capture_wall_times['contact_event_header_s']+=perf_counter()-started
 
     def _on_physics_step(self, _dt) -> None:
         from time import perf_counter

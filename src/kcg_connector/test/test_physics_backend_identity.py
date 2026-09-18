@@ -29,3 +29,19 @@ def test_backend_identity_matches_requested_execution_device():
                  "gpu_total_aggregate_pairs_capacity": 8192}
     assert physics_world_parameters(resources, "cpu")["sim_params"]["use_gpu_pipeline"] is False
     assert physics_world_parameters(resources)["sim_params"]["use_gpu_pipeline"] is True
+
+
+def test_gpu_solver_with_explicit_host_readback_is_not_misclassified_as_cpu():
+    host = SimpleNamespace(backend='numpy', device='cpu')
+    gpu_scene = context('cpu', False, 'GPU')
+    gpu_scene.is_gpu_dynamics_enabled = lambda: True
+    assert not physics_backend_record(host, gpu_scene, 'cuda:0')['pass']
+    audited = physics_backend_record(host, gpu_scene, 'cuda:0',
+        gpu_host_readback=True, observed_suppress_readback=False)
+    assert audited['pass'] and audited['gpu_backend_pass']
+    assert not audited['cpu_backend_pass']
+    assert audited['world_device']=='cpu' and audited['gpu_dynamics_enabled']
+    assert not physics_backend_record(host, gpu_scene, 'cuda:0',
+        gpu_host_readback=True, observed_suppress_readback=True)['pass']
+    assert not physics_backend_record(host, context('cpu',False,'MBP'), 'cuda:0',
+        gpu_host_readback=True, observed_suppress_readback=False)['pass']

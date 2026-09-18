@@ -4,6 +4,7 @@ log/
 .venv/
 .deps/
 src/kcg_connector/isaac/carts_v2/_contact_copy_native*.so
+src/kcg_connector/isaac/carts_v2/_contact_reports_native*.so
 /.venv
 /install
 artifacts/*

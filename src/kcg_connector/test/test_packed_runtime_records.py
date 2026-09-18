@@ -9,12 +9,28 @@ import unittest
 import msgpack
 
 from carts_v2.contact_codec import PackedContactPoints, decode_extension, encode_extension
+from carts_v2.contact_codec import PackedNativeFloat32ContactPoints
 from carts_v2.sample_store import GzipSampleStore
 from carts_v2.sensor_history import EncodedSensorHistory
 from trace_metadata import iter_truth_fields, read_truth_sample, write_gzip_array
 
 
 class PackedRuntimeRecordsTests(unittest.TestCase):
+    def test_native_float32_roundtrip_preserves_promoted_values_and_float64_review_math(self):
+        import numpy as np
+        bits = [0,0x80000000,1,0x807fffff,0x3f800000,0xbf800000,
+                0x7f7fffff,0x00800000,0x3eaaaaab,0x12345678]
+        raw = struct.pack('<10I',*bits)
+        native = PackedNativeFloat32ContactPoints(raw)
+        legacy = PackedContactPoints(struct.pack('<10d',*struct.unpack('<10f',raw)))
+        restored = msgpack.unpackb(msgpack.packb(native,default=encode_extension),
+                                   raw=False,ext_hook=decode_extension)
+        self.assertEqual(restored.payload,raw)
+        self.assertEqual(msgpack.packb(restored.tolist()),msgpack.packb(legacy.tolist()))
+        self.assertEqual(restored.as_array().dtype,np.dtype('float64'))
+        self.assertEqual(restored.as_array().tobytes(),legacy.as_array().tobytes())
+        self.assertEqual(len(raw)*2,len(legacy.payload))
+
     def test_indexed_and_projected_readers_preserve_every_contact_field(self):
         values = [1.25, -0.0, 2., 0., 0., 1., 1e-7, -2e-7, 0., -1e-6]
         points = PackedContactPoints(struct.pack('<10d', *values))

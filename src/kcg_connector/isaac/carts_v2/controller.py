@@ -951,23 +951,27 @@ class JointSignalStepper:
             try:
                 if self.step_index != first_step:
                     self._collect_recording_garbage(
-                        2 if self.step_index % 128 == 0 else 0, 'frame_end', primary_error)
+                        2 if self.step_index % self.recording_gc_audit['full_collection_interval_physical_steps'] == 0
+                        else 0, 'frame_end', primary_error)
             finally:
                 gc.enable()
 
-    def enable_deferred_recording_gc(self, *, only_nut_phases=False) -> None:
+    def enable_deferred_recording_gc(self, *, only_nut_phases=False, full_collection_interval_steps=128) -> None:
         """Defer automatic GC within a frame; keep bounded old-generation cleanup."""
         if self.step_index != 0:
             raise ValueError('Recording GC policy must be chosen before the first physical step')
         if type(only_nut_phases) is not bool:
             raise ValueError('Recording GC phase selection requires a boolean')
+        if (type(full_collection_interval_steps) is not int
+                or not 128 <= full_collection_interval_steps <= 8192):
+            raise ValueError('Full recording GC interval must be between128and8192physical steps')
         self.deferred_recording_gc_enabled = True
         self._recording_gc_finished = False
         self.wall_times['recording_gc_s'] = 0.0
         self.recording_gc_audit = {
             'scope': 'PROCESS_LOCAL_RECORDING_GC_NOT_A_PHYSICS_OR_CONTROL_CHANGE',
             'only_nut_phases': only_nut_phases,
-            'full_collection_interval_physical_steps': 128,
+            'full_collection_interval_physical_steps': full_collection_interval_steps,
             'collection_attempts_by_generation': [0, 0, 0],
             'collected_objects_by_generation': [0, 0, 0],
             'maximum_pause_s': 0.0, 'episode_end_collection_s': 0.0,

@@ -44,6 +44,8 @@ def recorded_controller(runtime, arguments, motion_plan, dynamic):
     class RecordedStepper(original_stepper):
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
+            self.diagnostic_stop_request_path=output/'STOP_REQUEST'
+            self._last_timing_phase=None
             recording_state['stepper'] = self
             recording_state['runtime'] = runtime
             recording_state['output'] = output
@@ -54,7 +56,10 @@ def recorded_controller(runtime, arguments, motion_plan, dynamic):
                 if type(deferred_gc) is not bool:
                     raise ValueError('The recording GC option requires a Boolean')
                 if deferred_gc:
-                    self.enable_deferred_recording_gc(only_nut_phases=True)
+                    recording=config['recording']
+                    self.enable_deferred_recording_gc(
+                        only_nut_phases=recording.get('defer_gc_only_nut_phases',True),
+                        full_collection_interval_steps=recording.get('gc_full_collection_interval_steps',128))
             world, robot = kwargs["world"], kwargs["robot"]
             before_time = float(world.current_time)
             before_joint = runner._host_array(robot.get_dof_positions()).copy()
@@ -69,6 +74,18 @@ def recorded_controller(runtime, arguments, motion_plan, dynamic):
             recording_state["initialization"] = isolation
             if isolation["world_time_after_s"] != before_time or isolation["maximum_joint_change_rad"] > 1e-12:
                 raise RuntimeError("camera initialization changed physics time or joint state")
+
+        def advance(self, phase, *args, **kwargs):
+            if phase!=self._last_timing_phase:
+                from time import perf_counter
+                row={'wall_clock':perf_counter(),'step':self.step_index,'next_phase':phase,
+                     'stepper':dict(self.wall_times),
+                     'truth_capture':dict(getattr(self.auditor,'capture_wall_times',{})),
+                     'hand_mechanism':dict(getattr(getattr(self.world,'hand_mechanism',None),'wall_times',{}))}
+                with (output/'phase_timing.jsonl').open('a') as stream:
+                    stream.write(json.dumps(row)+'\n')
+                self._last_timing_phase=phase
+            return super().advance(phase,*args,**kwargs)
 
     runner.control.JointSignalStepper = RecordedStepper
     try:

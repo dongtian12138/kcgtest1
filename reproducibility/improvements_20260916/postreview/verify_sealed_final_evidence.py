@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import msgpack
+from carts_v2.contact_codec import decode_extension
 import numpy as np
 import trimesh
 from scipy.spatial.transform import Rotation
@@ -40,7 +41,7 @@ def selective_rows(path, first_step=0, last_step=None):
     coverage = {'all_provided_native_report_points_retained', 'contact_report_channels_agree',
                 'contact_observation_backend', 'physics_step_callback_count'}
     with indexed_gzip(path, first_step) as stream:
-        u = msgpack.Unpacker(stream, raw=False)
+        u = msgpack.Unpacker(stream, raw=False, ext_hook=decode_extension)
         while True:
             try:
                 count = u.read_map_header()
@@ -75,16 +76,9 @@ def selective_rows(path, first_step=0, last_step=None):
                                         if not relevant:
                                             u.skip()
                                             continue
-                                        points = []
-                                        for _ in range(u.read_array_header()):
-                                            point = {}
-                                            for _ in range(u.read_map_header()):
-                                                f = u.unpack()
-                                                if f in ('impulse_n_s', 'position_m'):
-                                                    point[f] = u.unpack()
-                                                else:
-                                                    u.skip()
-                                            points.append(point)
+                                        # Both the original arrays and the lossless
+                                        # packed extension expose the same point fields.
+                                        points = u.unpack()
                                         header['contacts'] = points
                                     else:
                                         u.skip()

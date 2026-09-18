@@ -1,6 +1,7 @@
 """Decode only fields needed by specified postrun reviews; raw archives unchanged."""
 from pathlib import Path
 import gzip,json,msgpack
+from carts_v2.contact_codec import decode_extension
 
 def review_rows(directory, *, hand_contacts=False):
     p=Path(directory);archive=p/'truth_samples.msgpack.gz';index=json.loads(Path(str(archive)+'.index.json').read_text())
@@ -10,7 +11,7 @@ def review_rows(directory, *, hand_contacts=False):
     if hand_contacts:wanted.add('native_robot_link_pose_audit')
     expected=0
     with gzip.open(archive,'rb') as stream:
-        u=msgpack.Unpacker(stream,raw=False)
+        u=msgpack.Unpacker(stream,raw=False,ext_hook=decode_extension)
         while True:
             try:count=u.read_map_header()
             except msgpack.OutOfData:break

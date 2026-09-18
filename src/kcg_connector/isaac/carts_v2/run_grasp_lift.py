@@ -2989,6 +2989,7 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
     arguments.runtime_resources_document = load_runtime_resources(
         arguments.runtime_resources_path)
     arguments.physics_device = "cuda:0"
+    arguments.gpu_host_readback = False
     if arguments.body_assembly_collision_config:
         import yaml
         assembly_path = Path(arguments.body_assembly_collision_config)
@@ -2996,6 +2997,10 @@ def _load_plan_inputs(repository: Path, arguments: argparse.Namespace):
             assembly_path = repository / assembly_path
         numerical = yaml.safe_load(assembly_path.read_text()).get("physics_numerics", {})
         arguments.physics_device = numerical.get("device", "cuda:0")
+        arguments.gpu_host_readback = numerical.get('gpu_host_readback',False)
+        if (type(arguments.gpu_host_readback) is not bool
+                or (arguments.gpu_host_readback and arguments.physics_device!='cuda:0')):
+            raise ValueError('GPU host readback must be a Boolean for an explicit CUDA solver')
     if arguments.physics_device not in ("cuda:0", "cpu"):
         raise ValueError("assembly physics device must be cpu or cuda:0")
     mechanism_path=None
@@ -9237,6 +9242,8 @@ def _create_runtime(
         rendering_dt=1.0 / 60.0,
         **physics_world_parameters(arguments.runtime_resources_document, arguments.physics_device),
     )
+    if arguments.gpu_host_readback:
+        settings.set_bool('/physics/suppressReadback',False)
     context = world.get_physics_context()
     stage = get_current_stage()
     physics_scene_prim = stage.GetPrimAtPath(context.prim_path)
@@ -9402,8 +9409,12 @@ def _create_runtime(
                 candidate_hz=1./float(dynamic['physics_dt_s'])
                 candidate_position=numerical.get('position_iterations')
                 candidate_velocity=numerical.get('velocity_iterations')
-                if (candidate_hz not in (240.,480.,960.) or candidate_position not in (16,32,64)
-                        or candidate_velocity!=4 or arguments.physics_device!='cpu'):
+                regular_profile=(candidate_hz in (240.,480.,960.) and candidate_position in (16,32,64)
+                                 and candidate_velocity==4)
+                balanced_initial_profile=(candidate_hz==240. and candidate_position==255 and candidate_velocity==16)
+                gpu_profile=(arguments.physics_device=='cuda:0' and arguments.gpu_host_readback
+                             and candidate_hz in (480.,960.) and candidate_position==64 and candidate_velocity==4)
+                if not (gpu_profile or (arguments.physics_device=='cpu' and (regular_profile or balanced_initial_profile))):
                     raise ValueError('Unsupported bounded performance runtime candidate')
                 trace['connector_runtime_revalidation']={
                     'validated_source_profile':dict(connector_runtime_requirements),
@@ -9420,7 +9431,9 @@ def _create_runtime(
                     or not isinstance(connector_physics_hz, (int, float))
                     or not math.isfinite(connector_physics_hz) or connector_physics_hz <= 0):
                 raise ValueError("validated connector runtime requirements are invalid")
-            if (arguments.physics_device != "cpu"
+            declared_gpu_revalidation=(revalidate_runtime and arguments.physics_device=='cuda:0'
+                                       and arguments.gpu_host_readback)
+            if ((arguments.physics_device != "cpu" and not declared_gpu_revalidation)
                     or not math.isclose(float(dynamic["physics_dt_s"]), 1. / connector_physics_hz, rel_tol=0., abs_tol=1e-12)
                     or numerical.get("position_iterations") != connector_position_iterations
                     or numerical.get("velocity_iterations") != connector_velocity_iterations
@@ -9430,8 +9443,8 @@ def _create_runtime(
                     f"{connector_position_iterations}/{connector_velocity_iterations} iterations "
                     "and per-iteration external forces")
             physics_scene_api.CreateSolverTypeAttr("TGS")
-            physics_scene_api.CreateEnableGPUDynamicsAttr(False)
-            physics_scene_api.CreateBroadphaseTypeAttr("MBP")
+            physics_scene_api.CreateEnableGPUDynamicsAttr(declared_gpu_revalidation)
+            physics_scene_api.CreateBroadphaseTypeAttr("GPU" if declared_gpu_revalidation else "MBP")
             installer = model_path.with_name("install_model.py")
             spec = importlib.util.spec_from_file_location("validated_connector_installer", installer)
             module = importlib.util.module_from_spec(spec)
@@ -9653,13 +9666,17 @@ def _create_runtime(
         or not set(object_contact_paths).issubset(rigid_body_prims)
     ):
         raise RuntimeError("tensor contact sensor paths do not match audited rigid bodies")
+    tensor_contact_enabled=arguments.contact_audit_mode!='native-report'
     tensor_contact_prim = TensorRigidPrim(
         list(tensor_contact_sensor_paths),
         resolve_paths=False,
-        contact_filter_paths=list(recorded_contact_filters),
-        max_contact_count=contact_capacity,
+        **({'contact_filter_paths':list(recorded_contact_filters),'max_contact_count':contact_capacity}
+           if tensor_contact_enabled else {}),
     )
     trace["tensor_contact_view_audit"] = {
+        'tensor_contact_collectors_enabled':tensor_contact_enabled,
+        'native_contact_report_apis_retained':True,
+        'pose_views_retained':True,
         "robot_sensor_paths": list(robot_contact_paths),
         "object_sensor_paths": list(object_contact_paths),
         "contact_filter_paths": list(recorded_contact_filters),
@@ -9667,6 +9684,26 @@ def _create_runtime(
         "max_contact_count": contact_capacity,
     }
     context.set_gravity(float(scene["gravity_m_s2"]))
+    if arguments.body_assembly_collision_config and 'pin_contact_offset_m' in numerical:
+        if (arguments.physics_device!='cpu' or not numerical.get('revalidate_runtime_requirements',False)
+                or not math.isclose(float(dynamic['physics_dt_s']),1./960,rel_tol=0,abs_tol=1e-12)
+                or numerical.get('position_iterations') not in (16,32,64)
+                or numerical.get('velocity_iterations')!=4):
+            raise ValueError('The declared pin margin needs the explicitCPU960Hz performance revalidation profile')
+        from pin_contact_margin import configure_pin_contact_margin
+        margin=configure_pin_contact_margin(stage,numerical['pin_contact_offset_m'])
+        margin['actual_hz_position_velocity']=[960,numerical['position_iterations'],4]
+        (output/'pin_contact_margin.json').write_text(json.dumps(margin,indent=2)+'\n')
+        trace['contact_numerical_revalidation']={k:v for k,v in margin.items() if k!='colliders'}
+    if arguments.body_assembly_collision_config and numerical.get('compile_collision_pairs',False):
+        from runtime_collision_pruning import omit_disabled_collision_apis
+        from runtime_collision_groups import compile_leaf_collision_pairs
+        omission=omit_disabled_collision_apis(stage,deactivate_invisible_leaves=True)
+        compilation=compile_leaf_collision_pairs(stage,include_actor_pairs=True,
+            ownership_parser_workdir=output/'collision_filter_ownership')
+        (output/'disabled_collision_api_omission.json').write_text(json.dumps(omission,indent=2)+'\n')
+        (output/'collision_pair_compilation.json').write_text(json.dumps(compilation,indent=2)+'\n')
+        trace['collision_filter_representation']={k:v for k,v in compilation.items() if k!='groups'}
     world.reset()
     if 'physics_contact_solver_order_audit' in trace:
         order_audit = trace['physics_contact_solver_order_audit']
@@ -9741,7 +9778,9 @@ def _create_runtime(
         "complete": (set(rigid_body_prims) == set(contact_report_prims)
                      == set(after_rigid) == set(after_reporters)),
     })
-    backend = physics_backend_record(world, context, arguments.physics_device)
+    backend = physics_backend_record(world, context, arguments.physics_device,
+        gpu_host_readback=arguments.gpu_host_readback,
+        observed_suppress_readback=settings.get('/physics/suppressReadback'))
     if not backend["pass"]:
         raise RuntimeError(f"requested physics backend audit failed: {backend}")
     trace["physics_backend"] = backend
@@ -9851,6 +9890,8 @@ def _create_runtime(
         native_contact_copy=(assembly_document.get('recording',{}).get('native_contact_copy',False)
                              if arguments.body_assembly_collision_config else False),
         packed_native_contacts=(assembly_document.get('recording',{}).get('packed_native_contacts',False)
+                                if arguments.body_assembly_collision_config else False),
+        native_contact_float32=(assembly_document.get('recording',{}).get('native_contact_float32',False)
                                 if arguments.body_assembly_collision_config else False),
     )
     truth_stream = None
