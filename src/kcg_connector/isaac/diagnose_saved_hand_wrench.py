@@ -404,7 +404,8 @@ if args.frozen_connector_model is not None:
                             or (args.source_stage_probe is not None and args.physics_hz in (240,480))))
     balanced_iterations=bool(experimental_rate and source_stage_recipe
         and source_stage_recipe.get('balanced_cpu_iteration_budget',False)
-        and (args.physics_hz,args.position_iterations,args.velocity_iterations)==(240,255,16))
+        and (args.physics_hz,args.position_iterations,args.velocity_iterations)
+            in ((240,255,16),(480,128,8)))
     experimental_position=bool(args.experimental_connector_position_convergence
         and args.source_stage_probe is not None and args.physics_device=='cpu'
         and args.solver_type=='TGS' and args.external_forces_every_iteration
@@ -954,7 +955,7 @@ try:
         if prim.HasAPI(UsdPhysics.RigidBodyAPI):
             PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr(0.)
     if source_stage_recipe and source_stage_recipe.get('balanced_cpu_iteration_budget',False):
-        if not balanced_iterations:raise ValueError('the declared balanced iteration comparison must be CPU240Hz/255/16')
+        if not balanced_iterations:raise ValueError('the declared balanced iteration comparison must be CPU240Hz/255/16 or CPU480Hz/128/8')
         scene.CreateMinPositionIterationCountAttr(args.position_iterations)
         scene.CreateMaxPositionIterationCountAttr(args.position_iterations)
         counts={'rigid_bodies':0,'articulations':0}
@@ -968,9 +969,12 @@ try:
                 api.CreateSolverPositionIterationCountAttr(args.position_iterations)
                 api.CreateSolverVelocityIterationCountAttr(args.velocity_iterations)
         (args.output/'balanced_iteration_comparison.json').write_text(json.dumps({
-            'baseline_hz_position_velocity':[960,64,4],'actual_hz_position_velocity':[240,255,16],
-            'baseline_position_iterations_per_second':61440,'actual_position_iterations_per_second':61200,
-            'velocity_iterations_per_second':3840,'configured_actor_counts':counts,
+            'baseline_hz_position_velocity':[960,64,4],
+            'actual_hz_position_velocity':[args.physics_hz,args.position_iterations,args.velocity_iterations],
+            'baseline_position_iterations_per_second':61440,
+            'actual_position_iterations_per_second':args.physics_hz*args.position_iterations,
+            'velocity_iterations_per_second':args.physics_hz*args.velocity_iterations,
+            'configured_actor_counts':counts,
             'geometry_material_inertia_effort_boundaries_changed':False,
             'accuracy_requires_current_physical_review':True},indent=2)+'\n')
     contact_capacity=(max(4096,int(prepared["contact_recording"].get("minimum_contact_records",4096)))
