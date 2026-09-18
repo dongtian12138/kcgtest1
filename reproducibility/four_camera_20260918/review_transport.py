@@ -51,6 +51,7 @@ def main(run):
         for key,value in old_error.items():old_metrics[key]=max(old_metrics.get(key,0),abs(value))
         phase=phases.setdefault(row['phase'],{'first_step':row['step'],'last_step':row['step'],'sampled_path_m':0.,'first_position_m':actual[:3,3].tolist(),'peak_arm_speed_rad_s':0.})
         phase['last_step']=row['step'];phase['last_position_m']=actual[:3,3].tolist()
+        phase.setdefault('first_tracker_error',error);phase['last_tracker_error']=error
         if last is not None:phase['sampled_path_m']+=float(np.linalg.norm(actual[:3,3]-last))
         phase['peak_arm_speed_rad_s']=max(phase['peak_arm_speed_rad_s'],float(np.max(abs(np.asarray(row['active_velocities_rad_s'])[:7]))))
         last=actual[:3,3];final={'step':row['step'],'updated':error,'frozen':old_error,'world_from_body_truth':actual.tolist(),'world_from_body_tracker':predicted.tolist()}

@@ -9,6 +9,7 @@ from __future__ import annotations
 import gzip
 import json
 from pathlib import Path
+from time import perf_counter
 
 import numpy as np
 
@@ -180,6 +181,18 @@ def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
             record["geometry_stop"] = hit
             raise RuntimeError(f"nut reindex stopped: {hit or stepper.abort_reason}")
 
+    def await_reindex_plan(started, arm):
+        session=runtime.get('four_camera_perception_session')
+        if session is None:return
+        from perception_latency import execute_computation_delay
+        record['planning_delay_hold']=execute_computation_delay(world,stepper,dt,
+            perf_counter()-started,
+            lambda:advance('nut_index_free_final_hold',arm,open_hand))
+        fresh=session.available_observation(output/'reindex_plan_available_palm')
+        locate_bounds(np.asarray(fresh['world_from_plug_five_dof']))
+        record['planning_delay_hold']['current_body_observation']=fresh
+        save()
+
     try:
         stopped_hold_unload = bool(settings.get("allow_unload_after_lateral_hold_stop", False)
             and can_unload_after_lateral_hold_stop(rotation_record, ft.samples[-1]["phase"],
@@ -331,6 +344,7 @@ def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
                 final_hand_target_rad=open_hand.tolist(), open_hand_reindex_executed=False)
         else:
             record["stage"] = "PLANNING_OPEN_HAND_REINDEX_FROM_CURRENT_VISION"
+            planning_started=perf_counter()
             q, initial_hand = measured()
             angle = np.deg2rad(float(settings["rotation_about_socket_plus_z_deg"]))
             bounds = np.asarray([MOVEIT_SOFT_ARM_BOUNDS_RAD[name] for name in control.ARM_JOINT_NAMES])
@@ -351,7 +365,10 @@ def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
                 record.update(stage='REINDEXING_JOINT7_WITH_OPEN_HAND',reindex_first_step=int(stepper.step_index),
                     path_duration_s=details['duration_s'],maximum_planned_arm_speed_rad_s=details['maximum_planned_speed_rad_s'],
                     arm_target_offset_rad=(held-q[:7]).tolist(),joint7_return=details)
-                np.save(output/'open_hand_arm_path_rad.npy',states);save();world.play()
+                np.save(output/'open_hand_arm_path_rad.npy',states);save()
+                await_reindex_plan(planning_started,held)
+                record['reindex_first_step']=int(stepper.step_index)
+                world.play()
                 for candidate in states[1:]:advance('nut_index_free_rotate',candidate,open_hand)
                 settle_limit=float(settings.get('joint7_settle_timeout_s',.5))
                 tolerance=float(settings.get('joint7_position_tolerance_rad',.003))
@@ -401,6 +418,8 @@ def run_nut_release_and_reindex(repository, runtime, stepper, dynamic, grip,
                               path_duration_s=count*dt, maximum_planned_arm_speed_rad_s=peak,
                               arm_target_offset_rad=offset.tolist(), body_yaw_inferred_from_hand_or_nut=False)
                 save()
+                await_reindex_plan(planning_started,np.asarray(ft.samples[-1]['active_targets_rad'][:7]).copy())
+                record['reindex_first_step']=int(stepper.step_index)
                 world.play()
                 for candidate in states:
                     advance("nut_index_free_rotate", candidate, open_hand)

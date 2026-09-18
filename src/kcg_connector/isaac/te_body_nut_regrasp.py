@@ -6,6 +6,7 @@ import gzip
 import hashlib
 import json
 from pathlib import Path
+from time import perf_counter
 
 import numpy as np
 import yaml
@@ -356,6 +357,22 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
             record["geometry_stop"] = collision
             raise RuntimeError(f"nut regrasp stopped: {collision or stepper.abort_reason}")
 
+    def await_calculation(started, label, arm):
+        session=runtime.get('four_camera_perception_session')
+        if session is None:return None
+        from perception_latency import execute_computation_delay
+        delay=perf_counter()-started
+        record.setdefault('causal_calculation_holds',{})[label]=execute_computation_delay(
+            world,stepper,dt,delay,
+            lambda:advance('key_probe_nut_transfer_hold',arm,open_goal))
+        fresh=session.available_observation(output/f'{label}_available_palm')
+        # Recheck each executed state against the currently available Body
+        # envelope. The existing preclosure check still rejects a stale target.
+        locate_part_bounds(np.asarray(fresh['world_from_plug_five_dof']))
+        record['causal_calculation_holds'][label]['current_body_observation']=fresh
+        save()
+        return fresh
+
     try:
         if stepper.abort_reason is not None or not config["authorization"]["simulation_only"]:
             raise ValueError("the existing controller is not clear for simulation regrasp")
@@ -409,6 +426,7 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
         for _ in range(round(.5 / dt)):
             advance("key_probe_nut_open_hold", held_arm, open_goal, nut_contact=start_from_nut_grip)
         world.pause()
+        transfer_planning_started=perf_counter()
         active, released_hand = hand_pose()
         if start_from_nut_grip:
             # The plug can settle when the supporting grip is released. The
@@ -444,6 +462,8 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
         record["motions"].append({"ik": ik, "arm_target_offset_rad": offset.tolist(),
                                   "maximum_arm_speed_rad_s": peak, "path_steps": len(states)})
         np.save(output / "open_hand_arm_path_rad.npy", states)
+        record['stage']='WAITING_FOR_NUT_TRANSFER_PLAN';save()
+        await_calculation(transfer_planning_started,'transfer_plan',held_arm)
         record["stage"] = "MOVING_OPEN_HAND_TO_NUT"
         save()
         world.play()
@@ -461,6 +481,7 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
         body, new_target = target_from_palm(fresh)
         locate_part_bounds(body)
         if visual_phase_active:
+            phase_planning_started=perf_counter()
             initial_phase_position_error=float(np.linalg.norm(new_target[:3,3]-hand[:3,3]))
             initial_phase_position_tolerance=.25*min(row['body_clearance_m_at_first_nut_contact'] for row in geometry['first_contacts'])
             record['visual_nut_phase_start_position_check']={
@@ -498,6 +519,7 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
                 'arm_target_offset_rad':phase_offset.tolist(),'path_steps':len(phase_states),
                 'maximum_arm_speed_rad_s':phase_peak})
             np.save(output/'visual_phase_alignment_arm_path_rad.npy',phase_states)
+            await_calculation(phase_planning_started,'nut_phase_plan',held_arm)
             world.play()
             for arm in phase_states:
                 advance('key_probe_nut_transfer',arm,open_goal)
@@ -512,7 +534,12 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
             record['preclose_palm_observation']=fresh
             body,base_after=target_from_palm(fresh)
             locate_part_bounds(body)
+            phase_verification_started=perf_counter()
             phase_after=estimate_for_grasp(repository,fresh,world_from_socket,hand,commanded,phase_settings,phase_cache)
+            available=await_calculation(phase_verification_started,'nut_phase_verification',held_arm)
+            if available is not None:
+                _,hand=hand_pose()
+                body,base_after=target_from_palm(available)
             record['visual_nut_phase_after_alignment']=phase_after
             new_target,_=grasp_target_from_phase(base_after,canonical,phase_after)
             yaw_error=grasp_phase_error_deg(hand,phase_after)
