@@ -6,8 +6,8 @@ global_1:
 global_2:
   prim_path: /World/AssemblyGlobalKeyCamera
   role: SINGLE_HELD_BODY_KEY_OBSERVATION
-  eye_world_m: [0.403, 0.319, 0.244]
-  target_world_m: [0.515, 0.185, 0.275]
+  eye_world_m: [0.378, 0.319, 0.244]
+  target_world_m: [0.490, 0.185, 0.275]
   resolution_px: [1280, 720]
   focal_length_mm: 24.0
   horizontal_aperture_mm: 20.955
@@ -25,3 +25,4 @@ global_camera_poses_may_change_during_episode: false
 maximum_key_observation_events: 1
 key_observation_after_major_transport: true
 key_station_face_gap_m: 0.003
+key_station_offset_world_m: [-0.060, 0.0, 0.0]
