@@ -294,6 +294,9 @@ def _execute_held_plug_path(
     hand_target = np.asarray(ft_auditor.samples[-1]["active_targets_rad"][7:], dtype=np.float64)
     increment = float(dynamic["finger_maximum_speed_rad_s"]) * float(dynamic["physics_dt_s"])
     stiffness = float(dynamic["hand_stiffness"])
+    control_deadband = float(dynamic.get('finger_effort_control_deadband_nm', dynamic['effort_regulation_tolerance_nm']))
+    if not 0.0 < control_deadband <= float(dynamic['effort_regulation_tolerance_nm']):
+        raise ValueError('Finger control deadband must fit within the unchanged effort acceptance band')
     observer=getattr(stepper,'finger_moment_observer',None)
     if tare.shape != (4,) or not np.isfinite(tare).all() or np.any(direction[1:] == 0.0):
         raise ValueError("held-plug finger tare or closing direction is unavailable")
@@ -314,7 +317,7 @@ def _execute_held_plug_path(
             reference=stepper.hand_mechanism.drives['f1j2'].reference.transmission_stiffness
             hand_target,_=finger_force_motor_targets(stepper.hand_mechanism,stepper.latest[0][8:],hand_target,
                 direction[1:]*desired,measured,float(dynamic['physics_dt_s']),reference,1/6,
-                float(dynamic['finger_maximum_speed_rad_s']),float(dynamic['effort_regulation_tolerance_nm']),lower,upper)
+                float(dynamic['finger_maximum_speed_rad_s']),control_deadband,lower,upper)
         else:
             measured = direction[1:] * (stepper.latest[2][8:] - tare[1:])
             delta = direction[1:] * np.clip((desired - measured) / stiffness, -increment, increment)

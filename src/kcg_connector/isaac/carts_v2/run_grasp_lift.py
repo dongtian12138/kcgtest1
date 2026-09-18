@@ -2135,6 +2135,8 @@ def _registered_grasp(
         },
         "finite_clamp_target": {
             "preload_increment_rad": dynamic["preload_increment_rad"],
+            "finger_effort_control_deadband_nm": dynamic.get(
+                "finger_effort_control_deadband_nm", dynamic["effort_regulation_tolerance_nm"]),
             "finger_preload_scales": dynamic["finger_preload_scales"],
             "required_closing_joint_effort_nm": dict(
                 zip(

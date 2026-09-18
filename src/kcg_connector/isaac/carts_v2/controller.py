@@ -1573,10 +1573,13 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
     final_lift_damping = float(settings["lift_arm_damping_nm_s_rad"])
     maximum_increment = float(settings["finger_maximum_speed_rad_s"]) * dt
     effort_tolerance = float(settings["effort_regulation_tolerance_nm"])
+    control_deadband = float(settings.get("finger_effort_control_deadband_nm", effort_tolerance))
     hand_stiffness = float(settings["hand_stiffness"])
     if (
         not np.isfinite(effort_tolerance)
         or effort_tolerance <= 0.0
+        or not np.isfinite(control_deadband)
+        or not 0.0 < control_deadband <= effort_tolerance
         or not np.isfinite(hand_stiffness)
         or hand_stiffness <= 0.0
     ):
@@ -1601,7 +1604,7 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
             reference=stepper.hand_mechanism.drives['f1j2'].reference.transmission_stiffness
             targets,_=finger_force_motor_targets(stepper.hand_mechanism,stepper.latest[0][8:],previous,
                 closing_direction*desired_effort,measured,dt,reference,1/6,
-                float(settings['finger_maximum_speed_rad_s']),effort_tolerance,preload_lower,preload_upper)
+                float(settings['finger_maximum_speed_rad_s']),control_deadband,preload_lower,preload_upper)
             return targets
         resistive_effort = closing_direction * measured_effort
         result = np.array(previous, copy=True)
