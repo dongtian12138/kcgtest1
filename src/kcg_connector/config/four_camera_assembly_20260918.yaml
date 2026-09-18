@@ -1,0 +1,25 @@
+schema_version: kcg_four_camera_assembly_v1
+simulation_only: true
+global_1:
+  source_config: src/kcg_connector/config/te_rgbd_camera_near_side_v1.yaml
+  role: COARSE_PLUG_AND_SOCKET_LOCALIZATION
+global_2:
+  prim_path: /World/AssemblyGlobalKeyCamera
+  role: SINGLE_HELD_BODY_KEY_OBSERVATION
+  eye_world_m: [0.590, -0.370, 0.225]
+  target_world_m: [0.520, -0.210, 0.256]
+  resolution_px: [1280, 720]
+  focal_length_mm: 24.0
+  horizontal_aperture_mm: 20.955
+  clipping_range_m: [0.02, 10.0]
+palm:
+  prim_path: /World/AssemblyPalmCamera
+  source_mount: palm
+  role: BODY_POSITION_AND_DIRECTED_AXIS_WITHOUT_AXIAL_YAW
+wrist:
+  prim_path: /World/AssemblyWristCamera
+  source_mount: wrist
+  role: SOCKET_POSE_AND_KEYWAY_REFINEMENT
+mount_source_config: src/kcg_connector/config/d38999_keyed_v2_hand_camera_probe_v1.yaml
+global_camera_poses_may_change_during_episode: false
+maximum_key_observation_events: 1

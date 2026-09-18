@@ -11048,7 +11048,7 @@ def _execute(
         if not outcome["completed"]:
             trace["postgrasp_key_observation_skipped"] = outcome["failure_reason"]
         else:
-            observation = _observe_held_body(runtime, arguments, output, simulation_app)
+            observation = _observe_held_body(runtime, arguments, output, simulation_app, stepper=stepper)
             if arguments.body_assembly_transport:
                 if runtime["body_assembly_scene"] is None:
                     raise ValueError("body transport requires the same-scene source-CAD socket")
@@ -11114,8 +11114,15 @@ def _execute(
     return without_cyclic_gc(_finish_run,repository,inputs,runtime,trace,outcome)
 
 
-def _observe_held_body(runtime, arguments, output, simulation_app):
+def _observe_held_body(runtime, arguments, output, simulation_app, *, stepper=None):
     """Observe at fixed physics time; truth is saved only after visual estimation."""
+    from four_camera_rig import configuration
+    repository=Path(__file__).resolve().parents[4]
+    rig=configuration(repository,runtime)
+    if rig is not None:
+        if stepper is None:raise ValueError('Four-camera observation needs the active physical stepper')
+        from four_camera_grasp_observation import observe
+        return observe(repository,runtime,stepper,arguments,output,rig)
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from te_foundationpose_handoff_runtime import (

@@ -1,32 +1,32 @@
-# 当前状态：用户要求停止，保留记录层优化
+# 当前任务：四相机、一次键观测与真实闭环装配改进
 
-核验时间：2026-09-18T03:50:33.101270+00:00。
+核验时间：2026-09-18T06:45:00.411628+00:00。用户最新明确授权“可以按照你说的做”，此前停止状态已由本次执行授权替代。当前尚未启动新的仿真。
 
-## 当前指令
+## 本次范围
 
-用户最新要求：“把明确能够加快时间进展且不会对效果产生任何影响的效果保留，其他可能有潜在风险的回退，然后停止工作，我们来交流一下。”
+1. 四台功能相机：全局1粗定位插头与插座；全局2固定观察插头底部键；掌心观测本体位置/轴线；腕部精定位插座及键槽。禁止在控制中另设或移动外部虚拟视角，录像视角仅作证据。
+2. 抓取后两段搬运：送至全局2观察位，看一次键并换算坐标；再沿较短合理路线送到插座上方。原路径插头直线距离约0.40m、采样实际路程约3.47m，主要因单个远离当前姿态的终点IK解和关节插值。
+3. 首次键方向作为本体箭头保存；编码器传播手的已知运动，掌心的3平移+2倾斜修正本体相对手的漂移。额外绕轴自转作为有限夹持误差验证，不冒充相机测量，不再多次重看底部键。
+4. 视觉计算期间保留物理演化和时间戳/延迟语义；不以冻结世界代替机械臂保持。
+5. 区分保护/换抓停止与在线确认到位；用可用视觉/力觉/保持状态判断，真值只作事后验收。
+6. 定位已有初态X+1mm/yaw+1°抓取早停，完成少量有意义的扰动验证。
 
-**已停止。当前无本任务仿真进程。不得沿历史计划自动恢复实验或继续追求5倍；后续仅交流，等待新的明确执行指令。**
+## 基线与工作区
 
-## 有效保留状态
+- 在`/home/noob/WorkPlace/kcgtest1-performance-20260917`，分支`codex/four-camera-single-key-20260918`实施。起点35bdb14，仅保留无损记录优化。主树脏文件属于用户资产，不覆盖；主树只同步本上下文。
+- 原成功证据`/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run`及其他原始记录不改。
+- 当前物理基线CPU960Hz64/4、原contact-last、原CAD/SDF/材料/力速边界；不恢复已回退降频/GPU/contactOffset/网格或其它性能候选。记录配置`reproducibility/performance_20260917/assembly_recording_only_960hz.yaml`。
+- 保留原最终验收：14.605mm±10µm、源止挡真实正载、原2µm键槽标准、原NAIL/PAD接触、连续3s完全张手且零原始手冲量、同128簧套逐帧正载、Body/Nut不休眠、备用限位不承载。仅仿真，hardware_authorized=false。
+- 旧完整成功依赖多次键观测和可重新布置的外部视角；未验证本次四相机/一次键方案。旧末次旋拧因90N换抓储备停下，再由事后检查证实到位；不能当作在线到位判定已完善。
 
-- 优化工作树：`/home/noob/WorkPlace/kcgtest1-performance-20260917`，分支`codex/assembly-performance-5x-20260917`。主树及原成功基线的用户资产未改；没有远端推送。
-- 活动保留配置：`reproducibility/performance_20260917/assembly_recording_only_960hz.yaml`；除recording字段外，与封存 `reproducibility/improvements_20260916/config/visual_contact_last_gc128_task.yaml` 全部值严格一致。配合原 `src/kcg_connector/config/visual_assembly_v1_body.yaml`。
-- 保留只读原生接触复制/路径缓存、无损紧凑点编码、全量传感器历史紧凑存储、标准gzip兼容ISA-L压缩，及必要JSON兼容/归档索引/STOP_REQUEST/阶段计时。全部原生点与每物理步记录保留。
-- 求解/控制/碰撞/视觉恢复原基线：CPU960Hz64/4、原contact-last、原CAD/SDF/材料/接触参数、原运动时序/相机采样/力速保护、原Nut阶段GC每128步。FK缓存与Fabric延迟发布亦已回退。
-- 实验性降频、求解配置、GPU、碰撞组/几何/SDF/接触margin、轨迹重计时、相机采样及大间隔GC代码/配置已从活动入口移除。原始实验数据保留，代码在Git历史及 `artifacts/performance_5x/user_requested_conservative_stop/before_rollback_sources.zip` 可恢复。
+## 当前动作与下一步
 
-## 验证与结果边界
+- 先做最小受控抓取/抬升前缀，检查固定全局2能否看到键、掌心在夹持本体时能否测量端面中心和轴线。仅实现支撑该检查的相机约束与采集改动，不先大规模重构。
+- 同时以已有规划入口离线检查较短的携物路径，优先当前关节姿态附近的解与物体空间路径；不盲扫物理参数。
+- 获得可见性与路径证据后，再接入箭头传播、视觉延迟处理、在线到位与完整回合。
+- 始终只有一个主要物理实验，保留同回合原始数据和影像；结束先核对实际结果。最终至少5倍尚未达到，本轮不以降低精度换取速度。
 
-- 同源480帧 `all_native_comparison.json` 证明记录优化候选与原始参考全部字段和物理轨迹逻辑字节一致；`header_copy_probe/float32_result.json` 证明18339点/1889头全部值、顺序和事件精确一致。
-- 回退后11项记录/编码兼容测试、12项GC/收尾测试通过；语法检查通过。没有再启动物理回合。
-- **完整至少5倍未达到，也未宣称达到。** 原完整成功参考为15909.994568975s，新回合目标3181.998913795s；保留方案尚无完整回合倍率验收。
-- 最后运行`artifacts/performance_5x/full_balanced480_rgbd2x_01/run`已因用户请求受控停止，进程于2026-09-18T03:45:01.287296+00:00退出，960帧原始档案/索引匹配、视频关闭。提前中止导致旧评价器缺少settle样本报错，不是装配结果。
-- 两个原成功回合和资产保持：`/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run`等。只有仿真证据，hardware_authorized=false。
+## 环境
 
-## 说明与历史
-
-- 保留/回退详情：`reproducibility/performance_20260917/CONSERVATIVE_STOP_CN.md`。
-- 回退配置比较与源码快照：`artifacts/performance_5x/user_requested_conservative_stop/`。
-- 过程历史：`docs/history/CURRENT_CONTEXT_CN_20260918_before_balanced480.md`；停止前最新状态在上述回退目录`context_before_final_stop.md`。这些不是当前执行授权。
-- Isaac Python `/home/noob/WorkPlace/isaacsim/.conda-env/bin/python`；原项目`.venv`用于不含SDK的单元测试。当前不需要运行它们。
+Isaac Python `/home/noob/WorkPlace/isaacsim/.conda-env/bin/python`；规划 `/home/noob/WorkPlace/kcgtest1/.venv/bin/python`；视觉 `/home/noob/.cache/kcgtest1-sam6d/.venv/bin/python`；SAM根 `/home/noob/WorkPlace/kcgtest1-baseline-20260916/.deps/SAM-6D/SAM-6D`。
+主回合停止写run/STOP_REQUEST，避免SIGINT丢收尾。归档中的旧“运行中/继续”不构成当前授权。
