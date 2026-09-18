@@ -1,0 +1,28 @@
+{
+  "status": "DEFINED_BEFORE_FIRST_VARIATION_RUN_NOT_EXECUTED",
+  "scope": "SMALL_PHYSICAL_POSE_PERTURBATIONS_WITH_ORIGINAL_GRIP_FORCE_AND_PHYSICS_LIMITS",
+  "configuration": "reproducibility/four_camera_20260918/visual_body_centered_preload_variation.yaml",
+  "scenarios": {
+    "initial_x_plus_1mm_yaw_plus_1deg_mu0p45": {
+      "object_translation_delta_m": [
+        0.001,
+        0.0,
+        0.0
+      ],
+      "object_yaw_delta_rad": 0.017453292519943295,
+      "contact_friction_coefficient": 0.45
+    },
+    "initial_x_minus_1mm_yaw_minus_1deg_mu0p45": {
+      "object_translation_delta_m": [
+        -0.001,
+        0.0,
+        0.0
+      ],
+      "object_yaw_delta_rad": -0.017453292519943295,
+      "contact_friction_coefficient": 0.45
+    }
+  },
+  "primary_known_failure_case": "initial_x_plus_1mm_yaw_plus_1deg_mu0p45",
+  "completed_variation_trials": 0,
+  "whole_assembly_robustness_claimed": false
+}

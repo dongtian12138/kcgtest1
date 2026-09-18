@@ -29,14 +29,16 @@ def main(run):
     mount=np.linalg.inv(H)@camera
     memory.update_palm(mount,np.linalg.inv(camera)@np.array(palm['world_from_plug_five_dof']),anchor['physics_time_s'])
     frozen=np.array(anchor['hand_from_body_visual_memory']);events=[];last_held_step=None
+    key_availability_step=int(anchor['observation_latency']['availability_step'])
     for line in (run/'four_camera_perception/events.jsonl').read_text().splitlines():
         event=json.loads(line)
         if event['event']=='BODY_GRASP_REFERENCE_RETIRED':last_held_step=int(event['step'])-1
-        if (event['event']=='PALM_MEASUREMENT_CONSUMED'
-                and event['sample_time_s']>=anchor['physics_time_s']):
+        if (event['event']=='PALM_MEASUREMENT_CONSUMED' and event.get('key_update') is not None
+                and event['sample_time_s']>=anchor['physics_time_s']
+                and event['consumed_step']>=key_availability_step):
             observed=json.loads((Path(event['observation_directory'])/'observation.json').read_text())
             events.append((event,observed))
-    phases={};metrics={};old_metrics={};last=None;index=0;first=int(anchor['robot_sample_step'])+1;trajectory=[]
+    phases={};metrics={};old_metrics={};last=None;index=0;first=key_availability_step;trajectory=[]
     fields=('phase','simulation_time_s','hand_base_position_m','hand_base_orientation_wxyz',
             'object_part_positions_m','object_part_orientations_wxyz','active_velocities_rad_s')
     for row in iter_truth_fields(run,fields,first_step=first,last_step=last_held_step):
@@ -67,12 +69,14 @@ def main(run):
         record=json.loads(wrist_path.read_text());wrist={'key_direction_measured':record['measurement']['key_direction_measured'],'measurement':record['measurement']}
     result={'scope':'ENDED_HELD_BODY_SINGLE_KEY_LIFETIME_REVIEW','truth_used_only_after_motion':True,
         'body_grasp_reference_retired_after_step':last_held_step,
+        'key_observation_sample_step':int(anchor['robot_sample_step']),
+        'key_first_available_step':key_availability_step,
         'controller_completed':transport['completed'],'controller_stage':transport['stage'],
         'key_observation_events':anchor['key_observation_event_count'],'palm_consumed':index,
         'maximum_tracker_errors':metrics,'maximum_initial_frozen_memory_errors':old_metrics,
         'final':final,'phases':phases,'palm_current_frame_accuracy':palm_accuracy,'wrist':wrist,
         'full_assembly_claimed':False,'extra_axial_slip_is_not_observed_by_online_palm':True,
-        'pose_error_hand_transform_source':'POSTHOC_NATIVE_HAND_POSE; ONLINE_CONTROL_USES_ENCODER_FK'}
+        'pose_error_hand_transform_source':'RECORDED_ENCODER_FK_SAME_AS_ONLINE_CONTROL; BODY_POSE_IS_POSTHOC_TRUTH'}
     (run/'four_camera_transport_posthoc.json').write_text(json.dumps(result,indent=2)+'\n')
     (run/'four_camera_transport_trajectory_30hz.json').write_text(json.dumps(trajectory,separators=(',',':'))+'\n')
     print(json.dumps({k:v for k,v in result.items() if k not in ('phases','palm_current_frame_accuracy','wrist')},indent=2))

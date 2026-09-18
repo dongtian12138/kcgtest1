@@ -52,6 +52,25 @@ def seating_segment_duration(degrees, speed_deg_s, acceleration_deg_s2):
         np.sqrt((10./np.sqrt(3.))*degrees/acceleration_deg_s2))
 
 
+def wait_for_new_palm_commands(session, world, dt, index, elapsed, angle, after_sample_time):
+    """Keep the existing loaded controller stepping until a newer frame is consumed."""
+    started=float(world.current_time)
+    while True:
+        observation=session.last_observation
+        if observation is not None:
+            sample=float(observation['capture_physics_time_s'])
+            available=float(observation['available_physics_time_s'])
+            consumed=float(observation['consumed_physics_time_s'])
+            if not sample<=available<=consumed<=float(world.current_time):
+                raise RuntimeError('Palm confirmation is not causally available')
+            if sample>after_sample_time:
+                return index,elapsed
+        if float(world.current_time)-started>=.5:
+            raise RuntimeError('No new consumed palm frame within the existing0.5s observation bound')
+        yield index,elapsed,angle,0.,'key_probe_nut_rotation_visual_refine'
+        index+=1;elapsed+=dt
+
+
 def visual_seating_commands(repository,runtime,stepper,controller,socket,grip,output,
         record,geometry_reference,degrees,speed,config):
     """Yield turn/axis-hold commands using the existing shared controller."""
@@ -59,6 +78,7 @@ def visual_seating_commands(repository,runtime,stepper,controller,socket,grip,ou
     import omni.replicator.core as rep
     from te_body_socket_observation import observe_current_plug_from_rgbd
     world=runtime['world'];dt=float(world.get_physics_dt());out=Path(output)
+    session=runtime.get('four_camera_perception_session')
     axis=np.asarray(socket)[:3,2];segment=float(config['maximum_segment_deg'])
     acceleration=float(config['maximum_profile_acceleration_deg_s2'])
     settle=float(config.get('axis_settle_s',1.));attempts=int(config.get('maximum_axis_updates',2))
@@ -93,20 +113,31 @@ def visual_seating_commands(repository,runtime,stepper,controller,socket,grip,ou
         done+=amount
         if done>=degrees-1e-8:break
         for attempt in range(attempts+1):
-            world.pause()
+            if session is None:
+                world.pause()
+            else:
+                # Continuous delayed perception needs real holding steps. A
+                # paused lookup would return the same cached frame twice.
+                world.play()
+                index,elapsed=yield from wait_for_new_palm_commands(session,world,dt,
+                    index,elapsed,np.radians(done),float(world.current_time))
             q=np.asarray(stepper.latest[0]);hand=controller.model.forward_kinematics(q,enforce_limits=False)['handbase_link']
             path=out/f'body_axis_{checkpoint:02d}_{attempt:02d}'
             observation=observe_current_plug_from_rgbd(repository,omni.usd.get_context().get_stage(),
                 world,rep,hand,path,runtime)
             if not observation.get('position_and_axis_measured'):
                 raise RuntimeError('The current image did not resolve the seating axis')
-            # A stationary scene viewed from an unchanged camera must agree
-            # across completed captures. This catches delayed pose/image pairs
-            # without consulting an object's simulator pose.
+            # Keep the original position/axis consistency bounds. The fixed
+            # four-camera path compares independent timestamps while the
+            # physical loaded controller continues to hold the current angle.
             consistency=[];consistent=False
             for repeat in range(2):
                 previous=np.asarray(observation['world_from_plug_five_dof'],float).reshape(4,4)
                 next_path=path.with_name(path.name+f'_confirm_{repeat:02d}')
+                if session is not None:
+                    index,elapsed=yield from wait_for_new_palm_commands(session,world,dt,
+                        index,elapsed,np.radians(done),float(observation['capture_physics_time_s']))
+                    q=np.asarray(stepper.latest[0]);hand=controller.model.forward_kinematics(q,enforce_limits=False)['handbase_link']
                 fresh=observe_current_plug_from_rgbd(repository,omni.usd.get_context().get_stage(),
                     world,rep,hand,next_path,runtime)
                 if not fresh.get('position_and_axis_measured'):
@@ -115,14 +146,18 @@ def visual_seating_commands(repository,runtime,stepper,controller,socket,grip,ou
                 position_delta=float(np.linalg.norm(latest[:3,3]-previous[:3,3]))
                 axis_delta=float(np.degrees(np.arccos(np.clip(latest[:3,2]@previous[:3,2],-1,1))))
                 consistency.append({'image_directory':str(next_path),
-                    'position_difference_m':position_delta,'axis_difference_deg':axis_delta})
+                    'position_difference_m':position_delta,'axis_difference_deg':axis_delta,
+                    'previous_sample_time_s':observation.get('capture_physics_time_s'),
+                    'sample_time_s':fresh.get('capture_physics_time_s')})
                 observation=fresh
                 if position_delta<=.00001 and axis_delta<=.005:
                     consistent=True;break
             (path/'capture_consistency.json').write_text(json.dumps({'consistent':consistent,
-                'checks':consistency,'scene_physics_paused':True,'object_truth_used':False},indent=2)+'\n')
+                'checks':consistency,'scene_physics_paused':session is None,
+                'distinct_consumed_frames_required':session is not None,
+                'object_truth_used':False},indent=2)+'\n')
             if not consistent:
-                raise RuntimeError('Repeated stationary-camera images did not agree before axis control')
+                raise RuntimeError('Successive palm images did not agree before axis control')
             body=np.asarray(observation['world_from_plug_five_dof'],float).reshape(4,4)
             body_lateral=np.linalg.norm((np.eye(3)-np.outer(axis,axis))@(body[:3,3]-np.asarray(socket)[:3,3]))
             if body_lateral>float(grip['visual_alignment_allowance_from_quarter_body_clearance_m']):

@@ -1,10 +1,49 @@
 import unittest
+from types import SimpleNamespace
 import numpy as np
 from scipy.spatial.transform import Rotation
-from te_visual_seating_axis import visual_grasp_axis_update,seating_segment_duration
+from te_visual_seating_axis import (visual_grasp_axis_update,seating_segment_duration,
+    wait_for_new_palm_commands)
 
 
 class VisualSeatingAxisTests(unittest.TestCase):
+    def test_cached_frame_cannot_confirm_itself_and_wait_keeps_loaded_hold_commands(self):
+        world=SimpleNamespace(current_time=0.)
+        session=SimpleNamespace(last_observation={'capture_physics_time_s':-.1,
+            'available_physics_time_s':0.,'consumed_physics_time_s':0.})
+        commands=wait_for_new_palm_commands(session,world,.1,3,1.,.4,0.)
+        self.assertEqual(next(commands),(3,1.,.4,0.,'key_probe_nut_rotation_visual_refine'))
+        world.current_time=.1
+        self.assertEqual(next(commands)[0],4)
+        world.current_time=.2
+        session.last_observation={'capture_physics_time_s':.05,
+            'available_physics_time_s':.15,'consumed_physics_time_s':.2}
+        with self.assertRaises(StopIteration) as done:next(commands)
+        self.assertEqual(done.exception.value[0],5)
+        self.assertAlmostEqual(done.exception.value[1],1.2)
+        confirmation=wait_for_new_palm_commands(session,world,.1,5,1.2,.4,.05)
+        self.assertEqual(next(confirmation)[0],5)
+        world.current_time=.3
+        session.last_observation={'capture_physics_time_s':.2,
+            'available_physics_time_s':.25,'consumed_physics_time_s':.3}
+        with self.assertRaises(StopIteration):next(confirmation)
+
+    def test_missing_new_frame_has_a_finite_physical_hold(self):
+        world=SimpleNamespace(current_time=0.)
+        commands=wait_for_new_palm_commands(SimpleNamespace(last_observation=None),world,.1,0,0.,.4,0.)
+        for i in range(5):
+            world.current_time=i*.1
+            self.assertEqual(next(commands)[2:4],(.4,0.))
+        world.current_time=.5
+        with self.assertRaisesRegex(RuntimeError,'No new consumed palm frame'):next(commands)
+
+    def test_future_frame_is_rejected(self):
+        world=SimpleNamespace(current_time=.2)
+        session=SimpleNamespace(last_observation={'capture_physics_time_s':.1,
+            'available_physics_time_s':.3,'consumed_physics_time_s':.3})
+        commands=wait_for_new_palm_commands(session,world,.1,0,0.,.4,0.)
+        with self.assertRaisesRegex(RuntimeError,'not causally available'):next(commands)
+
     def test_camera_updates_axis_and_lateral_estimate_without_axial_or_pose_write(self):
         hand=np.eye(4);hand[:3,3]=[.55,.185,.7]
         relation=np.eye(4);relation[:3,3]=[.005,.001,-.441]
