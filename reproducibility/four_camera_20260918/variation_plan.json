@@ -1,5 +1,5 @@
 {
-  "status": "DEFINED_BEFORE_FIRST_VARIATION_RUN_NOT_EXECUTED",
+  "status": "TWO_PREDECLARED_INITIAL_GRASP_VARIATIONS_COMPLETED_ONE_PASS_ONE_PRELOAD_STOP",
   "scope": "SMALL_PHYSICAL_POSE_PERTURBATIONS_WITH_ORIGINAL_GRIP_FORCE_AND_PHYSICS_LIMITS",
   "configuration": "reproducibility/four_camera_20260918/visual_body_centered_preload_variation.yaml",
   "scenarios": {
@@ -23,6 +23,33 @@
     }
   },
   "primary_known_failure_case": "initial_x_plus_1mm_yaw_plus_1deg_mu0p45",
-  "completed_variation_trials": 0,
-  "whole_assembly_robustness_claimed": false
+  "completed_variation_trials": 2,
+  "whole_assembly_robustness_claimed": false,
+  "results": [
+    {
+      "run": "artifacts/four_camera_20260918/variation_plus_grasp_01/run",
+      "scenario": "initial_x_plus_1mm_yaw_plus_1deg_mu0p45",
+      "scope": "INITIAL_GRASP_LIFT_HOLD_ONLY",
+      "outcome": "STOPPED_BEFORE_LIFT_PRELOAD_CONTACT_EFFORT_NOT_REACHED",
+      "old_passive_joint_overspeed_reproduced": false,
+      "consecutive_compensated_moment_samples_reached": 5,
+      "consecutive_samples_required": 6,
+      "check_window_s": 0.5,
+      "original_moment_band_nm": 0.01,
+      "last_f1_compensated_error_nm": -0.01107549000432817,
+      "main_nominal_baseline_changed": false
+    },
+    {
+      "run": "artifacts/four_camera_20260918/variation_minus_grasp_01/run",
+      "scenario": "initial_x_minus_1mm_yaw_minus_1deg_mu0p45",
+      "scope": "INITIAL_GRASP_LIFT_HOLD_ONLY",
+      "outcome": "SOURCE_NAIL_LIFT_AND_HOLD_PASSED",
+      "minimum_hold_lift_m": 0.05597686767578125,
+      "hold_duration_s": 2.0,
+      "all_three_original_nails_body_fraction": 1.0,
+      "table_contact_samples_in_hold": 0,
+      "check_window_s": 0.5,
+      "main_nominal_baseline_changed": false
+    }
+  ]
 }

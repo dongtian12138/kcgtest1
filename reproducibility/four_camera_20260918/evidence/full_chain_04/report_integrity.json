@@ -1,0 +1,19 @@
+{
+  "purpose": "Bind the compact evidence copy to this exact completed episode; raw archives remain at run path",
+  "reports_sha256": {
+    "source_band_radial_occlusion_review.json": "d5d80b0cbf586938b2c3335ff867165f5758638e2ed371aa68cb65526c8a9248",
+    "three_second_release_review.json": "2e0946bd63d6c9cb060661fd37142d687dc38c2487fbb3d45b73855d6b647d62",
+    "native_body_support_review.json": "41bbcf6a86505358f83cacdc3c92a65501ff17e1b47315edbed42bd60016fc46",
+    "four_camera_contract_review.json": "33e4f6c8560e80170c09ee58a1ba91eba89e8fbaf501b01f8aa3455c011accae",
+    "source_key_containment_review.json": "54bf4dc4fab979524e5ac43bcbf348aa41c093e42df27efc3ab7c0135603b18b",
+    "online_completion.json": "3a8a854d81fac9972e09a7d23ac031980d19c7fcf793420c5bd13f0b66575d89",
+    "final_mating_visibility_review.json": "518da6c0232ce7a4898d36712cf9446cc87c3afc5ad62c27674e0f6b866b8b10",
+    "whole_assembly_review.json": "abf3da7c0a90ac158cc136ad1d75c853e311819868ed1d0e8e8eddde59b853d9",
+    "source_nut_pad_review.json": "2887a651bf290479c6420aa6bd2024cef9348abac0897b06b598e70038a29f22",
+    "motion_timing.json": "ea2ac916d3db2335f54955fbe1f9c7cbabff14367b70c7700887abcea4ec9407",
+    "validation_summary.json": "7e35e28fff7cad71948934a15df9d380f6954ac2fabd867513e32081e6e9189d",
+    "process.json": "a07d2e2c09625375bfdcbb144664361e1c3ebfd35002a36dd6d8ee41e1190f2c",
+    "actual_transport_path_review.json": "cec7bed3ff416a405b57fed6d659582e974a726982e8cc8552b647da2f48b100",
+    "source_nail_body_review.json": "ddb29cc610ffb45af99da00c19b49a803a22e2846ef2f9492872c5155b127c56"
+  }
+}

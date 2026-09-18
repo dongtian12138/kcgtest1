@@ -1,0 +1,25 @@
+{
+  "scope": "ONE_BOUNDED_INITIAL_GRASP_SETTLING_DIAGNOSIS_NOT_MAIN_BASELINE_REPLACEMENT",
+  "status": "PREPARED_NOT_EXECUTED",
+  "primary_hypothesis": "The force loops did not have enough post-ramp time to produce six consecutive acceptable raw compensated-moment samples.",
+  "changed_field": "dynamic.contact_endpoint_timeout_s",
+  "before_s": 0.5,
+  "after_s": 1.0,
+  "unchanged": [
+    "required moments",
+    "absolute moment band0.01Nm",
+    "six consecutive samples",
+    "control deadband0.005Nm",
+    "motor and joint force/speed/travel limits",
+    "physics and materials"
+  ],
+  "source_failure": "artifacts/four_camera_20260918/variation_plus_grasp_01/run",
+  "scenario": "initial_x_plus_1mm_yaw_plus_1deg_mu0p45",
+  "config": "reproducibility/four_camera_20260918/visual_body_settle_1s_diagnostic.yaml",
+  "causal_interpretation_requires": [
+    "Check whether early contact coordination consumed the expanded timeout",
+    "Report first qualifying six-frame run relative to the original480sample budget",
+    "If success occurs within the original budget, do not claim the extension fixed the failure"
+  ],
+  "no_repeated_timeout_sweep_authorized_by_this_plan": true
+}

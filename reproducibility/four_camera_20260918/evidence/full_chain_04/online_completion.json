@@ -1,0 +1,35 @@
+{
+  "status": "ONLINE_SEATING_CONFIRMED",
+  "online_seating_confirmed": true,
+  "observations": [
+    {
+      "sample_time_s": 280.52605629723985,
+      "observed_depth_m": 0.014603779336404943,
+      "lateral_error_m": 2.9980799821433025e-06,
+      "axis_error_deg": 0.003005804792230042
+    },
+    {
+      "sample_time_s": 284.5260565058561,
+      "observed_depth_m": 0.014603582317171347,
+      "lateral_error_m": 5.652835833532764e-06,
+      "axis_error_deg": 0.003692346466445153
+    }
+  ],
+  "within_original_visual_depth_tolerance": true,
+  "within_original_visual_depth_stability_tolerance": true,
+  "within_declared_visual_axis_and_lateral_tolerances": true,
+  "actual_robot_open_hold_s": 3.0,
+  "robot_observed_open_unloaded_hold_completed": true,
+  "preceding_loaded_torque_observed": true,
+  "last_loaded_robot_wrist_wrench_n_nm": [
+    -55.45331366681879,
+    -15.768566029549278,
+    37.16514551506086,
+    -0.12042776754421558,
+    -0.4070022182172959,
+    2.003313903974075
+  ],
+  "online_object_or_contact_truth_used": false,
+  "protection_or_regrasp_stop_alone_is_completion": false,
+  "physical_assembly_acceptance": "REQUIRES_ORIGINAL_INDEPENDENT_POSTRUN_REVIEW"
+}

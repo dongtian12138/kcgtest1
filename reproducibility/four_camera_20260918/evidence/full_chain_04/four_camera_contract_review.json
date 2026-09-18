@@ -1,0 +1,35 @@
+{
+  "scope": "ENDED_EPISODE_RECORDED_PERCEPTION_CONTRACT",
+  "passed": true,
+  "source_commit": "84bef70924b7244f47493a75c38a17fade6c3b58",
+  "declared_camera_paths": {
+    "global_1": "/World/D38999TabletopV1/TeNearSideRgbdCamera",
+    "global_2": "/World/AssemblyGlobalKeyCamera",
+    "palm": "/World/AssemblyPalmCamera",
+    "wrist": "/World/AssemblyWristCamera"
+  },
+  "actual_perception_camera_paths": {
+    "global_1": [
+      "/World/D38999TabletopV1/TeNearSideRgbdCamera"
+    ],
+    "global_2": [
+      "/World/AssemblyGlobalKeyCamera"
+    ],
+    "palm": [
+      "/World/AssemblyPalmCamera"
+    ],
+    "wrist": [
+      "/World/AssemblyWristCamera"
+    ]
+  },
+  "unique_functional_camera_paths": 4,
+  "key_observation_events": 1,
+  "palm_measurements_consumed": 1109,
+  "maximum_hand_mount_matrix_difference": {
+    "palm": 3.3306690738754696e-16,
+    "wrist": 1.3877787807814457e-16
+  },
+  "violations": [],
+  "evidence_video_cameras_are_not_perception_inputs": true,
+  "physical_assembly_verified_by_this_audit": false
+}

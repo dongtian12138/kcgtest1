@@ -1,0 +1,20 @@
+{
+  "scope": "ENDED_TWO_MACRO_TRANSPORT_LEGS",
+  "motions": [
+    {
+      "phase": "key_probe_body_to_fixed_key_view",
+      "body_path_m": 0.3970812302948109,
+      "hand_base_path_m": 0.38419988796992677,
+      "peak_arm_speed_rad_s": 0.12098801136016846
+    },
+    {
+      "phase": "key_probe_body_socket_centering",
+      "body_path_m": 0.060390968336412165,
+      "hand_base_path_m": 0.05899675025868237,
+      "peak_arm_speed_rad_s": 0.10478829592466354
+    }
+  ],
+  "body_total_path_m": 0.45747219863122307,
+  "hand_base_total_path_m": 0.4431966382286091,
+  "whole_round_speedup_claimed": false
+}

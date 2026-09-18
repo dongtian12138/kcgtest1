@@ -1,0 +1,47 @@
+{
+  "scope": "ONE_COMPLETE_FIXED_NOMINAL_SCENE_FOUR_CAMERA_ASSEMBLY",
+  "source_commit": "84bef70924b7244f47493a75c38a17fade6c3b58",
+  "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/four_camera_20260918/full_chain_04/run",
+  "ended_utc": "2026-09-18T17:59:51.662992+00:00",
+  "wall_seconds": 9073.704364104982,
+  "physical_dt_s": 0.0010416666666666667,
+  "all_original_acceptance_limits_retained": true,
+  "hardware_authorized": false,
+  "whole_assembly_verified": true,
+  "strict_three_second_release_verified": true,
+  "initial_key_entry_tracker_error": {
+    "center_error_m": 2.081420831057393e-05,
+    "axis_error_deg": 0.00022422735795931884,
+    "key_direction_error_deg": 0.042134763531898316,
+    "axial_key_error_deg": 0.042134755598284064
+  },
+  "maximum_held_body_tracker_errors": {
+    "center_error_m": 2.1627363108209595e-05,
+    "axis_error_deg": 0.009570215931451772,
+    "key_direction_error_deg": 0.27267760421864495,
+    "axial_key_error_deg": 0.27267731066465833
+  },
+  "actual_transport": {
+    "scope": "ENDED_TWO_MACRO_TRANSPORT_LEGS",
+    "motions": [
+      {
+        "phase": "key_probe_body_to_fixed_key_view",
+        "body_path_m": 0.3970812302948109,
+        "hand_base_path_m": 0.38419988796992677,
+        "peak_arm_speed_rad_s": 0.12098801136016846
+      },
+      {
+        "phase": "key_probe_body_socket_centering",
+        "body_path_m": 0.060390968336412165,
+        "hand_base_path_m": 0.05899675025868237,
+        "peak_arm_speed_rad_s": 0.10478829592466354
+      }
+    ],
+    "body_total_path_m": 0.45747219863122307,
+    "hand_base_total_path_m": 0.4431966382286091,
+    "whole_round_speedup_claimed": false
+  },
+  "fivefold_full_round_speedup_achieved": false,
+  "whole_assembly_robustness_across_perturbations_claimed": false,
+  "raw_data_not_copied_or_deleted": true
+}
