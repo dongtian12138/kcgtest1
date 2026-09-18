@@ -52,7 +52,7 @@ motion:
   unloaded_hold_duration_s: 0.25
   rotation_settle_duration_s: 0.5
   maximum_total_search_duration_s: 75.0
-  transport_face_gap_m: 0.05
+  transport_face_gap_m: 0.003
   maximum_precontact_speed_m_s: 0.002
   precontact_face_gap_m: 0.003
   target_key_entry_depth_m: 0.00785

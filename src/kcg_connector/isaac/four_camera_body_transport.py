@@ -39,6 +39,11 @@ def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output, *, 
         session=FourCameraPerceptionSession(root,runtime,stepper,anchor)
     elif not session.memory.initialized:
         raise RuntimeError('The nearby key station must initialize the single key before final transport')
+    station_gap=float(session.rig.get('key_station_face_gap_m',.05))
+    if not float(config['motion']['precontact_face_gap_m'])<=station_gap<=.05:
+        raise ValueError('Key station must remain outside the original precontact gap')
+    if not np.isclose(station_gap,float(config['motion']['transport_face_gap_m']),atol=1e-12,rtol=0):
+        raise ValueError('Key observation and entry alignment must use the same declared face gap')
     record = {'stage': 'WAITING_FOR_GLOBAL1_SOCKET', 'completed': False,
         'simulation_only': True, 'hardware_authorized': False,
         'online_object_or_contact_truth_used': False,
@@ -46,7 +51,7 @@ def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output, *, 
         'hand_from_body_visual_memory': session.relation_for_transport().tolist(),
         'transverse_frame_contains_observed_key': bool(session.memory.initialized),
         'contact_motion_commanded': False, 'motions': [],
-        'target_face_gap_m': .050, 'wrist_socket_observation_executed': False,
+        'target_face_gap_m': station_gap, 'wrist_socket_observation_executed': False,
         'transport_macro_legs': ['PICKUP_TO_FIXED_GLOBAL2', 'GLOBAL2_TO_SOCKET_WITH_LOCAL_WRIST_VIEW'],
         'physical_carry_and_memory_validity': 'REQUIRES_POSTRUN_EVALUATION'}
 
@@ -170,7 +175,7 @@ def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output, *, 
         z = -socket[:3, 2]
         y = np.array([0., 1., 0.]); y -= z * float(z @ y); y /= np.linalg.norm(y)
         side = np.eye(4); side[:3, :3] = np.column_stack((np.cross(y, z), y, z))
-        side[:3, 3] = socket[:3, 3] + .05 * socket[:3, 2] + np.array([-.035, 0., 0.])
+        side[:3, 3] = socket[:3, 3] + station_gap * socket[:3, 2] + np.array([-.035, 0., 0.])
         record['preobservation_axial_yaw_source'] = 'CHOSEN_FREE_SPACE_POSTURE_NOT_KEYWAY_MEASUREMENT'
         if prekey or not runtime.get('prekey_transfer_completed'):
             move(side, 'key_probe_body_to_fixed_key_view' if prekey else 'key_probe_body_short_carry')
@@ -204,7 +209,7 @@ def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output, *, 
         obstacles['receptacle'], _ = _cylinder_from_mesh(Path(global_observation['receptacle_cad_mm']), .001, socket)
         above = socket.copy()
         above[:3, :3] = socket[:3, :3] @ Rotation.from_euler('y', 180, degrees=True).as_matrix()
-        above[:3, 3] += .05 * socket[:3, 2]
+        above[:3, 3] += station_gap * socket[:3, 2]
         move(above, 'key_probe_body_socket_centering')
         record.update(stage='ABOVE_SOCKET_FROM_SINGLE_KEY_AND_DELAYED_PALM', completed=True,
             completed_scope='TRANSPORT_AND_WRIST_OBSERVATION_ONLY_NOT_ASSEMBLY',
