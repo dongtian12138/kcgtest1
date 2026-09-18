@@ -10543,9 +10543,20 @@ def _run_controller(runtime, arguments, motion_plan, dynamic):
             stepper.advance("initial_rgbd_settle",initial_arm,initial_hand)
         if stepper.abort_reason is None:
             observed,record=observe_tabletop_body(repository,runtime,runtime["output_directory"]/"initial_rgbd")
+            visual_planning_started = perf_counter()
             visual_plan=control.build_joint_motion_plan(repository,runtime["inputs"],runtime["control_plan"],
                                                         observed,include_lift=True)
             record["approach_geometry"]=check_initial_approach(repository,runtime,visual_plan,observed,initial_hand)
+            from four_camera_rig import configuration as four_camera_configuration
+            if four_camera_configuration(repository, runtime) is not None:
+                latency = .05 + record['estimation_wall_s'] + perf_counter() - visual_planning_started
+                wait_steps = math.ceil(latency / dynamic['physics_dt_s'])
+                for _ in stepper.active_steps(wait_steps):
+                    stepper.advance('initial_visual_planning_latency_hold', initial_arm, initial_hand)
+                record['availability'] = {'physical_hold_steps': wait_steps,
+                    'vision_and_planning_wall_s': latency,
+                    'consumption_physics_time_s': float(runtime['world'].current_time),
+                    'measurement_not_used_for_motion_during_delay': True}
             record["consumed_motion_plan"]=visual_plan
             record["controller_start_step"]=stepper.step_index
             runtime["initial_visual_body_grasp"]=record

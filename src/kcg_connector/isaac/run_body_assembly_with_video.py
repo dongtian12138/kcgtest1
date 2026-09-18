@@ -104,6 +104,12 @@ def finalize_recording():
             return False, None
 
     raw_archive = runtime.get('truth_stream')
+    session = runtime.get('four_camera_perception_session')
+    if session is not None:
+        attempt('four_camera_perception_close', session.close)
+    executor = runtime.pop('global1_socket_executor', None)
+    if executor is not None:
+        attempt('global1_worker_close', lambda: executor.shutdown(wait=True))
     if raw_archive is not None and not raw_archive.closed:
         attempt('raw_archive_close', raw_archive.close)
     stepper = recording_state.get('stepper')

@@ -20,6 +20,10 @@ def run_to_socket_observation(
     existing finite finger controller, joint protections, and wrist FT auditor.
     A failed existing-planner or current-hand collision check stops this attempt.
     """
+    from four_camera_rig import configuration
+    if configuration(repository, runtime) is not None:
+        from four_camera_body_transport import run
+        return run(repository, runtime, stepper, grasp_result, dynamic, body_observation, output)
     import fcl
     import yaml
     import omni.replicator.core as rep

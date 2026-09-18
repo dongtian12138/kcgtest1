@@ -99,6 +99,10 @@ def observe_tabletop_body(repository, runtime, output):
     finally:
         _close_rgbd_resources(resources)
     if abs(float(world.current_time)-before)>1e-9:raise RuntimeError("Initial perception capture advanced physics")
+    from time import perf_counter
+    estimation_started = perf_counter()
+    from four_camera_global_localization import start as start_socket_localization
+    start_socket_localization(repository, runtime, output / 'observation', before)
     from PIL import Image
     rgb=np.asarray(Image.open(output/'observation/rgb.png'));depth=np.load(output/'observation/depth_m.npy')
     static=np.load(static_path)
@@ -144,6 +148,7 @@ def observe_tabletop_body(repository, runtime, output):
         "required_later_key_observation":True,"captive_nut_axial_play_not_observed_by_ring":True,
         "body_grasp_must_be_verified_with_its_source_contact_region":True,
         "object_pose_or_semantic_or_contact_truth_read":False,"reset_after_frame":False}
+    record['estimation_wall_s'] = perf_counter() - estimation_started
     (output/'body_localization.json').write_text(json.dumps(record,indent=2)+'\n')
     world.play()
     return body,record
