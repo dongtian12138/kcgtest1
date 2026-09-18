@@ -1,0 +1,19 @@
+{
+  "scope": "ROBOT_AND_CAMERA_RECORDS_ONLY_SETTLING_DIAGNOSIS",
+  "physical_grasp_lift_hold_passed": true,
+  "first_six_frame_check_samples": 358,
+  "first_six_frame_check_time_s": 0.3729166666666667,
+  "original_budget_samples": 480,
+  "extended_budget_samples": 960,
+  "timeout_extension_exercised": false,
+  "early_contact_samples": 303,
+  "early_contact_timeout_extension_exercised": false,
+  "same_initial_visual_body_pose": true,
+  "same_consumed_motion_plan": true,
+  "failed_initial_visual_wait_steps": 25054,
+  "diagnostic_initial_visual_wait_steps": 24438,
+  "initial_visual_wait_difference_s": 0.6416666666666667,
+  "unique_cause_of_run_difference_established": false,
+  "conclusion": "The diagnostic passed before either original timeout. It does not demonstrate a benefit of extending the deadline. The original0.5s main configuration remains unchanged; do not promote the1s diagnostic.",
+  "no_object_truth_used_for_diagnosis": true
+}

@@ -1,5 +1,5 @@
 {
-  "status": "TWO_PREDECLARED_INITIAL_GRASP_VARIATIONS_COMPLETED_ONE_PASS_ONE_PRELOAD_STOP",
+  "status": "TARGETED_INITIAL_GRASP_CHECKS_COMPLETE_ROBUSTNESS_NOT_ESTABLISHED",
   "scope": "SMALL_PHYSICAL_POSE_PERTURBATIONS_WITH_ORIGINAL_GRIP_FORCE_AND_PHYSICS_LIMITS",
   "configuration": "reproducibility/four_camera_20260918/visual_body_centered_preload_variation.yaml",
   "scenarios": {
@@ -49,7 +49,16 @@
       "all_three_original_nails_body_fraction": 1.0,
       "table_contact_samples_in_hold": 0,
       "check_window_s": 0.5,
-      "main_nominal_baseline_changed": false
+      "main_nominal_baseline_changed": false,
+      "consecutive_compensated_moment_samples_reached": 6,
+      "check_samples_to_first_success": 345
     }
-  ]
+  ],
+  "followup_diagnostic": {
+    "run": "artifacts/four_camera_20260918/settling_1s_plus_grasp_01/run",
+    "physical_grasp_passed": true,
+    "extended_timeout_used": false,
+    "adopted_into_main_baseline": false
+  },
+  "main_baseline_robustness_accepted": false
 }

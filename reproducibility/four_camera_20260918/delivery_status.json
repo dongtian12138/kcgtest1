@@ -1,0 +1,17 @@
+{
+  "status": "WORK_COMPLETE_NO_EXPERIMENT_RUNNING",
+  "nominal_full_assembly": "VERIFIED_WITH_ORIGINAL_MECHANICS_AND_SEPARATE_STRICT3S_RELEASE",
+  "accepted_execution_source_commit": "84bef70924b7244f47493a75c38a17fade6c3b58",
+  "accepted_run": "artifacts/four_camera_20260918/full_chain_04/run",
+  "main_body_config": "reproducibility/four_camera_20260918/visual_body_centered_preload.yaml",
+  "main_assembly_config": "reproducibility/four_camera_20260918/assembly_fixed_cameras.yaml",
+  "main_contact_endpoint_timeout_s": 0.5,
+  "plus_initial_grasp": "STOPPED_AT_ORIGINAL_PRELOAD_STABILITY_GATE",
+  "minus_initial_grasp": "SOURCE_NAIL_LIFT_HOLD_VERIFIED",
+  "one_second_diagnostic": "PHYSICAL_GRASP_PASSED_BUT_EXTENSION_UNUSED_NOT_ADOPTED",
+  "initial_grasp_repeatability_resolved": false,
+  "whole_round_fivefold_speedup_achieved": false,
+  "further_experiments_scheduled": false,
+  "hardware_authorized": false,
+  "raw_failure_and_success_records_preserved": true
+}

@@ -1,0 +1,10 @@
+{
+  "purpose": "Bind compact robot-only diagnostic evidence and postrun results",
+  "reports_sha256": {
+    "robot_signals.json": "8a8e9edf6d09706669ec9123a58f09ee4a97e2333d60065e338d771464c7e6b3",
+    "interpretation.json": "12f8cd79761e0e95785977829fd6beebb987b20e4915783af1e092faf5513677",
+    "preload_settle_review.json": "97254c04b241f9a4475fba4a4de5a87cbcebf5ae8decae4245f6d9e70cd3edff",
+    "process.json": "addd7bfa36de60a2b6457189ef583e0ea6e7595208c3a459ef6ed22dbed0f95a",
+    "source_nail_body_review.json": "e24ee0b98f7be3a214de9ef61e955f02795fff51c4c284e5d26600c87573438a"
+  }
+}

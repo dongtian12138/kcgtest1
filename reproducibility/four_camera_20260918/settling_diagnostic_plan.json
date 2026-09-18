@@ -1,6 +1,6 @@
 {
   "scope": "ONE_BOUNDED_INITIAL_GRASP_SETTLING_DIAGNOSIS_NOT_MAIN_BASELINE_REPLACEMENT",
-  "status": "PREPARED_NOT_EXECUTED",
+  "status": "COMPLETED_EXTENSION_UNUSED_NOT_ADOPTED",
   "primary_hypothesis": "The force loops did not have enough post-ramp time to produce six consecutive acceptable raw compensated-moment samples.",
   "changed_field": "dynamic.contact_endpoint_timeout_s",
   "before_s": 0.5,
@@ -21,5 +21,9 @@
     "Report first qualifying six-frame run relative to the original480sample budget",
     "If success occurs within the original budget, do not claim the extension fixed the failure"
   ],
-  "no_repeated_timeout_sweep_authorized_by_this_plan": true
+  "no_repeated_timeout_sweep_authorized_by_this_plan": true,
+  "result": "reproducibility/four_camera_20260918/evidence/settling_1s_plus_grasp_01/interpretation.json",
+  "first_six_frame_check_samples": 358,
+  "timeout_extension_exercised": false,
+  "main_baseline_replaced": false
 }
