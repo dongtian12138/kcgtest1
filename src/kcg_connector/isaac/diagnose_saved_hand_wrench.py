@@ -80,7 +80,7 @@ parser.add_argument("--assembly-config",type=Path,
                     help="Explicit local physical-model configuration; defaults to the sealed source configuration.")
 parser.add_argument("--mounted-grasp-recipe",type=Path,
                     help="Explicit fixed-Nut laboratory grasp/torque recipe, not an assembly run.")
-parser.add_argument("--velocity-iterations", type=int, choices=(0,1,4,16), default=1)
+parser.add_argument("--velocity-iterations", type=int, choices=(0,1,4,8,16), default=1)
 parser.add_argument("--contact-convergence-check", action="store_true")
 parser.add_argument("--diagnostic-center-socket-before-start", action="store_true")
 parser.add_argument("--main-read-sequence", action="store_true",
