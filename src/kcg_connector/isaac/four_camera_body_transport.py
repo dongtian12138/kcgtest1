@@ -6,7 +6,7 @@ import math
 import numpy as np
 
 
-def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output):
+def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output, *, prekey=False):
     import fcl
     import yaml
     from scipy.spatial.transform import Rotation
@@ -26,12 +26,25 @@ def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output):
     speed = float(config['motion']['maximum_transport_joint_speed_rad_s'])
     probe = {'authorization': {'simulation_only': True, 'hardware_authorized': False},
              'motion': {'maximum_transport_joint_speed_rad_s': speed}}
-    session = FourCameraPerceptionSession(root, runtime, stepper, anchor)
+    session = runtime.get('four_camera_perception_session')
+    if prekey:
+        if session is not None:
+            raise RuntimeError('The initial unkeyed transfer can only start once')
+        hand=np.asarray(inputs.robot_model.forward_kinematics(tuple(stepper.latest[0]),
+            enforce_limits=False)['handbase_link'])
+        nominal=np.asarray(runtime['control_plan']['object_from_hand_row_major']).reshape(4,4)
+        session=FourCameraPerceptionSession(root,runtime,stepper,
+            prekey_world_from_body=hand@np.linalg.inv(nominal))
+    elif session is None:
+        session=FourCameraPerceptionSession(root,runtime,stepper,anchor)
+    elif not session.memory.initialized:
+        raise RuntimeError('The nearby key station must initialize the single key before final transport')
     record = {'stage': 'WAITING_FOR_GLOBAL1_SOCKET', 'completed': False,
         'simulation_only': True, 'hardware_authorized': False,
         'online_object_or_contact_truth_used': False,
-        'key_observation_event_count': 1, 'body_key_reobservations_after_memory': 0,
-        'hand_from_body_visual_memory': anchor['hand_from_body_visual_memory'],
+        'key_observation_event_count': int(session.memory.initialized), 'body_key_reobservations_after_memory': 0,
+        'hand_from_body_visual_memory': session.relation_for_transport().tolist(),
+        'transverse_frame_contains_observed_key': bool(session.memory.initialized),
         'contact_motion_commanded': False, 'motions': [],
         'target_face_gap_m': .050, 'wrist_socket_observation_executed': False,
         'transport_macro_legs': ['PICKUP_TO_FIXED_GLOBAL2', 'GLOBAL2_TO_SOCKET_WITH_LOCAL_WRIST_VIEW'],
@@ -103,7 +116,7 @@ def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output):
             save()
             planning_started = perf_counter()
             active = np.asarray(stepper.latest[0])
-            memory = session.memory.hand_from_body()
+            memory = session.relation_for_transport()
             states, plan = plan_body_path(inputs, active, memory, target_body, dt, speed)
             offset = np.asarray(ft.samples[-1]['active_targets_rad'][:7]) - active[:7]
             states += offset
@@ -125,9 +138,13 @@ def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output):
             if spacing > .01:
                 raise RuntimeError('Source-geometry sampling exceeded its declared joint spacing')
             _, check = _check_held_plug_path(scene, spatial, active[7:], obstacles, memory, bounds, 1., speed)
+            for field in ('duration_s','source_duration_s','maximum_commanded_arm_speed_rad_s'):
+                check.pop(field,None)
+            if prekey:
+                check['object_pose_input']='CURRENT_PALM_FIVE_DOF_AND_ENCODER_UNKEYED_TRANSPORT_FRAME'
             check.update(checked_states=len(spatial), maximum_joint_spacing_rad=spacing,
                          continuous_collision_guarantee=False,
-                         sampled_source_duration_is_not_execution_duration=True)
+                         physical_path_duration_s=plan['duration_s'])
             if check['first_collision'] is not None:
                 raise RuntimeError(f'Full hand or carried Body path collision: {check["first_collision"]}')
             latency = perf_counter() - planning_started
@@ -155,7 +172,15 @@ def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output):
         side = np.eye(4); side[:3, :3] = np.column_stack((np.cross(y, z), y, z))
         side[:3, 3] = socket[:3, 3] + .05 * socket[:3, 2] + np.array([-.035, 0., 0.])
         record['preobservation_axial_yaw_source'] = 'CHOSEN_FREE_SPACE_POSTURE_NOT_KEYWAY_MEASUREMENT'
-        move(side, 'key_probe_body_short_carry')
+        if prekey or not runtime.get('prekey_transfer_completed'):
+            move(side, 'key_probe_body_to_fixed_key_view' if prekey else 'key_probe_body_short_carry')
+        if prekey:
+            record.update(stage='AT_FIXED_NEAR_SOCKET_KEY_STATION',completed=True,
+                completed_scope='UNKEYED_TRANSPORT_TO_FIRST_KEY_OBSERVATION_ONLY',
+                arrival_world_from_body_for_transport=session.body().tolist(),
+                key_yaw_measured=False)
+            runtime['prekey_transfer_completed']=_json_ready(record)
+            return _json_ready(record)
 
         record['stage'] = 'FIXED_MOUNT_WRIST_SLOT_OBSERVATION'; save()
         frame = session.capture('wrist', output / 'wrist_socket')

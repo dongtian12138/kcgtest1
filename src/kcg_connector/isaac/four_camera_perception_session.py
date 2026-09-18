@@ -5,18 +5,19 @@ import json
 import numpy as np
 from four_camera_rig import configuration,camera_spec,intrinsics
 from key_direction_memory import KeyDirectionMemory
+from key_direction_memory import minimum_axis_rotation
 from palm_five_dof_tracking import measure
 from perception_latency import DelayedObservation
 
 
 class FourCameraPerceptionSession:
-    def __init__(self,repository,runtime,stepper,anchor):
+    def __init__(self,repository,runtime,stepper,anchor=None,*,prekey_world_from_body=None):
         import yaml
         self.root=Path(repository);self.runtime=runtime;self.stepper=stepper
         self.world=runtime['world'];self.rig=configuration(self.root,runtime)
         if self.rig is None:raise ValueError('Declared four-camera rig required')
-        if anchor.get('key_observation_event_count')!=1:
-            raise ValueError('Exactly one current-episode key observation is required')
+        if (anchor is None)==(prekey_world_from_body is None):
+            raise ValueError('Provide either the single key anchor or an explicitly unkeyed transport frame')
         self.output=Path(runtime['output_directory'])/'four_camera_perception'
         self.output.mkdir(exist_ok=False)
         settings=yaml.safe_load((self.root/runtime['body_assembly_control_config']).read_text())['perception']
@@ -26,16 +27,20 @@ class FourCameraPerceptionSession:
         self.resources={};self.pending=None;self.next_request=float(self.world.current_time)
         self.camera_counts={};self.palm_count=0;self.consumed_count=0;self.closed=False
         self.memory=KeyDirectionMemory()
-        self.memory.initialize(anchor['world_from_hand_encoder'],
-            np.asarray(anchor['key_measurement']['world_from_plug_row_major']).reshape(4,4),anchor['physics_time_s'])
-        palm=anchor['palm_observation']
-        spec,_=camera_spec(self.root,self.rig,'palm',anchor['world_from_hand_encoder'])
+        self.prekey_relation=None
+        spec,_=camera_spec(self.root,self.rig,'palm',self.hand())
         self.hand_from_palm=np.asarray(spec['mount']['hand_from_camera_cv'])
-        camera_from_body=np.linalg.inv(np.asarray(palm['world_from_camera_cv']))@np.asarray(palm['world_from_plug_five_dof'])
-        self.memory.update_palm(self.hand_from_palm,camera_from_body,anchor['physics_time_s'])
-        self.last_body=np.asarray(palm['world_from_plug_five_dof']);self.last_sample_time=float(anchor['physics_time_s'])
         self.cad=self.root/'artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/D38999_26FJ35PN_VISUAL.obj'
         self.events=(self.output/'events.jsonl').open('x',buffering=1)
+        if anchor is not None:
+            self.adopt_key_anchor(anchor)
+        else:
+            self.last_body=np.asarray(prekey_world_from_body,float).reshape(4,4)
+            self.prekey_relation=np.linalg.inv(self.hand())@self.last_body
+            self.last_sample_time=float(self.world.current_time)
+            self._write({'event':'UNKEYED_TRANSPORT_FRAME_STARTED',
+                'physics_time_s':self.last_sample_time,'key_yaw_measured':False,
+                'transverse_frame_is_chosen_for_motion_only':True})
         runtime['four_camera_perception_session']=self
 
     def hand(self):
@@ -43,7 +48,32 @@ class FourCameraPerceptionSession:
             tuple(self.stepper.latest[0]),enforce_limits=False)['handbase_link'])
 
     def body(self):
-        return self.memory.predict(self.hand()) if self.memory.active else self.last_body.copy()
+        if self.memory.active:return self.memory.predict(self.hand())
+        if self.prekey_relation is not None:return self.hand()@self.prekey_relation
+        return self.last_body.copy()
+
+    def relation_for_transport(self):
+        if self.memory.active:return self.memory.hand_from_body()
+        if self.prekey_relation is not None:return self.prekey_relation.copy()
+        raise RuntimeError('A retired Body grasp cannot supply a held transport frame')
+
+    def adopt_key_anchor(self,anchor):
+        if anchor.get('key_observation_event_count')!=1 or self.memory.initialized:
+            raise ValueError('Exactly one current-episode key initialization is permitted')
+        if self.pending is not None:
+            self._write({'event':'OLDER_PREKEY_PENDING_FRAME_REPLACED_BY_SYNCHRONIZED_KEY_ANCHOR',
+                         'sample_time_s':self.pending.sample_time_s})
+            self.pending=None
+        self.memory.initialize(anchor['world_from_hand_encoder'],
+            np.asarray(anchor['key_measurement']['world_from_plug_row_major']).reshape(4,4),anchor['physics_time_s'])
+        palm=anchor['palm_observation']
+        camera_from_body=np.linalg.inv(np.asarray(palm['world_from_camera_cv']))@np.asarray(palm['world_from_plug_five_dof'])
+        self.memory.update_palm(self.hand_from_palm,camera_from_body,anchor['physics_time_s'])
+        self.prekey_relation=None
+        self.last_body=np.asarray(palm['world_from_plug_five_dof'])
+        self.last_sample_time=float(anchor['physics_time_s'])
+        self._write({'event':'SINGLE_KEY_ANCHOR_INITIALIZED','sample_time_s':self.last_sample_time,
+                     'consumed_time_s':float(self.world.current_time)})
 
     def _write(self,event):
         from te_foundationpose_handoff_runtime import _json_ready
@@ -87,6 +117,11 @@ class FourCameraPerceptionSession:
             if self.memory.active:
                 update=self.memory.update_palm(self.hand_from_palm,
                     measurement['camera_from_plug_five_dof'],self.pending.sample_time_s)
+            elif self.prekey_relation is not None:
+                measured=self.hand_from_palm@np.asarray(measurement['camera_from_plug_five_dof'])
+                rotation=minimum_axis_rotation(self.prekey_relation[:3,2],measured[:3,2])
+                self.prekey_relation[:3,:3]=rotation@self.prekey_relation[:3,:3]
+                self.prekey_relation[:3,3]=measured[:3,3]
             self.consumed_count+=1
             self._write({'event':'PALM_MEASUREMENT_CONSUMED','sample_step':payload['sample_step'],
                 'sample_time_s':self.pending.sample_time_s,'available_time_s':self.pending.available_time_s,
@@ -128,7 +163,7 @@ class FourCameraPerceptionSession:
         from te_foundationpose_handoff_runtime import _close_rgbd_resources
         _close_rgbd_resources(self.resources)
         (self.output/'summary.json').write_text(json.dumps({'camera_counts':self.camera_counts,
-            'key_observation_event_count':1,'palm_samples':self.palm_count,
+            'key_observation_event_count':int(self.memory.initialized),'palm_samples':self.palm_count,
             'palm_measurements_consumed':self.consumed_count,'key_memory':self.memory.report(),
             'hardware_latency_calibrated':False,'online_object_or_contact_truth_used':False},indent=2)+'\n')
         self.events.close();self.closed=True

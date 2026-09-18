@@ -24,6 +24,10 @@ def observe(repository,runtime,stepper,arguments,output,rig):
     if count:raise RuntimeError('The fixed global key camera may initialize the key only once')
     root=Path(repository);out=Path(output)/'postgrasp_key';out.mkdir(parents=True,exist_ok=False)
     world=runtime['world'];stage=omni.usd.get_context().get_stage()
+    if rig.get('key_observation_after_major_transport',False):
+        from four_camera_body_transport import run as transfer_to_key_station
+        transfer_to_key_station(root,runtime,stepper,runtime['grasp_result'],
+            arguments.dynamic_settings,None,Path(output)/'prekey_transport',prekey=True)
     q=np.asarray(stepper.latest[0],float)
     hand=np.asarray(runtime['inputs'].robot_model.forward_kinematics(tuple(q),enforce_limits=False)['handbase_link'])
     nominal=np.asarray(runtime['control_plan']['object_from_hand_row_major']).reshape(4,4)
@@ -106,4 +110,7 @@ def observe(repository,runtime,stepper,arguments,output,rig):
     if record.get('observation_failure'):raise RuntimeError(record['observation_failure'])
     if not advance['completed']:raise RuntimeError('Original held-body limits stopped the observation latency hold')
     runtime['fixed_camera_grasp_observation']=record
+    session=runtime.get('four_camera_perception_session')
+    if session is not None:
+        session.adopt_key_anchor(record)
     return record
