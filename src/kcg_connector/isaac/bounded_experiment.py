@@ -35,6 +35,10 @@ def main(argv):
                        and all(a in argv for a in ('--visual-body-start','--hand-mechanism-config'))
                        and '--body-assembly-transport' not in argv
                        and '--postgrasp-key-observation' not in argv)
+    visual_entry_prefix=(any(str(a).endswith('/run_body_assembly_with_video.py') for a in argv)
+                         and all(a in argv for a in ('--visual-body-start','--body-key-entry',
+                                                     '--hand-mechanism-config','--body-assembly-transport'))
+                         and '--body-nut-regrasp' not in argv)
     # The current-hand baseline costs about 43 physics-wall seconds per
     # simulated second. An explicitly requested four-stroke run also includes
     # three measured releases, wrist returns and new grip preparations.
@@ -83,7 +87,7 @@ def main(argv):
     # The user-authorized fixed-camera prefix includes the original19s lift
     # and2s physical hold at960Hz. Permit an explicit15min budget only for
     # this no-transport visibility run; no runtime budget is extended live.
-    ceiling=21600. if visual_assembly else 3600. if fixed_camera_transport else 900. if fixed_camera_prefix or initial_grasp_only else 2400. if full_current_hand_turn else source_probe_ceiling if source_grip_probe else 600. if local_turn else 300.
+    ceiling=21600. if visual_assembly else 7200. if visual_entry_prefix else 3600. if fixed_camera_transport else 900. if fixed_camera_prefix or initial_grasp_only else 2400. if full_current_hand_turn else source_probe_ceiling if source_grip_probe else 600. if local_turn else 300.
     if not 0<grace<limit<=ceiling:raise SystemExit(f'this experiment requires 0 < closeout reserve < total limit <= {ceiling:g} seconds')
     started=time.monotonic();env=os.environ.copy()
     env.update(KCG_BOUNDED_EXPERIMENT='1',KCG_EXPERIMENT_ACTION_DEADLINE=str(started+limit-grace))
