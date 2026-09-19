@@ -1,0 +1,72 @@
+{
+  "scope": "GEOMETRY_BASED_RELEASE_CLEARANCE_CANDIDATE_NOT_DYNAMIC_SUCCESS",
+  "failed_run": "artifacts/initial_contact_fix_20260919/smooth_band_full_03/run",
+  "failed_source": "efb05999815544a35d99cf7a4284c81332d4d281",
+  "failure_step": 168203,
+  "unload_elapsed_s": 1.7104166666666667,
+  "finger_1_peak_nm": 1.4376487731933594,
+  "finger_effort_abort_nm": 0.9,
+  "control_already_monotonic_opening": true,
+  "previous_hand_body_z_m": -0.45443714,
+  "candidate_hand_body_z_m": -0.45393714,
+  "single_physical_variable": "BODY_RELATIVE_GRASP_HEIGHT_0P5_MM_TOWARD_FRONT",
+  "original_source_smooth_band_z_m": [
+    -0.02995,
+    -0.02805
+  ],
+  "predicted_contacts": [
+    {
+      "shift_hand_body_z_m": -0.0015,
+      "link": "f1Link3",
+      "fraction": 0.6448269703205326,
+      "finger_positions_rad": [
+        1.2217304763960306,
+        0.7141826791724373,
+        0.6188948960474373,
+        0.7131104135474373
+      ],
+      "first_envelope_contact_body_m": [
+        -0.013421811532529998,
+        -0.0115835885120186,
+        -0.028296467895576723
+      ],
+      "gap_m": -1.249000902703301e-16
+    },
+    {
+      "shift_hand_body_z_m": -0.0015,
+      "link": "f2Link2",
+      "fraction": 0.6524342000311523,
+      "finger_positions_rad": [
+        1.2217304763960306,
+        0.7147151852521806,
+        0.6194274021271806,
+        0.7136429196271806
+      ],
+      "first_envelope_contact_body_m": [
+        0.015511489984458018,
+        -0.008585931870949727,
+        -0.028452353043656994
+      ],
+      "gap_m": 7.632783294297951e-17
+    },
+    {
+      "shift_hand_body_z_m": -0.0015,
+      "link": "f3Link3",
+      "fraction": 0.6612406730409359,
+      "finger_positions_rad": [
+        1.2217304763960306,
+        0.7153316383628655,
+        0.6200438552378655,
+        0.7142593727378655
+      ],
+      "first_envelope_contact_body_m": [
+        0.0034841178884439166,
+        0.017383482682418815,
+        -0.028280807004182063
+      ],
+      "gap_m": 2.0816681711721685e-17
+    }
+  ],
+  "source_geometry_material_mass_solver_force_speed_and_acceptance_changed": false,
+  "dynamic_success_claimed": false
+}

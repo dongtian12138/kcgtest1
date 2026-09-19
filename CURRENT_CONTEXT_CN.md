@@ -1,6 +1,6 @@
 # 当前任务：继续修复，直至高位方案完整通过验收
 
-核验时间：2026-09-19T16:33:59.645769+00:00。用户明确要求“继续解决问题，直到成功完成验收”。必须持续推进，不以局部报告结束。当前抓取已通过，掌心遮挡修复已重放验证，准备新的完整回合。
+核验时间：2026-09-19T17:44:34.867301+00:00。用户明确要求“继续解决问题，直到成功完成验收”。必须持续推进，不以局部报告结束。当前抓取已通过，掌心遮挡修复已重放验证，准备新的完整回合。
 
 工作树/home/noob/WorkPlace/kcgtest1-performance-20260917，分支codex/high-global1-full-20260919；原项目只同步本入口。仅仿真hardware_authorized=false，无子代理授权，不推送，不删除原数据。一主物理实验，加载源码配置冻结，停止用STOP_REQUEST，不在线延预算。
 
@@ -30,7 +30,10 @@ smooth_band_full_02（a9673f2，session59769/PID1398099）已2026-09-19T16:04:27
 
 同一失败帧过滤161点、保留1074点、34箱覆盖，RMS0.041191mm通过；结束后独立真值位置误差8.54微米、轴误差0.000627°。24张旧观测位姿矩阵不变；同步G2/掌心宽ROI规则同帧也过；8项相关单测过。报告reproducibility/initial_contact_fix_20260919/palm_occlusion/result_CN.md，原始artifacts/initial_contact_fix_20260919/palm_occlusion_probe。临时重放/tmp/kcg_palm_occlusion_probe.py和/tmp/kcg_palm_circle_regression.py。
 
-下一步冻结修复后直接新完整回合smooth_band_full_03，保持visual_body_smooth_band_settle.yaml和assembly_high_global1_plus20.yaml及原21600s/300s收尾、5fps只五名称。物理/初抓代码没变，复用原smooth_band_preflight_02物理比较；run_grasp_lift的visual_body_start原合同允许复用名义物理预检，仍逐次比较物理绑定和当前图像轨迹，不更改预检判据。若任何绑定不符按实际结果处理，不绕过。旧session59769、41338、87043等已关闭。
+smooth_band_full_03/run（efb0599）已2026-09-19T17:21:42.334289Z结束，2776.934s，exit2，session96449已关闭。完成初抓/两次G2/搬运/插入；视觉粗调-20.297327°，二次余差+0.002257°。随后Body松手的单调减力阶段第168203步停止：f1关节反力矩1.437649Nm>原0.9Nm。此前1641步逐渐减力至约0.06Nm、手目标无跳变/重夹，Body下沉约0.108mm与旧成功松手约0.111mm相同；突发帧f2与Body后缘附近接触出现0.3238Ns总冲量和轴向法线，引起Body再下沉0.518mm。不是掌心、对键或螺母视觉门失败，尚未抓螺母。原始诊断artifacts/initial_contact_fix_20260919/body_release_diagnosis。
+
+新主假设：+2mm避开螺纹的抓取位置太靠近后端倒角，松手时微小下沉使指尖边缘接近倒角。下一候选只把hand相对Body高度从-0.45443714改为-0.45393714，即从+2mm回到+1.5mm；静态CAD/原Nail运动学预测三指首次接触z=-0.028296/-0.028452/-0.028281m仍在平直带内，同时增加后端倒角间隙0.5mm。配置visual_body_balanced_band.yaml，其余物理/控制/保护不改。依据reproducibility/initial_contact_fix_20260919/body_release/candidate_basis.json。当前无主实验运行，下一步独立预检balanced_band_preflight_01，通过后balanced_band_full_01完整回合；启动器/tmp/kcg_launch_balanced.py。该候选未验证，不能声称解决。
+
 
 用户明确要求直到完整成功验收，不能以本次局部视觉修复或失败报告结束。全过程完成后原source_nail_body、high_global1、source_nut_pad、two_key、camera、transport、native_support、source_key_containment、最终3秒、红带图像与几何、whole均须通过。可用/tmp/kcg_high_g1_postreview.py new_run（terminal存在且已结束才用）；再看同回合实际终态图像，写visibility和whole。不得拼接或用真值补成功。
 
