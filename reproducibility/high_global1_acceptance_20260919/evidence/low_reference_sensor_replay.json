@@ -1,0 +1,199 @@
+{
+  "scope": "POSTRUN_REPLAY_OF_TERMINAL_DECISION_FROM_ALREADY_CONSUMED_ONLINE_SENSORS",
+  "accepted": true,
+  "historical_runtime_online_seating_confirmed": true,
+  "historical_runtime_completion_record_modified": false,
+  "motion_source_commit": "df1afac5bd5d9bdb56dd49b58ef8b9728092ed08",
+  "decision_code_commit": "84e534c96760c59997fad938fbac07d16331188b",
+  "sampling_contract": {
+    "palm_period_s": 0.2,
+    "maximum_observation_age_s": 0.5,
+    "decision_step": 300583,
+    "decision_time_s": 313.10939132992644,
+    "source": "ORIGINAL_COMMITTED_CAMERA_SETTINGS_AND_RECORDED_ROBOT_CLOCK"
+  },
+  "decision": {
+    "status": "ONLINE_SEATING_CONFIRMED",
+    "online_seating_confirmed": true,
+    "observations": [
+      {
+        "sample_time_s": 310.2166828457266,
+        "sample_step": 297805,
+        "available_time_s": 310.36059614071274,
+        "consumed_time_s": 310.36147451994475,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01227",
+        "observed_depth_m": 0.014604011733340229,
+        "lateral_error_m": 2.2758459918940478e-05,
+        "axis_error_deg": 0.0011317290596786402
+      },
+      {
+        "sample_time_s": 310.4166828561574,
+        "sample_step": 297997,
+        "available_time_s": 310.5662110151723,
+        "consumed_time_s": 310.56668286398053,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01228",
+        "observed_depth_m": 0.01460401262268922,
+        "lateral_error_m": 2.2787546039372674e-05,
+        "axis_error_deg": 0.0011214426530483353
+      },
+      {
+        "sample_time_s": 310.61668286658823,
+        "sample_step": 298189,
+        "available_time_s": 310.76209624558106,
+        "consumed_time_s": 310.76251620752737,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01229",
+        "observed_depth_m": 0.014603844220081581,
+        "lateral_error_m": 2.3433899043281595e-05,
+        "axis_error_deg": 0.0027712287887110714
+      },
+      {
+        "sample_time_s": 310.81668287701905,
+        "sample_step": 298381,
+        "available_time_s": 310.9606720920245,
+        "consumed_time_s": 310.9614745512372,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01230",
+        "observed_depth_m": 0.014604014403194343,
+        "lateral_error_m": 2.274676950021489e-05,
+        "axis_error_deg": 0.0011239974638590834
+      },
+      {
+        "sample_time_s": 311.01668288744986,
+        "sample_step": 298573,
+        "available_time_s": 311.17304224344554,
+        "consumed_time_s": 311.1739745623199,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01231",
+        "observed_depth_m": 0.014603945830970471,
+        "lateral_error_m": 2.2912566522227198e-05,
+        "axis_error_deg": 0.001839009606595221
+      },
+      {
+        "sample_time_s": 311.2166828978807,
+        "sample_step": 298765,
+        "available_time_s": 311.3603830338805,
+        "consumed_time_s": 311.3604329053778,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01232",
+        "observed_depth_m": 0.01460395810871757,
+        "lateral_error_m": 2.279673177472819e-05,
+        "axis_error_deg": 0.0013774959800324448
+      },
+      {
+        "sample_time_s": 311.4166829083115,
+        "sample_step": 298957,
+        "available_time_s": 311.5592395943066,
+        "consumed_time_s": 311.55939124908764,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01233",
+        "observed_depth_m": 0.014604021265594016,
+        "lateral_error_m": 2.2848338372531084e-05,
+        "axis_error_deg": 0.0011491095522778183
+      },
+      {
+        "sample_time_s": 311.6166829187423,
+        "sample_step": 299149,
+        "available_time_s": 311.7588023457327,
+        "consumed_time_s": 311.75939125951845,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01234",
+        "observed_depth_m": 0.014603981679422656,
+        "lateral_error_m": 2.268370239704371e-05,
+        "axis_error_deg": 0.0014848142408869676
+      },
+      {
+        "sample_time_s": 311.8166829291731,
+        "sample_step": 299341,
+        "available_time_s": 311.9601136531972,
+        "consumed_time_s": 311.96043293667026,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01235",
+        "observed_depth_m": 0.0146040114700295,
+        "lateral_error_m": 2.2610139382451285e-05,
+        "axis_error_deg": 0.0011290913571451945
+      },
+      {
+        "sample_time_s": 312.0166829396039,
+        "sample_step": 299533,
+        "available_time_s": 312.1593240325863,
+        "consumed_time_s": 312.1593912803801,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01236",
+        "observed_depth_m": 0.014604011155518843,
+        "lateral_error_m": 2.2800534119257837e-05,
+        "axis_error_deg": 0.0011287036141182684
+      },
+      {
+        "sample_time_s": 312.21668295003474,
+        "sample_step": 299725,
+        "available_time_s": 312.3586885250523,
+        "consumed_time_s": 312.3593912908109,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01237",
+        "observed_depth_m": 0.014603990957890571,
+        "lateral_error_m": 2.2796890271901196e-05,
+        "axis_error_deg": 0.0011780823431840177
+      },
+      {
+        "sample_time_s": 312.41668296046555,
+        "sample_step": 299917,
+        "available_time_s": 312.5578862774826,
+        "consumed_time_s": 312.5583496345207,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01238",
+        "observed_depth_m": 0.014604012297459413,
+        "lateral_error_m": 2.2531171316506413e-05,
+        "axis_error_deg": 0.0011380402391207118
+      },
+      {
+        "sample_time_s": 312.61668297089636,
+        "sample_step": 300109,
+        "available_time_s": 312.76949440889877,
+        "consumed_time_s": 312.76980797888245,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01239",
+        "observed_depth_m": 0.014603594095162006,
+        "lateral_error_m": 2.2879394549647232e-05,
+        "axis_error_deg": 0.0017300825013348766
+      },
+      {
+        "sample_time_s": 312.8166829813272,
+        "sample_step": 300301,
+        "available_time_s": 312.9587108853273,
+        "consumed_time_s": 312.95939132210333,
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01240",
+        "observed_depth_m": 0.014604014664200535,
+        "lateral_error_m": 2.239585062652051e-05,
+        "axis_error_deg": 0.0011277764942724596
+      }
+    ],
+    "within_original_visual_depth_tolerance": true,
+    "within_original_visual_depth_stability_tolerance": true,
+    "within_declared_visual_axis_and_lateral_tolerances": true,
+    "actual_robot_open_hold_s": 3.0,
+    "visual_stability_scope": "EVERY_CONSUMED_PALM_FRAME_DURING_COMPLETED_OPEN_HOLD",
+    "released_window_coverage": {
+      "complete": true,
+      "pose_step_interval_inclusive": [
+        297702,
+        300582
+      ],
+      "sample_count": 14,
+      "first_sample_gap_s": 0.10729166666666666,
+      "last_sample_age_at_hold_end_s": 0.29270833333333335,
+      "maximum_sample_gap_s": 0.2,
+      "gap_admission": "DECLARED_PERIOD_OR_PRECEDING_RECORDED_PIPELINE_LATENCY_PLUS_TWO_PHYSICS_STEPS",
+      "maximum_admitted_sample_gap_s": 0.20208333333333334,
+      "declared_palm_period_s": 0.2,
+      "existing_maximum_observation_age_s": 0.5
+    },
+    "observed_released_depth_range_m": 4.2717043200954374e-07,
+    "robot_observed_open_unloaded_hold_completed": true,
+    "preceding_loaded_torque_observed": true,
+    "last_loaded_robot_wrist_wrench_n_nm": [
+      13.865439214777393,
+      -29.708957394306324,
+      26.491858445828687,
+      0.1469142617294291,
+      0.3569047074537413,
+      2.0010257548579395
+    ],
+    "online_object_or_contact_truth_used": false,
+    "protection_or_regrasp_stop_alone_is_completion": false,
+    "physical_assembly_acceptance": "REQUIRES_ORIGINAL_INDEPENDENT_POSTRUN_REVIEW"
+  },
+  "object_or_contact_truth_used_for_replayed_decision": false,
+  "physical_motion_reexecuted": false,
+  "new_images_synthesized_or_captured": false,
+  "independent_physical_geometry_and_three_second_contact_reviews_still_required": true
+}
