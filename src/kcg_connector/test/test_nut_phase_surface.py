@@ -2,6 +2,8 @@ import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
 
+pytest.importorskip("warp", reason="Run these vision geometry tests with the Isaac Python runtime")
+
 from te_nut_phase_surface import SourceTriangleSurface
 from te_nut_phase_vision import fit_phase
 

@@ -1,0 +1,19 @@
+{
+  "scope": "NUT_PHASE_SAMPLING_BIAS_FIX",
+  "checked_utc": "2026-09-19T14:23:12.909491+00:00",
+  "status": "LOCAL_FIX_VERIFIED_FULL_HIGH_GLOBAL1_REVALIDATION_PENDING",
+  "source_commit": "a3083890aebc6280e5b66e9a5c99b8ecfaaf8879",
+  "old_two_frame_change_deg": 0.525,
+  "new_same_saved_two_frame_change_at_0p025_deg_resolution": 0.0,
+  "fixed_frame_count": 16,
+  "all_original_quality_gates_passed": true,
+  "local_run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/nut_phase_surface_20260919/local_fourth_grasp_02/run",
+  "local_regrasp_controller_completed": true,
+  "local_visual_grasp_error_deg": -0.021783482574278423,
+  "original_limit_deg": 0.5,
+  "source_contact_regions_accepted": true,
+  "source_key_containment_accepted": true,
+  "full_high_global1_assembly_verified": false,
+  "no_truth_input_to_estimator": true,
+  "acceptance_thresholds_unchanged": true
+}

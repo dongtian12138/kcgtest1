@@ -1,6 +1,6 @@
 # 当前任务：修复螺母换抓的跨视角角度误停
 
-核验时间：2026-09-19T13:54:25.666388+00:00。用户问“问题出在哪、能否解决”，正在落实根因修复及局部验证；无主仿真实验运行。工作树/home/noob/WorkPlace/kcgtest1-performance-20260917，分支codex/high-global1-full-20260919。仅仿真，无子代理，不推送，不动原项目脏资产，只同步本入口。
+核验时间：2026-09-19T13:54:25.666388+00:00。用户问“问题出在哪、能否解决”，正在落实根因修复及局部验证；局部验证及后评已完成，无运行中的主实验，准备完整高位复验。工作树/home/noob/WorkPlace/kcgtest1-performance-20260917，分支codex/high-global1-full-20260919。仅仿真，无子代理，不推送，不动原项目脏资产，只同步本入口。
 
 ## 原结果与验收
 
@@ -14,10 +14,14 @@ SourceTriangleSurface位于src/kcg_connector/isaac/te_nut_phase_surface.py；只
 
 诊断artifacts/nut_phase_surface_20260919；固定图像回放入口reproducibility/nut_phase_surface_20260919/replay_saved_frames.py；输出ended_frame_regression.json。此前失败真值只用于根因后评，未用于新估计。
 
-## 下一步
+## 当前验证状态与下一步
 
-复用现有diagnose_saved_hand_wrench/te_source_stage_probe，新增显式stop_after_current_regrasp，只局部运行原第四次换抓并在完成后收尾，不进入旋紧。候选recipe在reproducibility/nut_phase_surface_20260919/local_fourth_grasp.json；source run为full_03，source step252521（已有开放手指的最后物理帧），sensor/grip stage nut_regrasp_continued_02，source rotation nut_rotation_continued_01。初始已发角度应以该旋转段终结记录核对。局部场景只在reset前使用封存初态，是诊断，不是同回合完整装配。模型/质量/材料/CPU960Hz64/4、原力/速/几何门保持。已有local source runner最大1500s适用于>180°阶段、无最终释放，计划20000步上界。必须先冻结提交，然后运行；只一个主实验。
+局部local_fourth_grasp_02/run已2026-09-19T14:17:13.333728Z结束，1175.338s、8503步、exit0，session11300已关闭。源接触区域及键槽几何后评均通过；视觉复核误差-0.021783°<原0.5°，实际重新抓握完成。local_01只有输出目录检查失败，未运行物理。控制修复已局部验证，完整高位成功仍未获得。
 
-局部通过后还需要完整高位同回合验收及仅五名称录像，不能拼接。完整仍需原source_nail_body、source_nut_pad、two_key、camera、transport、native_support、source_key_containment、最终3秒、红带图像+几何、whole通过。原低位成功不被候选替换。原始数据/失败证据保留，运行中代码配置冻结、停止用STOP_REQUEST、不改物体位姿/不使用真值控制。
+正在准备新的高位预检high_global1_names_preflight_04，通过后执行high_global1_full_04（均位于artifacts/two_key_20260919）。保持Body visual_body_contact_0p09.yaml、assembly_high_global1_plus20.yaml、原21600s/300s收尾、5fps仅五名称。只改变螺母视觉距离，控制/力/速/碰撞/5°修正/0.5°验收/360°/最多6次抓握门保留。一次一个主实验，加载源码配置冻结。停止用STOP_REQUEST，不在线改预算。
 
-Isaac Python /home/noob/WorkPlace/isaacsim/.conda-env/bin/python，ISAAC_ENV_PREFIX同环境；规划Python /home/noob/WorkPlace/kcgtest1/.venv/bin/python。PYTHONPATH含src/kcg_connector、isaac、carts_v2；OPENBLAS_NUM_THREADS=1；离线后评用without_cyclic_gc。恢复先核对实际进程。
+后评通用助手/tmp/kcg_high_g1_postreview.py需运行结束且terminal记录存在后调用（参数为新run路径），独立运行source_nail_body、high_global1、source_nut_pad、two_key、camera、transport、native_support、source_key_containment、3秒释放、source_band。随后必须提取并查看同回合最后旋紧/释放中间/最后帧，写final_mating_visibility_review，再用without_cyclic_gc做whole；不能拿局部成功代替全装配。旧label_five_view.py不得给录像加回其他文字。
+
+本次修复报告reproducibility/nut_phase_surface_20260919/result_CN.md与status.json，证据evidence/。全轮成功后才更新two_key_20260919/delivery_status.json的高位完整成功标志，原失败证据不覆盖。
+
+Isaac Python /home/noob/WorkPlace/isaacsim/.conda-env/bin/python，ISAAC_ENV_PREFIX同环境；规划Python /home/noob/WorkPlace/kcgtest1/.venv/bin/python。PYTHONPATH含src/kcg_connector、isaac、carts_v2；OPENBLAS_NUM_THREADS=1；离线后评用without_cyclic_gc。仅仿真hardware_authorized=false，无子代理、不推送、不删原数据。每次恢复先核对实际进程，不能等已退出的旧session。

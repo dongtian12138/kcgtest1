@@ -1,0 +1,448 @@
+{
+  "scope": "ENDED_FIXED_IMAGE_REPLAY_NOT_NEW_PHYSICAL_ASSEMBLY",
+  "estimator_input_sources": [
+    "RECORDED_DEPTH",
+    "RECORDED_CAMERA_CALIBRATION_AND_ENCODERS",
+    "IMAGE_BASED_BODY_POSITION_AND_AXIS",
+    "ORIGINAL_SOURCE_CAD"
+  ],
+  "truth_or_contacts_input_to_estimator": false,
+  "thresholds_changed": false,
+  "rows": [
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run",
+      "stage": "nut_regrasp_after_index",
+      "observation": "pre_phase_alignment_observation",
+      "sample_step": 210495,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00766",
+      "old_best": {
+        "yaw_deg": 89.15000000000005,
+        "clipped_rms_m": 4.16610757262683e-05,
+        "median_distance_m": 3.5220748023177604e-05,
+        "p90_distance_m": 6.220665792269055e-05,
+        "fraction_below0p1mm": 0.9962182603997839
+      },
+      "surface_best": {
+        "yaw_deg": 89.15000000000005,
+        "clipped_rms_m": 5.755231826405016e-07,
+        "median_distance_m": 3.557652235031128e-07,
+        "p90_distance_m": 9.475029969507887e-07,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 113.76219745826852,
+      "old_hand_error_at_same_sample_deg": 0.3772619096776566,
+      "surface_hand_error_at_same_sample_deg": 0.3772619096776566,
+      "surface_depth_and_fit_wall_s": 0.10712498700013384,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run",
+      "stage": "nut_regrasp_after_index",
+      "observation": "phase_aligned_palm_observation",
+      "sample_step": 212991,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00779",
+      "old_best": {
+        "yaw_deg": 89.05000000000008,
+        "clipped_rms_m": 4.2130372367689476e-05,
+        "median_distance_m": 3.4773783289856825e-05,
+        "p90_distance_m": 6.489789356610945e-05,
+        "fraction_below0p1mm": 0.9983801295896328
+      },
+      "surface_best": {
+        "yaw_deg": 89.07500000000009,
+        "clipped_rms_m": 1.3171023571234119e-06,
+        "median_distance_m": 1.2628734111785889e-06,
+        "p90_distance_m": 1.6856938600540161e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 52.36914920822525,
+      "old_hand_error_at_same_sample_deg": 0.09770144303126926,
+      "surface_hand_error_at_same_sample_deg": 0.07270144303123516,
+      "surface_depth_and_fit_wall_s": 0.10559477700735442,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run",
+      "stage": "nut_regrasp_continued_01",
+      "observation": "pre_phase_alignment_observation",
+      "sample_step": 231039,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00873",
+      "old_best": {
+        "yaw_deg": 179.02500000000006,
+        "clipped_rms_m": 4.235027778233261e-05,
+        "median_distance_m": 3.531943544384212e-05,
+        "p90_distance_m": 6.495314042225032e-05,
+        "fraction_below0p1mm": 0.9945975148568341
+      },
+      "surface_best": {
+        "yaw_deg": 178.85000000000008,
+        "clipped_rms_m": 9.792797895978119e-07,
+        "median_distance_m": 6.332034558909072e-07,
+        "p90_distance_m": 1.6316771507263184e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 65.10499314840244,
+      "old_hand_error_at_same_sample_deg": 0.4928544378751667,
+      "surface_hand_error_at_same_sample_deg": 0.6678544378751496,
+      "surface_depth_and_fit_wall_s": 0.10552919999463484,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run",
+      "stage": "nut_regrasp_continued_01",
+      "observation": "phase_aligned_palm_observation",
+      "sample_step": 233343,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00885",
+      "old_best": {
+        "yaw_deg": 179.07500000000007,
+        "clipped_rms_m": 4.1755184806225616e-05,
+        "median_distance_m": 3.448379499421838e-05,
+        "p90_distance_m": 6.454105362626013e-05,
+        "fraction_below0p1mm": 0.9956780118854673
+      },
+      "surface_best": {
+        "yaw_deg": 178.85000000000008,
+        "clipped_rms_m": 7.202358252485977e-07,
+        "median_distance_m": 5.550713808588625e-07,
+        "p90_distance_m": 1.1883676052093506e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 88.38266891502303,
+      "old_hand_error_at_same_sample_deg": -0.04252547792907535,
+      "surface_hand_error_at_same_sample_deg": 0.1824745220709474,
+      "surface_depth_and_fit_wall_s": 0.10387425500084646,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run",
+      "stage": "nut_regrasp_continued_02",
+      "observation": "pre_phase_alignment_observation",
+      "sample_step": 249741,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00970",
+      "old_best": {
+        "yaw_deg": 227.27500000000006,
+        "clipped_rms_m": 4.207332384869546e-05,
+        "median_distance_m": 3.522569777220421e-05,
+        "p90_distance_m": 6.300629148625617e-05,
+        "fraction_below0p1mm": 0.9973031283710896
+      },
+      "surface_best": {
+        "yaw_deg": 227.50000000000006,
+        "clipped_rms_m": 1.8396943403555926e-06,
+        "median_distance_m": 1.2200325727462769e-06,
+        "p90_distance_m": 3.1435866048923344e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 34.299576021791275,
+      "old_hand_error_at_same_sample_deg": 0.577645788927839,
+      "surface_hand_error_at_same_sample_deg": 0.3526457889278163,
+      "surface_depth_and_fit_wall_s": 0.10682996700052172,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run",
+      "stage": "nut_regrasp_continued_02",
+      "observation": "phase_aligned_palm_observation",
+      "sample_step": 251982,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00981",
+      "old_best": {
+        "yaw_deg": 227.80000000000007,
+        "clipped_rms_m": 4.2812514111729204e-05,
+        "median_distance_m": 3.465695511786131e-05,
+        "p90_distance_m": 6.480542868361092e-05,
+        "fraction_below0p1mm": 0.9929767693138843
+      },
+      "surface_best": {
+        "yaw_deg": 227.50000000000006,
+        "clipped_rms_m": 1.8767862762835396e-06,
+        "median_distance_m": 1.227484631272091e-06,
+        "p90_distance_m": 3.1869858503341675e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 33.27767231077624,
+      "old_hand_error_at_same_sample_deg": -0.5218420652612394,
+      "surface_hand_error_at_same_sample_deg": -0.22184206526117123,
+      "surface_depth_and_fit_wall_s": 0.10683515001437627,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+      "stage": "nut_regrasp_after_index",
+      "observation": "pre_phase_alignment_observation",
+      "sample_step": 210904,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00775",
+      "old_best": {
+        "yaw_deg": 88.90000000000005,
+        "clipped_rms_m": 4.248833600115892e-05,
+        "median_distance_m": 3.4515675907081915e-05,
+        "p90_distance_m": 6.478367281686123e-05,
+        "fraction_below0p1mm": 0.9940572663425176
+      },
+      "surface_best": {
+        "yaw_deg": 89.07500000000009,
+        "clipped_rms_m": 9.333262468841816e-07,
+        "median_distance_m": 6.94766640663147e-07,
+        "p90_distance_m": 1.5554302308373735e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 68.30893737975737,
+      "old_hand_error_at_same_sample_deg": 0.6264073713195444,
+      "surface_hand_error_at_same_sample_deg": 0.451407371319533,
+      "surface_depth_and_fit_wall_s": 0.10525195000809617,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+      "stage": "nut_regrasp_after_index",
+      "observation": "phase_aligned_palm_observation",
+      "sample_step": 213400,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00788",
+      "old_best": {
+        "yaw_deg": 89.17500000000011,
+        "clipped_rms_m": 4.222168353303695e-05,
+        "median_distance_m": 3.511186759974059e-05,
+        "p90_distance_m": 6.49382348665985e-05,
+        "fraction_below0p1mm": 0.9972987574284171
+      },
+      "surface_best": {
+        "yaw_deg": 89.07500000000009,
+        "clipped_rms_m": 9.218683396678373e-07,
+        "median_distance_m": 6.817281246185303e-07,
+        "p90_distance_m": 1.4808041441938258e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 71.04417114848344,
+      "old_hand_error_at_same_sample_deg": -0.2762098164856752,
+      "surface_hand_error_at_same_sample_deg": -0.17620981648565248,
+      "surface_depth_and_fit_wall_s": 0.10540276899700984,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+      "stage": "nut_regrasp_continued_01",
+      "observation": "pre_phase_alignment_observation",
+      "sample_step": 231448,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00882",
+      "old_best": {
+        "yaw_deg": 179.22500000000005,
+        "clipped_rms_m": 4.164424109888846e-05,
+        "median_distance_m": 3.4688913874280725e-05,
+        "p90_distance_m": 6.314119222818337e-05,
+        "fraction_below0p1mm": 0.9956780118854673
+      },
+      "surface_best": {
+        "yaw_deg": 179.27500000000006,
+        "clipped_rms_m": 1.2984941429254852e-06,
+        "median_distance_m": 9.509674328000983e-07,
+        "p90_distance_m": 2.1010637283325195e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 48.83310539608498,
+      "old_hand_error_at_same_sample_deg": 0.2953903117939092,
+      "surface_hand_error_at_same_sample_deg": 0.2453903117938978,
+      "surface_depth_and_fit_wall_s": 0.10592521200305782,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+      "stage": "nut_regrasp_continued_01",
+      "observation": "phase_aligned_palm_observation",
+      "sample_step": 233560,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00893",
+      "old_best": {
+        "yaw_deg": 179.22500000000005,
+        "clipped_rms_m": 4.2287193422235345e-05,
+        "median_distance_m": 3.513574529578225e-05,
+        "p90_distance_m": 6.413778765917336e-05,
+        "fraction_below0p1mm": 0.9956780118854673
+      },
+      "surface_best": {
+        "yaw_deg": 179.27500000000006,
+        "clipped_rms_m": 1.1781392907180868e-06,
+        "median_distance_m": 8.549541234970093e-07,
+        "p90_distance_m": 1.9166627680533566e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 59.47575728598907,
+      "old_hand_error_at_same_sample_deg": 0.005759168557915473,
+      "surface_hand_error_at_same_sample_deg": -0.044240831442095896,
+      "surface_depth_and_fit_wall_s": 0.10667846098658629,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+      "stage": "nut_regrasp_continued_02",
+      "observation": "pre_phase_alignment_observation",
+      "sample_step": 250264,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00980",
+      "old_best": {
+        "yaw_deg": 235.95000000000005,
+        "clipped_rms_m": 4.215094501708222e-05,
+        "median_distance_m": 3.475689998186372e-05,
+        "p90_distance_m": 6.325460797561068e-05,
+        "fraction_below0p1mm": 0.9946062567421791
+      },
+      "surface_best": {
+        "yaw_deg": 236.07500000000007,
+        "clipped_rms_m": 1.8215329432769067e-06,
+        "median_distance_m": 1.759268343448639e-06,
+        "p90_distance_m": 2.459995448589325e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 36.3447298573078,
+      "old_hand_error_at_same_sample_deg": 0.11684053776417613,
+      "surface_hand_error_at_same_sample_deg": -0.00815946223588071,
+      "surface_depth_and_fit_wall_s": 0.10621703800279647,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+      "stage": "nut_regrasp_continued_02",
+      "observation": "phase_aligned_palm_observation",
+      "sample_step": 252376,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00991",
+      "old_best": {
+        "yaw_deg": 235.90000000000003,
+        "clipped_rms_m": 4.2131165783406256e-05,
+        "median_distance_m": 3.512099959164605e-05,
+        "p90_distance_m": 6.506659063884114e-05,
+        "fraction_below0p1mm": 0.9967585089141004
+      },
+      "surface_best": {
+        "yaw_deg": 236.07500000000007,
+        "clipped_rms_m": 1.836165555310971e-06,
+        "median_distance_m": 1.7620623111724854e-06,
+        "p90_distance_m": 2.477318048477173e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 37.46050729440152,
+      "old_hand_error_at_same_sample_deg": 0.05496989429167343,
+      "surface_hand_error_at_same_sample_deg": -0.12003010570833794,
+      "surface_depth_and_fit_wall_s": 0.10707452299539,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+      "stage": "nut_regrasp_continued_03",
+      "observation": "pre_phase_alignment_observation",
+      "sample_step": 270464,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01085",
+      "old_best": {
+        "yaw_deg": 325.9999999999997,
+        "clipped_rms_m": 4.2111928960342505e-05,
+        "median_distance_m": 3.5301893259480137e-05,
+        "p90_distance_m": 6.413971233233651e-05,
+        "fraction_below0p1mm": 0.9989218328840971
+      },
+      "surface_best": {
+        "yaw_deg": 326.1249999999996,
+        "clipped_rms_m": 1.1692095479968502e-06,
+        "median_distance_m": 8.586794137954712e-07,
+        "p90_distance_m": 1.8896698293247033e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 60.54690545431144,
+      "old_hand_error_at_same_sample_deg": -0.02097261596361477,
+      "surface_hand_error_at_same_sample_deg": -0.14597261596347266,
+      "surface_depth_and_fit_wall_s": 0.10631603497313336,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+      "stage": "nut_regrasp_continued_03",
+      "observation": "phase_aligned_palm_observation",
+      "sample_step": 272768,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01097",
+      "old_best": {
+        "yaw_deg": 325.94999999999976,
+        "clipped_rms_m": 4.189180047510038e-05,
+        "median_distance_m": 3.49575537068784e-05,
+        "p90_distance_m": 6.295656319320179e-05,
+        "fraction_below0p1mm": 0.9956756756756757
+      },
+      "surface_best": {
+        "yaw_deg": 326.12499999999983,
+        "clipped_rms_m": 1.0849120709378759e-06,
+        "median_distance_m": 7.363932468251733e-07,
+        "p90_distance_m": 1.866370439529419e-06,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 59.93834046018496,
+      "old_hand_error_at_same_sample_deg": 0.048076377699032946,
+      "surface_hand_error_at_same_sample_deg": -0.12692362230103527,
+      "surface_depth_and_fit_wall_s": 0.10693650401663035,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+      "stage": "nut_regrasp_continued_04",
+      "observation": "pre_phase_alignment_observation",
+      "sample_step": 288945,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01181",
+      "old_best": {
+        "yaw_deg": 354.04999999999967,
+        "clipped_rms_m": 4.5425241420869074e-05,
+        "median_distance_m": 3.896755860494261e-05,
+        "p90_distance_m": 6.591528437932836e-05,
+        "fraction_below0p1mm": 0.9946033459255261
+      },
+      "surface_best": {
+        "yaw_deg": 354.1499999999998,
+        "clipped_rms_m": 1.7616785094499396e-05,
+        "median_distance_m": 1.3311251677805558e-05,
+        "p90_distance_m": 3.0062347650527955e-05,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 3.9069043599476063,
+      "old_hand_error_at_same_sample_deg": 1.3524912860123095,
+      "surface_hand_error_at_same_sample_deg": 1.252491286012173,
+      "surface_depth_and_fit_wall_s": 0.10549247098970227,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    },
+    {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+      "stage": "nut_regrasp_continued_04",
+      "observation": "phase_aligned_palm_observation",
+      "sample_step": 291254,
+      "frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01193",
+      "old_best": {
+        "yaw_deg": 354.12499999999983,
+        "clipped_rms_m": 4.490184311445792e-05,
+        "median_distance_m": 3.8929293657113105e-05,
+        "p90_distance_m": 6.570092584661531e-05,
+        "fraction_below0p1mm": 0.9978343259339469
+      },
+      "surface_best": {
+        "yaw_deg": 354.1499999999998,
+        "clipped_rms_m": 1.745905975647589e-05,
+        "median_distance_m": 1.262505156773841e-05,
+        "p90_distance_m": 2.996772527694702e-05,
+        "fraction_below0p1mm": 1.0
+      },
+      "surface_quality_passed": true,
+      "surface_three_degree_score_ratio": 4.0008471955250355,
+      "old_hand_error_at_same_sample_deg": -0.04552209057061418,
+      "surface_hand_error_at_same_sample_deg": -0.07052209057059144,
+      "surface_depth_and_fit_wall_s": 0.10461452801246196,
+      "distance_metric": "SOURCE_TRIANGLE_SURFACE_DISTANCE_CPU_BVH"
+    }
+  ],
+  "all_original_quality_gates_passed": true,
+  "frame_count": 16,
+  "median_per_image_wall_s": 0.10607112500292715
+}
