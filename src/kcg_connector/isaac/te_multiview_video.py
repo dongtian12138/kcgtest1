@@ -28,6 +28,8 @@ SMALL_PANELS = {
     "palm": (1440, 360, 480, 360),
     "wrist": (1440, 720, 480, 360),
 }
+FIVE_VIEW_PANELS = {name:(1440,index*270,480,270)
+                    for index,name in enumerate(('global_1','global_2','palm','wrist'))}
 
 
 def refresh_inspection_view(world) -> dict[str, object]:
@@ -134,8 +136,18 @@ class MultiViewVideoRecorder:
         before_phase_render: Callable[[str, int, int], None] | None = None,
     ) -> None:
         required = {"main", "global", "palm", "wrist"}
-        if set(camera_paths) != required:
-            raise ValueError("multiview recorder requires exactly four cameras")
+        five={'main','global_1','global_2','palm','wrist'}
+        if set(camera_paths) not in (required,five):
+            raise ValueError("multiview recorder requires the declared four- or five-view layout")
+        self.five_view=set(camera_paths)==five
+        self.small_panels=FIVE_VIEW_PANELS if self.five_view else SMALL_PANELS
+        self.camera_paths=dict(camera_paths)
+        self.online_status={}
+        self.expected_key_observations=2 if self.five_view else 1
+        self.label_font=None
+        if self.five_view:
+            from PIL import ImageFont
+            self.label_font=ImageFont.truetype('/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',21)
         self.rep = rep
         self.world = world
         self.output_path = output_path.resolve()
@@ -161,7 +173,7 @@ class MultiViewVideoRecorder:
         self.closed = False
         self.last_frames: dict[str, np.ndarray] | None = None
 
-        for index, name in enumerate(("main", "global", "palm", "wrist")):
+        for index, name in enumerate(('main',*self.small_panels)):
             resolution = (
                 MAIN_SOURCE_RESOLUTION
                 if name == "main"
@@ -325,9 +337,30 @@ class MultiViewVideoRecorder:
         canvas[my : my + mh, mx : mx + mw] = self._fit(
             frames["main"], (mw, mh)
         )
-        for name, (x, y, w, h) in SMALL_PANELS.items():
+        for name, (x, y, w, h) in self.small_panels.items():
             canvas[y : y + h, x : x + w] = self._fit(frames[name], (w, h))
-
+        if self.five_view:
+            from PIL import Image,ImageDraw
+            picture=Image.fromarray(canvas);draw=ImageDraw.Draw(picture)
+            labels={'global_1':'全局相机 1｜两件粗定位','global_2':'全局相机 2｜插头键位',
+                    'palm':'掌心相机｜位置和轴线','wrist':'腕部相机｜插座和键槽'}
+            for name,(x,y,w,h) in self.small_panels.items():
+                draw.rectangle((x,y,x+w,y+31),fill=(12,18,24))
+                draw.text((x+9,y+2),labels[name],font=self.label_font,fill=(240,245,250))
+            draw.rectangle((0,0,1439,67),fill=(12,18,24))
+            draw.text((14,4),f'主视角（仅录像）  仿真时间 {simulation_time_s:.1f} 秒',font=self.label_font,fill='white')
+            status=self.online_status
+            count=status.get('observation_count',0)
+            label=f'键位有效观测：{count}/{self.expected_key_observations}'
+            if 'angle_deg' in status:
+                kind='粗调指令' if status['stage']=='coarse' else '二次观测后待修正角'
+                label+=f"   {kind} {status['angle_deg']:+.3f}°   图像时刻 {status['sample_time_s']:.2f} 秒"
+            elif count:
+                label+=f"   已采集键位，等待角差计算   图像时刻 {status['sample_time_s']:.2f} 秒"
+            if 'measured_joint7_deg' in status:label+=f"   第七关节 {status['measured_joint7_deg']:.2f}°"
+            label+='   数值来源：视觉与编码器'
+            draw.text((14,34),label,font=self.label_font,fill=(120,235,200))
+            canvas=np.asarray(picture)
         return canvas
 
     def _write_composite(
@@ -448,6 +481,8 @@ class MultiViewVideoRecorder:
                 else 0
             ),
             "observation_only_not_returned_to_control": True,
+            "camera_paths":self.camera_paths,
+            "view_count":len(self.camera_paths),
             "error": encoding_error,
         }
         if encoding_error is not None:

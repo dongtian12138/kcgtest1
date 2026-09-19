@@ -140,8 +140,18 @@ def prepare_body_assembly_scene(repository, stage, scene, collision_config_path)
     )
     socket = UsdGeom.Xform.Define(stage, RECEPTACLE_ROOT)
     socket.AddTranslateOp().Set(Gf.Vec3d(*map(float, socket_position)))
+    # Experimental placement is authored before reset only. Online transport
+    # and alignment receive image-derived poses, never this scenario angle.
+    scene_yaw=float(probe.get('scene_initialization',{}).get('receptacle_yaw_deg',0.))
+    if not np.isfinite(scene_yaw) or abs(scene_yaw)>180.:
+        raise ValueError('A finite pre-reset socket placement angle is required')
+    if scene_yaw:socket.AddRotateZOp().Set(scene_yaw)
     visual = UsdGeom.Xform.Define(stage, RECEPTACLE_ROOT + "/OfficialVisual")
     visual.GetPrim().GetReferences().AddReference(str(visual_path))
+    if scene_yaw:
+        bbox_cache.Clear()
+        installed=bbox_cache.ComputeWorldBound(socket.GetPrim()).ComputeAlignedBox()
+        geometry_binding['installed_world_bounds_m']=[list(installed.GetMin()),list(installed.GetMax())]
     collision_report = _author_key_entry_collisions(
         stage, repository, scene, RECEPTACLE_ROOT, probe,
         Gf=Gf, Usd=Usd, UsdGeom=UsdGeom, UsdPhysics=UsdPhysics,
@@ -186,6 +196,8 @@ def prepare_body_assembly_scene(repository, stage, scene, collision_config_path)
         "report": {
             "simulation_only": True,
             "hardware_authorized": False,
+            "socket_initial_yaw_deg": scene_yaw,
+            "socket_initial_yaw_role": "SCENE_AUTHORING_AND_POSTRUN_EVALUATION_ONLY",
             "initial_grasp_part": initial_part,
             "geometry": geometry_binding,
             "collision": collision_report,

@@ -1,42 +1,27 @@
-# 当前状态：四相机与单次键观测改造已完成，名义整机验收通过
+# 当前任务：两次键位观测、真实视觉粗转与五画面录像
 
-核验时间：2026-09-18T19:30:49.435053+00:00。本次已授权实现与验证工作结束，目前无物理实验运行，也未安排自动后续实验。初抓重复性和原5倍整轮提速目标尚未解决，如后续继续须按用户当前请求选择任务，不自动恢复历史实验。
+核验时间：2026-09-19T05:50:35.462787+00:00。用户已明确授权实现并动态验证：固定G2第一次看键后做绕轴粗调整，第二次重新观测建立正式插入键方向；录像为一个旁观主视角加G1/G2/掌心/腕部四个实际工作相机。当前准备新场景预检，无主物理回合正在运行。不得仅做代码或文档后结束任务。
 
-## 当前有效基线与证据
+## 工作区和验收
 
-- 实现工作树`/home/noob/WorkPlace/kcgtest1-performance-20260917`，分支`codex/four-camera-single-key-20260918`。完整已验证执行源码提交`84bef70924b7244f47493a75c38a17fade6c3b58`；后续提交只增加报告、诊断配置及证据，未改变该实现。原`/home/noob/WorkPlace/kcgtest1`除同步本入口外未改其脏资产，未推送。
-- 主Body配置`reproducibility/four_camera_20260918/visual_body_centered_preload.yaml`，主装配配置`assembly_fixed_cameras.yaml`（同目录），原contact_endpoint_timeout_s=.5保留；调节deadband=.005，力目标、±.01Nm验收、6连续帧不变。1秒配置未采用。
-- 完整回合`artifacts/four_camera_20260918/full_chain_04/run`，2026-09-18T15:28:37.959009Z至17:59:51.662992Z，9073.704s、273285物理步。`whole_assembly_review.status=VERIFIED`且`complete_visual_assembly_verified=true`，独立`three_second_release_review.accepted=true`。
-- 原CPU960Hz、64/4、TGS/contact-last、CAD/SDF、质量/质心/惯量、材料、被动关节、力/速/行程限均保留；仅已有无损记录优化，不恢复已回退数值加速候选。仅仿真，hardware_authorized=false。
-- 功能相机恰好4条路径：G1同初始RGBD帧粗定位两件；固定G2只观察一次插头底部键；掌心位置/轴线5DOF；固定腕部精测Socket位姿和5槽。G2 eye[.378,.319,.244]/target[.490,.185,.275]，大搬运之后在3mm预接触高度、Socket侧方60mm看键，再短归中。录像旁观镜头不进入控制。
-- 实际插头搬运两段.3970812+.0603910=.4574722m；手基点.4431966m；搬运峰值arm.120988rad/s<原.15。旧主搬运约3.4746m。
-- KeyDirectionMemory由编码器传播手运动，掌心只修正位置/轴线，忽略圆拟合任意横向基；Body卸载前retire。接触开始主键轴向误差.0421348°，整个抓持期最大.2726773°；掌心没有测出额外轴向转动。中心误差最大21.627µm，轴.009570°。硬件延迟未标定。
-- 感知/规划结果的可用时间由受保护保持动作推进物理后满足。Nu首次规划8.628619s对应8284步；首次回转2.246249s对应2157步；Nu相位规划/验证同样有真实保持。te_visual_seating_axis可选分段分支修复了重复缓存帧确认，但当前配置未启用，只做软件检查，不称动态覆盖。
-- 在线到位True：独立观测深度14.603779/14.603582mm，实际张手保持3s、加载扭矩2.003314Nm。第四段在累计356.248994°因弹性裕量换抓，第五段再转1.708548°后到位候选及最终释放；原360°上界不变，换抓停止本身不等于成功。
-- 原始最终3s[270405,273285)共2880帧：手冲量严格零、源止挡和同128簧套每帧正载、Body/Nut醒着；实际深度14.603955mm恒定，满足14.605mm±10µm。全回合最大备用轴坐标.522465mm<原.5999mm。
-- 源键对槽面最大残差1.175528µm<原2µm；三原NAIL/Body初抓通过，Nu保持原允许区域（本轮两甲一腹），无其它受载对象。原红带1024/1024径向样本遮挡，已查看同回合旋拧末/释放中/最终视频帧。引擎健康/身份/有限性/真值隔离均true，PhysX容量警告0。
-- 原通用evaluation与exit2含旧全指腹/旧tensor通道的未通过标签，原报告保留；不得称所有JSON均通过。当前成功由适用源区域/源几何/原生接触/在线判断及完整汇总共同建立。
-- 旧完整参考`/home/noob/WorkPlace/kcgtest1-improvements-20260916/artifacts/full_validation/contact_last_gc128_repeat02/run`耗时15909.99s；当前进程比约1.7534倍，**未达到5倍**。独立后验检查另计；约7.6倍路程比不是整轮速度比。
+实现树 `/home/noob/WorkPlace/kcgtest1-performance-20260917`，分支 `codex/two-key-five-view-20260919`。原工作树脏资产不动，仅同步本入口。无硬件授权，无子代理授权，不推送、不删除原始证据，一次只运行一个主要物理实验。当前用户授权覆盖必要源码改动、受控仿真及对应验证。
 
-完整报告`reproducibility/four_camera_20260918/full_assembly_result_CN.md`；精简证据`evidence/full_chain_04/`，原始数据原位保留（truth msgpack.gz16342211301bytes、录像44762666bytes）。交付状态`delivery_status.json`。
+保留原完整名义基线源码84bef70、证据`artifacts/four_camera_20260918/full_chain_04/run`。它证明固定名义场景完整装配，不能证明大角度未知错位的自主视觉对键。审计发现默认插头Rx180、插座零yaw，且预观测搬运将临时Y轴置为世界+Y，因此默认场景提前接近对中。没有在这段目标生成链发现在线键角真值读取，但固定场景与预设动作存在有利匹配。
 
-## 初抓扰动与诊断：结果及边界
+新验证选插座初始绕轴+20°，保持原初抓和预观测搬运策略不变；角度只在第一次reset之前用于场景安装，控制必须从当前G2与腕部图像得到角差。配置`reproducibility/two_key_20260919/assembly_socket_plus20.yaml`；Body仍`reproducibility/four_camera_20260918/visual_body_centered_preload.yaml`。四相机定义`reproducibility/two_key_20260919/four_camera_two_key.yaml`。
 
-均只检查初抓/抬升/2s保持，不代表扰动下完整装配。
+## 已完成与下一步
 
-- `variation_plus_grasp_01`：+1mm/+1°，原.5s，2026-09-18T18:25:46.836303Z结束，496.825s。未重现旧被动关节超速，但在预载稳定门停止，未抬升。480帧最多5连续合格，要求6；末第一指**重力补偿后控制信号**误差-.0110755Nm超±.01。通用减零偏摘要的“末帧在带内”不是该信号，已更正解释。
-- `variation_minus_grasp_01`：-1mm/-1°，原.5s，2026-09-18T18:52:39.146998Z结束，711.787s；345帧获得6连续合格，实际抬升55.9769mm/2s/三NAIL Body接触/保持桌面零载通过。
-- `settling_1s_plus_grasp_01`：+1mm/+1°，仅最大等待.5→1s诊断，sourceecf7b0e，2026-09-18T19:14:54.066264Z结束，710.949s。358帧/.372917s已过门，早期接触303帧，均未用扩展窗口；实际抬升56.0074mm/2s/source_NAIL通过。
-- 两个+方向回合初始视觉位姿和下发运动计划完全相同，但前置实际视觉等待25054与24438步，相差.641667s，之后力轨迹不同。不能据此确定唯一根因；也没有证据证明1s是修复，故**未采用1秒配置，不自动继续扫描超时**。重复性仍未解决。
+已接入两阶段：纯函数由当前键/槽视觉位姿计算保持Body中心和轴线的绕轴粗转；实际粗转和原2s保持完成后，G2/掌心/编码器同步第二次取样，因果等待后显式更新键记忆。第二次之后允许的剩余绕轴修正上限1°只是小动作准入约定，不是键槽物理允差；超过即不插入。原力速/碰撞/行程和最终验收不放宽。
 
-详细记录`initial_grasp_robustness_CN.md`、`variation_plan.json`、`settling_diagnostic_plan.json`及evidence对应子目录（含机器人信号重放输入）。旧+1mm/+1°首次接触后三步f1j3=-4rad/s>3的原证据在`reproducibility/improvements_20260916/evidence/pose_variation_early_abort`；不要把当前未重现写成已证明彻底修复。
+五画面直接用四台感知相机的prim及安装位姿，额外只有旁观主视角；新文件名`assembly_five_view.mp4`，附中文标签、图像采样时间、在线测得角差和编码器J7，不显示真值为在线测量。连续录像图像不返回控制。旧四画面为非四相机模式保留。
 
-## 继续工作时的约束和入口
+当前相关软件20项检查通过，包括第二次观测的时间/阶段约束、轴向滑转重测、保持位置/轴线的转动、视觉槽方向变化导致相反转向、原单次分支和收尾。尚未验证物理表现。
 
-先核对用户当前任务；无新请求不启动新回合。一次只运行一个主物理实验，运行时冻结加载代码，用run/STOP_REQUEST受控停止，不SIGINT、不在线延长预算；没有子代理授权。真值仅后评，不进入在线控制；无硬件授权，不增力/放宽原物理验收，不删失败数据。
+下一步：完成代码检查并冻结源码，使用新配置独立预检（300s有界）；通过后运行+20°完整回合（原21600s上界、保留全量原始记录及五画面），先检查最早失败点，必要局部诊断，不盲扫、不在线延预算。运行以run/STOP_REQUEST受控停止，不SIGINT。结束后逐项原完整验收，另验证两次真实G2观测、首次明显非零角差、粗转实际执行、第二次重新锚定及插入前误差。摄像机审核和箭头后评须适配第二锚点；固定插座已旋转，后评应使用冻结安装记录的真实Socket变换，不能继续默认单位阵。原始失败证据保留。
 
-初抓后评`evaluate_visual_body_grasp.py`；Nu源面须`evaluate_source_nut_pad.py --geometry-plan artifacts/grasp_capacity_20260914/selected_two_nail_geometry.json`。键/3秒/原生支持/相机/箭头分别用已有review脚本。红带用`reproducibility/improvements_20260916/postreview/review_source_band_occlusion.py`加真实录像查看；evaluate_rear_face_visibility是合成遮挡消融，不是红带检查。完整汇总旧2s项须同时满足独立3s；本轮已全部完成，不重复重扫。
+## 环境
 
-详细历史见docs/history。主要失败链：早看键搬运后误差.555°；高位50mm看键后长下探误差约.4°并停在.777mm；低位01键掠视、02 G1学习粗姿态错误、03腕部遮挡，04改为低位60mm侧距通过。full_chain_03因审计发现Nu规划漏计物理等待而受控停止，并非物理失败；完整full_chain_04随后通过。旧contact_integration_candidate/prepare已过时，不重新应用。
+Isaac Python `/home/noob/WorkPlace/isaacsim/.conda-env/bin/python`，ISAAC_ENV_PREFIX同环境；规划Python `/home/noob/WorkPlace/kcgtest1/.venv/bin/python`；SAM环境/依赖保持原入口。OPENBLAS_NUM_THREADS=1。pytest禁用插件，PYTHONPATH加src/kcg_connector、isaac、carts_v2。普通rg受忽略时限定目录加--no-ignore。
 
-环境：Isaac Python `/home/noob/WorkPlace/isaacsim/.conda-env/bin/python`，ISAAC_ENV_PREFIX同环境；规划Python `/home/noob/WorkPlace/kcgtest1/.venv/bin/python`；SAM Python `/home/noob/.cache/kcgtest1-sam6d/.venv/bin/python`，SAM根`/home/noob/WorkPlace/kcgtest1-baseline-20260916/.deps/SAM-6D/SAM-6D`；OPENBLAS_NUM_THREADS=1。测试禁用pytest自动插件，sys.path加src/kcg_connector、isaac、carts_v2。普通rg被忽略时用限定目录--no-ignore。
+旧验收/未解决初抓重复性与5倍提速边界详见`docs/history/CURRENT_CONTEXT_CN_20260919_before_two_key.md`。不要因历史运行中描述自动恢复旧回合。

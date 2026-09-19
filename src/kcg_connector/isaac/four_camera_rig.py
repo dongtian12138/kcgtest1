@@ -18,8 +18,13 @@ def configuration(repository, runtime):
     if (data.get('schema_version')!='kcg_four_camera_assembly_v1'
             or data.get('simulation_only') is not True
             or data.get('global_camera_poses_may_change_during_episode') is not False
-            or data.get('maximum_key_observation_events')!=1):
-        raise ValueError('Four-camera mode requires a fixed, single-key-observation rig')
+            or data.get('maximum_key_observation_events') not in (1,2)):
+        raise ValueError('Four-camera mode requires a fixed rig and one or two declared key observations')
+    if data['maximum_key_observation_events']==2:
+        if data.get('key_observation_policy')!='COARSE_AXIAL_TURN_THEN_REOBSERVE':
+            raise ValueError('Two observations require explicit coarse-turn/reobservation semantics')
+        if not 0<float(data.get('maximum_refinement_rotation_deg',0))<=1.:
+            raise ValueError('Refinement must remain within the declared one-degree small-motion bound')
     return data
 
 

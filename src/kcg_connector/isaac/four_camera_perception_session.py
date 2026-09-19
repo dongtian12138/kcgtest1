@@ -28,6 +28,7 @@ class FourCameraPerceptionSession:
         self.last_observation=None
         self.camera_counts={};self.palm_count=0;self.consumed_count=0;self.closed=False
         self.memory=KeyDirectionMemory()
+        self.key_anchor_pending=False
         self.prekey_relation=None
         spec,_=camera_spec(self.root,self.rig,'palm',self.hand())
         self.hand_from_palm=np.asarray(spec['mount']['hand_from_camera_cv'])
@@ -59,8 +60,12 @@ class FourCameraPerceptionSession:
         raise RuntimeError('A retired Body grasp cannot supply a held transport frame')
 
     def adopt_key_anchor(self,anchor):
-        if anchor.get('key_observation_event_count')!=1 or self.memory.initialized:
-            raise ValueError('Exactly one current-episode key initialization is permitted')
+        count=anchor.get('key_observation_event_count')
+        refinement=(count==2 and self.rig.get('maximum_key_observation_events')==2
+                    and self.runtime.get('coarse_key_alignment_completed') is True
+                    and self.key_anchor_pending)
+        if not refinement and (count!=1 or self.memory.initialized):
+            raise ValueError('A second key anchor requires the completed coarse turn and a fresh image')
         availability=float(anchor['observation_latency']['availability_physics_time_s'])
         if availability>float(self.world.current_time) or float(anchor['physics_time_s'])>availability:
             raise ValueError('The single key observation is not causally available yet')
@@ -68,16 +73,28 @@ class FourCameraPerceptionSession:
             self._write({'event':'OLDER_PREKEY_PENDING_FRAME_REPLACED_BY_SYNCHRONIZED_KEY_ANCHOR',
                          'sample_time_s':self.pending.sample_time_s})
             self.pending=None
-        self.memory.initialize(anchor['world_from_hand_encoder'],
+        args=(anchor['world_from_hand_encoder'],
             np.asarray(anchor['key_measurement']['world_from_plug_row_major']).reshape(4,4),anchor['physics_time_s'])
+        correction=self.memory.reobserve_after_coarse_turn(*args) if refinement else self.memory.initialize(*args)
         palm=anchor['palm_observation']
         camera_from_body=np.linalg.inv(np.asarray(palm['world_from_camera_cv']))@np.asarray(palm['world_from_plug_five_dof'])
         self.memory.update_palm(self.hand_from_palm,camera_from_body,anchor['physics_time_s'])
         self.prekey_relation=None
         self.last_body=np.asarray(palm['world_from_plug_five_dof'])
         self.last_sample_time=float(anchor['physics_time_s'])
-        self._write({'event':'SINGLE_KEY_ANCHOR_INITIALIZED','sample_time_s':self.last_sample_time,
-                     'consumed_time_s':float(self.world.current_time)})
+        self.key_anchor_pending=False
+        self._write({'event':'KEY_ANCHOR_REOBSERVED_AFTER_COARSE_TURN' if refinement else 'SINGLE_KEY_ANCHOR_INITIALIZED',
+                     'sample_time_s':self.last_sample_time,'key_observation_event_count':count,
+                     'consumed_time_s':float(self.world.current_time),'refinement':correction})
+
+    def begin_key_refinement(self):
+        if (self.rig.get('maximum_key_observation_events')!=2 or self.memory.anchor_count!=1
+                or self.runtime.get('coarse_key_alignment_completed') is not True):
+            raise RuntimeError('The declared coarse turn must finish before the second key sample')
+        self.pending=None
+        self.key_anchor_pending=True
+        self._write({'event':'PALM_UPDATES_HELD_FOR_SYNCHRONIZED_KEY_REFINEMENT',
+                     'physics_time_s':float(self.world.current_time)})
 
     def _write(self,event):
         from te_foundationpose_handoff_runtime import _json_ready
@@ -112,6 +129,7 @@ class FourCameraPerceptionSession:
 
     def service(self,*,request_new=True):
         """Called between ordinary controller steps; never advances physics itself."""
+        if self.key_anchor_pending:return
         now=float(self.world.current_time)
         if self.pending is not None and self.pending.ready(now):
             payload=self.pending.payload;measurement=payload['measurement']
@@ -209,7 +227,7 @@ class FourCameraPerceptionSession:
         from te_foundationpose_handoff_runtime import _close_rgbd_resources
         _close_rgbd_resources(self.resources)
         (self.output/'summary.json').write_text(json.dumps({'camera_counts':self.camera_counts,
-            'key_observation_event_count':int(self.memory.initialized),'palm_samples':self.palm_count,
+            'key_observation_event_count':self.memory.anchor_count,'palm_samples':self.palm_count,
             'palm_measurements_consumed':self.consumed_count,'key_memory':self.memory.report(),
             'hardware_latency_calibrated':False,'online_object_or_contact_truth_used':False},indent=2)+'\n')
         self.events.close();self.closed=True

@@ -34,7 +34,7 @@ def minimum_axis_rotation(old,new):
 
 class KeyDirectionMemory:
     def __init__(self):
-        self.initialized=False;self.active=False;self.update_count=0
+        self.initialized=False;self.active=False;self.update_count=0;self.anchor_count=0
 
     def initialize(self,world_from_hand,world_from_body_with_key,sample_time_s):
         if self.initialized:raise RuntimeError('A second key initialization is not permitted in this episode')
@@ -45,6 +45,27 @@ class KeyDirectionMemory:
         self.key_hand=h[:3,:3].T@b[:3,1]
         self.sample_time_s=float(sample_time_s)
         self.initialized=True;self.active=True
+        self.anchor_count=1
+
+    def reobserve_after_coarse_turn(self,world_from_hand,world_from_body_with_key,sample_time_s):
+        """Explicit second visual anchor, after a completed physical coarse turn."""
+        if not self.active or self.anchor_count!=1:
+            raise RuntimeError('Exactly one active coarse key anchor must precede refinement')
+        if not math.isfinite(sample_time_s) or sample_time_s<=self.sample_time_s:
+            raise ValueError('The refinement must use a newer synchronized key image')
+        h,b=_pose(world_from_hand),_pose(world_from_body_with_key)
+        predicted=self.predict(h)
+        axis=b[:3,2]
+        old=_unit(predicted[:3,1]-axis*(axis@predicted[:3,1]))
+        measured=b[:3,1]
+        correction=math.degrees(math.atan2(axis@np.cross(old,measured),old@measured))
+        self.position_hand=h[:3,:3].T@(b[:3,3]-h[:3,3])
+        self.axis_hand=h[:3,:3].T@axis
+        self.key_hand=h[:3,:3].T@measured
+        self.sample_time_s=float(sample_time_s);self.anchor_count=2
+        return {'previous_prediction_to_new_measurement_axial_deg':correction,
+                'source':'SECOND_CURRENT_GLOBAL2_IMAGE_NOT_ENCODER_TARGET',
+                'sample_time_s':self.sample_time_s}
 
     def update_palm(self,hand_from_camera,camera_from_body_five_dof,sample_time_s):
         if not self.active:raise RuntimeError('Key reference is not bound to the current Body grasp')
@@ -79,7 +100,7 @@ class KeyDirectionMemory:
         self.active=False;self.retirement_reason=str(reason)
 
     def report(self):
-        return {'initialized':self.initialized,'active_body_grasp':self.active,
+        return {'initialized':self.initialized,'active_body_grasp':self.active,'anchor_count':self.anchor_count,
                 'palm_update_count':self.update_count,'sample_time_s':getattr(self,'sample_time_s',None),
                 'extra_axial_rotation_is_measured':False,
                 'assumption':'ADDITIONAL_BODY_AXIAL_SLIP_MUST_FIT_REMAINING_KEYWAY_CLEARANCE_AND_REQUIRES_VERIFICATION',

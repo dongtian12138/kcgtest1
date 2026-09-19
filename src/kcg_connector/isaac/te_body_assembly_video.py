@@ -37,18 +37,32 @@ class BodyAssemblyVideo:
         self.stride = round(1.0 / self.physics_dt_s / self.fps)
         self.output = Path(output)
         self.frozen_main_target = None
+        from four_camera_rig import configuration,camera_spec
+        self.rig=configuration(repository,runtime)
+        self.basename='assembly_five_view' if self.rig else 'assembly_four_view'
         self.paths = {name: "/World/BodyAssemblyVideo/" + name for name in ("main", "global", "palm", "wrist")}
         self.mounts = {name: hand_camera_mount(repository, name) for name in ("palm", "wrist")}
-        global_config = yaml.safe_load((Path(repository) / GLOBAL_CAMERA_CONFIG).read_text())["camera"]
-        global_pose = self.eye_target(global_config["eye_world_m"], global_config["target_world_m"])
-        self.author_camera(self.stage, self.paths["global"], global_pose,
-            resolution=SMALL_SOURCE_RESOLUTION, focal_length_mm=global_config["focal_length_mm"],
-            horizontal_aperture_mm=global_config["horizontal_aperture_mm"],
-            clipping_range_m=tuple(global_config["clipping_range_m"]), Gf=Gf, UsdGeom=UsdGeom)
+        if self.rig:
+            self.paths={'main':'/World/BodyAssemblyVideo/main'}
+            for role in ('global_1','global_2','palm','wrist'):
+                spec,pose=camera_spec(repository,self.rig,role,np.eye(4))
+                self.paths[role]=spec['prim_path']
+                if role.startswith('global'):
+                    self.author_camera(self.stage,spec['prim_path'],pose,resolution=SMALL_SOURCE_RESOLUTION,
+                        focal_length_mm=spec['focal_length_mm'],horizontal_aperture_mm=spec['horizontal_aperture_mm'],
+                        clipping_range_m=tuple(spec['clipping_range_m']),Gf=Gf,UsdGeom=UsdGeom)
+        else:
+            global_config = yaml.safe_load((Path(repository) / GLOBAL_CAMERA_CONFIG).read_text())["camera"]
+            global_pose = self.eye_target(global_config["eye_world_m"], global_config["target_world_m"])
+            self.author_camera(self.stage, self.paths["global"], global_pose,
+                resolution=SMALL_SOURCE_RESOLUTION, focal_length_mm=global_config["focal_length_mm"],
+                horizontal_aperture_mm=global_config["horizontal_aperture_mm"],
+                clipping_range_m=tuple(global_config["clipping_range_m"]), Gf=Gf, UsdGeom=UsdGeom)
         self._set_poses("initialization", np.zeros(11))
         self.recorder = MultiViewVideoRecorder(rep=rep, world=self.world, camera_paths=self.paths,
-            output_path=self.output / "assembly_four_view.mp4", physics_hz=round(1.0/self.physics_dt_s), fps=self.fps)
-        self.inspection_camera = (create_inspection_camera(self.world, self.paths['global'])
+            output_path=self.output / (self.basename+'.mp4'), physics_hz=round(1.0/self.physics_dt_s), fps=self.fps)
+        self.recorder.expected_key_observations=self.rig['maximum_key_observation_events'] if self.rig else 1
+        self.inspection_camera = (create_inspection_camera(self.world, self.paths['global_1' if self.rig else 'global'])
             if runtime.get('inspection_ui_enabled',True) else None)
         self.refresh_inspection_view = refresh_inspection_view
         self.next_ui_refresh_wall_s = perf_counter()
@@ -57,7 +71,7 @@ class BodyAssemblyVideo:
         self.ui_refresh_wall_s = 0.0
         self.maximum_ui_refresh_gap_s = 0.0
         self.ui_audit = (self.output / "inspection_refresh_audit.jsonl").open("x", buffering=1)
-        self.timeline = (self.output / "assembly_four_view_frames.jsonl").open("x", encoding="utf-8", buffering=1)
+        self.timeline = (self.output / (self.basename+'_frames.jsonl')).open("x", encoding="utf-8", buffering=1)
         self.original_capture = runtime["auditor"].capture
         runtime["auditor"].capture = self.capture
 
@@ -122,6 +136,8 @@ class BodyAssemblyVideo:
         phase = str(kwargs["phase"])
         native_before = self._native_state_for_recording()
         self._set_poses(phase, np.asarray(kwargs["active_positions"]))
+        self.recorder.online_status=dict(self.runtime.get('key_alignment_video_status',{}))
+        self.recorder.online_status['measured_joint7_deg']=float(np.degrees(kwargs['active_positions'][6]))
         before = float(self.world.current_time)
         index_before = int(self.world.current_time_step_index)
         render_error = None
@@ -138,6 +154,7 @@ class BodyAssemblyVideo:
                 self.maximum_render_state_deltas.get(name, 0.0), value)
         self.timeline.write(json.dumps({"frame": self.recorder.frame_count-1 if render_error is None else None, "step": step,
             "phase": phase, "simulation_time_s": (step+1)*self.physics_dt_s,
+            "online_visual_and_encoder_status":self.recorder.online_status,
             "world_time_before_render_s": before, "world_time_after_render_s": after,
             "world_step_before_render": index_before,
             "world_step_after_render": int(self.world.current_time_step_index),
@@ -194,5 +211,5 @@ class BodyAssemblyVideo:
         result.update(camera_pose_inputs="FIXED_RIG_CALIBRATION_AND_JOINT_ENCODER_FK",
                       simulator_object_or_contact_truth_used_for_camera_poses=False,
                       physics_time_invariance_checked_each_frame=True)
-        (self.output / "assembly_four_view_video.json").write_text(json.dumps(result, indent=2) + "\n")
+        (self.output / (self.basename+'_video.json')).write_text(json.dumps(result, indent=2) + "\n")
         return result

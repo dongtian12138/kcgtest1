@@ -10,7 +10,7 @@ import math
 import numpy as np
 
 
-def observe(repository,runtime,stepper,arguments,output,rig):
+def observe(repository,runtime,stepper,arguments,output,rig,*,observation_index=1):
     import omni.replicator.core as rep
     import omni.usd
     from pxr import Gf,UsdGeom
@@ -21,20 +21,28 @@ def observe(repository,runtime,stepper,arguments,output,rig):
     from te_plug_five_dof_geometry import estimate_plug_rear_circle_from_float_depth,_visible_face_geometry
 
     count=runtime.get('body_key_observation_events',0)
-    if count:raise RuntimeError('The fixed global key camera may initialize the key only once')
-    root=Path(repository);out=Path(output)/'postgrasp_key';out.mkdir(parents=True,exist_ok=False)
+    if observation_index!=count+1 or observation_index>rig['maximum_key_observation_events']:
+        raise RuntimeError('Key observation sequence exceeds the declared episode policy')
+    root=Path(repository);out=Path(output)/('postgrasp_key' if observation_index==1 else 'postgrasp_key_refined')
+    out.mkdir(parents=True,exist_ok=False)
     world=runtime['world'];stage=omni.usd.get_context().get_stage()
-    if rig.get('key_observation_after_major_transport',False):
+    if observation_index==1 and rig.get('key_observation_after_major_transport',False):
         from four_camera_body_transport import run as transfer_to_key_station
         transfer_to_key_station(root,runtime,stepper,runtime['grasp_result'],
             arguments.dynamic_settings,None,Path(output)/'prekey_transport',prekey=True)
+    session=runtime.get('four_camera_perception_session')
+    if observation_index==2:
+        if session is None:raise RuntimeError('No active Body grasp for refinement')
+        session.begin_key_refinement()
     q=np.asarray(stepper.latest[0],float)
     hand=np.asarray(runtime['inputs'].robot_model.forward_kinematics(tuple(q),enforce_limits=False)['handbase_link'])
     nominal=np.asarray(runtime['control_plan']['object_from_hand_row_major']).reshape(4,4)
-    seed=hand@np.linalg.inv(nominal)
+    seed=session.body() if observation_index==2 else hand@np.linalg.inv(nominal)
     sample_step=int(stepper.step_index)-1;sample_time=float(world.current_time)
     started=perf_counter();resources={};images={}
-    record={'scope':'SINGLE_FIXED_GLOBAL_KEY_AND_PALM_VISIBILITY_PREFIX',
+    record={'scope':'FIXED_GLOBAL_KEY_AND_SYNCHRONIZED_PALM_OBSERVATION',
+            'observation_role':'COARSE_AXIAL_ALIGNMENT' if observation_index==1 and rig['maximum_key_observation_events']==2 else 'FINAL_KEY_ANCHOR',
+            'record_path':str(out/'camera_and_estimate.json'),
             'robot_sample_step':sample_step,'physics_time_s':sample_time,
             'world_from_hand_encoder':hand.tolist(),'active_positions_rad':q.tolist(),
             'online_object_or_contact_truth_used':False,'full_assembly_claimed':False}
@@ -55,9 +63,9 @@ def observe(repository,runtime,stepper,arguments,output,rig):
             images[role]=(spec,pose,np.load(folder/'depth_m.npy'),capture)
         spec,camera,depth,capture=images['global_2'];K=intrinsics(spec)
         key=estimate_held_plug_key_from_depth(depth,K,camera,seed)
-        runtime['body_key_observation_events']=1
+        runtime['body_key_observation_events']=observation_index
         record.update(capture=capture,intrinsics_3x3=K.tolist(),world_from_camera_cv=camera.tolist(),
-                      key_measurement=key,key_observation_event_count=1)
+                      key_measurement=key,key_observation_event_count=observation_index)
         if not key.get('key_direction_measured'):
             raise RuntimeError('Fixed global camera2 did not resolve the body key')
         body=np.asarray(key['world_from_plug_row_major']).reshape(4,4)
@@ -101,7 +109,7 @@ def observe(repository,runtime,stepper,arguments,output,rig):
            'motion':{'maximum_transport_joint_speed_rad_s':.15}}
     advance=_execute_held_plug_path(world,stepper,runtime['nail_body_ft_auditor'],runtime['grasp_result'],
         arguments.dynamic_settings,np.repeat(held[None,:],steps,axis=0),probe,
-        phase='key_probe_observation_latency_hold')
+        phase='key_probe_observation_latency_hold' if observation_index==1 else 'key_probe_refined_observation_latency_hold')
     record['observation_latency']={'capture_and_processing_wall_s':latency,
         'physics_hold_duration_s':steps*dt,'physics_hold_steps':steps,
         'availability_physics_time_s':float(world.current_time),'availability_step':int(stepper.step_index),
@@ -113,4 +121,6 @@ def observe(repository,runtime,stepper,arguments,output,rig):
     session=runtime.get('four_camera_perception_session')
     if session is not None:
         session.adopt_key_anchor(record)
+    runtime['key_alignment_video_status']={'stage':'key_sample','observation_count':observation_index,
+        'sample_time_s':record['physics_time_s']}
     return record

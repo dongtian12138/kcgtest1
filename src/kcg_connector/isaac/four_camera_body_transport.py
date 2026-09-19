@@ -121,6 +121,7 @@ def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output, *, 
 
         def move(target_body, phase):
             refresh()
+            if callable(target_body):target_body=target_body(session.body())
             record['stage'] = phase
             save()
             planning_started = perf_counter()
@@ -211,6 +212,42 @@ def run(repository, runtime, stepper, grasp_result, dynamic, anchor, output, *, 
         socket = np.asarray(measurement['world_from_receptacle_row_major']).reshape(4, 4)
         record['world_from_socket_wrist_visual'] = socket.tolist()
         obstacles['receptacle'], _ = _cylinder_from_mesh(Path(global_observation['receptacle_cad_mm']), .001, socket)
+        if session.rig.get('maximum_key_observation_events')==2:
+            from two_stage_key_alignment import axial_target
+            from four_camera_grasp_observation import observe
+            from types import SimpleNamespace
+            def coarse_target(current):
+                target,details=axial_target(current,socket)
+                details.update(first_key_sample_time_s=anchor['physics_time_s'],
+                    wrist_sample_time_s=frame['sample_time_s'],
+                    planning_physics_time_s=float(world.current_time))
+                record['coarse_axial_alignment']=details
+                runtime['key_alignment_video_status']={
+                    'stage':'coarse','observation_count':1,
+                    'angle_deg':details['signed_rotation_about_body_axis_deg'],
+                    'sample_time_s':anchor['physics_time_s']}
+                return target
+            move(coarse_target,'key_probe_body_coarse_axial_alignment')
+            runtime['coarse_key_alignment_completed']=True
+            record['stage']='SECOND_FIXED_GLOBAL2_KEY_OBSERVATION';save()
+            refined=observe(root,runtime,stepper,SimpleNamespace(dynamic_settings=dynamic),
+                runtime['output_directory'],session.rig,observation_index=2)
+            record['key_anchor_for_entry']=refined['record_path']
+            record['key_observation_event_count']=2
+            record['body_key_reobservations_after_memory']=1
+            refresh()
+            _,residual=axial_target(session.body(),socket)
+            record['after_second_observation']=residual
+            record['after_second_observation']['sample_time_s']=refined['physics_time_s']
+            limit=float(session.rig['maximum_refinement_rotation_deg'])
+            residual['maximum_allowed_further_axial_rotation_deg']=limit
+            runtime['key_alignment_video_status']={
+                'stage':'refined','observation_count':2,
+                'angle_deg':residual['signed_rotation_about_body_axis_deg'],
+                'sample_time_s':refined['physics_time_s']}
+            save()
+            if abs(residual['signed_rotation_about_body_axis_deg'])>limit:
+                raise RuntimeError('Second key image still requires a large turn; insertion is not admitted')
         above = socket.copy()
         above[:3, :3] = socket[:3, :3] @ Rotation.from_euler('y', 180, degrees=True).as_matrix()
         above[:3, 3] += station_gap * socket[:3, 2]
