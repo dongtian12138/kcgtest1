@@ -1651,9 +1651,12 @@ def _run_preload_lift_hold(stepper, motion_plan, settings, pregrasp, contact, ta
         if measured_effort_requires_abort(settings, latest[2][8:] - tare[1:]):
             return "HAND_MEASURED_EFFORT_ABORT"
     effort_evidence_count = 0
-    effort_check_steps = round(
-        float(settings["contact_endpoint_timeout_s"]) / dt
-    )
+    effort_settle_timeout = float(settings.get(
+        "prelift_effort_settle_timeout_s", settings["contact_endpoint_timeout_s"]
+    ))
+    if not np.isfinite(effort_settle_timeout) or not 0.0 < effort_settle_timeout <= 2.0:
+        return "PRELIFT_EFFORT_SETTLE_TIMEOUT_CONFIGURATION_ABORT"
+    effort_check_steps = round(effort_settle_timeout / dt)
     for _ in stepper.active_steps(effort_check_steps):
         hand_target = regulated_hand_target(
             previous_target, predicted_task_effort
