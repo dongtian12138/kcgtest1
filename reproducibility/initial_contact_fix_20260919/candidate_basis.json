@@ -1,0 +1,116 @@
+{
+  "scope": "SOURCE_CAD_AND_KINEMATIC_GRASP_BAND_DIAGNOSIS_NOT_DYNAMIC_SUCCESS",
+  "original_hand_body_z_m": -0.45243714,
+  "candidate_hand_body_z_m": -0.45443714,
+  "single_physical_variable": "INITIAL_GRASP_TARGET_Z_RELATIVE_TO_VISUALLY_OBSERVED_BODY",
+  "sampled_smooth_band_z_range_m": [
+    -0.02995,
+    -0.02805
+  ],
+  "predicted_contacts": [
+    {
+      "shift_hand_body_z_m": 0.0,
+      "link": "f1Link3",
+      "fraction": 0.5908907865260719,
+      "finger_positions_rad": [
+        1.2217304763960306,
+        0.710407146306825,
+        0.615119363181825,
+        0.709334880681825
+      ],
+      "first_envelope_contact_body_m": [
+        -0.01397612087909822,
+        -0.012048706579897983,
+        -0.0264744407062021
+      ],
+      "gap_m": -5.898059818321144e-17
+    },
+    {
+      "shift_hand_body_z_m": 0.0,
+      "link": "f2Link2",
+      "fraction": 0.5983932496248262,
+      "finger_positions_rad": [
+        1.2217304763960306,
+        0.7109323187237379,
+        0.6156445355987379,
+        0.7098600530987379
+      ],
+      "first_envelope_contact_body_m": [
+        0.016138341085494577,
+        -0.008947840783838493,
+        -0.02662759018383988
+      ],
+      "gap_m": -1.734723475976807e-17
+    },
+    {
+      "shift_hand_body_z_m": 0.0,
+      "link": "f3Link3",
+      "fraction": 0.6073058130457715,
+      "finger_positions_rad": [
+        1.2217304763960306,
+        0.7115561981632039,
+        0.6162684150382041,
+        0.710483932538204
+      ],
+      "first_envelope_contact_body_m": [
+        0.0036097762032489718,
+        0.018096186974412586,
+        -0.02645878666824153
+      ],
+      "gap_m": -4.85722573273506e-17
+    },
+    {
+      "shift_hand_body_z_m": -0.002,
+      "link": "f1Link3",
+      "fraction": 0.644826970320076,
+      "finger_positions_rad": [
+        1.2217304763960306,
+        0.7141826791724053,
+        0.6188948960474053,
+        0.7131104135474053
+      ],
+      "first_envelope_contact_body_m": [
+        -0.013421811532534744,
+        -0.01158358851202259,
+        -0.02879646789557394
+      ],
+      "gap_m": 6.0750016128707784e-15
+    },
+    {
+      "shift_hand_body_z_m": -0.002,
+      "link": "f2Link2",
+      "fraction": 0.6524342000311534,
+      "finger_positions_rad": [
+        1.2217304763960306,
+        0.7147151852521807,
+        0.6194274021271807,
+        0.7136429196271807
+      ],
+      "first_envelope_contact_body_m": [
+        0.015511489984457998,
+        -0.00858593187094972,
+        -0.028952353043657002
+      ],
+      "gap_m": 5.551115123125783e-17
+    },
+    {
+      "shift_hand_body_z_m": -0.002,
+      "link": "f3Link3",
+      "fraction": 0.6612406730410038,
+      "finger_positions_rad": [
+        1.2217304763960306,
+        0.7153316383628703,
+        0.6200438552378703,
+        0.7142593727378703
+      ],
+      "first_envelope_contact_body_m": [
+        0.0034841178884437484,
+        0.017383482682417836,
+        -0.02878080700418254
+      ],
+      "gap_m": -9.71445146547012e-16
+    }
+  ],
+  "initial_grasp_success_claimed": false,
+  "physics_and_acceptance_changed": false
+}
