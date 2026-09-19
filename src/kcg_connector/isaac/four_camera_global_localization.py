@@ -51,7 +51,8 @@ def start(repository, runtime, image_directory, sample_time):
     rig = configuration(root, runtime)
     if rig is None or runtime.get('global1_socket_job') is not None:
         return
-    sources = json.loads((root / 'src/kcg_connector/config/te_same_reset_rgbd_observe_v1.json').read_text())['frozen_sources']
+    sources = json.loads((root / rig['global_1'].get('observation_sources',
+        'src/kcg_connector/config/te_same_reset_rgbd_observe_v1.json')).read_text())['frozen_sources']
     template = json.loads((root / sources['provider_input_template']).read_text())
     workspace = template['frozen_endpoint_workspaces_world_aabb_m']['receptacle']
     spec, camera = camera_spec(root, rig, 'global_1')

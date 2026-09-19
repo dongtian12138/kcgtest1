@@ -8,6 +8,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT/'src/kcg_connector/isaac'),str(ROOT/'src/kcg_connector/isaac/carts_v2')]
 from trace_metadata import read_truth_sample
 from two_stage_key_alignment import axial_target
+from key_direction_memory import minimum_axis_rotation
 
 
 def load(path):return json.loads(Path(path).read_text())
@@ -41,6 +42,10 @@ def review(run):
     after=read_truth_sample(run,coarse['execution']['last_step']-1)
     actual_before,actual_after=body_pose(before),body_pose(after)
     physical_turn=float(np.degrees(Rotation.from_matrix(actual_after[:3,:3]@actual_before[:3,:3].T).magnitude()))
+    carried_key=minimum_axis_rotation(actual_before[:3,2],actual_after[:3,2])@actual_before[:3,1]
+    physical_axial_turn=float(np.degrees(np.arctan2(actual_after[:3,2]@np.cross(carried_key,actual_after[:3,1]),
+        carried_key@actual_after[:3,1])))
+    physical_axis_change=float(np.degrees(np.arccos(np.clip(actual_before[:3,2]@actual_after[:3,2],-1,1))))
     observations=[]
     for anchor in anchors:
         row=read_truth_sample(run,anchor['robot_sample_step']);actual=body_pose(row)
@@ -71,7 +76,7 @@ def review(run):
         'coarse_target_preserves_body_center_and_axis':bool(np.allclose(start[:3,3],target[:3,3],rtol=0,atol=1e-12)
             and np.allclose(start[:3,2],target[:3,2],rtol=0,atol=1e-12)),
         'perturbed_case_requires_at_least_ten_degree_correction':abs(declared)>=10.,
-        'physical_body_actually_turns_at_least_ten_degrees':physical_turn>=10.,
+        'physical_body_actually_twists_at_least_ten_degrees':abs(physical_axial_turn)>=10.,
         'fresh_second_key_anchor_consumed':len(refinements)==1 and refinements[0]['sample_time_s']==anchors[1]['physics_time_s']
             and refinements[0]['consumed_time_s']>=anchors[1]['observation_latency']['availability_physics_time_s'],
         'remaining_small_motion_admission':abs(residual)<=1.,
@@ -93,6 +98,8 @@ def review(run):
         'second_anchor_update':refinements,
         'truth_only_postrun':{'socket_world_yaw_deg':float(np.degrees(np.arctan2(socket[1,0],socket[0,0]))),
             'actual_body_rotation_during_coarse_stage_deg':physical_turn,
+            'actual_body_axial_rotation_during_coarse_stage_deg':physical_axial_turn,
+            'actual_body_axis_change_during_coarse_stage_deg':physical_axis_change,
             'actual_joint7_delta_deg':float(np.degrees(after['active_positions_rad'][6]-before['active_positions_rad'][6])),
             'coarse_stage_body_center_displacement_m':float(np.linalg.norm(actual_after[:3,3]-actual_before[:3,3])),
             'entry':entry},

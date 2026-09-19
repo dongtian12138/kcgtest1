@@ -50,6 +50,12 @@ def compare_nominal_scene_scope(repository,reference_scene,current_scene,current
         'later_controller_settings_are_not_preflight_results':True}
 
 
+def _initial_camera_options(repository,runtime):
+    from four_camera_rig import configuration
+    rig=configuration(repository,runtime)
+    return rig['global_1'] if rig else {}
+
+
 def body_grasp_frame(axis_pose):
     if axis_pose.get("status") != "OBSERVED_AXIS_POSITION_YAW_FREE":
         raise ValueError("The current image did not resolve the supported plug axis")
@@ -75,9 +81,11 @@ def observe_tabletop_body(repository, runtime, output):
 
     repository=Path(repository);output=Path(output);output.mkdir(parents=True,exist_ok=False)
     world=runtime["world"];stage=omni.usd.get_context().get_stage()
-    camera_path=repository/'src/kcg_connector/config/te_rgbd_camera_near_side_v1.yaml'
+    global1=_initial_camera_options(repository,runtime)
+    camera_path=repository/global1.get('source_config','src/kcg_connector/config/te_rgbd_camera_near_side_v1.yaml')
     camera=yaml.safe_load(camera_path.read_text())["camera"]
-    source=json.loads((repository/'src/kcg_connector/config/te_same_reset_rgbd_observe_v1.json').read_text())["frozen_sources"]
+    source=json.loads((repository/_initial_camera_options(repository,runtime).get(
+        'observation_sources','src/kcg_connector/config/te_same_reset_rgbd_observe_v1.json')).read_text())["frozen_sources"]
     template_path=repository/source["provider_input_template"]
     template=json.loads(template_path.read_text())
     static_path=repository/source["static_background_depth"]
@@ -138,9 +146,19 @@ def observe_tabletop_body(repository, runtime, output):
         "input":"current ordinary RGB/depth and frozen calibration/background/CAD","output":"axis position without measured key yaw"}
     input_path=output/'provider_input.json';input_path.write_text(json.dumps(manifest,indent=2)+'\n')
     result=run_te_rgbd_pose_provider(input_path,repository)
+    method=global1.get('initial_plug_pose_method','SUPPORTED_LOWER_RING')
+    if method=='VISIBLE_BODY_REAR_FACE':
+        from kcg_connector.te_rgbd_pose_provider import load_provider_inputs
+        from global1_visible_face import estimate as estimate_global1_face
+        result=estimate_global1_face(load_provider_inputs(input_path,repository),result,
+            repository/'artifacts/kcg_connector/vision/sam6d_segmentation_run19_observation_v1/D38999_26FJ35PN_VISUAL.obj')
+    elif method!='SUPPORTED_LOWER_RING':
+        raise ValueError('Unsupported declared Global1 plug localization method')
     result_path=output/'pose_provider_result.json';result_path.write_text(json.dumps(result,indent=2)+'\n')
     axis=result["transport_grasp_pose"];body=body_grasp_frame(axis)
-    record={"source":"CURRENT_RGBD_WITH_CAD_COAXIALITY_AND_STATIC_TABLE_SUPPORT_PRIOR",
+    record={"source":("CURRENT_RGBD_VISIBLE_BODY_REAR_FACE" if method=="VISIBLE_BODY_REAR_FACE"
+                       else "CURRENT_RGBD_WITH_CAD_COAXIALITY_AND_STATIC_TABLE_SUPPORT_PRIOR"),
+        "global1_camera_source_config":str(camera_path),"initial_plug_pose_method":method,
         "capture":capture,"physics_time_s":before,"provider_result":str(result_path),
         "robot_sample_step":int(runtime["nail_body_ft_auditor"].samples[-1]["step"]),
         "provider_result_sha256":digest(result_path),"world_from_body_for_initial_grasp":body.tolist(),
@@ -174,7 +192,8 @@ def check_initial_approach(repository,runtime,plan,observed_body,initial_hand):
     with np.load(mesh_path) as meshes:
         for name in ("f1Link3","f2Link2","f3Link3"):
             scene.objects[name]=fcl.CollisionObject(_fcl_model(meshes[name]))
-    source=json.loads((repository/'src/kcg_connector/config/te_same_reset_rgbd_observe_v1.json').read_text())["frozen_sources"]
+    source=json.loads((repository/_initial_camera_options(repository,runtime).get(
+        'observation_sources','src/kcg_connector/config/te_same_reset_rgbd_observe_v1.json')).read_text())["frozen_sources"]
     template=json.loads((repository/source["provider_input_template"]).read_text())
     obstacles={}
     for name,box in template["known_static_scene_geometry"].items():

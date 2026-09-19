@@ -9493,7 +9493,7 @@ def _create_runtime(
         "transfer_distance_m": float(dynamic["table_release_clearance_m"]),
         "online_object_truth_used": False,
     }
-    if arguments.capture_visual_evidence or arguments.postgrasp_key_observation:
+    if arguments.capture_visual_evidence or arguments.postgrasp_key_observation or arguments.visual_body_start:
         render = scene["render"]
         lighting_root = "/World/CARTSGraspVisualEvidenceLights"
         dome = UsdLux.DomeLight.Define(stage, lighting_root + "/Fill")
