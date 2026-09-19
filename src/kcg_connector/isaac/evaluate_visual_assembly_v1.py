@@ -112,14 +112,20 @@ def review(directory):
             session=json.loads(session_path.read_text()) if session_path.exists() else {}
             memory=session.get('key_memory',{})
             visual.update(
-                single_key_observation=(transport['key_observation_event_count']==1
-                    and transport.get('body_key_reobservations_after_memory')==0),
                 fixed_four_camera_records_verified=(camera_review.exists()
                     and json.loads(camera_review.read_text()).get('passed') is True),
                 palm_position_and_axis_updates=int(memory.get('palm_update_count',0))>=2,
                 body_grasp_reference_retired=(memory.get('active_body_grasp') is False
                     and memory.get('retirement_reason')=='BODY_RELEASED_AFTER_GUIDED_ENTRY'),
                 online_seating_confirmed=transport.get('online_completion',{}).get('online_seating_confirmed') is True)
+            if transport['key_observation_event_count']==2:
+                two_key_review=directory/'two_key_alignment_review.json'
+                visual['two_stage_key_observations']=(transport.get('body_key_reobservations_after_memory')==1
+                    and memory.get('anchor_count')==2 and two_key_review.exists()
+                    and json.loads(two_key_review.read_text()).get('passed') is True)
+            else:
+                visual['single_key_observation']=(transport['key_observation_event_count']==1
+                    and transport.get('body_key_reobservations_after_memory')==0)
         else:
             visual['body_key_reobserved_after_carry']=transport.get('body_key_reobservations_after_memory',0)>0
         result['visual_stage_conditions']=visual

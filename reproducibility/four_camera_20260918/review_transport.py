@@ -23,7 +23,7 @@ def errors(predicted,actual):
 
 def main(run):
     run=Path(run).resolve();transport=json.loads((run/'socket_transport/transport_and_observation.json').read_text())
-    anchor=json.loads((run/'postgrasp_key/camera_and_estimate.json').read_text())
+    anchor=json.loads(Path(transport.get('key_anchor_for_entry',run/'postgrasp_key/camera_and_estimate.json')).read_text())
     memory=KeyDirectionMemory();memory.initialize(anchor['world_from_hand_encoder'],np.array(anchor['key_measurement']['world_from_plug_row_major']).reshape(4,4),anchor['physics_time_s'])
     palm=anchor['palm_observation'];camera=np.array(palm['world_from_camera_cv']);H=np.array(anchor['world_from_hand_encoder'])
     mount=np.linalg.inv(H)@camera
@@ -68,7 +68,7 @@ def main(run):
     wrist=None
     if wrist_path.exists():
         record=json.loads(wrist_path.read_text());wrist={'key_direction_measured':record['measurement']['key_direction_measured'],'measurement':record['measurement']}
-    result={'scope':'ENDED_HELD_BODY_SINGLE_KEY_LIFETIME_REVIEW','truth_used_only_after_motion':True,
+    result={'scope':'ENDED_HELD_BODY_FINAL_KEY_ANCHOR_LIFETIME_REVIEW','truth_used_only_after_motion':True,
         'body_grasp_reference_retired_after_step':last_held_step,
         'key_observation_sample_step':int(anchor['robot_sample_step']),
         'key_first_available_step':key_availability_step,

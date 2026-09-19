@@ -15,11 +15,16 @@ def main(run):
  if 'exit_code' not in process:raise ValueError('Audit only an ended episode')
  commit=process['source_commit']
  def source(path):return yaml.safe_load(subprocess.check_output(['git','show',f'{commit}:{path}'],cwd=root,text=True))
- rig=source('src/kcg_connector/config/four_camera_assembly_20260918.yaml')
+ invocation=json.loads((run/'run_invocation.json').read_text())['argv']
+ assembly=source(invocation[invocation.index('--body-assembly-collision-config')+1])
+ rig=source(assembly['perception']['four_camera_rig'])
  g1=source(rig['global_1']['source_config'])['camera'];mounts=source(rig['mount_source_config'])['camera_rig']
  expected={'global_1':g1['prim_path'],**{role:rig[role]['prim_path'] for role in ('global_2','palm','wrist')}}
  actual={};violations=[];mount_error={'palm':0.,'wrist':0.}
  a=json.loads((run/'postgrasp_key/camera_and_estimate.json').read_text())
+ anchors=[a]
+ if rig['maximum_key_observation_events']==2:
+  anchors.append(json.loads((run/'postgrasp_key_refined/camera_and_estimate.json').read_text()))
  initial=json.loads((run/'initial_rgbd/body_localization.json').read_text())
  actual['global_1']={initial['capture']['camera_path']};actual['global_2']={a['capture']['camera_path']}
  if not np.allclose(np.asarray(a['world_from_camera_cv']),installed_pose(rig['global_2']),atol=1e-12,rtol=0):violations.append('Global2 extrinsics differ from episode installation')
@@ -28,6 +33,10 @@ def main(run):
  socket=json.loads((run/'global1_socket/camera_and_estimate.json').read_text())
  if Path(socket['rgbd_directory'])!=run/'initial_rgbd/observation':violations.append('Socket coarse localization did not reuse the initial Global1 frame')
  records=[('palm',a['palm_observation']['capture'],a['world_from_hand_encoder'],a['palm_observation']['world_from_camera_cv'])]
+ for second in anchors[1:]:
+  actual['global_2'].add(second['capture']['camera_path'])
+  if not np.allclose(np.asarray(second['world_from_camera_cv']),installed_pose(rig['global_2']),atol=1e-12,rtol=0):violations.append('Second Global2 extrinsics differ from fixed installation')
+  records.append(('palm',second['palm_observation']['capture'],second['world_from_hand_encoder'],second['palm_observation']['world_from_camera_cv']))
  for p in sorted((run/'four_camera_perception').glob('palm_*/observation.json')):
   d=json.loads(p.read_text());records.append(('palm',d['capture'],d['hand'],d['camera']))
  p=run/'socket_transport/wrist_socket/camera_and_estimate.json'
@@ -47,10 +56,15 @@ def main(run):
  initialized=[e for e in events if e['event']=='SINGLE_KEY_ANCHOR_INITIALIZED']
  expected_events=1 if rig.get('key_observation_after_major_transport') else 0
  if a['key_observation_event_count']!=1 or len(initialized)!=expected_events:violations.append('Single key initialization count differs')
+ refined=[e for e in events if e['event']=='KEY_ANCHOR_REOBSERVED_AFTER_COARSE_TURN']
+ if len(refined)!=len(anchors)-1:violations.append('Declared second key anchor count differs')
+ for index,anchor in enumerate(anchors,1):
+  if anchor['key_observation_event_count']!=index or not anchor['key_measurement']['key_direction_measured']:violations.append('Unresolved or out-of-order key observation')
+  if anchor['observation_latency']['availability_step']<=anchor['robot_sample_step']:violations.append('Key result bypassed physical latency')
  out={'scope':'ENDED_EPISODE_RECORDED_PERCEPTION_CONTRACT','passed':not violations,'source_commit':commit,
       'declared_camera_paths':expected,'actual_perception_camera_paths':{k:sorted(v) for k,v in actual.items()},
       'unique_functional_camera_paths':len(set.union(*actual.values())),
-      'key_observation_events':a['key_observation_event_count'],'palm_measurements_consumed':len(consumed),
+      'key_observation_events':len(anchors),'palm_measurements_consumed':len(consumed),
       'maximum_hand_mount_matrix_difference':mount_error,'violations':violations,
       'evidence_video_cameras_are_not_perception_inputs':True,'physical_assembly_verified_by_this_audit':False}
  (run/'four_camera_contract_review.json').write_text(json.dumps(out,indent=2)+'\n');print(json.dumps(out,indent=2))
