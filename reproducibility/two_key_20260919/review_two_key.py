@@ -82,7 +82,7 @@ def review(run):
         'remaining_small_motion_admission':abs(residual)<=1.,
         'five_recorded_views':video['view_count']==5 and set(video['camera_paths'])=={'main','global_1','global_2','palm','wrist'},
         'video_render_does_not_change_native_state':all(v==0 for v in video['maximum_render_native_state_deltas'].values()),
-        'recorded_overlay_includes_both_measurement_stages':{1,2}.issubset({f.get('online_visual_and_encoder_status',{}).get('observation_count') for f in frames}),
+        'recorded_frame_metadata_includes_both_measurement_stages':{1,2}.issubset({f.get('online_visual_and_encoder_status',{}).get('observation_count') for f in frames}),
     }
     entry=None
     entry_path=run/'socket_transport/key_entry/key_entry_controller_result.json'
@@ -95,6 +95,7 @@ def review(run):
         'source_commit':load(run.parent/'process.json')['source_commit'],
         'online_observed_coarse_rotation_deg':declared,'online_remaining_refinement_deg':residual,
         'camera_paths':video['camera_paths'],'observations':observations,
+        'visible_video_text_policy':video.get('visible_text_policy','LEGACY_DIAGNOSTIC_LABELS'),
         'second_anchor_update':refinements,
         'truth_only_postrun':{'socket_world_yaw_deg':float(np.degrees(np.arctan2(socket[1,0],socket[0,0]))),
             'actual_body_rotation_during_coarse_stage_deg':physical_turn,
