@@ -1,0 +1,61 @@
+{
+  "scope": "ENDED_NATIVE_CONTACT_BODY_SUPPORT_ONLY",
+  "accepted": true,
+  "checks": {
+    "controller_support_completed": true,
+    "hold_exists": true,
+    "strictly_zero_hand_impulse_every_hold_frame": true,
+    "positive_socket_support_every_hold_frame": true,
+    "body_and_nut_awake_every_hold_frame": true,
+    "native_coverage": true,
+    "complete_recorded_interval": true,
+    "backup_limit_not_reached": true
+  },
+  "hold_sample_count": 480,
+  "hold_duration_s": 0.5,
+  "maximum_backup_coordinate_m": 3.282720457290391e-07,
+  "hold_body_z_range_m": 0.0,
+  "hold_socket_impulse_range_n_s": [
+    0.0007760176332258478,
+    0.0008008092528035396
+  ],
+  "maximum_native_socket_contact_penetration_m": 7.014641596470028e-07,
+  "positive_source_pairs": [
+    {
+      "paths": [
+        "/World/TE_J35FreeSplitPlug/CouplingNut/SourceCadCollision",
+        "/World/TEVisualHandoff/FixedReceptaclePose/OfficialVisual/NutContactSurface_04"
+      ],
+      "reports": 65
+    },
+    {
+      "paths": [
+        "/World/TE_J35FreeSplitPlug/CouplingNut/SourceCadCollision",
+        "/World/TEVisualHandoff/FixedReceptaclePose/OfficialVisual/NutContactSurface_02"
+      ],
+      "reports": 968
+    },
+    {
+      "paths": [
+        "/World/TE_J35FreeSplitPlug/CouplingNut/SourceCadCollision",
+        "/World/TEVisualHandoff/FixedReceptaclePose/OfficialVisual/NutContactSurface_05"
+      ],
+      "reports": 970
+    },
+    {
+      "paths": [
+        "/World/TE_J35FreeSplitPlug/CouplingNut/SourceCadCollision",
+        "/World/TEVisualHandoff/FixedReceptaclePose/OfficialVisual/NutContactSurface_07"
+      ],
+      "reports": 25
+    },
+    {
+      "paths": [
+        "/World/TE_J35FreeSplitPlug/CouplingNut/SourceCadCollision",
+        "/World/TEVisualHandoff/FixedReceptaclePose/OfficialVisual/NutContactSurface_00"
+      ],
+      "reports": 906
+    }
+  ],
+  "full_assembly_claimed": false
+}

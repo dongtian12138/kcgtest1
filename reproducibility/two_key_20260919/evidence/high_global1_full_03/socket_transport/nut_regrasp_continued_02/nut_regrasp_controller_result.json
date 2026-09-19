@@ -1,0 +1,3625 @@
+{
+  "completed": false,
+  "stage": "STOPPED",
+  "first_step": 247540,
+  "simulation_only": true,
+  "hardware_authorized": false,
+  "online_object_or_contact_truth_used": false,
+  "old_hand_body_memory_used": false,
+  "physical_nut_grasp_verified": false,
+  "physical_result": "REQUIRES_POSTRUN_CONTACT_AND_KEY_GEOMETRY",
+  "geometry_plan": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/grasp_capacity_20260914/selected_two_nail_geometry.json",
+  "motions": [
+    {
+      "ik": {
+        "duration_s": 1.0,
+        "maximum_ik_position_error_m": 1.2879581403217598e-09,
+        "maximum_ik_orientation_error_rad": 2.1798393761549063e-09
+      },
+      "arm_target_offset_rad": [
+        -1.2241581303626403e-05,
+        8.642343257780905e-05,
+        0.00013296357506820122,
+        -0.00011758738626854726,
+        -5.818661640272227e-05,
+        0.00023476722164450514,
+        -0.00011531714697021744
+      ],
+      "maximum_arm_speed_rad_s": 0.003882962206915863,
+      "path_steps": 961
+    },
+    {
+      "kind": "VISUAL_NUT_PHASE_ALIGNMENT",
+      "ik": {
+        "duration_s": 1.0,
+        "maximum_ik_position_error_m": 7.18586120585703e-10,
+        "maximum_ik_orientation_error_rad": 8.489507165047541e-09
+      },
+      "arm_target_offset_rad": [
+        -8.12672694257277e-06,
+        -0.00014768453681801574,
+        0.00013937714178335892,
+        -0.00011758953109375359,
+        5.789365937236557e-05,
+        -0.00023454390578159234,
+        -3.289678286100273e-05
+      ],
+      "path_steps": 961,
+      "maximum_arm_speed_rad_s": 0.01772422352299685
+    }
+  ],
+  "nut_rotation_commanded": false,
+  "nailfree_grasp_reuse": null,
+  "canonical_grasp_axial_shift_m": 0.0,
+  "grasp_axis_shift_override_used": false,
+  "grip_effort_target_update": {
+    "time_constant_s": 0.0,
+    "per_step_error_relaxation_gain": 1.0,
+    "signal": "UNFILTERED_NATIVE_PROJECTED_JOINT_FORCE_MINUS_OPEN_HAND_TARE",
+    "raw_measurement_or_protection_changed": false,
+    "independent_time_scale_reference": "EXISTING_ROTATION_TARGET_RELAXATION_AND_HAND_DAMPING_OVER_STIFFNESS"
+  },
+  "opening_from_existing_nut_grip": false,
+  "fingertip_planning_geometry": {
+    "manifest": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/kcg_connector/isaac/te_full_assembly_20260905/nut_regrasp_01/cooked_finger_inspection/geometry_only_manifest.json",
+    "source": "OFFLINE_PHYSX_COOKING_OF_UNMODIFIED_ROBOT_ASSET",
+    "physical_robot_geometry_changed": false,
+    "object_pose_or_contact_truth_consumed": false,
+    "full_robot_collision_link_count": 17
+  },
+  "body_avoidance_envelope": {
+    "source": "AXIAL_SOURCE_CAD_TRIANGLE_RADIUS_BOUNDS_OVER_ALL_YAW",
+    "band_height_m": 0.00025,
+    "pose_reserve_m": 0.0007,
+    "radius_rounding_up_m": 1e-06,
+    "angular_sections": 128,
+    "component_count": 2,
+    "bands": [
+      {
+        "z_min_m": -0.031713399362564086,
+        "z_max_m": -0.030763399362564087,
+        "source_radius_bound_m": 0.01577340066432953
+      },
+      {
+        "z_min_m": -0.030763399362564087,
+        "z_max_m": -0.030513399362564086,
+        "source_radius_bound_m": 0.017729201255361735
+      },
+      {
+        "z_min_m": -0.030513399362564086,
+        "z_max_m": -0.030263399362564086,
+        "source_radius_bound_m": 0.017729201255361735
+      },
+      {
+        "z_min_m": -0.030263399362564086,
+        "z_max_m": -0.030013399362564086,
+        "source_radius_bound_m": 0.017729201255361735
+      },
+      {
+        "z_min_m": -0.030013399362564086,
+        "z_max_m": -0.029763399362564086,
+        "source_radius_bound_m": 0.017729201255361735
+      },
+      {
+        "z_min_m": -0.029763399362564086,
+        "z_max_m": -0.029513399362564086,
+        "source_radius_bound_m": 0.017729201255361735
+      },
+      {
+        "z_min_m": -0.029513399362564086,
+        "z_max_m": -0.029263399362564085,
+        "source_radius_bound_m": 0.017729201255361735
+      },
+      {
+        "z_min_m": -0.029263399362564085,
+        "z_max_m": -0.029013399362564085,
+        "source_radius_bound_m": 0.017729201255361735
+      },
+      {
+        "z_min_m": -0.029013399362564085,
+        "z_max_m": -0.028763399362564085,
+        "source_radius_bound_m": 0.017729201255361735
+      },
+      {
+        "z_min_m": -0.028763399362564085,
+        "z_max_m": -0.028513399362564085,
+        "source_radius_bound_m": 0.017729201255361735
+      },
+      {
+        "z_min_m": -0.028513399362564085,
+        "z_max_m": -0.028263399362564084,
+        "source_radius_bound_m": 0.017729201255361735
+      },
+      {
+        "z_min_m": -0.028263399362564084,
+        "z_max_m": -0.028013399362564084,
+        "source_radius_bound_m": 0.01838724150643465
+      },
+      {
+        "z_min_m": -0.028013399362564084,
+        "z_max_m": -0.027763399362564084,
+        "source_radius_bound_m": 0.01841194634652223
+      },
+      {
+        "z_min_m": -0.027763399362564084,
+        "z_max_m": -0.027513399362564084,
+        "source_radius_bound_m": 0.01845310109295221
+      },
+      {
+        "z_min_m": -0.027513399362564084,
+        "z_max_m": -0.027263399362564084,
+        "source_radius_bound_m": 0.018453101224751696
+      },
+      {
+        "z_min_m": -0.027263399362564084,
+        "z_max_m": -0.027013399362564083,
+        "source_radius_bound_m": 0.018453101228133907
+      },
+      {
+        "z_min_m": -0.027013399362564083,
+        "z_max_m": -0.026763399362564083,
+        "source_radius_bound_m": 0.018453102039574617
+      },
+      {
+        "z_min_m": -0.026763399362564083,
+        "z_max_m": -0.026513399362564083,
+        "source_radius_bound_m": 0.018453102039574617
+      },
+      {
+        "z_min_m": -0.026513399362564083,
+        "z_max_m": -0.026263399362564083,
+        "source_radius_bound_m": 0.018453102039574617
+      },
+      {
+        "z_min_m": -0.026263399362564083,
+        "z_max_m": -0.026013399362564082,
+        "source_radius_bound_m": 0.018453102020104376
+      },
+      {
+        "z_min_m": -0.026013399362564082,
+        "z_max_m": -0.025763399362564082,
+        "source_radius_bound_m": 0.018453102020104376
+      },
+      {
+        "z_min_m": -0.025763399362564082,
+        "z_max_m": -0.025513399362564082,
+        "source_radius_bound_m": 0.018453101968008857
+      },
+      {
+        "z_min_m": -0.025513399362564082,
+        "z_max_m": -0.025263399362564082,
+        "source_radius_bound_m": 0.018453101853091864
+      },
+      {
+        "z_min_m": -0.025263399362564082,
+        "z_max_m": -0.02501339936256408,
+        "source_radius_bound_m": 0.018453102949693767
+      },
+      {
+        "z_min_m": -0.02501339936256408,
+        "z_max_m": -0.02476339936256408,
+        "source_radius_bound_m": 0.018453102949693767
+      },
+      {
+        "z_min_m": -0.02476339936256408,
+        "z_max_m": -0.02451339936256408,
+        "source_radius_bound_m": 0.018453102949693767
+      },
+      {
+        "z_min_m": -0.02451339936256408,
+        "z_max_m": -0.02426339936256408,
+        "source_radius_bound_m": 0.01845310246363096
+      },
+      {
+        "z_min_m": -0.02426339936256408,
+        "z_max_m": -0.02401339936256408,
+        "source_radius_bound_m": 0.018453102193923637
+      },
+      {
+        "z_min_m": -0.02401339936256408,
+        "z_max_m": -0.02376339936256408,
+        "source_radius_bound_m": 0.01845310253024985
+      },
+      {
+        "z_min_m": -0.02376339936256408,
+        "z_max_m": -0.02351339936256408,
+        "source_radius_bound_m": 0.01845310253024985
+      },
+      {
+        "z_min_m": -0.02351339936256408,
+        "z_max_m": -0.02326339936256408,
+        "source_radius_bound_m": 0.01845310276826017
+      },
+      {
+        "z_min_m": -0.02326339936256408,
+        "z_max_m": -0.02301339936256408,
+        "source_radius_bound_m": 0.01845310276826017
+      },
+      {
+        "z_min_m": -0.02301339936256408,
+        "z_max_m": -0.02276339936256408,
+        "source_radius_bound_m": 0.01845310276826017
+      },
+      {
+        "z_min_m": -0.02276339936256408,
+        "z_max_m": -0.02251339936256408,
+        "source_radius_bound_m": 0.018453102610661125
+      },
+      {
+        "z_min_m": -0.02251339936256408,
+        "z_max_m": -0.02226339936256408,
+        "source_radius_bound_m": 0.018453102610661125
+      },
+      {
+        "z_min_m": -0.02226339936256408,
+        "z_max_m": -0.02201339936256408,
+        "source_radius_bound_m": 0.018453102610661125
+      },
+      {
+        "z_min_m": -0.02201339936256408,
+        "z_max_m": -0.02106339936256408,
+        "source_radius_bound_m": 0.019075400651038906
+      },
+      {
+        "z_min_m": -0.015713399362564072,
+        "z_max_m": -0.014763399362564072,
+        "source_radius_bound_m": 0.01996440106665559
+      },
+      {
+        "z_min_m": -0.014763399362564072,
+        "z_max_m": -0.014513399362564072,
+        "source_radius_bound_m": 0.01741266761311093
+      },
+      {
+        "z_min_m": -0.014513399362564072,
+        "z_max_m": -0.014263399362564072,
+        "source_radius_bound_m": 0.017411701712822667
+      },
+      {
+        "z_min_m": -0.014263399362564072,
+        "z_max_m": -0.014013399362564072,
+        "source_radius_bound_m": 0.017411701712822667
+      },
+      {
+        "z_min_m": -0.014013399362564072,
+        "z_max_m": -0.013763399362564072,
+        "source_radius_bound_m": 0.01763149549666422
+      },
+      {
+        "z_min_m": -0.013763399362564072,
+        "z_max_m": -0.013513399362564071,
+        "source_radius_bound_m": 0.01763149549666422
+      },
+      {
+        "z_min_m": -0.013513399362564071,
+        "z_max_m": -0.013263399362564071,
+        "source_radius_bound_m": 0.01758202054390967
+      },
+      {
+        "z_min_m": -0.013263399362564071,
+        "z_max_m": -0.013013399362564071,
+        "source_radius_bound_m": 0.017634002970276414
+      },
+      {
+        "z_min_m": -0.013013399362564071,
+        "z_max_m": -0.01276339936256407,
+        "source_radius_bound_m": 0.01788071746361561
+      },
+      {
+        "z_min_m": -0.01276339936256407,
+        "z_max_m": -0.01251339936256407,
+        "source_radius_bound_m": 0.01788071746361561
+      },
+      {
+        "z_min_m": -0.01251339936256407,
+        "z_max_m": -0.01226339936256407,
+        "source_radius_bound_m": 0.01804093098605435
+      },
+      {
+        "z_min_m": -0.01226339936256407,
+        "z_max_m": -0.01201339936256407,
+        "source_radius_bound_m": 0.01804093098605435
+      },
+      {
+        "z_min_m": -0.01201339936256407,
+        "z_max_m": -0.01176339936256407,
+        "source_radius_bound_m": 0.018151747062802315
+      },
+      {
+        "z_min_m": -0.01176339936256407,
+        "z_max_m": -0.01151339936256407,
+        "source_radius_bound_m": 0.018151747062802315
+      },
+      {
+        "z_min_m": -0.01151339936256407,
+        "z_max_m": -0.01126339936256407,
+        "source_radius_bound_m": 0.018151747062802315
+      },
+      {
+        "z_min_m": -0.01126339936256407,
+        "z_max_m": -0.01101339936256407,
+        "source_radius_bound_m": 0.018212295034946396
+      },
+      {
+        "z_min_m": -0.01101339936256407,
+        "z_max_m": -0.010763399362564069,
+        "source_radius_bound_m": 0.018212295034946396
+      },
+      {
+        "z_min_m": -0.010763399362564069,
+        "z_max_m": -0.010513399362564069,
+        "source_radius_bound_m": 0.01822210130647418
+      },
+      {
+        "z_min_m": -0.010513399362564069,
+        "z_max_m": -0.010263399362564068,
+        "source_radius_bound_m": 0.01822210130647418
+      },
+      {
+        "z_min_m": -0.010263399362564068,
+        "z_max_m": -0.010013399362564068,
+        "source_radius_bound_m": 0.01822210130647418
+      },
+      {
+        "z_min_m": -0.010013399362564068,
+        "z_max_m": -0.009763399362564068,
+        "source_radius_bound_m": 0.01822210130647418
+      },
+      {
+        "z_min_m": -0.009763399362564068,
+        "z_max_m": -0.009513399362564068,
+        "source_radius_bound_m": 0.01822210130647418
+      },
+      {
+        "z_min_m": -0.009513399362564068,
+        "z_max_m": -0.009263399362564068,
+        "source_radius_bound_m": 0.018181086976143592
+      },
+      {
+        "z_min_m": -0.009263399362564068,
+        "z_max_m": -0.009013399362564067,
+        "source_radius_bound_m": 0.018181086976143592
+      },
+      {
+        "z_min_m": -0.009013399362564067,
+        "z_max_m": -0.008763399362564067,
+        "source_radius_bound_m": 0.018181086976143592
+      },
+      {
+        "z_min_m": -0.008763399362564067,
+        "z_max_m": -0.008513399362564067,
+        "source_radius_bound_m": 0.018089575314020882
+      },
+      {
+        "z_min_m": -0.008513399362564067,
+        "z_max_m": -0.008263399362564067,
+        "source_radius_bound_m": 0.018089575314020882
+      },
+      {
+        "z_min_m": -0.008263399362564067,
+        "z_max_m": -0.008013399362564066,
+        "source_radius_bound_m": 0.01794828340492903
+      },
+      {
+        "z_min_m": -0.008013399362564066,
+        "z_max_m": -0.007763399362564066,
+        "source_radius_bound_m": 0.01794828340492903
+      },
+      {
+        "z_min_m": -0.007763399362564066,
+        "z_max_m": -0.007513399362564066,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.007513399362564066,
+        "z_max_m": -0.007263399362564066,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.007263399362564066,
+        "z_max_m": -0.007013399362564066,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.007013399362564066,
+        "z_max_m": -0.006763399362564065,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.006763399362564065,
+        "z_max_m": -0.006513399362564065,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.006513399362564065,
+        "z_max_m": -0.006263399362564065,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.006263399362564065,
+        "z_max_m": -0.006013399362564065,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.006013399362564065,
+        "z_max_m": -0.0057633993625640645,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.0057633993625640645,
+        "z_max_m": -0.005513399362564064,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.005513399362564064,
+        "z_max_m": -0.005263399362564064,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.005263399362564064,
+        "z_max_m": -0.005013399362564064,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.005013399362564064,
+        "z_max_m": -0.004763399362564064,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.004763399362564064,
+        "z_max_m": -0.004513399362564063,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.004513399362564063,
+        "z_max_m": -0.004263399362564063,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.004263399362564063,
+        "z_max_m": -0.004013399362564063,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.004013399362564063,
+        "z_max_m": -0.0037633993625640627,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.0037633993625640627,
+        "z_max_m": -0.0035133993625640625,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.0035133993625640625,
+        "z_max_m": -0.0032633993625640623,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.0032633993625640623,
+        "z_max_m": -0.003013399362564062,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.003013399362564062,
+        "z_max_m": -0.002763399362564062,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.002763399362564062,
+        "z_max_m": -0.0025133993625640616,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.0025133993625640616,
+        "z_max_m": -0.0022633993625640614,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.0022633993625640614,
+        "z_max_m": -0.002013399362564061,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.002013399362564061,
+        "z_max_m": -0.001763399362564061,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.001763399362564061,
+        "z_max_m": -0.0015133993625640607,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.0015133993625640607,
+        "z_max_m": -0.0012633993625640605,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.0012633993625640605,
+        "z_max_m": -0.0010133993625640603,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.0010133993625640603,
+        "z_max_m": -0.00076339936256406,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.00076339936256406,
+        "z_max_m": -0.0005133993625640598,
+        "source_radius_bound_m": 0.018821400798192077
+      },
+      {
+        "z_min_m": -0.0005133993625640598,
+        "z_max_m": -0.0002633993625640596,
+        "source_radius_bound_m": 0.017837151418326883
+      },
+      {
+        "z_min_m": -0.0002633993625640596,
+        "z_max_m": -1.339936256405938e-05,
+        "source_radius_bound_m": 0.017837151418326883
+      },
+      {
+        "z_min_m": -1.339936256405938e-05,
+        "z_max_m": 0.0007,
+        "source_radius_bound_m": 0.017837151418326883
+      }
+    ],
+    "used_as_physical_collision_geometry": false
+  },
+  "motor_cap_transition": {
+    "active_caps_nm": [
+      1.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "motor_input_state_reset": false,
+    "source": "artifacts/full_rotation_20260914/continuous_unturned_10/continuous_mating_review.json",
+    "hardware_rating_claimed": false
+  },
+  "loaded_nut_force_observation": {
+    "limit_n": 110.0,
+    "phases": [
+      "key_probe_nut_contact",
+      "key_probe_nut_grip_hold",
+      "key_probe_nut_index_unload",
+      "key_probe_nut_index_open",
+      "key_probe_nut_rotation_visual_align",
+      "key_probe_nut_rotation_visual_refine",
+      "key_probe_nut_rotation_axial_settle",
+      "key_probe_nut_rotation_turn",
+      "key_probe_nut_rotation_hold"
+    ],
+    "source": "artifacts/full_rotation_20260914/continuous_unturned_10/continuous_mating_review.json",
+    "source_local_grip_peak_n": 7.423843484462589,
+    "commanded_force_reference_changed": false,
+    "hardware_rating_claimed": false
+  },
+  "captured_nut_axial_reference_m": 0.0005,
+  "captured_nut_axial_reference_source": "SOURCE_WORKING_THRUST_FACE_AFTER_COMPLETED_CAPTURE_STROKE; NOT_OBJECT_STATE_READBACK",
+  "grasp_orientation_source": "RETAINED_ROBOT_HAND_YAW_AND_CURRENT_VISUAL_SOCKET_AXIS",
+  "partial_turn_reindex_yaw_retained": true,
+  "nut_yaw_directly_measured": false,
+  "keyed_grasp_reference_world": [
+    [
+      -0.4730141541417371,
+      -0.8810548279986925,
+      -6.463042012030749e-06,
+      0.5500069003398808
+    ],
+    [
+      -0.881054828008719,
+      0.473014154162543,
+      -2.102499007628337e-06,
+      0.18499521635459473
+    ],
+    [
+      4.9095272521966534e-06,
+      4.699782578451094e-06,
+      -0.9999999999769043,
+      0.2591850815759636
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "grasp_yaw_bias": {
+    "desired_total_bias_deg": 0.0,
+    "previous_total_bias_deg": 0.0,
+    "applied_increment_deg": 0.0,
+    "axis": "KEYED_BODY_PLUS_Z_OPPOSITE_VISUAL_SOCKET_PLUS_Z",
+    "source": "DECLARED_FIXED_GRASP_POSE_PARAMETER_NOT_MEASURED_NUT_YAW",
+    "body_observation_and_collision_envelope_rotated": false,
+    "physical_object_pose_written": false
+  },
+  "world_from_body_palm_five_dof": [
+    [
+      -0.5480093685783527,
+      -0.8364721872923876,
+      0.00010879634298085012,
+      0.5500055370958981
+    ],
+    [
+      -0.8364721875303701,
+      0.5480093428333982,
+      -0.00019913679815993722,
+      0.18499434804016943
+    ],
+    [
+      0.00010695098070762051,
+      -0.00020013394602888193,
+      -0.9999999742539456,
+      0.25968507494088766
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "target_world_from_hand": [
+    [
+      -0.5480093532658206,
+      -0.836472204368163,
+      -7.255497251952205e-06,
+      0.553584088275971
+    ],
+    [
+      -0.83647220437378,
+      0.5480093532964623,
+      -3.1084105451861255e-06,
+      0.18843711779350036
+    ],
+    [
+      6.576179377729028e-06,
+      4.3655837272677515e-06,
+      -0.9999999999688478,
+      0.7001402715099299
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "open_hand_goal_rad": [
+    1.0471975511965976,
+    0.6345364456176764,
+    0.451303031921387,
+    0.6345330734252933
+  ],
+  "finite_closing_goal_rad": [
+    1.0471975511965976,
+    0.8319012424511868,
+    0.586548288313576,
+    0.8013100765316113
+  ],
+  "causal_calculation_holds": {
+    "transfer_plan": {
+      "calculation_wall_s": 0.6837030780152418,
+      "calculation_finished_at_sim_time_s": 258.35834680777043,
+      "available_time_s": 259.0420498857857,
+      "consumed_time_s": 259.04272184346337,
+      "first_step": 248022,
+      "last_step": 248679,
+      "intervening_physics_steps": 657,
+      "existing_force_speed_and_geometry_checks_retained": true,
+      "object_or_contact_truth_used": false,
+      "current_body_observation": {
+        "status": "DELAYED_CURRENT_PALM_POSITION_AND_AXIS",
+        "position_and_axis_measured": true,
+        "physics_time_s": 258.72293016011827,
+        "capture_physics_time_s": 258.72293016011827,
+        "available_physics_time_s": 258.94697772811634,
+        "consumed_physics_time_s": 258.94793017185293,
+        "capture": {
+          "camera_path": "/World/AssemblyPalmCamera",
+          "warmup_render_frames": 3,
+          "render_subframes_per_frame": 4,
+          "capture_and_save_wall_s": 0.8145812269940507,
+          "resolution": [
+            1280,
+            720
+          ],
+          "finite_positive_depth_pixels": 921600,
+          "depth_valid_fraction": 1.0,
+          "rgb_minimum": 13,
+          "rgb_maximum": 248,
+          "rgb_standard_deviation": 40.34664221027369
+        },
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00963",
+        "world_from_hand_encoder": [
+          [
+            -0.548009264567505,
+            -0.8364721721896883,
+            0.00038871640909739197,
+            0.5536692084708943
+          ],
+          [
+            -0.8364722530541507,
+            0.5480092690740608,
+            -0.0001043044883588444,
+            0.18850728994654972
+          ],
+          [
+            -0.00012577239327983986,
+            -0.0003823103164734703,
+            -0.9999999190100602,
+            0.7006226992321662
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "world_from_camera_cv": [
+          [
+            -0.548009264567505,
+            -0.8364721721896883,
+            0.00038871640909739197,
+            0.55379165413976
+          ],
+          [
+            -0.8364722530541507,
+            0.5480092690740608,
+            -0.0001043044883588444,
+            0.1884744340327167
+          ],
+          [
+            -0.00012577239327983986,
+            -0.0003823103164734703,
+            -0.9999999190100602,
+            0.3856227247439973
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "intrinsics_3x3": [
+          [
+            1465.998568360773,
+            0.0,
+            640.0
+          ],
+          [
+            0.0,
+            1465.998568360773,
+            360.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "world_from_plug_five_dof": [
+          [
+            -0.5480093046332418,
+            -0.8364722293022085,
+            0.00010789617332362973,
+            0.5500054082947625
+          ],
+          [
+            -0.8364722293606854,
+            0.5480092789853621,
+            -0.00019913389505778333,
+            0.18499453669070323
+          ],
+          [
+            0.00010744186898031299,
+            -0.0001993793799990639,
+            -0.9999999743520536,
+            0.2596850712846128
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "metrics": {
+          "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+          "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+          "axial_yaw_estimated": false,
+          "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+          "rgb_intensity_used_for_center": false,
+          "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+          "sam_used_as_plane_seed_not_required_full_contour": false,
+          "original_seed_contour_rms_m": 3.606112389135099e-05,
+          "depth_source": "FLOAT_METERS_NPY",
+          "mask_valid_depth_pixels": 234536,
+          "depth_pixel_center_offset_px": 0.5,
+          "backprojection_principal_point_index_coordinates_px": [
+            639.5,
+            359.5
+          ],
+          "visible_face_component_pixels": 123308,
+          "visible_face_radius_m": 0.015773400522113887,
+          "visible_face_to_object_origin_m": 0.03101339912,
+          "plane_residual_limit_m": 2e-05,
+          "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+          "plane_ransac_sampled_inlier_fraction": 0.5170037861991336,
+          "plane_refined_inlier_fraction": 0.5167436981955862,
+          "plane_inlier_residual_rms_m": 4.6812162123233504e-07,
+          "circle_residual_rms_m": 3.606112389135099e-05,
+          "circle_quality_limit_m": 9.712472311739876e-05,
+          "estimated_pixel_footprint_m": 6.474981541159918e-05,
+          "estimated_visible_face_center_camera_m": [
+            0.004994342084048723,
+            0.0013025472414584665,
+            0.09492313669502872
+          ],
+          "estimated_directed_axis_camera": [
+            0.00023321426531979763,
+            0.00018293093991850196,
+            0.999999956073688
+          ],
+          "elapsed_s": 0.05595777399139479,
+          "truth_inputs_used": [],
+          "sam_used_for_this_observation": false,
+          "roi_is_not_an_observed_pose": true
+        },
+        "measurement": {
+          "geometry": {
+            "metrics": {
+              "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+              "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+              "axial_yaw_estimated": false,
+              "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+              "rgb_intensity_used_for_center": false,
+              "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+              "sam_used_as_plane_seed_not_required_full_contour": false,
+              "original_seed_contour_rms_m": 3.606112389135099e-05,
+              "depth_source": "FLOAT_METERS_NPY",
+              "mask_valid_depth_pixels": 234536,
+              "depth_pixel_center_offset_px": 0.5,
+              "backprojection_principal_point_index_coordinates_px": [
+                639.5,
+                359.5
+              ],
+              "visible_face_component_pixels": 123308,
+              "visible_face_radius_m": 0.015773400522113887,
+              "visible_face_to_object_origin_m": 0.03101339912,
+              "plane_residual_limit_m": 2e-05,
+              "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+              "plane_ransac_sampled_inlier_fraction": 0.5170037861991336,
+              "plane_refined_inlier_fraction": 0.5167436981955862,
+              "plane_inlier_residual_rms_m": 4.6812162123233504e-07,
+              "circle_residual_rms_m": 3.606112389135099e-05,
+              "circle_quality_limit_m": 9.712472311739876e-05,
+              "estimated_pixel_footprint_m": 6.474981541159918e-05,
+              "estimated_visible_face_center_camera_m": [
+                0.004994342084048723,
+                0.0013025472414584665,
+                0.09492313669502872
+              ],
+              "estimated_directed_axis_camera": [
+                0.00023321426531979763,
+                0.00018293093991850196,
+                0.999999956073688
+              ],
+              "elapsed_s": 0.05595777399139479,
+              "truth_inputs_used": [],
+              "sam_used_for_this_observation": false,
+              "roi_is_not_an_observed_pose": true
+            },
+            "camera_from_object": [
+              [
+                0.9999999728055529,
+                6.617444900424222e-24,
+                0.00023321426531979763,
+                0.005001574851139564
+              ],
+              [
+                -4.266210591752586e-08,
+                0.9999999832681347,
+                0.00018293093991850196,
+                0.0013082205517095558
+              ],
+              [
+                -0.00023321426141768793,
+                -0.00018293094489320785,
+                0.999999956073688,
+                0.12593653445272446
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          }
+        },
+        "tracking_seed_mask": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00963/roi.png",
+        "axial_yaw_measured": false,
+        "previous_hand_body_relation_used_for_measurement": false,
+        "previous_pose_used_only_for_search_region": true,
+        "online_object_or_contact_truth_used": false,
+        "consumed_by_stage_at_physics_time_s": 259.04272184346337,
+        "sample_age_at_stage_consumption_s": 0.3197916833451018,
+        "new_image_acquired_by_this_function": false
+      }
+    },
+    "nut_phase_plan": {
+      "calculation_wall_s": 0.7683034899819177,
+      "calculation_finished_at_sim_time_s": 260.54376358841546,
+      "available_time_s": 261.3120670783974,
+      "consumed_time_s": 261.3125136285089,
+      "first_step": 250120,
+      "last_step": 250858,
+      "intervening_physics_steps": 738,
+      "existing_force_speed_and_geometry_checks_retained": true,
+      "object_or_contact_truth_used": false,
+      "current_body_observation": {
+        "status": "DELAYED_CURRENT_PALM_POSITION_AND_AXIS",
+        "position_and_axis_measured": true,
+        "physics_time_s": 260.96876361058094,
+        "capture_physics_time_s": 260.96876361058094,
+        "available_physics_time_s": 261.1585462405754,
+        "consumed_physics_time_s": 261.1593886205228,
+        "capture": {
+          "camera_path": "/World/AssemblyPalmCamera",
+          "warmup_render_frames": 3,
+          "render_subframes_per_frame": 4,
+          "capture_and_save_wall_s": 0.8335301390034147,
+          "resolution": [
+            1280,
+            720
+          ],
+          "finite_positive_depth_pixels": 921600,
+          "depth_valid_fraction": 1.0,
+          "rgb_minimum": 28,
+          "rgb_maximum": 248,
+          "rgb_standard_deviation": 40.4942741811892
+        },
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00974",
+        "world_from_hand_encoder": [
+          [
+            -0.5479730737104815,
+            -0.8364957505852368,
+            -0.0006080634245882757,
+            0.5536190171152978
+          ],
+          [
+            -0.8364957474477689,
+            0.5479733142477053,
+            -0.00033372770893302483,
+            0.18839836496975135
+          ],
+          [
+            0.0006123643404194285,
+            0.0003257686704002924,
+            -0.9999997594423149,
+            0.7000077098799125
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "world_from_camera_cv": [
+          [
+            -0.5479730737104815,
+            -0.8364957505852368,
+            -0.0006080634245882757,
+            0.5534274771365525
+          ],
+          [
+            -0.8364957474477689,
+            0.5479733142477053,
+            -0.00033372770893302483,
+            0.18829324074143744
+          ],
+          [
+            0.0006123643404194285,
+            0.0003257686704002924,
+            -0.9999997594423149,
+            0.38500778565558325
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "intrinsics_3x3": [
+          [
+            1465.998568360773,
+            0.0,
+            640.0
+          ],
+          [
+            0.0,
+            1465.998568360773,
+            360.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "world_from_plug_five_dof": [
+          [
+            -0.5479730905835389,
+            -0.8364959540362881,
+            0.00010429403005128968,
+            0.550006533011068
+          ],
+          [
+            -0.8364959533978212,
+            0.5479730653566303,
+            -0.0001989792151238324,
+            0.18499524869508865
+          ],
+          [
+            0.00010929498904275942,
+            -0.00019627678957468865,
+            -0.9999999747650135,
+            0.2596850303139663
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "metrics": {
+          "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+          "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+          "axial_yaw_estimated": false,
+          "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+          "rgb_intensity_used_for_center": false,
+          "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+          "sam_used_as_plane_seed_not_required_full_contour": false,
+          "original_seed_contour_rms_m": 3.5200203429698395e-05,
+          "depth_source": "FLOAT_METERS_NPY",
+          "mask_valid_depth_pixels": 237395,
+          "depth_pixel_center_offset_px": 0.5,
+          "backprojection_principal_point_index_coordinates_px": [
+            639.5,
+            359.5
+          ],
+          "visible_face_component_pixels": 124840,
+          "visible_face_radius_m": 0.015773400522113887,
+          "visible_face_to_object_origin_m": 0.03101339912,
+          "plane_residual_limit_m": 2e-05,
+          "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+          "plane_ransac_sampled_inlier_fraction": 0.5167062629530405,
+          "plane_refined_inlier_fraction": 0.517087554497778,
+          "plane_inlier_residual_rms_m": 4.4432976002469057e-07,
+          "circle_residual_rms_m": 3.5200203429698395e-05,
+          "circle_quality_limit_m": 9.6499939061196e-05,
+          "estimated_pixel_footprint_m": 6.4333292707464e-05,
+          "estimated_visible_face_center_camera_m": [
+            0.00457220029430845,
+            0.0010297577692567094,
+            0.0943125150070768
+          ],
+          "estimated_directed_axis_camera": [
+            -0.0005030693779017413,
+            -0.0005220454751065917,
+            0.9999997371948273
+          ],
+          "elapsed_s": 0.05360552799538709,
+          "truth_inputs_used": [],
+          "sam_used_for_this_observation": false,
+          "roi_is_not_an_observed_pose": true
+        },
+        "measurement": {
+          "geometry": {
+            "metrics": {
+              "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+              "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+              "axial_yaw_estimated": false,
+              "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+              "rgb_intensity_used_for_center": false,
+              "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+              "sam_used_as_plane_seed_not_required_full_contour": false,
+              "original_seed_contour_rms_m": 3.5200203429698395e-05,
+              "depth_source": "FLOAT_METERS_NPY",
+              "mask_valid_depth_pixels": 237395,
+              "depth_pixel_center_offset_px": 0.5,
+              "backprojection_principal_point_index_coordinates_px": [
+                639.5,
+                359.5
+              ],
+              "visible_face_component_pixels": 124840,
+              "visible_face_radius_m": 0.015773400522113887,
+              "visible_face_to_object_origin_m": 0.03101339912,
+              "plane_residual_limit_m": 2e-05,
+              "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+              "plane_ransac_sampled_inlier_fraction": 0.5167062629530405,
+              "plane_refined_inlier_fraction": 0.517087554497778,
+              "plane_inlier_residual_rms_m": 4.4432976002469057e-07,
+              "circle_residual_rms_m": 3.5200203429698395e-05,
+              "circle_quality_limit_m": 9.6499939061196e-05,
+              "estimated_pixel_footprint_m": 6.4333292707464e-05,
+              "estimated_visible_face_center_camera_m": [
+                0.00457220029430845,
+                0.0010297577692567094,
+                0.0943125150070768
+              ],
+              "estimated_directed_axis_camera": [
+                -0.0005030693779017413,
+                -0.0005220454751065917,
+                0.9999997371948273
+              ],
+              "elapsed_s": 0.05360552799538709,
+              "truth_inputs_used": [],
+              "sam_used_for_this_observation": false,
+              "roi_is_not_an_observed_pose": true
+            },
+            "camera_from_object": [
+              [
+                0.9999998734605926,
+                0.0,
+                -0.0005030693779017413,
+                0.004556598402906533
+              ],
+              [
+                -2.626251256307199e-07,
+                0.9999998637342172,
+                -0.0005220454751065917,
+                0.0010135673645784386
+              ],
+              [
+                0.0005030693093505989,
+                0.0005220455411659251,
+                0.9999997371948273,
+                0.1253259059765951
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          }
+        },
+        "tracking_seed_mask": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00974/roi.png",
+        "axial_yaw_measured": false,
+        "previous_hand_body_relation_used_for_measurement": false,
+        "previous_pose_used_only_for_search_region": true,
+        "online_object_or_contact_truth_used": false,
+        "consumed_by_stage_at_physics_time_s": 261.3125136285089,
+        "sample_age_at_stage_consumption_s": 0.34375001792795956,
+        "new_image_acquired_by_this_function": false
+      }
+    },
+    "nut_phase_verification": {
+      "calculation_wall_s": 0.23162431697710417,
+      "calculation_finished_at_sim_time_s": 262.813555373461,
+      "available_time_s": 263.0451796904381,
+      "consumed_time_s": 263.0458470522426,
+      "first_step": 252299,
+      "last_step": 252522,
+      "intervening_physics_steps": 223,
+      "existing_force_speed_and_geometry_checks_retained": true,
+      "object_or_contact_truth_used": false,
+      "current_body_observation": {
+        "status": "DELAYED_CURRENT_PALM_POSITION_AND_AXIS",
+        "position_and_axis_measured": true,
+        "physics_time_s": 262.88438871048857,
+        "capture_physics_time_s": 262.88438871048857,
+        "available_physics_time_s": 263.0340199245082,
+        "consumed_physics_time_s": 263.0343887183117,
+        "capture": {
+          "camera_path": "/World/AssemblyPalmCamera",
+          "warmup_render_frames": 3,
+          "render_subframes_per_frame": 4,
+          "capture_and_save_wall_s": 0.813059064996196,
+          "resolution": [
+            1280,
+            720
+          ],
+          "finite_positive_depth_pixels": 921600,
+          "depth_valid_fraction": 1.0,
+          "rgb_minimum": 22,
+          "rgb_maximum": 248,
+          "rgb_standard_deviation": 40.377924959569995
+        },
+        "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00983",
+        "world_from_hand_encoder": [
+          [
+            -0.5395583621961958,
+            -0.8419481994621054,
+            -5.662753477252855e-05,
+            0.5535437337921112
+          ],
+          [
+            -0.841948199807533,
+            0.5395583558839928,
+            9.714225090857405e-05,
+            0.18848650633822925
+          ],
+          [
+            -5.1234883684433345e-05,
+            0.00010009136476168578,
+            -0.9999999936783526,
+            0.7001413472571175
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "world_from_camera_cv": [
+          [
+            -0.5395583621961958,
+            -0.8419481994621054,
+            -5.662753477252855e-05,
+            0.5535258961186579
+          ],
+          [
+            -0.841948199807533,
+            0.5395583558839928,
+            9.714225090857405e-05,
+            0.18851710614726544
+          ],
+          [
+            -5.1234883684433345e-05,
+            0.00010009136476168578,
+            -0.9999999936783526,
+            0.38514134924843646
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "intrinsics_3x3": [
+          [
+            1465.998568360773,
+            0.0,
+            640.0
+          ],
+          [
+            0.0,
+            1465.998568360773,
+            360.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "world_from_plug_five_dof": [
+          [
+            -0.539558386582011,
+            -0.8419481787475698,
+            0.0001085019245891134,
+            0.5500069035714018
+          ],
+          [
+            -0.8419481786344475,
+            0.5395583608074892,
+            -0.0001994413992860174,
+            0.18499521740584424
+          ],
+          [
+            0.0001093762023200769,
+            -0.00019896327740242362,
+            -0.99999997422523,
+            0.25968508157595205
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "metrics": {
+          "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+          "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+          "axial_yaw_estimated": false,
+          "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+          "rgb_intensity_used_for_center": false,
+          "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+          "sam_used_as_plane_seed_not_required_full_contour": false,
+          "original_seed_contour_rms_m": 3.590742993665041e-05,
+          "depth_source": "FLOAT_METERS_NPY",
+          "mask_valid_depth_pixels": 236831,
+          "depth_pixel_center_offset_px": 0.5,
+          "backprojection_principal_point_index_coordinates_px": [
+            639.5,
+            359.5
+          ],
+          "visible_face_component_pixels": 124538,
+          "visible_face_radius_m": 0.015773400522113887,
+          "visible_face_to_object_origin_m": 0.03101339912,
+          "plane_residual_limit_m": 2e-05,
+          "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+          "plane_ransac_sampled_inlier_fraction": 0.5167038238075936,
+          "plane_refined_inlier_fraction": 0.5169213489788077,
+          "plane_inlier_residual_rms_m": 4.6734508668976013e-07,
+          "circle_residual_rms_m": 3.590742993665041e-05,
+          "circle_quality_limit_m": 9.663317079446445e-05,
+          "estimated_pixel_footprint_m": 6.44221138629763e-05,
+          "estimated_visible_face_center_camera_m": [
+            0.004865396382623841,
+            0.0010592625518823667,
+            0.09444272669389797
+          ],
+          "estimated_directed_axis_camera": [
+            0.00016061108873349414,
+            -0.0002990546357216628,
+            0.9999999423852
+          ],
+          "elapsed_s": 0.053116741008125246,
+          "truth_inputs_used": [],
+          "sam_used_for_this_observation": false,
+          "roi_is_not_an_observed_pose": true
+        },
+        "measurement": {
+          "geometry": {
+            "metrics": {
+              "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+              "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+              "axial_yaw_estimated": false,
+              "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+              "rgb_intensity_used_for_center": false,
+              "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+              "sam_used_as_plane_seed_not_required_full_contour": false,
+              "original_seed_contour_rms_m": 3.590742993665041e-05,
+              "depth_source": "FLOAT_METERS_NPY",
+              "mask_valid_depth_pixels": 236831,
+              "depth_pixel_center_offset_px": 0.5,
+              "backprojection_principal_point_index_coordinates_px": [
+                639.5,
+                359.5
+              ],
+              "visible_face_component_pixels": 124538,
+              "visible_face_radius_m": 0.015773400522113887,
+              "visible_face_to_object_origin_m": 0.03101339912,
+              "plane_residual_limit_m": 2e-05,
+              "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+              "plane_ransac_sampled_inlier_fraction": 0.5167038238075936,
+              "plane_refined_inlier_fraction": 0.5169213489788077,
+              "plane_inlier_residual_rms_m": 4.6734508668976013e-07,
+              "circle_residual_rms_m": 3.590742993665041e-05,
+              "circle_quality_limit_m": 9.663317079446445e-05,
+              "estimated_pixel_footprint_m": 6.44221138629763e-05,
+              "estimated_visible_face_center_camera_m": [
+                0.004865396382623841,
+                0.0010592625518823667,
+                0.09444272669389797
+              ],
+              "estimated_directed_axis_camera": [
+                0.00016061108873349414,
+                -0.0002990546357216628,
+                0.9999999423852
+              ],
+              "elapsed_s": 0.053116741008125246,
+              "truth_inputs_used": [],
+              "sam_used_for_this_observation": false,
+              "roi_is_not_an_observed_pose": true
+            },
+            "camera_from_object": [
+              [
+                0.9999999871020391,
+                -6.617444900424222e-24,
+                0.00016061108873349414,
+                0.00487037747842183
+              ],
+              [
+                4.8031491253563054e-08,
+                0.9999999552831604,
+                -0.0002990546357216628,
+                0.0010499878511060446
+              ],
+              [
+                -0.00016061108155147384,
+                0.0002990546395788579,
+                0.9999999423852,
+                0.12545612402706718
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          }
+        },
+        "tracking_seed_mask": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00983/roi.png",
+        "axial_yaw_measured": false,
+        "previous_hand_body_relation_used_for_measurement": false,
+        "previous_pose_used_only_for_search_region": true,
+        "online_object_or_contact_truth_used": false,
+        "consumed_by_stage_at_physics_time_s": 263.0458470522426,
+        "sample_age_at_stage_consumption_s": 0.1614583417540416,
+        "new_image_acquired_by_this_function": false
+      }
+    }
+  },
+  "preclose_palm_observation": {
+    "status": "DELAYED_CURRENT_PALM_POSITION_AND_AXIS",
+    "position_and_axis_measured": true,
+    "physics_time_s": 262.48438868962694,
+    "capture_physics_time_s": 262.48438868962694,
+    "available_physics_time_s": 262.6569271466404,
+    "consumed_physics_time_s": 262.6573053653119,
+    "capture": {
+      "camera_path": "/World/AssemblyPalmCamera",
+      "warmup_render_frames": 3,
+      "render_subframes_per_frame": 4,
+      "capture_and_save_wall_s": 0.8094331629981752,
+      "resolution": [
+        1280,
+        720
+      ],
+      "finite_positive_depth_pixels": 921600,
+      "depth_valid_fraction": 1.0,
+      "rgb_minimum": 23,
+      "rgb_maximum": 248,
+      "rgb_standard_deviation": 40.3839676182431
+    },
+    "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00981",
+    "world_from_hand_encoder": [
+      [
+        -0.5395583621961958,
+        -0.8419481994621054,
+        -5.662753477252855e-05,
+        0.5535437337921112
+      ],
+      [
+        -0.841948199807533,
+        0.5395583558839928,
+        9.714225090857405e-05,
+        0.18848650633822925
+      ],
+      [
+        -5.1234883684433345e-05,
+        0.00010009136476168578,
+        -0.9999999936783526,
+        0.7001413472571175
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "world_from_camera_cv": [
+      [
+        -0.5395583621961958,
+        -0.8419481994621054,
+        -5.662753477252855e-05,
+        0.5535258961186579
+      ],
+      [
+        -0.841948199807533,
+        0.5395583558839928,
+        9.714225090857405e-05,
+        0.18851710614726544
+      ],
+      [
+        -5.1234883684433345e-05,
+        0.00010009136476168578,
+        -0.9999999936783526,
+        0.38514134924843646
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "intrinsics_3x3": [
+      [
+        1465.998568360773,
+        0.0,
+        640.0
+      ],
+      [
+        0.0,
+        1465.998568360773,
+        360.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "world_from_plug_five_dof": [
+      [
+        -0.5395583865510266,
+        -0.8419481788503331,
+        0.00010785666698217262,
+        0.5500067171597128
+      ],
+      [
+        -0.8419481786057257,
+        0.5395583608412656,
+        -0.00019947127029311783,
+        0.18499505176579686
+      ],
+      [
+        0.00010974950631365732,
+        -0.00019843612107862816,
+        -0.9999999742890755,
+        0.25968508465664775
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "metrics": {
+      "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+      "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+      "axial_yaw_estimated": false,
+      "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+      "rgb_intensity_used_for_center": false,
+      "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+      "sam_used_as_plane_seed_not_required_full_contour": false,
+      "original_seed_contour_rms_m": 3.590773329242827e-05,
+      "depth_source": "FLOAT_METERS_NPY",
+      "mask_valid_depth_pixels": 236835,
+      "depth_pixel_center_offset_px": 0.5,
+      "backprojection_principal_point_index_coordinates_px": [
+        639.5,
+        359.5
+      ],
+      "visible_face_component_pixels": 124519,
+      "visible_face_radius_m": 0.015773400522113887,
+      "visible_face_to_object_origin_m": 0.03101339912,
+      "plane_residual_limit_m": 2e-05,
+      "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+      "plane_ransac_sampled_inlier_fraction": 0.5178942390514956,
+      "plane_refined_inlier_fraction": 0.5168915067452023,
+      "plane_inlier_residual_rms_m": 4.572821648159441e-07,
+      "circle_residual_rms_m": 3.590773329242827e-05,
+      "circle_quality_limit_m": 9.663316763356073e-05,
+      "estimated_pixel_footprint_m": 6.442211175570715e-05,
+      "estimated_visible_face_center_camera_m": [
+        0.004865624845365891,
+        0.0010593137797954941,
+        0.09444272360464441
+      ],
+      "estimated_directed_axis_camera": [
+        0.0001609843927150155,
+        -0.0002985274793991799,
+        0.9999999424826831
+      ],
+      "elapsed_s": 0.054043087002355605,
+      "truth_inputs_used": [],
+      "sam_used_for_this_observation": false,
+      "roi_is_not_an_observed_pose": true
+    },
+    "measurement": {
+      "geometry": {
+        "metrics": {
+          "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+          "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+          "axial_yaw_estimated": false,
+          "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+          "rgb_intensity_used_for_center": false,
+          "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+          "sam_used_as_plane_seed_not_required_full_contour": false,
+          "original_seed_contour_rms_m": 3.590773329242827e-05,
+          "depth_source": "FLOAT_METERS_NPY",
+          "mask_valid_depth_pixels": 236835,
+          "depth_pixel_center_offset_px": 0.5,
+          "backprojection_principal_point_index_coordinates_px": [
+            639.5,
+            359.5
+          ],
+          "visible_face_component_pixels": 124519,
+          "visible_face_radius_m": 0.015773400522113887,
+          "visible_face_to_object_origin_m": 0.03101339912,
+          "plane_residual_limit_m": 2e-05,
+          "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+          "plane_ransac_sampled_inlier_fraction": 0.5178942390514956,
+          "plane_refined_inlier_fraction": 0.5168915067452023,
+          "plane_inlier_residual_rms_m": 4.572821648159441e-07,
+          "circle_residual_rms_m": 3.590773329242827e-05,
+          "circle_quality_limit_m": 9.663316763356073e-05,
+          "estimated_pixel_footprint_m": 6.442211175570715e-05,
+          "estimated_visible_face_center_camera_m": [
+            0.004865624845365891,
+            0.0010593137797954941,
+            0.09444272360464441
+          ],
+          "estimated_directed_axis_camera": [
+            0.0001609843927150155,
+            -0.0002985274793991799,
+            0.9999999424826831
+          ],
+          "elapsed_s": 0.054043087002355605,
+          "truth_inputs_used": [],
+          "sam_used_for_this_observation": false,
+          "roi_is_not_an_observed_pose": true
+        },
+        "camera_from_object": [
+          [
+            0.9999999870420125,
+            -6.617444900424222e-24,
+            0.0001609843927150155,
+            0.004870617518589252
+          ],
+          [
+            4.8058265602559685e-08,
+            0.99999995544067,
+            -0.0002985274793991799,
+            0.0010500554279285997
+          ],
+          [
+            -0.00016098438554165882,
+            0.0002985274832674953,
+            0.9999999424826831,
+            0.1254561209408369
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      }
+    },
+    "tracking_seed_mask": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00981/roi.png",
+    "axial_yaw_measured": false,
+    "previous_hand_body_relation_used_for_measurement": false,
+    "previous_pose_used_only_for_search_region": true,
+    "online_object_or_contact_truth_used": false,
+    "consumed_by_stage_at_physics_time_s": 262.813555373461,
+    "sample_age_at_stage_consumption_s": 0.3291666838340461,
+    "new_image_acquired_by_this_function": false
+  },
+  "visual_nut_phase_start_position_check": {
+    "error_m": 0.00014239985399849993,
+    "original_tolerance_m": 0.0005999253536858531,
+    "passed": true
+  },
+  "visual_nut_phase_before_alignment": {
+    "scope": "CURRENT_RGBD_NU_EXTERIOR_LOCAL_PHASE_ESTIMATE",
+    "source_frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception",
+    "capture_physics_time_s": 260.1500135678798,
+    "source_model_sha256": "234b7c0f14caeae1b8dffeabb8bae5a63e8b05d2463f3a7ff3e0c0d1d53f9eb6",
+    "phase_fit": {
+      "best": {
+        "yaw_deg": 227.27500000000006,
+        "clipped_rms_m": 4.207332384869546e-05,
+        "median_distance_m": 3.522569777220421e-05,
+        "p90_distance_m": 6.300629148625617e-05,
+        "fraction_below0p1mm": 0.9973031283710896
+      },
+      "selected_points": 59327,
+      "fit_points": 1854,
+      "coarse_score_curve": [
+        {
+          "yaw_deg": 220.0,
+          "clipped_rms_m": 0.0001198600115919706,
+          "median_distance_m": 3.797783512174188e-05,
+          "p90_distance_m": 8.197025251747185e-05,
+          "fraction_below0p1mm": 0.9212513484358145
+        },
+        {
+          "yaw_deg": 220.25,
+          "clipped_rms_m": 0.00011803632585194529,
+          "median_distance_m": 3.8099812994386495e-05,
+          "p90_distance_m": 7.988874589658899e-05,
+          "fraction_below0p1mm": 0.9277238403451996
+        },
+        {
+          "yaw_deg": 220.5,
+          "clipped_rms_m": 0.00011671587089908201,
+          "median_distance_m": 3.8578047280564374e-05,
+          "p90_distance_m": 8.095991791256362e-05,
+          "fraction_below0p1mm": 0.9298813376483279
+        },
+        {
+          "yaw_deg": 220.75,
+          "clipped_rms_m": 0.0001155366935956289,
+          "median_distance_m": 3.87350236399434e-05,
+          "p90_distance_m": 7.943289306108048e-05,
+          "fraction_below0p1mm": 0.93042071197411
+        },
+        {
+          "yaw_deg": 221.0,
+          "clipped_rms_m": 0.00011344711650523549,
+          "median_distance_m": 3.7384665972629196e-05,
+          "p90_distance_m": 7.658695805216458e-05,
+          "fraction_below0p1mm": 0.9336569579288025
+        },
+        {
+          "yaw_deg": 221.25,
+          "clipped_rms_m": 0.00011221318971364393,
+          "median_distance_m": 3.8363500017112084e-05,
+          "p90_distance_m": 7.677565017542466e-05,
+          "fraction_below0p1mm": 0.9325782092772384
+        },
+        {
+          "yaw_deg": 221.5,
+          "clipped_rms_m": 0.00010964491108342144,
+          "median_distance_m": 3.72283915243794e-05,
+          "p90_distance_m": 7.796800645791325e-05,
+          "fraction_below0p1mm": 0.935814455231931
+        },
+        {
+          "yaw_deg": 221.75,
+          "clipped_rms_m": 0.00010740922687004215,
+          "median_distance_m": 3.831007041642034e-05,
+          "p90_distance_m": 7.599356699962019e-05,
+          "fraction_below0p1mm": 0.9331175836030206
+        },
+        {
+          "yaw_deg": 222.0,
+          "clipped_rms_m": 0.00010495139290608445,
+          "median_distance_m": 3.7598654466441505e-05,
+          "p90_distance_m": 7.295343397656947e-05,
+          "fraction_below0p1mm": 0.9395900755124056
+        },
+        {
+          "yaw_deg": 222.25,
+          "clipped_rms_m": 0.00010264196217625106,
+          "median_distance_m": 3.6357015697290436e-05,
+          "p90_distance_m": 7.523994380589015e-05,
+          "fraction_below0p1mm": 0.9422869471413161
+        },
+        {
+          "yaw_deg": 222.5,
+          "clipped_rms_m": 0.00010044644079078413,
+          "median_distance_m": 3.740622609881014e-05,
+          "p90_distance_m": 7.473188401210466e-05,
+          "fraction_below0p1mm": 0.9444444444444444
+        },
+        {
+          "yaw_deg": 222.75,
+          "clipped_rms_m": 9.760039259894211e-05,
+          "median_distance_m": 3.63757316545113e-05,
+          "p90_distance_m": 7.356076697437296e-05,
+          "fraction_below0p1mm": 0.9449838187702265
+        },
+        {
+          "yaw_deg": 223.0,
+          "clipped_rms_m": 9.481905099880808e-05,
+          "median_distance_m": 3.6686343275977286e-05,
+          "p90_distance_m": 7.248585208736365e-05,
+          "fraction_below0p1mm": 0.9487594390507011
+        },
+        {
+          "yaw_deg": 223.25,
+          "clipped_rms_m": 9.244187721206937e-05,
+          "median_distance_m": 3.743035297326689e-05,
+          "p90_distance_m": 7.093260958616483e-05,
+          "fraction_below0p1mm": 0.9530744336569579
+        },
+        {
+          "yaw_deg": 223.5,
+          "clipped_rms_m": 8.976431942716987e-05,
+          "median_distance_m": 3.721975576269372e-05,
+          "p90_distance_m": 7.130350362709667e-05,
+          "fraction_below0p1mm": 0.9557713052858684
+        },
+        {
+          "yaw_deg": 223.75,
+          "clipped_rms_m": 8.669894359527756e-05,
+          "median_distance_m": 3.744981344272486e-05,
+          "p90_distance_m": 7.275708587884444e-05,
+          "fraction_below0p1mm": 0.9573894282632147
+        },
+        {
+          "yaw_deg": 224.0,
+          "clipped_rms_m": 8.289179751296543e-05,
+          "median_distance_m": 3.699411125932231e-05,
+          "p90_distance_m": 7.194347337582255e-05,
+          "fraction_below0p1mm": 0.9590075512405609
+        },
+        {
+          "yaw_deg": 224.25,
+          "clipped_rms_m": 7.92759456730433e-05,
+          "median_distance_m": 3.728380121709726e-05,
+          "p90_distance_m": 6.904843786223747e-05,
+          "fraction_below0p1mm": 0.9638619201725998
+        },
+        {
+          "yaw_deg": 224.5,
+          "clipped_rms_m": 7.634764317011758e-05,
+          "median_distance_m": 3.754356002900351e-05,
+          "p90_distance_m": 6.963960708127672e-05,
+          "fraction_below0p1mm": 0.9676375404530745
+        },
+        {
+          "yaw_deg": 224.75,
+          "clipped_rms_m": 7.29865950659445e-05,
+          "median_distance_m": 3.615451187317833e-05,
+          "p90_distance_m": 6.856130016881736e-05,
+          "fraction_below0p1mm": 0.9735706580366774
+        },
+        {
+          "yaw_deg": 225.0,
+          "clipped_rms_m": 7.043395029776322e-05,
+          "median_distance_m": 3.510363707827057e-05,
+          "p90_distance_m": 6.731827985997254e-05,
+          "fraction_below0p1mm": 0.9724919093851133
+        },
+        {
+          "yaw_deg": 225.25,
+          "clipped_rms_m": 6.765025367908646e-05,
+          "median_distance_m": 3.772150813305415e-05,
+          "p90_distance_m": 6.820453450114029e-05,
+          "fraction_below0p1mm": 0.97680690399137
+        },
+        {
+          "yaw_deg": 225.5,
+          "clipped_rms_m": 6.437445960871952e-05,
+          "median_distance_m": 3.656934598562974e-05,
+          "p90_distance_m": 6.925183976739065e-05,
+          "fraction_below0p1mm": 0.9773462783171522
+        },
+        {
+          "yaw_deg": 225.75,
+          "clipped_rms_m": 6.129233922468833e-05,
+          "median_distance_m": 3.6817351018566966e-05,
+          "p90_distance_m": 6.802821877734085e-05,
+          "fraction_below0p1mm": 0.9795037756202805
+        },
+        {
+          "yaw_deg": 226.0,
+          "clipped_rms_m": 5.76164638281529e-05,
+          "median_distance_m": 3.5359548070177836e-05,
+          "p90_distance_m": 6.611803972106992e-05,
+          "fraction_below0p1mm": 0.9859762675296656
+        },
+        {
+          "yaw_deg": 226.25,
+          "clipped_rms_m": 5.5329709956199635e-05,
+          "median_distance_m": 3.6136049962418e-05,
+          "p90_distance_m": 6.573199453063925e-05,
+          "fraction_below0p1mm": 0.9854368932038835
+        },
+        {
+          "yaw_deg": 226.5,
+          "clipped_rms_m": 5.124239126759105e-05,
+          "median_distance_m": 3.6592764303892844e-05,
+          "p90_distance_m": 6.657817420411966e-05,
+          "fraction_below0p1mm": 0.9881337648327939
+        },
+        {
+          "yaw_deg": 226.75,
+          "clipped_rms_m": 4.690262948801949e-05,
+          "median_distance_m": 3.6202621160751595e-05,
+          "p90_distance_m": 6.387991867374351e-05,
+          "fraction_below0p1mm": 0.9919093851132686
+        },
+        {
+          "yaw_deg": 227.0,
+          "clipped_rms_m": 4.38101419862535e-05,
+          "median_distance_m": 3.509993297533601e-05,
+          "p90_distance_m": 6.343258171786031e-05,
+          "fraction_below0p1mm": 0.9908306364617044
+        },
+        {
+          "yaw_deg": 227.25,
+          "clipped_rms_m": 4.219005215957882e-05,
+          "median_distance_m": 3.53731924416489e-05,
+          "p90_distance_m": 6.333840488186852e-05,
+          "fraction_below0p1mm": 0.9956850053937433
+        },
+        {
+          "yaw_deg": 227.5,
+          "clipped_rms_m": 4.259916290505746e-05,
+          "median_distance_m": 3.556093474070451e-05,
+          "p90_distance_m": 6.413025740044881e-05,
+          "fraction_below0p1mm": 0.9951456310679612
+        },
+        {
+          "yaw_deg": 227.75,
+          "clipped_rms_m": 4.268852956226014e-05,
+          "median_distance_m": 3.509156294194176e-05,
+          "p90_distance_m": 6.411198309639303e-05,
+          "fraction_below0p1mm": 0.9924487594390508
+        },
+        {
+          "yaw_deg": 228.0,
+          "clipped_rms_m": 4.450563129497931e-05,
+          "median_distance_m": 3.623645805274956e-05,
+          "p90_distance_m": 6.481848935131589e-05,
+          "fraction_below0p1mm": 0.9919093851132686
+        },
+        {
+          "yaw_deg": 228.25,
+          "clipped_rms_m": 4.640194921890843e-05,
+          "median_distance_m": 3.572825512745781e-05,
+          "p90_distance_m": 6.31636177839739e-05,
+          "fraction_below0p1mm": 0.988673139158576
+        },
+        {
+          "yaw_deg": 228.5,
+          "clipped_rms_m": 5.072626240341116e-05,
+          "median_distance_m": 3.5897756571175696e-05,
+          "p90_distance_m": 6.547824454951818e-05,
+          "fraction_below0p1mm": 0.9843581445523193
+        },
+        {
+          "yaw_deg": 228.75,
+          "clipped_rms_m": 5.5936955656286596e-05,
+          "median_distance_m": 3.681286894706442e-05,
+          "p90_distance_m": 6.583905286743916e-05,
+          "fraction_below0p1mm": 0.9854368932038835
+        },
+        {
+          "yaw_deg": 229.0,
+          "clipped_rms_m": 5.908661716682006e-05,
+          "median_distance_m": 3.648182720730909e-05,
+          "p90_distance_m": 6.477609194048674e-05,
+          "fraction_below0p1mm": 0.9816612729234089
+        },
+        {
+          "yaw_deg": 229.25,
+          "clipped_rms_m": 6.345060576216775e-05,
+          "median_distance_m": 3.6793973262065956e-05,
+          "p90_distance_m": 6.792235983262614e-05,
+          "fraction_below0p1mm": 0.982200647249191
+        },
+        {
+          "yaw_deg": 229.5,
+          "clipped_rms_m": 6.668216194807712e-05,
+          "median_distance_m": 3.72297357271558e-05,
+          "p90_distance_m": 6.593811109053024e-05,
+          "fraction_below0p1mm": 0.9773462783171522
+        },
+        {
+          "yaw_deg": 229.75,
+          "clipped_rms_m": 6.974013734947615e-05,
+          "median_distance_m": 3.6057918065168575e-05,
+          "p90_distance_m": 6.658558805678496e-05,
+          "fraction_below0p1mm": 0.9773462783171522
+        },
+        {
+          "yaw_deg": 230.0,
+          "clipped_rms_m": 7.287657487923676e-05,
+          "median_distance_m": 3.724643402613194e-05,
+          "p90_distance_m": 6.825725778833658e-05,
+          "fraction_below0p1mm": 0.9778856526429341
+        },
+        {
+          "yaw_deg": 230.25,
+          "clipped_rms_m": 7.558154541287099e-05,
+          "median_distance_m": 3.635789467506653e-05,
+          "p90_distance_m": 6.846221374256509e-05,
+          "fraction_below0p1mm": 0.9681769147788565
+        },
+        {
+          "yaw_deg": 230.5,
+          "clipped_rms_m": 7.890998592504565e-05,
+          "median_distance_m": 3.603266967844661e-05,
+          "p90_distance_m": 6.892833018729546e-05,
+          "fraction_below0p1mm": 0.9665587918015103
+        },
+        {
+          "yaw_deg": 230.75,
+          "clipped_rms_m": 8.172008853992714e-05,
+          "median_distance_m": 3.66387111995088e-05,
+          "p90_distance_m": 6.91513679788202e-05,
+          "fraction_below0p1mm": 0.9638619201725998
+        },
+        {
+          "yaw_deg": 231.0,
+          "clipped_rms_m": 8.496064591689086e-05,
+          "median_distance_m": 3.776046999231061e-05,
+          "p90_distance_m": 6.840795564403215e-05,
+          "fraction_below0p1mm": 0.9622437971952535
+        },
+        {
+          "yaw_deg": 231.25,
+          "clipped_rms_m": 8.805207350547402e-05,
+          "median_distance_m": 3.7339961248016856e-05,
+          "p90_distance_m": 7.247686964824251e-05,
+          "fraction_below0p1mm": 0.9600862998921251
+        },
+        {
+          "yaw_deg": 231.5,
+          "clipped_rms_m": 9.024473539671943e-05,
+          "median_distance_m": 3.6808457169132145e-05,
+          "p90_distance_m": 7.165240049738752e-05,
+          "fraction_below0p1mm": 0.9568500539374326
+        },
+        {
+          "yaw_deg": 231.75,
+          "clipped_rms_m": 9.26805465669431e-05,
+          "median_distance_m": 3.756614885185986e-05,
+          "p90_distance_m": 7.347629886922276e-05,
+          "fraction_below0p1mm": 0.9514563106796117
+        },
+        {
+          "yaw_deg": 232.0,
+          "clipped_rms_m": 9.505224885662569e-05,
+          "median_distance_m": 3.701465000969979e-05,
+          "p90_distance_m": 7.253636542073103e-05,
+          "fraction_below0p1mm": 0.9498381877022654
+        },
+        {
+          "yaw_deg": 232.25,
+          "clipped_rms_m": 9.738068439453935e-05,
+          "median_distance_m": 3.71575904874067e-05,
+          "p90_distance_m": 7.242255995580607e-05,
+          "fraction_below0p1mm": 0.947680690399137
+        },
+        {
+          "yaw_deg": 232.5,
+          "clipped_rms_m": 0.00010009393763853961,
+          "median_distance_m": 3.715587104288103e-05,
+          "p90_distance_m": 7.402222943121712e-05,
+          "fraction_below0p1mm": 0.9428263214670982
+        },
+        {
+          "yaw_deg": 232.75,
+          "clipped_rms_m": 0.00010246677361135461,
+          "median_distance_m": 3.722848273754517e-05,
+          "p90_distance_m": 7.40783942537109e-05,
+          "fraction_below0p1mm": 0.9422869471413161
+        },
+        {
+          "yaw_deg": 233.0,
+          "clipped_rms_m": 0.00010481473395113556,
+          "median_distance_m": 3.7311553271954004e-05,
+          "p90_distance_m": 7.383490674579418e-05,
+          "fraction_below0p1mm": 0.9374325782092773
+        },
+        {
+          "yaw_deg": 233.25,
+          "clipped_rms_m": 0.00010753017209788353,
+          "median_distance_m": 3.7841418830622256e-05,
+          "p90_distance_m": 7.52567215395268e-05,
+          "fraction_below0p1mm": 0.9352750809061489
+        },
+        {
+          "yaw_deg": 233.5,
+          "clipped_rms_m": 0.00010917541285435802,
+          "median_distance_m": 3.69004005156817e-05,
+          "p90_distance_m": 7.696822844706182e-05,
+          "fraction_below0p1mm": 0.9390507011866235
+        },
+        {
+          "yaw_deg": 233.75,
+          "clipped_rms_m": 0.0001118033334828498,
+          "median_distance_m": 3.766241159210447e-05,
+          "p90_distance_m": 7.902668099373612e-05,
+          "fraction_below0p1mm": 0.9325782092772384
+        },
+        {
+          "yaw_deg": 234.0,
+          "clipped_rms_m": 0.00011355123339193464,
+          "median_distance_m": 3.744043645624529e-05,
+          "p90_distance_m": 7.803174058930677e-05,
+          "fraction_below0p1mm": 0.9271844660194175
+        },
+        {
+          "yaw_deg": 234.25,
+          "clipped_rms_m": 0.0001155189937474984,
+          "median_distance_m": 3.7885141359754164e-05,
+          "p90_distance_m": 7.876727610966231e-05,
+          "fraction_below0p1mm": 0.9271844660194175
+        },
+        {
+          "yaw_deg": 234.5,
+          "clipped_rms_m": 0.00011787534549857028,
+          "median_distance_m": 3.839191188129346e-05,
+          "p90_distance_m": 7.910236415697227e-05,
+          "fraction_below0p1mm": 0.9234088457389428
+        },
+        {
+          "yaw_deg": 234.75,
+          "clipped_rms_m": 0.00012022469697747865,
+          "median_distance_m": 3.804558511157004e-05,
+          "p90_distance_m": 8.169413271468907e-05,
+          "fraction_below0p1mm": 0.9223300970873787
+        },
+        {
+          "yaw_deg": 235.0,
+          "clipped_rms_m": 0.00012205099843404056,
+          "median_distance_m": 3.8069595231049424e-05,
+          "p90_distance_m": 8.120709642383983e-05,
+          "fraction_below0p1mm": 0.919093851132686
+        },
+        {
+          "yaw_deg": 235.25,
+          "clipped_rms_m": 0.00012338287853483064,
+          "median_distance_m": 3.872066125283145e-05,
+          "p90_distance_m": 8.333782664322363e-05,
+          "fraction_below0p1mm": 0.9158576051779935
+        },
+        {
+          "yaw_deg": 235.5,
+          "clipped_rms_m": 0.00012489039865695402,
+          "median_distance_m": 3.714145925728703e-05,
+          "p90_distance_m": 8.612765975364475e-05,
+          "fraction_below0p1mm": 0.9153182308522114
+        },
+        {
+          "yaw_deg": 235.75,
+          "clipped_rms_m": 0.00012665626335495053,
+          "median_distance_m": 3.774267292347767e-05,
+          "p90_distance_m": 8.953285698911746e-05,
+          "fraction_below0p1mm": 0.9115426105717368
+        }
+      ],
+      "fine_score_curve": [
+        {
+          "yaw_deg": 226.95,
+          "clipped_rms_m": 4.4258126098759386e-05,
+          "median_distance_m": 3.5068942770791905e-05,
+          "p90_distance_m": 6.386267229275789e-05,
+          "fraction_below0p1mm": 0.9908306364617044
+        },
+        {
+          "yaw_deg": 226.975,
+          "clipped_rms_m": 4.4027711567921126e-05,
+          "median_distance_m": 3.503770080235297e-05,
+          "p90_distance_m": 6.420250694598459e-05,
+          "fraction_below0p1mm": 0.9902912621359223
+        },
+        {
+          "yaw_deg": 227.0,
+          "clipped_rms_m": 4.38101419862535e-05,
+          "median_distance_m": 3.509993297533601e-05,
+          "p90_distance_m": 6.343258171786031e-05,
+          "fraction_below0p1mm": 0.9908306364617044
+        },
+        {
+          "yaw_deg": 227.025,
+          "clipped_rms_m": 4.378616545128609e-05,
+          "median_distance_m": 3.551073710751858e-05,
+          "p90_distance_m": 6.388509243876972e-05,
+          "fraction_below0p1mm": 0.9892125134843581
+        },
+        {
+          "yaw_deg": 227.05,
+          "clipped_rms_m": 4.376492224223923e-05,
+          "median_distance_m": 3.5920251379273125e-05,
+          "p90_distance_m": 6.464967702713192e-05,
+          "fraction_below0p1mm": 0.9919093851132686
+        },
+        {
+          "yaw_deg": 227.07500000000002,
+          "clipped_rms_m": 4.3613639359115636e-05,
+          "median_distance_m": 3.584279774639679e-05,
+          "p90_distance_m": 6.539387544463862e-05,
+          "fraction_below0p1mm": 0.9919093851132686
+        },
+        {
+          "yaw_deg": 227.10000000000002,
+          "clipped_rms_m": 4.345520876549168e-05,
+          "median_distance_m": 3.561326234869704e-05,
+          "p90_distance_m": 6.462203429595099e-05,
+          "fraction_below0p1mm": 0.9924487594390508
+        },
+        {
+          "yaw_deg": 227.12500000000003,
+          "clipped_rms_m": 4.3400156302643386e-05,
+          "median_distance_m": 3.526264095566772e-05,
+          "p90_distance_m": 6.466919263414796e-05,
+          "fraction_below0p1mm": 0.9929881337648327
+        },
+        {
+          "yaw_deg": 227.15000000000003,
+          "clipped_rms_m": 4.3242158568253665e-05,
+          "median_distance_m": 3.556796874671875e-05,
+          "p90_distance_m": 6.529509745422399e-05,
+          "fraction_below0p1mm": 0.9924487594390508
+        },
+        {
+          "yaw_deg": 227.17500000000004,
+          "clipped_rms_m": 4.308723342555804e-05,
+          "median_distance_m": 3.616173063185415e-05,
+          "p90_distance_m": 6.520930083500787e-05,
+          "fraction_below0p1mm": 0.994066882416397
+        },
+        {
+          "yaw_deg": 227.20000000000005,
+          "clipped_rms_m": 4.27821964336069e-05,
+          "median_distance_m": 3.52435301793423e-05,
+          "p90_distance_m": 6.456866064138443e-05,
+          "fraction_below0p1mm": 0.994066882416397
+        },
+        {
+          "yaw_deg": 227.22500000000005,
+          "clipped_rms_m": 4.253408873030501e-05,
+          "median_distance_m": 3.505136679120267e-05,
+          "p90_distance_m": 6.376912374200398e-05,
+          "fraction_below0p1mm": 0.9956850053937433
+        },
+        {
+          "yaw_deg": 227.25000000000006,
+          "clipped_rms_m": 4.219005215957811e-05,
+          "median_distance_m": 3.537319244164751e-05,
+          "p90_distance_m": 6.333840488185299e-05,
+          "fraction_below0p1mm": 0.9956850053937433
+        },
+        {
+          "yaw_deg": 227.27500000000006,
+          "clipped_rms_m": 4.207332384869546e-05,
+          "median_distance_m": 3.522569777220421e-05,
+          "p90_distance_m": 6.300629148625617e-05,
+          "fraction_below0p1mm": 0.9973031283710896
+        },
+        {
+          "yaw_deg": 227.30000000000007,
+          "clipped_rms_m": 4.2149991971824295e-05,
+          "median_distance_m": 3.527591883331731e-05,
+          "p90_distance_m": 6.366441696732076e-05,
+          "fraction_below0p1mm": 0.9962243797195254
+        },
+        {
+          "yaw_deg": 227.32500000000007,
+          "clipped_rms_m": 4.231480499421848e-05,
+          "median_distance_m": 3.5421899917678325e-05,
+          "p90_distance_m": 6.309520043953033e-05,
+          "fraction_below0p1mm": 0.9967637540453075
+        },
+        {
+          "yaw_deg": 227.35000000000008,
+          "clipped_rms_m": 4.245651555178171e-05,
+          "median_distance_m": 3.533882449495719e-05,
+          "p90_distance_m": 6.420175522263785e-05,
+          "fraction_below0p1mm": 0.9973031283710896
+        },
+        {
+          "yaw_deg": 227.37500000000009,
+          "clipped_rms_m": 4.2371823662718845e-05,
+          "median_distance_m": 3.55448824191964e-05,
+          "p90_distance_m": 6.448039133846397e-05,
+          "fraction_below0p1mm": 0.9967637540453075
+        },
+        {
+          "yaw_deg": 227.4000000000001,
+          "clipped_rms_m": 4.2365327284661014e-05,
+          "median_distance_m": 3.5288884329328886e-05,
+          "p90_distance_m": 6.403277372791103e-05,
+          "fraction_below0p1mm": 0.9983818770226537
+        },
+        {
+          "yaw_deg": 227.4250000000001,
+          "clipped_rms_m": 4.2481178341652314e-05,
+          "median_distance_m": 3.6117386879505916e-05,
+          "p90_distance_m": 6.445534670262195e-05,
+          "fraction_below0p1mm": 0.9978425026968716
+        },
+        {
+          "yaw_deg": 227.4500000000001,
+          "clipped_rms_m": 4.2616145528515996e-05,
+          "median_distance_m": 3.636145905921782e-05,
+          "p90_distance_m": 6.43591755319151e-05,
+          "fraction_below0p1mm": 0.9962243797195254
+        },
+        {
+          "yaw_deg": 227.4750000000001,
+          "clipped_rms_m": 4.261053476735497e-05,
+          "median_distance_m": 3.584212642873768e-05,
+          "p90_distance_m": 6.424683956637021e-05,
+          "fraction_below0p1mm": 0.9956850053937433
+        },
+        {
+          "yaw_deg": 227.5000000000001,
+          "clipped_rms_m": 4.2599162905057265e-05,
+          "median_distance_m": 3.556093474068742e-05,
+          "p90_distance_m": 6.413025740044662e-05,
+          "fraction_below0p1mm": 0.9951456310679612
+        },
+        {
+          "yaw_deg": 227.52500000000012,
+          "clipped_rms_m": 4.262631028089064e-05,
+          "median_distance_m": 3.578366452099549e-05,
+          "p90_distance_m": 6.550458655742518e-05,
+          "fraction_below0p1mm": 0.9962243797195254
+        },
+        {
+          "yaw_deg": 227.55000000000013,
+          "clipped_rms_m": 4.264470435533598e-05,
+          "median_distance_m": 3.627982588175019e-05,
+          "p90_distance_m": 6.477957532616123e-05,
+          "fraction_below0p1mm": 0.9967637540453075
+        }
+      ],
+      "three_degree_alternatives": [
+        {
+          "yaw_deg": 224.27500000000006,
+          "clipped_rms_m": 7.892761679570903e-05,
+          "median_distance_m": 3.669215338944442e-05,
+          "p90_distance_m": 6.935901415467678e-05,
+          "fraction_below0p1mm": 0.9627831715210357
+        },
+        {
+          "yaw_deg": 230.27500000000006,
+          "clipped_rms_m": 7.588938353182581e-05,
+          "median_distance_m": 3.5902828790362555e-05,
+          "p90_distance_m": 6.899673559603945e-05,
+          "fraction_below0p1mm": 0.9687162891046386
+        }
+      ],
+      "prior_deg": 227.85264578892784,
+      "search_half_width_deg": 8.0,
+      "online_object_truth_used": false
+    },
+    "quality_conditions": {
+      "enough_exterior_points": true,
+      "within_search_window": true,
+      "source_surface_fit": true,
+      "three_degree_alternative_distinguishable": true
+    },
+    "quality_passed": true,
+    "alternative_score_ratio": 1.8037411021943506,
+    "estimated_world_from_nut_rotation": [
+      [
+        0.8896157274305078,
+        -0.45670980471244704,
+        0.00010857166832186949
+      ],
+      [
+        -0.45670977902721516,
+        -0.8896157248495326,
+        -0.00019960298814430895
+      ],
+      [
+        0.00018774770514769115,
+        0.00012798421484740531,
+        -0.9999999741854194
+      ]
+    ],
+    "reference_origin_world_m": [
+      0.5500072279479246,
+      0.18499520925796603,
+      0.25918514874001075
+    ],
+    "reference_target_hand_nut_yaw_deg": -174.5245766750459,
+    "global_revolution_count_measured": false,
+    "exterior90degree_equivalence_used": true,
+    "object_or_contact_truth_used": false
+  },
+  "visual_nut_phase_alignment": {
+    "applied_yaw_increment_deg": -0.5801307278671004,
+    "maximum_yaw_increment_deg": 5.0,
+    "target_world_from_hand": [
+      [
+        -0.5395119663160438,
+        -0.8419779321035089,
+        -7.2452717585271985e-06,
+        0.5535506928236357
+      ],
+      [
+        -0.8419779321093385,
+        0.5395119663465957,
+        -3.116382606651291e-06,
+        0.1884741064597079
+      ],
+      [
+        6.532836195981408e-06,
+        4.4190332245589534e-06,
+        -0.9999999999688971,
+        0.700140345446811
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "source": "CURRENT_RGBD_NU_EXTERIOR_AND_FIXED_REFERENCE_GRASP",
+    "object_pose_written": false,
+    "body_observation_or_envelope_rotated": false,
+    "motion_completed": true,
+    "actual_target_tracking_yaw_error_deg": -0.5218420652612394,
+    "verification_yaw_tolerance_deg": 0.5
+  },
+  "pre_phase_alignment_observation": {
+    "status": "DELAYED_CURRENT_PALM_POSITION_AND_AXIS",
+    "position_and_axis_measured": true,
+    "physics_time_s": 260.1500135678798,
+    "capture_physics_time_s": 260.1500135678798,
+    "available_physics_time_s": 260.3114470688859,
+    "consumed_physics_time_s": 260.31147190963384,
+    "capture": {
+      "camera_path": "/World/AssemblyPalmCamera",
+      "warmup_render_frames": 3,
+      "render_subframes_per_frame": 4,
+      "capture_and_save_wall_s": 0.8237784179800656,
+      "resolution": [
+        1280,
+        720
+      ],
+      "finite_positive_depth_pixels": 921600,
+      "depth_valid_fraction": 1.0,
+      "rgb_minimum": 18,
+      "rgb_maximum": 248,
+      "rgb_standard_deviation": 40.48002044655656
+    },
+    "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00970",
+    "world_from_hand_encoder": [
+      [
+        -0.5479730737104815,
+        -0.8364957505852368,
+        -0.0006080634245882757,
+        0.5536190171152978
+      ],
+      [
+        -0.8364957474477689,
+        0.5479733142477053,
+        -0.00033372770893302483,
+        0.18839836496975135
+      ],
+      [
+        0.0006123643404194285,
+        0.0003257686704002924,
+        -0.9999997594423149,
+        0.7000077098799125
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "world_from_camera_cv": [
+      [
+        -0.5479730737104815,
+        -0.8364957505852368,
+        -0.0006080634245882757,
+        0.5534274771365525
+      ],
+      [
+        -0.8364957474477689,
+        0.5479733142477053,
+        -0.00033372770893302483,
+        0.18829324074143744
+      ],
+      [
+        0.0006123643404194285,
+        0.0003257686704002924,
+        -0.9999997594423149,
+        0.38500778565558325
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "intrinsics_3x3": [
+      [
+        1465.998568360773,
+        0.0,
+        640.0
+      ],
+      [
+        0.0,
+        1465.998568360773,
+        360.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "world_from_plug_five_dof": [
+      [
+        -0.5479730887369915,
+        -0.8364959547016555,
+        0.00010857166832186949,
+        0.5500071736620904
+      ],
+      [
+        -0.8364959548435671,
+        0.547973062922801,
+        -0.00019960298814430895,
+        0.1849953090594601
+      ],
+      [
+        0.00010747274249206302,
+        -0.00020019682729637215,
+        -0.9999999741854194,
+        0.25968514872710347
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "metrics": {
+      "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+      "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+      "axial_yaw_estimated": false,
+      "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+      "rgb_intensity_used_for_center": false,
+      "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+      "sam_used_as_plane_seed_not_required_full_contour": false,
+      "original_seed_contour_rms_m": 3.5123361102986795e-05,
+      "depth_source": "FLOAT_METERS_NPY",
+      "mask_valid_depth_pixels": 237399,
+      "depth_pixel_center_offset_px": 0.5,
+      "backprojection_principal_point_index_coordinates_px": [
+        639.5,
+        359.5
+      ],
+      "visible_face_component_pixels": 124855,
+      "visible_face_radius_m": 0.015773400522113887,
+      "visible_face_to_object_origin_m": 0.03101339912,
+      "plane_residual_limit_m": 2e-05,
+      "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+      "plane_ransac_sampled_inlier_fraction": 0.5175568660488626,
+      "plane_refined_inlier_fraction": 0.5171125404909035,
+      "plane_inlier_residual_rms_m": 4.5997492415332305e-07,
+      "circle_residual_rms_m": 3.5123361102986795e-05,
+      "circle_quality_limit_m": 9.649981757681086e-05,
+      "estimated_pixel_footprint_m": 6.43332117178739e-05,
+      "estimated_visible_face_center_camera_m": [
+        0.004571855326836472,
+        0.0010293765577113736,
+        0.09431239627645366
+      ],
+      "estimated_directed_axis_camera": [
+        -0.0005048916246591686,
+        -0.0005259655121230278,
+        0.9999997342223284
+      ],
+      "elapsed_s": 0.054092584003228694,
+      "truth_inputs_used": [],
+      "sam_used_for_this_observation": false,
+      "roi_is_not_an_observed_pose": true
+    },
+    "measurement": {
+      "geometry": {
+        "metrics": {
+          "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+          "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+          "axial_yaw_estimated": false,
+          "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+          "rgb_intensity_used_for_center": false,
+          "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+          "sam_used_as_plane_seed_not_required_full_contour": false,
+          "original_seed_contour_rms_m": 3.5123361102986795e-05,
+          "depth_source": "FLOAT_METERS_NPY",
+          "mask_valid_depth_pixels": 237399,
+          "depth_pixel_center_offset_px": 0.5,
+          "backprojection_principal_point_index_coordinates_px": [
+            639.5,
+            359.5
+          ],
+          "visible_face_component_pixels": 124855,
+          "visible_face_radius_m": 0.015773400522113887,
+          "visible_face_to_object_origin_m": 0.03101339912,
+          "plane_residual_limit_m": 2e-05,
+          "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+          "plane_ransac_sampled_inlier_fraction": 0.5175568660488626,
+          "plane_refined_inlier_fraction": 0.5171125404909035,
+          "plane_inlier_residual_rms_m": 4.5997492415332305e-07,
+          "circle_residual_rms_m": 3.5123361102986795e-05,
+          "circle_quality_limit_m": 9.649981757681086e-05,
+          "estimated_pixel_footprint_m": 6.43332117178739e-05,
+          "estimated_visible_face_center_camera_m": [
+            0.004571855326836472,
+            0.0010293765577113736,
+            0.09431239627645366
+          ],
+          "estimated_directed_axis_camera": [
+            -0.0005048916246591686,
+            -0.0005259655121230278,
+            0.9999997342223284
+          ],
+          "elapsed_s": 0.054092584003228694,
+          "truth_inputs_used": [],
+          "sam_used_for_this_observation": false,
+          "roi_is_not_an_observed_pose": true
+        },
+        "camera_from_object": [
+          [
+            0.9999998725422157,
+            0.0,
+            -0.0005048916246591686,
+            0.004556196921368572
+          ],
+          [
+            -2.655556157776176e-07,
+            0.9999998616800952,
+            -0.0005259655121230278,
+            0.0010130645793605469
+          ],
+          [
+            0.0005048915548226073,
+            0.0005259655791614353,
+            0.9999997342223284,
+            0.12532578715378465
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      }
+    },
+    "tracking_seed_mask": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00970/roi.png",
+    "axial_yaw_measured": false,
+    "previous_hand_body_relation_used_for_measurement": false,
+    "previous_pose_used_only_for_search_region": true,
+    "online_object_or_contact_truth_used": false,
+    "consumed_by_stage_at_physics_time_s": 260.54376358841546,
+    "sample_age_at_stage_consumption_s": 0.39375002053566277,
+    "new_image_acquired_by_this_function": false
+  },
+  "phase_aligned_palm_observation": {
+    "status": "DELAYED_CURRENT_PALM_POSITION_AND_AXIS",
+    "position_and_axis_measured": true,
+    "physics_time_s": 262.48438868962694,
+    "capture_physics_time_s": 262.48438868962694,
+    "available_physics_time_s": 262.6569271466404,
+    "consumed_physics_time_s": 262.6573053653119,
+    "capture": {
+      "camera_path": "/World/AssemblyPalmCamera",
+      "warmup_render_frames": 3,
+      "render_subframes_per_frame": 4,
+      "capture_and_save_wall_s": 0.8094331629981752,
+      "resolution": [
+        1280,
+        720
+      ],
+      "finite_positive_depth_pixels": 921600,
+      "depth_valid_fraction": 1.0,
+      "rgb_minimum": 23,
+      "rgb_maximum": 248,
+      "rgb_standard_deviation": 40.3839676182431
+    },
+    "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00981",
+    "world_from_hand_encoder": [
+      [
+        -0.5395583621961958,
+        -0.8419481994621054,
+        -5.662753477252855e-05,
+        0.5535437337921112
+      ],
+      [
+        -0.841948199807533,
+        0.5395583558839928,
+        9.714225090857405e-05,
+        0.18848650633822925
+      ],
+      [
+        -5.1234883684433345e-05,
+        0.00010009136476168578,
+        -0.9999999936783526,
+        0.7001413472571175
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "world_from_camera_cv": [
+      [
+        -0.5395583621961958,
+        -0.8419481994621054,
+        -5.662753477252855e-05,
+        0.5535258961186579
+      ],
+      [
+        -0.841948199807533,
+        0.5395583558839928,
+        9.714225090857405e-05,
+        0.18851710614726544
+      ],
+      [
+        -5.1234883684433345e-05,
+        0.00010009136476168578,
+        -0.9999999936783526,
+        0.38514134924843646
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "intrinsics_3x3": [
+      [
+        1465.998568360773,
+        0.0,
+        640.0
+      ],
+      [
+        0.0,
+        1465.998568360773,
+        360.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "world_from_plug_five_dof": [
+      [
+        -0.5395583865510266,
+        -0.8419481788503331,
+        0.00010785666698217262,
+        0.5500067171597128
+      ],
+      [
+        -0.8419481786057257,
+        0.5395583608412656,
+        -0.00019947127029311783,
+        0.18499505176579686
+      ],
+      [
+        0.00010974950631365732,
+        -0.00019843612107862816,
+        -0.9999999742890755,
+        0.25968508465664775
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "metrics": {
+      "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+      "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+      "axial_yaw_estimated": false,
+      "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+      "rgb_intensity_used_for_center": false,
+      "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+      "sam_used_as_plane_seed_not_required_full_contour": false,
+      "original_seed_contour_rms_m": 3.590773329242827e-05,
+      "depth_source": "FLOAT_METERS_NPY",
+      "mask_valid_depth_pixels": 236835,
+      "depth_pixel_center_offset_px": 0.5,
+      "backprojection_principal_point_index_coordinates_px": [
+        639.5,
+        359.5
+      ],
+      "visible_face_component_pixels": 124519,
+      "visible_face_radius_m": 0.015773400522113887,
+      "visible_face_to_object_origin_m": 0.03101339912,
+      "plane_residual_limit_m": 2e-05,
+      "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+      "plane_ransac_sampled_inlier_fraction": 0.5178942390514956,
+      "plane_refined_inlier_fraction": 0.5168915067452023,
+      "plane_inlier_residual_rms_m": 4.572821648159441e-07,
+      "circle_residual_rms_m": 3.590773329242827e-05,
+      "circle_quality_limit_m": 9.663316763356073e-05,
+      "estimated_pixel_footprint_m": 6.442211175570715e-05,
+      "estimated_visible_face_center_camera_m": [
+        0.004865624845365891,
+        0.0010593137797954941,
+        0.09444272360464441
+      ],
+      "estimated_directed_axis_camera": [
+        0.0001609843927150155,
+        -0.0002985274793991799,
+        0.9999999424826831
+      ],
+      "elapsed_s": 0.054043087002355605,
+      "truth_inputs_used": [],
+      "sam_used_for_this_observation": false,
+      "roi_is_not_an_observed_pose": true
+    },
+    "measurement": {
+      "geometry": {
+        "metrics": {
+          "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+          "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+          "axial_yaw_estimated": false,
+          "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+          "rgb_intensity_used_for_center": false,
+          "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+          "sam_used_as_plane_seed_not_required_full_contour": false,
+          "original_seed_contour_rms_m": 3.590773329242827e-05,
+          "depth_source": "FLOAT_METERS_NPY",
+          "mask_valid_depth_pixels": 236835,
+          "depth_pixel_center_offset_px": 0.5,
+          "backprojection_principal_point_index_coordinates_px": [
+            639.5,
+            359.5
+          ],
+          "visible_face_component_pixels": 124519,
+          "visible_face_radius_m": 0.015773400522113887,
+          "visible_face_to_object_origin_m": 0.03101339912,
+          "plane_residual_limit_m": 2e-05,
+          "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+          "plane_ransac_sampled_inlier_fraction": 0.5178942390514956,
+          "plane_refined_inlier_fraction": 0.5168915067452023,
+          "plane_inlier_residual_rms_m": 4.572821648159441e-07,
+          "circle_residual_rms_m": 3.590773329242827e-05,
+          "circle_quality_limit_m": 9.663316763356073e-05,
+          "estimated_pixel_footprint_m": 6.442211175570715e-05,
+          "estimated_visible_face_center_camera_m": [
+            0.004865624845365891,
+            0.0010593137797954941,
+            0.09444272360464441
+          ],
+          "estimated_directed_axis_camera": [
+            0.0001609843927150155,
+            -0.0002985274793991799,
+            0.9999999424826831
+          ],
+          "elapsed_s": 0.054043087002355605,
+          "truth_inputs_used": [],
+          "sam_used_for_this_observation": false,
+          "roi_is_not_an_observed_pose": true
+        },
+        "camera_from_object": [
+          [
+            0.9999999870420125,
+            -6.617444900424222e-24,
+            0.0001609843927150155,
+            0.004870617518589252
+          ],
+          [
+            4.8058265602559685e-08,
+            0.99999995544067,
+            -0.0002985274793991799,
+            0.0010500554279285997
+          ],
+          [
+            -0.00016098438554165882,
+            0.0002985274832674953,
+            0.9999999424826831,
+            0.1254561209408369
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      }
+    },
+    "tracking_seed_mask": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00981/roi.png",
+    "axial_yaw_measured": false,
+    "previous_hand_body_relation_used_for_measurement": false,
+    "previous_pose_used_only_for_search_region": true,
+    "online_object_or_contact_truth_used": false,
+    "consumed_by_stage_at_physics_time_s": 262.813555373461,
+    "sample_age_at_stage_consumption_s": 0.3291666838340461,
+    "new_image_acquired_by_this_function": false
+  },
+  "visual_nut_phase_after_alignment": {
+    "scope": "CURRENT_RGBD_NU_EXTERIOR_LOCAL_PHASE_ESTIMATE",
+    "source_frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception",
+    "capture_physics_time_s": 262.48438868962694,
+    "source_model_sha256": "234b7c0f14caeae1b8dffeabb8bae5a63e8b05d2463f3a7ff3e0c0d1d53f9eb6",
+    "phase_fit": {
+      "best": {
+        "yaw_deg": 227.80000000000007,
+        "clipped_rms_m": 4.2812514111729204e-05,
+        "median_distance_m": 3.465695511786131e-05,
+        "p90_distance_m": 6.480542868361092e-05,
+        "fraction_below0p1mm": 0.9929767693138843
+      },
+      "selected_points": 59204,
+      "fit_points": 1851,
+      "coarse_score_curve": [
+        {
+          "yaw_deg": 219.5,
+          "clipped_rms_m": 0.00012919760082007775,
+          "median_distance_m": 3.929134067918027e-05,
+          "p90_distance_m": 8.970242710307334e-05,
+          "fraction_below0p1mm": 0.9113992436520799
+        },
+        {
+          "yaw_deg": 219.75,
+          "clipped_rms_m": 0.0001270651388767778,
+          "median_distance_m": 3.7316470006094645e-05,
+          "p90_distance_m": 8.345326806694825e-05,
+          "fraction_below0p1mm": 0.9135602377093462
+        },
+        {
+          "yaw_deg": 220.0,
+          "clipped_rms_m": 0.00012506345563831017,
+          "median_distance_m": 3.873315607525848e-05,
+          "p90_distance_m": 8.494383098638061e-05,
+          "fraction_below0p1mm": 0.9130199891950297
+        },
+        {
+          "yaw_deg": 220.25,
+          "clipped_rms_m": 0.00012315071043264493,
+          "median_distance_m": 3.839252059574783e-05,
+          "p90_distance_m": 8.679764191550881e-05,
+          "fraction_below0p1mm": 0.915180983252296
+        },
+        {
+          "yaw_deg": 220.5,
+          "clipped_rms_m": 0.00012052360200777588,
+          "median_distance_m": 3.780315137706386e-05,
+          "p90_distance_m": 8.203597765858257e-05,
+          "fraction_below0p1mm": 0.9162614802809292
+        },
+        {
+          "yaw_deg": 220.75,
+          "clipped_rms_m": 0.0001181549825404524,
+          "median_distance_m": 3.8462828981845956e-05,
+          "p90_distance_m": 8.28694018550195e-05,
+          "fraction_below0p1mm": 0.9205834683954619
+        },
+        {
+          "yaw_deg": 221.0,
+          "clipped_rms_m": 0.00011514139458489438,
+          "median_distance_m": 3.7088984510023535e-05,
+          "p90_distance_m": 8.03432160422437e-05,
+          "fraction_below0p1mm": 0.9249054565099946
+        },
+        {
+          "yaw_deg": 221.25,
+          "clipped_rms_m": 0.00011250159856499199,
+          "median_distance_m": 3.8551640662148675e-05,
+          "p90_distance_m": 7.902152271980647e-05,
+          "fraction_below0p1mm": 0.9270664505672609
+        },
+        {
+          "yaw_deg": 221.5,
+          "clipped_rms_m": 0.00010933042381911676,
+          "median_distance_m": 3.696901631965636e-05,
+          "p90_distance_m": 7.64676229251438e-05,
+          "fraction_below0p1mm": 0.9324689357104268
+        },
+        {
+          "yaw_deg": 221.75,
+          "clipped_rms_m": 0.00010705206191532587,
+          "median_distance_m": 3.672667479051408e-05,
+          "p90_distance_m": 7.631479793083076e-05,
+          "fraction_below0p1mm": 0.9357104267963263
+        },
+        {
+          "yaw_deg": 222.0,
+          "clipped_rms_m": 0.00010488932183185066,
+          "median_distance_m": 3.8043275831138754e-05,
+          "p90_distance_m": 7.502458355715982e-05,
+          "fraction_below0p1mm": 0.9394921663965424
+        },
+        {
+          "yaw_deg": 222.25,
+          "clipped_rms_m": 0.00010291196971608406,
+          "median_distance_m": 3.798520270254851e-05,
+          "p90_distance_m": 7.461084407032819e-05,
+          "fraction_below0p1mm": 0.940032414910859
+        },
+        {
+          "yaw_deg": 222.5,
+          "clipped_rms_m": 9.986501842030023e-05,
+          "median_distance_m": 3.58980194452201e-05,
+          "p90_distance_m": 7.286234076593092e-05,
+          "fraction_below0p1mm": 0.9432739059967585
+        },
+        {
+          "yaw_deg": 222.75,
+          "clipped_rms_m": 9.740400046662917e-05,
+          "median_distance_m": 3.70221456282947e-05,
+          "p90_distance_m": 7.200954329592089e-05,
+          "fraction_below0p1mm": 0.9470556455969746
+        },
+        {
+          "yaw_deg": 223.0,
+          "clipped_rms_m": 9.509369918704166e-05,
+          "median_distance_m": 3.5647965050718225e-05,
+          "p90_distance_m": 7.260841613754595e-05,
+          "fraction_below0p1mm": 0.9513776337115073
+        },
+        {
+          "yaw_deg": 223.25,
+          "clipped_rms_m": 9.240504116143629e-05,
+          "median_distance_m": 3.775222855072688e-05,
+          "p90_distance_m": 7.275037104395071e-05,
+          "fraction_below0p1mm": 0.9567801188546732
+        },
+        {
+          "yaw_deg": 223.5,
+          "clipped_rms_m": 8.987033030426811e-05,
+          "median_distance_m": 3.671871495732074e-05,
+          "p90_distance_m": 6.856243113294454e-05,
+          "fraction_below0p1mm": 0.9562398703403565
+        },
+        {
+          "yaw_deg": 223.75,
+          "clipped_rms_m": 8.747103557759633e-05,
+          "median_distance_m": 3.595750255036561e-05,
+          "p90_distance_m": 7.244139663275915e-05,
+          "fraction_below0p1mm": 0.95569962182604
+        },
+        {
+          "yaw_deg": 224.0,
+          "clipped_rms_m": 8.44192002713432e-05,
+          "median_distance_m": 3.646613557302552e-05,
+          "p90_distance_m": 6.859532946555948e-05,
+          "fraction_below0p1mm": 0.9605618584548893
+        },
+        {
+          "yaw_deg": 224.25,
+          "clipped_rms_m": 8.139435143454955e-05,
+          "median_distance_m": 3.729542807786028e-05,
+          "p90_distance_m": 7.125274733427669e-05,
+          "fraction_below0p1mm": 0.9627228525121556
+        },
+        {
+          "yaw_deg": 224.5,
+          "clipped_rms_m": 7.706252490151997e-05,
+          "median_distance_m": 3.599716878790114e-05,
+          "p90_distance_m": 6.9900272229039e-05,
+          "fraction_below0p1mm": 0.9632631010264722
+        },
+        {
+          "yaw_deg": 224.75,
+          "clipped_rms_m": 7.414329040572102e-05,
+          "median_distance_m": 3.629429859047415e-05,
+          "p90_distance_m": 6.923798249779658e-05,
+          "fraction_below0p1mm": 0.9702863317125878
+        },
+        {
+          "yaw_deg": 225.0,
+          "clipped_rms_m": 7.147266637396914e-05,
+          "median_distance_m": 3.6770215585297825e-05,
+          "p90_distance_m": 6.751687671373966e-05,
+          "fraction_below0p1mm": 0.9719070772555376
+        },
+        {
+          "yaw_deg": 225.25,
+          "clipped_rms_m": 6.872594818750947e-05,
+          "median_distance_m": 3.569266182373133e-05,
+          "p90_distance_m": 6.750884792069104e-05,
+          "fraction_below0p1mm": 0.9783900594273366
+        },
+        {
+          "yaw_deg": 225.5,
+          "clipped_rms_m": 6.63437459043514e-05,
+          "median_distance_m": 3.637835991802096e-05,
+          "p90_distance_m": 6.539496774204595e-05,
+          "fraction_below0p1mm": 0.97784981091302
+        },
+        {
+          "yaw_deg": 225.75,
+          "clipped_rms_m": 6.452405248498262e-05,
+          "median_distance_m": 3.602230800147522e-05,
+          "p90_distance_m": 6.568545798398515e-05,
+          "fraction_below0p1mm": 0.9810913019989195
+        },
+        {
+          "yaw_deg": 226.0,
+          "clipped_rms_m": 6.331946432279894e-05,
+          "median_distance_m": 3.773041713013539e-05,
+          "p90_distance_m": 6.858689650105186e-05,
+          "fraction_below0p1mm": 0.9848730415991356
+        },
+        {
+          "yaw_deg": 226.25,
+          "clipped_rms_m": 5.888410255660728e-05,
+          "median_distance_m": 3.5094578275777937e-05,
+          "p90_distance_m": 6.517945743513062e-05,
+          "fraction_below0p1mm": 0.9837925445705025
+        },
+        {
+          "yaw_deg": 226.5,
+          "clipped_rms_m": 5.3454693189864443e-05,
+          "median_distance_m": 3.5536204611326986e-05,
+          "p90_distance_m": 6.384331346350628e-05,
+          "fraction_below0p1mm": 0.9854132901134521
+        },
+        {
+          "yaw_deg": 226.75,
+          "clipped_rms_m": 4.9109698349069795e-05,
+          "median_distance_m": 3.512601520833408e-05,
+          "p90_distance_m": 6.501310713925066e-05,
+          "fraction_below0p1mm": 0.9881145326850351
+        },
+        {
+          "yaw_deg": 227.0,
+          "clipped_rms_m": 4.5410592011067075e-05,
+          "median_distance_m": 3.596084033989565e-05,
+          "p90_distance_m": 6.644900795371158e-05,
+          "fraction_below0p1mm": 0.9897352782279849
+        },
+        {
+          "yaw_deg": 227.25,
+          "clipped_rms_m": 4.3359704972557885e-05,
+          "median_distance_m": 3.655763574682637e-05,
+          "p90_distance_m": 6.462499571158478e-05,
+          "fraction_below0p1mm": 0.993517017828201
+        },
+        {
+          "yaw_deg": 227.5,
+          "clipped_rms_m": 4.3112412224514834e-05,
+          "median_distance_m": 3.47847995307428e-05,
+          "p90_distance_m": 6.535799591007853e-05,
+          "fraction_below0p1mm": 0.993517017828201
+        },
+        {
+          "yaw_deg": 227.75,
+          "clipped_rms_m": 4.281978933464548e-05,
+          "median_distance_m": 3.504730165337898e-05,
+          "p90_distance_m": 6.423437655106895e-05,
+          "fraction_below0p1mm": 0.9929767693138843
+        },
+        {
+          "yaw_deg": 228.0,
+          "clipped_rms_m": 4.514221776747932e-05,
+          "median_distance_m": 3.52506953976498e-05,
+          "p90_distance_m": 6.516708577773097e-05,
+          "fraction_below0p1mm": 0.9886547811993517
+        },
+        {
+          "yaw_deg": 228.25,
+          "clipped_rms_m": 4.7041777147304747e-05,
+          "median_distance_m": 3.582872392016052e-05,
+          "p90_distance_m": 6.388227794995804e-05,
+          "fraction_below0p1mm": 0.9886547811993517
+        },
+        {
+          "yaw_deg": 228.5,
+          "clipped_rms_m": 5.151396235705318e-05,
+          "median_distance_m": 3.553983224080091e-05,
+          "p90_distance_m": 6.532397375240164e-05,
+          "fraction_below0p1mm": 0.9854132901134521
+        },
+        {
+          "yaw_deg": 228.75,
+          "clipped_rms_m": 5.589565498751034e-05,
+          "median_distance_m": 3.583742013388217e-05,
+          "p90_distance_m": 6.678845739971883e-05,
+          "fraction_below0p1mm": 0.9832522960561858
+        },
+        {
+          "yaw_deg": 229.0,
+          "clipped_rms_m": 5.886386073204362e-05,
+          "median_distance_m": 3.529927168595341e-05,
+          "p90_distance_m": 6.608274099293588e-05,
+          "fraction_below0p1mm": 0.9827120475418692
+        },
+        {
+          "yaw_deg": 229.25,
+          "clipped_rms_m": 6.273804897004894e-05,
+          "median_distance_m": 3.6013869527203795e-05,
+          "p90_distance_m": 6.697361409716357e-05,
+          "fraction_below0p1mm": 0.9800108049702864
+        },
+        {
+          "yaw_deg": 229.5,
+          "clipped_rms_m": 6.573515165390153e-05,
+          "median_distance_m": 3.6364673286199335e-05,
+          "p90_distance_m": 6.939639326042247e-05,
+          "fraction_below0p1mm": 0.9783900594273366
+        },
+        {
+          "yaw_deg": 229.75,
+          "clipped_rms_m": 6.766149801155078e-05,
+          "median_distance_m": 3.6908995344000905e-05,
+          "p90_distance_m": 6.844319432568885e-05,
+          "fraction_below0p1mm": 0.9756888168557536
+        },
+        {
+          "yaw_deg": 230.0,
+          "clipped_rms_m": 6.90747993989875e-05,
+          "median_distance_m": 3.580681407776561e-05,
+          "p90_distance_m": 6.76655214087233e-05,
+          "fraction_below0p1mm": 0.9735278227984873
+        },
+        {
+          "yaw_deg": 230.25,
+          "clipped_rms_m": 7.211426365869455e-05,
+          "median_distance_m": 3.6134179411001046e-05,
+          "p90_distance_m": 6.954546542328341e-05,
+          "fraction_below0p1mm": 0.968665586169638
+        },
+        {
+          "yaw_deg": 230.5,
+          "clipped_rms_m": 7.546811251917052e-05,
+          "median_distance_m": 3.640583304430378e-05,
+          "p90_distance_m": 6.888147622714522e-05,
+          "fraction_below0p1mm": 0.9670448406266883
+        },
+        {
+          "yaw_deg": 230.75,
+          "clipped_rms_m": 7.98261943128314e-05,
+          "median_distance_m": 3.6952791136773e-05,
+          "p90_distance_m": 6.913180300678208e-05,
+          "fraction_below0p1mm": 0.9621826039978391
+        },
+        {
+          "yaw_deg": 231.0,
+          "clipped_rms_m": 8.493377937821636e-05,
+          "median_distance_m": 3.608260117288788e-05,
+          "p90_distance_m": 6.99990782091387e-05,
+          "fraction_below0p1mm": 0.9605618584548893
+        },
+        {
+          "yaw_deg": 231.25,
+          "clipped_rms_m": 8.885376840859611e-05,
+          "median_distance_m": 3.7550889324414666e-05,
+          "p90_distance_m": 7.070565052677307e-05,
+          "fraction_below0p1mm": 0.9605618584548893
+        },
+        {
+          "yaw_deg": 231.5,
+          "clipped_rms_m": 9.169909624311838e-05,
+          "median_distance_m": 3.630093714923701e-05,
+          "p90_distance_m": 7.076619262399897e-05,
+          "fraction_below0p1mm": 0.9546191247974068
+        },
+        {
+          "yaw_deg": 231.75,
+          "clipped_rms_m": 9.436211157113866e-05,
+          "median_distance_m": 3.638863798848999e-05,
+          "p90_distance_m": 7.320527882733717e-05,
+          "fraction_below0p1mm": 0.9524581307401405
+        },
+        {
+          "yaw_deg": 232.0,
+          "clipped_rms_m": 9.716353082554166e-05,
+          "median_distance_m": 3.700057884526449e-05,
+          "p90_distance_m": 7.230389494166842e-05,
+          "fraction_below0p1mm": 0.9502971366828741
+        },
+        {
+          "yaw_deg": 232.25,
+          "clipped_rms_m": 9.961748391847153e-05,
+          "median_distance_m": 3.656788083731585e-05,
+          "p90_distance_m": 7.137500299687787e-05,
+          "fraction_below0p1mm": 0.9486763911399244
+        },
+        {
+          "yaw_deg": 232.5,
+          "clipped_rms_m": 0.00010185114538384781,
+          "median_distance_m": 3.630442479952147e-05,
+          "p90_distance_m": 7.514959783254835e-05,
+          "fraction_below0p1mm": 0.9448946515397083
+        },
+        {
+          "yaw_deg": 232.75,
+          "clipped_rms_m": 0.00010432694653411838,
+          "median_distance_m": 3.8059904707101785e-05,
+          "p90_distance_m": 7.441382734710316e-05,
+          "fraction_below0p1mm": 0.9411129119394922
+        },
+        {
+          "yaw_deg": 233.0,
+          "clipped_rms_m": 0.00010625837559002136,
+          "median_distance_m": 3.7406740209367197e-05,
+          "p90_distance_m": 7.652265896250138e-05,
+          "fraction_below0p1mm": 0.9394921663965424
+        },
+        {
+          "yaw_deg": 233.25,
+          "clipped_rms_m": 0.00010789136244172167,
+          "median_distance_m": 3.776591486932192e-05,
+          "p90_distance_m": 7.465635325955348e-05,
+          "fraction_below0p1mm": 0.9384116693679092
+        },
+        {
+          "yaw_deg": 233.5,
+          "clipped_rms_m": 0.00010965287482759514,
+          "median_distance_m": 3.7008134429473516e-05,
+          "p90_distance_m": 7.457572129571552e-05,
+          "fraction_below0p1mm": 0.9394921663965424
+        },
+        {
+          "yaw_deg": 233.75,
+          "clipped_rms_m": 0.00011183407711188043,
+          "median_distance_m": 3.6683830397506604e-05,
+          "p90_distance_m": 7.812229790652627e-05,
+          "fraction_below0p1mm": 0.9346299297676931
+        },
+        {
+          "yaw_deg": 234.0,
+          "clipped_rms_m": 0.00011313031306726266,
+          "median_distance_m": 3.7219590431102465e-05,
+          "p90_distance_m": 7.585820695179705e-05,
+          "fraction_below0p1mm": 0.9324689357104268
+        },
+        {
+          "yaw_deg": 234.25,
+          "clipped_rms_m": 0.00011535723661907508,
+          "median_distance_m": 3.9193392334448447e-05,
+          "p90_distance_m": 7.805828086473364e-05,
+          "fraction_below0p1mm": 0.9303079416531604
+        },
+        {
+          "yaw_deg": 234.5,
+          "clipped_rms_m": 0.00011688764503610067,
+          "median_distance_m": 3.779363868572506e-05,
+          "p90_distance_m": 8.02618305057219e-05,
+          "fraction_below0p1mm": 0.9297676931388439
+        },
+        {
+          "yaw_deg": 234.75,
+          "clipped_rms_m": 0.00011822478630091334,
+          "median_distance_m": 3.698804104400111e-05,
+          "p90_distance_m": 7.978868709862748e-05,
+          "fraction_below0p1mm": 0.9254457050243112
+        },
+        {
+          "yaw_deg": 235.0,
+          "clipped_rms_m": 0.00012014963285467524,
+          "median_distance_m": 3.732903838071407e-05,
+          "p90_distance_m": 8.09304493754597e-05,
+          "fraction_below0p1mm": 0.9216639654240951
+        },
+        {
+          "yaw_deg": 235.25,
+          "clipped_rms_m": 0.00012231597181277707,
+          "median_distance_m": 3.8399530824701736e-05,
+          "p90_distance_m": 8.47970880775381e-05,
+          "fraction_below0p1mm": 0.9211237169097785
+        }
+      ],
+      "fine_score_curve": [
+        {
+          "yaw_deg": 227.45,
+          "clipped_rms_m": 4.2847212200299424e-05,
+          "median_distance_m": 3.5308535051907024e-05,
+          "p90_distance_m": 6.486874604842111e-05,
+          "fraction_below0p1mm": 0.9918962722852512
+        },
+        {
+          "yaw_deg": 227.475,
+          "clipped_rms_m": 4.3029601328548124e-05,
+          "median_distance_m": 3.472088909499622e-05,
+          "p90_distance_m": 6.473034391184479e-05,
+          "fraction_below0p1mm": 0.9940572663425176
+        },
+        {
+          "yaw_deg": 227.5,
+          "clipped_rms_m": 4.3112412224514834e-05,
+          "median_distance_m": 3.47847995307428e-05,
+          "p90_distance_m": 6.535799591007853e-05,
+          "fraction_below0p1mm": 0.993517017828201
+        },
+        {
+          "yaw_deg": 227.525,
+          "clipped_rms_m": 4.298953999880098e-05,
+          "median_distance_m": 3.5141515320609163e-05,
+          "p90_distance_m": 6.579908864751705e-05,
+          "fraction_below0p1mm": 0.9945975148568341
+        },
+        {
+          "yaw_deg": 227.55,
+          "clipped_rms_m": 4.286953015165863e-05,
+          "median_distance_m": 3.5816217244990285e-05,
+          "p90_distance_m": 6.479860241343821e-05,
+          "fraction_below0p1mm": 0.9956780118854673
+        },
+        {
+          "yaw_deg": 227.57500000000002,
+          "clipped_rms_m": 4.298256033034963e-05,
+          "median_distance_m": 3.641445886091858e-05,
+          "p90_distance_m": 6.445861425100321e-05,
+          "fraction_below0p1mm": 0.9951377633711507
+        },
+        {
+          "yaw_deg": 227.60000000000002,
+          "clipped_rms_m": 4.30985723004838e-05,
+          "median_distance_m": 3.682761002302494e-05,
+          "p90_distance_m": 6.456205439674562e-05,
+          "fraction_below0p1mm": 0.9956780118854673
+        },
+        {
+          "yaw_deg": 227.62500000000003,
+          "clipped_rms_m": 4.314526419049838e-05,
+          "median_distance_m": 3.64343130120745e-05,
+          "p90_distance_m": 6.443399898030097e-05,
+          "fraction_below0p1mm": 0.9956780118854673
+        },
+        {
+          "yaw_deg": 227.65000000000003,
+          "clipped_rms_m": 4.313554410283076e-05,
+          "median_distance_m": 3.708990462708806e-05,
+          "p90_distance_m": 6.351891420580331e-05,
+          "fraction_below0p1mm": 0.9956780118854673
+        },
+        {
+          "yaw_deg": 227.67500000000004,
+          "clipped_rms_m": 4.306585496327461e-05,
+          "median_distance_m": 3.6833390966522616e-05,
+          "p90_distance_m": 6.376942617914808e-05,
+          "fraction_below0p1mm": 0.9967585089141004
+        },
+        {
+          "yaw_deg": 227.70000000000005,
+          "clipped_rms_m": 4.3006566092338134e-05,
+          "median_distance_m": 3.6794145472880094e-05,
+          "p90_distance_m": 6.372565637549747e-05,
+          "fraction_below0p1mm": 0.9962182603997839
+        },
+        {
+          "yaw_deg": 227.72500000000005,
+          "clipped_rms_m": 4.2900834230235726e-05,
+          "median_distance_m": 3.606967565934387e-05,
+          "p90_distance_m": 6.414208859326213e-05,
+          "fraction_below0p1mm": 0.9951377633711507
+        },
+        {
+          "yaw_deg": 227.75000000000006,
+          "clipped_rms_m": 4.2819789334645624e-05,
+          "median_distance_m": 3.504730165339473e-05,
+          "p90_distance_m": 6.423437655106062e-05,
+          "fraction_below0p1mm": 0.9929767693138843
+        },
+        {
+          "yaw_deg": 227.77500000000006,
+          "clipped_rms_m": 4.283170978652336e-05,
+          "median_distance_m": 3.5250882034315143e-05,
+          "p90_distance_m": 6.56361337696966e-05,
+          "fraction_below0p1mm": 0.9929767693138843
+        },
+        {
+          "yaw_deg": 227.80000000000007,
+          "clipped_rms_m": 4.2812514111729204e-05,
+          "median_distance_m": 3.465695511786131e-05,
+          "p90_distance_m": 6.480542868361092e-05,
+          "fraction_below0p1mm": 0.9929767693138843
+        },
+        {
+          "yaw_deg": 227.82500000000007,
+          "clipped_rms_m": 4.292375818243149e-05,
+          "median_distance_m": 3.477845608135064e-05,
+          "p90_distance_m": 6.519342233606141e-05,
+          "fraction_below0p1mm": 0.9924365207995678
+        },
+        {
+          "yaw_deg": 227.85000000000008,
+          "clipped_rms_m": 4.3081876094176795e-05,
+          "median_distance_m": 3.498603909937173e-05,
+          "p90_distance_m": 6.511844189383834e-05,
+          "fraction_below0p1mm": 0.9929767693138843
+        },
+        {
+          "yaw_deg": 227.87500000000009,
+          "clipped_rms_m": 4.329542546638178e-05,
+          "median_distance_m": 3.438633131048436e-05,
+          "p90_distance_m": 6.349264595467952e-05,
+          "fraction_below0p1mm": 0.9924365207995678
+        },
+        {
+          "yaw_deg": 227.9000000000001,
+          "clipped_rms_m": 4.36865295981713e-05,
+          "median_distance_m": 3.485499034174853e-05,
+          "p90_distance_m": 6.41917713871636e-05,
+          "fraction_below0p1mm": 0.9913560237709347
+        },
+        {
+          "yaw_deg": 227.9250000000001,
+          "clipped_rms_m": 4.4071281743575714e-05,
+          "median_distance_m": 3.532197746850659e-05,
+          "p90_distance_m": 6.452681419923162e-05,
+          "fraction_below0p1mm": 0.9891950297136682
+        },
+        {
+          "yaw_deg": 227.9500000000001,
+          "clipped_rms_m": 4.440819162006999e-05,
+          "median_distance_m": 3.561620049005605e-05,
+          "p90_distance_m": 6.488425910887041e-05,
+          "fraction_below0p1mm": 0.9902755267423015
+        },
+        {
+          "yaw_deg": 227.9750000000001,
+          "clipped_rms_m": 4.478723638793408e-05,
+          "median_distance_m": 3.567096594296988e-05,
+          "p90_distance_m": 6.484482913679354e-05,
+          "fraction_below0p1mm": 0.9897352782279849
+        },
+        {
+          "yaw_deg": 228.0000000000001,
+          "clipped_rms_m": 4.514221776748096e-05,
+          "median_distance_m": 3.5250695397681804e-05,
+          "p90_distance_m": 6.51670857777111e-05,
+          "fraction_below0p1mm": 0.9886547811993517
+        },
+        {
+          "yaw_deg": 228.02500000000012,
+          "clipped_rms_m": 4.5561379773800427e-05,
+          "median_distance_m": 3.5233121886334514e-05,
+          "p90_distance_m": 6.594086203010016e-05,
+          "fraction_below0p1mm": 0.9886547811993517
+        },
+        {
+          "yaw_deg": 228.05000000000013,
+          "clipped_rms_m": 4.584625965886081e-05,
+          "median_distance_m": 3.614901787868257e-05,
+          "p90_distance_m": 6.531295303457796e-05,
+          "fraction_below0p1mm": 0.9891950297136682
+        }
+      ],
+      "three_degree_alternatives": [
+        {
+          "yaw_deg": 224.80000000000007,
+          "clipped_rms_m": 7.37528262940188e-05,
+          "median_distance_m": 3.6361655379130976e-05,
+          "p90_distance_m": 6.932785997103459e-05,
+          "fraction_below0p1mm": 0.9702863317125878
+        },
+        {
+          "yaw_deg": 230.80000000000007,
+          "clipped_rms_m": 8.089212572273909e-05,
+          "median_distance_m": 3.63203400609613e-05,
+          "p90_distance_m": 6.974520959663992e-05,
+          "fraction_below0p1mm": 0.9627228525121556
+        }
+      ],
+      "prior_deg": 227.27815793473886,
+      "search_half_width_deg": 8.0,
+      "online_object_truth_used": false
+    },
+    "quality_conditions": {
+      "enough_exterior_points": true,
+      "within_search_window": true,
+      "source_surface_fit": true,
+      "three_degree_alternative_distinguishable": true
+    },
+    "quality_passed": true,
+    "alternative_score_ratio": 1.7226931850239782,
+    "estimated_world_from_nut_rotation": [
+      [
+        0.8853936180182687,
+        -0.46484204794689066,
+        0.00010785666698217262
+      ],
+      [
+        -0.46484202235427774,
+        -0.8853936155545721,
+        -0.00019947127029311783
+      ],
+      [
+        0.00018821823813063192,
+        0.0001264742784911386,
+        -0.9999999742890755
+      ]
+    ],
+    "reference_origin_world_m": [
+      0.5500067710880463,
+      0.18499495203016172,
+      0.2591850846695032
+    ],
+    "reference_target_hand_nut_yaw_deg": -174.5245766750459,
+    "global_revolution_count_measured": false,
+    "exterior90degree_equivalence_used": true,
+    "object_or_contact_truth_used": false
+  },
+  "failure_stage": "ALIGNING_OPEN_HAND_TO_OBSERVED_NUT_PHASE",
+  "failure_reason": "Fresh image still shows a misaligned Nu grasp after the bounded correction",
+  "last_step": 252522,
+  "executed_command_steps": 4982,
+  "outer_abort_reason": null
+}

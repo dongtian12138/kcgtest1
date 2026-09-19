@@ -1,0 +1,78 @@
+{
+  "scope": "POSTRUN_ONLY_SOURCE_NAIL_CONTACT_AND_LIFT",
+  "online_control_used": false,
+  "classification": "nearest original STL face at native rigid-link contact position",
+  "maximum_source_projection_residual_m": 0.0005,
+  "source_face_range": [
+    11836,
+    12912
+  ],
+  "sensor_truth_stream": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/truth_samples.msgpack.gz",
+  "fingers": {
+    "f1Link3": {
+      "positive_contact_points": 173076,
+      "counts": {
+        "nail_body": 173076,
+        "other_surface_body": 0,
+        "uncertain_projection": 0,
+        "other_object": 0
+      },
+      "normal_impulse_sum_n_s": {
+        "nail_body": 474.93839318985147,
+        "other_surface_body": 0.0,
+        "uncertain_projection": 0.0,
+        "other_object": 0.0
+      },
+      "maximum_projection_residual_m": 0.0002555274111824454,
+      "exceptions": []
+    },
+    "f2Link2": {
+      "positive_contact_points": 125356,
+      "counts": {
+        "nail_body": 125356,
+        "other_surface_body": 0,
+        "uncertain_projection": 0,
+        "other_object": 0
+      },
+      "normal_impulse_sum_n_s": {
+        "nail_body": 419.4597693936825,
+        "other_surface_body": 0.0,
+        "uncertain_projection": 0.0,
+        "other_object": 0.0
+      },
+      "maximum_projection_residual_m": 0.0002809982312503319,
+      "exceptions": []
+    },
+    "f3Link3": {
+      "positive_contact_points": 190289,
+      "counts": {
+        "nail_body": 190289,
+        "other_surface_body": 0,
+        "uncertain_projection": 0,
+        "other_object": 0
+      },
+      "normal_impulse_sum_n_s": {
+        "nail_body": 401.1041833057811,
+        "other_surface_body": 0.0,
+        "uncertain_projection": 0.0,
+        "other_object": 0.0
+      },
+      "maximum_projection_residual_m": 0.0002084633558707544,
+      "exceptions": []
+    }
+  },
+  "physical_assembly_complete_claimed": false,
+  "maximum_body_lift_m": 0.07471825182437897,
+  "hold_duration_s": 2.0,
+  "minimum_body_lift_during_hold_m": 0.055982545018196106,
+  "table_contact_samples_in_hold": 0,
+  "all_three_nails_body_contact_fraction_in_hold": 1.0,
+  "each_nail_body_contact_fraction_in_hold": {
+    "f1Link3": 1.0,
+    "f2Link2": 1.0,
+    "f3Link3": 1.0
+  },
+  "fresh_image_motion_consumption_record_present": true,
+  "contact_scope": "INITIAL_BODY_GRASP_AND_CARRY_BEFORE_INTENTIONAL_BODY_UNLOAD",
+  "accepted": true
+}

@@ -1,7 +1,7 @@
 {
-  "scope": "TWO_STAGE_KEY_AND_FIVE_VIEW_IMPLEMENTATION_WITH_HIGH_GLOBAL1_INITIAL_STAGE_CHECK",
+  "scope": "TWO_STAGE_KEY_VERIFIED_LOW_GLOBAL1_BASELINE_AND_HIGH_GLOBAL1_FULL_ATTEMPT",
   "implementation_worktree": "/home/noob/WorkPlace/kcgtest1-performance-20260917",
-  "branch": "codex/two-key-five-view-20260919",
+  "branch": "codex/high-global1-full-20260919",
   "two_stage_key_full_assembly": {
     "verified": true,
     "source_commit": "df1afac5bd5d9bdb56dd49b58ef8b9728092ed08",
@@ -12,15 +12,22 @@
   },
   "preferred_high_global1": {
     "initial_grasp_verified": true,
+    "two_stage_key_alignment_verified": true,
+    "guided_entry_and_released_support_verified": true,
     "full_assembly_verified": false,
-    "source_commit": "e77b86fa0388bd359b25da59d4c9f82b31c2723b",
+    "source_commit": "8959158fe2925492647ef334c04c5535a3260a2a",
     "configuration": "reproducibility/two_key_20260919/assembly_high_global1_plus20.yaml",
-    "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_grasp_01/run",
-    "video": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_grasp_01/run/video/assembly_five_view.mp4"
+    "body_configuration": "reproducibility/two_key_20260919/visual_body_contact_0p09.yaml",
+    "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run",
+    "video": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/video/assembly_five_view.mp4",
+    "video_is_success_episode": false,
+    "status": "FOURTH_NUT_GRASP_VISUAL_REJECTION",
+    "detailed_status": "reproducibility/two_key_20260919/high_global1_full_status.json"
   },
   "hardware_authorized": false,
   "experiments_running": false,
   "automatic_future_experiments_scheduled": false,
   "raw_evidence_preserved": true,
-  "fivefold_whole_episode_speedup_verified": false
+  "fivefold_whole_episode_speedup_verified": false,
+  "checked_utc": "2026-09-19T13:09:25.019389+00:00"
 }

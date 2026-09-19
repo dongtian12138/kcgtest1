@@ -1,0 +1,10 @@
+{
+  "scope": "POSTRUN_SAME_EPISODE_VISUAL_ASSEMBLY_REVIEW",
+  "online_control_used": false,
+  "complete_visual_assembly_verified": false,
+  "required_final_observation_s": 2.0,
+  "nominal_source_stop_depth_m": 0.014605,
+  "source_stop_depth_review_tolerance_m": 1e-05,
+  "thrust_backup_limit_m": 0.0005999,
+  "status": "INCOMPLETE_NO_TERMINAL_RELEASE_RECORD"
+}

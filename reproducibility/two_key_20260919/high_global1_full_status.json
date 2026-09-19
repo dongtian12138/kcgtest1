@@ -1,0 +1,51 @@
+{
+  "scope": "HIGH_GLOBAL1_COMPLETE_EPISODE_ATTEMPT_WITH_CAMERA_NAME_ONLY_RECORDING",
+  "status": "NOT_COMPLETE_FOURTH_NUT_GRASP_VISUAL_REJECTION",
+  "checked_utc": "2026-09-19T13:09:25.019389+00:00",
+  "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run",
+  "executed_source_commit": "8959158fe2925492647ef334c04c5535a3260a2a",
+  "high_global1_coarse_and_initial_grasp_verified": true,
+  "two_stage_key_alignment_verified": true,
+  "source_key_containment_through_stop_verified": true,
+  "body_released_support_verified": true,
+  "recorded_nut_source_pad_contacts_verified": true,
+  "full_assembly_verified": false,
+  "terminal_three_second_release_performed": false,
+  "whole_status": "INCOMPLETE_NO_TERMINAL_RELEASE_RECORD",
+  "stop": {
+    "stage": "FOURTH_NUT_GRASP_BEFORE_CLOSURE",
+    "online_visual_error_deg": -0.5218420652612394,
+    "unchanged_limit_deg": 0.5,
+    "postrun_actual_nut_encoder_hand_error_deg": -0.21933887706114774,
+    "postrun_actual_nut_rotation_between_images_deg": 3.9196122151359076e-07,
+    "image_estimate_shift_deg": 0.525,
+    "physical_truth_returned_to_control": false
+  },
+  "final_body_depth_m": 0.011938107460737202,
+  "nominal_full_stop_depth_m": 0.014605,
+  "video": {
+    "path": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/video/assembly_five_view.mp4",
+    "classification": "INCOMPLETE_DIAGNOSTIC_EPISODE_NOT_SUCCESS_VIDEO",
+    "visible_labels": [
+      "主视角",
+      "全局相机1",
+      "全局相机2",
+      "掌心相机",
+      "腕部相机"
+    ],
+    "duration_s": 263.2,
+    "fps": 5,
+    "resolution": [
+      1920,
+      1080
+    ],
+    "frame_count": 1316,
+    "ffmpeg_return_code": 0,
+    "all_recorded_render_native_deltas_zero": true,
+    "inspected_actual_final_frame": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/postrun_evidence/stopped_fourth_nut_grasp.png"
+  },
+  "wall_s": 6705.369273070013,
+  "previous_complete_success_baseline_preserved": true,
+  "acceptance_relaxed": false,
+  "experiments_running": false
+}

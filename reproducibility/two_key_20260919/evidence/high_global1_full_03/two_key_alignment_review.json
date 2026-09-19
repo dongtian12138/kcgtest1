@@ -1,0 +1,74 @@
+{
+  "scope": "ENDED_TWO_VISUAL_KEY_OBSERVATIONS_AND_PHYSICAL_COARSE_TURN",
+  "passed": true,
+  "checks": {
+    "exactly_two_resolved_key_samples": true,
+    "same_fixed_global2_pose": true,
+    "coarse_turn_after_both_measurements": true,
+    "second_key_sample_after_physical_coarse_turn": true,
+    "positive_physical_delay_for_each_key_result": true,
+    "coarse_target_recomputed_from_visual_key_and_slot": true,
+    "coarse_target_preserves_body_center_and_axis": true,
+    "perturbed_case_requires_at_least_ten_degree_correction": true,
+    "physical_body_actually_twists_at_least_ten_degrees": true,
+    "fresh_second_key_anchor_consumed": true,
+    "remaining_small_motion_admission": true,
+    "five_recorded_views": true,
+    "video_render_does_not_change_native_state": true,
+    "recorded_frame_metadata_includes_both_measurement_stages": true
+  },
+  "source_commit": "8959158fe2925492647ef334c04c5535a3260a2a",
+  "online_observed_coarse_rotation_deg": -19.294955442842028,
+  "online_remaining_refinement_deg": -0.07062397837257027,
+  "camera_paths": {
+    "main": "/World/BodyAssemblyVideo/main",
+    "global_1": "/World/D38999TabletopV1/TeGlobalE50RgbdCamera",
+    "global_2": "/World/AssemblyGlobalKeyCamera",
+    "palm": "/World/AssemblyPalmCamera",
+    "wrist": "/World/AssemblyWristCamera"
+  },
+  "observations": [
+    {
+      "index": 1,
+      "sample_time_s": 103.9291720869951,
+      "actual_remaining_axial_correction_deg_POSTRUN_ONLY": -19.24486844474427,
+      "image_based_remaining_axial_correction_deg": -19.295061873045423,
+      "measured_key_direction_error_deg_POSTRUN_ONLY": 0.04980669884771251
+    },
+    {
+      "index": 2,
+      "sample_time_s": 114.49688097147737,
+      "actual_remaining_axial_correction_deg_POSTRUN_ONLY": 0.06550658677118235,
+      "image_based_remaining_axial_correction_deg": -0.07084171036373113,
+      "measured_key_direction_error_deg_POSTRUN_ONLY": 0.03634982580416406
+    }
+  ],
+  "visible_video_text_policy": "CAMERA_NAMES_ONLY",
+  "second_anchor_update": [
+    {
+      "event": "KEY_ANCHOR_REOBSERVED_AFTER_COARSE_TURN",
+      "sample_time_s": 114.49688097147737,
+      "key_observation_event_count": 2,
+      "consumed_time_s": 116.79063109110575,
+      "refinement": {
+        "previous_prediction_to_new_measurement_axial_deg": 0.0737709547659785,
+        "source": "SECOND_CURRENT_GLOBAL2_IMAGE_NOT_ENCODER_TARGET",
+        "sample_time_s": 114.49688097147737
+      }
+    }
+  ],
+  "truth_only_postrun": {
+    "socket_world_yaw_deg": 20.000000000000004,
+    "actual_body_rotation_during_coarse_stage_deg": 19.310272896670458,
+    "actual_body_axial_rotation_during_coarse_stage_deg": -19.310270432532597,
+    "actual_body_axis_change_during_coarse_stage_deg": 0.009801913144972791,
+    "actual_joint7_delta_deg": -19.158948279923866,
+    "coarse_stage_body_center_displacement_m": 1.097093881787983e-05,
+    "entry": {
+      "step": 130373,
+      "remaining_axial_correction_deg_POSTRUN_ONLY": 0.17115904004416263
+    }
+  },
+  "postrun_truth_returned_to_control": false,
+  "physical_full_assembly_requires_separate_original_acceptance": true
+}

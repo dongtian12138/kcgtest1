@@ -1,0 +1,36 @@
+{
+  "scope": "ENDED_ONLY_DIAGNOSIS_OF_FOURTH_NUT_GRASP_VISUAL_REJECTION",
+  "source_commit": "8959158fe2925492647ef334c04c5535a3260a2a",
+  "episode_complete_assembly_verified": false,
+  "controller_stop_reason": "Fresh image still shows a misaligned Nu grasp after the bounded correction",
+  "recorded_stop_yaw_error_deg": -0.5218420652612394,
+  "unchanged_acceptance_deg": 0.5,
+  "observations": [
+    {
+      "observation": "pre_phase_alignment_observation",
+      "sample_step": 249741,
+      "sample_time_s": 260.1500135678798,
+      "online_estimated_nut_phase_deg": 227.27500000000006,
+      "image_fit_quality_passed": true,
+      "estimated_nut_yaw_error_mod90_deg_POSTRUN_ONLY": -0.2224969183321619,
+      "image_based_hand_nut_error_at_sample_deg": 0.577645788927839,
+      "actual_nut_and_encoder_hand_error_at_sample_deg_POSTRUN_ONLY": 0.35514767712504636
+    },
+    {
+      "observation": "phase_aligned_palm_observation",
+      "sample_step": 251982,
+      "sample_time_s": 262.48438868962694,
+      "online_estimated_nut_phase_deg": 227.80000000000007,
+      "image_fit_quality_passed": true,
+      "estimated_nut_yaw_error_mod90_deg_POSTRUN_ONLY": 0.3025030844272649,
+      "image_based_hand_nut_error_at_sample_deg": -0.5218420652612394,
+      "actual_nut_and_encoder_hand_error_at_sample_deg_POSTRUN_ONLY": -0.21933887706114774
+    }
+  ],
+  "actual_nut_rotation_between_images_deg_POSTRUN_ONLY": 3.9196122151359076e-07,
+  "actual_nut_axial_rotation_between_images_deg_POSTRUN_ONLY": -1.1978822025837712e-11,
+  "online_estimated_phase_change_deg": 0.5250000000000057,
+  "postrun_truth_used_online": false,
+  "acceptance_relaxed": false,
+  "new_dynamic_run_started": false
+}
