@@ -1,0 +1,251 @@
+{
+  "scope": "FIXED_GLOBAL1_COARSE_SOCKET_ONLY",
+  "same_frame_as_initial_plug_localization": true,
+  "rgbd_directory": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_grasp_01/run/initial_rgbd/observation",
+  "sample_time_s": 2.002083437750116,
+  "estimation_wall_s": 21.296074250974925,
+  "nominal_sensor_delay_s": 0.05,
+  "available_time_s": 23.348157688725042,
+  "world_from_camera_cv": [
+    [
+      0.0,
+      0.766044443118978,
+      -0.6427876096865394,
+      0.9528119462962507
+    ],
+    [
+      1.0,
+      -0.0,
+      0.0,
+      -0.0125
+    ],
+    [
+      -0.0,
+      -0.6427876096865395,
+      -0.7660444431189779,
+      0.7337403880273357
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "intrinsics_3x3": [
+    [
+      1465.998568360773,
+      0.0,
+      640.0
+    ],
+    [
+      0.0,
+      1465.998568360773,
+      360.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "coarse_estimate": {
+    "workspace_filter": {
+      "scope": "CURRENT_IMAGE_PROPOSALS_INSIDE_DECLARED_INSTALLATION_WORKSPACE",
+      "workspace_world_aabb_m": {
+        "maximum": [
+          0.6,
+          0.235,
+          0.285
+        ],
+        "minimum": [
+          0.5,
+          0.135,
+          0.235
+        ]
+      },
+      "minimum_inside_pixels": 150,
+      "minimum_inside_fraction": 0.5,
+      "proposals": [
+        {
+          "source_index": 0,
+          "score": 0.30561017990112305,
+          "valid_depth_pixels": 764488,
+          "pixels_in_declared_workspace": 0,
+          "workspace_fraction": 0.0,
+          "accepted": false
+        },
+        {
+          "source_index": 1,
+          "score": 0.3015793263912201,
+          "valid_depth_pixels": 90736,
+          "pixels_in_declared_workspace": 29590,
+          "workspace_fraction": 0.3261109151825075,
+          "accepted": false
+        },
+        {
+          "source_index": 2,
+          "score": 0.6249251365661621,
+          "valid_depth_pixels": 9072,
+          "pixels_in_declared_workspace": 0,
+          "workspace_fraction": 0.0,
+          "accepted": false
+        },
+        {
+          "source_index": 3,
+          "score": 0.2828560471534729,
+          "valid_depth_pixels": 6656,
+          "pixels_in_declared_workspace": 5864,
+          "workspace_fraction": 0.8810096153846154,
+          "accepted": true
+        },
+        {
+          "source_index": 4,
+          "score": 0.31469836831092834,
+          "valid_depth_pixels": 6616,
+          "pixels_in_declared_workspace": 5824,
+          "workspace_fraction": 0.8802902055622733,
+          "accepted": true
+        },
+        {
+          "source_index": 5,
+          "score": 0.5372605323791504,
+          "valid_depth_pixels": 4992,
+          "pixels_in_declared_workspace": 0,
+          "workspace_fraction": 0.0,
+          "accepted": false
+        },
+        {
+          "source_index": 6,
+          "score": 0.43508580327033997,
+          "valid_depth_pixels": 3656,
+          "pixels_in_declared_workspace": 3656,
+          "workspace_fraction": 1.0,
+          "accepted": true
+        },
+        {
+          "source_index": 7,
+          "score": 0.37200266122817993,
+          "valid_depth_pixels": 2648,
+          "pixels_in_declared_workspace": 0,
+          "workspace_fraction": 0.0,
+          "accepted": false
+        },
+        {
+          "source_index": 8,
+          "score": 0.7137066125869751,
+          "valid_depth_pixels": 11892,
+          "pixels_in_declared_workspace": 11892,
+          "workspace_fraction": 1.0,
+          "accepted": true
+        }
+      ],
+      "kept_count": 4,
+      "source_scores_and_masks_modified": false,
+      "object_or_contact_truth_used": false
+    },
+    "score": 0.7137066125869751,
+    "mask": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_grasp_01/run/global1_socket/perception/sam6d_results/best_mask_depth_support_filtered.png",
+    "timing_s": {
+      "ism": 15.357992731005652,
+      "depth_filter": 0.207363612978952,
+      "total": 15.565356343984604
+    },
+    "depth_filter": {
+      "schema_version": "kcg_sam6d_depth_support_filter_v1",
+      "source_detection_score": 0.7137066125869751,
+      "broad_mask_pixels": 12452,
+      "filtered_mask_pixels": 12456,
+      "removed_pixels": 0,
+      "filtered_bbox_xywh": [
+        1025,
+        297,
+        152,
+        126
+      ],
+      "minimum_image_border_px": 103,
+      "filtered_valid_depth_fraction": 1.0,
+      "support_plane_normal_camera": [
+        -1.4237333967820519e-07,
+        -0.6426797685710884,
+        -0.7661349196253829
+      ],
+      "support_plane_offset_m": 0.5336506542552626,
+      "support_plane_ransac_inlier_fraction": 0.8899721938685721,
+      "minimum_height_above_support_m": 0.001,
+      "depth_source": "FLOAT_METERS_NPY",
+      "truth_inputs_used": []
+    }
+  },
+  "world_from_socket_coarse": [
+    [
+      0.9999999999999967,
+      0.0,
+      -8.215928652152506e-08,
+      0.550023527848956
+    ],
+    [
+      -3.6922090282097286e-15,
+      0.999999999999999,
+      -4.493964327748133e-08,
+      0.1849901950102027
+    ],
+    [
+      8.215928652152497e-08,
+      4.493964327748148e-08,
+      0.9999999999999956,
+      0.271622977685174
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "coarse_geometry": {
+    "world_from_socket_coarse": [
+      [
+        0.9999999999999967,
+        0.0,
+        -8.215928652152506e-08,
+        0.550023527848956
+      ],
+      [
+        -3.6922090282097286e-15,
+        0.999999999999999,
+        -4.493964327748133e-08,
+        0.1849901950102027
+      ],
+      [
+        8.215928652152497e-08,
+        4.493964327748148e-08,
+        0.9999999999999956,
+        0.271622977685174
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "socket_key_yaw_measured": false,
+    "source": "CURRENT_GLOBAL1_SEGMENTED_DEPTH_UPPER_LIP_PLANE_AND_ANNULUS",
+    "workspace_points": 12456,
+    "upper_lip_points": 634,
+    "plane_points": 596,
+    "plane_rms_m": 2.819676678194281e-08,
+    "annulus_fit_radius_m": 0.018956767471101296,
+    "annulus_fit_rms_m": 0.00037138368150498686,
+    "fixture_prior": "UPRIGHT_SUPPORT_NORMAL_PLUS_WORLD_Z_SELECTS_UPPER_LIP_ONLY",
+    "transverse_frame_chosen_not_measured": true,
+    "fine_contact_pose_requires_wrist": true,
+    "online_object_or_contact_truth_used": false
+  },
+  "learning_pose_used_for_transport": false,
+  "socket_key_yaw_measured": false,
+  "online_object_or_contact_truth_used": false,
+  "receptacle_cad_mm": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/kcg_connector/vision/sam6d_receptacle_current_camera_run21_v1/D38999_20FJ35SN_VISUAL.obj",
+  "hardware_latency_calibrated": false
+}

@@ -1,0 +1,335 @@
+{
+  "scope": "FIXED_GLOBAL_KEY_AND_SYNCHRONIZED_PALM_OBSERVATION",
+  "observation_role": "FINAL_KEY_ANCHOR",
+  "record_path": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/postgrasp_key_refined/camera_and_estimate.json",
+  "robot_sample_step": 108641,
+  "physics_time_s": 113.17083923565224,
+  "world_from_hand_encoder": [
+    [
+      -0.945676871314211,
+      -0.3251058173976105,
+      0.001209361648574552,
+      0.4821349290728445
+    ],
+    [
+      -0.3250719404640396,
+      0.9456206982473395,
+      0.011389845001507026,
+      0.1706640605835419
+    ],
+    [
+      -0.004846502275805553,
+      0.010377983447954025,
+      -0.9999344022860924,
+      0.7268515276407754
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "active_positions_rad": [
+    0.04388592392206192,
+    0.3126266300678253,
+    0.4406605660915375,
+    -1.0491206645965576,
+    -0.12522104382514954,
+    1.8000625371932983,
+    0.10517679154872894,
+    1.2221369743347168,
+    0.7150155305862427,
+    0.6214011311531067,
+    0.7110251784324646
+  ],
+  "online_object_or_contact_truth_used": false,
+  "full_assembly_claimed": false,
+  "capture": {
+    "camera_path": "/World/AssemblyGlobalKeyCamera",
+    "warmup_render_frames": 3,
+    "render_subframes_per_frame": 4,
+    "capture_and_save_wall_s": 0.8045242779771797,
+    "resolution": [
+      1280,
+      720
+    ],
+    "finite_positive_depth_pixels": 300994,
+    "depth_valid_fraction": 0.32659939236111113,
+    "rgb_minimum": 2,
+    "rgb_maximum": 255,
+    "rgb_standard_deviation": 37.33756763646078
+  },
+  "intrinsics_3x3": [
+    [
+      1465.998568360773,
+      0.0,
+      640.0
+    ],
+    [
+      0.0,
+      1465.998568360773,
+      360.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "world_from_camera_cv": [
+    [
+      -0.7672817679805835,
+      0.1120839778104782,
+      0.6314395223952729,
+      0.378
+    ],
+    [
+      -0.6413101344315324,
+      -0.13410047345182213,
+      -0.7554722857229159,
+      0.319
+    ],
+    [
+      0.0,
+      -0.9846086760425065,
+      0.17477343923440605,
+      0.244
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "key_measurement": {
+    "observed_key_arcs": [
+      {
+        "pixel_count": 41,
+        "center_deg": 169.9982588901879,
+        "width_deg": 3.8119687119140053
+      },
+      {
+        "pixel_count": 121,
+        "center_deg": 249.8064254039092,
+        "width_deg": 7.565689694182993
+      },
+      {
+        "pixel_count": 16,
+        "center_deg": 315.0012433239606,
+        "width_deg": 0.03813844199601135
+      }
+    ],
+    "key_pixel_count": 178,
+    "angular_pixel_footprint_deg": 0.3334805758703413,
+    "rim_plane_pixel_count": 248,
+    "rim_cylinder_inlier_pixel_count": 1395,
+    "key_direction_measured": true,
+    "world_from_plug_row_major": [
+      -0.9391001360061169,
+      -0.3436183188036625,
+      -0.004169596603635825,
+      0.4899730932155976,
+      -0.34359277477184724,
+      0.9391007862316186,
+      -0.005806756731444121,
+      0.18455091945493363,
+      0.005910979434503768,
+      -0.004020482769531106,
+      -0.9999744476937522,
+      0.2745664103807526,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "key_yaw_in_axis_gauge_deg": 159.90234214704856,
+    "matched_supplier_key_angles_deg": [
+      90.0,
+      10.0
+    ],
+    "scope": "CURRENT_EXPOSED_SHELL_KEYS_ONLY_NO_HIDDEN_YAW_PROPAGATION",
+    "online_object_or_contact_truth_used": false
+  },
+  "key_observation_event_count": 2,
+  "hand_from_body_visual_memory": [
+    [
+      0.9997490009182409,
+      0.019696067059771498,
+      0.010677083185757117,
+      -0.009734597853525928
+    ],
+    [
+      -0.019540178211286726,
+      0.9997037311047908,
+      -0.014513147509440051,
+      0.005889660961220854
+    ],
+    [
+      -0.010959771824711804,
+      0.0143008726145153,
+      0.9998376710466621,
+      0.45242309673550846
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "palm_observation": {
+    "capture": {
+      "camera_path": "/World/AssemblyPalmCamera",
+      "warmup_render_frames": 3,
+      "render_subframes_per_frame": 4,
+      "capture_and_save_wall_s": 1.0538278159801848,
+      "resolution": [
+        1280,
+        720
+      ],
+      "finite_positive_depth_pixels": 921600,
+      "depth_valid_fraction": 1.0,
+      "rgb_minimum": 0,
+      "rgb_maximum": 255,
+      "rgb_standard_deviation": 44.99433946748727
+    },
+    "world_from_camera_cv": [
+      [
+        -0.945676871314211,
+        -0.3251058173976105,
+        0.001209361648574552,
+        0.48251587799214546
+      ],
+      [
+        -0.3250719404640396,
+        0.9456206982473395,
+        0.011389845001507026,
+        0.1742518617590166
+      ],
+      [
+        -0.004846502275805553,
+        0.010377983447954025,
+        -0.9999344022860924,
+        0.4118721909206563
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "intrinsics_3x3": [
+      [
+        1465.998568360773,
+        0.0,
+        640.0
+      ],
+      [
+        0.0,
+        1465.998568360773,
+        360.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "world_from_plug_five_dof": [
+      [
+        -0.9456862852557832,
+        -0.3250539759259415,
+        -0.0041668469920591415,
+        0.49000508125762277
+      ],
+      [
+        -0.3250283948051676,
+        0.9456863873344883,
+        -0.005813723473024251,
+        0.18454157885777522
+      ],
+      [
+        0.005830304408336589,
+        -0.004143614965480955,
+        -0.9999744186755598,
+        0.274566144537144
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "metrics": {
+      "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+      "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+      "axial_yaw_estimated": false,
+      "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+      "rgb_intensity_used_for_center": false,
+      "mask_source": "SIMULTANEOUS_GLOBAL2_VISUAL_POSE_AND_CAD_REAR_FACE_ROI",
+      "sam_used_as_plane_seed_not_required_full_contour": false,
+      "original_seed_contour_rms_m": 8.247455566273109e-05,
+      "depth_source": "FLOAT_METERS_NPY",
+      "mask_valid_depth_pixels": 218592,
+      "depth_pixel_center_offset_px": 0.5,
+      "backprojection_principal_point_index_coordinates_px": [
+        639.5,
+        359.5
+      ],
+      "visible_face_component_pixels": 98492,
+      "visible_face_radius_m": 0.015773400522113887,
+      "visible_face_to_object_origin_m": 0.03101339912,
+      "plane_residual_limit_m": 2e-05,
+      "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+      "plane_ransac_sampled_inlier_fraction": 0.4396501244327331,
+      "plane_refined_inlier_fraction": 0.43924297321036454,
+      "plane_inlier_residual_rms_m": 4.956982007902093e-07,
+      "circle_residual_rms_m": 8.247455566273109e-05,
+      "circle_quality_limit_m": 0.00010888305316163354,
+      "estimated_pixel_footprint_m": 7.258870210775569e-05,
+      "estimated_visible_face_center_camera_m": [
+        -0.010092932781884306,
+        0.006320760104953893,
+        0.10641493336913646
+      ],
+      "estimated_directed_axis_camera": [
+        0.01067674749325138,
+        -0.014520629018046405,
+        0.9998375660055413
+      ],
+      "elapsed_s": 0.047768544987775385,
+      "truth_inputs_used": [],
+      "sam_used_for_this_observation": false
+    },
+    "axial_yaw_measured": false,
+    "roi_source": "SIMULTANEOUS_GLOBAL2_KEY_IMAGE_AND_ORIGINAL_CAD_REAR_FACE_DIMENSIONS",
+    "online_object_or_contact_truth_used": false
+  },
+  "observation_latency": {
+    "capture_and_processing_wall_s": 2.2793176639825106,
+    "physics_hold_duration_s": 2.2802083333333334,
+    "physics_hold_steps": 2189,
+    "availability_physics_time_s": 115.4510476879077,
+    "availability_step": 110831,
+    "measurement_was_not_used_during_latency_hold": true,
+    "hold_execution": {
+      "phase": "key_probe_refined_observation_latency_hold",
+      "completed": true,
+      "abort_reason": null,
+      "first_step": 108642,
+      "last_step": 110831,
+      "maximum_arm_speed_rad_s": 0.003550639608874917,
+      "hand_effort_targets_nm": [
+        0.489391244043,
+        0.43295468874875,
+        0.4078378054775
+      ],
+      "physical_object_transport_success": "REQUIRES_POSTRUN_OBJECT_MOTION_EVALUATION",
+      "online_object_or_contact_truth_used": false
+    }
+  }
+}

@@ -1,0 +1,249 @@
+{
+  "schema_version": "kcg_global1_visible_face_coarse_pose_v1",
+  "status": "OBSERVED_AXIS_POSITION_YAW_FREE",
+  "transport_grasp_pose": {
+    "status": "OBSERVED_AXIS_POSITION_YAW_FREE",
+    "target_part": "Body",
+    "pose_reference": "plug_supplier_mating_face_axis",
+    "position_xyz_m": [
+      0.5199856732829002,
+      -0.20998073937547812,
+      0.19999998675911956
+    ],
+    "quaternion_xyzw": null,
+    "outward_axis_world": [
+      -2.419231874300737e-05,
+      -1.7717388686912656e-05,
+      -0.9999999995504127
+    ],
+    "yaw_status": "UNOBSERVED_FREE_TRANSVERSE_FRAME_FOR_INITIAL_GRASP_ONLY",
+    "main_key_required": false,
+    "uncertainty_6d_3sigma": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "uncertainty_6d_research_bound": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "uncertainty_6d_research_bound_scope": "FINITE_SIMULATION_RESEARCH_BOUND_NOT_3SIGMA_NOT_CAMERA_OR_MANUFACTURING_CERTIFICATION",
+    "uncertainty_6d_research_bound_semantics": {
+      "component_order": [
+        "x",
+        "y",
+        "z",
+        "roll",
+        "pitch",
+        "yaw"
+      ],
+      "translation_components_are_absolute_bounds": true,
+      "roll_pitch_values_encode_one_combined_axis_tilt_cone": true,
+      "roll_pitch_are_not_an_independent_box": true,
+      "yaw_is_unobserved_full_range": true
+    },
+    "confidence": null,
+    "confidence_scope": "NO_NEW_CALIBRATED_CONFIDENCE_CLAIMED",
+    "transport_grasp_planning_input_available": true,
+    "transport_grasp_control_allowed": false,
+    "receptacle_contact_allowed": false,
+    "insertion_allowed": false,
+    "locking_allowed": false,
+    "in_plane_branch_observed": false,
+    "frozen_main_key_propagation_allowed": false,
+    "coupling_nut_reference_forbidden": true,
+    "robot_command_count": 0,
+    "derivation": {
+      "method": "CURRENT_GLOBAL1_VISIBLE_BODY_REAR_FACE_DEPTH_CIRCLE",
+      "axis_sign_profile_check": {
+        "method": "KNOWN_SUPPORT_NORMAL_PLUS_OFFICIAL_CAD_ASYMMETRIC_RADIAL_PROFILE_V1",
+        "supplier_plus_z_world_sign": -1,
+        "supplier_outward_axis_world": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "negative_sign_profile_rmse_m": 0.0001605785675683274,
+        "positive_sign_profile_rmse_m": 0.0031800516122137993,
+        "relative_best_profile_improvement": 0.949504414660572,
+        "minimum_required_relative_improvement": 0.1,
+        "sign_unique": true,
+        "observed_profile_bin_count": 22
+      },
+      "metrics": {
+        "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+        "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+        "axial_yaw_estimated": false,
+        "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+        "rgb_intensity_used_for_center": false,
+        "mask_source": "ORDINARY_BACKGROUND_DEPTH_DIFFERENCE_AND_DECLARED_WORKSPACE",
+        "sam_used_as_plane_seed_not_required_full_contour": false,
+        "original_seed_contour_rms_m": 0.00028472210166420966,
+        "depth_source": "FLOAT_METERS_NPY",
+        "mask_valid_depth_pixels": 9164,
+        "depth_pixel_center_offset_px": 0.5,
+        "backprojection_principal_point_index_coordinates_px": [
+          639.5,
+          359.5
+        ],
+        "visible_face_component_pixels": 2896,
+        "visible_face_radius_m": 0.015773400522113887,
+        "visible_face_to_object_origin_m": 0.03101339912,
+        "plane_residual_limit_m": 2e-05,
+        "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+        "plane_ransac_sampled_inlier_fraction": 0.2007856831078132,
+        "plane_refined_inlier_fraction": 0.20722391968572676,
+        "plane_inlier_residual_rms_m": 6.432626490359557e-07,
+        "circle_residual_rms_m": 0.00028472210166420966,
+        "circle_quality_limit_m": 0.0006787108857922928,
+        "estimated_pixel_footprint_m": 0.00045247392386152857,
+        "estimated_visible_face_center_camera_m": [
+          -0.1974801898990314,
+          -0.008416898480631374,
+          0.6633261095774015
+        ],
+        "estimated_directed_axis_camera": [
+          -1.7717388686912656e-05,
+          0.6427690770062111,
+          0.7660599932973118
+        ],
+        "elapsed_s": 0.6715678259788547,
+        "truth_inputs_used": [],
+        "sam_used_for_this_observation": false
+      },
+      "support_height_used_as_acceptance_check_not_substituted_for_measured_z": true,
+      "original_support_z_bound_m": 0.000471,
+      "original_axis_tilt_bound_rad": 0.0112
+    }
+  },
+  "world_from_plug_five_dof_with_arbitrary_transverse_basis": [
+    [
+      -4.2862471447480155e-10,
+      0.9999999997073657,
+      -2.419231874300737e-05,
+      0.5199856732829002
+    ],
+    [
+      0.9999999998430471,
+      0.0,
+      -1.7717388686912656e-05,
+      -0.20998073937547812
+    ],
+    [
+      -1.771738868172794e-05,
+      -2.4192318746867084e-05,
+      -0.9999999995504127,
+      0.19999998675911956
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "legacy_lower_ring_observation": {
+    "status": "MISS_TRANSPORT_RING_NOT_OBSERVABLE",
+    "target_part": "CouplingNut",
+    "pose_reference": "plug_supplier_mating_face_axis",
+    "position_xyz_m": null,
+    "quaternion_xyzw": null,
+    "outward_axis_world": null,
+    "yaw_status": "UNOBSERVED_FREE_FOR_AXISYMMETRIC_NUT_TRANSPORT_ONLY",
+    "main_key_required": false,
+    "uncertainty_6d_3sigma": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "uncertainty_6d_research_bound": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "uncertainty_6d_research_bound_scope": "FINITE_SIMULATION_RESEARCH_BOUND_NOT_3SIGMA_NOT_CAMERA_OR_MANUFACTURING_CERTIFICATION",
+    "uncertainty_6d_research_bound_semantics": {
+      "component_order": [
+        "x",
+        "y",
+        "z",
+        "roll",
+        "pitch",
+        "yaw"
+      ],
+      "translation_components_are_absolute_bounds": true,
+      "roll_pitch_values_encode_one_combined_axis_tilt_cone": true,
+      "roll_pitch_are_not_an_independent_box": true,
+      "yaw_is_unobserved_full_range": true
+    },
+    "confidence": 0.0,
+    "confidence_scope": "AXIS_SIGN_PROFILE_SEPARATION_ONLY_NOT_CALIBRATED_6D",
+    "transport_grasp_planning_input_available": false,
+    "transport_grasp_control_allowed": false,
+    "receptacle_contact_allowed": false,
+    "insertion_allowed": false,
+    "locking_allowed": false,
+    "in_plane_branch_observed": false,
+    "frozen_main_key_propagation_allowed": false,
+    "coupling_nut_reference_forbidden": true,
+    "robot_command_count": 0,
+    "derivation": {
+      "lateral_center": "te_rx180_cad_axial_ring_circle_least_squares_v1",
+      "axial_origin": "known_static_support_plus_signed_supplier_axial_extent",
+      "axis_sign": {
+        "method": "KNOWN_SUPPORT_NORMAL_PLUS_OFFICIAL_CAD_ASYMMETRIC_RADIAL_PROFILE_V1",
+        "supplier_plus_z_world_sign": -1,
+        "supplier_outward_axis_world": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "negative_sign_profile_rmse_m": 0.0001605785675683274,
+        "positive_sign_profile_rmse_m": 0.0031800516122137993,
+        "relative_best_profile_improvement": 0.949504414660572,
+        "minimum_required_relative_improvement": 0.1,
+        "sign_unique": true,
+        "observed_profile_bin_count": 22
+      },
+      "rx180_axisymmetric_ring": {
+        "method": "TE_RX180_CAD_AXIAL_RING_CIRCLE_LEAST_SQUARES_V1",
+        "supplier_local_z_interval_m": [
+          -0.0055,
+          -0.0015
+        ],
+        "supplier_axis_sign_required": -1,
+        "point_count": 474,
+        "minimum_point_count": 1000,
+        "band_selected_without_object_pose_truth": true,
+        "simulation_research_bound_frozen": true,
+        "formal_3sigma_or_camera_certification": false,
+        "fit_valid": false,
+        "failure_reason": "INSUFFICIENT_CAD_AXIAL_RING_POINTS",
+        "center_xy_m": null,
+        "candidate_research_bound_per_lateral_component_m": null
+      },
+      "rx180_rear_face_current_capture_guard": null,
+      "rear_face_position_or_axis_consumed_by_transport_target": false,
+      "transport_target_axis_source": "KNOWN_STATIC_SUPPORT_NORMAL",
+      "transport_target_z_source": "KNOWN_STATIC_SUPPORT_GEOMETRY",
+      "rear_face_guard_role": "CURRENT_CAPTURE_Z_AND_TILT_RESEARCH_ENVELOPE_ONLY"
+    }
+  },
+  "key_yaw_measured": false,
+  "object_pose_or_contact_truth_used": false,
+  "robot_command_count": 0,
+  "input_scope": "CURRENT_ORDINARY_RGBD_CALIBRATION_BACKGROUND_CAD_AND_DECLARED_WORKSPACE"
+}

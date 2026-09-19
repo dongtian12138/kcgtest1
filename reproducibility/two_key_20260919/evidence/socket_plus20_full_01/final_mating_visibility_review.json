@@ -1,0 +1,209 @@
+{
+  "scope": "POSTRUN_ACTUAL_SAME_EPISODE_RED_BAND_VISIBILITY_REVIEW",
+  "online_control_used": false,
+  "accepted": true,
+  "physical_assembly_success_claimed_by_visibility_alone": false,
+  "reviewed_actual_frames": [
+    {
+      "frame": 1545,
+      "step": 296640,
+      "phase": "key_probe_nut_rotation_turn",
+      "simulation_time_s": 309.00104166666665,
+      "online_visual_and_encoder_status": {
+        "stage": "refined",
+        "observation_count": 2,
+        "angle_deg": -0.028627389864658126,
+        "sample_time_s": 113.17083923565224,
+        "measured_joint7_deg": -79.96038055419922
+      },
+      "world_time_before_render_s": 309.0031411157688,
+      "world_time_after_render_s": 309.0031411157688,
+      "world_step_before_render": 296643,
+      "world_step_after_render": 296643,
+      "render_error": null,
+      "render_clock_audit": {
+        "before": {
+          "timeline_s": 21.833333333333375,
+          "physics_s": 309.0031411157688,
+          "physics_step": 296643,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        },
+        "after_app_flush": {
+          "timeline_s": 21.833333333333375,
+          "physics_s": 309.0031411157688,
+          "physics_step": 296643,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": false
+        },
+        "after_capture": {
+          "timeline_s": 21.833333333333375,
+          "physics_s": 309.0031411157688,
+          "physics_step": 296643,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": true
+        },
+        "after_restore": {
+          "timeline_s": 21.833333333333375,
+          "physics_s": 309.0031411157688,
+          "physics_step": 296643,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        }
+      },
+      "render_native_state_max_abs_deltas": {
+        "robot_joint_position_rad": 0.0,
+        "robot_joint_velocity_rad_s": 0.0,
+        "robot_projected_joint_force_nm": 0.0,
+        "object_position_m": 0.0,
+        "object_quaternion_wxyz": 0.0,
+        "object_linear_velocity_m_s": 0.0,
+        "object_angular_velocity_rad_s": 0.0,
+        "raw_wrist_wrench_n_nm": 0.0
+      },
+      "native_state_deltas_are_record_only_not_controller_inputs": true,
+      "image": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/postrun_evidence/rotation_end_before_release.png",
+      "label": "rotation_end_before_release"
+    },
+    {
+      "frame": 1558,
+      "step": 299136,
+      "phase": "nut_index_free_open_hold",
+      "simulation_time_s": 311.6010416666667,
+      "online_visual_and_encoder_status": {
+        "stage": "refined",
+        "observation_count": 2,
+        "angle_deg": -0.028627389864658126,
+        "sample_time_s": 113.17083923565224,
+        "measured_joint7_deg": -79.0816650390625
+      },
+      "world_time_before_render_s": 311.6031412513694,
+      "world_time_after_render_s": 311.6031412513694,
+      "world_step_before_render": 299139,
+      "world_step_after_render": 299139,
+      "render_error": null,
+      "render_clock_audit": {
+        "before": {
+          "timeline_s": 22.066666666666695,
+          "physics_s": 311.6031412513694,
+          "physics_step": 299139,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        },
+        "after_app_flush": {
+          "timeline_s": 22.066666666666695,
+          "physics_s": 311.6031412513694,
+          "physics_step": 299139,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": false
+        },
+        "after_capture": {
+          "timeline_s": 22.066666666666695,
+          "physics_s": 311.6031412513694,
+          "physics_step": 299139,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": true
+        },
+        "after_restore": {
+          "timeline_s": 22.066666666666695,
+          "physics_s": 311.6031412513694,
+          "physics_step": 299139,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        }
+      },
+      "render_native_state_max_abs_deltas": {
+        "robot_joint_position_rad": 0.0,
+        "robot_joint_velocity_rad_s": 0.0,
+        "robot_projected_joint_force_nm": 0.0,
+        "object_position_m": 0.0,
+        "object_quaternion_wxyz": 0.0,
+        "object_linear_velocity_m_s": 0.0,
+        "object_angular_velocity_rad_s": 0.0,
+        "raw_wrist_wrench_n_nm": 0.0
+      },
+      "native_state_deltas_are_record_only_not_controller_inputs": true,
+      "image": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/postrun_evidence/released_hold.png",
+      "label": "released_hold"
+    },
+    {
+      "frame": 1565,
+      "step": 300480,
+      "phase": "nut_index_free_open_hold",
+      "simulation_time_s": 313.00104166666665,
+      "online_visual_and_encoder_status": {
+        "stage": "refined",
+        "observation_count": 2,
+        "angle_deg": -0.028627389864658126,
+        "sample_time_s": 113.17083923565224,
+        "measured_joint7_deg": -79.0816650390625
+      },
+      "world_time_before_render_s": 313.00314132438507,
+      "world_time_after_render_s": 313.00314132438507,
+      "world_step_before_render": 300483,
+      "world_step_after_render": 300483,
+      "render_error": null,
+      "render_clock_audit": {
+        "before": {
+          "timeline_s": 22.183333333333355,
+          "physics_s": 313.00314132438507,
+          "physics_step": 300483,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        },
+        "after_app_flush": {
+          "timeline_s": 22.183333333333355,
+          "physics_s": 313.00314132438507,
+          "physics_step": 300483,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": false
+        },
+        "after_capture": {
+          "timeline_s": 22.183333333333355,
+          "physics_s": 313.00314132438507,
+          "physics_step": 300483,
+          "timeline_playing": true,
+          "timeline_auto_update": false,
+          "play_simulations": true
+        },
+        "after_restore": {
+          "timeline_s": 22.183333333333355,
+          "physics_s": 313.00314132438507,
+          "physics_step": 300483,
+          "timeline_playing": true,
+          "timeline_auto_update": true,
+          "play_simulations": true
+        }
+      },
+      "render_native_state_max_abs_deltas": {
+        "robot_joint_position_rad": 0.0,
+        "robot_joint_velocity_rad_s": 0.0,
+        "robot_projected_joint_force_nm": 0.0,
+        "object_position_m": 0.0,
+        "object_quaternion_wxyz": 0.0,
+        "object_linear_velocity_m_s": 0.0,
+        "object_angular_velocity_rad_s": 0.0,
+        "raw_wrist_wrench_n_nm": 0.0
+      },
+      "native_state_deltas_are_record_only_not_controller_inputs": true,
+      "image": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/postrun_evidence/final.png",
+      "label": "final"
+    }
+  ],
+  "actual_image_observation": "No exposed red mating-indicator band was visible in the reviewed same-episode main and Global2 views. Frames are extracted unchanged from the original recording.",
+  "geometric_cross_check": {
+    "path": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/source_band_radial_occlusion_review.json",
+    "sample_count": 1024,
+    "covered_by_nut_sample_count": 1024
+  }
+}

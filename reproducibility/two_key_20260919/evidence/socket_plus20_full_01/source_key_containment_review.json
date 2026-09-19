@@ -1,0 +1,59 @@
+{
+  "scope": "POSTRUN_ACCEPTED_SOURCE_KEY_VERTICES_VS_SOURCE_SLOT_SIDEWALL_PLANES",
+  "online_control_used": false,
+  "source_model": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc",
+  "minimum_sidewall_gaps_m": [
+    -9.102334355843845e-07,
+    -9.17225450523973e-07,
+    -2.0800388739883325e-07,
+    8.672538076378001e-05,
+    -1.5311573464386052e-06
+  ],
+  "first_reviewed_step": 129049,
+  "first_step_source": "SAME_EPISODE_KEY_ENTRY_CONTROLLER",
+  "evaluated_sample_count_by_key": [
+    158972,
+    158964,
+    158965,
+    158982,
+    158988
+  ],
+  "minimum_gap_witnesses": [
+    {
+      "step": 194332,
+      "phase": "key_probe_nut_grip_hold",
+      "gap_m": -9.102334355843845e-07
+    },
+    {
+      "step": 194210,
+      "phase": "key_probe_nut_contact",
+      "gap_m": -9.17225450523973e-07
+    },
+    {
+      "step": 194224,
+      "phase": "key_probe_nut_contact",
+      "gap_m": -2.0800388739883325e-07
+    },
+    {
+      "step": 194335,
+      "phase": "key_probe_nut_grip_hold",
+      "gap_m": 8.672538076378001e-05
+    },
+    {
+      "step": 219703,
+      "phase": "key_probe_nut_rotation_turn",
+      "gap_m": -1.5311573464386052e-06
+    }
+  ],
+  "full_key_axial_extent_sample_count": 136849,
+  "final": {
+    "step": 300582,
+    "all_keys_behind_mouth": true,
+    "body_depth_m": 0.014604491442441914
+  },
+  "numerical_sidewall_review_tolerance_m": 2e-06,
+  "reference": "artifacts/visual_assembly_v1/reference_full_mating_key_gap_review.json",
+  "accepted_full_mating_reference_maximum_residual_m": 1.7060737748285649e-06,
+  "physical_geometry_or_contact_parameters_changed": false,
+  "accepted": true
+}

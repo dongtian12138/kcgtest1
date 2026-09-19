@@ -1,0 +1,26 @@
+{
+  "scope": "TWO_STAGE_KEY_AND_FIVE_VIEW_IMPLEMENTATION_WITH_HIGH_GLOBAL1_INITIAL_STAGE_CHECK",
+  "implementation_worktree": "/home/noob/WorkPlace/kcgtest1-performance-20260917",
+  "branch": "codex/two-key-five-view-20260919",
+  "two_stage_key_full_assembly": {
+    "verified": true,
+    "source_commit": "df1afac5bd5d9bdb56dd49b58ef8b9728092ed08",
+    "global1_view": "near_side_low",
+    "socket_initial_yaw_deg": 20,
+    "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+    "video": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/video/assembly_five_view_CN.mp4"
+  },
+  "preferred_high_global1": {
+    "initial_grasp_verified": true,
+    "full_assembly_verified": false,
+    "source_commit": "e77b86fa0388bd359b25da59d4c9f82b31c2723b",
+    "configuration": "reproducibility/two_key_20260919/assembly_high_global1_plus20.yaml",
+    "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_grasp_01/run",
+    "video": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_grasp_01/run/video/assembly_five_view.mp4"
+  },
+  "hardware_authorized": false,
+  "experiments_running": false,
+  "automatic_future_experiments_scheduled": false,
+  "raw_evidence_preserved": true,
+  "fivefold_whole_episode_speedup_verified": false
+}

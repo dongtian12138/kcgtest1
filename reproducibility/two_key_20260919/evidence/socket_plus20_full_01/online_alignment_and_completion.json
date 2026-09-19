@@ -1,0 +1,94 @@
+{
+  "coarse_axial_alignment": {
+    "signed_rotation_about_body_axis_deg": -19.002261286785824,
+    "current_visual_key_world": [
+      -0.019616208305306148,
+      0.999792900894286,
+      -0.005418458554922374
+    ],
+    "measured_socket_keyway_world": [
+      -0.3440694190570594,
+      0.9389442128631835,
+      6.889482046252322e-07
+    ],
+    "body_axis_world": [
+      -0.004125095951021525,
+      -0.005500388353238923,
+      -0.999976364376358
+    ],
+    "preserved_body_center_world_m": [
+      0.490006395681107,
+      0.18452217121819492,
+      0.2745655904385012
+    ],
+    "inputs": "CURRENT_KEY_IMAGE_ENCODER_PALM_AND_CURRENT_WRIST_SLOT_IMAGE",
+    "scene_initial_angle_is_not_an_input": true,
+    "first_key_sample_time_s": 102.65208868705668,
+    "wrist_sample_time_s": 105.26250548986718,
+    "planning_physics_time_s": 105.63125550909899
+  },
+  "after_second_observation": {
+    "signed_rotation_about_body_axis_deg": -0.028627389864658126,
+    "current_visual_key_world": [
+      -0.34361988042041014,
+      0.9391001560368022,
+      -0.004034192796259079
+    ],
+    "measured_socket_keyway_world": [
+      -0.3440694190570594,
+      0.9389442128631835,
+      6.889482046252322e-07
+    ],
+    "body_axis_world": [
+      -0.004175425774931681,
+      -0.005823498689433286,
+      -0.9999743260117293
+    ],
+    "preserved_body_center_world_m": [
+      0.49000539059270093,
+      0.18454176218524235,
+      0.2745664069084891
+    ],
+    "inputs": "CURRENT_KEY_IMAGE_ENCODER_PALM_AND_CURRENT_WRIST_SLOT_IMAGE",
+    "scene_initial_angle_is_not_an_input": true,
+    "sample_time_s": 113.17083923565224,
+    "maximum_allowed_further_axial_rotation_deg": 1.0
+  },
+  "key_anchor_for_entry": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/postgrasp_key_refined/camera_and_estimate.json",
+  "key_observation_event_count": 2,
+  "online_completion": {
+    "status": "ONLINE_SEATING_CONFIRMED",
+    "online_seating_confirmed": true,
+    "observations": [
+      {
+        "sample_time_s": 308.8166827727109,
+        "observed_depth_m": 0.014604166296159933,
+        "lateral_error_m": 2.2211124375034355e-05,
+        "axis_error_deg": 0.0009679786497301248
+      },
+      {
+        "sample_time_s": 312.8166829813272,
+        "observed_depth_m": 0.014604014664200535,
+        "lateral_error_m": 2.239585062652051e-05,
+        "axis_error_deg": 0.0011277764942724596
+      }
+    ],
+    "within_original_visual_depth_tolerance": true,
+    "within_original_visual_depth_stability_tolerance": true,
+    "within_declared_visual_axis_and_lateral_tolerances": true,
+    "actual_robot_open_hold_s": 3.0,
+    "robot_observed_open_unloaded_hold_completed": true,
+    "preceding_loaded_torque_observed": true,
+    "last_loaded_robot_wrist_wrench_n_nm": [
+      13.865439214777393,
+      -29.708957394306324,
+      26.491858445828687,
+      0.1469142617294291,
+      0.3569047074537413,
+      2.0010257548579395
+    ],
+    "online_object_or_contact_truth_used": false,
+    "protection_or_regrasp_stop_alone_is_completion": false,
+    "physical_assembly_acceptance": "REQUIRES_ORIGINAL_INDEPENDENT_POSTRUN_REVIEW"
+  }
+}

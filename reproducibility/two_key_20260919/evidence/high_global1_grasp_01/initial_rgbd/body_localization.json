@@ -1,0 +1,58 @@
+{
+  "source": "CURRENT_RGBD_VISIBLE_BODY_REAR_FACE",
+  "global1_camera_source_config": "/home/noob/WorkPlace/kcgtest1-performance-20260917/src/kcg_connector/config/te_rgbd_camera_global_e50_v1.yaml",
+  "initial_plug_pose_method": "VISIBLE_BODY_REAR_FACE",
+  "capture": {
+    "camera_path": "/World/D38999TabletopV1/TeGlobalE50RgbdCamera",
+    "warmup_render_frames": 5,
+    "render_subframes_per_frame": 4,
+    "capture_and_save_wall_s": 0.8683221160026733,
+    "resolution": [
+      1280,
+      720
+    ],
+    "finite_positive_depth_pixels": 921600,
+    "depth_valid_fraction": 1.0,
+    "rgb_minimum": 0,
+    "rgb_maximum": 255,
+    "rgb_standard_deviation": 29.439221344598828
+  },
+  "physics_time_s": 2.002083437750116,
+  "provider_result": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_grasp_01/run/initial_rgbd/pose_provider_result.json",
+  "robot_sample_step": 1919,
+  "provider_result_sha256": "0c53f24a6bf5f1ccea1097f539d0959c1737a1e17edb6d825ad011e46d1f11d6",
+  "world_from_body_for_initial_grasp": [
+    [
+      0.9999999997073659,
+      0.0,
+      -2.4192318743007375e-05,
+      0.5199856732829002
+    ],
+    [
+      -4.2862471453297417e-10,
+      -0.9999999998430471,
+      -1.771738868691266e-05,
+      -0.20998073937547812
+    ],
+    [
+      -2.419231873921032e-05,
+      1.771738869209737e-05,
+      -0.999999999550413,
+      0.19999998675911956
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "key_angle_measured": false,
+  "axial_frame_yaw_selected_for_grasp_not_measured": true,
+  "required_later_key_observation": true,
+  "captive_nut_axial_play_not_observed_by_ring": true,
+  "body_grasp_must_be_verified_with_its_source_contact_region": true,
+  "object_pose_or_semantic_or_contact_truth_read": false,
+  "reset_after_frame": false,
+  "estimation_wall_s": 1.0603849060134962
+}

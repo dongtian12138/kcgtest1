@@ -1,0 +1,43 @@
+{
+  "scope": "POSTRUN_ORIGINAL_THREE_SECOND_RELEASE_CONDITIONS",
+  "accepted": true,
+  "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run",
+  "reviewed_raw_range_half_open": [
+    297703,
+    300583
+  ],
+  "sample_count": 2880,
+  "duration_s": 3.0,
+  "conditions": {
+    "completed_terminal_release": true,
+    "actual_full_three_second_window": true,
+    "all_frames_are_open_hold": true,
+    "raw_hand_impulse_exactly_zero_every_frame": true,
+    "source_stop_positive_every_frame": true,
+    "same128_clips_loaded_every_frame": true,
+    "body_and_nut_awake_every_frame": true,
+    "original_source_stop_depth_tolerance": true,
+    "backup_limit_not_reached_in_this_window": true,
+    "raw_report_coverage_complete": true
+  },
+  "phase_counts": {
+    "nut_index_free_open_hold": 2880
+  },
+  "raw_report_coverage": {
+    "all_provided_native_points_retained": 2880,
+    "channels_agree": 2880,
+    "one_physics_callback": 2880
+  },
+  "sleeping_state_counts": {
+    "(False, False)": 2880
+  },
+  "depth_range_m": [
+    0.014604491442441914,
+    0.014604521244764301
+  ],
+  "maximum_backup_coordinate_m_in_window": 0.00051927586643775,
+  "distinct_loaded_clip_sets": 1,
+  "online_control_used": false,
+  "acceptance_tolerances_changed": false,
+  "full_assembly_requires_other_source_geometry_contact_and_vision_reviews": true
+}

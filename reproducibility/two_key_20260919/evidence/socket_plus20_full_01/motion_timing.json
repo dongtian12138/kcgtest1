@@ -1,0 +1,30 @@
+{
+  "execution_through_transport_s": 10487.454245415982,
+  "motion_evidence_closeout_s": 0.39328535000095144,
+  "stepper": {
+    "command_and_sensor_s": 366.7986380478833,
+    "physics_step_s": 6034.0590874571935,
+    "audit_and_record_s": 1786.9685058582108,
+    "viewport_render_s": 0.0,
+    "recording_gc_s": 361.5770937318739,
+    "physical_step_count": 300583
+  },
+  "hand_mechanism": {
+    "read_before_s": 28.304813700320665,
+    "fourbar_update_s": 106.86528596331482,
+    "motor_solve_s": 70.80857871088665,
+    "native_physics_s": 5597.579248500842,
+    "read_after_s": 110.71252324641682,
+    "evidence_and_boundary_s": 111.48181242423016
+  },
+  "truth_capture": {
+    "contact_callback_s": 167.64133048488293,
+    "contact_event_header_s": 22.355014837230556,
+    "native_contact_poll_s": 18.234933998755878,
+    "contact_python_decode_s": 149.40639648612705,
+    "engine_and_body_s": 99.87316039126017,
+    "robot_poses_s": 312.2348965811543,
+    "contact_counts_s": 301.692086889816,
+    "archive_append_s": 329.280150763283
+  }
+}
