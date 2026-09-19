@@ -329,6 +329,11 @@ def load_v2_config(path: Path | str) -> CARTSV2Config:
     if count < 32 or count > 64:
         raise ValueError("candidate_count must stay in [32, 64]")
     dynamic = value.get("dynamic", {})
+    contact_speed = float(dynamic.get(
+        "contact_approach_speed_rad_s", dynamic.get("finger_maximum_speed_rad_s", 0.0)
+    ))
+    if not 0.0 < contact_speed <= float(dynamic.get("finger_maximum_speed_rad_s", 0.0)):
+        raise ValueError("contact approach speed must be positive and within the finger speed limit")
     if (
         float(dynamic.get("lift_distance_m", 0.0)) != 0.05
         or float(dynamic.get("hold_duration_s", 0.0)) < 2.0

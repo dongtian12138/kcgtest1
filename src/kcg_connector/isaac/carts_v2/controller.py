@@ -1468,7 +1468,9 @@ def _tare_and_close(stepper, motion_plan, settings, pregrasp, first_finger_only=
         hand_stiffness=float(settings["hand_stiffness"]),
         finger_order=tuple(motion_plan["closing_order_finger_numbers"]),
     )
-    maximum_increment = float(settings["finger_maximum_speed_rad_s"]) * dt
+    maximum_increment = float(settings.get(
+        "contact_approach_speed_rad_s", settings["finger_maximum_speed_rad_s"]
+    )) * dt
     closure_steps = sum(
         int(abs(final_hand[index] - pregrasp["hand"][index]) / maximum_increment)
         + contact.endpoint_timeout_samples

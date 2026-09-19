@@ -2131,6 +2131,9 @@ def _registered_grasp(
             "method": "SEQUENTIAL_LOW_SPEED_JOINT_EFFORT_CONTACT_THEN_FINITE_PRELOAD",
             "closing_order": list(closing_order),
             "finger_maximum_speed_rad_s": dynamic["finger_maximum_speed_rad_s"],
+            "contact_approach_speed_rad_s": dynamic.get(
+                "contact_approach_speed_rad_s", dynamic["finger_maximum_speed_rad_s"]
+            ),
             "contact_detection_effort_rise_nm": dynamic["contact_effort_rise_nm"],
         },
         "finite_clamp_target": {
