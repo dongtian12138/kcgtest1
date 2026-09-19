@@ -24,9 +24,9 @@
 
 平直圆环前段原生接触完成，三指末帧均仍接触Body，最大反力矩0.514992Nm，原2.49Nm冲击未重现。结束原因PRELOAD_CONTACT_EFFORT_NOT_REACHED。按同一个FingerRootMomentObserver重放原tare/编码器/反力：目标[0.489391,0.432955,0.407838]Nm，最后误差[-0.010095,-0.006301,-0.007232]Nm，原容差0.01Nm且需6连样，本回合最多2连样，0.5s截止时尚未稳定。报告artifacts/initial_contact_fix_20260919/preload_settle_review.json和history。
 
-下一候选visual_body_smooth_band_settle.yaml保留同一+2mm高度，只新增prelift_effort_settle_timeout_s=1.5（原0.5）；源controller.py只为该预紧检查读取独立等待时限，默认仍原值，允许有限≤2s。目标力、0.01容差、6连样、0.9瞬时停止与控制器都不变。新的预检smooth_band_preflight_02（300s/30s）、前段smooth_band_grasp_02（900s/90s）随后冻结执行。启动脚本/tmp/kcg_launch_smooth_settle.py preflight或grasp，原脚本/tmp/kcg_launch_smooth_body.py保留。旧前段和数据不覆盖。
+当前候选visual_body_smooth_band_settle.yaml保留同一+2mm高度，只新增prelift_effort_settle_timeout_s=1.5（原0.5）；源controller.py只为该预紧检查读取独立等待时限，默认仍原值，允许有限≤2s。目标力、0.01容差、6连样、0.9瞬时停止与控制器都不变。预检smooth_band_preflight_02已192.835s通过；唯一主实验smooth_band_grasp_02/run已2026-09-19T15:34:25.457906Z启动，PID1369319，工具session41338，源码75e438b461ad401628dca4d5e913c9d6c0819d65冻结，900s/90s收尾。预检session87043已关闭。smooth_band_grasp_02已2026-09-19T15:46:24.074968Z结束，718.619s，session41338关闭。原源Nail/Body抬升保持后评通过：最低55.9805mm/2秒、3甲Body接触100%、桌面0、最大反力矩0.520579Nm；高位G1初抓复核通过。实际预紧检查413步=0.430208s，未用满原0.5s，因此不能把成功单独归因于延时。启动脚本/tmp/kcg_launch_smooth_settle.py preflight或grasp，原脚本/tmp/kcg_launch_smooth_body.py保留。旧前段和数据不覆盖。
 
-前段只有初抓/抬升/保持，通过原实际接触/离桌/2秒等验收后，必须继续完整同回合至最终3秒松手成功及五名称录像；用户明确要求直到成功，不以局部报告结束。完整21600s/300s、原高位assembly_high_global1_plus20.yaml不变。若失败先找最早原因，不能无依据加力或放宽判据。
+前段已通过。现在准备smooth_band_full_02完整回合，使用相同75e438b控制代码和候选配置、原preflight02证据。用户明确要求直到成功，必须继续完整同回合至最终3秒松手及五名称录像，不以局部报告结束。阶段报告reproducibility/initial_contact_fix_20260919/stage_result_CN.md。完整21600s/300s、原高位assembly_high_global1_plus20.yaml不变。若失败先找最早原因，不能无依据加力或放宽判据。
 
 完整结束后可调用/tmp/kcg_high_g1_postreview.py new_run（只有terminal完整时），原source_nail_body、high_global1、source_nut_pad、two_key、camera、transport、native_support、source_key_containment、3秒、source_band；必须再看本回合实际终态图像，写visibility和whole，全部通过才生成成功结论。后评关闭cyclic GC不改变数据。已有数据仅结束后读真值；禁止真值在线控制、启动后改物体位姿、隐藏固定或增力制造成功。
 

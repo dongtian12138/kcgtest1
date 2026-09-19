@@ -1,0 +1,39 @@
+{
+  "scope": "HIGH_GLOBAL1_CURRENT_IMAGE_TO_ACTUAL_INITIAL_GRASP_LIFT_HOLD_ONLY",
+  "accepted": true,
+  "checks": {
+    "declared_high_camera_used_for_initial_image": true,
+    "recorded_camera_at_high_installation": true,
+    "video_global1_is_the_same_camera": true,
+    "same_image_used_for_both_parts": true,
+    "visible_rear_face_method_used": true,
+    "unobserved_key_yaw_not_claimed": true,
+    "current_image_plan_consumed_causally": true,
+    "actual_original_nail_grasp_lift_hold_verified": true,
+    "controller_completed": true,
+    "engine_identity_and_finiteness": true,
+    "no_object_pose_writes_or_online_truth": true,
+    "video_did_not_change_native_state": true
+  },
+  "source_commit": "75e438b461ad401628dca4d5e913c9d6c0819d65",
+  "camera_path": "/World/D38999TabletopV1/TeGlobalE50RgbdCamera",
+  "camera_eye_world_m": [
+    0.9528119462962507,
+    -0.0125,
+    0.7337403880273357
+  ],
+  "postrun_only_pose_errors": {
+    "body_position_m": 2.3776508098847e-05,
+    "body_axis_deg": 0.00024797825793085467,
+    "socket_position_m": 2.5489172463424092e-05,
+    "socket_axis_deg": 5.399738656763834e-06
+  },
+  "minimum_actual_lift_during_hold_m": 0.05598051846027374,
+  "hold_duration_s": 2.0,
+  "three_original_nails_body_contact_fraction": 1.0,
+  "video_path": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/initial_contact_fix_20260919/smooth_band_grasp_02/run/video/assembly_five_view.mp4",
+  "video_duration_s": 63.6,
+  "wall_s": 718.6187989549944,
+  "high_global1_full_assembly_verified": false,
+  "postrun_truth_returned_to_control": false
+}
