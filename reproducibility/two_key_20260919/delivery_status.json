@@ -22,12 +22,33 @@
     "video": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/video/assembly_five_view.mp4",
     "video_is_success_episode": false,
     "status": "FOURTH_NUT_GRASP_VISUAL_REJECTION",
-    "detailed_status": "reproducibility/two_key_20260919/high_global1_full_status.json"
+    "detailed_status": "reproducibility/two_key_20260919/high_global1_full_status.json",
+    "nut_phase_fix": {
+      "locally_verified": true,
+      "source_commit": "a3083890aebc6280e5b66e9a5c99b8ecfaaf8879",
+      "result": "reproducibility/nut_phase_surface_20260919/result_CN.md"
+    },
+    "latest_full_revalidation": {
+      "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_04/run",
+      "executed_source_commit": "98ff9b213fef2003b1dfe43c61ca8b0d1cfb7274",
+      "wall_s": 466.5207794540038,
+      "exit_code": 2,
+      "completed": false,
+      "stage": "INITIAL_BODY_PARALLEL_CONTACT_APPROACH",
+      "failure_reason": "HAND_MEASURED_EFFORT_ABORT",
+      "f2_projected_joint_effort_nm": 2.4932684898376465,
+      "unchanged_abort_nm": 0.9,
+      "nut_phase_estimator_reached": false,
+      "maximum_lift_m": 0.0,
+      "earlier_speed_reduction_has_not_eliminated_contact_failure": true,
+      "initial_contact_spike_root_cause_established": false
+    },
+    "initial_grasp_repeatability_verified": false
   },
   "hardware_authorized": false,
   "experiments_running": false,
   "automatic_future_experiments_scheduled": false,
   "raw_evidence_preserved": true,
   "fivefold_whole_episode_speedup_verified": false,
-  "checked_utc": "2026-09-19T13:09:25.019389+00:00"
+  "checked_utc": "2026-09-19T14:46:34.521026+00:00"
 }

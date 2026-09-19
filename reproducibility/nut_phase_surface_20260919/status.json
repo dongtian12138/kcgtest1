@@ -1,7 +1,7 @@
 {
   "scope": "NUT_PHASE_SAMPLING_BIAS_FIX",
-  "checked_utc": "2026-09-19T14:23:12.909491+00:00",
-  "status": "LOCAL_FIX_VERIFIED_FULL_HIGH_GLOBAL1_REVALIDATION_PENDING",
+  "checked_utc": "2026-09-19T14:46:34.521026+00:00",
+  "status": "NUT_PHASE_FIX_LOCALLY_VERIFIED_FULL_REVALIDATION_STOPPED_AT_INITIAL_GRASP",
   "source_commit": "a3083890aebc6280e5b66e9a5c99b8ecfaaf8879",
   "old_two_frame_change_deg": 0.525,
   "new_same_saved_two_frame_change_at_0p025_deg_resolution": 0.0,
@@ -15,5 +15,21 @@
   "source_key_containment_accepted": true,
   "full_high_global1_assembly_verified": false,
   "no_truth_input_to_estimator": true,
-  "acceptance_thresholds_unchanged": true
+  "acceptance_thresholds_unchanged": true,
+  "experiments_running": false,
+  "full_revalidation": {
+    "run": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_04/run",
+    "executed_source_commit": "98ff9b213fef2003b1dfe43c61ca8b0d1cfb7274",
+    "wall_s": 466.5207794540038,
+    "exit_code": 2,
+    "completed": false,
+    "stage": "INITIAL_BODY_PARALLEL_CONTACT_APPROACH",
+    "failure_reason": "HAND_MEASURED_EFFORT_ABORT",
+    "f2_projected_joint_effort_nm": 2.4932684898376465,
+    "unchanged_abort_nm": 0.9,
+    "nut_phase_estimator_reached": false,
+    "maximum_lift_m": 0.0,
+    "earlier_speed_reduction_has_not_eliminated_contact_failure": true,
+    "initial_contact_spike_root_cause_established": false
+  }
 }

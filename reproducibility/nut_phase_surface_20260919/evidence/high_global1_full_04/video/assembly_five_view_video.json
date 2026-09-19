@@ -1,0 +1,62 @@
+{
+  "path": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_04/run/video/assembly_five_view.mp4",
+  "fps": 5,
+  "resolution_px": [
+    1920,
+    1080
+  ],
+  "physics_hz": 960,
+  "physics_step_stride": 192,
+  "frame_count": 208,
+  "duration_s": 41.6,
+  "phase_frame_counts": {
+    "ft_free_space_tare": 3,
+    "initial_rgbd_settle": 7,
+    "initial_visual_planning_latency_hold": 130,
+    "settle": 10,
+    "preshape_at_home": 15,
+    "approach_above": 15,
+    "approach_descent": 20,
+    "pregrasp_hold": 3,
+    "tare": 2,
+    "parallel_contact_approach": 3
+  },
+  "ffmpeg_return_code": 0,
+  "ffmpeg_log": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_04/run/video/assembly_five_view.ffmpeg.log",
+  "file_size_bytes": 2436773,
+  "observation_only_not_returned_to_control": true,
+  "camera_paths": {
+    "main": "/World/BodyAssemblyVideo/main",
+    "global_1": "/World/D38999TabletopV1/TeGlobalE50RgbdCamera",
+    "global_2": "/World/AssemblyGlobalKeyCamera",
+    "palm": "/World/AssemblyPalmCamera",
+    "wrist": "/World/AssemblyWristCamera"
+  },
+  "view_count": 5,
+  "visible_text_policy": "CAMERA_NAMES_ONLY",
+  "error": null,
+  "capture_and_encode_wall_s": 19.969251436763443,
+  "inspection_view": {
+    "camera_path": null,
+    "camera_pose_rewritten_during_motion": false,
+    "refresh_count": 0,
+    "refresh_wall_s": 0.0,
+    "maximum_refresh_gap_s": 0.0,
+    "wall_seconds_between_refresh_attempts": 0.1,
+    "note": "Responsiveness during explicit motion; blocking planning/perception calls are not yet serviced here."
+  },
+  "maximum_render_native_state_deltas": {
+    "robot_joint_position_rad": 0.0,
+    "robot_joint_velocity_rad_s": 0.0,
+    "robot_projected_joint_force_nm": 0.0,
+    "object_position_m": 0.0,
+    "object_quaternion_wxyz": 0.0,
+    "object_linear_velocity_m_s": 0.0,
+    "object_angular_velocity_rad_s": 0.0,
+    "raw_wrist_wrench_n_nm": 0.0
+  },
+  "render_state_audit_role": "POSTRUN_ONLY; NO_STATE_VALUES_RETURNED_TO_CONTROL",
+  "camera_pose_inputs": "FIXED_RIG_CALIBRATION_AND_JOINT_ENCODER_FK",
+  "simulator_object_or_contact_truth_used_for_camera_poses": false,
+  "physics_time_invariance_checked_each_frame": true
+}
