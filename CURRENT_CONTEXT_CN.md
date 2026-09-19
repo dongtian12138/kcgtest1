@@ -1,6 +1,6 @@
 # 当前任务：继续修复，直至高位方案完整通过验收
 
-核验时间：2026-09-19T15:08:26.112198+00:00。用户明确要求“继续解决问题，直到成功完成验收”。必须持续推进，不以局部通过/失败报告结束。平直圆环前段smooth_band_grasp_01已结束，474.483s、exit2，session84529关闭，无主物理实验运行。初次接触未出现尖峰，最大手指反力矩0.514992Nm<0.9，但原半秒预紧等待未取得6个连续稳定采样，未抬升。
+核验时间：2026-09-19T16:33:59.645769+00:00。用户明确要求“继续解决问题，直到成功完成验收”。必须持续推进，不以局部报告结束。当前抓取已通过，掌心遮挡修复已重放验证，准备新的完整回合。
 
 工作树/home/noob/WorkPlace/kcgtest1-performance-20260917，分支codex/high-global1-full-20260919；原项目只同步本入口。仅仿真hardware_authorized=false，无子代理授权，不推送，不删除原数据。一主物理实验，加载源码配置冻结，停止用STOP_REQUEST，不在线延预算。
 
@@ -20,14 +20,18 @@
 
 候选reproducibility/initial_contact_fix_20260919/visual_body_smooth_band.yaml。唯一物理变量object_from_hand_row_major[11]: -0.45243714 -> -0.45443714。原计划及候选原Nail/运动学/全周向外包络预测对照在candidate_basis.json，三候选接触z=-0.028796/-0.028952/-0.028781m均在平直圆环内。只是几何筛选，必须实际验证。原始诊断artifacts/initial_contact_fix_20260919，脚本/tmp/kcg_initial_contact_compare.py、kcg_contact_order_compare.py、kcg_body_contact_surface_check.py、kcg_body_profile.py、kcg_predict_smooth_grasp.py。原Body网格数据/tmp/kcg_body_exterior.npz。
 
-## 当前最早阻塞与紧接步骤
+## 已通过抓取，当前视觉修复与紧接步骤
 
-平直圆环前段原生接触完成，三指末帧均仍接触Body，最大反力矩0.514992Nm，原2.49Nm冲击未重现。结束原因PRELOAD_CONTACT_EFFORT_NOT_REACHED。按同一个FingerRootMomentObserver重放原tare/编码器/反力：目标[0.489391,0.432955,0.407838]Nm，最后误差[-0.010095,-0.006301,-0.007232]Nm，原容差0.01Nm且需6连样，本回合最多2连样，0.5s截止时尚未稳定。报告artifacts/initial_contact_fix_20260919/preload_settle_review.json和history。
+平直圆环抓取+1.5s等待上限的smooth_band_grasp_02已通过原源Nail接触/55.9805mm抬升/2秒保持/桌面0/最大反力矩0.520579Nm；实际0.430208s达到力带，未用到额外上限。此前前段01仅因0.5s等待未6连样停止，接触冲击已未重现。该高度与等待配置继续保留。
 
-当前候选visual_body_smooth_band_settle.yaml保留同一+2mm高度，只新增prelift_effort_settle_timeout_s=1.5（原0.5）；源controller.py只为该预紧检查读取独立等待时限，默认仍原值，允许有限≤2s。目标力、0.01容差、6连样、0.9瞬时停止与控制器都不变。预检smooth_band_preflight_02已192.835s通过；唯一主实验smooth_band_grasp_02/run已2026-09-19T15:34:25.457906Z启动，PID1369319，工具session41338，源码75e438b461ad401628dca4d5e913c9d6c0819d65冻结，900s/90s收尾。预检session87043已关闭。smooth_band_grasp_02已2026-09-19T15:46:24.074968Z结束，718.619s，session41338关闭。原源Nail/Body抬升保持后评通过：最低55.9805mm/2秒、3甲Body接触100%、桌面0、最大反力矩0.520579Nm；高位G1初抓复核通过。实际预紧检查413步=0.430208s，未用满原0.5s，因此不能把成功单独归因于延时。启动脚本/tmp/kcg_launch_smooth_settle.py preflight或grasp，原脚本/tmp/kcg_launch_smooth_body.py保留。旧前段和数据不覆盖。
+smooth_band_full_02（a9673f2，session59769/PID1398099）已2026-09-19T16:04:27.707179Z退出1，674.322s；初抓、抬升、保持均控制完成，实际力带0.476042s通过。第一张掌心图像因手指遮挡切边被当圆轮廓而拒绝：RMS0.234555mm>原0.110925mm。未搬运，未对键。当前无主实验运行。
 
-前段已通过。现在准备smooth_band_full_02完整回合，使用相同75e438b控制代码和候选配置、原preflight02证据。用户明确要求直到成功，必须继续完整同回合至最终3秒松手及五名称录像，不以局部报告结束。阶段报告reproducibility/initial_contact_fix_20260919/stage_result_CN.md。完整21600s/300s、原高位assembly_high_global1_plus20.yaml不变。若失败先找最早原因，不能无依据加力或放宽判据。
+新视觉修复在te_plug_five_dof_geometry._coarse_face_center新增仅失败后使用的前景深度遮挡过滤：当前深度比当前端面平面更近>2倍原平面噪声带时识别遮挡，排除相邻边界后拟合实际可见圆弧。保留原圆半径、原RMS要求、原平面支持门；额外要求≥100点、至少18/36角度箱和信息最小特征值≥0.2。保留原完整轮廓RMS及被排除点数。原成功路径不变；不估计Body绕轴角、不读对象真值。session同时在测量前保存measurement_input.json，便于失败重放，不返回真值。
 
-完整结束后可调用/tmp/kcg_high_g1_postreview.py new_run（只有terminal完整时），原source_nail_body、high_global1、source_nut_pad、two_key、camera、transport、native_support、source_key_containment、3秒、source_band；必须再看本回合实际终态图像，写visibility和whole，全部通过才生成成功结论。后评关闭cyclic GC不改变数据。已有数据仅结束后读真值；禁止真值在线控制、启动后改物体位姿、隐藏固定或增力制造成功。
+同一失败帧过滤161点、保留1074点、34箱覆盖，RMS0.041191mm通过；结束后独立真值位置误差8.54微米、轴误差0.000627°。24张旧观测位姿矩阵不变；同步G2/掌心宽ROI规则同帧也过；8项相关单测过。报告reproducibility/initial_contact_fix_20260919/palm_occlusion/result_CN.md，原始artifacts/initial_contact_fix_20260919/palm_occlusion_probe。临时重放/tmp/kcg_palm_occlusion_probe.py和/tmp/kcg_palm_circle_regression.py。
 
-Isaac Python /home/noob/WorkPlace/isaacsim/.conda-env/bin/python；规划Python /home/noob/WorkPlace/kcgtest1/.venv/bin/python。ISAAC_ENV_PREFIX同Isaac环境，OPENBLAS_NUM_THREADS=1，PYTHONPATH含src/kcg_connector、isaac、carts_v2。恢复先核验实际进程；旧预检session17870及前段84529均已关闭。
+下一步冻结修复后直接新完整回合smooth_band_full_03，保持visual_body_smooth_band_settle.yaml和assembly_high_global1_plus20.yaml及原21600s/300s收尾、5fps只五名称。物理/初抓代码没变，复用原smooth_band_preflight_02物理比较；run_grasp_lift的visual_body_start原合同允许复用名义物理预检，仍逐次比较物理绑定和当前图像轨迹，不更改预检判据。若任何绑定不符按实际结果处理，不绕过。旧session59769、41338、87043等已关闭。
+
+用户明确要求直到完整成功验收，不能以本次局部视觉修复或失败报告结束。全过程完成后原source_nail_body、high_global1、source_nut_pad、two_key、camera、transport、native_support、source_key_containment、最终3秒、红带图像与几何、whole均须通过。可用/tmp/kcg_high_g1_postreview.py new_run（terminal存在且已结束才用）；再看同回合实际终态图像，写visibility和whole。不得拼接或用真值补成功。
+
+仅仿真hardware_authorized=false，一次一主实验，控制源码配置冻结，停止用STOP_REQUEST，不在线延预算/改物体位姿/使用对象真值控制。原低位完整成功和全部失败证据保留，不推送，无子代理。Isaac Python /home/noob/WorkPlace/isaacsim/.conda-env/bin/python；规划Python /home/noob/WorkPlace/kcgtest1/.venv/bin/python。OPENBLAS_NUM_THREADS=1，PYTHONPATH含src/kcg_connector、isaac、carts_v2。恢复核对真实进程。

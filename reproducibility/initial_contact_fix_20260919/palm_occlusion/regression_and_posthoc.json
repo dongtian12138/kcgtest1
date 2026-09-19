@@ -1,0 +1,154 @@
+{
+  "scope": "ENDED_FRAME_REGRESSION_AND_POSTRUN_ONLY_MEASUREMENT_EVALUATION",
+  "old_frame_count": 24,
+  "all_previous_poses_unchanged": true,
+  "old_frame_checks": [
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00000/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.4644690600107424
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00089/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.041708948003361
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00178/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.041218539990950376
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00268/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.0402771889930591
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00357/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.04268602098454721
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00446/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.04139485800988041
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00536/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.04091748400242068
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00625/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.04667985299602151
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00714/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.05279761500423774
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00804/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.054293269000481814
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00893/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.0546469819964841
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/high_global1_full_03/run/four_camera_perception/palm_00983/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.05381665300228633
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00000/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.042429638997418806
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00112/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.043737195985158905
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00225/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.043072477012174204
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00338/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.04435220098821446
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00451/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.043764448986621574
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00564/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.04493125999579206
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00676/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.05504895199555904
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00789/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.05555615300545469
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_00902/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.05496307500288822
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01015/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.0519354100106284
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01128/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.049304142012260854
+    },
+    {
+      "file": "/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/two_key_20260919/socket_plus20_full_01/run/four_camera_perception/palm_01241/observation.json",
+      "maximum_pose_matrix_difference": 0.0,
+      "occlusion_filter_used": false,
+      "wall_s": 0.05180389599991031
+    }
+  ],
+  "failed_frame_postrun_position_error_m": 8.536659009440645e-06,
+  "failed_frame_postrun_axis_error_deg": 0.0006267483660403504,
+  "postrun_truth_used_by_estimator": false
+}

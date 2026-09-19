@@ -1,0 +1,81 @@
+{
+  "input": "SAME_ENDED_FRAME_WITH_EXISTING_GLOBAL2_ANCHOR_PALM_ROI_RULE",
+  "metrics": {
+    "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+    "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+    "axial_yaw_estimated": false,
+    "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+    "rgb_intensity_used_for_center": false,
+    "mask_source": "CURRENT_IMAGE_SAM",
+    "sam_used_as_plane_seed_not_required_full_contour": false,
+    "original_seed_contour_rms_m": 0.00023455480227439957,
+    "foreground_occlusion_boundary_filtered": true,
+    "visible_rim_support": {
+      "excluded_foreground_boundary_pixels": 161,
+      "retained_visible_rim_pixels": 1074,
+      "occupied_ten_degree_bins": 34,
+      "minimum_required_occupied_ten_degree_bins": 18,
+      "minimum_normal_information_eigenvalue": 0.44495184346696354,
+      "required_normal_information_eigenvalue": 0.2,
+      "foreground_depth_margin_m": 4e-05,
+      "selection_source": "CURRENT_DEPTH_IN_FRONT_OF_CURRENT_FITTED_FACE_PLANE"
+    },
+    "depth_source": "FLOAT_METERS_NPY",
+    "mask_valid_depth_pixels": 207665,
+    "depth_pixel_center_offset_px": 0.5,
+    "backprojection_principal_point_index_coordinates_px": [
+      639.5,
+      359.5
+    ],
+    "visible_face_component_pixels": 94312,
+    "visible_face_radius_m": 0.015773400522113887,
+    "visible_face_to_object_origin_m": 0.03101339912,
+    "plane_residual_limit_m": 2e-05,
+    "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+    "plane_ransac_sampled_inlier_fraction": 0.44160872161334436,
+    "plane_refined_inlier_fraction": 0.44146582235812487,
+    "plane_inlier_residual_rms_m": 4.6115162661820207e-07,
+    "circle_residual_rms_m": 4.119130412007923e-05,
+    "circle_quality_limit_m": 0.00011092498964724685,
+    "estimated_pixel_footprint_m": 7.394999309816457e-05,
+    "estimated_visible_face_center_camera_m": [
+      -0.00968212467445901,
+      0.005678011768223796,
+      0.1084105781648808
+    ],
+    "estimated_directed_axis_camera": [
+      0.00010880834136941168,
+      3.3167375479112825e-05,
+      0.9999999935303349
+    ],
+    "elapsed_s": 0.09635117300786078,
+    "truth_inputs_used": []
+  },
+  "camera_from_object": [
+    [
+      0.9999999940803724,
+      0.0,
+      0.00010880834136941168,
+      -0.009678750157940536
+    ],
+    [
+      -3.60888713482203e-09,
+      0.9999999994499627,
+      3.3167375479112825e-05,
+      0.005679040401277293
+    ],
+    [
+      -0.000108808341309563,
+      -3.316737567545134e-05,
+      0.9999999935303349,
+      0.13942397708423448
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "truth_used": false
+}

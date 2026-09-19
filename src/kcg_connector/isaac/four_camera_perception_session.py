@@ -175,7 +175,14 @@ class FourCameraPerceptionSession:
             self.pending=None
         if request_new and self.pending is None and now>=self.next_request:
             predicted=self.body();folder=self.output/f'palm_{self.palm_count:05d}'
-            frame=self.capture('palm',folder);started=perf_counter()
+            frame=self.capture('palm',folder)
+            from te_foundationpose_handoff_runtime import _json_ready
+            (folder/'measurement_input.json').write_text(json.dumps(_json_ready({
+                **{k:v for k,v in frame.items() if k!='depth'},
+                'predicted_world_from_body_for_roi_only':predicted,
+                'cad_path':str(self.cad),'depth_file':str(folder/'depth_m.npy'),
+                'online_object_or_contact_truth_used':False}),indent=2)+'\n')
+            started=perf_counter()
             measurement,mask=measure(frame['depth'],frame['intrinsics'],frame['camera'],predicted,self.cad)
             compute=perf_counter()-started
             import cv2

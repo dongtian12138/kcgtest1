@@ -124,6 +124,8 @@ def _coarse_face_center(
     face_radius_m: float,
     plane_residual_limit_m: float,
     minimum_component_band_m: float = 0.00075,
+    foreground_depth_m: np.ndarray | None = None,
+    occlusion_diagnostics: dict | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, int]:
     yy, xx = image_points
     residual_image = np.full(mask.shape, np.inf, dtype=np.float64)
@@ -144,6 +146,35 @@ def _coarse_face_center(
     contour = max(contours, key=cv2.contourArea).reshape(-1, 2).astype(np.float64)
     if len(contour) < 100 or cv2.contourArea(contour.astype(np.float32)) < 1000.0:
         raise RuntimeError("the visible face contour is too small")
+
+    occluded_count = 0
+    if foreground_depth_m is not None:
+        # A finger cuts a boundary into the face silhouette. It is not part
+        # of the circular rim: its measured depth is in front of the fitted
+        # face plane. Classify that occlusion before fitting the circle,
+        # independently of the circle residual or a desired object pose.
+        depth = np.asarray(foreground_depth_m, dtype=np.float64)
+        if depth.shape != mask.shape:
+            raise ValueError("occlusion depth and face mask shapes differ")
+        oy, ox = np.indices(depth.shape)
+        denominator = (normal[0] * (ox - intrinsics[0, 2]) / intrinsics[0, 0]
+                       + normal[1] * (oy - intrinsics[1, 2]) / intrinsics[1, 1]
+                       + normal[2])
+        with np.errstate(divide="ignore", invalid="ignore"):
+            plane_depth = -offset / denominator
+        margin = 2.0 * plane_residual_limit_m
+        foreground = (np.isfinite(depth) & (depth > 0.0)
+                      & np.isfinite(plane_depth) & (plane_depth > 0.0)
+                      & (depth < plane_depth - margin))
+        adjacent = cv2.dilate(foreground.astype(np.uint8), np.ones((3, 3), np.uint8))
+        index = contour.astype(np.int64)
+        visible = adjacent[index[:, 1], index[:, 0]] == 0
+        occluded_count = int(np.count_nonzero(~visible))
+        if occluded_count == 0:
+            raise RuntimeError("no measured foreground occlusion explains the noncircular boundary")
+        contour = contour[visible]
+        if len(contour) < 100:
+            raise RuntimeError("too few unoccluded rim pixels for a face centre")
 
     rays = np.column_stack(
         (
@@ -171,6 +202,28 @@ def _coarse_face_center(
         max_nfev=200,
     )
     residual = np.linalg.norm(boundary_2d - solution.x, axis=1) - face_radius_m
+    if foreground_depth_m is not None:
+        angles = np.arctan2(boundary_2d[:, 1] - solution.x[1],
+                            boundary_2d[:, 0] - solution.x[0])
+        occupied = np.unique(np.floor((angles + np.pi) * 36.0 / (2.0 * np.pi)).astype(int) % 36)
+        directions = boundary_2d - solution.x
+        lengths = np.linalg.norm(directions, axis=1)
+        if np.any(lengths < 1e-12):
+            raise RuntimeError("visible rim contains a degenerate centre direction")
+        directions /= lengths[:, None]
+        information_min = float(np.linalg.eigvalsh(directions.T @ directions / len(directions))[0])
+        if len(occupied) < 18 or information_min < 0.2:
+            raise RuntimeError("unoccluded rim does not sufficiently constrain both face-centre coordinates")
+        if occlusion_diagnostics is not None:
+            occlusion_diagnostics.update(
+                excluded_foreground_boundary_pixels=occluded_count,
+                retained_visible_rim_pixels=len(contour),
+                occupied_ten_degree_bins=len(occupied),
+                minimum_required_occupied_ten_degree_bins=18,
+                minimum_normal_information_eigenvalue=information_min,
+                required_normal_information_eigenvalue=0.2,
+                foreground_depth_margin_m=margin,
+                selection_source="CURRENT_DEPTH_IN_FRONT_OF_CURRENT_FITTED_FACE_PLANE")
     return (
         solution.x,
         first,
@@ -378,6 +431,8 @@ def estimate_plug_rear_circle_from_float_depth(
     quality_limit = max(2.0 * plane_residual_limit_m, 1.5 * pixel_footprint)
     original_circle_rms = circle_rms
     plane_seed_completed = False
+    occlusion_mask = valid
+    occlusion_diagnostics = {}
     if circle_rms > quality_limit:
         # SAM may select only the textured interior of the face. Its mask is
         # a seed, not evidence that the mask boundary is the CAD circle.
@@ -396,6 +451,7 @@ def estimate_plug_rear_circle_from_float_depth(
             chosen=int(np.argmax(overlap))
             if overlap[chosen]>0:
                 completed=labels==chosen
+                occlusion_mask=completed
                 cy,cx=np.nonzero(completed);cz=depth[cy,cx]
                 cp=np.column_stack(((cx-K[0,2])*cz/K[0,0],(cy-K[1,2])*cz/K[1,1],cz))
                 cc,cf,cs,cr,cpixels=_coarse_face_center(
@@ -406,6 +462,22 @@ def estimate_plug_rear_circle_from_float_depth(
                     center_2d,first,second,circle_rms,pixels=cc,cf,cs,cr,cpixels
                     center=-offset*normal+center_2d[0]*first+center_2d[1]*second
                     plane_seed_completed=True
+    if circle_rms > quality_limit:
+        # Retain the original fit and quality threshold. Only a measured
+        # foreground occlusion permits a visible-rim fit, with independent
+        # coverage/conditioning checks and the same radial residual limit.
+        oy, ox = np.nonzero(occlusion_mask)
+        oz = depth[oy, ox]
+        op = np.column_stack(((ox-K[0,2])*oz/K[0,0],
+                              (oy-K[1,2])*oz/K[1,1], oz))
+        cc, cf, cs, cr, cpixels = _coarse_face_center(
+            mask=occlusion_mask, image_points=(oy, ox), point_cloud=op,
+            normal=normal, offset=offset, intrinsics=K, face_radius_m=radius,
+            plane_residual_limit_m=plane_residual_limit_m, minimum_component_band_m=0.,
+            foreground_depth_m=depth, occlusion_diagnostics=occlusion_diagnostics)
+        if cr <= quality_limit:
+            center_2d, first, second, circle_rms, pixels = cc, cf, cs, cr, cpixels
+            center = -offset*normal + center_2d[0]*first + center_2d[1]*second
     if circle_rms > quality_limit:
         raise RuntimeError(f"rear-face contour does not fit source circle: {circle_rms} > {quality_limit} m")
     axis = -normal
@@ -420,6 +492,10 @@ def estimate_plug_rear_circle_from_float_depth(
         "rgb_intensity_used_for_center": False, "mask_source": "CURRENT_IMAGE_SAM",
         "sam_used_as_plane_seed_not_required_full_contour":plane_seed_completed,
         "original_seed_contour_rms_m":original_circle_rms,
+        "foreground_occlusion_boundary_filtered":bool(occlusion_diagnostics),
+        "visible_rim_support":occlusion_diagnostics,
+        "circle_residual_scope":("VISIBLE_RIM_AFTER_MEASURED_FOREGROUND_REMOVAL"
+            if occlusion_diagnostics else "FULL_COMPONENT_OUTER_CONTOUR"),
         "depth_source": "FLOAT_METERS_NPY", "mask_valid_depth_pixels": len(points),
         "depth_pixel_center_offset_px": float(pixel_center_offset_px),
         "backprojection_principal_point_index_coordinates_px": [float(K[0, 2]), float(K[1, 2])],

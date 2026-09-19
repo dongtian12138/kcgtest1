@@ -1,0 +1,111 @@
+{
+  "world_from_plug_five_dof": [
+    [
+      0.9999998788883334,
+      0.0004472241392210044,
+      0.0002054601866277585,
+      0.5201163201755509
+    ],
+    [
+      0.00044723948738380215,
+      -0.9999998972012437,
+      -7.466152526544874e-05,
+      -0.21004495775055143
+    ],
+    [
+      0.0002054267750703367,
+      7.475340613151613e-05,
+      -0.9999999761058838,
+      0.25598832091560203
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "camera_from_plug_five_dof": [
+    [
+      0.9999999940803724,
+      0.0,
+      0.00010880834136941168,
+      -0.009678750157940536
+    ],
+    [
+      -3.60888713482203e-09,
+      0.9999999994499627,
+      3.3167375479112825e-05,
+      0.005679040401277293
+    ],
+    [
+      -0.000108808341309563,
+      -3.316737567545134e-05,
+      0.9999999935303349,
+      0.13942397708423448
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "metrics": {
+    "schema_version": "kcg_plug_rear_float_depth_circle_v1",
+    "controlled_pose_components": "POSITION_AND_DIRECTED_AXIS_ONLY",
+    "axial_yaw_estimated": false,
+    "center_source": "SOURCE_REAR_FACE_DEPTH_CIRCLE",
+    "rgb_intensity_used_for_center": false,
+    "mask_source": "PREVIOUS_VISUAL_IDENTITY_ENCODER_PREDICTION_AND_CURRENT_DEPTH",
+    "sam_used_as_plane_seed_not_required_full_contour": false,
+    "original_seed_contour_rms_m": 0.00023455480227439957,
+    "foreground_occlusion_boundary_filtered": true,
+    "visible_rim_support": {
+      "excluded_foreground_boundary_pixels": 161,
+      "retained_visible_rim_pixels": 1074,
+      "occupied_ten_degree_bins": 34,
+      "minimum_required_occupied_ten_degree_bins": 18,
+      "minimum_normal_information_eigenvalue": 0.44495184346696354,
+      "required_normal_information_eigenvalue": 0.2,
+      "foreground_depth_margin_m": 4e-05,
+      "selection_source": "CURRENT_DEPTH_IN_FRONT_OF_CURRENT_FITTED_FACE_PLANE"
+    },
+    "depth_source": "FLOAT_METERS_NPY",
+    "mask_valid_depth_pixels": 173087,
+    "depth_pixel_center_offset_px": 0.5,
+    "backprojection_principal_point_index_coordinates_px": [
+      639.5,
+      359.5
+    ],
+    "visible_face_component_pixels": 94312,
+    "visible_face_radius_m": 0.015773400522113887,
+    "visible_face_to_object_origin_m": 0.03101339912,
+    "plane_residual_limit_m": 2e-05,
+    "plane_band_status": "NOMINAL_SIMULATION_NOISE_ASSUMPTION_NOT_HARDWARE_CALIBRATION",
+    "plane_ransac_sampled_inlier_fraction": 0.5298345350342023,
+    "plane_refined_inlier_fraction": 0.52965849543871,
+    "plane_inlier_residual_rms_m": 4.6115162661820207e-07,
+    "circle_residual_rms_m": 4.119130412007923e-05,
+    "circle_quality_limit_m": 0.00011092498964724685,
+    "estimated_pixel_footprint_m": 7.394999309816457e-05,
+    "estimated_visible_face_center_camera_m": [
+      -0.00968212467445901,
+      0.005678011768223796,
+      0.1084105781648808
+    ],
+    "estimated_directed_axis_camera": [
+      0.00010880834136941168,
+      3.3167375479112825e-05,
+      0.9999999935303349
+    ],
+    "elapsed_s": 0.09293765600887127,
+    "truth_inputs_used": [],
+    "sam_used_for_this_observation": false,
+    "roi_is_not_an_observed_pose": true
+  },
+  "axial_yaw_measured": false,
+  "online_object_or_contact_truth_used": false,
+  "replay_wall_s": 0.5503816870041192,
+  "input_source": "SAME_FAILED_DEPTH_FRAME_ENCODERS_AND_RECORDED_NOMINAL_SEARCH_FRAME_NO_OBJECT_TRUTH"
+}
