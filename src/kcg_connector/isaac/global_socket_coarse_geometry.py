@@ -7,6 +7,39 @@ import numpy as np
 from scipy.optimize import least_squares
 
 
+def depth_component_from_image_seed(depth, static_depth, seed_mask, intrinsics,
+                                    world_from_camera, workspace, *, foreground_delta_m=.00025):
+    """Recover an object's current depth silhouette when SAM selects an inner face.
+
+    No pose is supplied: the seed must substantially overlap one connected
+    foreground component inside the same declared socket search workspace.
+    Original lip geometry checks still decide whether this region is usable.
+    """
+    import cv2
+    depth=np.asarray(depth,float);background=np.asarray(static_depth,float)
+    seed=np.asarray(seed_mask,bool);k=np.asarray(intrinsics,float);camera=np.asarray(world_from_camera,float)
+    if depth.shape!=background.shape or seed.shape!=depth.shape:
+        raise ValueError('Seed, current depth and calibrated background must have identical dimensions')
+    y,x=np.indices(depth.shape)
+    with np.errstate(invalid='ignore'):
+        points=np.stack(((x+.5-k[0,2])*depth/k[0,0],(y+.5-k[1,2])*depth/k[1,1],depth),-1)
+        world=points@camera[:3,:3].T+camera[:3,3]
+        foreground=(np.isfinite(depth)&(depth>0)&
+            ((~np.isfinite(background))|(background<=0)|(background-depth>=foreground_delta_m)))
+        foreground&=np.all((world>=workspace['minimum'])&(world<=workspace['maximum']),axis=-1)
+    count,labels=cv2.connectedComponents(foreground.astype(np.uint8),connectivity=8)
+    overlap=np.bincount(labels[seed&foreground],minlength=count);overlap[0]=0
+    candidates=np.flatnonzero((overlap>=150)&(overlap/max(1,int(seed.sum()))>=.5))
+    if len(candidates)!=1:
+        raise ValueError('Image seed does not uniquely overlap one supported foreground depth component')
+    chosen=int(candidates[0]);mask=labels==chosen
+    return mask,{'method':'CURRENT_DEPTH_COMPONENT_OVERLAPPING_SAM_IMAGE_SEED',
+        'seed_pixels':int(seed.sum()),'component_pixels':int(mask.sum()),
+        'overlap_pixels':int(overlap[chosen]),'foreground_delta_m':float(foreground_delta_m),
+        'minimum_overlap_pixels':150,'minimum_seed_overlap_fraction':.5,
+        'source_mask_modified':False,'object_or_contact_truth_used':False}
+
+
 def estimate(depth, mask, intrinsics, world_from_camera, workspace):
     depth=np.asarray(depth,float);k=np.asarray(intrinsics,float);camera=np.asarray(world_from_camera,float)
     y,x=np.nonzero(np.asarray(mask,bool)&np.isfinite(depth)&(depth>0))

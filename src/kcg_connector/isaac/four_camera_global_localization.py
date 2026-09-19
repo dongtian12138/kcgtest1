@@ -26,10 +26,22 @@ def _estimate(repository, image_directory, output, sample_time, camera, intrinsi
         output_dir=output / 'perception', workspace_world_aabb_m=workspace,
         workspace_world_from_camera=camera,run_pem=False)
     import cv2
-    from global_socket_coarse_geometry import estimate
+    from global_socket_coarse_geometry import estimate,depth_component_from_image_seed
     mask=cv2.imread(str(seed['mask']),cv2.IMREAD_GRAYSCALE)
     if mask is None:raise RuntimeError('The current Global1 socket mask is missing')
-    geometry=estimate(np.load(image_directory/'depth_m.npy'),mask>0,intrinsic,camera,workspace)
+    depth=np.load(image_directory/'depth_m.npy')
+    refinement=None
+    try:
+        geometry=estimate(depth,mask>0,intrinsic,camera,workspace)
+    except ValueError as initial_error:
+        # Preserve the SAM output. It can identify only the central insert,
+        # while the outer lip needed for coarse pose is visible in the depth.
+        refined,refinement=depth_component_from_image_seed(depth,
+            np.load(image_directory.parent/'background/depth_m.npy'),mask>0,
+            intrinsic,camera,workspace)
+        refinement['initial_geometry_failure']=str(initial_error)
+        cv2.imwrite(str(output/'coarse_depth_component.png'),refined.astype(np.uint8)*255)
+        geometry=estimate(depth,refined,intrinsic,camera,workspace)
     elapsed = perf_counter() - started
     record = _json_ready({'scope': 'FIXED_GLOBAL1_COARSE_SOCKET_ONLY',
         'same_frame_as_initial_plug_localization': True, 'rgbd_directory': str(image_directory),
@@ -38,6 +50,7 @@ def _estimate(repository, image_directory, output, sample_time, camera, intrinsi
         'world_from_camera_cv': camera, 'intrinsics_3x3': intrinsic, 'coarse_estimate': seed,
         'world_from_socket_coarse': geometry['world_from_socket_coarse'],
         'coarse_geometry':geometry,'learning_pose_used_for_transport':False,
+        'image_seed_depth_component_refinement':refinement,
         'socket_key_yaw_measured': False, 'online_object_or_contact_truth_used': False,
         'receptacle_cad_mm': str(repository / SOCKET_CAD_MM),
         'hardware_latency_calibrated': False})
