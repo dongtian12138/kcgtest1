@@ -115,18 +115,27 @@ def continue_after_entry(repository,runtime,stepper,grasp_result,dynamic,record,
     series=record.get('continued_nut_strokes',{})
     release=series.get('terminal_release')
     if release is not None:
-        from four_camera_online_completion import assess
+        from four_camera_online_completion import assess, released_observations
         rotations=[record.get('nut_rotation'),record.get('nut_rotation_after_index')]
         rotations.extend(item.get('rotation') for item in series.get('attempts',[]))
         last=next(item for item in reversed(rotations) if item is not None)
-        observations=[release[label]['five_dof_observation'] for label in ('before_nut_release','after_nut_release')
-                      if label in release]
+        session=runtime['four_camera_perception_session']
+        decision_time=float(world.current_time)
+        observations=released_observations(session.output,release,
+            decision_step=int(stepper.step_index),decision_time_s=decision_time)
+        record['online_completion_sampling_contract']={
+            'palm_period_s':session.period,
+            'maximum_observation_age_s':session.maximum_observation_age_s,
+            'decision_time_s':decision_time,'decision_step':int(stepper.step_index),
+            'scope':'AFTER_ALL_MOTION_NO_ADDITIONAL_PHYSICS_OR_CAMERA_CAPTURE'}
         record['controller_sequence_completed']=record['completed']
         record['online_completion']=assess(wrist_socket,observations,release,
             last['last_loaded_interface_wrench_n_nm'],last['settings']['visual_progress'],
             physics_dt_s=float(dynamic['physics_dt_s']),
             maximum_lateral_error_m=float(last['settings']['measured_tracking']['maximum_lateral_error_m']),
-            maximum_axis_error_deg=.10)
+            maximum_axis_error_deg=.10,palm_period_s=session.period,
+            maximum_observation_age_s=session.maximum_observation_age_s,
+            decision_time_s=decision_time)
         record['completed']=bool(record['online_completion']['online_seating_confirmed'])
         record['completed_scope']='ONLINE_SENSOR_SEATING_DECISION_REQUIRES_ORIGINAL_POSTRUN_PHYSICAL_ACCEPTANCE'
         if not record['completed']:

@@ -1,0 +1,257 @@
+[
+  {
+    "sample_step": 298315,
+    "sample_time_s": 310.74793287343346,
+    "consumed_step": 298452,
+    "consumed_time_s": 310.8895995474886,
+    "position_world_m": [
+      0.5500094648915618,
+      0.1850153980307073,
+      0.25701816637124364
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.566763774374199e-05,
+      "circle_quality_limit_m": 9.676024837694625e-05
+    }
+  },
+  {
+    "sample_step": 298507,
+    "sample_time_s": 310.94793288386427,
+    "consumed_step": 298645,
+    "consumed_time_s": 311.0906412246404,
+    "position_world_m": [
+      0.5500096690403002,
+      0.18501559904188017,
+      0.25701790785203205
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.5630681742774215e-05,
+      "circle_quality_limit_m": 9.676051275343288e-05
+    }
+  },
+  {
+    "sample_step": 298699,
+    "sample_time_s": 311.1479328942951,
+    "consumed_step": 298837,
+    "consumed_time_s": 311.29064123507123,
+    "position_world_m": [
+      0.5500098044575353,
+      0.18501580171035067,
+      0.25701816718914633
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.579982474084158e-05,
+      "circle_quality_limit_m": 9.676024717371429e-05
+    }
+  },
+  {
+    "sample_step": 298891,
+    "sample_time_s": 311.3479329047259,
+    "consumed_step": 299027,
+    "consumed_time_s": 311.48855791206006,
+    "position_world_m": [
+      0.5500089597735425,
+      0.18501553711039537,
+      0.2570181661390627
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.5704088666997703e-05,
+      "circle_quality_limit_m": 9.676024852439643e-05
+    }
+  },
+  {
+    "sample_step": 299083,
+    "sample_time_s": 311.5479329151567,
+    "consumed_step": 299224,
+    "consumed_time_s": 311.69376625609584,
+    "position_world_m": [
+      0.5500090604995453,
+      0.1850156151431799,
+      0.25701816599081617
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.5703326031598387e-05,
+      "circle_quality_limit_m": 9.676024860439104e-05
+    }
+  },
+  {
+    "sample_step": 299275,
+    "sample_time_s": 311.7479329255875,
+    "consumed_step": 299411,
+    "consumed_time_s": 311.8885579329217,
+    "position_world_m": [
+      0.5500098031512388,
+      0.18501580148860647,
+      0.2570181670028591
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.5799798271925884e-05,
+      "circle_quality_limit_m": 9.676024736430551e-05
+    }
+  },
+  {
+    "sample_step": 299467,
+    "sample_time_s": 311.94793293601833,
+    "consumed_step": 299606,
+    "consumed_time_s": 312.0916829435155,
+    "position_world_m": [
+      0.5500092705838925,
+      0.1850151795283097,
+      0.25701816600192606
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.576251130540455e-05,
+      "circle_quality_limit_m": 9.676024895539809e-05
+    }
+  },
+  {
+    "sample_step": 299659,
+    "sample_time_s": 312.14793294644915,
+    "consumed_step": 299796,
+    "consumed_time_s": 312.2895996205043,
+    "position_world_m": [
+      0.5500096501936437,
+      0.18501504386873982,
+      0.2570180519082894
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.5681138069856444e-05,
+      "circle_quality_limit_m": 9.676036583520554e-05
+    }
+  },
+  {
+    "sample_step": 299851,
+    "sample_time_s": 312.34793295687996,
+    "consumed_step": 299991,
+    "consumed_time_s": 312.4927246310981,
+    "position_world_m": [
+      0.5500094045842239,
+      0.18501547395976123,
+      0.25701816611324474
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.575481213450824e-05,
+      "circle_quality_limit_m": 9.676024858016024e-05
+    }
+  },
+  {
+    "sample_step": 300043,
+    "sample_time_s": 312.54793296731077,
+    "consumed_step": 300182,
+    "consumed_time_s": 312.6916829748079,
+    "position_world_m": [
+      0.5500105119546959,
+      0.1850157895290534,
+      0.2570179333467608
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.5766700118295704e-05,
+      "circle_quality_limit_m": 9.676048646275624e-05
+    }
+  },
+  {
+    "sample_step": 300235,
+    "sample_time_s": 312.7479329777416,
+    "consumed_step": 300372,
+    "consumed_time_s": 312.88959965179674,
+    "position_world_m": [
+      0.5500090314883058,
+      0.1850158433471866,
+      0.2570181660628872
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.57116992890061e-05,
+      "circle_quality_limit_m": 9.67602483339755e-05
+    }
+  },
+  {
+    "sample_step": 300427,
+    "sample_time_s": 312.9479329881724,
+    "consumed_step": 300565,
+    "consumed_time_s": 313.09064132894855,
+    "position_world_m": [
+      0.5500088013013856,
+      0.1850152866081149,
+      0.2570181668166213
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.565800711673507e-05,
+      "circle_quality_limit_m": 9.676024805434582e-05
+    }
+  },
+  {
+    "sample_step": 300619,
+    "sample_time_s": 313.1479329986032,
+    "consumed_step": 300755,
+    "consumed_time_s": 313.2885580059374,
+    "position_world_m": [
+      0.5500089994743439,
+      0.18501567880957115,
+      0.2570181668024467
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.564082056560871e-05,
+      "circle_quality_limit_m": 9.676024771903966e-05
+    }
+  },
+  {
+    "sample_step": 300811,
+    "sample_time_s": 313.347933009034,
+    "consumed_step": 300946,
+    "consumed_time_s": 313.4875163496472,
+    "position_world_m": [
+      0.5500090868094549,
+      0.18501567317351938,
+      0.2570181665913174
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.567686590508235e-05,
+      "circle_quality_limit_m": 9.676024793514311e-05
+    }
+  },
+  {
+    "sample_step": 301003,
+    "sample_time_s": 313.54793301946484,
+    "consumed_step": 301145,
+    "consumed_time_s": 313.69480802712496,
+    "position_world_m": [
+      0.5500092395006504,
+      0.18501545208108022,
+      0.25701816646211617
+    ],
+    "metrics": {
+      "foreground_occlusion_boundary_filtered": false,
+      "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+      "circle_residual_rms_m": 3.572806652129793e-05,
+      "circle_quality_limit_m": 9.676024824873105e-05
+    }
+  }
+]

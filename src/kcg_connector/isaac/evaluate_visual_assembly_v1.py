@@ -13,6 +13,60 @@ from scipy.spatial.transform import Rotation
 from trace_metadata import iter_truth_samples
 
 
+def terminal_sensor_decision_review(directory, transport):
+    from evaluate_terminal_completion_sensors import review as review_completion
+    completion=review_completion(directory)
+    return {
+        'path':str(Path(directory)/'online_completion_sensor_replay.json'),
+        'accepted':completion['accepted'],
+        'historical_runtime_online_seating_confirmed':completion['historical_runtime_online_seating_confirmed'],
+        'validation_mode':'REPLAY_OF_ALREADY_CONSUMED_ONLINE_SENSORS_AFTER_ALL_MOTION',
+        'new_terminal_logic_executed_in_recorded_physics_run':
+            'online_completion_sampling_contract' in transport}
+
+
+def finalize_conditions(result):
+    result['complete_visual_assembly_verified']=bool(result['continuous_step_sequence']
+        and all(result['mechanical_conditions'].values())
+        and all(result['visual_stage_conditions'].values())
+        and all(result['additional_review_conditions'].values()))
+    result['status']='VERIFIED' if result['complete_visual_assembly_verified'] else 'REVIEW_REQUIRED'
+
+
+def refresh_terminal_decision(directory, original_review):
+    """Reuse this run's completed raw audit when only the terminal predicate changed.
+
+    The original audit remains separate and is bound by its digest. No contact,
+    geometry, sequence, or image-inspection result is recomputed or replaced.
+    """
+    import hashlib
+    directory=Path(directory).resolve();original_review=Path(original_review).resolve()
+    if original_review.parent!=directory or original_review.name=='whole_assembly_review.json':
+        raise ValueError('A separately preserved audit from this exact run is required')
+    raw=original_review.read_bytes();result=json.loads(raw)
+    terminal=json.loads((directory/'socket_transport/nut_terminal_release/nut_reindex_controller_result.json').read_text())
+    if (result['scope']!='POSTRUN_SAME_EPISODE_VISUAL_ASSEMBLY_REVIEW'
+            or result['status'] not in ('VERIFIED','REVIEW_REQUIRED')
+            or result['sample_count']!=terminal['support_hold_last_step']
+            or result['final']['step']!=terminal['support_hold_last_step']-1):
+        raise ValueError('The preserved full audit does not cover this completed episode')
+    transport=json.loads((directory/'socket_transport/transport_and_observation.json').read_text())
+    completion=terminal_sensor_decision_review(directory,transport)
+    visual=result['visual_stage_conditions']
+    historical=visual.pop('online_seating_confirmed')
+    if historical is not completion['historical_runtime_online_seating_confirmed']:
+        raise ValueError('Historical controller outcome and preserved review differ')
+    visual['released_window_sensor_seating_confirmed']=completion['accepted'] is True
+    result['terminal_sensor_decision_review']=completion
+    result['unchanged_physical_audit_basis']={
+        'path':str(original_review),'sha256':hashlib.sha256(raw).hexdigest(),
+        'all_mechanical_geometry_sequence_and_visibility_conditions_preserved':True,
+        'only_revised_condition':'FINAL_SENSOR_STABILITY_USES_THE_RELEASED_WINDOW'}
+    finalize_conditions(result)
+    (directory/'whole_assembly_review.json').write_text(json.dumps(result,indent=2)+'\n')
+    return result
+
+
 def review(directory):
     directory=Path(directory)
     terminal_path=directory/'socket_transport/nut_terminal_release/nut_reindex_controller_result.json'
@@ -111,13 +165,18 @@ def review(directory):
             session_path=directory/'four_camera_perception/summary.json'
             session=json.loads(session_path.read_text()) if session_path.exists() else {}
             memory=session.get('key_memory',{})
+            # Re-evaluate the final sensor predicate separately from physical
+            # acceptance. Preserve and expose a historical false negative;
+            # never rewrite the recorded controller outcome to claim a rerun.
+            completion=terminal_sensor_decision_review(directory,transport)
+            result['terminal_sensor_decision_review']=completion
             visual.update(
                 fixed_four_camera_records_verified=(camera_review.exists()
                     and json.loads(camera_review.read_text()).get('passed') is True),
                 palm_position_and_axis_updates=int(memory.get('palm_update_count',0))>=2,
                 body_grasp_reference_retired=(memory.get('active_body_grasp') is False
                     and memory.get('retirement_reason')=='BODY_RELEASED_AFTER_GUIDED_ENTRY'),
-                online_seating_confirmed=transport.get('online_completion',{}).get('online_seating_confirmed') is True)
+                released_window_sensor_seating_confirmed=completion['accepted'] is True)
             if transport['key_observation_event_count']==2:
                 two_key_review=directory/'two_key_alignment_review.json'
                 visual['two_stage_key_observations']=(transport.get('body_key_reobservations_after_memory')==1
@@ -138,8 +197,7 @@ def review(directory):
         result['required_additional_reviews']={k:str(v) for k,v in required.items()}
         external={k:(json.loads(v.read_text()).get('accepted') is True if v.exists() else False) for k,v in required.items()}
         result['additional_review_conditions']=external
-        result['complete_visual_assembly_verified']=bool(sequence_complete and all(mechanics.values()) and all(visual.values()) and all(external.values()))
-        result['status']='VERIFIED' if result['complete_visual_assembly_verified'] else 'REVIEW_REQUIRED'
+        finalize_conditions(result)
     if angle_rows:
         angles=np.degrees(np.unwrap(np.array(angle_rows)[:,1]));result['recorded_turn_interval_relative_nut_rotation_range_deg']=float(np.ptp(angles))
         result['turn_angles_are_measured_pose_results_not_controller_commands']=True

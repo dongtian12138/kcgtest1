@@ -23,6 +23,7 @@ class FourCameraPerceptionSession:
         settings=yaml.safe_load((self.root/runtime['body_assembly_control_config']).read_text())['perception']
         self.period=float(settings.get('palm_update_period_s',.2))
         self.sensor_delay=float(settings.get('nominal_sensor_frame_period_s',.05))
+        self.maximum_observation_age_s=.5
         if self.period<=0 or self.sensor_delay<=0:raise ValueError('Positive declared camera periods required')
         self.resources={};self.pending=None;self.next_request=float(self.world.current_time)
         self.last_observation=None
@@ -213,7 +214,7 @@ class FourCameraPerceptionSession:
         if self.last_observation is None:
             raise RuntimeError('No consumed palm observation is available')
         age=float(self.world.current_time)-self.last_observation['capture_physics_time_s']
-        if age > .5:
+        if age > self.maximum_observation_age_s:
             raise RuntimeError('Palm observation is older than the declared0.5s maximum age')
         result=_json_ready(copy.deepcopy(self.last_observation))
         result.update(consumed_by_stage_at_physics_time_s=float(self.world.current_time),

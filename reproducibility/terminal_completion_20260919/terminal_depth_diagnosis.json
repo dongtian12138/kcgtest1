@@ -1,0 +1,33 @@
+{
+  "scope": "ENDED_DIAGNOSIS_NOT_ONLINE_CONTROL",
+  "endpoints": {
+    "297163": {
+      "label": "before_nut_release",
+      "visual_depth_m": 0.014597055076836063,
+      "circle_metrics": {
+        "foreground_occlusion_boundary_filtered": false,
+        "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+        "circle_residual_rms_m": 3.5436165785042565e-05,
+        "circle_quality_limit_m": 9.675306799686123e-05
+      },
+      "physical_depth_m": 0.01459742829203603
+    },
+    "301003": {
+      "label": "after_nut_release",
+      "visual_depth_m": 0.01460432709844789,
+      "circle_metrics": {
+        "foreground_occlusion_boundary_filtered": false,
+        "circle_residual_scope": "FULL_COMPONENT_OUTER_CONTOUR",
+        "circle_residual_rms_m": 3.572806652129793e-05,
+        "circle_quality_limit_m": 9.676024824873105e-05
+      },
+      "physical_depth_m": 0.01460478946566579
+    }
+  },
+  "released_visual_count": 15,
+  "released_visual_depth_range_m": [
+    0.014604326375304936,
+    0.014604585713019848
+  ],
+  "released_visual_depth_range_um": 0.2593377149123083
+}
