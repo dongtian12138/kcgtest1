@@ -1,0 +1,32 @@
+{
+  "base_config": "reproducibility/two_key_20260919/visual_body_contact_0p09.yaml",
+  "assembly_config": "reproducibility/two_key_20260919/assembly_high_global1_plus20.yaml",
+  "warmup_s": 0.5,
+  "perform_current_regrasp": true,
+  "stop_after_current_regrasp": true,
+  "initial_loaded_command_deg": 228.79693951181557,
+  "inspection_ui_enabled": false,
+  "maximum_physical_steps": 20000,
+  "defer_recording_gc": true,
+  "solve_articulation_contact_last": true,
+  "scope": "LOCAL_FOURTH_GRASP_FROM_SEALED_OPEN_HAND_STATE_NOT_COMPLETE_ASSEMBLY",
+  "source_step": 252521,
+  "motor_input_state": {
+    "f1j1": {
+      "input_angle": 1.0471976411625583,
+      "input_velocity": 0.0
+    },
+    "f1j2": {
+      "input_angle": 0.6345383410930648,
+      "input_velocity": 0.0
+    },
+    "f2j1": {
+      "input_angle": 0.45135068738460593,
+      "input_velocity": -1.7832037462210626e-14
+    },
+    "f3j2": {
+      "input_angle": 0.6345347994694701,
+      "input_velocity": 0.0
+    }
+  }
+}

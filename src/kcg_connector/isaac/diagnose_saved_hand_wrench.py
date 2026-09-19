@@ -1372,7 +1372,8 @@ try:
             metadata=metadata,sensor_sample=probe_sensor,source_rotation=control_record,recipe=source_stage_recipe,
             source_visual_context_run=base_run)
         print(json.dumps(result,indent=2),flush=True)
-        passed=(result.get('free_return_completed') if 'free_joint7_return' in result
+        passed=(result.get('current_regrasp_completed') if source_stage_recipe.get('stop_after_current_regrasp')
+                else result.get('free_return_completed') if 'free_joint7_return' in result
                 else bool(result.get('rotation',{}).get('completed')))
         requested_exit_code=0 if passed and not result.get('error') else 2
         raise SystemExit(requested_exit_code)

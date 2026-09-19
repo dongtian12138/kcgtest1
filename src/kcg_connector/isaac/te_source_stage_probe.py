@@ -38,6 +38,10 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
     import fcl
 
     degrees=source_probe_rotation_degrees(recipe)
+    regrasp_only=recipe.get('stop_after_current_regrasp',False)
+    if (type(regrasp_only) is not bool or
+            regrasp_only and not recipe.get('perform_current_regrasp')):
+        raise ValueError('A regrasp-only diagnosis requires the current regrasp controller')
     repository=Path(repository);output=args.output;stage=omni.usd.get_context().get_stage()
     inputs=load_v2_inputs(repository,config_path=repository/recipe['base_config'],
         object_id=metadata['object_id'],finger_mechanism_path=args.finger_mechanism)
@@ -173,6 +177,10 @@ def run_source_stage_probe(*,repository,args,world,robot_data,ft_tree,contact_vi
             result['current_grip']=geometry
             if not geometry.get('completed'):raise RuntimeError(geometry.get('failure_reason','Current regrasp failed'))
             grip=geometry
+            if regrasp_only:
+                result['current_regrasp_completed']=True
+                result['physical_grip_requires_postrun_contact_review']=True
+                return result
         elif not geometry.get('geometry_only'):raise RuntimeError(geometry.get('failure_reason','Geometry preparation failed'))
         if recipe.get('preserve_source_grip_state'):
             if perform_grip or not recipe.get('motor_input_state'):

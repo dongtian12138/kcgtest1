@@ -1,16 +1,15 @@
-"""Image/CAD-only prototype; no simulator state or controller mutation."""
+"""Image/CAD-only Nut phase observation; no simulator state or control mutation."""
 from pathlib import Path
 import numpy as np
-from scipy.spatial import cKDTree
 
 def prepare_template(v,faces):
+    from te_nut_phase_surface import SourceTriangleSurface
     tri=v[faces]
     keep=(tri[:,:,2].max(axis=1)>-.022)&(tri[:,:,2].min(axis=1)<-.0175)&(np.linalg.norm(tri[:,:,:2],axis=2).max(axis=1)>.0205)
-    tri=tri[keep];area=np.linalg.norm(np.cross(tri[:,1]-tri[:,0],tri[:,2]-tri[:,0]),axis=1)/2
-    rng=np.random.default_rng(20260915);ids=rng.choice(len(tri),500000,p=area/area.sum());a=np.sqrt(rng.random(len(ids)));b=rng.random(len(ids))
-    sample=(1-a[:,None])*tri[ids,0]+(a*(1-b))[:,None]*tri[ids,1]+(a*b)[:,None]*tri[ids,2]
-    radius=np.linalg.norm(sample[:,:2],axis=1);sample=sample[(radius>.0205)&(radius<.0245)&(sample[:,2]>-.022)&(sample[:,2]<-.0175)]
-    return cKDTree(sample)
+    # Retain the source exterior triangles. A nearest sampled-point distance
+    # includes the sampling gaps and can shift its angular optimum when the
+    # camera moves, even though the Nut has not moved.
+    return SourceTriangleSurface(v,faces[keep])
 
 def extract_points(observation,depth,intrinsics,world_from_socket,offset_m=.0005):
     B=np.asarray(observation['world_from_plug_five_dof']);C=np.asarray(observation['world_from_camera_cv']);S=np.asarray(world_from_socket).reshape(4,4);K=np.asarray(intrinsics)
@@ -37,6 +36,7 @@ def fit_phase(tree,points,prior_deg,half_width_deg=8.):
     best=min(fine,key=lambda r:r['clipped_rms_m'])
     alternatives=[score(best['yaw_deg']+delta) for delta in (-3,3)]
     return {'best':best,'selected_points':len(points),'fit_points':len(sampled),'coarse_score_curve':coarse,
+            'distance_metric':getattr(tree,'method','SAMPLED_POINT_DISTANCE'),
             'fine_score_curve':fine,'three_degree_alternatives':alternatives,'prior_deg':float(prior_deg),
             'search_half_width_deg':half_width_deg,'online_object_truth_used':False}
 
