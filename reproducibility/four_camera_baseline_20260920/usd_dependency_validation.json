@@ -1,0 +1,14 @@
+[
+  {
+    "asset": "artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda",
+    "layer_count": 11,
+    "unresolved_assets": [],
+    "all_usd_layers_inside_current_checkout": true
+  },
+  {
+    "asset": "artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc",
+    "layer_count": 1,
+    "unresolved_assets": [],
+    "all_usd_layers_inside_current_checkout": true
+  }
+]

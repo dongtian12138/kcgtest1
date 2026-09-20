@@ -1,3 +1,5 @@
+> GitHub封存说明：[跨电脑复现入口](../../docs/REPRODUCE_FOUR_CAMERA_BASELINE_20260920_CN.md)。下面的原始数据路径保留用于追溯，不是新机器启动参数。
+
 # 高位全局相机1完整仿真装配验收
 
 核验时间：2026-09-19T21:06:46.222964+00:00。
@@ -36,7 +38,7 @@
 
 ## 录像和复现记录
 
-[打开本轮全过程录像](/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/initial_contact_fix_20260919/balanced_band_full_01/run/video/assembly_five_view.mp4)：313.8秒，即5分13.8秒；1920×1080，5fps，1569帧。画面文字仅保留“主视角、全局相机1、全局相机2、掌心相机、腕部相机”。本轮计算用时2.860561小时，即2小时51分38秒，不含后续独立审查；此结果不构成5倍提速声明。
+[打开本轮全过程录像](https://github.com/dongtian12138/kcgtest1/releases/download/assembly-four-camera-high-global1-20260920/high-global1-assembly-five-view.mp4)：313.8秒，即5分13.8秒；1920×1080，5fps，1569帧。画面文字仅保留“主视角、全局相机1、全局相机2、掌心相机、腕部相机”。本轮计算用时2.860561小时，即2小时51分38秒，不含后续独立审查；此结果不构成5倍提速声明。
 
 - [实际运行命令](evidence/physical_run_invocation.json)
 - [物理运行来源与耗时](evidence/physical_process.json)

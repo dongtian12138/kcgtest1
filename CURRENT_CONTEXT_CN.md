@@ -1,6 +1,6 @@
 # 当前状态：高位全局相机1完整仿真装配已验收
 
-核验时间：2026-09-19T21:06:46.222964+00:00。用户“继续解决直到成功完成验收”的工作已完成。当前无物理实验或后评进程在运行，不自动启动后续实验/学术/性能任务。
+核验时间：2026-09-19T21:06:46.222964+00:00。完整装配验收已完成。当前用户已明确授权把该基线上传GitHub新分支，正在完成复现交付；没有启动新物理回合。
 
 ## 当前有效结果与证据边界
 
@@ -27,3 +27,9 @@
 修复证据：reproducibility/initial_contact_fix_20260919/body_release/diagnosis_CN.md（后倒角接触）、palm_occlusion/result_CN.md（掌心遮挡）；reproducibility/nut_phase_surface_20260919/result_CN.md（Nut三角面匹配）；reproducibility/terminal_completion_20260919/diagnosis_CN.md（卸力与释放状态区分）。低位完整基线socket_plus20_full_01/df1afac仍保留，全部失败原始数据保留。
 
 仅仿真hardware_authorized=false；不得在线对象/接触真值控制、改物体位姿、隐藏固定或增力造成功。960Hz/64/4、源几何质量材料、原力速/键槽/释放验收边界不变。后续任务按用户新指令，恢复时核对实际进程，不凭历史“运行中”等待。
+
+## 2026-09-20 GitHub复现封存
+
+发布分支codex/connector-four-camera-baseline-20260920；发布标签assembly-four-camera-high-global1-20260920。工作目录/home/noob/WorkPlace/kcgtest1-baseline-20260920；本机已在该独立目录从公开Release恢复297输入，另有2个高位G1输入随Git保存，固定SAM源码/补丁/四权重校验、记录模块重新编译、当前ROS资源构建、USD引用闭合及规划FK只读加载、启动--check均通过。第三方Python环境复用，未做跨机器零安装或新完整物理回合。
+
+本分支入口README.md和docs/REPRODUCE_FOUR_CAMERA_BASELINE_20260920_CN.md；默认scripts/run_current_hand_assembly.py已绑定本次高位四相机成功配置。历史本机路径仅保留为原证据，其他电脑应从当前克隆目录和自身环境启动。用户授权的发布不修改主分支或旧基线。当前正等待Git推送与Release附件核验完成，完成后更新本节。

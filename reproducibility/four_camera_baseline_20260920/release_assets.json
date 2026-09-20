@@ -1,0 +1,17 @@
+{
+  "release_tag": "assembly-four-camera-high-global1-20260920",
+  "assets": [
+    {
+      "name": "high-global1-assembly-five-view.mp4",
+      "bytes": 49534272,
+      "sha256": "2210e27cb44242786d8c8a5a03bcccca57619e152c5887937a5faedaab0ae263"
+    },
+    {
+      "name": "high-global1-evidence.tar.gz",
+      "bytes": 2074934,
+      "sha256": "dfa21272bd33e960101d099bd442d80de157ab9884988091f53975fcc905c1b7"
+    }
+  ],
+  "raw_whole_episode_archive_uploaded": false,
+  "raw_whole_episode_archive_required_to_run_new_episode": false
+}

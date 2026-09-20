@@ -1,0 +1,1383 @@
+{
+  "python_version": "3.12.13",
+  "packages": [
+    {
+      "name": "absl-py",
+      "version": "2.4.0"
+    },
+    {
+      "name": "ackermann-msgs",
+      "version": "2.0.2"
+    },
+    {
+      "name": "action-msgs",
+      "version": "1.2.3"
+    },
+    {
+      "name": "action-tutorials-interfaces",
+      "version": "0.20.9"
+    },
+    {
+      "name": "action-tutorials-py",
+      "version": "0.20.9"
+    },
+    {
+      "name": "actionlib-msgs",
+      "version": "4.9.2"
+    },
+    {
+      "name": "actuator-msgs",
+      "version": "0.0.1"
+    },
+    {
+      "name": "aioboto3",
+      "version": "15.5.0"
+    },
+    {
+      "name": "aiobotocore",
+      "version": "2.25.1"
+    },
+    {
+      "name": "aiodns",
+      "version": "3.1.1"
+    },
+    {
+      "name": "aiofiles",
+      "version": "23.2.1"
+    },
+    {
+      "name": "aiohappyeyeballs",
+      "version": "2.6.1"
+    },
+    {
+      "name": "aiohttp",
+      "version": "3.13.4"
+    },
+    {
+      "name": "aioitertools",
+      "version": "0.11.0"
+    },
+    {
+      "name": "aiosignal",
+      "version": "1.4.0"
+    },
+    {
+      "name": "ament-cmake-test",
+      "version": "1.3.14"
+    },
+    {
+      "name": "ament-copyright",
+      "version": "0.12.15"
+    },
+    {
+      "name": "ament-cppcheck",
+      "version": "0.12.15"
+    },
+    {
+      "name": "ament-cpplint",
+      "version": "0.12.15"
+    },
+    {
+      "name": "ament-flake8",
+      "version": "0.12.15"
+    },
+    {
+      "name": "ament-index-python",
+      "version": "1.4.1"
+    },
+    {
+      "name": "ament-lint",
+      "version": "0.12.15"
+    },
+    {
+      "name": "ament-lint-cmake",
+      "version": "0.12.15"
+    },
+    {
+      "name": "ament-package",
+      "version": "0.14.2"
+    },
+    {
+      "name": "ament-pep257",
+      "version": "0.12.15"
+    },
+    {
+      "name": "ament-uncrustify",
+      "version": "0.12.15"
+    },
+    {
+      "name": "ament-xmllint",
+      "version": "0.12.15"
+    },
+    {
+      "name": "angles",
+      "version": "1.15.0"
+    },
+    {
+      "name": "annotated-doc",
+      "version": "0.0.5"
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0"
+    },
+    {
+      "name": "anyio",
+      "version": "4.14.2"
+    },
+    {
+      "name": "asteval",
+      "version": "1.0.6"
+    },
+    {
+      "name": "async-timeout",
+      "version": "5.0.1"
+    },
+    {
+      "name": "attrs",
+      "version": "25.1.0"
+    },
+    {
+      "name": "awscrt",
+      "version": "0.23.8"
+    },
+    {
+      "name": "azure-core",
+      "version": "1.38.0"
+    },
+    {
+      "name": "azure-identity",
+      "version": "1.13.0"
+    },
+    {
+      "name": "azure-storage-blob",
+      "version": "12.17.0"
+    },
+    {
+      "name": "boto3",
+      "version": "1.40.61"
+    },
+    {
+      "name": "botocore",
+      "version": "1.40.61"
+    },
+    {
+      "name": "builtin-interfaces",
+      "version": "1.2.3"
+    },
+    {
+      "name": "camera-calibration",
+      "version": "3.0.9"
+    },
+    {
+      "name": "cbor2",
+      "version": "5.9.0"
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22"
+    },
+    {
+      "name": "cffi",
+      "version": "2.1.1"
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.3.2"
+    },
+    {
+      "name": "click",
+      "version": "8.1.7"
+    },
+    {
+      "name": "cloudpickle",
+      "version": "3.1.2"
+    },
+    {
+      "name": "coacd",
+      "version": "1.0.7"
+    },
+    {
+      "name": "composition-interfaces",
+      "version": "1.2.3"
+    },
+    {
+      "name": "contourpy",
+      "version": "1.3.3"
+    },
+    {
+      "name": "control-msgs",
+      "version": "4.9.0"
+    },
+    {
+      "name": "controller-manager",
+      "version": "2.54.0"
+    },
+    {
+      "name": "controller-manager-msgs",
+      "version": "2.54.0"
+    },
+    {
+      "name": "coverage",
+      "version": "7.4.4"
+    },
+    {
+      "name": "cryptography",
+      "version": "46.0.7"
+    },
+    {
+      "name": "cuda-bindings",
+      "version": "12.9.4"
+    },
+    {
+      "name": "cuda-pathfinder",
+      "version": "1.2.2"
+    },
+    {
+      "name": "cuda-toolkit",
+      "version": "12.8.1"
+    },
+    {
+      "name": "cv-bridge",
+      "version": "3.2.1"
+    },
+    {
+      "name": "cycler",
+      "version": "0.12.1"
+    },
+    {
+      "name": "Cython",
+      "version": "3.3.0"
+    },
+    {
+      "name": "demo-nodes-py",
+      "version": "0.20.9"
+    },
+    {
+      "name": "diagnostic-msgs",
+      "version": "4.9.2"
+    },
+    {
+      "name": "diagnostic-updater",
+      "version": "4.0.7"
+    },
+    {
+      "name": "domain-coordinator",
+      "version": "0.10.0"
+    },
+    {
+      "name": "etils",
+      "version": "1.13.0"
+    },
+    {
+      "name": "example-interfaces",
+      "version": "0.9.3"
+    },
+    {
+      "name": "examples-rclpy-executors",
+      "version": "0.15.5"
+    },
+    {
+      "name": "examples-rclpy-minimal-action-client",
+      "version": "0.15.5"
+    },
+    {
+      "name": "examples-rclpy-minimal-action-server",
+      "version": "0.15.5"
+    },
+    {
+      "name": "examples-rclpy-minimal-client",
+      "version": "0.15.5"
+    },
+    {
+      "name": "examples-rclpy-minimal-publisher",
+      "version": "0.15.5"
+    },
+    {
+      "name": "examples-rclpy-minimal-service",
+      "version": "0.15.5"
+    },
+    {
+      "name": "examples-rclpy-minimal-subscriber",
+      "version": "0.15.5"
+    },
+    {
+      "name": "Farama-Notifications",
+      "version": "0.0.6"
+    },
+    {
+      "name": "fastapi",
+      "version": "0.120.4"
+    },
+    {
+      "name": "filelock",
+      "version": "3.25.2"
+    },
+    {
+      "name": "fonttools",
+      "version": "4.61.1"
+    },
+    {
+      "name": "frozenlist",
+      "version": "1.5.0"
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.2.0"
+    },
+    {
+      "name": "gazebo-msgs",
+      "version": "3.9.0"
+    },
+    {
+      "name": "generate-parameter-library-py",
+      "version": "0.7.5"
+    },
+    {
+      "name": "geometry-msgs",
+      "version": "4.9.2"
+    },
+    {
+      "name": "glfw",
+      "version": "2.10.0"
+    },
+    {
+      "name": "gps-msgs",
+      "version": "3.1.0"
+    },
+    {
+      "name": "gymnasium",
+      "version": "1.2.3"
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0"
+    },
+    {
+      "name": "httptools",
+      "version": "0.6.1"
+    },
+    {
+      "name": "idna",
+      "version": "3.10"
+    },
+    {
+      "name": "idna-ssl",
+      "version": "1.1.0"
+    },
+    {
+      "name": "ijson",
+      "version": "3.5.1"
+    },
+    {
+      "name": "image-geometry",
+      "version": "3.2.1"
+    },
+    {
+      "name": "ImageIO",
+      "version": "2.37.2"
+    },
+    {
+      "name": "imgui-bundle",
+      "version": "1.92.601"
+    },
+    {
+      "name": "importlib_resources",
+      "version": "7.1.0"
+    },
+    {
+      "name": "iniconfig",
+      "version": "2.3.0"
+    },
+    {
+      "name": "interactive-markers",
+      "version": "2.3.2"
+    },
+    {
+      "name": "isaacsim",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-app",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-asset",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-benchmark",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-code-editor",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-core",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-cortex",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-example",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-extscache-kit",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-extscache-kit-sdk",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-extscache-physics",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-gui",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-kernel",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-replicator",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-rl",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-robot",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-robot-motion",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-robot-setup",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-ros1",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-ros2",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-sensor",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-storage",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-template",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-test",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isaacsim-utils",
+      "version": "6.0.1.0"
+    },
+    {
+      "name": "isodate",
+      "version": "0.6.1"
+    },
+    {
+      "name": "Jinja2",
+      "version": "3.1.5"
+    },
+    {
+      "name": "jmespath",
+      "version": "1.0.1"
+    },
+    {
+      "name": "joblib",
+      "version": "1.5.3"
+    },
+    {
+      "name": "joint-state-publisher",
+      "version": "2.4.0"
+    },
+    {
+      "name": "joint-state-publisher-gui",
+      "version": "2.4.0"
+    },
+    {
+      "name": "kcg_connector",
+      "version": "0.1.0"
+    },
+    {
+      "name": "kcg_rl",
+      "version": "0.1.0"
+    },
+    {
+      "name": "kiwisolver",
+      "version": "1.4.9"
+    },
+    {
+      "name": "laser-geometry",
+      "version": "2.4.1"
+    },
+    {
+      "name": "launch",
+      "version": "1.0.14"
+    },
+    {
+      "name": "launch-param-builder",
+      "version": "0.1.1"
+    },
+    {
+      "name": "launch-ros",
+      "version": "0.19.14"
+    },
+    {
+      "name": "launch-testing",
+      "version": "1.0.14"
+    },
+    {
+      "name": "launch-testing-ros",
+      "version": "0.19.14"
+    },
+    {
+      "name": "launch-xml",
+      "version": "1.0.14"
+    },
+    {
+      "name": "launch-yaml",
+      "version": "1.0.14"
+    },
+    {
+      "name": "lifecycle-msgs",
+      "version": "1.2.3"
+    },
+    {
+      "name": "llvmlite",
+      "version": "0.46.0"
+    },
+    {
+      "name": "logging-demo",
+      "version": "0.20.9"
+    },
+    {
+      "name": "manifold3d",
+      "version": "3.5.2"
+    },
+    {
+      "name": "map-msgs",
+      "version": "2.1.0"
+    },
+    {
+      "name": "MarkupSafe",
+      "version": "3.0.3"
+    },
+    {
+      "name": "matplotlib",
+      "version": "3.10.8"
+    },
+    {
+      "name": "message-filters",
+      "version": "4.3.19"
+    },
+    {
+      "name": "moveit-configs-utils",
+      "version": "2.5.9"
+    },
+    {
+      "name": "moveit-msgs",
+      "version": "2.2.1"
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0"
+    },
+    {
+      "name": "msal",
+      "version": "1.35.1"
+    },
+    {
+      "name": "msal-extensions",
+      "version": "1.3.1"
+    },
+    {
+      "name": "msgpack",
+      "version": "1.2.2"
+    },
+    {
+      "name": "mujoco",
+      "version": "3.8.0"
+    },
+    {
+      "name": "mujoco-usd-converter",
+      "version": "0.2.0"
+    },
+    {
+      "name": "mujoco-warp",
+      "version": "3.8.0.3"
+    },
+    {
+      "name": "multidict",
+      "version": "6.1.0"
+    },
+    {
+      "name": "nav-msgs",
+      "version": "4.9.2"
+    },
+    {
+      "name": "nest-asyncio",
+      "version": "1.6.0"
+    },
+    {
+      "name": "networkx",
+      "version": "3.6.1"
+    },
+    {
+      "name": "newton",
+      "version": "1.2.1"
+    },
+    {
+      "name": "newton-actuators",
+      "version": "0.1.0"
+    },
+    {
+      "name": "newton-usd-schemas",
+      "version": "0.2.0"
+    },
+    {
+      "name": "numpy",
+      "version": "2.3.1"
+    },
+    {
+      "name": "numpy-stl",
+      "version": "4.0.0"
+    },
+    {
+      "name": "nvidia-cublas-cu12",
+      "version": "12.8.4.1"
+    },
+    {
+      "name": "nvidia-cuda-cupti-cu12",
+      "version": "12.8.90"
+    },
+    {
+      "name": "nvidia-cuda-nvrtc-cu12",
+      "version": "12.8.93"
+    },
+    {
+      "name": "nvidia-cuda-runtime-cu12",
+      "version": "12.8.90"
+    },
+    {
+      "name": "nvidia-cudnn-cu12",
+      "version": "9.19.0.56"
+    },
+    {
+      "name": "nvidia-cufft-cu12",
+      "version": "11.3.3.83"
+    },
+    {
+      "name": "nvidia-cufile-cu12",
+      "version": "1.13.1.3"
+    },
+    {
+      "name": "nvidia-curand-cu12",
+      "version": "10.3.9.90"
+    },
+    {
+      "name": "nvidia-cusolver-cu12",
+      "version": "11.7.3.90"
+    },
+    {
+      "name": "nvidia-cusparse-cu12",
+      "version": "12.5.8.93"
+    },
+    {
+      "name": "nvidia-cusparselt-cu12",
+      "version": "0.7.1"
+    },
+    {
+      "name": "nvidia-nccl-cu12",
+      "version": "2.28.9"
+    },
+    {
+      "name": "nvidia-nvjitlink-cu12",
+      "version": "12.8.93"
+    },
+    {
+      "name": "nvidia-nvshmem-cu12",
+      "version": "3.4.5"
+    },
+    {
+      "name": "nvidia-nvtx-cu12",
+      "version": "12.8.90"
+    },
+    {
+      "name": "oauthlib",
+      "version": "3.2.2"
+    },
+    {
+      "name": "object-recognition-msgs",
+      "version": "2.0.0"
+    },
+    {
+      "name": "octomap-msgs",
+      "version": "2.0.1"
+    },
+    {
+      "name": "opencv-python-headless",
+      "version": "4.13.0.90"
+    },
+    {
+      "name": "osqp",
+      "version": "1.0.5"
+    },
+    {
+      "name": "osrf-pycommon",
+      "version": "2.1.6"
+    },
+    {
+      "name": "packaging",
+      "version": "26.0"
+    },
+    {
+      "name": "pandas",
+      "version": "3.0.5"
+    },
+    {
+      "name": "pcl-msgs",
+      "version": "1.0.0"
+    },
+    {
+      "name": "pendulum-msgs",
+      "version": "0.20.9"
+    },
+    {
+      "name": "pillow",
+      "version": "12.2.0"
+    },
+    {
+      "name": "pip",
+      "version": "26.2.1"
+    },
+    {
+      "name": "pluggy",
+      "version": "1.6.0"
+    },
+    {
+      "name": "portalocker",
+      "version": "2.7.0"
+    },
+    {
+      "name": "propcache",
+      "version": "0.2.1"
+    },
+    {
+      "name": "psutil",
+      "version": "5.9.8"
+    },
+    {
+      "name": "pycares",
+      "version": "5.0.1"
+    },
+    {
+      "name": "pycollada",
+      "version": "0.9.3"
+    },
+    {
+      "name": "pycparser",
+      "version": "3.0"
+    },
+    {
+      "name": "pydantic",
+      "version": "2.11.10"
+    },
+    {
+      "name": "pydantic_core",
+      "version": "2.33.2"
+    },
+    {
+      "name": "Pygments",
+      "version": "2.21.0"
+    },
+    {
+      "name": "PyJWT",
+      "version": "2.13.0"
+    },
+    {
+      "name": "PyOpenGL",
+      "version": "3.1.10"
+    },
+    {
+      "name": "PyOpenGL-accelerate",
+      "version": "3.1.10"
+    },
+    {
+      "name": "pyparsing",
+      "version": "3.3.2"
+    },
+    {
+      "name": "pyperclip",
+      "version": "1.11.0"
+    },
+    {
+      "name": "pypng",
+      "version": "0.20220715.0"
+    },
+    {
+      "name": "pytest",
+      "version": "9.1.1"
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0"
+    },
+    {
+      "name": "python-fcl",
+      "version": "0.7.0.11"
+    },
+    {
+      "name": "python-multipart",
+      "version": "0.0.26"
+    },
+    {
+      "name": "python-qt-binding",
+      "version": "1.1.3"
+    },
+    {
+      "name": "python-utils",
+      "version": "4.0.0"
+    },
+    {
+      "name": "pytz",
+      "version": "2024.1"
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3"
+    },
+    {
+      "name": "qdldl",
+      "version": "0.1.7.post5"
+    },
+    {
+      "name": "qrcode",
+      "version": "7.4.2"
+    },
+    {
+      "name": "qt-dotgraph",
+      "version": "2.2.5"
+    },
+    {
+      "name": "qt-gui",
+      "version": "2.2.5"
+    },
+    {
+      "name": "qt-gui-cpp",
+      "version": "2.2.5"
+    },
+    {
+      "name": "qt-gui-py-common",
+      "version": "2.2.5"
+    },
+    {
+      "name": "quality-of-service-demo-py",
+      "version": "0.20.9"
+    },
+    {
+      "name": "rcl-interfaces",
+      "version": "1.2.3"
+    },
+    {
+      "name": "rclpy",
+      "version": "3.3.21"
+    },
+    {
+      "name": "rcutils",
+      "version": "5.1.9"
+    },
+    {
+      "name": "requests",
+      "version": "2.32.3"
+    },
+    {
+      "name": "requests-oauthlib",
+      "version": "1.3.1"
+    },
+    {
+      "name": "resource-retriever",
+      "version": "3.1.3"
+    },
+    {
+      "name": "rmw-dds-common",
+      "version": "1.6.0"
+    },
+    {
+      "name": "ros-gz-interfaces",
+      "version": "0.244.25"
+    },
+    {
+      "name": "ros-ign-interfaces",
+      "version": "0.244.25"
+    },
+    {
+      "name": "ros2action",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2bag",
+      "version": "0.15.16"
+    },
+    {
+      "name": "ros2cli",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2component",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2doctor",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2interface",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2launch",
+      "version": "0.19.14"
+    },
+    {
+      "name": "ros2lifecycle",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2multicast",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2node",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2param",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2pkg",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2plugin",
+      "version": "5.1.4"
+    },
+    {
+      "name": "ros2run",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2service",
+      "version": "0.18.19"
+    },
+    {
+      "name": "ros2topic",
+      "version": "0.18.19"
+    },
+    {
+      "name": "rosbag2-interfaces",
+      "version": "0.15.16"
+    },
+    {
+      "name": "rosbag2-py",
+      "version": "0.15.16"
+    },
+    {
+      "name": "rosgraph-msgs",
+      "version": "1.2.3"
+    },
+    {
+      "name": "rosidl-adapter",
+      "version": "3.1.9"
+    },
+    {
+      "name": "rosidl-cli",
+      "version": "3.1.9"
+    },
+    {
+      "name": "rosidl-cmake",
+      "version": "3.1.9"
+    },
+    {
+      "name": "rosidl-generator-c",
+      "version": "3.1.9"
+    },
+    {
+      "name": "rosidl-generator-cpp",
+      "version": "3.1.9"
+    },
+    {
+      "name": "rosidl-generator-py",
+      "version": "0.14.6"
+    },
+    {
+      "name": "rosidl-generator-rs",
+      "version": "0.4.12"
+    },
+    {
+      "name": "rosidl-parser",
+      "version": "3.1.9"
+    },
+    {
+      "name": "rosidl-runtime-py",
+      "version": "0.9.3"
+    },
+    {
+      "name": "rosidl-typesupport-c",
+      "version": "2.0.2"
+    },
+    {
+      "name": "rosidl-typesupport-cpp",
+      "version": "2.0.2"
+    },
+    {
+      "name": "rosidl-typesupport-fastrtps-c",
+      "version": "2.2.4"
+    },
+    {
+      "name": "rosidl-typesupport-fastrtps-cpp",
+      "version": "2.2.4"
+    },
+    {
+      "name": "rosidl-typesupport-introspection-c",
+      "version": "3.1.9"
+    },
+    {
+      "name": "rosidl-typesupport-introspection-cpp",
+      "version": "3.1.9"
+    },
+    {
+      "name": "rpyutils",
+      "version": "0.2.2"
+    },
+    {
+      "name": "rqt-action",
+      "version": "2.0.1"
+    },
+    {
+      "name": "rqt-bag",
+      "version": "1.1.6"
+    },
+    {
+      "name": "rqt-bag-plugins",
+      "version": "1.1.6"
+    },
+    {
+      "name": "rqt-console",
+      "version": "2.0.3"
+    },
+    {
+      "name": "rqt-graph",
+      "version": "1.3.2"
+    },
+    {
+      "name": "rqt-gui",
+      "version": "1.1.9"
+    },
+    {
+      "name": "rqt-gui-py",
+      "version": "1.1.9"
+    },
+    {
+      "name": "rqt-msg",
+      "version": "1.2.1"
+    },
+    {
+      "name": "rqt-plot",
+      "version": "1.1.5"
+    },
+    {
+      "name": "rqt-publisher",
+      "version": "1.5.0"
+    },
+    {
+      "name": "rqt-py-common",
+      "version": "1.1.9"
+    },
+    {
+      "name": "rqt-py-console",
+      "version": "1.0.2"
+    },
+    {
+      "name": "rqt-reconfigure",
+      "version": "1.1.4"
+    },
+    {
+      "name": "rqt-service-caller",
+      "version": "1.0.5"
+    },
+    {
+      "name": "rqt-shell",
+      "version": "1.0.2"
+    },
+    {
+      "name": "rqt-srv",
+      "version": "1.0.3"
+    },
+    {
+      "name": "rqt-topic",
+      "version": "1.5.1"
+    },
+    {
+      "name": "rtree",
+      "version": "1.4.1"
+    },
+    {
+      "name": "s3transfer",
+      "version": "0.14.0"
+    },
+    {
+      "name": "scipy",
+      "version": "1.17.0"
+    },
+    {
+      "name": "scripts",
+      "version": "3.9.0"
+    },
+    {
+      "name": "sensor-msgs",
+      "version": "4.9.2"
+    },
+    {
+      "name": "sensor-msgs-py",
+      "version": "4.9.2"
+    },
+    {
+      "name": "sentry-sdk",
+      "version": "2.42.1"
+    },
+    {
+      "name": "setuptools",
+      "version": "78.1.0"
+    },
+    {
+      "name": "shape-msgs",
+      "version": "4.9.2"
+    },
+    {
+      "name": "six",
+      "version": "1.17.0"
+    },
+    {
+      "name": "srdfdom",
+      "version": "2.0.7"
+    },
+    {
+      "name": "sros2",
+      "version": "0.10.9"
+    },
+    {
+      "name": "stable_baselines3",
+      "version": "2.7.1"
+    },
+    {
+      "name": "starlette",
+      "version": "0.49.3"
+    },
+    {
+      "name": "statistics-msgs",
+      "version": "1.2.3"
+    },
+    {
+      "name": "std-msgs",
+      "version": "4.9.2"
+    },
+    {
+      "name": "std-srvs",
+      "version": "4.9.2"
+    },
+    {
+      "name": "stereo-msgs",
+      "version": "4.9.2"
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0"
+    },
+    {
+      "name": "teleop-twist-keyboard",
+      "version": "2.4.1"
+    },
+    {
+      "name": "tf-transformations",
+      "version": "1.1.1"
+    },
+    {
+      "name": "tf2-geometry-msgs",
+      "version": "0.25.22"
+    },
+    {
+      "name": "tf2-kdl",
+      "version": "0.25.22"
+    },
+    {
+      "name": "tf2-msgs",
+      "version": "0.25.22"
+    },
+    {
+      "name": "tf2-py",
+      "version": "0.25.22"
+    },
+    {
+      "name": "tf2-ros-py",
+      "version": "0.25.22"
+    },
+    {
+      "name": "tf2-sensor-msgs",
+      "version": "0.25.22"
+    },
+    {
+      "name": "tf2-tools",
+      "version": "0.25.22"
+    },
+    {
+      "name": "theora-image-transport",
+      "version": "2.5.5"
+    },
+    {
+      "name": "threadpoolctl",
+      "version": "3.6.0"
+    },
+    {
+      "name": "tinyobjloader",
+      "version": "2.0.0rc13"
+    },
+    {
+      "name": "toml",
+      "version": "0.10.2"
+    },
+    {
+      "name": "topic-monitor",
+      "version": "0.20.9"
+    },
+    {
+      "name": "torch",
+      "version": "2.11.0+cu128"
+    },
+    {
+      "name": "torchaudio",
+      "version": "2.11.0+cu128"
+    },
+    {
+      "name": "torchvision",
+      "version": "0.26.0+cu128"
+    },
+    {
+      "name": "trajectory-msgs",
+      "version": "4.9.2"
+    },
+    {
+      "name": "trimesh",
+      "version": "4.11.1"
+    },
+    {
+      "name": "triton",
+      "version": "3.6.0"
+    },
+    {
+      "name": "turtlesim",
+      "version": "1.4.3"
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.2"
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.12.2"
+    },
+    {
+      "name": "ujson",
+      "version": "5.13.0"
+    },
+    {
+      "name": "unique-identifier-msgs",
+      "version": "2.2.1"
+    },
+    {
+      "name": "urdf-usd-converter",
+      "version": "0.1.3"
+    },
+    {
+      "name": "urdfdom-py",
+      "version": "1.2.1"
+    },
+    {
+      "name": "urllib3",
+      "version": "2.6.3"
+    },
+    {
+      "name": "usd-exchange",
+      "version": "2.3.0"
+    },
+    {
+      "name": "uvicorn",
+      "version": "0.29.0"
+    },
+    {
+      "name": "vision-msgs",
+      "version": "4.1.1"
+    },
+    {
+      "name": "visualization-msgs",
+      "version": "4.9.2"
+    },
+    {
+      "name": "warp-lang",
+      "version": "1.13.0"
+    },
+    {
+      "name": "watchdog",
+      "version": "4.0.0"
+    },
+    {
+      "name": "websockets",
+      "version": "12.0"
+    },
+    {
+      "name": "wheel",
+      "version": "0.47.0"
+    },
+    {
+      "name": "wrapt",
+      "version": "1.16.0"
+    },
+    {
+      "name": "xacro",
+      "version": "2.1.1"
+    },
+    {
+      "name": "yarl",
+      "version": "1.18.3"
+    },
+    {
+      "name": "zipp",
+      "version": "4.1.0"
+    }
+  ],
+  "role": "isaac",
+  "scope": "CURRENT_VALIDATION_MACHINE_AT_PUBLICATION"
+}

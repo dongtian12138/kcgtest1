@@ -1,0 +1,323 @@
+{
+  "camera_calibration": {
+    "calibration_id": "te_global_e50_sim_v1",
+    "calibration_scope": "SIMULATION_ONLY_FROZEN_GLOBAL_CAMERA",
+    "calibration_sha256": "13353bb5bb40470e9fac35d55220cdbda7b3cd99373a5299f77a7847e7b819fc",
+    "camera_cv_axes": [
+      "x_right",
+      "y_down",
+      "z_forward"
+    ],
+    "camera_cv_from_world_row_major": [
+      0.0,
+      1.0,
+      0.0,
+      0.0125,
+      0.7660444431189781,
+      0.0,
+      -0.6427876096865395,
+      -0.25825706664705594,
+      -0.6427876096865394,
+      -0.0,
+      -0.766044443118978,
+      1.1745334603808495,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "camera_frame_id": "te_global_e50_rgbd_camera_optical",
+    "clipping_range_m": [
+      0.1,
+      10.0
+    ],
+    "intrinsics_3x3": [
+      [
+        1465.99853515625,
+        0.0,
+        640.0
+      ],
+      [
+        0.0,
+        1465.99853515625,
+        360.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "resolution_px": [
+      1280,
+      720
+    ],
+    "transform_convention": "parent_T_child",
+    "world_frame_id": "world",
+    "world_from_camera_cv_row_major": [
+      0.0,
+      0.7660444431189779,
+      -0.6427876096865394,
+      0.9528119462962507,
+      1.0,
+      -0.0,
+      0.0,
+      -0.0125,
+      -0.0,
+      -0.6427876096865394,
+      -0.7660444431189779,
+      0.7337403880273357,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  },
+  "capture_contract_sha256": "a7417493038e009c94696bf4efd93102c118f50c912fd1ed8ff83f0bd6a9b791",
+  "capture_id": "global_camera_e50_run23_v1",
+  "capture_time": {
+    "capture_completed_at_utc": "2026-09-01T05:29:13.003592+00:00",
+    "capture_started_at_utc": "2026-09-01T05:29:11.951018+00:00",
+    "clock_domain": "host_utc",
+    "observed_frame_timestamp_utc": "2026-09-01T05:29:12.873563+00:00",
+    "static_frame_timestamp_utc": "2026-09-01T05:29:12.336386+00:00"
+  },
+  "control_authorized": false,
+  "formal_gate": {
+    "ambiguous_key_result": "MISS_KEY_AMBIGUOUS",
+    "key_observation_required": true,
+    "miss_authorizes_motion": false,
+    "missing_endpoint_result": "MISS_ENDPOINT_NOT_FOUND",
+    "pose_result_from_scene_generation_truth_forbidden": true,
+    "required_outputs": [
+      "plug_position_xyz_m",
+      "plug_quaternion_xyzw",
+      "plug_insertion_axis_world",
+      "plug_unique_main_key_world",
+      "receptacle_position_xyz_m",
+      "receptacle_quaternion_xyzw",
+      "receptacle_insertion_axis_world",
+      "receptacle_unique_main_keyway_world"
+    ],
+    "unobserved_key_result": "MISS_KEY_NOT_OBSERVABLE"
+  },
+  "frozen_endpoint_workspaces_world_aabb_m": {
+    "plug": {
+      "maximum": [
+        0.57,
+        -0.16,
+        0.245
+      ],
+      "minimum": [
+        0.47,
+        -0.26,
+        0.198
+      ]
+    },
+    "receptacle": {
+      "maximum": [
+        0.6,
+        0.235,
+        0.285
+      ],
+      "minimum": [
+        0.5,
+        0.135,
+        0.235
+      ]
+    }
+  },
+  "known_static_scene_geometry": {
+    "fixture": {
+      "center_world_m": [
+        0.55,
+        0.185,
+        0.22
+      ],
+      "size_m": [
+        0.14,
+        0.14,
+        0.04
+      ]
+    },
+    "table": {
+      "center_world_m": [
+        0.55,
+        0.0,
+        0.16
+      ],
+      "size_m": [
+        0.8,
+        0.9,
+        0.08
+      ]
+    }
+  },
+  "observability": {
+    "control_authorized": false,
+    "endpoints": [
+      {
+        "endpoint": "plug",
+        "median_optical_depth_m": 0.6633985936641693,
+        "minimum_key_width_px": 4.0,
+        "minimum_point_count": 150,
+        "nearest_optical_depth_m": 0.6524001955986023,
+        "optimistic_smallest_key_width_px": 2.9679495473752175,
+        "point_count": 9164,
+        "smallest_key_chord_m": 0.0013208,
+        "status": "MISS_KEY_NOT_OBSERVABLE",
+        "width_bound_kind": "nearest_measured_depth_optimistic_upper_bound",
+        "workspace_maximum_world_m": [
+          0.57,
+          -0.16,
+          0.245
+        ],
+        "workspace_minimum_world_m": [
+          0.47,
+          -0.26,
+          0.198
+        ]
+      },
+      {
+        "endpoint": "receptacle",
+        "median_optical_depth_m": 0.6144482493400574,
+        "minimum_key_width_px": 4.0,
+        "minimum_point_count": 150,
+        "nearest_optical_depth_m": 0.6003955602645874,
+        "optimistic_smallest_key_width_px": 3.906753832783711,
+        "point_count": 11637,
+        "smallest_key_chord_m": 0.0016,
+        "status": "MISS_KEY_NOT_OBSERVABLE",
+        "width_bound_kind": "nearest_measured_depth_optimistic_upper_bound",
+        "workspace_maximum_world_m": [
+          0.6,
+          0.235,
+          0.285
+        ],
+        "workspace_minimum_world_m": [
+          0.5,
+          0.135,
+          0.235
+        ]
+      }
+    ],
+    "foreground_depth_pixel_count": 20801,
+    "full_6d_pose_claimed": false,
+    "interpretation": "necessary_view_gate_only_not_a_pose_or_control_authorization",
+    "minimum_foreground_depth_delta_m": 0.00025,
+    "minimum_key_width_px": 4.0,
+    "observed_valid_depth_pixel_count": 921600,
+    "provider_inputs": [
+      "ordinary_rgb",
+      "ordinary_depth",
+      "ordinary_static_scene_depth",
+      "camera_intrinsics",
+      "frozen_world_from_camera_cv",
+      "frozen_endpoint_workspaces",
+      "public_te_key_dimensions"
+    ],
+    "schema_version": "kcg_te_rgbd_observability_v1",
+    "semantic_or_instance_inputs_used": [],
+    "static_valid_depth_pixel_count": 921600,
+    "status": "MISS_KEY_NOT_OBSERVABLE",
+    "truth_inputs_used": [],
+    "unique_main_key_claimed": false,
+    "valid_depth_point_count": 20801
+  },
+  "ordinary_depth": {
+    "encoding": "npy_distance_to_image_plane_m_float32",
+    "path_relative_to_manifest": "observation/depth_m.npy",
+    "sha256": "97347dcefc204cc63fbe1c40463db5a28e2f3f2372448e0ccb6d486839c60077",
+    "shape": [
+      720,
+      1280
+    ]
+  },
+  "ordinary_rgb": {
+    "encoding": "png_rgb_uint8",
+    "path_relative_to_manifest": "observation/rgb.png",
+    "sha256": "c8fb48cbc985f5b6c1dcd9a940d4ba56d6733536709ac0b7fedd79fe209c7e06",
+    "shape": [
+      720,
+      1280,
+      3
+    ]
+  },
+  "ordinary_static_scene_depth": {
+    "encoding": "npy_distance_to_image_plane_m_float32",
+    "path_relative_to_manifest": "background/depth_m.npy",
+    "sha256": "634f5617a3a5171f4ab2d302164eefedf52b90a6459c21b05772876e714b55c3",
+    "shape": [
+      720,
+      1280
+    ]
+  },
+  "pose_result": null,
+  "provider_callable_contract": {
+    "implementation_status": "OBSERVABILITY_GATE_EXECUTED_FULL_CAD_PROVIDER_NOT_IMPLEMENTED",
+    "input": "provider_input mapping plus static/observed RGB-D arrays",
+    "output": "one vision pose pair or one formal_gate MISS code"
+  },
+  "schema_version": "kcg_te_rgbd_provider_input_v1",
+  "te_cad_models": {
+    "plug": {
+      "identity": "D38999/26FJ35PN",
+      "model_id": "te_deutsch_d38999_26fj35pn",
+      "outward_axis_local": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "registration_cad": "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_26FJ35PN_VISUAL.stl",
+      "registration_cad_sha256": "89bbf4ba3b8b5fb388276a378a820bb7547e676e97f0b9e2635b7862a86aa617",
+      "role": "loose_plug",
+      "supplier_frame_origin": "mating_face_center",
+      "unique_main_key_local": [
+        0.0,
+        1.0,
+        0.0
+      ]
+    },
+    "receptacle": {
+      "identity": "D38999/20FJ35SN",
+      "model_id": "te_deutsch_d38999_20fj35sn",
+      "outward_axis_local": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "registration_cad": "artifacts/kcg_connector/isaac/te_j35_engineering_v1/visual/D38999_20FJ35SN_VISUAL.stl",
+      "registration_cad_sha256": "5a972c8c77fe75a619362380c604a969098e3338859c9e0a223f47afc25395e0",
+      "role": "fixed_receptacle",
+      "supplier_frame_origin": "mating_face_center",
+      "unique_main_keyway_local": [
+        0.0,
+        1.0,
+        0.0
+      ]
+    }
+  },
+  "truth_firewall": {
+    "forbidden_provider_inputs": [
+      "semantic_segmentation_truth",
+      "instance_segmentation_truth",
+      "object_pose_truth",
+      "object_prim_path",
+      "renderer_truth_point_cloud",
+      "contact_truth",
+      "collider_identity",
+      "penetration_depth_truth"
+    ],
+    "posthoc_truth_evaluation_allowed": true,
+    "provider_inputs_exactly": [
+      "ordinary_rgb",
+      "ordinary_depth",
+      "ordinary_static_scene_depth",
+      "camera_intrinsics",
+      "frozen_world_from_camera_cv",
+      "te_registration_cad",
+      "known_static_table_and_fixture_geometry",
+      "frozen_endpoint_workspaces"
+    ]
+  }
+}

@@ -70,6 +70,14 @@ def assets(archive_path):
             if digest(destination) != row['sha256']:
                 raise ValueError(f'Extracted file differs: {destination}')
     print(f'Runtime assets verified: {len(expected)} files')
+    supplement = ROOT / 'reproducibility/four_camera_baseline_20260920/extra_runtime_inputs.json'
+    if supplement.is_file():
+        rows = json.loads(supplement.read_text())['files']
+        for row in rows:
+            source = ROOT / row['path']
+            if not source.is_file() or digest(source) != row['sha256']:
+                raise ValueError(f'Missing or changed Git-tracked high-camera input: {source}')
+        print(f'High-camera inputs verified from Git: {len(rows)} files')
 
 
 def sam6d(reuse):

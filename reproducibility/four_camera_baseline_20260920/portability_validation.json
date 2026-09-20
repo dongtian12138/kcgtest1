@@ -1,0 +1,33 @@
+{
+  "checked_utc": "2026-09-20T07:30:24.889176+00:00",
+  "scope": "SAME_MACHINE_INDEPENDENT_CHECKOUT_READ_ONLY_RESTORATION_VALIDATION",
+  "base_assets_downloaded_from_public_github": true,
+  "base_asset_files_verified": 297,
+  "extra_high_camera_inputs_verified": 2,
+  "same_bytes_as_successful_run": true,
+  "pinned_sam_commit": "1c2543b3b6faa1f1d81b3c7291f8b371d71e50c2",
+  "sam_patch_applied_and_four_weight_sha256_verified": true,
+  "native_recording_modules_rebuilt_for_isaac_python": true,
+  "current_checkout_ros_resource_build_passed": true,
+  "robot_model_load_and_finite_fk_passed": true,
+  "usd_dependency_closure": [
+    {
+      "asset": "artifacts/kcg_connector/isaac/te_nail_tip_body_grasp_v1/handarm_original_nails_source_decomposition.usda",
+      "layer_count": 11,
+      "unresolved_assets": [],
+      "all_usd_layers_inside_current_checkout": true
+    },
+    {
+      "asset": "artifacts/kcg_connector/te_connector_contact_repaired_20260911/connector_model.usdc",
+      "layer_count": 1,
+      "unresolved_assets": [],
+      "all_usd_layers_inside_current_checkout": true
+    }
+  ],
+  "check_launcher_passed": true,
+  "exact_recorded_motion_arguments_preserved_except_output_paths_and_environment_launcher": true,
+  "physics_control_or_geometry_changed_for_publication": false,
+  "third_party_python_environments_reused": true,
+  "new_physics_episode_started": false,
+  "fresh_machine_environment_installation_validated": false
+}

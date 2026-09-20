@@ -1,0 +1,8 @@
+numpy==1.23.5
+scipy==1.10.1
+trimesh==5.0.0
+python-fcl==0.7.0.8
+tesseract-robotics-nanobind==0.35.0.7
+xacro==2.1.1
+PyYAML==6.0.3
+rtree==1.4.1
