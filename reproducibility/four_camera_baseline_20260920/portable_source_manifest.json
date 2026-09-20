@@ -25,7 +25,7 @@
     "scripts/build_contact_copy.py": "23718ffce839e76594c9213547b201ef2c71cdabc96d1a3b45313297a403d5d3",
     "scripts/prepare_assembly_reproduction.py": "9a73de3b0e2c350cc6faf74f18bea763e667bff8927a827109c5a3d24291d05c",
     "scripts/review_current_hand_assembly.py": "b7d5a40ebbcaf68fe6d0ae3827f85d0f93d90959f254b276a3ac02ecb2b38b3d",
-    "scripts/run_current_hand_assembly.py": "9a1bd85632d0fe9bd0bc1b2df20bf3d54171bd19f30e54b90e28457413cc5c4b",
+    "scripts/run_current_hand_assembly.py": "15914526d26bdbbeebdad5d15dace62bbc839c682a30f618d308be3ec15db722",
     "src/iiwa_description/meshes/hand/collision/f1Link1_convex.stl": "71ac06e81fddbe7924c6272929d2cc16b6ee1a0987a6b2c9a7090335c03d06d4",
     "src/iiwa_description/meshes/hand/collision/f1Link2_convex.stl": "0120af92411f3258dede198f79628a214e578dc002df096eb81cc3b95d597313",
     "src/iiwa_description/meshes/hand/collision/f1Link3_convex.stl": "86acaf02b370cf023f59a34416fdba532dfabb94b8976c13a4c446b64e91216f",

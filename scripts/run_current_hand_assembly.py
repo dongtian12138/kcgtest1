@@ -39,6 +39,11 @@ def replace_value(command, flag, value):
 
 
 def check_reference():
+    try:
+        subprocess.check_output(['git','rev-parse','--verify','HEAD'],cwd=ROOT,
+                                text=True,stderr=subprocess.DEVNULL)
+    except (OSError,subprocess.CalledProcessError) as error:
+        raise ValueError('请按复现说明用 git clone 获取此分支，以保留源码版本和验收来源；没有启动物理') from error
     manifest = read_json(ASSETS / "runtime_assets.json")
     source = read_json(BASE / "portable_source_manifest.json")
     expected = {row["path"]: row["sha256"] for row in manifest["files"]}

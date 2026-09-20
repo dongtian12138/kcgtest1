@@ -20,7 +20,7 @@
 
 验收报告：`reproducibility/high_global1_acceptance_20260919/result_CN.md`；同目录acceptance_summary.json及evidence。完整录像：`/home/noob/WorkPlace/kcgtest1-performance-20260917/artifacts/initial_contact_fix_20260919/balanced_band_full_01/run/video/assembly_five_view.mp4`，5分13.8秒/1920×1080/5fps，只五视角名称，不拼接。计算用时2小时51分38秒，不是5倍提速声明。
 
-实现工作树`/home/noob/WorkPlace/kcgtest1-performance-20260917`，分支codex/high-global1-full-20260919。原项目只同步本入口，原有未提交资产不动。配置visual_body_balanced_band.yaml（原抓取高度+1.5mm，平直带中部）；assembly_high_global1_plus20.yaml；four_camera_two_key_high_global1.yaml。源码修复与原始证据均保留，未推送。
+实现工作树`/home/noob/WorkPlace/kcgtest1-performance-20260917`，分支codex/high-global1-full-20260919。原项目只同步本入口，原有未提交资产不动。配置visual_body_balanced_band.yaml（原抓取高度+1.5mm，平直带中部）；assembly_high_global1_plus20.yaml；four_camera_two_key_high_global1.yaml。源码修复与原始证据均保留；2026-09-20已另建GitHub复现分支，见下文。
 
 ## 历史索引与边界
 
@@ -32,4 +32,4 @@
 
 发布分支codex/connector-four-camera-baseline-20260920；发布标签assembly-four-camera-high-global1-20260920。工作目录/home/noob/WorkPlace/kcgtest1-baseline-20260920；本机已在该独立目录从公开Release恢复297输入，另有2个高位G1输入随Git保存，固定SAM源码/补丁/四权重校验、记录模块重新编译、当前ROS资源构建、USD引用闭合及规划FK只读加载、启动--check均通过。第三方Python环境复用，未做跨机器零安装或新完整物理回合。
 
-本分支入口README.md和docs/REPRODUCE_FOUR_CAMERA_BASELINE_20260920_CN.md；默认scripts/run_current_hand_assembly.py已绑定本次高位四相机成功配置。历史本机路径仅保留为原证据，其他电脑应从当前克隆目录和自身环境启动。用户授权的发布不修改主分支或旧基线。当前正等待Git推送与Release附件核验完成，完成后更新本节。
+本分支入口README.md和docs/REPRODUCE_FOUR_CAMERA_BASELINE_20260920_CN.md；默认scripts/run_current_hand_assembly.py已绑定本次高位四相机成功配置。历史本机路径仅保留为原证据，其他电脑应从当前克隆目录和自身环境启动。用户授权的发布不修改主分支或旧基线。新分支已推送GitHub并从远端重新克隆；已核对509个Git源码/高位输入绑定、恢复297个Release输入、固定SAM与四权重、重新编译记录模块和构建当前ROS资源，--check通过。当前正在发布录像/审核附件；Release发布状态以最后核验记录为准。

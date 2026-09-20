@@ -29,5 +29,6 @@
   "physics_control_or_geometry_changed_for_publication": false,
   "third_party_python_environments_reused": true,
   "new_physics_episode_started": false,
-  "fresh_machine_environment_installation_validated": false
+  "fresh_machine_environment_installation_validated": false,
+  "frozen_sam_renderer_patch_not_required_for_runtime": "Frozen templates are included among the hash-verified runtime inputs; the runtime uses the two pinned inference patches and does not regenerate templates."
 }
