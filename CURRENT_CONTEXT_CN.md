@@ -1,6 +1,6 @@
 # 当前状态：高位全局相机1完整仿真装配已验收
 
-核验时间：2026-09-19T21:06:46.222964+00:00。完整装配验收已完成。当前用户已明确授权把该基线上传GitHub新分支，正在完成复现交付；没有启动新物理回合。
+核验时间：2026-09-20T07:47:05.339280+00:00。完整装配验收及用户授权的GitHub新分支发布已完成。当前没有物理实验或发布任务在运行。
 
 ## 当前有效结果与证据边界
 
@@ -32,4 +32,10 @@
 
 发布分支codex/connector-four-camera-baseline-20260920；发布标签assembly-four-camera-high-global1-20260920。工作目录/home/noob/WorkPlace/kcgtest1-baseline-20260920；本机已在该独立目录从公开Release恢复297输入，另有2个高位G1输入随Git保存，固定SAM源码/补丁/四权重校验、记录模块重新编译、当前ROS资源构建、USD引用闭合及规划FK只读加载、启动--check均通过。第三方Python环境复用，未做跨机器零安装或新完整物理回合。
 
-本分支入口README.md和docs/REPRODUCE_FOUR_CAMERA_BASELINE_20260920_CN.md；默认scripts/run_current_hand_assembly.py已绑定本次高位四相机成功配置。历史本机路径仅保留为原证据，其他电脑应从当前克隆目录和自身环境启动。用户授权的发布不修改主分支或旧基线。新分支已推送GitHub并从远端重新克隆；已核对509个Git源码/高位输入绑定、恢复297个Release输入、固定SAM与四权重、重新编译记录模块和构建当前ROS资源，--check通过。当前正在发布录像/审核附件；Release发布状态以最后核验记录为准。
+本分支入口README.md和docs/REPRODUCE_FOUR_CAMERA_BASELINE_20260920_CN.md；默认scripts/run_current_hand_assembly.py已绑定本次高位四相机成功配置。历史本机路径仅保留为原证据，其他电脑应从当前克隆目录和自身环境启动。用户授权的发布不修改主分支或旧基线。新分支已推送GitHub并从远端重新克隆；已核对509个Git源码/高位输入绑定、恢复297个Release输入、固定SAM与四权重、重新编译记录模块和构建当前ROS资源，--check通过。Release已公开，录像/证据包/SHA256清单均已匿名下载并核对字节与摘要。固定标签指向d6b6fc5001edaebfd73145d3005ee55d721362fd；后续分支提交仅追加发布核验文档，控制和配置与标签相同。
+
+发布地址：https://github.com/dongtian12138/kcgtest1/tree/codex/connector-four-camera-baseline-20260920
+固定发布页：https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-four-camera-high-global1-20260920
+复现说明：docs/REPRODUCE_FOUR_CAMERA_BASELINE_20260920_CN.md。核验文件：reproducibility/four_camera_baseline_20260920/publication_verification.json、github_clone_validation.json。主分支及旧分支未推送改动。
+
+若在其他电脑或旧工作树阅读本入口，应以发布分支的当前克隆目录为运行根目录，并指定当地三个Python环境；上文历史本机路径不是跨机器依赖。当前发布核验没有重新跑整轮动力学，原完整成功和末端传感判定重放的证据边界不变。

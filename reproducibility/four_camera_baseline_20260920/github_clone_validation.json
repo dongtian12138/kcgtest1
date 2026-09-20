@@ -12,5 +12,8 @@
   "check_launcher_passed": true,
   "third_party_environments_reused": true,
   "new_physics_executed": false,
-  "fresh_machine_environment_installation_validated": false
+  "fresh_machine_environment_installation_validated": false,
+  "final_code_commit_checked": "d6b6fc5001edaebfd73145d3005ee55d721362fd",
+  "final_code_check_launcher_passed": true,
+  "missing_git_metadata_rejected_before_simulation": true
 }

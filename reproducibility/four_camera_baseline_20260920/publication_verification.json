@@ -1,0 +1,33 @@
+{
+  "checked_utc": "2026-09-20T07:44:38.352105+00:00",
+  "branch": "codex/connector-four-camera-baseline-20260920",
+  "branch_url": "https://github.com/dongtian12138/kcgtest1/tree/codex/connector-four-camera-baseline-20260920",
+  "release_tag": "assembly-four-camera-high-global1-20260920",
+  "release_url": "https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-four-camera-high-global1-20260920",
+  "release_target_commit": "d6b6fc5001edaebfd73145d3005ee55d721362fd",
+  "assets": [
+    {
+      "name": "high-global1-assembly-five-view.mp4",
+      "bytes": 49534272,
+      "sha256": "2210e27cb44242786d8c8a5a03bcccca57619e152c5887937a5faedaab0ae263",
+      "anonymous_public_download_verified": true
+    },
+    {
+      "name": "high-global1-evidence.tar.gz",
+      "bytes": 2074934,
+      "sha256": "dfa21272bd33e960101d099bd442d80de157ab9884988091f53975fcc905c1b7",
+      "anonymous_public_download_verified": true
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 197,
+      "sha256": "ecf257c96458e4294521f8afea0e0239e8d7c458f3dd85e0da7c6fbee4345641",
+      "anonymous_public_download_verified": true
+    }
+  ],
+  "remote_refs_at_verification": [
+    "d6b6fc5001edaebfd73145d3005ee55d721362fd\trefs/heads/codex/connector-four-camera-baseline-20260920",
+    "d6b6fc5001edaebfd73145d3005ee55d721362fd\trefs/tags/assembly-four-camera-high-global1-20260920"
+  ],
+  "master_or_older_baseline_branches_pushed": false
+}
