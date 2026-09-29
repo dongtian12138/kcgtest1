@@ -32,3 +32,9 @@
 清理明细位于同目录的 `selected_deletions.json`、`root_artifacts_deleted.txt`、`nut_artifacts_deleted.txt` 和 `root_environment_deleted.txt`。旧主目录未提交改动另存为补丁与未跟踪文件包，并保留 Git stash `f3994fb71a00d9f920cbab47c9cc9dfa584bcb60`；螺母研究未提交改动另存并保留 stash `4536e94a1068b90f1f368549f34f2a9956eb063d`。原有 Git 分支均未删除。原基线分支和固定发布页可从 GitHub 获取。
 
 清理前的活动说明备份为 `docs/history/CURRENT_CONTEXT_CN_before_disk_cleanup_20260929.md`。本次没有执行仿真、修改装配控制/几何/安全边界、推送或发布新的成果。
+
+## 2026-09-29 腕部回转补核更正
+
+清理时对整个螺母研究产物目录的删除范围过宽。该目录中还包含一个已验收通过的局部连续回合 `captured_to_release_02`，其回转策略已选择90°、0°、90°并完成剩余旋拧与3秒松手；它没有从桌面抓取重新执行全流程，但不能归为失败实验。整目录清理同时删除了该回合的大型原始流与 `video/assembly_five_view.mp4`。本轮在保留的工程目录、Git历史、常用下载/文档/缓存/回收站目录中按相关文件名检索，未找到该录像副本。
+
+代码与小体积结果仍在Git中。本轮将提交 `1483051` 的原验收文件、执行绑定和末帧图片，以及实际执行提交 `60b8cbc` 的回转选择器，提取至 `artifacts/wrist_reindex_audit_20260929`；没有恢复已删除原始流或录像，也没有重新执行物理。公开完整四相机基线及其录像仍完好，但仍采用旧回转规则，不应将其称为回转问题修复后的完整验证。
