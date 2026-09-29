@@ -1,0 +1,190 @@
+{
+  "status": "ONLINE_SEATING_CONFIRMED",
+  "online_seating_confirmed": true,
+  "observations": [
+    {
+      "sample_time_s": 301.7937657397706,
+      "sample_step": 289719,
+      "available_time_s": 301.94093001070434,
+      "consumed_time_s": 301.9416824141517,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01176",
+      "observed_depth_m": 0.014604060044693596,
+      "lateral_error_m": 1.053721654006551e-05,
+      "axis_error_deg": 0.0007896229317061152
+    },
+    {
+      "sample_time_s": 301.9937657502014,
+      "sample_step": 289911,
+      "available_time_s": 302.13499067020604,
+      "consumed_time_s": 302.1354324242566,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01177",
+      "observed_depth_m": 0.014604058656620723,
+      "lateral_error_m": 1.0786192620314272e-05,
+      "axis_error_deg": 0.0007785559024640839
+    },
+    {
+      "sample_time_s": 302.19376576063223,
+      "sample_step": 290103,
+      "available_time_s": 302.3422247487586,
+      "consumed_time_s": 302.34272410173435,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01178",
+      "observed_depth_m": 0.01460405818206767,
+      "lateral_error_m": 1.0694202600436497e-05,
+      "axis_error_deg": 0.0007867189443498128
+    },
+    {
+      "sample_time_s": 302.39376577106304,
+      "sample_step": 290295,
+      "available_time_s": 302.53915706411937,
+      "consumed_time_s": 302.5395991120022,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01179",
+      "observed_depth_m": 0.014604045883317148,
+      "lateral_error_m": 1.0603141904726817e-05,
+      "axis_error_deg": 0.0007340368265641246
+    },
+    {
+      "sample_time_s": 302.59376578149386,
+      "sample_step": 290487,
+      "available_time_s": 302.73490760959686,
+      "consumed_time_s": 302.735432455549,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01180",
+      "observed_depth_m": 0.014604057011923665,
+      "lateral_error_m": 1.1041626658030492e-05,
+      "axis_error_deg": 0.000778767936100066
+    },
+    {
+      "sample_time_s": 302.79376579192467,
+      "sample_step": 290679,
+      "available_time_s": 302.9367286539171,
+      "consumed_time_s": 302.9375157994218,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01181",
+      "observed_depth_m": 0.014604106281249918,
+      "lateral_error_m": 1.0953923136768695e-05,
+      "axis_error_deg": 0.0013349020576638203
+    },
+    {
+      "sample_time_s": 302.9937658023555,
+      "sample_step": 290871,
+      "available_time_s": 303.1342255644966,
+      "consumed_time_s": 303.13439080968965,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01182",
+      "observed_depth_m": 0.014604053243785244,
+      "lateral_error_m": 1.075566382676075e-05,
+      "axis_error_deg": 0.0007957142901097021
+    },
+    {
+      "sample_time_s": 303.1937658127863,
+      "sample_step": 291063,
+      "available_time_s": 303.33592593665236,
+      "consumed_time_s": 303.33647415356245,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01183",
+      "observed_depth_m": 0.014604058467167716,
+      "lateral_error_m": 1.0615591032813762e-05,
+      "axis_error_deg": 0.0007882263764819671
+    },
+    {
+      "sample_time_s": 303.3937658232171,
+      "sample_step": 291255,
+      "available_time_s": 303.5418000320904,
+      "consumed_time_s": 303.5427241643192,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01184",
+      "observed_depth_m": 0.014604058043109254,
+      "lateral_error_m": 1.077655465108777e-05,
+      "axis_error_deg": 0.0007869347994068406
+    },
+    {
+      "sample_time_s": 303.5937658336479,
+      "sample_step": 291447,
+      "available_time_s": 303.7442969837692,
+      "consumed_time_s": 303.744807508192,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01185",
+      "observed_depth_m": 0.014604251139342755,
+      "lateral_error_m": 1.1715576495458627e-05,
+      "axis_error_deg": 0.0013997969783210947
+    },
+    {
+      "sample_time_s": 303.79376584407873,
+      "sample_step": 291639,
+      "available_time_s": 303.93655348913745,
+      "consumed_time_s": 303.9375158515759,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01186",
+      "observed_depth_m": 0.014604059322229763,
+      "lateral_error_m": 1.0525521024113952e-05,
+      "axis_error_deg": 0.0008014479222180719
+    },
+    {
+      "sample_time_s": 303.99376585450955,
+      "sample_step": 291831,
+      "available_time_s": 304.13605635352434,
+      "consumed_time_s": 304.1364741952857,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01187",
+      "observed_depth_m": 0.014604059159699645,
+      "lateral_error_m": 1.0781400861701315e-05,
+      "axis_error_deg": 0.0007815116767477847
+    },
+    {
+      "sample_time_s": 304.19376586494036,
+      "sample_step": 292023,
+      "available_time_s": 304.3363410068676,
+      "consumed_time_s": 304.3364742057165,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01188",
+      "observed_depth_m": 0.014604372227058687,
+      "lateral_error_m": 1.0877202271683043e-05,
+      "axis_error_deg": 0.0021110129629366126
+    },
+    {
+      "sample_time_s": 304.3937658753712,
+      "sample_step": 292215,
+      "available_time_s": 304.5411809063051,
+      "consumed_time_s": 304.5416825497523,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01189",
+      "observed_depth_m": 0.014604062448554896,
+      "lateral_error_m": 1.0675351091363417e-05,
+      "axis_error_deg": 0.000766305010623067
+    },
+    {
+      "sample_time_s": 304.593765885802,
+      "sample_step": 292407,
+      "available_time_s": 304.7450353817083,
+      "consumed_time_s": 304.7458492270671,
+      "rgbd_directory": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/four_camera_perception/palm_01190",
+      "observed_depth_m": 0.014604166629207488,
+      "lateral_error_m": 1.0657750408203647e-05,
+      "axis_error_deg": 0.0017695146253331252
+    }
+  ],
+  "within_original_visual_depth_tolerance": true,
+  "within_original_visual_depth_stability_tolerance": true,
+  "within_declared_visual_axis_and_lateral_tolerances": true,
+  "actual_robot_open_hold_s": 3.0,
+  "visual_stability_scope": "EVERY_CONSUMED_PALM_FRAME_DURING_COMPLETED_OPEN_HOLD",
+  "released_window_coverage": {
+    "complete": true,
+    "pose_step_interval_inclusive": [
+      289686,
+      292566
+    ],
+    "sample_count": 15,
+    "first_sample_gap_s": 0.034375,
+    "last_sample_age_at_hold_end_s": 0.165625,
+    "maximum_sample_gap_s": 0.2,
+    "gap_admission": "DECLARED_PERIOD_OR_PRECEDING_RECORDED_PIPELINE_LATENCY_PLUS_TWO_PHYSICS_STEPS",
+    "maximum_admitted_sample_gap_s": 0.20208333333333334,
+    "declared_palm_period_s": 0.2,
+    "existing_maximum_observation_age_s": 0.5
+  },
+  "observed_released_depth_range_m": 3.2634374153885093e-07,
+  "robot_observed_open_unloaded_hold_completed": true,
+  "preceding_loaded_torque_observed": true,
+  "last_loaded_robot_wrist_wrench_n_nm": [
+    -5.665662526159218,
+    29.936058143885536,
+    11.742106829745591,
+    -0.14648491350727752,
+    0.21999315557956112,
+    1.412288798915157
+  ],
+  "online_object_or_contact_truth_used": false,
+  "protection_or_regrasp_stop_alone_is_completion": false,
+  "physical_assembly_acceptance": "REQUIRES_ORIGINAL_INDEPENDENT_POSTRUN_REVIEW"
+}

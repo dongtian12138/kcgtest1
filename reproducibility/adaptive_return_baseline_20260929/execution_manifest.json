@@ -1,6 +1,6 @@
 {
   "configuration_id": "HIGH_GLOBAL1_FOUR_CAMERA_TWO_KEY_ADAPTIVE_RETURN_CPU960_64_4",
-  "basis": "Verified fresh full tabletop-to-release episode at motion_source_commit. Publication adds compact evidence, offline review and reproduction documentation; runtime control and physical configuration are unchanged.",
+  "basis": "Published full four-camera baseline plus exactly the previously validated phase-equivalent return selection and preserved regrasp yaw. A fresh continuous tabletop episode is required.",
   "comparison_baseline_commit": "ca5ebc7913bc88190fc94d44084aef7cfcd5a13a",
   "verified_return_execution_commit": "60b8cbc0a4228d606a81ca6f8e8e4d41f68e4702",
   "terminal_decision_commit": "84e534c96760c59997fad938fbac07d16331188b",
@@ -9,7 +9,7 @@
     "reproducibility/adaptive_return_baseline_20260929/assembly_command.json": "200da1bacac1bbfd022863b3d80ec79b13faf4e824ecc32d883d8fc4ba2c48b2",
     "reproducibility/adaptive_return_baseline_20260929/assembly_task.yaml": "bc304125d4c4cc293e8b0d0e7f485bd77ece95551a4e34cf11d5e9bf531799fa",
     "reproducibility/adaptive_return_baseline_20260929/extra_runtime_inputs.json": "3586ecafda24ae60f722deca1ec36eac3d6f2bdcacc6c66aae488eac92519d83",
-    "reproducibility/adaptive_return_baseline_20260929/integration_scope.json": "4e2ba2f3760d7e20c6bbd1a85213a846177ccba8bb7092bb45a12685c55a2a98",
+    "reproducibility/adaptive_return_baseline_20260929/integration_scope.json": "2dc2b98e45bd05223a8036db486478906141c1142747738f41123c5afab2fd21",
     "reproducibility/assembly_20260916/assembly_command.json": "7b9f87cef6a810343a1520548b94b840b2798efc66b51ea0d40fd0d21ff0f84f",
     "reproducibility/assembly_20260916/key_backlash_dimensions.json": "aa09cd6133f4a54cc3aca731e9c723826d67432eea43325dde8a24e7024e6dc0",
     "reproducibility/four_camera_baseline_20260920/assembly_command.json": "a656b68dfbd2b19244f9bd2439b48b14c9e9767d33d4539102ee45c62ae53321",
@@ -518,10 +518,6 @@
     "src/kcg_moveit1/config/handarm.srdf": "856f44a9507a58dced9953feb36432884bfca692116fddb46f9055f2333fa880",
     "src/kcg_moveit1/config/handarm.urdf.xacro": "76dabd23ac6c713b7fd6fa85e2cee7b62c09397e6b011d4ffdbdf9d5db6c4e7c",
     "src/kcg_moveit1/config/tesseract_kinematics.yaml": "d342e3fd39b572e82586bb278846903e70eedf3370d4500c9c506594089804d1",
-    "src/kcg_moveit1/scripts/plan_visual_pose_tesseract.py": "bc2ea78d8b0d71409ea38b7a4e0ab8cc289a2e9b9ed4692bac6a7987a5337d43",
-    "reproducibility/adaptive_return_baseline_20260929/review_return_policy.py": "54de69d7fe7e2160f8d7f962045cb9b7f482fe5ce0cfafc9ea68c3d28bf340a7",
-    "reproducibility/adaptive_return_baseline_20260929/execution_manifest.json": "290759f2468d5d34180eecd38cd2107637839a36e731ad7970cd68572dd84c54"
-  },
-  "motion_source_commit": "6df30f18308bcad767bc0b5f46ef80089f7a6bf8",
-  "verified_utc": "2026-09-29T14:52:34.126889+00:00"
+    "src/kcg_moveit1/scripts/plan_visual_pose_tesseract.py": "bc2ea78d8b0d71409ea38b7a4e0ab8cc289a2e9b9ed4692bac6a7987a5337d43"
+  }
 }

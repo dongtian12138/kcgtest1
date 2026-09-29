@@ -1,0 +1,26 @@
+{
+  "source_run": "artifacts/adaptive_return_20260929/full01/run",
+  "execution_commit": "6df30f18308bcad767bc0b5f46ef80089f7a6bf8",
+  "original_video": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run/video/assembly_five_view.mp4",
+  "independent_preserved_copy": "/home/noob/Videos/kcgtest1/20260929_adaptive_return/assembly_five_view_full01.mp4",
+  "sha256": "891ba8991fc54c06a9704cedf2eefbec7c5df5b056b0ddf69f6b59ae6bab4447",
+  "bytes": 48213247,
+  "metadata": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "5/1",
+        "nb_frames": "1524"
+      }
+    ],
+    "format": {
+      "duration": "304.800000",
+      "size": "48213247"
+    }
+  },
+  "physical_acceptance_status": "VERIFIED_FULL_TABLETOP_EPISODE",
+  "editing_or_splicing_performed": false
+}

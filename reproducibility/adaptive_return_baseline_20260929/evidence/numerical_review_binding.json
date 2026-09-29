@@ -1,0 +1,20 @@
+{
+  "binding": {
+    "run": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run",
+    "process_sha256": "16c190f2f44f1cbdae30382a7285cf50c15d9b4d3f44693439aee1a15ccb289e",
+    "archive_size": 20248894246,
+    "archive_mtime_ns": 1790691734045730969
+  },
+  "results": {
+    "body": true,
+    "high_global1": true,
+    "nut": true,
+    "two_key": true,
+    "cameras": true,
+    "transport": "DIAGNOSTIC_ONLY",
+    "support": true,
+    "keys": true,
+    "release": true,
+    "band": true
+  }
+}

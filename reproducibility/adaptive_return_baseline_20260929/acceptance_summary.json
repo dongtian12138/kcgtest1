@@ -1,0 +1,94 @@
+{
+  "status": "VERIFIED",
+  "verified_at_utc": "2026-09-29T14:52:34.124119+00:00",
+  "scope": "SAME_EPISODE_FRESH_TABLETOP_THROUGH_FINAL_THREE_SECOND_RELEASE",
+  "execution_commit": "6df30f18308bcad767bc0b5f46ef80089f7a6bf8",
+  "comparison_baseline_commit": "ca5ebc7913bc88190fc94d44084aef7cfcd5a13a",
+  "full_tabletop_visual_episode_retested": true,
+  "hardware_tested": false,
+  "whole_assembly_verified": true,
+  "strict_three_second_release_verified": true,
+  "return_policy_verified": true,
+  "online_seating_confirmed_in_this_actual_episode": true,
+  "physical_samples": 292567,
+  "continuous_physical_steps": true,
+  "executed_turn_commands": [
+    {
+      "stage": "nut_rotation",
+      "first_step": 198721,
+      "executed_command_deg": 89.99999997355123,
+      "normal_stop_reason": null
+    },
+    {
+      "stage": "nut_rotation_after_index",
+      "first_step": 220159,
+      "executed_command_deg": 89.99999997355123,
+      "normal_stop_reason": null
+    },
+    {
+      "stage": "nut_rotation_continued_01",
+      "first_step": 241486,
+      "executed_command_deg": 70.6145557922704,
+      "normal_stop_reason": "WRIST_FORCE_RESERVE_EARLY_REGRASP"
+    },
+    {
+      "stage": "nut_rotation_continued_02",
+      "first_step": 255617,
+      "executed_command_deg": 80.68359375,
+      "normal_stop_reason": "WRIST_FORCE_RESERVE_EARLY_REGRASP"
+    },
+    {
+      "stage": "nut_rotation_continued_03",
+      "first_step": 275622,
+      "executed_command_deg": 24.29157892711342,
+      "normal_stop_reason": "ELASTIC_RESERVE_EARLY_REGRASP"
+    },
+    {
+      "stage": "nut_rotation_continued_04",
+      "first_step": 288396,
+      "executed_command_deg": 1.8766361062859414,
+      "normal_stop_reason": "ELASTIC_RESERVE_EARLY_REGRASP"
+    }
+  ],
+  "turn_commands_are_not_actual_nut_angles": true,
+  "selected_free_returns_deg": [
+    90.0,
+    90.0,
+    0.0,
+    90.0,
+    0.0
+  ],
+  "measured_free_return_angles_deg": [
+    89.99552831922549,
+    89.99634649943435,
+    0.0,
+    89.98742567499947,
+    0.0
+  ],
+  "total_free_return_command_deg": 270.0,
+  "zero_return_count": 2,
+  "minimum_arm_joint_margin_during_returns_deg": 13.179210996456613,
+  "minimum_body_lift_during_initial_hold_mm": 55.98337948322296,
+  "final_release_depth_range_mm": [
+    14.604610651731464,
+    14.604610651731464
+  ],
+  "release_physical_steps": 2880,
+  "release_duration_s": 3.0,
+  "source_stop_and_same128_clips_every_release_frame": true,
+  "maximum_thrust_coordinate_mm": 0.5168911451272555,
+  "worst_key_sidewall_numerical_residual_um": 1.9759412265263343,
+  "original_key_review_band_um": 2.0,
+  "recorded_nut_relative_angle_range_deg": 353.7535895606413,
+  "video_duration_s": 304.8,
+  "video_frames": 1524,
+  "video_size": [
+    1920,
+    1080
+  ],
+  "video_fps": 5,
+  "process_wall_s": 9774.359611876076,
+  "original_process_exit_code_retained": 2,
+  "legacy_exit_code_explanation": "The inherited generic CARTS launcher selects nominal_research_dynamic_pass for grasp-lift mode; its legacy all-pad classification is false for this source-nail workflow, as in the previous full baseline. The original evaluation is retained; success is determined by the independent source-geometry, full-assembly and strict release reviews.",
+  "robustness_or_hardware_guarantee_claimed": false
+}

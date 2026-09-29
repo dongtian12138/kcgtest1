@@ -1,0 +1,256 @@
+{
+  "scope": "POSTRUN_RECORDED_RETURN_POLICY_AND_ROBOT_JOINT_AUDIT",
+  "run": "/home/noob/WorkPlace/kcgtest1/artifacts/adaptive_return_20260929/full01/run",
+  "source_commit": "6df30f18308bcad767bc0b5f46ef80089f7a6bf8",
+  "online_truth_used": false,
+  "rows": [
+    {
+      "stage": "nut_reindex",
+      "first_step": 201961,
+      "last_step": 210597,
+      "selected_return_deg": 90.0,
+      "measured_free_hand_axial_rotation_deg": 89.99552831922549,
+      "actual_j7_before_after_deg": [
+        95.36683047500486,
+        9.694162621079968
+      ],
+      "actual_return_minimum_arm_margin_deg": 13.179210996456613,
+      "free_rotate_phase_samples": 3393,
+      "selection": {
+        "policy": "MINIMUM_FREE_TURN_WITH_NEXT_STROKE_JOINT_FEASIBILITY",
+        "selected_return_deg": 90.0,
+        "next_loaded_turn_deg": -90.0,
+        "phase_period_deg": 90.0,
+        "candidates": [
+          {
+            "return_angle_deg": 0.0,
+            "feasible": false,
+            "reason": "Next-turn preview crosses an original soft joint limit"
+          },
+          {
+            "return_angle_deg": 90.0,
+            "feasible": true,
+            "minimum_joint_margin_rad": 0.22978482511391363,
+            "return_joint_travel_rad": 2.100715059444075,
+            "return_samples": 3393,
+            "lookahead_samples": 91
+          },
+          {
+            "return_angle_deg": -90.0,
+            "feasible": false,
+            "reason": "open-hand reindex exceeds its joint speed or position bounds"
+          }
+        ],
+        "zero_return_short_circuit": false,
+        "future_collision_or_grasp_success_certified": false,
+        "online_object_or_contact_truth_used": false
+      },
+      "checks": {
+        "return_completed": true,
+        "phase_selection_enabled": true,
+        "selected_original_phase_candidate": true,
+        "next_stroke_joint_preview_present": true,
+        "actual_return_arm_within_original_limits": true,
+        "next_grasp_completed": true,
+        "next_grasp_preserved_selected_phase": true
+      }
+    },
+    {
+      "stage": "nut_reindex_continued_01",
+      "first_step": 223399,
+      "last_step": 232058,
+      "selected_return_deg": 90.0,
+      "measured_free_hand_axial_rotation_deg": 89.99634649943435,
+      "actual_j7_before_after_deg": [
+        95.36198104069415,
+        9.70197464994317
+      ],
+      "actual_return_minimum_arm_margin_deg": 13.460778714801217,
+      "free_rotate_phase_samples": 3392,
+      "selection": {
+        "policy": "MINIMUM_FREE_TURN_WITH_NEXT_STROKE_JOINT_FEASIBILITY",
+        "selected_return_deg": 90.0,
+        "next_loaded_turn_deg": -90.0,
+        "phase_period_deg": 90.0,
+        "candidates": [
+          {
+            "return_angle_deg": 0.0,
+            "feasible": false,
+            "reason": "Next-turn preview crosses an original soft joint limit"
+          },
+          {
+            "return_angle_deg": 90.0,
+            "feasible": true,
+            "minimum_joint_margin_rad": 0.23469938941462787,
+            "return_joint_travel_rad": 2.1007746925593556,
+            "return_samples": 3392,
+            "lookahead_samples": 91
+          },
+          {
+            "return_angle_deg": -90.0,
+            "feasible": false,
+            "reason": "open-hand reindex exceeds its joint speed or position bounds"
+          }
+        ],
+        "zero_return_short_circuit": false,
+        "future_collision_or_grasp_success_certified": false,
+        "online_object_or_contact_truth_used": false
+      },
+      "checks": {
+        "return_completed": true,
+        "phase_selection_enabled": true,
+        "selected_original_phase_candidate": true,
+        "next_stroke_joint_preview_present": true,
+        "actual_return_arm_within_original_limits": true,
+        "next_grasp_completed": true,
+        "next_grasp_preserved_selected_phase": true
+      }
+    },
+    {
+      "stage": "nut_reindex_continued_02",
+      "first_step": 243635,
+      "last_step": 245985,
+      "selected_return_deg": 0.0,
+      "measured_free_hand_axial_rotation_deg": 0.0,
+      "actual_j7_before_after_deg": [
+        76.78772555514053,
+        76.78772555514053
+      ],
+      "actual_return_minimum_arm_margin_deg": 14.632668421646155,
+      "free_rotate_phase_samples": 0,
+      "selection": {
+        "policy": "MINIMUM_FREE_TURN_WITH_NEXT_STROKE_JOINT_FEASIBILITY",
+        "selected_return_deg": 0.0,
+        "next_loaded_turn_deg": -90.0,
+        "phase_period_deg": 90.0,
+        "candidates": [
+          {
+            "return_angle_deg": 0.0,
+            "feasible": true,
+            "minimum_joint_margin_rad": 0.1658231952650402,
+            "return_joint_travel_rad": 0.0,
+            "return_samples": 1,
+            "lookahead_samples": 91
+          }
+        ],
+        "zero_return_short_circuit": true,
+        "future_collision_or_grasp_success_certified": false,
+        "online_object_or_contact_truth_used": false
+      },
+      "checks": {
+        "return_completed": true,
+        "phase_selection_enabled": true,
+        "selected_original_phase_candidate": true,
+        "next_stroke_joint_preview_present": true,
+        "actual_return_arm_within_original_limits": true,
+        "next_grasp_completed": true,
+        "next_grasp_preserved_selected_phase": true
+      }
+    },
+    {
+      "stage": "nut_reindex_continued_03",
+      "first_step": 258048,
+      "last_step": 266089,
+      "selected_return_deg": 90.0,
+      "measured_free_hand_axial_rotation_deg": 89.98742567499947,
+      "actual_j7_before_after_deg": [
+        154.74987481730807,
+        68.20486886296747
+      ],
+      "actual_return_minimum_arm_margin_deg": 14.711010691426202,
+      "free_rotate_phase_samples": 3420,
+      "selection": {
+        "policy": "MINIMUM_FREE_TURN_WITH_NEXT_STROKE_JOINT_FEASIBILITY",
+        "selected_return_deg": 90.0,
+        "next_loaded_turn_deg": -28.70185051062714,
+        "phase_period_deg": 90.0,
+        "candidates": [
+          {
+            "return_angle_deg": 0.0,
+            "feasible": false,
+            "reason": "Next-turn preview crosses an original soft joint limit"
+          },
+          {
+            "return_angle_deg": 90.0,
+            "feasible": true,
+            "minimum_joint_margin_rad": 0.25651958546240317,
+            "return_joint_travel_rad": 2.100378602524935,
+            "return_samples": 3420,
+            "lookahead_samples": 30
+          },
+          {
+            "return_angle_deg": -90.0,
+            "feasible": false,
+            "reason": "IK_TARGET_UNREACHABLE: CURRENT_VISION_OPEN_HAND_NUT_REINDEX:best_position_orientation_error=(0.00044229477576899785, 0.003427737325321281)"
+          }
+        ],
+        "zero_return_short_circuit": false,
+        "future_collision_or_grasp_success_certified": false,
+        "online_object_or_contact_truth_used": false
+      },
+      "checks": {
+        "return_completed": true,
+        "phase_selection_enabled": true,
+        "selected_original_phase_candidate": true,
+        "next_stroke_joint_preview_present": true,
+        "actual_return_arm_within_original_limits": true,
+        "next_grasp_completed": true,
+        "next_grasp_preserved_selected_phase": true
+      }
+    },
+    {
+      "stage": "nut_reindex_continued_04",
+      "first_step": 276917,
+      "last_step": 278860,
+      "selected_return_deg": 0.0,
+      "measured_free_hand_axial_rotation_deg": 0.0,
+      "actual_j7_before_after_deg": [
+        91.56015431469248,
+        91.56015431469248
+      ],
+      "actual_return_minimum_arm_margin_deg": 15.110112305008387,
+      "free_rotate_phase_samples": 0,
+      "selection": {
+        "policy": "MINIMUM_FREE_TURN_WITH_NEXT_STROKE_JOINT_FEASIBILITY",
+        "selected_return_deg": 0.0,
+        "next_loaded_turn_deg": -4.4102715835136905,
+        "phase_period_deg": 90.0,
+        "candidates": [
+          {
+            "return_angle_deg": 0.0,
+            "feasible": true,
+            "minimum_joint_margin_rad": 0.26398347050551774,
+            "return_joint_travel_rad": 0.0,
+            "return_samples": 1,
+            "lookahead_samples": 6
+          }
+        ],
+        "zero_return_short_circuit": true,
+        "future_collision_or_grasp_success_certified": false,
+        "online_object_or_contact_truth_used": false
+      },
+      "checks": {
+        "return_completed": true,
+        "phase_selection_enabled": true,
+        "selected_original_phase_candidate": true,
+        "next_stroke_joint_preview_present": true,
+        "actual_return_arm_within_original_limits": true,
+        "next_grasp_completed": true,
+        "next_grasp_preserved_selected_phase": true
+      }
+    }
+  ],
+  "accepted": true,
+  "selected_return_angles_deg": [
+    90.0,
+    90.0,
+    0.0,
+    90.0,
+    0.0
+  ],
+  "zero_return_executed": true,
+  "limitations": [
+    "This audit checks robot measurements during recorded returns and the subsequent grasp handoffs.",
+    "Whole-episode physical contacts, seating, release and source geometry require the independent original full-assembly reviews."
+  ]
+}

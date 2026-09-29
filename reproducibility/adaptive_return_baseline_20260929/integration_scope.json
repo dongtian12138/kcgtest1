@@ -14,5 +14,6 @@
   },
   "acceptance": "A new continuous tabletop-to-final-release episode, original physical gates, and same-episode video are required.",
   "hardware_authorized": false,
-  "physical_validation_status": "PENDING_NEW_COMPLETE_EPISODE"
+  "physical_validation_status": "VERIFIED_FULL_TABLETOP_TO_RELEASE",
+  "acceptance_summary": "reproducibility/adaptive_return_baseline_20260929/acceptance_summary.json"
 }
