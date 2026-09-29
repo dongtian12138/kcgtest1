@@ -1,0 +1,57 @@
+{
+  "verified_at_utc": "2026-09-29T15:02:17.343573+00:00",
+  "release_url": "https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-four-camera-adaptive-return-20260929",
+  "release_id": 399256904,
+  "tag": "assembly-four-camera-adaptive-return-20260929",
+  "sealed_commit": "996ed2ad128f29642bca9ba984da5d8b90d6d389",
+  "draft": false,
+  "assets": [
+    {
+      "name": "adaptive_return_full_assembly_five_view.mp4",
+      "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-four-camera-adaptive-return-20260929/adaptive_return_full_assembly_five_view.mp4",
+      "bytes": 48213247,
+      "sha256": "891ba8991fc54c06a9704cedf2eefbec7c5df5b056b0ddf69f6b59ae6bab4447",
+      "server_digest": "sha256:891ba8991fc54c06a9704cedf2eefbec7c5df5b056b0ddf69f6b59ae6bab4447",
+      "anonymous_full_download_verified": true
+    },
+    {
+      "name": "adaptive_return_baseline_evidence.tar.gz",
+      "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-four-camera-adaptive-return-20260929/adaptive_return_baseline_evidence.tar.gz",
+      "bytes": 2143541,
+      "sha256": "7be0eb98b691deb09fb4ffd96e31c026aa7bdc265e1486fceeb058fa26063223",
+      "server_digest": "sha256:7be0eb98b691deb09fb4ffd96e31c026aa7bdc265e1486fceeb058fa26063223",
+      "anonymous_full_download_verified": true
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "url": "https://github.com/dongtian12138/kcgtest1/releases/download/assembly-four-camera-adaptive-return-20260929/SHA256SUMS.txt",
+      "bytes": 217,
+      "sha256": "9423a4092f65e14e8fcda6c0cb671ae5581aca3d75d6ede8878ac7fd5e6dd088",
+      "server_digest": "sha256:9423a4092f65e14e8fcda6c0cb671ae5581aca3d75d6ede8878ac7fd5e6dd088",
+      "anonymous_full_download_verified": true
+    }
+  ],
+  "status": "PUBLISHED_AND_PUBLIC_DOWNLOADS_VERIFIED",
+  "actual_execution_commit": "6df30f18308bcad767bc0b5f46ef80089f7a6bf8",
+  "runtime_files_unchanged_since_actual_execution": true,
+  "remote_refs_at_publication": {
+    "refs/heads/codex/connector-adaptive-return-baseline-20260929": "996ed2ad128f29642bca9ba984da5d8b90d6d389",
+    "refs/tags/assembly-four-camera-adaptive-return-20260929": "ea57439a6ef355d1e4f314391db1f3339ec8f95b",
+    "refs/tags/assembly-four-camera-adaptive-return-20260929^{}": "996ed2ad128f29642bca9ba984da5d8b90d6d389"
+  },
+  "remote_clone_check": {
+    "commit": "996ed2ad128f29642bca9ba984da5d8b90d6d389",
+    "same_machine_existing_third_party_environments": true,
+    "versioned_asset_restore_passed": true,
+    "native_recorders_rebuilt_in_clone": true,
+    "robot_resources_rebuilt_in_clone": true,
+    "bound_source_and_asset_files": 814,
+    "entrypoint_check_passed": true,
+    "checkout_was_clean": true,
+    "second_physical_episode_started": false,
+    "log": "published_entrypoint_check.txt"
+  },
+  "preserved_local_video": "/home/noob/Videos/kcgtest1/20260929_adaptive_return/assembly_five_view_full01.mp4",
+  "preserved_raw_episode": "artifacts/adaptive_return_20260929/full01/run",
+  "note": "The immutable release tag points to the sealed acceptance commit. A subsequent documentation-only branch commit records these completed publication checks."
+}

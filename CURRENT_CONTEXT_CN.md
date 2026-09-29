@@ -1,6 +1,6 @@
-# 当前：新回转策略的完整四相机装配已验收，正在发布
+# 当前：新回转策略的完整四相机装配已验收并发布
 
-核验时间：2026-09-29T14:52:34.127330+00:00。用户本轮明确授权完整仿真、新基线、GitHub发布和录像保存。全部物理动作及后评已完成，没有运行中的物理实验；hardware_authorized=false。
+核验时间：2026-09-29T15:02:17.343573+00:00。用户本轮明确授权完整仿真、新基线、GitHub发布和录像保存。全部物理动作及后评已完成，没有运行中的物理实验；hardware_authorized=false。
 
 ## 当前有效完整基线
 
@@ -19,6 +19,10 @@
 
 本次新成功原始数据和独立视频副本不属于缓存或失败实验，不因artifacts被Git忽略而删除。上次删除研究局部成功录像的更正见 `docs/DISK_CLEANUP_20260929_CN.md`；旧活动入口见 `docs/history/CURRENT_CONTEXT_CN_during_adaptive_return_full01_20260929.md`。
 
-## 剩余工作
+## 发布及恢复状态
 
-尚需提交并推送本次新分支、固定发布 `assembly-four-camera-adaptive-return-20260929`，上传完整原录像及证据包，验证远端代码与附件可取用。发布已获用户授权，不再重复确认。GitHub现有账号写入权限已核对。所有运行控制源码仍是已实际执行的6df30f1，之后只整理后评与发布信息。
+已推送分支 `codex/connector-adaptive-return-baseline-20260929`。固定标签 `assembly-four-camera-adaptive-return-20260929` 指向封存提交 `996ed2ad128f29642bca9ba984da5d8b90d6d389`；之后分支只补入发布核对记录。发布页：https://github.com/dongtian12138/kcgtest1/releases/tag/assembly-four-camera-adaptive-return-20260929 。
+
+完整原录像、验收证据包和校验表均已公开发布，并逐个匿名完整下载后核对字节数和SHA256一致。另从远端固定标签新克隆，恢复版本化资产、重新编译原生记录模块并重建本次克隆的机器人资源，814个绑定文件及复现入口检查通过。该检查复用了同机既有第三方环境，没有执行第二台机器的完整回合。核对记录见 `reproducibility/adaptive_return_baseline_20260929/publication_verification.json`。
+
+本轮用户要求的集成、从桌面开始的完整执行、同回合验收、新基线、GitHub发布和录像保留均已完成；没有运行中的物理实验或待续实验。全部运行控制源码仍是已实际执行的6df30f1。下一步仅按用户新要求推进，不自动恢复历史候选或重复运行。
