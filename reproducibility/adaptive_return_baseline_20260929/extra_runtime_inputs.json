@@ -1,0 +1,15 @@
+{
+  "scope": "UNCHANGED_HIGH_GLOBAL1_CALIBRATION_TEMPLATE_AND_STATIC_BACKGROUND",
+  "files": [
+    {
+      "path": "artifacts/two_key_20260919/global1_high_replay/original_provider_input.json",
+      "bytes": 8571,
+      "sha256": "91fb52af4aab453a1c353abcad83f1875130b92f30842e451f01dbe03f81a874"
+    },
+    {
+      "path": "artifacts/two_key_20260919/global1_high_replay/background/depth_m.npy",
+      "bytes": 3686528,
+      "sha256": "634f5617a3a5171f4ab2d302164eefedf52b90a6459c21b05772876e714b55c3"
+    }
+  ]
+}

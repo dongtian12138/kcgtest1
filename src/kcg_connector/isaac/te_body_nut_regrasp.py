@@ -233,8 +233,11 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
             keyed[:3,:3]=np.asarray(world_from_socket)[:3,:3]@np.diag([-1.,1.,-1.])
             commanded=float(runtime.get('coaxial_nut_commanded_degrees',0.))
             partial_quarter=abs((commanded+45.)%90.-45.)>.01
-            keep_reindex_yaw=bool(config['nut_regrasp'].get('preserve_reindex_yaw_after_early_stop')
-                and commanded>=80. and partial_quarter)
+            from te_phase_equivalent_reindex import retain_returned_grasp_yaw
+            equivalent_return=runtime.get('phase_equivalent_return_completed') is True
+            keep_reindex_yaw=retain_returned_grasp_yaw(commanded,
+                preserve_partial=bool(config['nut_regrasp'].get('preserve_reindex_yaw_after_early_stop')),
+                equivalent_return_completed=equivalent_return)
             if keep_reindex_yaw:
                 if retained_reindex_body_rotation is None:
                     _,current_hand=hand_pose()
@@ -256,7 +259,8 @@ def run_body_nut_regrasp(repository, runtime, stepper, dynamic, observation,
                 record['captured_nut_axial_reference_source']='SOURCE_WORKING_THRUST_FACE_AFTER_COMPLETED_CAPTURE_STROKE; NOT_OBJECT_STATE_READBACK'
             record['grasp_orientation_source']=('RETAINED_ROBOT_HAND_YAW_AND_CURRENT_VISUAL_SOCKET_AXIS'
                 if keep_reindex_yaw else 'CURRENT_VISUAL_SOCKET_KEY_REFERENCE_AND_SOURCE_CAD_GRASP')
-            record['partial_turn_reindex_yaw_retained']=keep_reindex_yaw
+            record['partial_turn_reindex_yaw_retained']=bool(keep_reindex_yaw and partial_quarter)
+            record['phase_equivalent_reindex_yaw_retained']=equivalent_return
             record['nut_yaw_directly_measured']=False
             record['keyed_grasp_reference_world']=keyed.tolist()
             # Only the hand target is rotated. Keep the measured Body and

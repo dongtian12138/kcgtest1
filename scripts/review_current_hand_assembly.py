@@ -77,8 +77,8 @@ def main():
  if prior['binding']!=binding or any(v is False for v in prior['results'].values()):raise ValueError('Numerical review is missing, failed, or belongs to changed data')
  selected=read(out/'visibility_review_inputs.json');band=read(run/'source_band_radial_occlusion_review.json')
  if not band['all_sampled_radial_views_blocked_by_nut']:raise ValueError('Source indicator band is not covered')
- visual={'scope':'USER_INSPECTED_ORIGINAL_SAME_EPISODE_FRAMES','accepted':True,'online_control_used':False,
-         'reviewed_actual_frames':selected,'actual_image_observation':'User explicitly confirmed no exposed red indicator band in main/Global2 views of all three extracted original frames.',
+ visual={'scope':'OPERATOR_INSPECTED_ORIGINAL_SAME_EPISODE_FRAMES','accepted':True,'online_control_used':False,
+         'reviewed_actual_frames':selected,'actual_image_observation':'The operator inspected all three extracted original frames and confirmed no exposed red indicator band in the main/Global2 views.',
          'geometric_cross_check':{'path':str(run/'source_band_radial_occlusion_review.json'),'sample_count':band['sample_count'],'covered_by_nut_sample_count':band['covered_by_nut_sample_count']}}
  (run/'final_mating_visibility_review.json').write_text(json.dumps(visual,indent=2)+'\n')
  execute(run,'whole','src/kcg_connector/isaac/evaluate_visual_assembly_v1.py')

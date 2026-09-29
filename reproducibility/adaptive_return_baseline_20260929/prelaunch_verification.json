@@ -1,0 +1,18 @@
+{
+  "verified_at_utc": "2026-09-29T11:40:32.074543+00:00",
+  "targeted_tests": {
+    "result": "31 passed",
+    "files": [
+      "test_phase_equivalent_reindex.py",
+      "test_nut_motion_controls.py",
+      "test_nut_reserve_release.py"
+    ]
+  },
+  "only_configuration_changes": [
+    "nut_reindex.phase_equivalent_return=true",
+    "nut_reindex.next_loaded_turn_deg=-90.0"
+  ],
+  "launcher_bound_files_verified": 812,
+  "ros_resources_rebuilt": true,
+  "new_physical_success_claimed": false
+}

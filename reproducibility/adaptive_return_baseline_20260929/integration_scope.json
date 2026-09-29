@@ -1,0 +1,18 @@
+{
+  "comparison_baseline_commit": "ca5ebc7913bc88190fc94d44084aef7cfcd5a13a",
+  "verified_segment_execution_commit": "60b8cbc0a4228d606a81ca6f8e8e4d41f68e4702",
+  "imported_source_files": [
+    "src/kcg_connector/isaac/te_body_nut_continuation.py",
+    "src/kcg_connector/isaac/te_body_nut_reindex.py",
+    "src/kcg_connector/isaac/te_body_nut_regrasp.py",
+    "src/kcg_connector/isaac/te_phase_equivalent_reindex.py",
+    "src/kcg_connector/test/test_phase_equivalent_reindex.py"
+  ],
+  "runtime_configuration_changes": {
+    "nut_reindex.phase_equivalent_return": true,
+    "nut_reindex.next_loaded_turn_deg": -90.0
+  },
+  "acceptance": "A new continuous tabletop-to-final-release episode, original physical gates, and same-episode video are required.",
+  "hardware_authorized": false,
+  "physical_validation_status": "PENDING_NEW_COMPLETE_EPISODE"
+}

@@ -18,7 +18,7 @@ import time
 
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT / "reproducibility/four_camera_baseline_20260920"
+BASE = ROOT / "reproducibility/adaptive_return_baseline_20260929"
 ASSETS = ROOT / "reproducibility/assembly_20260916"
 REFERENCE = ROOT / "reproducibility/high_global1_acceptance_20260919/evidence"
 MOTION_FLAGS = (
@@ -123,7 +123,7 @@ def execute(command, output, label, limit, reserve):
         process={'pid':child.pid,'argv':command,
             'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
             'started_utc':datetime.now(timezone.utc).isoformat(),
-            'scope':'HIGH_GLOBAL1_FOUR_CAMERA_BASELINE_'+label.upper(),
+            'scope':'HIGH_GLOBAL1_FOUR_CAMERA_ADAPTIVE_RETURN_'+label.upper(),
             'simulation_only':True,'hardware_authorized':False}
         process_path.write_text(json.dumps(process,indent=2)+'\n')
         try:
@@ -177,7 +177,7 @@ def main(argv=None):
             ['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True, stderr=subprocess.DEVNULL).strip()
     except (OSError, subprocess.CalledProcessError):
         source_commit = None
-    plan = {"source_run": str(REFERENCE), "configuration_id": configuration_id, "checked_bound_files": checked,
+    plan = {"comparison_baseline_evidence": str(REFERENCE), "initialization": "FRESH_TABLETOP_SCENE_NO_RECORDED_STATE_RESTORE", "configuration_id": configuration_id, "checked_bound_files": checked,
             "source_git_commit": source_commit,
             "source_manifest_sha256": hashlib.sha256((BASE / 'portable_source_manifest.json').read_bytes()).hexdigest(),
             "initial_pose_variation_requested": False,

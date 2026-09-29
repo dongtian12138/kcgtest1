@@ -63,7 +63,8 @@ def run_nut_rotation_with_recovery(repository,runtime,stepper,dynamic,grip,socke
                     record.update(stage='STOPPED',failure_reason=last.get('failure_reason'))
                     break
                 release=copy.deepcopy(assembly['nut_reindex'])
-                release.update(release_only=False,allow_recovery_reindex=True)
+                release.update(release_only=False,allow_recovery_reindex=True,
+                    next_loaded_turn_deg=remaining)
                 reindex=run_nut_release_and_reindex(repository,runtime,stepper,dynamic,current_grip,last,socket,release,
                     output/f'recovery_reindex_{attempt:02d}')
                 record['attempts'][-1]['reindex']=reindex
@@ -139,7 +140,7 @@ def continue_nut_strokes_and_release(repository, runtime, stepper, dynamic, reco
         entry = {"index": index + 1, "requested_rotation_deg": angle}
         series["attempts"].append(entry)
         reindex_settings = copy.deepcopy(assembly["nut_reindex"])
-        reindex_settings.update(release_only=False,
+        reindex_settings.update(release_only=False,next_loaded_turn_deg=angle,
             rotation_about_socket_plus_z_deg=(
                 float(assembly['nut_reindex']['rotation_about_socket_plus_z_deg'])
                 if last_rotation.get('early_regrasp')
@@ -147,7 +148,8 @@ def continue_nut_strokes_and_release(repository, runtime, stepper, dynamic, reco
         # A compensated 94-degree request may stop early. The existing
         # quarter-turn open return preserves the tested flute grasp phase;
         # the unused requested remainder must not rotate that phase again.
-        entry['early_regrasp_retains_configured_open_return']=bool(last_rotation.get('early_regrasp'))
+        entry['early_regrasp_retains_configured_open_return']=bool(
+            last_rotation.get('early_regrasp') and not reindex_settings.get('phase_equivalent_return',False))
         record["stage"] = "CONTINUED_NUT_RELEASE_AND_OPEN_HAND_REINDEX"
         save_record()
         entry["reindex"] = run_nut_release_and_reindex(
